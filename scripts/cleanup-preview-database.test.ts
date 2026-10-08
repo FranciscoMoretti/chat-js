@@ -67,9 +67,67 @@ const expectRejection = async (
   throw new Error("Expected the operation to reject.");
 };
 /* oxlint-enable oxc/no-async-await */
+interface GitHubState {
+  readonly state: string;
+  readonly repo: string;
+  readonly open: boolean;
+  readonly stateBeforeDelete: string;
+  readonly openBeforeDelete: boolean;
+}
+/* oxlint-disable typescript/promise-function-async -- GitHub mock callbacks return their existing promises directly to preserve synchronous assertion throws. */
+/* oxlint-disable eslint/no-magic-numbers -- These literal counts and page-size assertions are fixed GitHub fixture values. */
+const createGitHub = ({
+  state,
+  repo,
+  open,
+  stateBeforeDelete,
+  openBeforeDelete,
+}: GitHubState): Parameters<typeof cleanupPreviewDatabase>[0]["github"] => {
+  let getCount = 0;
+  let listCount = 0;
+  return {
+    paginate: (_method: unknown, params: unknown) => {
+      expect(params).toEqual({
+        head: "owner:feature",
+        owner: "owner",
+        per_page: 100,
+        repo: "repo",
+        state: "open",
+      });
+      listCount += 1;
+      if (listCount === 1) {
+        if (open) {
+          return Promise.resolve([{}]);
+        }
+        return Promise.resolve([]);
+      }
+      if (openBeforeDelete) {
+        return Promise.resolve([{}]);
+      }
+      return Promise.resolve([]);
+    },
+    rest: {
+      pulls: {
+        get: () =>
+          Promise.resolve({
+            data: {
+              closed_at: "2026-09-29T00:00:00Z",
+              head: { ref: "feature", repo: { full_name: repo } },
+              // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              state: (getCount += 1) === 1 ? state : stateBeforeDelete,
+            },
+          }),
+        list: (): void => {
+          // Pagination is handled by the mock; the list method is only a token.
+        },
+      },
+    },
+  };
+};
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable typescript/promise-function-async */
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
-/* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
@@ -88,49 +146,16 @@ const run = async ({
   openBeforeDelete = open,
 }: RunOptions = {}): Promise<RunResult> => {
   const calls: Call[] = [];
-  let getCount = 0;
-  let listCount = 0;
   let pageIndex = 0;
   const result = await cleanupPreviewDatabase({
     apiKey: "test-key",
-    github: {
-      paginate: (_method: unknown, params: unknown) => {
-        expect(params).toEqual({
-          head: "owner:feature",
-          owner: "owner",
-          per_page: 100,
-          repo: "repo",
-          state: "open",
-        });
-        listCount += 1;
-        if (listCount === 1) {
-          if (open) {
-            return Promise.resolve([{}]);
-          }
-          return Promise.resolve([]);
-        }
-        if (openBeforeDelete) {
-          return Promise.resolve([{}]);
-        }
-        return Promise.resolve([]);
-      },
-      rest: {
-        pulls: {
-          get: () =>
-            Promise.resolve({
-              data: {
-                closed_at: "2026-09-29T00:00:00Z",
-                head: { ref: "feature", repo: { full_name: repo } },
-                // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                state: (getCount += 1) === 1 ? state : stateBeforeDelete,
-              },
-            }),
-          list: (): void => {
-            // Pagination is handled by the mock; the list method is only a token.
-          },
-        },
-      },
-    },
+    github: createGitHub({
+      open,
+      openBeforeDelete,
+      repo,
+      state,
+      stateBeforeDelete,
+    }),
     number: 123,
     repository: { owner: "owner", repo: "repo" },
     request: (url: string, options: Readonly<Pick<RequestInit, "method">>) => {
@@ -150,10 +175,7 @@ const run = async ({
 
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-lines-per-function -- preview database cleanup: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
@@ -212,6 +234,9 @@ describe("preview database cleanup", (): void => {
     }
   );
   /* oxlint-enable oxc/no-async-await */
+});
+
+describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["2026-09-30T00:00:00Z", "invalid"])'s awaited sequencing and rejected-Promise behavior. */
   it.each(["2026-09-30T00:00:00Z", "invalid"])(
     "preserves recreated previews or unknown creation dates %s",
@@ -225,6 +250,9 @@ describe("preview database cleanup", (): void => {
     }
   );
   /* oxlint-enable oxc/no-async-await */
+});
+
+describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("finds later-page previews using the opaque next cursor", async (): Promise<void> => {
     const { calls, result } = await run({
@@ -260,6 +288,9 @@ describe("preview database cleanup", (): void => {
     );
   });
   /* oxlint-enable oxc/no-async-await */
+});
+
+describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
@@ -268,6 +299,9 @@ describe("preview database cleanup", (): void => {
     expect(concurrent.result).toContain("Deleted");
   });
   /* oxlint-enable oxc/no-async-await */
+});
+
+describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([     { ...preview, id: "br-quiet-pine-za1aryyz" },     { ...preview, parent_id: rootBranch.'s awaited sequencing and rejected-Promise behavior. */
   it.each([
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -297,4 +331,3 @@ describe("preview database cleanup", (): void => {
   /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */

@@ -1,9 +1,7 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
-import { execFileSync } from "node:child_process";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import { readFile, writeFile } from "node:fs/promises";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
+import { execFileSync } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import path from "node:path";
 
@@ -17,7 +15,7 @@ if (!argument) {
   );
 }
 const archive = path.resolve(argument);
-/* oxlint-disable node/no-sync -- candidate: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
+/* oxlint-disable node/no-sync -- Validate the tarball manifest before any workspace manifest or lockfile is modified. */
 const candidate: unknown = JSON.parse(
   execFileSync("tar", ["-xOf", archive, "package/package.json"], {
     encoding: "utf-8",
@@ -45,7 +43,7 @@ const originals = await Promise.all(
   }))
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable node/no-sync -- run: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
+/* oxlint-disable node/no-sync -- Run package checks serially with inherited stdio; failures propagate so the enclosing finally restores manifests and lockfile. */
 const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
 /* oxlint-enable node/no-sync */

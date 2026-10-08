@@ -1,16 +1,12 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
-import { createRequire } from "node:module";
-// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
-import { fileURLToPath } from "node:url";
-
-import type postgresType from "postgres";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
+import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
+import { fileURLToPath } from "node:url";
+import type postgresType from "postgres";
 
 const EMPTY_MESSAGE_LENGTH = 0;
 const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
@@ -53,8 +49,8 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMaintainerBuild's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
+/* oxlint-disable eslint/max-statements -- One phase/error scope coordinates connection, advisory-lock migration, cleanup and build; the finally cleanup must not replace the original sanitized migration failure. */
+/* oxlint-disable eslint/init-declarations -- The initial undefined failure sentinel permits cleanup errors to be recorded by ??=; an empty-string initializer would suppress those errors. */
 const runMaintainerBuild = async (
   source: Readonly<NodeJS.ProcessEnv>,
   operations: Readonly<BuildOperations>

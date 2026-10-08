@@ -1,21 +1,15 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
-import { execFile } from "node:child_process";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { mkdir, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { createHash } from "node:crypto";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
-import { mkdir, rm, writeFile } from "node:fs/promises";
-/* oxlint-enable sort-imports */
+import { setTimeout as delay } from "node:timers/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
+import { execFile } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { homedir } from "node:os";
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import nodePath from "node:path";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
-import { setTimeout as delay } from "node:timers/promises";
-/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { promisify } from "node:util";
 

@@ -1,9 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
-import { isWorktreeEnvConfig } from "./worktree-config";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { WorktreeEnvConfig } from "./worktree-runtime";
-/* oxlint-enable sort-imports */
+import { isWorktreeEnvConfig } from "./worktree-config";
 import { resolveWorktreeRuntime } from "./worktree-runtime";
 
 const ZERO_OFFSET = 0;
@@ -82,12 +80,13 @@ describe("rejects malformed worktree runtime settings", () => {
     expect(() =>
       resolveWorktreeRuntime(
         {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          ...config,
           apps: {
             chat: { offset: ZERO_OFFSET },
             site: { offset: ZERO_OFFSET },
           },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
         },
         {}
       )
@@ -95,29 +94,39 @@ describe("rejects malformed worktree runtime settings", () => {
   });
 
   it("requires at least one app", () => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    expect(() => resolveWorktreeRuntime({ ...config, apps: {} }, {})).toThrow(
-      "at least one app"
-    );
+    expect(() =>
+      resolveWorktreeRuntime(
+        { apps: {}, range: config.range, slot: config.slot, url: config.url },
+        {}
+      )
+    ).toThrow("at least one app");
   });
 
   it("requires a valid slot environment variable", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing config.slot own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        { ...config, slot: { ...config.slot, env: "not valid" } },
+        {
+          apps: config.apps,
+          range: config.range,
+          slot: { default: config.slot.default, env: "not valid" },
+          url: config.url,
+        },
         {}
       )
     ).toThrow("slot.env");
   });
 });
 
-describe("validates app ports and template references", () => {
+describe("validates app ports", () => {
   it("rejects offsets outside the reserved range", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        { ...config, apps: { chat: { offset: PORT_RANGE_STRIDE } } },
+        {
+          apps: { chat: { offset: PORT_RANGE_STRIDE } },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
+        },
         {}
       )
     ).toThrow("stride");
@@ -126,25 +135,32 @@ describe("validates app ports and template references", () => {
   it("rejects privileged ports", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing config.range own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        { ...config, range: { ...config.range, base: PRIVILEGED_PORT } },
+        {
+          apps: config.apps,
+          range: { base: PRIVILEGED_PORT, stride: config.range.stride },
+          slot: config.slot,
+          url: config.url,
+        },
         {}
       )
     ).toThrow("1024-65535");
   });
+});
 
+describe("validates template references", () => {
   it("rejects unknown template variables", () => {
     expect(() =>
       resolveWorktreeRuntime(
         {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          ...config,
           apps: {
             chat: {
               exports: { APP_URL: "{apps.missing.url}" },
               offset: ZERO_OFFSET,
             },
           },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
         },
         {}
       )
@@ -154,8 +170,12 @@ describe("validates app ports and template references", () => {
   it("rejects cross-app references in the shared URL template", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        { ...config, url: "http://localhost:{apps.chat.port}" },
+        {
+          apps: config.apps,
+          range: config.range,
+          slot: config.slot,
+          url: "http://localhost:{apps.chat.port}",
+        },
         {}
       )
     ).toThrow("url must not reference other apps");

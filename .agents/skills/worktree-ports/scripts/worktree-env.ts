@@ -1,10 +1,7 @@
 #!/usr/bin/env bun
 
-import { spawn } from "bun";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { loadWorktreeConfig, resolveWorktreeRuntime } from "./worktree-runtime";
-/* oxlint-enable sort-imports */
+import { spawn } from "bun";
 
 const ARGUMENT_START_INDEX = 2;
 const FIRST_ARGUMENT_INDEX = 0;
@@ -33,8 +30,8 @@ const fail: (message: string) => never = (message) => {
 const writeStatus = (message: string): void => console.log(message);
 
 if (args[FIRST_ARGUMENT_INDEX] === "--info") {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing runtime own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  const info = { ...runtime, configFile };
+  // oxlint-disable-next-line eslint/sort-keys -- Preserve the documented worktree --info JSON field order.
+  const info = { apps: runtime.apps, slot: runtime.slot, configFile };
   if (args[SECOND_ARGUMENT_INDEX] === "--json") {
     // JSON.stringify treats a null replacer as absent; the third argument controls indentation.
     // oxlint-disable-next-line unicorn/no-null -- Use the native serializer without a filtering replacer for the CLI's JSON output.
@@ -75,7 +72,7 @@ const spawnChild = (
 ): ReturnType<typeof spawn> => {
   try {
     return spawn([...commandArgs], {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of environment rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Pass Bun a fresh own-property snapshot, preserving enumerable string and symbol keys, getter receiver/order, and native CopyDataProperties behavior; Object.entries drops symbols and Object.assign invokes target setters, while prefer-object-spread rejects Object.assign.
       env: { ...environment },
       stderr: "inherit",
       stdin: "inherit",
@@ -90,7 +87,7 @@ const spawnChild = (
 };
 
 // Forward ambient variables for commands that rely on inherited setup alongside app-specific overrides.
-// oxlint-disable-next-line node/no-process-env, oxc/no-rest-spread-properties -- Child processes inherit this CLI's environment and receive validated app exports. Rest/spread: Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing app.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+// oxlint-disable-next-line node/no-process-env, oxc/no-rest-spread-properties -- Forward the CLI's native process environment and app exports. Preserve enumerable string and symbol keys, getter receiver/order, and app override order; Object.entries drops symbols and Object.assign invokes target setters, while prefer-object-spread rejects Object.assign.
 const childEnvironment = { ...process.env, ...app.env };
 const child = spawnChild(args, childEnvironment);
 

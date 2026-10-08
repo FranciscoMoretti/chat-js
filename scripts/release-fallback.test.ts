@@ -2,11 +2,9 @@ import { expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
 import { mkdtemp, rm } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
+import { tmpdir } from "node:os";
 
 const SUCCESS_EXIT_CODE = 0;
 const NON_SUCCESS_EXIT_CODE = 1;
