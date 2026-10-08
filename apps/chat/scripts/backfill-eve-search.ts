@@ -16,6 +16,10 @@ import { assertEveConfigured } from "../lib/eve/server";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const DATABASE_SHUTDOWN_TIMEOUT_SECONDS = 5;
+const MILLISECONDS_PER_SECOND = 1000;
+const DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS =
+  DATABASE_SHUTDOWN_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND;
+const SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS = 250;
 const BACKFILL_BATCH_SIZE = 50;
 const FAILURE_EXIT_STATUS = 1;
 const SUCCESS_EXIT_STATUS = 0;
@@ -96,6 +100,49 @@ const main = async (): Promise<number> => {
   }
   return SUCCESS_EXIT_STATUS;
 };
+
+/* oxlint-disable promise/avoid-new, eslint/no-promise-executor-return, typescript/strict-void-return --
+ * Node's Writable.write callback signals when pending stdout/stderr output has flushed; wrap it in Promises so the timeout path can bound the flush before exiting.
+ */
+const flushOutputBeforeForcedExit = async (): Promise<void> => {
+  await Promise.race([
+    Promise.all([
+      new Promise<void>((resolve) => {
+        process.stdout.write("", () => resolve());
+      }),
+      new Promise<void>((resolve) => {
+        process.stderr.write("", () => resolve());
+      }),
+    ]),
+    new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS);
+    }),
+  ]);
+};
+/* oxlint-enable promise/avoid-new, eslint/no-promise-executor-return, typescript/strict-void-return */
+
+const shutdownDatabase = async (exitStatus: number): Promise<number> => {
+  let shutdownExitStatus = exitStatus;
+  const shutdownStartedAt = performance.now();
+  try {
+    await db.$client.end({ timeout: DATABASE_SHUTDOWN_TIMEOUT_SECONDS });
+  } catch (error) {
+    console.error("Search backfill database shutdown failed.", error);
+    shutdownExitStatus = FAILURE_EXIT_STATUS;
+  }
+  if (
+    performance.now() - shutdownStartedAt >=
+    DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS
+  ) {
+    console.error(
+      "Search backfill database shutdown timed out; forcing process exit."
+    );
+    await flushOutputBeforeForcedExit();
+    // oxlint-disable-next-line unicorn/no-process-exit -- postgres@3.4.9 end({ timeout }) can resolve after its deadline while a half-open peer keeps the socket active; this CLI must exit after a bounded output-flush window.
+    process.exit(FAILURE_EXIT_STATUS);
+  }
+  return shutdownExitStatus;
+};
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined */
 /* oxlint-disable no-console --
@@ -114,12 +161,7 @@ void (async (): Promise<void> => {
     );
     exitStatus = FAILURE_EXIT_STATUS;
   } finally {
-    try {
-      await db.$client.end({ timeout: DATABASE_SHUTDOWN_TIMEOUT_SECONDS });
-    } catch (error) {
-      console.error("Search backfill database shutdown failed.", error);
-      exitStatus = FAILURE_EXIT_STATUS;
-    }
+    exitStatus = await shutdownDatabase(exitStatus);
   }
   process.exitCode = exitStatus;
 })();
