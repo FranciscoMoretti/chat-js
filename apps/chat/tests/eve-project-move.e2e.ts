@@ -59,7 +59,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       "move-fixture-ok",
       { timeout: 90_000 }
     );
-    const projectsGate = Promise.withResolvers<undefined>();
+    const projectsGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(projectsRoute, async (route) => {
       await projectsGate.promise;
       await route.fulfill({
@@ -91,8 +91,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-loading.png"),
       style: screenshotStyle,
     });
-    // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
-    projectsGate.resolve(undefined);
+    projectsGate.resolve();
     await expect(dialog.getByRole("alert")).toContainText(
       "Could not load projects."
     );
@@ -127,7 +126,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-save-error.png"),
       style: screenshotStyle,
     });
-    const moveGate = Promise.withResolvers<undefined>();
+    const moveGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
       async (route) => {
@@ -145,8 +144,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-pending.png"),
       style: screenshotStyle,
     });
-    // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
-    moveGate.resolve(undefined);
+    moveGate.resolve();
     await expect(dialog).not.toBeVisible();
     await expect(
       page.locator(`a[href="/project/${projectId}/chat/${id}"]`)

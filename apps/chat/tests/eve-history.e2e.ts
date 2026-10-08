@@ -104,7 +104,7 @@ test("history pages and searches older conversations without exposing other owne
       await expand.click();
     }
     const search = page.getByRole("textbox", { name: "Search conversations" });
-    const searchGate = Promise.withResolvers<undefined>();
+    const searchGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route("**/api/trpc/eve.list**", async (route) => {
       await searchGate.promise;
       await route.continue();
@@ -120,8 +120,7 @@ test("history pages and searches older conversations without exposing other owne
         path: "tests/eve-results/screenshots/eve-history-loading.png",
       });
     } finally {
-      // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
-      searchGate.resolve(undefined);
+      searchGate.resolve();
     }
     await page.unroute("**/api/trpc/eve.list**");
     await expect(

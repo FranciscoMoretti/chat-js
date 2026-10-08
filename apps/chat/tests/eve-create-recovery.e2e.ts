@@ -258,7 +258,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
-  const retryGate = Promise.withResolvers<undefined>();
+  const retryGate: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
@@ -274,8 +274,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-pending-mobile.png"),
   });
-  // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
-  retryGate.resolve(undefined);
+  retryGate.resolve();
   await expect(page.locator(".is-assistant")).toContainText(
     "project-recovery-ok",
     { timeout: 90_000 }
