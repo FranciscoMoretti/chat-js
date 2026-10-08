@@ -1,12 +1,12 @@
 import { expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- The generator contract test creates isolated files for the installed native linter.
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse.
+import path from "node:path";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Node/Bun generator contract test uses the host temporary directory.
 import { tmpdir } from "node:os";
-// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse.
-import path from "node:path";
 
-// oxlint-disable-next-line sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ./generated-registration-source (generatedRegistrationSource); sort-imports requires the reverse.
+// oxlint-disable-next-line sort-imports -- Preserve node:os before ./generated-registration-source while their runtime initialization order is still under site review.
 import { generatedRegistrationSource } from "./generated-registration-source";
 
 const registrationReason =

@@ -1,16 +1,14 @@
 import { describe, expect, it } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse. */
+
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ./get-package-manager (inferPackageManager); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve node:os before ./get-package-manager while their runtime initialization order is still under site review.
 import { inferPackageManager } from "./get-package-manager";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */

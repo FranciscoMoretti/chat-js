@@ -7,19 +7,20 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before #cli/registry/shadcn (installItems); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { installItems } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
 
 import { updateEnvironmentExample } from "./environment-example";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./environment-example (updateEnvironmentExample) before ./installation-dependencies (prepareDependencyUpdate); Oxfmt places ./installation-dependencies (prepareDependencyUpdate, single) before ./installation-files (directoryFiles, multiple); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./environment-example before ./installation-dependencies while their runtime initialization order is still under site review.
 import { prepareDependencyUpdate } from "./installation-dependencies";
+// oxlint-disable-next-line sort-imports -- Preserve ./installation-dependencies before ./installation-files while their runtime initialization order is still under site review.
 import { directoryFiles, optionalFile } from "./installation-files";
-/* oxlint-enable sort-imports */
-import type { planInstallation } from "./installation-plan";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./installation-plan (planInstallation) before ./mcp-schema (assertMcpApprovalSchema); sort-imports requires the reverse. */
+
 import { assertMcpApprovalSchema } from "./mcp-schema";
-/* oxlint-enable sort-imports */
+
+import type { planInstallation } from "./installation-plan";
+
 // oxlint-disable-next-line import/max-dependencies -- Installation composes provider validation, dependency ownership and rollback within one transaction.
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";

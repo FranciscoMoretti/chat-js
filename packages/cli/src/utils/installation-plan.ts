@@ -1,30 +1,27 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:fs/promises (readFile) before node:path (path); sort-imports requires the reverse. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before @chat-js/gateways/definition (GatewayDefinition); sort-imports requires the reverse. */
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-/* oxlint-enable sort-imports */
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places @chat-js/gateways/definition (gatewayDefinitionSchema, single) before #cli/registry/shadcn (itemAddress, multiple); sort-imports requires the reverse. */
-import { itemAddress, readItem } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
-
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import type { InstallationSelection } from "../../../registry/installation";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { installationSelectionSchema } from "../../../registry/installation";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ../../../registry/installation (installationSelectionSchema, single) before ../../../registry/metadata (FeatureDefinition, multiple); sort-imports requires the reverse. */
 import type {
   FeatureDefinition,
   ToolDefinition,
   // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
+
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
+
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { readFile } from "node:fs/promises";
+
+// oxlint-disable-next-line sort-imports -- Preserve node:fs/promises before @chat-js/gateways/definition while their runtime initialization order is still under site review.
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
+// oxlint-disable-next-line sort-imports -- Preserve @chat-js/gateways/definition before #cli/registry/shadcn while their runtime initialization order is still under site review.
+import { itemAddress, readItem } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import type { InstallationSelection } from "../../../registry/installation";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { installationSelectionSchema } from "../../../registry/installation";
+
+// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/installation before ../../../registry/metadata while their runtime initialization order is still under site review.
 import {
   featureDefinitionSchema,
   featureIdSchema,
@@ -40,9 +37,9 @@ import {
 } from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./provider-config (readProviderId, single) before ./sync-tools (readInstalledTools, multiple); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./provider-config before ./sync-tools while their runtime initialization order is still under site review.
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
-/* oxlint-enable sort-imports */
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]

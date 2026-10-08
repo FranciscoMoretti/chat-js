@@ -1,20 +1,19 @@
 import { afterEach, expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse. */
+
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path, single) before ../../../registry/metadata (featureDefinitionSchema, multiple); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve node:os before ../../../registry/metadata while their runtime initialization order is still under site review.
 import {
   featureDefinitionSchema,
   toolDefinitionSchema,
   // oxlint-disable-next-line import/no-relative-parent-imports -- Use the existing package-local registry contract and test fixture in the standalone CLI layout.
 } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
+
 // oxlint-disable-next-line import/no-relative-parent-imports -- Use the existing package-local registry contract and test fixture in the standalone CLI layout.
 import { externalGatewayFixture } from "../../test/external-gateway";
 import { validateProviderRequirements } from "./installation-requirements";

@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before ./preflight (preflight); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./preflight (preflight, single) before ./provider-config (readProviderId, multiple); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./preflight before ./provider-config while their runtime initialization order is still under site review.
 import { readProviderId, readProviderLiteral } from "./provider-config";
-/* oxlint-enable sort-imports */
 
 type MediaKind = "image" | "video";
 interface MediaGateway {

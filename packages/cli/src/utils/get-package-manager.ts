@@ -1,11 +1,7 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
+import type { PackageManager } from "#cli/types"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import fs from "node:fs";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before #cli/types (PackageManager); sort-imports requires the reverse. */
-import type { PackageManager } from "#cli/types";
-/* oxlint-enable sort-imports */
 
 const launcherPackageManager = (): PackageManager => {
   // oxlint-disable-next-line node/no-process-env -- Read the launching package manager per call; inferPackageManager uses this current process fallback only after exhausting project manifests and lockfiles.

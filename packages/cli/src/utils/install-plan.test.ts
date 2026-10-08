@@ -1,25 +1,25 @@
 import { afterEach, expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse. */
+
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
+// oxlint-disable-next-line sort-imports -- Preserve node:os before #cli/helpers/scaffold while their runtime initialization order is still under site review.
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places #cli/helpers/scaffold (scaffoldFromTemplate) before #cli/registry/shadcn (installItems); sort-imports requires the reverse. */
-import { installItems } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places #cli/registry/shadcn (installItems, single) before ./install-plan (installPlan, multiple); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve #cli/helpers/scaffold before #cli/registry/shadcn while their runtime initialization order is still under site review.
+import { installItems } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line sort-imports -- Preserve #cli/registry/shadcn before ./install-plan while their runtime initialization order is still under site review.
 import { installPlan, recordInstalledSource } from "./install-plan";
-/* oxlint-enable sort-imports */
+
 import { planInstallation } from "./installation-plan";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./installation-plan (planInstallation, single) before ./sync-tools (syncTools, multiple); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./installation-plan before ./sync-tools while their runtime initialization order is still under site review.
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
-/* oxlint-enable sort-imports */
 
 const roots: string[] = [];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */

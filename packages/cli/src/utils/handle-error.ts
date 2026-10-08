@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before ./highlighter (highlighter); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./highlighter while their runtime initialization order is still under site review.
 import { highlighter } from "./highlighter";
-/* oxlint-enable sort-imports */
+
 import { logger } from "./logger";
 
 const failureExitCode = 1;

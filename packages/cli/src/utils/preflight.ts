@@ -3,9 +3,8 @@ import { lstat } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ./is-safe-target (isSafeTarget); sort-imports requires the reverse. */
+// oxlint-disable-next-line sort-imports -- Preserve node:path before ./is-safe-target while their runtime initialization order is still under site review.
 import { isSafeTarget } from "./is-safe-target";
-/* oxlint-enable sort-imports */
 
 const LAST_PART_OFFSET = 1;
 
@@ -57,10 +56,8 @@ export const preflight = async (
       if (
         entry &&
         (entry.isSymbolicLink() ||
-          // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          (index === parts.length - LAST_PART_OFFSET
-            ? !entry.isFile()
-            : !entry.isDirectory()))
+          (index === parts.length - LAST_PART_OFFSET && !entry.isFile()) ||
+          (index !== parts.length - LAST_PART_OFFSET && !entry.isDirectory()))
       ) {
         throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
       }

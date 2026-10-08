@@ -1,16 +1,13 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { stat } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:fs/promises (stat) before node:path (path); sort-imports requires the reverse. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+
+import type { ToolDefinition } from "../../../registry/metadata";
+
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
+import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { stat } from "node:fs/promises";
 
 import ts from "typescript";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places typescript (ts) before ../../../registry/metadata (ToolDefinition); sort-imports requires the reverse. */
-import type { ToolDefinition } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const EMPTY_COLLECTION_SIZE = 0;

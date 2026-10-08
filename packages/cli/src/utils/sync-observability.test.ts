@@ -1,17 +1,17 @@
 import { afterEach, expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse. */
+
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
+// oxlint-disable-next-line sort-imports -- Preserve node:os before #cli/helpers/scaffold while their runtime initialization order is still under site review.
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places #cli/helpers/scaffold (scaffoldFromTemplate) before #cli/registry/shadcn (installItems); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve #cli/helpers/scaffold before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { installItems } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { observabilityItems } from "../../../registry/src/features/observability";

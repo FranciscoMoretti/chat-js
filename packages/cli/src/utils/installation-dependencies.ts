@@ -1,15 +1,14 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, readdir, stat, writeFile } from "node:fs/promises";
+
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before #cli/helpers/readonly-input (ReadonlyInput); sort-imports requires the reverse. */
-import type { ReadonlyInput } from "#cli/helpers/readonly-input";
-/* oxlint-enable sort-imports */
-
 import type { planInstallation } from "./installation-plan";
+
+import { z } from "zod";
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
 
 const dependencyReceipt = ".chatjs/installed-dependencies.json";

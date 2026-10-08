@@ -1,24 +1,21 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
-import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:crypto (createHash, single) before node:fs/promises (mkdir, multiple); sort-imports requires the reverse. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import pathModule from "node:path";
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (pathModule) before #cli/helpers/readonly-input (ReadonlyInput); sort-imports requires the reverse. */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
-/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptor types live outside the CLI package.
-import type { ToolDefinition } from "../../../registry/metadata";
+import type { ToolDefinition } from "../../../registry/metadata"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
+import { createHash } from "node:crypto";
+
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import pathModule from "node:path";
 // oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptors outside the CLI package are bundled into the published executable.
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { validateCustomToolKeys } from "./custom-tool-keys";
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./custom-tool-keys (validateCustomToolKeys) before ./generated-registration-source (generatedRegistrationSource); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./custom-tool-keys before ./generated-registration-source while their runtime initialization order is still under site review.
 import { generatedRegistrationSource } from "./generated-registration-source";
-/* oxlint-enable sort-imports */
+
 import { preflight } from "./preflight";
 
 const generated =
@@ -114,7 +111,6 @@ const registrationKey = (item: Readonly<Pick<Registration, "key">>): string =>
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const readToolDefinition = async (
   cwd: string,
@@ -150,7 +146,10 @@ const readToolDefinition = async (
       ? [`${directory}/${entryName}/document.tsx`]
       : []),
     // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    ...(definition.tools.some((tool) => tool.rendererExport)
+    ...(definition.tools.some(
+      ({ rendererExport }): boolean =>
+        typeof rendererExport === "string" && rendererExport !== ""
+    )
       ? [`${directory}/${entryName}/renderer.tsx`]
       : []),
   ]);
@@ -168,7 +167,10 @@ const readToolDefinition = async (
       ? [readFile(pathModule.join(cwd, directory, entryName, "document.tsx"))]
       : []),
     // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    ...(definition.tools.some((tool) => tool.rendererExport)
+    ...(definition.tools.some(
+      ({ rendererExport }): boolean =>
+        typeof rendererExport === "string" && rendererExport !== ""
+    )
       ? [readFile(pathModule.join(cwd, directory, entryName, "renderer.tsx"))]
       : []),
   ]);
@@ -178,7 +180,6 @@ const readToolDefinition = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectDefinitions's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 
@@ -345,11 +346,13 @@ const registrationImports = (
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const sourceFor = (
   registrations: readonly ReadonlyInput<Registration>[]
 ): { providerBody: string; toolBody: string; uiBody: string } => {
-  const renderers = registrations.filter((item) => item.rendererExport);
+  const renderers = registrations.filter(
+    ({ rendererExport }): boolean =>
+      typeof rendererExport === "string" && rendererExport !== ""
+  );
   const providers = registrations.filter((item): boolean => item.provider);
   const ordinary = registrations.filter((item): boolean => !item.workflow);
   return {
@@ -395,12 +398,10 @@ const sourceFor = (
     )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\n/* oxlint-disable oxc/no-rest-spread-properties -- Copy installed and custom renderer bindings into the public registry after duplicate-key validation, preserving own-enumerable composition and binding identities. */\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n/* oxlint-enable oxc/no-rest-spread-properties */\n`,
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- Preserve the explicit executor absence and empty-export sentinels when checking the generated registry. */
 const validateToolDependencies = (
   definitions: readonly ReadonlyInput<ToolDefinition>[]
 ): void => {
@@ -434,14 +435,13 @@ const validateToolDependencies = (
       (item: ReadonlyInput<Registration>): boolean =>
         registrationKey(item) === "runCodeDocument"
     ) &&
-    (!executor || !executor.codeExecutorExport)
+    (!executor || (executor.codeExecutorExport ?? "") === "")
   ) {
     throw new Error(
       "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
     );
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -557,7 +557,6 @@ const validateToolInstallation = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const syncTools = async (
   cwd: string,
   options: {
@@ -661,7 +660,8 @@ const syncTools = async (
     )
   );
   const runner = definitions.find(
-    (item: ReadonlyInput<ToolDefinition>) => item.documentRunExport
+    ({ documentRunExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof documentRunExport === "string" && documentRunExport !== ""
   );
   await writeFile(
     pathModule.join(dir, "document-run.ts"),
@@ -675,7 +675,8 @@ const syncTools = async (
     generatedSource(providerBody)
   );
   const executor = definitions.find(
-    (item: ReadonlyInput<ToolDefinition>) => item.codeExecutorExport
+    ({ codeExecutorExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof codeExecutorExport === "string" && codeExecutorExport !== ""
   );
   await writeFile(
     pathModule.join(dir, "code-executor.ts"),
@@ -694,7 +695,8 @@ const syncTools = async (
     )
   );
   const availability = definitions.filter(
-    (item: ReadonlyInput<ToolDefinition>) => item.availabilityExport
+    ({ availabilityExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof availabilityExport === "string" && availabilityExport !== ""
   );
   await writeFile(
     pathModule.join(dir, "tool-availability.ts"),
@@ -708,7 +710,6 @@ const syncTools = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readInstalledTools, syncTools, toolRegistrationTargets, validateToolInstallation); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

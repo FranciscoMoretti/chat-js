@@ -4,9 +4,10 @@ import { access, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ../../../registry/metadata (featureDefinitionSchema); sort-imports requires the reverse. */
+
+// oxlint-disable-next-line sort-imports -- Preserve node:path before ../../../registry/metadata while their runtime initialization order is still under site review.
 import { featureDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
+
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
