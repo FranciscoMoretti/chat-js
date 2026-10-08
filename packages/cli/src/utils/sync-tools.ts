@@ -183,42 +183,36 @@ const readToolDefinition = async (
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const collectDefinitions = async (
   cwd: string,
   directory: string,
-  entries: readonly Readonly<Awaited<ReturnType<typeof readdir>>[number]>[],
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This collector replaces existing descriptors with splice and appends discovered descriptors with push in the caller-owned accumulator.
-  definitions: ToolDefinition[],
-  index = 0
-): Promise<void> => {
-  const entry = entries[index];
-  // oxlint-disable-next-line no-undefined -- Native readdir yields concrete Dirent entries until this recursive index reaches exhaustion; compare the absent result explicitly.
-  if (entry === undefined) {
-    return;
-  }
-  if (entry.isSymbolicLink()) {
-    throw new Error(`Tool directories must not be symlinks: ${entry.name}`);
-  }
-  if (entry.isDirectory() && !entry.name.startsWith("_")) {
-    const definition = await readToolDefinition(cwd, directory, entry.name);
-    if (definition) {
-      const existing = definitions.findIndex(
-        (item: ReadonlyInput<ToolDefinition>): boolean =>
-          item.id === definition.id
-      );
-      if (existing !== -1) {
-        definitions.splice(existing, 1);
+  entries: readonly Readonly<Awaited<ReturnType<typeof readdir>>[number]>[]
+): Promise<ToolDefinition[]> => {
+  const definitions: ToolDefinition[] = [];
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Tool directories must not be symlinks: ${entry.name}`);
+    }
+    if (entry.isDirectory() && !entry.name.startsWith("_")) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate and append each directory before visiting the next Dirent so error and registration order match the source listing.
+      const definition = await readToolDefinition(cwd, directory, entry.name);
+      if (definition) {
+        const existing = definitions.findIndex(
+          (item: ReadonlyInput<ToolDefinition>): boolean =>
+            item.id === definition.id
+        );
+        if (existing !== -1) {
+          definitions.splice(existing, 1);
+        }
+        definitions.push(definition);
       }
-      definitions.push(definition);
     }
   }
-  await collectDefinitions(cwd, directory, entries, definitions, index + 1);
+  return definitions;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -505,8 +499,7 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
       checkGenerated(await readOptional(pathModule.join(dir, file)), file);
     })
   );
-  const definitions: ToolDefinition[] = [];
-  await collectDefinitions(cwd, directory, entries, definitions);
+  const definitions = await collectDefinitions(cwd, directory, entries);
   const ids = new Set(
     definitions.map((item: ReadonlyInput<ToolDefinition>): string => item.id)
   );
