@@ -29,12 +29,11 @@ const eveToolAllowed = (name: string): boolean =>
   !eveTurnGuest.get() ||
   ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some((tool) => tool === name);
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveInstalledToolEnabled uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): eveInstalledToolEnabled accepts [key]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveInstalledToolEnabled uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const eveInstalledToolEnabled = (name: string): boolean => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const operation = Object.entries(eveDocumentOperations).find(
-    ([key]) => key === name
+    ([key]: readonly [string, ...unknown[]]) => key === name
   )?.[1];
   if (operation) {
     return installedDocumentKinds.has(operation.kind);
@@ -50,7 +49,7 @@ const eveInstalledToolEnabled = (name: string): boolean => {
   }
   return true;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable id-length -- id-length (#506): filterEveTools uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 const filterEveTools = <T extends object>(tools: T): Partial<T> => {

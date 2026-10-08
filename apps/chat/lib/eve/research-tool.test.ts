@@ -75,9 +75,8 @@ beforeEach(() => {
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("lets the supervisor request follow-up after receiving findings and synthesizes al uses 4, 1, 7, 8, -1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("lets the supervisor request follow-up after receiving findings and synthesizes al accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("lets the supervisor request follow-up after receiving findings and synthesizes all rounds", async () => {
   agent
@@ -94,8 +93,8 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     .mockResolvedValueOnce({ complete: true, topics: [] })
     .mockResolvedValueOnce({ content: "# Both findings", title: "Report" });
   const outputs = await Array.fromAsync(executeEveResearch({}, context));
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(agent.mock.calls.map(([name]) => name)).toEqual([
+
+  expect(agent.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
     "researchPlanner",
     "researchPlanner",
     "researcher",
@@ -133,11 +132,10 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("bounds adaptive decisions even when the supervisor never finishes") uses 1, 4, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("bounds adaptive decisions even when the supervisor never finishes") accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("bounds adaptive decisions even when the supervisor never finishes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("bounds adaptive decisions even when the supervisor never finishes", async () => {
@@ -159,16 +157,22 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   });
   await Array.fromAsync(executeEveResearch({}, context));
   expect(
-    agent.mock.calls.filter(([name]) => name === "researchPlanner")
+    agent.mock.calls.filter(
+      ([name]: Readonly<(typeof agent.mock.calls)[number]>) =>
+        name === "researchPlanner"
+    )
   ).toHaveLength(4);
   expect(
-    agent.mock.calls.filter(([name]) => name === "researcher")
+    agent.mock.calls.filter(
+      ([name]: Readonly<(typeof agent.mock.calls)[number]>) =>
+        name === "researcher"
+    )
   ).toHaveLength(3);
   expect(mocks.save).toHaveBeenCalledOnce();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns clarification without starting research or saving a document") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

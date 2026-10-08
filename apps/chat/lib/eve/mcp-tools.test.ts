@@ -97,9 +97,7 @@ const context = {
 };
 /* oxlint-enable unicorn/no-null */
 const execute = vi.fn();
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): definition accepts { output }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 const definition = tool({
   description: "Echo",
   execute,
@@ -109,9 +107,11 @@ const definition = tool({
     required: ["text"],
     type: "object",
   }),
-  toModelOutput: ({ output }) => ({ type: "text", value: String(output) }),
+  toModelOutput: ({ output }: { readonly output: unknown }) => ({
+    type: "text",
+    value: String(output),
+  }),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -145,12 +145,15 @@ it("returns serializable namespaced discovery without credentials or live connec
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ userId: "stranger" }, { enabled: false }])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
-  async (change) => {
+  async (
+    change: Readonly<
+      | { userId: string; enabled?: undefined }
+      | { enabled: boolean; userId?: undefined }
+    >
+  ) => {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing change own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     mocks.get.mockResolvedValue({ ...connector, ...change });
     await expect(
@@ -162,7 +165,6 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("revalidates after discovery and refuses a revoked connector") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -540,9 +542,8 @@ it("cancels a hung tools listing and closes its transport", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("normalizes dotted and long model IDs without losing original tool names or collid uses 20, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("normalizes dotted and long model IDs without losing original tool names or collid accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("normalizes dotted and long model IDs without losing original tool names or colliding with underscores", async () => {
   const longName = "remote".repeat(20);
@@ -554,19 +555,19 @@ it("normalizes dotted and long model IDs without losing original tool names or c
     ])
   );
   const tools = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(tools.map((item) => item.remoteName)).toEqual([
-    "foo.bar",
-    "foo_bar",
-    longName,
-  ]);
-  expect(new Set(tools.map((item) => item.name)).size).toBe(3);
+  expect(
+    tools.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["foo.bar", "foo_bar", longName]);
+  expect(
+    new Set(tools.map((item: { readonly name: string }) => item.name)).size
+  ).toBe(3);
   for (const item of tools) {
     expect(item.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
   }
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 it("approval requests inherit cancellation", async () => {
   mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
@@ -585,9 +586,7 @@ it("approval requests inherit cancellation", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it("unsupported descriptions do not suppress later valid tools") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 it("unsupported descriptions do not suppress later valid tools", async () => {
   const unsupported = tool({
     description: (): string => "Dynamic description",
@@ -600,11 +599,12 @@ it("unsupported descriptions do not suppress later valid tools", async () => {
     ])
   );
   const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(descriptions.map((item) => item.remoteName)).toEqual(["echo"]);
+  expect(
+    descriptions.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["echo"]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("approval cancellation bounds connector lookup before any transport opens", async () => {
   mocks.get.mockReturnValueOnce(Promise.withResolvers().promise);
@@ -633,10 +633,9 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("a timed-out connector does not discard completed discovery or suppress the next c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("a timed-out connector does not discard completed discovery or suppress the next c uses 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("a timed-out connector does not discard completed discovery or suppress the next c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
   const deadlines: AbortController[] = [];
@@ -661,10 +660,11 @@ it("a timed-out connector does not discard completed discovery or suppress the n
     await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalledTimes(2));
     deadlines[1].abort(new DOMException("Discovery timed out", "TimeoutError"));
     const descriptions = await discovery;
-    expect(descriptions.map((item) => item.connectorId)).toEqual([
-      "connector",
-      "later",
-    ]);
+    expect(
+      descriptions.map(
+        (item: { readonly connectorId: string }) => item.connectorId
+      )
+    ).toEqual(["connector", "later"]);
     expect(mocks.close).toHaveBeenCalledTimes(3);
   } finally {
     timeout.mockRestore();
@@ -672,7 +672,7 @@ it("a timed-out connector does not discard completed discovery or suppress the n
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): it("schema conversion cancellation stops later tool conversions after the pending sch keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
