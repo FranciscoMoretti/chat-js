@@ -17,6 +17,8 @@ import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { configureStorageProvider } from "../../cli/src/helpers/storage-provider";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable-next-line import/no-relative-parent-imports -- Format generated demo sources with the demo application's effective formatter policy. */
+import demoFormatConfig from "../../../apps/chat/oxfmt.config";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { demoInstallation } from "../installation";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -31,10 +33,10 @@ import path from "node:path";
 import { planInstallation } from "../../cli/src/utils/installation-plan";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/max-dependencies -- This importer reaches the 11th dependency here; the canonical installer composes 18 dependencies against the configured maximum of 10.
 import { preflight } from "../../cli/src/utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-// oxlint-disable-next-line import/max-dependencies -- This importer reaches the 11th dependency here; the canonical installer composes 18 dependencies against the configured maximum of 10.
 import { registry } from "../registry";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -52,7 +54,6 @@ import { syncTools } from "../../cli/src/utils/sync-tools";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-import ultracite from "ultracite/oxfmt";
 import { z } from "zod";
 
 // Explicit demo exceptions, scoped to one value/import. Everything else is checked.
@@ -87,7 +88,7 @@ const formatted = async (file: string, content: string): Promise<string> => {
   ) {
     return content;
   }
-  const result = await format(file, content, ultracite);
+  const result = await format(file, content, demoFormatConfig);
   if (result.errors.length > NO_FORMATTING_ERRORS) {
     throw new Error(`Could not format demo source: ${file}`);
   }
