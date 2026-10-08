@@ -1,12 +1,10 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef, useState } from "react";
-/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/dialog; keep this adjacent import pair ordered. */
 import {
   Dialog,
   DialogContent,
@@ -16,10 +14,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 /* oxlint-enable sort-imports */
+
 import { Input } from "@/components/ui/input";
+
+import type { JSX as ReactJSX } from "react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ChatRenameDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ChatRenameDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return -- ChatRenameDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ChatRenameDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries;  */
 
 // oxlint-disable-next-line max-statements -- Keep the dialog's draft, immediate submission lock and async error lifecycle together.
 export const ChatRenameDialog = ({
@@ -52,14 +53,13 @@ export const ChatRenameDialog = ({
   );
   useEffect(() => {
     if (open && !wasOpen.current) {
-      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with the latest title.
       setChatTitle(currentTitle);
       setSubmitError("");
     }
     if (!open && wasOpen.current) {
       submissionSession.current = Symbol("rename dialog session");
       submissionLock.current = false;
-      // oxlint-disable-next-line react/set-state-in-effect -- A controlled close invalidates pending UI for the next dialog session.
+
       setIsSubmitting(false);
     }
     wasOpen.current = open;
@@ -160,4 +160,4 @@ export const ChatRenameDialog = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

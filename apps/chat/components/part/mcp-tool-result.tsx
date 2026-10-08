@@ -1,23 +1,20 @@
 "use client";
 
-import type { DynamicToolUIPart } from "ai";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tool,
   ToolContent,
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
-/* oxlint-enable sort-imports */
-import { parseToolId } from "@/lib/ai/mcp-name-id";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { DynamicToolUIPart } from "ai";
+
+import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
+
+import React from "react";
+
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
+
+import { parseToolId } from "@/lib/ai/mcp-name-id";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-undefined -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value */

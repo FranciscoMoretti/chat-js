@@ -1,16 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense, useSyncExternalStore } from "react";
-/* oxlint-enable sort-imports */
+
 import type { JSX as ReactJSX } from "react";
 
 import { SocialAuthProviders } from "@/components/auth-providers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { InternalLink } from "@/components/internal-link";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/auth-providers and @/components/ui/card; keep this adjacent import pair ordered. */
 import {
   Card,
   CardContent,
@@ -19,11 +15,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 /* oxlint-enable sort-imports */
+
 import {
   buildSocialAuthRequest,
   isElectronRenderer,
 } from "@/lib/electron-auth";
+
+import { InternalLink } from "@/components/internal-link";
+
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LoginForm); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- LoginForm renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading -- LoginForm: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */

@@ -1,35 +1,37 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { memo, useState } from "react";
-/* oxlint-enable sort-imports */
+
 import type { JSX as ReactJSX, ReactNode } from "react";
+
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ChatMenuItems } from "@/components/chat-menu-items";
-/* oxlint-enable sort-imports */
-import { InternalLink } from "@/components/internal-link";
-import { ShareDialog } from "@/components/share-button";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
+
+import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+import { InternalLink } from "@/components/internal-link";
+
+import { ShareDialog } from "@/components/share-button";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/share-button and @/components/ui/sidebar; keep this adjacent import pair ordered. */
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-/* oxlint-disable react/jsx-no-literals -- PureSidebarChatItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
+/* oxlint-disable react/jsx-no-literals -- PureSidebarChatItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 const PureSidebarChatItem = ({
   chat,
@@ -63,9 +65,10 @@ const PureSidebarChatItem = ({
   ) => ReactNode;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
+  const { projectId } = chat;
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     // oxlint-disable-next-line no-ternary -- Keep chatHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    chat.projectId
+    projectId !== null && projectId !== ""
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
@@ -180,8 +183,8 @@ const PureSidebarChatItem = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarChatItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
-/* oxlint-disable max-statements -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
+/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async */
+/* oxlint-disable max-statements -- SidebarChatItem: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation */
 
 export const SidebarChatItem = memo(
   PureSidebarChatItem,

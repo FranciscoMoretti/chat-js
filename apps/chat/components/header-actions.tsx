@@ -1,26 +1,25 @@
 "use client";
 
-import { LogIn } from "lucide-react";
-import { useRouter } from "next/navigation";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { memo } from "react";
-/* oxlint-enable sort-imports */
-
-import { DocsLink } from "@/components/docs-link";
-import { GitHubLink } from "@/components/github-link";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/tooltip; keep this adjacent import pair ordered. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 /* oxlint-enable sort-imports */
+
+import { DocsLink } from "@/components/docs-link";
+
+import { GitHubLink } from "@/components/github-link";
+import { LogIn } from "lucide-react";
+
+import type { JSX as ReactJSX } from "react";
+
+import { useRouter } from "next/navigation";
+
 import { useSession } from "@/providers/session-provider";
 /* oxlint-disable react/jsx-no-literals -- PureHeaderActions renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- PureHeaderActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */

@@ -1,14 +1,14 @@
 "use client";
 
+import React, { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
+
 import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import React, { useCallback } from "react";
-/* oxlint-enable sort-imports */
+
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/alert-dialog; keep this adjacent import pair ordered. */
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 /* oxlint-enable sort-imports */
+
 import { useTRPC } from "@/trpc/react";
 
 interface DeleteProjectDialogProps {
@@ -29,7 +30,7 @@ interface DeleteProjectDialogProps {
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DeleteProjectDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- DeleteProjectDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-void-return -- DeleteProjectDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- DeleteProjectDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; adding async changes synchronous throw behavior and promise identity */
 
 export const DeleteProjectDialog = ({
   deleteId,
@@ -128,4 +129,4 @@ export const DeleteProjectDialog = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

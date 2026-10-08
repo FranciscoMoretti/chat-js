@@ -1,12 +1,11 @@
 "use client";
 
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { PlusIcon } from "lucide-react";
 import React from "react";
+
 import type { JSX as ReactJSX } from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (FollowUpSuggestionsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- FollowUpSuggestionsView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */

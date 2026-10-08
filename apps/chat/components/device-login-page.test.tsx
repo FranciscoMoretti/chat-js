@@ -1,14 +1,18 @@
 import React, { createElement } from "react";
-import type { ComponentProps } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { act, create } from "react-test-renderer";
-/* oxlint-enable sort-imports */
+import { create } from "react-test-renderer";
+// oxlint-disable-next-line eslint/sort-imports -- The act export was removed after verifying it is identical to React.act; keep the renderer's import declaration in its original runtime position pending the module-effects review.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
 
 import { DeviceLoginPage } from "./device-login-page";
 
 const mocks = vi.hoisted(() => ({
-  transferUser: vi.fn(),
+  transferUser:
+    vi.fn<
+      (
+        args: Readonly<{ fetchOptions?: Readonly<{ onError?: () => void }> }>
+      ) => Promise<{ done: true }>
+    >(),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -17,22 +21,18 @@ vi.mock("@/lib/auth-client", () => ({
     getSession: vi.fn(),
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type -- device-login-page.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: ComponentProps<"a">). */
-
 vi.mock("next/link", () => ({
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native anchor refs, React children and open CSS/string aliases to React.createElement; the readonly outer fields retain those native members flagged by the rule.
-  default: (props: Readonly<ComponentProps<"a">>) => createElement("a", props),
+  default: (props: Readonly<ComponentProps<"a">>): React.ReactElement =>
+    createElement("a", props),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const searchParams = new URLSearchParams("done=1");
-/* oxlint-disable typescript/explicit-function-return-type -- device-login-page.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/device-login",
-  useSearchParams: () => searchParams,
+  usePathname: (): string => "/device-login",
+  useSearchParams: (): URLSearchParams => searchParams,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -43,7 +43,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => {
   mocks.transferUser.mockReset();
 });
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/promise-function-async -- device-login-page.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including node); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/promise-function-async -- device-login-page.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
 describe("device login page", () => {
@@ -56,16 +56,14 @@ describe("device login page", () => {
         }
       | undefined;
     mocks.transferUser.mockImplementation(({ fetchOptions: options }) => {
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       fetchOptions = options;
       return transfer.promise;
     });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    // oxlint-disable-next-line typescript/no-deprecated -- `create` is deprecated with react-test-renderer; keep its existing renderer fixture until the test migrates to a different renderer.
     let renderer: ReturnType<typeof create> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    React.act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- `create` is deprecated with react-test-renderer; keep its existing renderer fixture until the test migrates to a different renderer.
       renderer = create(<DeviceLoginPage />);
     });
 
@@ -82,9 +80,8 @@ describe("device login page", () => {
     );
     expect(retryButton).toBeDefined();
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    act(() => {
-      // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- #596: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading props from retryButton; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    React.act(() => {
+      // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- typescript/no-unsafe-call: `ReactTestInstance.props` is declared as `any` by the pinned renderer types, so this is the fixture's native renderer ABI boundary. Optional chain: Keep the existing nullish guard when reading props from retryButton; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       retryButton?.props.onClick();
     });
     expect(
@@ -98,8 +95,7 @@ describe("device login page", () => {
       )
     ).toHaveLength(1);
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    act(() => {
+    React.act(() => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling fetchOptions.onError; read onError from fetchOptions; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       fetchOptions?.onError?.();
     });

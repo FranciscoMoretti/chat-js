@@ -1,26 +1,28 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderPlus } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { usePathname, useRouter } from "next/navigation";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { usePathname, useRouter } from "next/navigation";
+
+import { FolderPlus } from "lucide-react";
 
 import type { ProjectDetailsData } from "@/components/project-details-dialog";
-/* oxlint-enable sort-imports */
+
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+
+import type { JSX as ReactJSX } from "react";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/sidebar-project-item and @/components/ui/sidebar; keep this adjacent import pair ordered. */
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarProjects); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

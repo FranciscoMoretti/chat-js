@@ -1,7 +1,4 @@
 import { ArrowRight, FileText } from "lucide-react";
-import React, { useId } from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Dialog,
   DialogContent,
@@ -9,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
+
 import {
   Drawer,
   DrawerContent,
@@ -17,21 +14,19 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getFaviconUrl } from "@/lib/url-utils";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import React, { useId } from "react";
 import { Favicon } from "./favicon";
-/* oxlint-enable sort-imports */
+
 import { FaviconGroup } from "./favicon-group";
+
+import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
+
+import { cn } from "@/lib/utils";
+
+import { getFaviconUrl } from "@/lib/url-utils";
+
+import { useMediaQuery } from "@/hooks/use-media-query";
 /* oxlint-disable react/jsx-max-depth -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; }). */
 
 const SourcesList = ({

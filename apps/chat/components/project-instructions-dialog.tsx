@@ -1,11 +1,8 @@
 "use client";
 
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/dialog; keep this adjacent import pair ordered. */
 import {
   Dialog,
   DialogContent,
@@ -15,6 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 /* oxlint-enable sort-imports */
+
+import React from "react";
+
 import { Textarea } from "@/components/ui/textarea";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectInstructionsDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectInstructionsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */

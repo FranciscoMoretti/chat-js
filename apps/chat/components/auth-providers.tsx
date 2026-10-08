@@ -1,32 +1,34 @@
 "use client";
 
-import { Github } from "lucide-react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType, JSX as ReactJSX } from "react";
-/* oxlint-enable sort-imports */
-import React, { useMemo } from "react";
-import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Badge } from "@/components/ui/badge";
-/* oxlint-enable sort-imports */
-import { Button } from "@/components/ui/button";
-import authClient from "@/lib/auth-client";
-import { config } from "@/lib/config";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import React, { useMemo } from "react";
+
 import type {
   SocialAuthProvider,
   SocialAuthSignInOptions,
 } from "@/lib/social-auth";
+import { Github } from "lucide-react";
+
+import { toast } from "sonner";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/electron-auth-ui; keep this adjacent import pair ordered. */
+import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
 /* oxlint-enable sort-imports */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/electron-auth-ui and @/lib/social-auth; keep this adjacent import pair ordered. */
 import {
   getEnabledSocialAuthProviders,
   isSocialAuthProvider,
   sortSocialAuthProvidersByLastUsed,
 } from "@/lib/social-auth";
+/* oxlint-enable sort-imports */
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+import authClient from "@/lib/auth-client";
+
+import { config } from "@/lib/config";
 
 const emptyQuery: Record<string, string> = {};
 /* oxlint-disable react/jsx-no-literals -- GoogleIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
@@ -58,7 +60,7 @@ const GoogleIcon = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- VercelIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react/no-multi-comp -- VercelIcon: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
+/* oxlint-disable react/no-multi-comp -- VercelIcon: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const VercelIcon = ({
   className,
@@ -96,7 +98,7 @@ const AUTH_PROVIDER_METADATA = {
 } satisfies Record<SocialAuthProvider, Omit<AuthProviderDefinition, "id">>;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SocialAuthProviders); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- SocialAuthProviders renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, no-console, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, unicorn/no-null -- SocialAuthProviders: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-console, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, unicorn/no-null -- SocialAuthProviders: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const SocialAuthProviders = ({
   callbackURL,
@@ -172,11 +174,13 @@ export const SocialAuthProviders = ({
   return (
     <div className="space-y-2">
       {providers.map(
-        (
-          /* oxlint-disable typescript/prefer-readonly-parameter-types -- This reader retains the native React component constructor and callable signatures; the faithful readonly control preserves them and the native rule still flags that graph. */
-          { icon: Icon, id, label }
-          /* oxlint-enable typescript/prefer-readonly-parameter-types */
-        ) => {
+        ({
+          icon: Icon,
+          id,
+          label,
+        }: Readonly<Pick<AuthProviderDefinition, "id" | "label">> & {
+          readonly icon: React.JSXElementConstructor<{ className?: string }>;
+        }) => {
           const isLastUsed = id === lastUsedProvider;
 
           return (

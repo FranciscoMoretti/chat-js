@@ -1,11 +1,10 @@
 "use client";
 
 import { CircleAlert, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
 import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 

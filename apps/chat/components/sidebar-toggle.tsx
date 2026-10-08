@@ -1,12 +1,13 @@
-import { PanelLeft } from "lucide-react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentProps, JSX as ReactJSX } from "react";
-/* oxlint-enable sort-imports */
+
+import { PanelLeft } from "lucide-react";
+
 import React from "react";
 
 import type { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/sidebar and @/components/ui/tooltip; keep this adjacent import pair ordered. */
 import {
   Tooltip,
   TooltipContent,

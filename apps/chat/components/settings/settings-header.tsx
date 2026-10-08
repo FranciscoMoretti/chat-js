@@ -1,12 +1,10 @@
 "use client";
 
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+
+import React from "react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SettingsHeader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- SettingsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
 
 export const SettingsHeader = (): React.JSX.Element => {
   const { isMobile } = useSidebar();

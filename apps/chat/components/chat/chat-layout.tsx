@@ -8,10 +8,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useSidebar } from "@/components/ui/sidebar";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+
+import { useSidebar } from "@/components/ui/sidebar";
+
+const MAIN_PANEL_DEFAULT_PERCENT = 65;
+const MAIN_PANEL_MIN_PERCENT = 40;
+const SECONDARY_PANEL_DEFAULT_PERCENT = 35;
+const SECONDARY_PANEL_MIN_PERCENT = 25;
 
 interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
@@ -35,7 +39,7 @@ type ChatLayoutProps = Omit<
 > & {
   isSecondaryPanelVisible?: boolean;
 };
-/* oxlint-disable react/jsx-props-no-spreading -- ChatLayout: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable react/jsx-props-no-spreading -- Forward the native ResizablePanelGroup props, including refs, keyboard handlers and accessibility attributes, through this layout boundary. */
 
 const ChatLayout = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
@@ -74,14 +78,14 @@ const ChatLayout = (
 /* oxlint-enable react/jsx-props-no-spreading */
 
 type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
-/* oxlint-disable no-magic-numbers, react/jsx-props-no-spreading, react/no-multi-comp -- ChatLayoutMain: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 65); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp -- ChatLayoutMain: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 65); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ChatLayoutMain = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
-    defaultSize = 65,
-    minSize = 40,
+    defaultSize = MAIN_PANEL_DEFAULT_PERCENT,
+    minSize = MAIN_PANEL_MIN_PERCENT,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ChatLayoutMainProps
@@ -99,16 +103,16 @@ const ChatLayoutMain = (
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react/jsx-props-no-spreading, react/no-multi-comp */
+/* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp */
 
 type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
-/* oxlint-disable no-magic-numbers, react/jsx-props-no-spreading, react/no-multi-comp, unicorn/no-null -- ChatLayoutSecondary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 35); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, unicorn/no-null -- ChatLayoutSecondary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 35); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ChatLayoutSecondary = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
-    defaultSize = 35,
-    minSize = 25,
+    defaultSize = SECONDARY_PANEL_DEFAULT_PERCENT,
+    minSize = SECONDARY_PANEL_MIN_PERCENT,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ChatLayoutSecondaryProps
@@ -124,7 +128,7 @@ const ChatLayoutSecondary = (
     <ResizablePanel defaultSize={defaultSize} minSize={minSize} {...props} />
   );
 };
-/* oxlint-enable no-magic-numbers, react/jsx-props-no-spreading, react/no-multi-comp, unicorn/no-null */
+/* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, unicorn/no-null */
 
 type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
 /* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, unicorn/no-null -- ChatLayoutHandle: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */

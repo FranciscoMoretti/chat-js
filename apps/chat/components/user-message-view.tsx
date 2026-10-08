@@ -2,18 +2,28 @@
 
 import React from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Message, MessageContent } from "@/components/ai-elements/message";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UserMessageView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions -- UserMessageView: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editor). */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions -- UserMessageView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: editor is rendered ReactNode content; its established truthiness controls editing chrome and preserves the original false, null, undefined, empty string or zero child. A non-null presence predicate changes those branches. */
 
-/** Inline editing and message chrome for EVE messages. */
+/**
+ * Inline editing and message chrome for EVE messages.
+ *
+ * @param {string} text Visible user message text.
+ * @param {ReadonlyReactNode | undefined} attachments Attached files for this message.
+ * @param {ReadonlyReactNode} actions Message action controls.
+ * @param {ReadonlyReactNode | undefined} responses Additional response content below the message.
+ * @param {ReadonlyReactNode | undefined} editor Inline editor content.
+ * @param {(() => void) | undefined} onEdit Opens the inline editor on double click.
+ * @param {boolean | undefined} editDisabled Disables inline editing.
+ * @param {string | undefined} messageId Stable message identity.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const UserMessageView = ({
   text,
   attachments,
@@ -57,8 +67,8 @@ export const UserMessageView = ({
               }
               const selection = globalThis.getSelection();
               if (
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-                selection?.toString() &&
+                selection !== null &&
+                selection.toString() !== "" &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {
                 return;
@@ -94,4 +104,4 @@ export const UserMessageView = ({
   </Message>
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions */

@@ -6,10 +6,11 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/dialog; keep this adjacent import pair ordered. */
 import {
   Dialog,
   DialogClose,
@@ -18,10 +19,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 /* oxlint-enable sort-imports */
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 interface ImageModalProps {
   readonly imageName?: string;

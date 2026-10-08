@@ -1,14 +1,14 @@
 "use client";
 
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PromptInputHeader } from "@/components/ai-elements/prompt-input";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ai-elements/prompt-input and @/components/attachment-list; keep this adjacent import pair ordered. */
 import { AttachmentList } from "@/components/attachment-list";
 /* oxlint-enable sort-imports */
+
 import type { AttachmentViewData } from "@/components/attachment-list";
+
+import React from "react";
 import { cn } from "@/lib/utils";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ContextBar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */

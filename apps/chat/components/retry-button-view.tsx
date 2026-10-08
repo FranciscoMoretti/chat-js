@@ -1,13 +1,11 @@
 "use client";
 
-import { RefreshCcw } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Action } from "@/components/ai-elements/actions";
-/* oxlint-enable sort-imports */
+
+import React from "react";
+
+import { RefreshCcw } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetryButtonView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

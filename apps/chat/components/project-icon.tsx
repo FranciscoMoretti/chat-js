@@ -25,15 +25,17 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
-/* oxlint-enable sort-imports */
 import { getColorValue } from "@/lib/project-icons";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/lib/project-icons and @/lib/utils; keep this adjacent import pair ordered. */
 import { cn } from "@/lib/utils";
 /* oxlint-enable sort-imports */
+
+const DEFAULT_ICON_SIZE = 16;
 
 const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   book: Book,
@@ -70,12 +72,12 @@ interface ProjectIconProps {
   readonly size?: number;
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectIcon); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership */
 
 export const ProjectIcon = ({
   icon,
   color,
-  size = 16,
+  size = DEFAULT_ICON_SIZE,
   className,
 }: ProjectIconProps): React.JSX.Element => {
   const IconComponent = ICON_MAP[icon] ?? Folder;
@@ -92,4 +94,4 @@ export const ProjectIcon = ({
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */

@@ -1,14 +1,5 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import React from "react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { BundledLanguage } from "shiki";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Sandbox,
   SandboxCode,
@@ -20,7 +11,12 @@ import {
   SandboxTabsList,
   SandboxTabsTrigger,
 } from "@/components/ai-elements/sandbox";
-/* oxlint-enable sort-imports */
+
+import type { BundledLanguage } from "shiki";
+
+import React from "react";
+
+import type { ToolUIPart } from "ai";
 
 interface SandboxComposedProps {
   readonly code: string;

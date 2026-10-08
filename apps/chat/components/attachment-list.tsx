@@ -14,24 +14,25 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ai-elements/prompt-input; keep this adjacent import pair ordered. */
 import {
   PromptInputHoverCard,
   PromptInputHoverCardContent,
 } from "@/components/ai-elements/prompt-input";
 /* oxlint-enable sort-imports */
+
 import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getFileImageProps } from "@/lib/file-url";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- @/lib/utils import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+
+import { getFileImageProps } from "@/lib/file-url";
+
+/* oxlint-disable import/max-dependencies -- @/hooks/use-image-load-error import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 /* oxlint-enable import/max-dependencies */
+
+const HTTP_NOT_FOUND = 404;
 
 const emptyUploadQueue: string[] = [];
 
@@ -87,7 +88,7 @@ const AttachmentIcon = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- AttachmentPill renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/forbid-component-props -- Loader2Icon, Button accept the supplied styling props; preserve this composition's layout and appearance. */
 const AttachmentPill = ({
@@ -162,7 +163,7 @@ const AttachmentPill = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-void-return -- AttachmentItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp -- AttachmentItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/forbid-component-props -- PromptInputHoverCardContent, Button, ExternalLink, Download accept the supplied styling props; preserve this composition's layout and appearance. */
 const AttachmentItem = ({
@@ -251,7 +252,7 @@ const AttachmentItem = ({
                   /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
                   try {
                     const response = await fetch(url);
-                    if (response.status === 404) {
+                    if (response.status === HTTP_NOT_FOUND) {
                       toast.error("File unavailable");
                       return;
                     }
@@ -289,9 +290,9 @@ const AttachmentItem = ({
   /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, unicorn/no-null -- AttachmentList: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, unicorn/no-null -- AttachmentList: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const AttachmentList = ({
   attachments,

@@ -1,11 +1,10 @@
 "use client";
 
 import { FolderInput, Pencil, PinIcon, Trash2 } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-/* oxlint-enable sort-imports */
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 interface ChatMenuItemsProps {

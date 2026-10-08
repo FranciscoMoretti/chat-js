@@ -1,11 +1,10 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { InternalLink } from "@/components/internal-link";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { InternalLink } from "@/components/internal-link";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface LoginPromptProps {

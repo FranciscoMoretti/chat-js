@@ -1,19 +1,21 @@
 "use client";
 
 import { formatDistance } from "date-fns";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping date-fns and lucide-react; keep this adjacent import pair ordered. */
 import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 /* oxlint-enable sort-imports */
+
 import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
+
 import { ShareDialog } from "@/components/share-button";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/share-button and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +23,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectChatItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectChatItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-boolean-expressions -- ProjectChatItem: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.updatedAt). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async -- ProjectChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 export const ProjectChatItem = ({
   chat,
@@ -58,12 +61,13 @@ export const ProjectChatItem = ({
     await onRename(chat.id, title);
   };
   /* oxlint-enable oxc/no-async-await */
-  // oxlint-disable-next-line no-ternary -- Keep lastMessageText as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  /* oxlint-disable no-ternary, typescript/strict-boolean-expressions -- The original Date/string predicate narrows the conditional second chat.updatedAt read for the native Date constructor. Guarding a captured value does not narrow the preserved second property read; reusing one captured value changes dynamic-getter behavior. */
   const lastMessageText = chat.updatedAt
     ? formatDistance(new Date(chat.updatedAt), new Date(), {
         addSuffix: true,
       })
     : "";
+  /* oxlint-enable no-ternary, typescript/strict-boolean-expressions */
 
   return (
     <>
@@ -152,4 +156,4 @@ export const ProjectChatItem = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async */

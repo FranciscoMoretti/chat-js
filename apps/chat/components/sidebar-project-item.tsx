@@ -1,38 +1,40 @@
 "use client";
 
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
-import { MoreHorizontal } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
-
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
+
 import { InternalLink } from "@/components/internal-link";
+
+import { MoreHorizontal } from "lucide-react";
 import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
-import { ProjectIcon } from "@/components/project-icon";
-import { ProjectMenuItems } from "@/components/project-menu-items";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/project-details-dialog and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useRenameProject } from "@/hooks/use-projects";
-/* oxlint-disable import/max-dependencies -- @/lib/db/schema import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { getProjectColorName, getProjectIconName } from "@/lib/project-icons";
 import type { Project } from "@/lib/db/schema";
+import { ProjectIcon } from "@/components/project-icon";
+/* oxlint-disable import/max-dependencies -- @/components/project-menu-items import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+import { ProjectMenuItems } from "@/components/project-menu-items";
 /* oxlint-enable import/max-dependencies */
-import { getProjectIconName, getProjectColorName } from "@/lib/project-icons";
+
+import type { JSX as ReactJSX } from "react";
+
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
+import { useRenameProject } from "@/hooks/use-projects";
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarProjectItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- SidebarProjectItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- SidebarProjectItem: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- SidebarProjectItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const SidebarProjectItem = ({
   project,

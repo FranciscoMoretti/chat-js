@@ -1,6 +1,6 @@
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import {
   Card,
   CardContent,

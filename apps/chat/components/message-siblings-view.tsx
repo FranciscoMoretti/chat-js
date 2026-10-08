@@ -1,13 +1,12 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Action } from "@/components/ai-elements/actions";
+
+import React from "react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageSiblingsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- MessageSiblingsView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
+
 /* oxlint-disable no-magic-numbers, react/jsx-max-depth -- MessageSiblingsView: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const MessageSiblingsView = ({

@@ -4,7 +4,7 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Sources } from "@/components/sources";
 /* oxlint-enable sort-imports */
 
@@ -28,7 +28,7 @@ const webSearchOutput = z.object({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WebSearch); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- WebSearch renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop -- WebSearch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract */
 
 export const WebSearch = ({
   part,
@@ -75,6 +75,7 @@ export const WebSearch = ({
   ];
   return (
     <div className="space-y-3">
+      {/* oxlint-disable-next-line typescript/strict-boolean-expressions -- The optional error string is also the exact empty or missing React child when no error is present. */}
       {result.data.error && <p role="alert">{result.data.error}</p>}
       {uniqueSources.length > 0 && <Sources sources={uniqueSources} />}
     </div>
@@ -82,4 +83,4 @@ export const WebSearch = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop */

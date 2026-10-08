@@ -1,19 +1,22 @@
 "use client";
 
-import { LogIn, X } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { AnimatePresence, motion } from "motion/react";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { LogIn, X } from "lucide-react";
 import React, { useState } from "react";
-/* oxlint-enable sort-imports */
 
 import { InternalLink } from "@/components/internal-link";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- The Button/InternalLink import-order counterfactual remains under source-specific module evaluation review. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
+
+import type { JSX as ReactJSX } from "react";
+
 import { cn } from "@/lib/utils";
+
+const BANNER_ANIMATE = { height: "auto", opacity: 1 };
+const BANNER_EXIT = { height: 0, opacity: 0 };
+const BANNER_INITIAL = { height: 0, opacity: 0 };
+const BANNER_TRANSITION = { duration: 0.2 };
 
 interface LoginCtaBannerProps {
   readonly className?: string;
@@ -24,7 +27,7 @@ interface LoginCtaBannerProps {
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LoginCtaBanner); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- LoginCtaBanner renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, unicorn/no-null -- LoginCtaBanner: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null -- LoginCtaBanner: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const LoginCtaBanner = ({
   message,
@@ -64,11 +67,11 @@ export const LoginCtaBanner = ({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ height: "auto", opacity: 1 }}
+        animate={BANNER_ANIMATE}
         className="w-full"
-        exit={{ height: 0, opacity: 0 }}
-        initial={{ height: 0, opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        exit={BANNER_EXIT}
+        initial={BANNER_INITIAL}
+        transition={BANNER_TRANSITION}
       >
         <div
           className={cn(
@@ -121,4 +124,4 @@ export const LoginCtaBanner = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null */

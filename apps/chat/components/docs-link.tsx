@@ -1,9 +1,7 @@
 import { BookOpen } from "lucide-react";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
+
+import React from "react";
 
 const DOCS_URL = "https://chatjs.dev/docs";
 

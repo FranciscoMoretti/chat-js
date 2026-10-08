@@ -3,14 +3,12 @@
 
 import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
 import React, { useState } from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import {
   Dialog,
   DialogContent,
@@ -25,19 +23,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 /* oxlint-enable sort-imports */
 
 type ShareStep = "info" | "shared";
 /* oxlint-disable react/jsx-no-literals -- ShareDialogView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return -- ShareDialogView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ShareDialogView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries;  */
 
 /* oxlint-disable react/forbid-component-props -- Button, Loader2 accept the supplied styling props; preserve this composition's layout and appearance. */
 const ShareDialogView = ({
@@ -105,7 +101,7 @@ const ShareDialogView = ({
                 ? "This chat is currently public. Anyone with the link can view it."
                 : "Make this chat public so you can share it with others."}
             </DialogDescription>
-          </DialogHeader /* oxlint-enable no-ternary */ /* oxlint-disable no-ternary -- Keep the public/private sharing status as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
+          </DialogHeader /* oxlint-enable no-ternary */ /* oxlint-disable no-ternary -- Keep the public/private sharing description as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
           <div className="flex flex-col gap-4">
             <div className="bg-muted/20 flex items-center gap-3 rounded-lg border p-3">
               {isPublic ? (
@@ -260,9 +256,9 @@ const ShareDialogView = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- ShareDialog: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- ShareDialog: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 // Extracted dialog component that can be controlled externally
 /* oxlint-disable react/forbid-component-props -- DialogContent accept the supplied styling props; preserve this composition's layout and appearance. */
@@ -298,7 +294,7 @@ const ShareDialog = ({
 
 /* oxlint-disable react/forbid-component-props -- Button, PopoverContent accept the supplied styling props; preserve this composition's layout and appearance. */
 const ShareButton = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- This exported boundary accepts the established Button-compatible prop type, including ref and event fields. Its unused fields are not forwarded; removing them requires a caller-visible API migration, while the faithful readonly control still reports the native graph. */
   {
     className,
     renderContent,

@@ -1,32 +1,37 @@
 "use client";
 
-import { Share } from "lucide-react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping react and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/dropdown-menu and @/components/ui/popover; keep this adjacent import pair ordered. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
+
+import type { JSX as ReactJSX } from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { Share } from "lucide-react";
+
 import { useSession } from "@/providers/session-provider";
 
 interface ShareMenuItemProps {
   readonly children?: ReadonlyReactNode;
   readonly onShare: () => void;
 }
+
+const preventEventDefault = (event: {
+  readonly preventDefault: () => void;
+}): void => event.preventDefault();
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ShareMenuItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ShareMenuItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ShareMenuItem: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable react/jsx-max-depth -- ShareMenuItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const ShareMenuItem = ({
   onShare,
@@ -43,9 +48,7 @@ export const ShareMenuItem = ({
           <DropdownMenuItem
             // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
             className="cursor-pointer opacity-50"
-            onSelect={(event: { readonly preventDefault: () => void }) =>
-              event.preventDefault()
-            }
+            onSelect={preventEventDefault}
           >
             <Share size={16} />
             <span>Share</span>
@@ -75,4 +78,4 @@ export const ShareMenuItem = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */
+/* oxlint-enable react/jsx-max-depth */

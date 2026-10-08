@@ -1,24 +1,25 @@
 "use client";
 
+import type { ComposerControlProps } from "./control";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
+
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
-import { useChatModels } from "@/providers/chat-models-provider";
-import { useSession } from "@/providers/session-provider";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+
+import { useChatModels } from "@/providers/chat-models-provider";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/providers/chat-models-provider and ./tool-display; keep this adjacent import pair ordered. */
+import { getToolDisplay } from "./tool-display";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ComposerControlProps } from "./control";
-/* oxlint-enable sort-imports */
-import { getToolDisplay } from "./tool-display";
+import { useSession } from "@/providers/session-provider";
 
 const loginPrompt = (
   <LoginPrompt
@@ -27,7 +28,7 @@ const loginPrompt = (
   />
 );
 /* oxlint-disable react/jsx-no-literals -- ToolControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/strict-boolean-expressions, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
 const ToolControl = ({
@@ -58,8 +59,7 @@ const ToolControl = ({
       // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuCheckboxItem accepts className in its styling contract; preserve this caller's layout and appearance.
       className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
 
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
-      disabled={disabled || (!checked && unsupported)}
+      disabled={disabled === true || (!checked && unsupported)}
       onSelect={() => {
         if (checked) {
           onToolChange(null);
@@ -86,7 +86,7 @@ const ToolControl = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, unicorn/no-null */
 
 const canvasTools = {
   code: "createCodeDocument",

@@ -7,21 +7,20 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
-import Image from "next/image";
-import React from "react";
-import type { JSX as ReactJSX } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentViewData } from "@/components/attachment-list";
-/* oxlint-enable sort-imports */
+import Image from "next/image";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next/image and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getFileImageProps } from "@/lib/file-url";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+import React from "react";
+
+import type { JSX as ReactJSX } from "react";
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+
+import { getFileImageProps } from "@/lib/file-url";
+
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 const LoadingPreview = (): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">

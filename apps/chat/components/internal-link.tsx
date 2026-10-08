@@ -1,28 +1,29 @@
 "use client";
 
-import type { Route } from "next";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import Link from "next/link";
-/* oxlint-enable sort-imports */
-import { useRouter } from "next/navigation";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
   MouseEventHandler as ReactMouseEventHandler,
 } from "react";
-/* oxlint-enable sort-imports */
+
+import Link from "next/link";
+import React from "react";
+
+import type { Route } from "next";
 
 import { isElectronRenderer } from "@/lib/electron-auth";
+
+import { useRouter } from "next/navigation";
+
+const PRIMARY_MOUSE_BUTTON = 0;
+const AUXILIARY_MOUSE_BUTTON = 1;
 
 type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
   href: string | Exclude<ReactComponentProps<typeof Link>["href"], string>;
   onNavigate?: () => void;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (InternalLink); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading -- InternalLink: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading -- InternalLink: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes */
 
-/* oxlint-disable react/react-in-jsx-scope -- InternalLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 export const InternalLink = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
@@ -34,7 +35,7 @@ export const InternalLink = (
     ...props
   }: InternalLinkProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): ReactJSX.Element => {
+): React.JSX.Element => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
@@ -60,7 +61,7 @@ export const InternalLink = (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 0) {
+    if (event.defaultPrevented || event.button !== PRIMARY_MOUSE_BUTTON) {
       return;
     }
 
@@ -86,7 +87,11 @@ export const InternalLink = (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onAuxClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onAuxClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 1 || !isElectron) {
+    if (
+      event.defaultPrevented ||
+      event.button !== AUXILIARY_MOUSE_BUTTON ||
+      !isElectron
+    ) {
       return;
     }
 
@@ -106,5 +111,4 @@ export const InternalLink = (
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading */
