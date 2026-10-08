@@ -27,17 +27,16 @@ const group = {
   candidates: eveResponseGroupCandidates(input.operationId, input.modelIds),
   id: crypto.randomUUID(),
 };
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): admission accepts { operationId }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 const admission = {
   group,
-  reservations: group.candidates.map(({ operationId }) => ({
-    operationId,
-    reservationId: crypto.randomUUID(),
-  })),
+  reservations: group.candidates.map(
+    ({ operationId }: Readonly<{ modelId: string; operationId: string }>) => ({
+      operationId,
+      reservationId: crypto.randomUUID(),
+    })
+  ),
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -95,9 +94,8 @@ it("does not declare terminal rejection when the primary refund cannot prove non
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("marks every multi-model edited candidate with the shared user intent") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("marks every multi-model edited candidate with the shared user intent") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("marks every multi-model edited candidate with the shared user intent", async () => {
   mocks.reserve.mockResolvedValue(group);
@@ -108,11 +106,15 @@ it("marks every multi-model edited candidate with the shared user intent", async
     forkKind: "edit",
   });
   expect(mocks.create).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.create.mock.calls.map((call) => call[1].forkKind)).toEqual([
-    "edit",
-    "edit",
-  ]);
+
+  expect(
+    mocks.create.mock.calls.map(
+      (call: Readonly<(typeof mocks.create.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        call[1].forkKind
+      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
+    )
+  ).toEqual(["edit", "edit"]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */

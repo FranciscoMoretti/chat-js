@@ -49,11 +49,10 @@ beforeEach(() => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): test("all resources and native family payloads finish before the application tombston keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("all resources and native family payloads finish before the application tombston uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("all resources and native family payloads finish before the application tombston uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("all resources and native family payloads finish before the application tombston accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("all resources and native family payloads finish before the application tombstone", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -75,11 +74,15 @@ test("all resources and native family payloads finish before the application tom
     "/trusted/app"
   );
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.native.mock.calls.map((call) => call[0])).toEqual([
-    "session-root",
-    "session-branch",
-  ]);
+
+  expect(
+    mocks.native.mock.calls.map(
+      (call: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        call[0]
+      /* oxlint-enable typescript/no-unsafe-return */
+    )
+  ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
   gate.resolve(undefined);
   expect(await deletion).toEqual({ rootId: "root" });
@@ -87,7 +90,7 @@ test("all resources and native family payloads finish before the application tom
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 test("resource uncertainty prevents any native payload erasure", async () => {
   mocks.resources.mockRejectedValue(new Error("uncertain allocation"));
@@ -99,10 +102,9 @@ test("resource uncertainty prevents any native payload erasure", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("partial native purge retains pending state and retry runs the full ordering aga uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("partial native purge retains pending state and retry runs the full ordering aga uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("partial native purge retains pending state and retry runs the full ordering aga accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("partial native purge retains pending state and retry runs the full ordering again", async () => {
   mocks.native
@@ -116,8 +118,15 @@ test("partial native purge retains pending state and retry runs the full orderin
     await deleteLocalEveConversationFamily("owner", "root", "/app")
   ).toEqual({ rootId: "root" });
   expect(mocks.resources).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.native.mock.calls.map((call) => call[0])).toEqual([
+
+  expect(
+    mocks.native.mock.calls.map(
+      (call: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        call[0]
+      /* oxlint-enable typescript/no-unsafe-return */
+    )
+  ).toEqual([
     "session-root",
     "session-branch",
     "session-root",
@@ -126,7 +135,7 @@ test("partial native purge retains pending state and retry runs the full orderin
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): test("foreign or missing families cannot erase native or application data") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

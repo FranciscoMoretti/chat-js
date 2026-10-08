@@ -18,14 +18,16 @@ import { cn } from "@/lib/utils";
 
 type ActionsProps = ComponentProps<"div">;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Actions: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ActionsProps). */
-
-const Actions = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ActionsProps): React.JSX.Element => (
+const Actions = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ActionsProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn("flex items-center gap-1", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Actions's native div attributes, preserving caller events and accessibility props.
@@ -34,25 +36,28 @@ const Actions = ({
     {children}
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
 };
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Action: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- Action: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const Action = ({
-  tooltip,
-  children,
-  label,
-  className,
-  variant = "ghost",
-  size = "sm",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, children, label, className, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ActionProps): React.JSX.Element => {
+const Action = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    tooltip,
+    children,
+    label,
+    className,
+    variant = "ghost",
+    size = "sm",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, children, label, className, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ActionProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const button = (
     <Button
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -92,7 +97,7 @@ const Action = ({
   return button;
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Action, Actions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */
 export { Action, Actions };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ActionProps, ActionsProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

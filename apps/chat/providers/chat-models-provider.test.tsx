@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { config } from "@/lib/config";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
@@ -20,15 +22,12 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/app-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/lib/ai/app-models") accepts models: { id: string }[]; model; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/explicit-function-return-type -- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/app-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary. */
 vi.mock("@/lib/ai/app-models", () => ({
-  getDefaultEnabledModels: (models: { id: string }[]) =>
+  getDefaultEnabledModels: (models: readonly { readonly id: string }[]) =>
     new Set(models.map((model) => model.id)),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/providers/session-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -86,33 +85,30 @@ const updatedModels: AppModelDefinition[] = [
   },
 ];
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep ContextProbe's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): ContextProbe accepts { onValue, }: { onValue: (value: ReturnType<typeof useChatModels>) => void; }; value: ReturnType<typeof useChatModels>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): ContextProbe preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- * typescript/explicit-function-return-type (#560): Keep ContextProbe's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/no-null (#570): ContextProbe preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
 const ContextProbe = ({
   onValue,
 }: {
-  onValue: (value: ReturnType<typeof useChatModels>) => void;
+  readonly onValue: (
+    value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
+  ) => void;
 }) => {
   onValue(useChatModels());
   return null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
- * init-declarations (#507): describe("ChatModelsProvider") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/strict-void-return -- * init-declarations (#507): describe("ChatModelsProvider") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("ChatModelsProvider") uses 2, 1, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * react-perf/jsx-no-new-function-as-prop (#557): describe("ChatModelsProvider") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * typescript/prefer-readonly-parameter-types (#565): describe("ChatModelsProvider") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-void-return (#611): describe("ChatModelsProvider")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
+ * typescript/strict-void-return (#611): describe("ChatModelsProvider")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary. */
 describe("ChatModelsProvider", () => {
   it("preserves the context identity when its semantic inputs are unchanged", () => {
-    const values: ReturnType<typeof useChatModels>[] = [];
+    const values: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>[] =
+      [];
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -121,7 +117,11 @@ describe("ChatModelsProvider", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ChatModelsProvider models={models}>
-          <ContextProbe onValue={(value) => values.push(value)} />
+          <ContextProbe
+            onValue={(
+              value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
+            ) => values.push(value)}
+          />
         </ChatModelsProvider>
       );
     });
@@ -136,7 +136,11 @@ describe("ChatModelsProvider", () => {
       act(() => {
         rendered.update(
           <ChatModelsProvider models={models}>
-            <ContextProbe onValue={(value) => values.push(value)} />
+            <ContextProbe
+              onValue={(
+                value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
+              ) => values.push(value)}
+            />
           </ChatModelsProvider>
         );
       });
@@ -150,7 +154,8 @@ describe("ChatModelsProvider", () => {
   });
 
   it("updates lookup and filtered models when the model input changes", () => {
-    const values: ReturnType<typeof useChatModels>[] = [];
+    const values: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>[] =
+      [];
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -159,7 +164,11 @@ describe("ChatModelsProvider", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ChatModelsProvider models={models}>
-          <ContextProbe onValue={(value) => values.push(value)} />
+          <ContextProbe
+            onValue={(
+              value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
+            ) => values.push(value)}
+          />
         </ChatModelsProvider>
       );
     });
@@ -174,7 +183,11 @@ describe("ChatModelsProvider", () => {
       act(() => {
         rendered.update(
           <ChatModelsProvider models={updatedModels}>
-            <ContextProbe onValue={(value) => values.push(value)} />
+            <ContextProbe
+              onValue={(
+                value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
+              ) => values.push(value)}
+            />
           </ChatModelsProvider>
         );
       });
@@ -193,4 +206,4 @@ describe("ChatModelsProvider", () => {
     }
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/strict-void-return */

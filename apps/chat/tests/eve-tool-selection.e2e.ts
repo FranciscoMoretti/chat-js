@@ -1,23 +1,27 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
+import { readFile } from "node:fs/promises";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
+import path from "node:path";
 /* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
-import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import path from "node:path";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
+/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -65,18 +69,22 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * init-declarations (#507): test("Canvas selection survives native history and edits while later turns reset to a assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("Canvas selection survives native history and edits while later turns reset to a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("Canvas selection survives native history and edits while later turns reset to a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("Canvas selection survives native history and edits while later turns reset to a uses 200, 0, 409, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("Canvas selection survives native history and edits while later turns reset to a accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("Canvas selection survives native history and edits while later turns reset to a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const intended = {
@@ -109,6 +117,7 @@ test("Canvas selection survives native history and edits while later turns reset
   let binding: ReturnType<typeof conversationBinding.parse> | undefined;
   await page.route(
     "**/api/agent-conversations",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     async (route) => {
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture the actual native operation payload; subsequent assertions verify tool selection on the wire.
       operation = route.request().postDataJSON();
@@ -199,4 +208,4 @@ test("Canvas selection survives native history and edits while later turns reset
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */

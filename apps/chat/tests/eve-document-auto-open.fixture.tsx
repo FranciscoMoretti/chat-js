@@ -44,20 +44,20 @@ const completed: Part = {
   type: "dynamic-tool",
 };
 /* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, no-undefined, react/only-export-components, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/prefer-readonly-parameter-types (#565): Fixture accepts { switchBranch, startBackground, startReplay, finishReplay, }: { switchBranch: () => ; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function, no-undefined, react/only-export-components -- max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+
 const Fixture = ({
   switchBranch,
   startBackground,
   startReplay,
   finishReplay,
 }: {
-  switchBranch: () => void;
-  startBackground: () => void;
-  startReplay: () => void;
-  finishReplay: () => void;
+  readonly switchBranch: () => void;
+  readonly startBackground: () => void;
+  readonly startReplay: () => void;
+  readonly finishReplay: () => void;
 }): React.JSX.Element => {
   const { artifact, setArtifact } = useArtifact();
   const [part, setPart] = useState<Part>(completed);
@@ -182,7 +182,7 @@ const Fixture = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- App renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
-/* oxlint-enable max-lines-per-function, no-undefined, react/only-export-components, typescript/prefer-readonly-parameter-types*/
+/* oxlint-enable max-lines-per-function, no-undefined, react/only-export-components */
 /* oxlint-disable no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/promise-function-async -- * no-undefined (#519): App uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react-perf/jsx-no-new-function-as-prop (#557): App creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): App keeps related fixture render states together; extraction changes component, state, and layout boundaries.

@@ -7,7 +7,7 @@ import { siteLinks } from "@/lib/site-config";
 import { ThemeToggle } from "./theme-toggle";
 /* oxlint-enable sort-imports */
 
-const NAV_LINKS = [
+const NAV_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   { href: siteLinks.threads, label: "Threads" },
   { href: siteLinks.demo, label: "Demo" },
   { href: siteLinks.docs, label: "Docs" },
@@ -22,7 +22,6 @@ const NAV_LINKS = [
 /* oxlint-disable eslint/max-lines-per-function -- Navbar: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
 /* oxlint-disable react/jsx-max-depth -- Navbar: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Navbar: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const Navbar = (): React.JSX.Element => (
   <header className="border-border/40 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-xl">
     <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -100,7 +99,6 @@ export const Navbar = (): React.JSX.Element => (
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable eslint/max-lines-per-function */

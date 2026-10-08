@@ -54,14 +54,14 @@ import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "@/lib/eve/usage-reconciliation-busy";
+// oxlint-disable-next-line sort-imports -- This readonly view preserves the native request/session members and follows the existing runtime import group.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): rejectRequest accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const rejectRequest = (
-  request: Request,
+  request: { readonly method: string },
   message: string,
   status: number
 ): Response =>
@@ -73,20 +73,19 @@ const rejectRequest = (
     return Response.json({ error: message }, { status });
   };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * max-params (#511): checkTurnAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): checkTurnAdmission uses 402 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep checkTurnAdmission's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): checkTurnAdmission accepts request: Request; principal: EvePrincipal; command: Exclude<Awaited<ReturnType<typeof readCommand>>, Response>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type -- max-params (#511): checkTurnAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): checkTurnAdmission uses 402 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep checkTurnAdmission's return type inferred from its schema, SDK, or implementation result; principal: EvePrincipal; command: ReadonlyNativeSurface<Exclude<Awaited<ReturnType<typeof readCommand>>, Response>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const checkTurnAdmission = async (
-  request: Request,
-  principal: EvePrincipal,
+  request: ReadonlyNativeSurface<Request>,
+  principal: Readonly<EvePrincipal>,
   sessionId: string,
-  command: Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
+  command: ReadonlyNativeSurface<
+    Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
+  >
 ) => {
   if (!command.isNewMessage || command.message === undefined) {
     return;
@@ -106,7 +105,7 @@ const checkTurnAdmission = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): selectionsConflict uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -132,20 +131,23 @@ const parseToolSelection = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): readCommand uses 400 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep readCommand's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readCommand accepts request: Request; policy: NonNullable<ReturnType<typeof parseSessionRequest>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): readCommand preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null -- init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): readCommand uses 400 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep readCommand's return type inferred from its schema, SDK, or implementation result; policy: NonNullable<ReturnType<typeof parseSessionRequest>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): readCommand preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+
 const readCommand = async (
-  request: Request,
+  request: {
+    readonly method: string;
+    readonly json: Request["json"];
+    readonly headers: { readonly get: (name: string) => string | null };
+  },
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- The policy retains its original Zod schema handle and native parse signatures; the faithful readonly control preserves them and the native rule still flags that graph. */
   policy: NonNullable<ReturnType<typeof parseSessionRequest>>,
-  ownerId: string,
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */ ownerId: string,
   conversationId: string
 ) => {
   let body: string | undefined;
@@ -209,22 +211,22 @@ const readCommand = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handle's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): handle uses 401, 403, 404, 0, 400, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): handle uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): handle accepts request: Request; context: { params: Promise<{ path: string[]; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): handle intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- max-lines-per-function (#510): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): handle uses 401, 403, 404, 0, 400, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): handle uses undefined for absent or optional values; context: { params: Promise<{ path: string[]; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): handle intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+
 const handle = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   context: {
-    params: Promise<{
-      path: string[];
-    }>;
+    readonly params: Readonly<
+      Promise<{
+        readonly path: readonly string[];
+      }>
+    >;
   }
 ): Promise<Response> => {
   const principal = await resolveEvePrincipal(request.headers);
@@ -320,7 +322,7 @@ const handle = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 const GET = handle;
 

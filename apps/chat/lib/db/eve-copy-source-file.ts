@@ -26,7 +26,7 @@ export const readPublicEveCopyFile = async (
   key: string,
   read: (key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>
 ): Promise<Blob> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- lockEveCopyOwners requires the complete native Drizzle transaction to retain transaction-bound lock provenance; mapped readonly views erase protected schema/nestedIndex, while shallow readonly leaves mutable session/table metadata.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original transaction is passed to lockEveCopyOwners for advisory-lock writes before the shared file read; its native receiver rejects a readonly projection (TS2345).
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [source.ownerId]);
     const [reference] = await tx

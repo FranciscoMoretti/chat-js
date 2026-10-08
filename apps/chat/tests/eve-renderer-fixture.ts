@@ -6,6 +6,9 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+// oxlint-disable-next-line sort-imports -- Oxfmt separates this readonly type import from runtime React modules; sort-imports orders their bindings together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveToolResult } from "../components/eve/eve-tool-result";
 /* oxlint-enable sort-imports */
@@ -145,27 +148,24 @@ const states: {
   },
 ];
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): content accepts { label, part }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 const content = renderToStaticMarkup(
   createElement(
     "main",
     { className: "mx-auto max-w-3xl space-y-6 p-6" },
-    states.map(({ label, part }) =>
-      createElement(
-        "section",
-        { className: "space-y-2", key: label },
-        createElement("h2", { className: "font-semibold" }, label),
-        createElement(EveToolResult, {
-          isReadonly: true,
-          messageId: "fixture",
-          part,
-        })
-      )
+    states.map(
+      ({ label, part }: ReadonlyNativeSurface<(typeof states)[number]>) =>
+        createElement(
+          "section",
+          { className: "space-y-2", key: label },
+          createElement("h2", { className: "font-semibold" }, label),
+          createElement(EveToolResult, {
+            isReadonly: true,
+            messageId: "fixture",
+            part,
+          })
+        )
     )
   )
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 process.stdout.write(content);

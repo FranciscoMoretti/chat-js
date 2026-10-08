@@ -28,13 +28,13 @@ const webSearchOutput = z.object({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WebSearch); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- WebSearch renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including search); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
 
 export const WebSearch = ({
   part,
 }: {
   readonly messageId: string;
-  readonly part: { state: string; output?: unknown };
+  readonly part: { readonly state: string; readonly output?: unknown };
 }): ReactJSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">Search failed.</p>;
@@ -46,12 +46,32 @@ export const WebSearch = ({
   if (!result.success) {
     return <p role="alert">This search result could not be displayed.</p>;
   }
-  const sources = result.data.searches.flatMap((search) =>
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    search.results.map((source) => ({ ...source, source: "web" as const }))
+  const sources = result.data.searches.flatMap(
+    (
+      search: Readonly<{
+        results: readonly Readonly<{
+          content: string;
+          title: string;
+          url: string;
+        }>[];
+      }>
+    ) =>
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      search.results.map((source) => ({ ...source, source: "web" as const }))
   );
   const uniqueSources = [
-    ...new Map(sources.map((source) => [source.url, source])).values(),
+    ...new Map(
+      sources.map(
+        (
+          source: Readonly<{
+            source: "web";
+            content: string;
+            title: string;
+            url: string;
+          }>
+        ) => [source.url, source]
+      )
+    ).values(),
   ];
   return (
     <div className="space-y-3">
@@ -62,4 +82,4 @@ export const WebSearch = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/strict-boolean-expressions */

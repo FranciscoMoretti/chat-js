@@ -32,8 +32,9 @@ const HoverCard = (
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const HoverCardTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- HoverCardTrigger forwards HoverCardPrimitiveTrigger's Ref<HTMLAnchorElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof HoverCardPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <HoverCardPrimitiveTrigger
     data-slot="hover-card-trigger"
@@ -47,14 +48,18 @@ const HoverCardTrigger = (
 /* oxlint-disable no-magic-numbers, react/no-multi-comp -- HoverCardContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- HoverCardContent forwards HoverCardPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const HoverCardContent = ({
-  className,
-  align = "center",
-  sideOffset = 4,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof HoverCardPrimitiveContent>): ReactJSX.Element => (
+
+const HoverCardContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    align = "center",
+    sideOffset = 4,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof HoverCardPrimitiveContent>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <HoverCardPrimitivePortal data-slot="hover-card-portal">
     <HoverCardPrimitiveContent
       align={align}

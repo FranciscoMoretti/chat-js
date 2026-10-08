@@ -39,9 +39,7 @@ type GuestTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
 
-type GuestWriteTransaction = Readonly<
-  Pick<GuestTransaction, "execute" | "insert" | "select" | "update">
->;
+type GuestWriteTransaction = GuestTransaction;
 
 interface GuestRateWindow {
   seconds: number;
@@ -116,6 +114,7 @@ const createEveGuest = async (
   ) {
     throw new Error("Guest expiry must be in the future.");
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   return await db.transaction(async (tx: GuestWriteTransaction) => {
     const ownerId = eveGuestOwnerId(input.tokenHash);
     await tx.insert(user).values({
@@ -187,7 +186,7 @@ const validateReservation = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rateAvailable's awaited sequencing and rejected-Promise behavior. */
 
 const rateAvailable = async (
-  tx: GuestWriteTransaction,
+  tx: Readonly<Pick<GuestTransaction, "select">>,
   input: ReadonlyNativeSurface<{
     ipHash: string;
     requestsPerMinute: number;
@@ -228,6 +227,7 @@ const rateAvailable = async (
  * typescript/strict-boolean-expressions (#610): admissionGuest intentionally keeps the existing falsy-value behavior of guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const admissionGuest = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   tx: GuestWriteTransaction,
   input: ReadonlyNativeSurface<GuestReservationInput>,
   bootstrap:
@@ -284,6 +284,7 @@ const admissionGuest = async (
  * typescript/strict-boolean-expressions (#610): reserveMessage intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const reserveMessage = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert, .update operations under caller-held locks; preserve the native writer contract.
   tx: GuestWriteTransaction,
   input: ReadonlyNativeSurface<GuestReservationInput>,
   bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
@@ -384,6 +385,7 @@ const reserveEveGuestMessage = async (
   bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
 ): Promise<GuestReservationResult> => {
   validateReservation(input, bootstrap);
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
   return await db.transaction((tx: GuestWriteTransaction) =>
     reserveMessage(tx, input, bootstrap)
   );
@@ -418,6 +420,7 @@ max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and in
 const reserveEveGuestMessages = async <T = undefined>(
   inputs: readonly ReadonlyNativeSurface<GuestReservationInput>[],
   bootstrap?: ReadonlyNativeSurface<GuestBootstrap>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The admission callback receives the original live transaction to persist comparison intent; retain its native writer contract.
   persistAdmission?: (tx: GuestWriteTransaction) => Promise<T>
 ): Promise<GuestBatchResult<T>> => {
   const [first] = inputs;
@@ -441,6 +444,7 @@ const reserveEveGuestMessages = async <T = undefined>(
     operations.add(input.operationId.toLowerCase());
   }
   try {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
     return await db.transaction(async (tx: GuestWriteTransaction) => {
       const reservations: {
         operationId: string;
@@ -504,6 +508,7 @@ const releaseMessage = async (
   reservationId: string,
   requireUncreated: boolean
 ): Promise<boolean> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: GuestWriteTransaction) => {
     const identity = and(
       eq(eveGuestMessage.ownerId, ownerId),

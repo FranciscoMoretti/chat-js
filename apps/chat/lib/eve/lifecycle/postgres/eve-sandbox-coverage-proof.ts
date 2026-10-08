@@ -23,10 +23,9 @@ const savedSchema = z.object({
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyEveSandboxCoverage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Internal: caller authorizes the deleting family and canonical worker root.
  * @param {Sql} connection Native workflow database connection used to retain proof under the purge lock.
@@ -38,11 +37,12 @@ typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage acce
  * @returns {Promise<string[]>} Sandbox-owning session IDs from matching retained proof or newly verified coverage.
  */
 const verifyEveSandboxCoverage = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Open the native Postgres transaction with connection.begin; preserve its overloaded transaction callback and connection lifecycle contract.
   connection: Sql,
   input: {
-    sessionId: string;
-    runIds: string[];
-    appRoot: string;
+    readonly sessionId: string;
+    readonly runIds: readonly string[];
+    readonly appRoot: string;
   },
   verifyIdentity: (sessionId: string) => Promise<void>
 ): Promise<string[]> => {
@@ -52,7 +52,10 @@ const verifyEveSandboxCoverage = async (
   }
   return await connection.begin(
     "isolation level read committed",
-    async (query) => {
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native transaction executes database writes and retains the Postgres tagged-query and interpolation overloads.
+      query
+    ) => {
       // Same lock as native payload erasure: retain the evidence until proof commits.
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-native-purge:${input.sessionId}`}, 0))`;
       const savedRows =
@@ -115,10 +118,9 @@ const verifyEveSandboxCoverage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isFencedEveDescendant's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Only call after authorizing the owner of rootSessionId's deleting binding.
  * @param {string} databaseUrl Native workflow database used to inspect the retained cleanup inventory.
@@ -135,7 +137,10 @@ const isFencedEveDescendant = async (
   try {
     return await connection.begin(
       "isolation level repeatable read read only",
-      async (query) => {
+      async (
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
+        query
+      ) => {
         const retained = z
           .array(z.object({ id: z.string() }))
           .parse(
@@ -166,6 +171,6 @@ const isFencedEveDescendant = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isFencedEveDescendant, verifyEveSandboxCoverage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 export { isFencedEveDescendant, verifyEveSandboxCoverage };
 /* oxlint-enable import/no-named-export */

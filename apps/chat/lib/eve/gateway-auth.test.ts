@@ -306,24 +306,28 @@ it("stamps the reservation from the body, ignoring forged identity headers and m
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   { id: reservationId, ownerId: "foreign", state: "creating" },   { id: reser's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   undefined,
   { id: reservationId, ownerId: "foreign", state: "creating" },
   { id: reservationId, ownerId: "owner", state: "deleting" },
   { id: reservationId, ownerId: "owner", state: "deleted" },
-])("rejects an unavailable creation identity: %j", async (row) => {
-  mocks.mapping.mockResolvedValue(row);
-  const command = request("/eve/v1/session", "POST");
-  command.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(command)).toBeNull();
-});
+])(
+  "rejects an unavailable creation identity: %j",
+  async (
+    row: Readonly<{ id: string; ownerId: string; state: string } | undefined>
+  ) => {
+    mocks.mapping.mockResolvedValue(row);
+    const command = request("/eve/v1/session", "POST");
+    command.headers.delete("x-chatjs-deletion");
+    expect(await authenticateEveGateway(command)).toBeNull();
+  }
+);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
 it("does not let a seed reservation use the message operation namespace", async () => {
   mocks.mapping.mockResolvedValue({

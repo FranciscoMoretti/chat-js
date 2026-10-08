@@ -1,27 +1,31 @@
 /* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process"; its Node runtime boundary deliberately permits these built-ins.
  */
-import { execFileSync } from "node:child_process";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright runtime bindings ahead of the type-only TestInfo import; type imports have no runtime evaluation order.
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-lines-per-function (#510): test("pending delivery survives reload and clears only for its operation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("pending delivery survives reload and clears only for its operation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("pending delivery survives reload and clears only for its operation") uses 20, 1024 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("pending delivery survives reload and clears only for its operation") uses execFileSync( "bun", [ "-e", 'const result = await Bun.build({entrypoints:["test; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("pending delivery survives reload and clears only for its operation") accepts { page, }; testInfo; error; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("pending delivery survives reload and clears only for its operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("pending delivery survives reload and clears only for its operation", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     [
@@ -38,11 +42,14 @@ test("pending delivery survives reload and clears only for its operation", async
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://localhost:39799/delivery-fixture", (route) =>
-    route.fulfill({
-      body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
-      contentType: "text/html",
-    })
+  await page.route(
+    "http://localhost:39799/delivery-fixture",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+        contentType: "text/html",
+      })
   );
   const mount = async (): Promise<void> => {
     await page.goto("http://localhost:39799/delivery-fixture");
@@ -96,4 +103,4 @@ test("pending delivery survives reload and clears only for its operation", async
   expect(errors).toEqual([]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */

@@ -64,12 +64,11 @@ beforeEach(() => {
   mocks.text = true;
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "automatic",   "selected",   "other-tool",   "disabled",   "no-documents",   "no-text", 's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/explicit-function-return-type (#560): Keep it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -137,7 +136,9 @@ it.each([
       })
     ).rejects.toThrow("provider reached");
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.doGenerateCalls[0].tools; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
+    const names = provider.doGenerateCalls[0].tools?.map(
+      (entry: { readonly name: string }) => entry.name
+    );
     expect(names).toEqual(
       // oxlint-disable-next-line no-ternary -- Keep expect(names).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ["automatic", "selected"].includes(scenario)
@@ -148,7 +149,7 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
   const original = new ContextContainer();

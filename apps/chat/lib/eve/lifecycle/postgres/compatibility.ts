@@ -19,8 +19,9 @@ const fencedTables = [
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (assertPostgresLifecycleCompatibility); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPostgresLifecycleCompatibility's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- postgres.Sql is a callable connection API whose transactions remain mutable. */
+
 export const assertPostgresLifecycleCompatibility = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   connection: Sql
 ): Promise<void> => {
   const [workflow] = await connection`

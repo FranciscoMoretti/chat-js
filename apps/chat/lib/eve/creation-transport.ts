@@ -17,7 +17,6 @@ class EveCreationTransportError extends Error {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): requestEveCreation accepts ...args: Parameters<typeof eveRequest>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Record the failing boundary without logging credentials or message bodies.
  * @param {"lookup" | "dispatch"} stage Boundary reported when the native request fails.
@@ -26,7 +25,9 @@ class EveCreationTransportError extends Error {
  */
 const requestEveCreation = async (
   stage: "lookup" | "dispatch",
-  ...args: Parameters<typeof eveRequest>
+
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original native RequestInit/fetch tuple; readonly header tuples are rejected by the native request receiver.
+  ...args: Readonly<Parameters<typeof eveRequest>>
 ): Promise<Response> => {
   try {
     return await eveRequest(...args);
@@ -36,6 +37,6 @@ const requestEveCreation = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveCreationTransportError, requestEveCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { EveCreationTransportError, requestEveCreation };
 /* oxlint-enable import/no-named-export */

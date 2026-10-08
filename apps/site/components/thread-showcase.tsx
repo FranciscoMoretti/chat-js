@@ -1,6 +1,6 @@
 "use client";
 
-import type { ThreadRunHandle } from "@chat-js/thread";
+import type { ThreadInit, ThreadRun, ThreadRunHandle } from "@chat-js/thread";
 import { getMessageText } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -38,43 +38,45 @@ const INSTALL_COMMAND = "bun add @chat-js/thread";
 const MAX_ACTIVE_RUNS = 8;
 
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
+type ThreadFinishEvent = Parameters<
+  NonNullable<ThreadInit<PlaygroundMessage>["onFinish"]>
+>["0"];
+// oxlint-disable-next-line eslint/no-magic-numbers -- Select getMessageText's sole receiver from its native Parameters tuple.
+type PlaygroundMessageReader = Parameters<typeof getMessageText>[0] &
+  Readonly<Pick<PlaygroundMessage, "metadata">>;
 
 /* oxlint-disable typescript/explicit-function-return-type -- responseState: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- responseState: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
-const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
-  if (message.role !== "assistant") {
-    return "complete";
-  }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from chat.tree.getRunForMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const status = chat.tree.getRunForMessage(message.id)?.status;
+const responseState = (
+  status: ThreadRun["status"] | undefined,
+  isStopped: boolean
+) => {
   if (status === "streaming" || status === "submitted") {
     return status;
   }
   if (status === "error") {
     return "error";
   }
-  if (chat.stoppedIds.has(message.id)) {
+  if (isStopped) {
     return "stopped";
   }
   return "complete";
 };
 /* oxlint-disable react/jsx-no-literals -- ResponseStatus renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- ResponseStatus: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ResponseStatus: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ResponseStatus = ({
-  chat,
-  message,
+  isAssistant,
+  state,
+  text,
 }: {
-  chat: PlaygroundChat;
-  message: PlaygroundMessage;
+  readonly isAssistant: boolean;
+  readonly state: ReturnType<typeof responseState>;
+  readonly text: string;
 }): React.JSX.Element => {
-  const state = responseState(chat, message);
   const live = state === "streaming" || state === "submitted";
-  const tokens = Math.ceil(getMessageText(message).length / 4);
+  const tokens = Math.ceil(text.length / 4);
   return (
     <span className={styles.responseStatus} data-state={state}>
       <span
@@ -90,7 +92,7 @@ const ResponseStatus = ({
             : state.charAt(0).toUpperCase() + state.slice(1)
         }
       </span>
-      {message.role === "assistant" && (
+      {isAssistant && (
         <span
           className={styles.tokens}
           title="Estimated tokens: text length divided by four"
@@ -103,7 +105,6 @@ const ResponseStatus = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ThreadInstallCommand renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -182,8 +183,8 @@ const ThreadInstallCommand = (): React.JSX.Element => {
 /* oxlint-disable react/jsx-max-depth -- Conversation: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 /* oxlint-disable unicorn/no-null -- Conversation: React refs/rendering and selected-state contracts use null as an explicit empty state. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Conversation: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable typescript/strict-boolean-expressions -- Conversation: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Conversation owns cursor state through the native tree.setCursor writer API; a reader-only tree contract cannot express that mutation.
 const Conversation = ({
   chat,
   draft,
@@ -194,14 +195,14 @@ const Conversation = ({
   playgroundError,
   responseCount,
 }: {
-  chat: PlaygroundChat;
-  draft: string;
-  onBranch: (messageId: string) => Promise<void>;
-  onDraftChange: (draft: string) => void;
-  onResponseCountChange: (count: number) => void;
-  onSend: () => Promise<void>;
-  playgroundError: string | null;
-  responseCount: number;
+  readonly chat: PlaygroundChat;
+  readonly draft: string;
+  readonly onBranch: (messageId: string) => Promise<void>;
+  readonly onDraftChange: (draft: string) => void;
+  readonly onResponseCountChange: (count: number) => void;
+  readonly onSend: () => Promise<void>;
+  readonly playgroundError: string | null;
+  readonly responseCount: number;
 }): React.JSX.Element => {
   const transcript = useRef<HTMLDivElement>(null);
   const followTranscript = useRef(true);
@@ -221,7 +222,8 @@ const Conversation = ({
   }, []);
   const { cursorId } = chat.tree;
   const textLength = chat.messages.reduce(
-    (length, message): number => length + getMessageText(message).length,
+    (length, message: PlaygroundMessageReader): number =>
+      length + getMessageText(message).length,
     0
   );
   useEffect((): void => {
@@ -265,7 +267,14 @@ const Conversation = ({
 
       <div
         className={styles.transcript}
-        onScroll={(event): void => {
+        onScroll={(
+          event: Readonly<{
+            currentTarget: Pick<
+              HTMLDivElement,
+              "clientHeight" | "scrollHeight" | "scrollTop"
+            >;
+          }>
+        ): void => {
           const element = event.currentTarget;
           followTranscript.current =
             element.scrollHeight - element.scrollTop - element.clientHeight <
@@ -273,11 +282,20 @@ const Conversation = ({
         }}
         ref={transcript}
       >
-        {chat.messages.map((message) => {
+        {chat.messages.map((message: PlaygroundMessageReader) => {
           const isUser = message.role === "user";
+          let state: ReturnType<typeof responseState> = "complete";
+          if (message.role === "assistant") {
+            state = responseState(
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard when reading status from getRunForMessage(...); retain the SDK query's undefined result.
+              chat.tree.getRunForMessage(message.id)?.status,
+              chat.stoppedIds.has(message.id)
+            );
+          }
           const siblings = chat.tree.getSiblings(message.id);
           const siblingIndex = siblings.findIndex(
-            (sibling): boolean => sibling.id === message.id
+            (sibling: Readonly<Pick<PlaygroundMessage, "id">>): boolean =>
+              sibling.id === message.id
           );
           const hasSiblings = siblings.length > 1 && siblingIndex !== -1;
 
@@ -319,7 +337,13 @@ const Conversation = ({
                   {getMessageText(message) || "Streaming..."}
                 </p>
               </div>
-              {!isUser && <ResponseStatus chat={chat} message={message} />}
+              {!isUser && (
+                <ResponseStatus
+                  isAssistant={message.role === "assistant"}
+                  state={state}
+                  text={getMessageText(message)}
+                />
+              )}
               <div className={styles.messageActions}>
                 <button
                   className={styles.branchButton}
@@ -386,7 +410,9 @@ const Conversation = ({
 
       <form
         className="border-border border-t p-3"
-        onSubmit={(event): void => {
+        onSubmit={(
+          event: Readonly<Pick<React.FormEvent, "preventDefault">>
+        ): void => {
           event.preventDefault();
           void onSend();
         }}
@@ -406,7 +432,11 @@ const Conversation = ({
           <textarea
             aria-label="Message this branch"
             className="block min-h-16 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none"
-            onChange={(event): void => onDraftChange(event.target.value)}
+            onChange={(
+              event: Readonly<{
+                target: Pick<HTMLTextAreaElement, "value">;
+              }>
+            ): void => onDraftChange(event.target.value)}
             placeholder="Message this branch…"
             rows={2}
             value={draft}
@@ -421,9 +451,11 @@ const Conversation = ({
               <select
                 aria-label="Number of responses"
                 className="text-foreground bg-transparent font-mono outline-none"
-                onChange={(event): void =>
-                  onResponseCountChange(Number(event.target.value))
-                }
+                onChange={(
+                  event: Readonly<{
+                    target: Pick<HTMLSelectElement, "value">;
+                  }>
+                ): void => onResponseCountChange(Number(event.target.value))}
                 value={responseCount}
               >
                 {[1, 2, 3, 4].map((count) => (
@@ -497,7 +529,6 @@ const Conversation = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- TreeCanvas renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable react/jsx-max-depth */
@@ -515,9 +546,13 @@ const Conversation = ({
 /* oxlint-disable react/jsx-max-depth -- TreeCanvas: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable unicorn/no-null -- TreeCanvas: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- TreeCanvas: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable typescript/strict-boolean-expressions -- TreeCanvas: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TreeCanvas's click handler calls chat.tree.setCursor to move the native thread cursor; the writer API is the owned interaction boundary.
+const TreeCanvas = ({
+  chat,
+}: {
+  readonly chat: PlaygroundChat;
+}): React.JSX.Element => {
   const layout = useMemo(
     () =>
       buildTreeLayout({
@@ -526,7 +561,11 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
       }),
     [chat.tree.childrenByParentId, chat.tree.rootIds]
   );
-  const activeIds = new Set(chat.messages.map((message): string => message.id));
+  const activeIds = new Set(
+    chat.messages.map(
+      (message: Readonly<Pick<PlaygroundMessage, "id">>): string => message.id
+    )
+  );
   const canvas = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ height: 0, width: 0 });
   useEffect(() => {
@@ -612,7 +651,14 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
             }
             const isActive = activeIds.has(node.id);
             const isCursor = chat.tree.cursorId === node.id;
-            const state = responseState(chat, message);
+            let state: ReturnType<typeof responseState> = "complete";
+            if (message.role === "assistant") {
+              state = responseState(
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard when reading status from getRunForMessage(...); retain the SDK query's undefined result.
+                chat.tree.getRunForMessage(message.id)?.status,
+                chat.stoppedIds.has(message.id)
+              );
+            }
 
             return (
               <button
@@ -652,7 +698,11 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
                 {
                   // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   message.role === "assistant" ? (
-                    <ResponseStatus chat={chat} message={message} />
+                    <ResponseStatus
+                      isAssistant={message.role === "assistant"}
+                      state={state}
+                      text={getMessageText(message)}
+                    />
                   ) : (
                     <span className={styles.promptLabel}>
                       Prompt
@@ -673,7 +723,6 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
@@ -709,7 +758,6 @@ const messageInput = (text: string, title: string, messageId?: string) => ({
 /* oxlint-disable react/jsx-max-depth -- PlaygroundSession: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- PlaygroundSession: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- PlaygroundSession: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- PlaygroundSession: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable typescript/promise-function-async -- PlaygroundSession: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 /* oxlint-disable typescript/strict-boolean-expressions -- PlaygroundSession: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const PlaygroundSession = (): React.JSX.Element => {
@@ -728,9 +776,18 @@ const PlaygroundSession = (): React.JSX.Element => {
     concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
     generateId: generateMessageId,
     initialTree,
-    onFinish: ({ message, isAbort }): void => {
+    onFinish: ({
+      message,
+      isAbort,
+    }: Readonly<{
+      message: Readonly<Pick<ThreadFinishEvent["message"], "id">>;
+      isAbort: boolean;
+    }>): void => {
       if (isAbort) {
-        setStoppedIds((previous) => new Set([...previous, message.id]));
+        setStoppedIds(
+          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React's `SetStateAction<ReadonlySet<string>>` accepts the native readonly collection. This updater only iterates it and creates a fresh Set; the compiler verifies the exact setter receiver, though Oxlint flags its standard-library callback surface.
+          (previous: ReadonlySet<string>) => new Set([...previous, message.id])
+        );
       }
     },
     transport: createPlaygroundTransport(),
@@ -775,10 +832,10 @@ const PlaygroundSession = (): React.JSX.Element => {
           })
         )
       );
-      const completions = [
-        primaryRun.finished,
-        ...siblingRuns.map((run): Promise<void> => run.finished),
-      ];
+      const completions = [primaryRun.finished];
+      for (const siblingRun of siblingRuns) {
+        completions.push(siblingRun.finished);
+      }
       await Promise.all(completions);
     } catch (error) {
       setPlaygroundError(
@@ -890,7 +947,6 @@ const PlaygroundSession = (): React.JSX.Element => {
 /* oxlint-disable react/jsx-no-literals -- ThreadPlayground renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-max-depth */

@@ -3,7 +3,7 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-const PRODUCT_LINKS = [
+const PRODUCT_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   { href: siteLinks.threads, label: "Threads" },
   { href: siteLinks.demo, label: "Demo" },
   { href: siteLinks.desktop, label: "Desktop App" },
@@ -11,7 +11,7 @@ const PRODUCT_LINKS = [
   { href: siteLinks.docsGettingStarted, label: "Getting Started" },
 ];
 
-const COMMUNITY_LINKS = [
+const COMMUNITY_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   {
     href: siteLinks.github,
     label: "GitHub",
@@ -24,7 +24,6 @@ const COMMUNITY_LINKS = [
 /* oxlint-disable eslint/max-lines-per-function -- Footer: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
 /* oxlint-disable react/jsx-max-depth -- Footer: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Footer: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const Footer = (): React.JSX.Element => (
   <footer className="border-border/40 border-t">
     <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
@@ -119,7 +118,6 @@ export const Footer = (): React.JSX.Element => (
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable eslint/max-lines-per-function */

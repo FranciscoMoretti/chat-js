@@ -5,6 +5,8 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { CodeBlockCopyButton } from "@/components/ai-elements/code-block";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
@@ -14,8 +16,7 @@ class CopyBoundary extends React.Component<
   { readonly children: React.ReactNode },
   { readonly failed: boolean }
 > {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ReactNode retains its native element/portal contract; this boundary forwards it without mutation.
-  public constructor(props: CopyBoundary["props"]) {
+  public constructor(props: { readonly children: ReadonlyReactNode }) {
     super(props);
     this.state = { failed: false };
   }
@@ -90,8 +91,7 @@ test.each(["clipboard", "unavailable"])(
       vi.stubGlobal(
         "navigator",
         new Proxy(originalNavigator, {
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve Navigator native accessors on the original receiver; the proxy reads without mutation.
-          get(target, key): unknown {
+          get(target: ReadonlyNativeSurface<Navigator>, key): unknown {
             if (key === "clipboard") {
               // oxlint-disable-next-line no-undefined -- Simulate an absent browser Clipboard API.
               return undefined;

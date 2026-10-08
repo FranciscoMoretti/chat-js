@@ -94,12 +94,8 @@ beforeEach(() => {
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): requestHash accepts value: typeof input; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const requestHash = (value: typeof input): string =>
+const requestHash = (value: Readonly<typeof input>): string =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("does not trust arbitrary forwarded headers or alternate IP spellings for quota", () => {
   const forged = new Request(request, {

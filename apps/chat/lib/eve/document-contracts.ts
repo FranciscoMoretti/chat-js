@@ -5,8 +5,8 @@ import { isFileStorageKey } from "@/lib/file-url";
 /* oxlint-enable sort-imports */
 
 interface DocumentAssistantRequest {
-  message: string;
-  modelId: string;
+  readonly message: string;
+  readonly modelId: string;
 }
 
 /* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.

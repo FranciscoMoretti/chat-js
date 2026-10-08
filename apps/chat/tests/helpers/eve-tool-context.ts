@@ -1,5 +1,8 @@
 import type { ToolContext } from "eve/tools";
 
+// oxlint-disable-next-line sort-imports -- Keep the separate readonly type import in Oxfmt module grouping; sort-imports instead orders runtime and type bindings together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep unexpected's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -8,12 +11,11 @@ const unexpected = () => {
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (testToolContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): testToolContext accepts overrides: Partial<ToolContext> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): testToolContext preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 export const testToolContext = (
-  overrides: Partial<ToolContext> = {}
+  overrides: ReadonlyNativeSurface<Partial<ToolContext>> = {}
 ): ToolContext => ({
   abortSignal: new AbortController().signal,
   callId: "test",
@@ -31,4 +33,4 @@ export const testToolContext = (
   ...overrides,
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

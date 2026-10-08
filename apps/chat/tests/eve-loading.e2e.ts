@@ -1,17 +1,25 @@
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): test("restoring a saved chat shows a loader without runtime wording") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("restoring a saved chat shows a loader without runtime wording") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("restoring a saved chat shows a loader without runtime wording") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("restoring a saved chat shows a loader without runtime wording") accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("restoring a saved chat shows a loader without runtime wording") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+/* oxlint-disable eslint/max-lines-per-function -- #786 adds receiver-specific notes to native Playwright callbacks; keep this loader scenario sequence together. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("restoring a saved chat shows a loader without runtime wording", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/agent-conversations", {
     data: {
@@ -25,12 +33,16 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
   const binding = await response.json();
   const gate = Promise.withResolvers<undefined>();
-  await page.route("**/api/trpc/*", async (route) => {
-    if (route.request().url().includes("eve.branches")) {
-      await gate.promise;
+  await page.route(
+    "**/api/trpc/*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.continue() to resolve the intercepted live request through the original native Route receiver.
+    async (route) => {
+      if (route.request().url().includes("eve.branches")) {
+        await gate.promise;
+      }
+      await route.continue();
     }
-    await route.continue();
-  });
+  );
   try {
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
     await page.goto(`/chat/${binding.id}`);
@@ -56,5 +68,6 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     page.getByRole("status", { name: "Loading conversation" })
   ).toHaveCount(0);
 });
+/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */

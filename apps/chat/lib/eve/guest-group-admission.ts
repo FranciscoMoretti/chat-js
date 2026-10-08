@@ -10,6 +10,8 @@ import type { z } from "zod";
 import { reserveEveGuestMessages } from "@/lib/db/eve-guests";
 /* oxlint-enable sort-imports */
 import { reserveEveResponseGroupInTransaction } from "@/lib/db/eve-response-groups";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 /* oxlint-enable sort-imports */
@@ -24,22 +26,21 @@ import type { eveResponseGroupInput } from "./response-group-input";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async -- * max-lines-per-function (#510): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): admitGuestResponseGroup uses 0, 409, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): admitGuestResponseGroup accepts request: Request; principal: Extract< EvePrincipal, { kind: "guest"; } >; input: z.infer<typeof eveResponseGroupInput>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): admitGuestResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+ * typescript/promise-function-async (#606): admitGuestResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 export const admitGuestResponseGroup = async (
-  request: Request,
-  principal: Extract<
-    EvePrincipal,
-    {
-      kind: "guest";
-    }
+  request: ReadonlyNativeSurface<Request>,
+  principal: Readonly<
+    Extract<
+      EvePrincipal,
+      {
+        readonly kind: "guest";
+      }
+    >
   >,
-  input: z.infer<typeof eveResponseGroupInput>
+  input: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<
   | Response
   | {
@@ -89,7 +90,10 @@ export const admitGuestResponseGroup = async (
       messageLimit: ANONYMOUS_LIMITS.CREDITS,
       expiresAt: new Date(Date.now() + ANONYMOUS_LIMITS.SESSION_DURATION),
     },
-    (tx) => reserveEveResponseGroupInTransaction(tx, principal.ownerId, input)
+    (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native Drizzle transaction writer inserts the usage receipt and returns the original transaction query contract.
+      tx
+    ) => reserveEveResponseGroupInTransaction(tx, principal.ownerId, input)
   );
   if (result.status === "admitted") {
     if (!result.admission) {
@@ -111,4 +115,4 @@ export const admitGuestResponseGroup = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */

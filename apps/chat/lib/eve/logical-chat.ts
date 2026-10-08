@@ -9,15 +9,18 @@ import { LogicalCommands } from "./logical-commands";
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
 
 type LogicalBranch = EveBranchReference & {
-  sessionId: string | null;
-  createdAt: Date | string;
-  initialModelId: string | null;
-  operationId: string;
-  groupCandidates?:
-    | {
-        modelId: string;
-        operationId: string;
-        rejection?: { error: string; code?: "project_not_found" };
+  readonly sessionId: string | null;
+  readonly createdAt: Date | string;
+  readonly initialModelId: string | null;
+  readonly operationId: string;
+  readonly groupCandidates?:
+    | readonly {
+        readonly modelId: string;
+        readonly operationId: string;
+        readonly rejection?: {
+          readonly error: string;
+          readonly code?: "project_not_found";
+        };
       }[]
     | null;
 };

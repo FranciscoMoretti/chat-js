@@ -36,11 +36,10 @@ vi.mock("./storage-provider", async () => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): describe("file storage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("file storage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("file storage") uses 0, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): describe("file storage") accepts file; [keys]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): describe("file storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): describe("file storage") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -61,7 +60,9 @@ describe("file storage", () => {
     assert.equal(uploaded.url, `/api/files/${key}`);
     const uploadedFiles = await listFiles();
     assert.deepEqual(
-      uploadedFiles.files.map((file) => file.pathname),
+      uploadedFiles.files.map(
+        (file: { readonly pathname: string }) => file.pathname
+      ),
       [key]
     );
 
@@ -107,29 +108,32 @@ describe("file storage", () => {
     try {
       const { files } = await listFiles();
       assert.deepEqual(
-        new Set(files.map((file) => file.url)),
-        new Set(uploads.map((file) => file.url))
+        new Set(files.map((file: { readonly url: string }) => file.url)),
+        new Set(uploads.map((file: { readonly url: string }) => file.url))
       );
       assert.deepEqual(
         vi
           .mocked(fileIdsForStorageKeys)
-          .mock.calls.map(([keys]) => keys.length),
+          .mock.calls.map(
+            ([keys]: Readonly<[storageKeys: readonly string[]]>) => keys.length
+          ),
         [100, 1]
       );
     } finally {
-      await deleteFilesByUrls(uploads.map((file) => file.url));
+      await deleteFilesByUrls(
+        uploads.map((file: { readonly url: string }) => file.url)
+      );
     }
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./db/file-storage-keys") accepts keys: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdsForStorageKeys: vi.fn((keys: string[]) =>
+  fileIdsForStorageKeys: vi.fn((keys: readonly string[]) =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     )
@@ -137,4 +141,4 @@ vi.mock("./db/file-storage-keys", () => ({
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

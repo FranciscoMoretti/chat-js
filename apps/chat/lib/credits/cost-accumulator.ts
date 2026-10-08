@@ -1,5 +1,7 @@
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import { getAppModelDefinition } from "@/lib/ai/app-models";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const CENTS_PER_DOLLAR = 100;
 const NO_TOKEN_USAGE = 0;
@@ -87,8 +89,8 @@ class CostAccumulator {
    */
   public addLLMCost(
     modelId: AppModelId,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- getEntries exposes the same mutable usage object; accepting deep-readonly ownership would require changing that public aliasing contract.
-    usage: UsageInfo,
+
+    usage: ReadonlyNativeSurface<UsageInfo>,
     source: string
   ): void {
     this.entries.push({ modelId, source, type: "llm", usage });
@@ -104,8 +106,8 @@ class CostAccumulator {
   public addImageCost(
     modelId: string,
     count: number,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- getEntries exposes the same mutable usage object; accepting deep-readonly ownership would require changing that public aliasing contract.
-    usage: UsageInfo,
+
+    usage: ReadonlyNativeSurface<UsageInfo>,
     source: string
   ): void {
     this.entries.push({ count, modelId, source, type: "image", usage });

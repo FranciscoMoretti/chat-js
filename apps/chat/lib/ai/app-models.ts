@@ -13,8 +13,8 @@ import {
 /* oxlint-enable sort-imports */
 
 type AppModelDefinition = Omit<ModelData, "id"> & {
-  id: AppModelId;
-  apiModelId: string;
+  readonly id: AppModelId;
+  readonly apiModelId: string;
 };
 
 const DISABLED_MODELS = new Set<string>(config.ai.disabledModels);
@@ -68,7 +68,6 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
     );
 
 const buildChatModels = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Sorting/filtering retains original model records with mutable nested fields in the public return array.
   appModels: readonly AppModelDefinition[]
 ): AppModelDefinition[] =>
   appModels

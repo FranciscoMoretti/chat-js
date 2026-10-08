@@ -68,12 +68,11 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve signup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): signup uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): signup accepts auth: ReturnType<typeof makeApp>["auth"]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 const signup = async (
-  auth: ReturnType<typeof makeApp>["auth"],
+  auth: Readonly<Pick<ReturnType<typeof makeApp>["auth"], "handler">>,
   origin: string,
   name: string
 ): Promise<string> => {
@@ -96,7 +95,7 @@ const signup = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements --
  * max-statements (#512): it("two local apps sharing a browser cookie jar retain separate users") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

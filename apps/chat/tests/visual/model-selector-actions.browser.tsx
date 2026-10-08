@@ -10,6 +10,7 @@ import { ModelSelector } from "@/components/model-selector";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import "./sandbox.css";
 /* oxlint-enable sort-imports */
@@ -56,8 +57,7 @@ class SelectionBoundary extends React.Component<
   { readonly children: React.ReactNode },
   { failed: boolean }
 > {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ReactNode uses React's element and portal declarations; the fixture constructor forwards props without mutation.
-  public constructor(props: SelectionBoundary["props"]) {
+  public constructor(props: { readonly children: ReadonlyReactNode }) {
     super(props);
     this.state = { failed: false };
   }

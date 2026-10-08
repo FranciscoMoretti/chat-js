@@ -1,23 +1,25 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
+
 import { expect, test } from "@playwright/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -29,25 +31,28 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const modelId = "openai/gpt-5-nano";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("fork API preserves native history in ChatJS and rejects changed retries and for assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("fork API preserves native history in ChatJS and rejects changed retries and for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("fork API preserves native history in ChatJS and rejects changed retries and for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("fork API preserves native history in ChatJS and rejects changed retries and for uses 180_000, 2, 409, 1, 404, 400, 150_000, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("fork API preserves native history in ChatJS and rejects changed retries and for accepts { page, }; testInfo; route; entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("fork API preserves native history in ChatJS and rejects changed retries and for preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("fork API preserves native history in ChatJS and rejects changed retries and for preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("fork API preserves native history in ChatJS and rejects changed retries and foreign sources", async ({
   page,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout()/testInfo.annotations() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(180_000);
   let cleanup: { id: string; origin: string } | undefined;
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await page.route(
+      "https://unpkg.com/react-scan/**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+      (route) => route.abort()
     );
     await page.goto("/api/dev-login");
     await page.request.post("/api/chat-model", {
@@ -154,11 +159,14 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .where(eq(eveUsage.sessionId, branch.sessionId));
     // Follow-up suggestions have independent hook-model receipts. Only the new
     // branch turn may be billed; copied ancestor turns must not be charged again.
-    expect(new Set(usage.map((entry) => entry.turnId))).toEqual(
-      new Set(["turn_1"])
-    );
     expect(
-      usage.filter((entry) => !entry.eventId.includes(":model-call:"))
+      new Set(usage.map((entry: { readonly turnId: string }) => entry.turnId))
+    ).toEqual(new Set(["turn_1"]));
+    expect(
+      usage.filter(
+        (entry: { readonly eventId: string }) =>
+          !entry.eventId.includes(":model-call:")
+      )
     ).toHaveLength(1);
     const [stored] = await db
       .select()
@@ -255,4 +263,4 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */

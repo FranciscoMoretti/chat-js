@@ -17,12 +17,13 @@ vi.mock("@/lib/auth-client", () => ({
     getSession: vi.fn(),
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- device-login-page.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: ComponentProps<"a">). */
+/* oxlint-disable typescript/explicit-function-return-type -- device-login-page.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: ComponentProps<"a">). */
 
 vi.mock("next/link", () => ({
-  default: (props: ComponentProps<"a">) => createElement("a", props),
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native anchor refs, React children and open CSS/string aliases to React.createElement; the readonly outer fields retain those native members flagged by the rule.
+  default: (props: Readonly<ComponentProps<"a">>) => createElement("a", props),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 const searchParams = new URLSearchParams("done=1");
 /* oxlint-disable typescript/explicit-function-return-type -- device-login-page.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
@@ -42,9 +43,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => {
   mocks.transferUser.mockReset();
 });
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- device-login-page.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including node); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/promise-function-async -- device-login-page.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including node); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
 describe("device login page", () => {
+  // oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
   it("shows retry transfer progress and returns to waiting after onError", () => {
     const transfer = Promise.withResolvers<{ done: true }>();
     let fetchOptions:
@@ -71,7 +74,11 @@ describe("device login page", () => {
 
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const retryButton = renderer?.root.find(
-      (node) => node.type === "button" && node.children.includes("Try again")
+      (node: {
+        readonly props: Readonly<Record<string, unknown>>;
+        readonly type: unknown;
+        readonly children: readonly unknown[];
+      }) => node.type === "button" && node.children.includes("Try again")
     );
     expect(retryButton).toBeDefined();
 
@@ -82,8 +89,12 @@ describe("device login page", () => {
     });
     expect(
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      renderer?.root.findAll((node) =>
-        node.children.includes("Opening the desktop app...")
+      renderer?.root.findAll(
+        (node: {
+          readonly props: Readonly<Record<string, unknown>>;
+          readonly type: unknown;
+          readonly children: readonly unknown[];
+        }) => node.children.includes("Opening the desktop app...")
       )
     ).toHaveLength(1);
 
@@ -94,16 +105,24 @@ describe("device login page", () => {
     });
     expect(
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      renderer?.root.findAll((node) =>
-        node.children.includes("You're signed in")
+      renderer?.root.findAll(
+        (node: {
+          readonly props: Readonly<Record<string, unknown>>;
+          readonly type: unknown;
+          readonly children: readonly unknown[];
+        }) => node.children.includes("You're signed in")
       )
     ).toHaveLength(1);
     expect(
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      renderer?.root.findAll((node) =>
-        node.children.includes("Opening the desktop app...")
+      renderer?.root.findAll(
+        (node: {
+          readonly props: Readonly<Record<string, unknown>>;
+          readonly type: unknown;
+          readonly children: readonly unknown[];
+        }) => node.children.includes("Opening the desktop app...")
       )
     ).toHaveLength(0);
   });
 });
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/promise-function-async */

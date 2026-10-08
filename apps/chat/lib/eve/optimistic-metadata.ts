@@ -8,6 +8,7 @@ import type {
   getEveChatIdentity,
   listEveConversations,
 } from "@/lib/db/eve-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 type Identity = Awaited<ReturnType<typeof getEveChatIdentity>>;
 type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
@@ -50,11 +51,12 @@ const rollbackFields = <Value extends Metadata>(
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optimisticEveMetadata's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function, max-params -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const optimisticEveMetadata = async (
-  cache: QueryClient,
+  cache: Readonly<
+    Pick<QueryClient, "cancelQueries" | "getQueriesData" | "setQueryData">
+  >,
   listKey: QueryKey,
   detailKey: QueryKey,
   id: string,
@@ -72,17 +74,25 @@ const optimisticEveMetadata = async (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...data,
         // oxlint-disable-next-line oxc/no-map-spread -- #541: React Query updates require fresh page and item objects rather than mutating cached snapshots.
-        pages: data.pages.map((page) => ({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          ...page,
-          items: page.items.map((item) => {
-            if (item.id === id) {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-              return { ...item, ...patch };
-            }
-            return item;
-          }),
-        })),
+        pages: data.pages.map(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            ...page,
+            items: page.items.map(
+              (
+                item: ReadonlyNativeSurface<
+                  History["pages"][number]["items"][number]
+                >
+              ) => {
+                if (item.id === id) {
+                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                  return { ...item, ...patch };
+                }
+                return item;
+              }
+            ),
+          })
+        ),
       });
     }
   }
@@ -98,8 +108,10 @@ const optimisticEveMetadata = async (
     for (const [key, previous] of lists) {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const before = previous?.pages
-        .flatMap((page) => page.items)
-        .find((item) => item.id === id);
+        .flatMap(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => page.items
+        )
+        .find((item: { readonly id: string }) => item.id === id);
       if (before) {
         cache.setQueryData<History>(
           key,
@@ -107,16 +119,24 @@ const optimisticEveMetadata = async (
             current && {
               // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...current,
-              pages: current.pages.map((page) => ({
-                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-                ...page,
-                items: page.items.map((item) => {
-                  if (item.id === id) {
-                    return rollbackFields(item, before, patch);
-                  }
-                  return item;
-                }),
-              })),
+              pages: current.pages.map(
+                (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                  ...page,
+                  items: page.items.map(
+                    (
+                      item: ReadonlyNativeSurface<
+                        History["pages"][number]["items"][number]
+                      >
+                    ) => {
+                      if (item.id === id) {
+                        return rollbackFields(item, before, patch);
+                      }
+                      return item;
+                    }
+                  ),
+                })
+              ),
             }
         );
       }
@@ -137,6 +157,6 @@ const optimisticEveMetadata = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (optimisticEveMetadata, pendingEveMetadataMutations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-params */
 export { optimisticEveMetadata, pendingEveMetadataMutations };
 /* oxlint-enable import/no-named-export */

@@ -24,11 +24,12 @@ const ScrollBar = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, orientation = "vertical", ...props },
-
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <ScrollAreaPrimitiveScrollAreaScrollbar
       // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveScrollAreaScrollbar accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -62,10 +63,12 @@ const ScrollArea = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveRoot>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, children, ...props },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <ScrollAreaPrimitiveRoot
       // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.

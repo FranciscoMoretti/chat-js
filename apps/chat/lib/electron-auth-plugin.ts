@@ -1,6 +1,8 @@
 import { electron } from "@better-auth/electron";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AuthContext } from "better-auth";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -22,9 +24,11 @@ const electronAuthPlugin = {
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing plugin own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...plugin,
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onRequest's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Better Auth owns and mutates the native request context. */
+
   async onRequest(
-    request: Request,
+    request: ReadonlyNativeSurface<Request>,
+
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the native Better Auth context to plugin.onRequest; readonly allowedHosts is rejected by the receiving AuthContext contract.
     context: AuthContext
   ): Promise<{ response: Response } | { request: Request } | undefined> {
     const origin = request.headers.get("origin");
@@ -43,7 +47,6 @@ const electronAuthPlugin = {
     return await plugin.onRequest(request, context);
   },
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (electronAuthPlugin); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

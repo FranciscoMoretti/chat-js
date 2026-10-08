@@ -6,13 +6,17 @@ import type {
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Input uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React input props, including native object refs. Deep readonly ref.current fails the input JSX receiver; preserving scalar string & {} aliases in type/autoComplete/role/style still triggers this rule.
-const Input = ({
-  className,
-  type,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"input">): ReactJSX.Element => (
+
+const Input = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    type,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"input">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <input
     className={cn(
       "border-input selection:bg-primary selection:text-primary-foreground file:text-foreground placeholder:text-muted-foreground dark:bg-input/30 flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",

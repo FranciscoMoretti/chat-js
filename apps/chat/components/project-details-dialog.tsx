@@ -30,14 +30,14 @@ import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ProjectDetailsData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ProjectDetailsData {
-  color: ProjectColorName;
-  icon: ProjectIconName;
-  name: string;
+  readonly color: ProjectColorName;
+  readonly icon: ProjectIconName;
+  readonly name: string;
 }
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ProjectDetailsDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectDetailsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ProjectDetailsDialog = ({
   open,
@@ -49,14 +49,14 @@ export const ProjectDetailsDialog = ({
   onSubmit,
   isLoading,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mode: "create" | "edit";
-  initialName?: string;
-  initialIcon?: ProjectIconName;
-  initialColor?: ProjectColorName;
-  onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
-  isLoading: boolean;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly mode: "create" | "edit";
+  readonly initialName?: string;
+  readonly initialIcon?: ProjectIconName;
+  readonly initialColor?: ProjectColorName;
+  readonly onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
+  readonly isLoading: boolean;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const [submitError, setSubmitError] = useState("");
@@ -171,8 +171,10 @@ export const ProjectDetailsDialog = ({
             // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
             className="flex-1"
             maxLength={255}
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={(keyboardEvent) => {
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => setName(event.target.value)}
+            onKeyDown={(keyboardEvent: { readonly key: string }) => {
               if (keyboardEvent.key === "Enter" && !isDisabled) {
                 void handleSubmit();
               } else if (keyboardEvent.key === "Escape") {
@@ -204,4 +206,4 @@ export const ProjectDetailsDialog = ({
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return, unicorn/no-null */

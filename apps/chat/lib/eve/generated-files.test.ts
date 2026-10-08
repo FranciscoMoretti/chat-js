@@ -38,16 +38,17 @@ beforeEach(() => {
   mocks.upload.mockResolvedValue({ url: "fixture-url" });
 });
 /* oxlint-enable max-params, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep context's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): context accepts signal = new AbortController().signal; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
-const context = (signal = new AbortController().signal) => ({
+const context = (
+  signal: Readonly<AbortSignal> = new AbortController().signal
+) => ({
   abortSignal: signal,
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

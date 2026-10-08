@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Card uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Card = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn(
@@ -30,12 +31,13 @@ const Card = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardHeader = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn(
@@ -54,12 +56,13 @@ const CardHeader = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardTitle = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn("leading-none font-semibold", className)}
@@ -75,12 +78,13 @@ const CardTitle = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardDescription = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn("text-muted-foreground text-sm", className)}
@@ -96,12 +100,13 @@ const CardDescription = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardAction = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn(
@@ -120,12 +125,13 @@ const CardAction = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardContent = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn("px-6", className)}
@@ -141,12 +147,13 @@ const CardContent = (
 
 /* oxlint-disable react/react-in-jsx-scope -- CardFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardFooter = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn("flex items-center px-6 [.border-t]:pt-6", className)}

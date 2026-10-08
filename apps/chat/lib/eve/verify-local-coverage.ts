@@ -11,17 +11,20 @@ import { open, realpath } from "node:fs/promises";
 import nodePath from "node:path";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isDeepStrictEqual } from "node:util";
-/* oxlint-enable sort-imports */
 
 import postgres from "postgres";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
 /* oxlint-enable sort-imports */
 import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/max-dependencies -- The readonly DTO type is an explicit dependency alongside this existing integration boundary; aggregating imports would hide the same coupling.
 import { assertEveConfigured } from "./server";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
@@ -49,12 +52,9 @@ const receiptSchema = z.strictObject({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyLocalEveFamilyCoverage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- * max-lines-per-function (#510): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): verifyLocalEveFamilyCoverage uses 15_000, 16_384 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): verifyLocalEveFamilyCoverage accepts inventories: { sessionId: string; runIds: string[]; }[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+ * no-magic-numbers (#517): verifyLocalEveFamilyCoverage uses 15_000, 16_384 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Verify native and local sandbox identity evidence for every retired family inventory.
  * Call only after family authorization, retirement and native/local fences.
@@ -65,10 +65,12 @@ const receiptSchema = z.strictObject({
 export const verifyLocalEveFamilyCoverage = async (
   ownerId: string,
   appRoot: string,
-  inventories: {
-    sessionId: string;
-    runIds: string[];
-  }[]
+  inventories: ReadonlyNativeSurface<
+    {
+      readonly sessionId: string;
+      readonly runIds: readonly string[];
+    }[]
+  >
 ): Promise<void> => {
   assertEveConfigured();
   const canonicalRoot = await realpath(appRoot);
@@ -160,4 +162,4 @@ export const verifyLocalEveFamilyCoverage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

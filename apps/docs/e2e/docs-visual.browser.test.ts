@@ -27,7 +27,6 @@ const pages = [
 
 /* oxlint-disable eslint/max-statements -- docs-visual.browser.test.ts: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
 /* oxlint-disable eslint/no-undefined -- docs-visual.browser.test.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- docs-visual.browser.test.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- docs-visual.browser.test.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 for (const page of pages) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -63,7 +62,7 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      [...document.images].map((image) =>
+      [...document.images].map((image: Pick<HTMLImageElement, "decode">) =>
         image.decode().catch(() => {
           // Keep capturing the page when an image fails to decode.
         })
@@ -75,6 +74,5 @@ for (const page of pages) {
   /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */

@@ -1,8 +1,5 @@
 import { build } from "bun";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): result accepts builder; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder waits for its bundle before publishing JavaScript to stdout.
 const result = await build({
   define: {
@@ -13,6 +10,7 @@ const result = await build({
   plugins: [
     {
       name: "presentation-fixture-boundaries",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Register onResolve/onLoad callbacks on Bun's original shared PluginBuilder; these calls mutate the build's resolver/loader registry.
       setup(builder) {
         builder.onResolve({ filter: /^next\/image$/u }, () => ({
           namespace: "fixture",
@@ -28,14 +26,21 @@ const result = await build({
   ],
   target: "browser",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): if (!result.success) { throw new Error(result.logs.map( accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 if (!result.success) {
-  throw new Error(result.logs.map((entry) => entry.message).join("\n"));
+  throw new Error(
+    result.logs
+      .map(
+        /**
+         * @param {Readonly<{message: string}>} entry Build diagnostic to include in the failure output.
+         * @returns {string} Diagnostic message displayed in the build error.
+         */
+        (entry) => entry.message
+      )
+      .join("\n")
+  );
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): process.stdout.write uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

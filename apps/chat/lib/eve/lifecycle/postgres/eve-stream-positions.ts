@@ -23,7 +23,7 @@ const positionRows = z.array(
  * @returns {Promise<Map<string, number>>} Positions for existing stream groups, including zero non-EOF chunks; missing streams are omitted.
  */
 const readEvePostgresStreamPositions = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Postgres Sql is a callable connection with overloaded interpolation and mutable driver lifecycle/option members; preserve the native driver input contract.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   connection: Sql,
   sessionIds: readonly string[]
 ): Promise<Map<string, number>> => {

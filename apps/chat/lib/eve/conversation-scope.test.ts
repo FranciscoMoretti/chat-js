@@ -54,9 +54,8 @@ it("rejects a subagent inheriting its parent's reservation attribute", async () 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   [undefined, "identity_missing"],   [{ ownerId: "foreign", state: "creating" }, "owner_mi's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it.each([
@@ -69,15 +68,26 @@ it.each([
     "binding_conflict",
   ],
   [{ ownerId: "owner", sessionId: null, state: "bound" }, "binding_conflict"],
-])("rejects inconsistent or retired mapping %j", async (row, code) => {
-  mocks.read.mockResolvedValue(row);
-  await expect(resolve()).rejects.toMatchObject({ code });
-  expect(mocks.request).not.toHaveBeenCalled();
-  expect(mocks.bind).not.toHaveBeenCalled();
-});
+])(
+  "rejects inconsistent or retired mapping %j",
+  async (
+    row: Readonly<
+      | { ownerId: string; state: string }
+      | { ownerId: string; sessionId: string; state: string }
+      | { ownerId: string; sessionId: null; state: string }
+      | undefined
+    >,
+    code
+  ) => {
+    mocks.read.mockResolvedValue(row);
+    await expect(resolve()).rejects.toMatchObject({ code });
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.bind).not.toHaveBeenCalled();
+  }
+);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the existing reverse binding for sessions created before the attribute exist uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -100,9 +110,8 @@ it("uses the existing reverse binding for sessions created before the attribute 
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   [404, { code: "eve_operation_not_found" }, "receipt_pending"],   [503, {}, "receipt_unav's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r uses 404, 503, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   [404, { code: "eve_operation_not_found" }, "receipt_pending"],
@@ -110,7 +119,7 @@ it.each([
   [200, {}, "receipt_unavailable"],
 ])(
   "keeps receipt availability separate from corruption (%s)",
-  async (status, body, code) => {
+  async (status, body: unknown, code) => {
     mocks.request.mockResolvedValue(Response.json(body, { status }));
     await expect(resolve()).rejects.toMatchObject({ code });
     expect(mocks.bind).not.toHaveBeenCalled();
@@ -118,7 +127,7 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 it("treats malformed native JSON as unavailable without binding the session", async (): Promise<void> => {
   mocks.request.mockResolvedValue(new Response("{"));
   await expect(resolve()).rejects.toMatchObject({

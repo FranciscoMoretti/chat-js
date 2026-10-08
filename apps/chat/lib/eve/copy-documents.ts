@@ -11,18 +11,21 @@ const ALLOCATIONS_PARAMETER_INDEX = 1;
 type CopyDocumentSnapshot = Awaited<
   ReturnType<typeof snapshotPublicEveCopyDocuments>
 >["documents"];
-type PreparedCopyDocument = Omit<CopyDocumentSnapshot[number], "revisions"> & {
-  revisions: (Omit<
-    CopyDocumentSnapshot[number]["revisions"][number],
-    "operationId" | "turnIndex"
-  > & {
-    operationId: string;
-    turnIndex: null;
-  })[];
+type PreparedCopyDocument = ReadonlyNativeSurface<
+  Omit<CopyDocumentSnapshot[number], "revisions">
+> & {
+  readonly revisions: readonly ReadonlyNativeSurface<
+    Omit<
+      CopyDocumentSnapshot[number]["revisions"][number],
+      "operationId" | "turnIndex"
+    > & {
+      operationId: string;
+      turnIndex: null;
+    }
+  >[];
 };
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments retains mutable snapshot and allocation views; readonly projection changes copied revision fileIds output mutability, so this scope remains unreviewed.
+/* oxlint-disable max-statements, unicorn/no-null -- max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Converts an authorized, completely allocated ancestry into idle imported revisions.
@@ -31,10 +34,12 @@ unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its s
  * @returns {PreparedCopyDocument[]} Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
  */
 const prepareEveCopyDocuments = (
-  snapshot: CopyDocumentSnapshot,
-  allocations: Parameters<
-    typeof rewriteEveCopyResources
-  >[typeof ALLOCATIONS_PARAMETER_INDEX]
+  snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>,
+  allocations: ReadonlyNativeSurface<
+    Parameters<
+      typeof rewriteEveCopyResources
+    >[typeof ALLOCATIONS_PARAMETER_INDEX]
+  >
 ): PreparedCopyDocument[] => {
   for (const document of snapshot) {
     const revisionIds = new Set<string>();
@@ -71,7 +76,7 @@ const prepareEveCopyDocuments = (
     })),
   }));
 };
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */
 
 /**
  * Inventories every accessible revision, including files removed from the current head.

@@ -1,3 +1,4 @@
+import type { UserContent } from "ai";
 /* oxlint-disable import/max-dependencies --
 
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
@@ -14,6 +15,8 @@ import {
 } from "@/lib/db/eve-queries";
 /* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -34,6 +37,11 @@ import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
+
+type PreparedContentPart<Part> = {
+  readonly [Field in keyof Part]: Field extends "type" ? Part[Field] : unknown;
+};
+
 /* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/creation");
@@ -117,16 +125,12 @@ const creationFailure = (cause: unknown): Response => {
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveConversationCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveConversationCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
-
- * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/strict-boolean-expressions -- * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): executeEveConversationCreation accepts input: z.infer<typeof createConversationInput>; initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
+ * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
  * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
@@ -137,9 +141,11 @@ const creationFailure = (cause: unknown): Response => {
  */
 export const executeEveConversationCreation = async (
   ownerId: string,
-  input: z.infer<typeof createConversationInput>,
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
   guestReservationId?: string,
-  initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>
+  initialPreparedMessage?:
+    | string
+    | readonly PreparedContentPart<UserContent[number]>[]
 ): Promise<Response> => {
   let preparedMessage = initialPreparedMessage;
   try {
@@ -269,4 +275,4 @@ export const executeEveConversationCreation = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/strict-boolean-expressions */

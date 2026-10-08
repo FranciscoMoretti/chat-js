@@ -1,26 +1,30 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { execFileSync } from "node:child_process";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync --
  * max-lines-per-function (#510): test("EVE message presentation keeps editing, actions, versions and cards coherent") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("EVE message presentation keeps editing, actions, versions and cards coherent") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("EVE message presentation keeps editing, actions, versions and cards coherent") uses 30, 1024, 2, 0, 4, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("EVE message presentation keeps editing, actions, versions and cards coherent") uses execFileSync( "bun", ["tests/eve-message-presentation.build.mjs"], { encoding: "ut; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("EVE message presentation keeps editing, actions, versions and cards coherent") accepts { page, }; testInfo; error; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("EVE message presentation keeps editing, actions, versions and cards coherent", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     ["tests/eve-message-presentation.build.mjs"],
@@ -38,16 +42,20 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     { encoding: "utf-8", maxBuffer: 30 * 1024 * 1024 }
   );
   const fixtureUrl = "http://eve-message-presentation.test/";
-  await page.route("**/*", async (route) => {
-    if (route.request().url() === fixtureUrl) {
-      await route.fulfill({
-        body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
-        contentType: "text/html",
-      });
-      return;
+  await page.route(
+    "**/*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() and route.abort() to resolve the intercepted live request through the original native Route receiver.
+    async (route) => {
+      if (route.request().url() === fixtureUrl) {
+        await route.fulfill({
+          body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+          contentType: "text/html",
+        });
+        return;
+      }
+      await route.abort();
     }
-    await route.abort();
-  });
+  );
   await page.goto(fixtureUrl);
   await page.addScriptTag({ content: script, type: "module" });
 
@@ -267,4 +275,4 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   expect(errors).toEqual([]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync */

@@ -12,17 +12,21 @@ import {
   Search,
   Video,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import React from "react";
 
+type FeatureIcon = (
+  props: Readonly<Pick<LucideProps, "className">>
+) => React.ReactNode;
+
 interface Feature {
-  description: string;
-  icon: LucideIcon;
-  title: string;
+  readonly description: string;
+  readonly icon: FeatureIcon;
+  readonly title: string;
 }
 
 /* ── Platform ─────────────────────────────────────────────────────── */
-const PLATFORM_FEATURES: Feature[] = [
+const PLATFORM_FEATURES: readonly Feature[] = [
   {
     description:
       "Claude, GPT, Gemini, Grok, Llama — one unified interface. Switch providers mid-conversation without losing context.",
@@ -62,7 +66,7 @@ const PLATFORM_FEATURES: Feature[] = [
 ];
 
 /* ── Built-in Tools ───────────────────────────────────────────────── */
-const TOOLS: Feature[] = [
+const TOOLS: readonly Feature[] = [
   {
     description:
       "Multi-step research agent that synthesizes the web into comprehensive reports.",
@@ -101,10 +105,13 @@ const TOOLS: Feature[] = [
 ];
 
 /* oxlint-disable react/jsx-max-depth -- FeatureCard: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- FeatureCard: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* ── Shared card component ────────────────────────────────────────── */
 
-const FeatureCard = ({ feature }: { feature: Feature }): React.JSX.Element => (
+const FeatureCard = ({
+  feature,
+}: {
+  readonly feature: Feature;
+}): React.JSX.Element => (
   <div className="group border-border/50 bg-card hover:border-border hover:shadow-foreground/3 relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
     <div className="bg-foreground/2 pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
     <div className="relative flex h-full flex-col">
@@ -120,15 +127,13 @@ const FeatureCard = ({ feature }: { feature: Feature }): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-disable react/no-multi-comp -- SectionLabel: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SectionLabel: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const SectionLabel = ({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: string;
 }): React.JSX.Element => (
   <div className="mb-8 flex items-center gap-4">
     <span className="text-foreground/70 font-mono text-xs tracking-[0.2em] uppercase">
@@ -139,13 +144,11 @@ const SectionLabel = ({
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Features); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- Features renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 
 /* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Features: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* ── Main component ───────────────────────────────────────────────── */
 
 export const Features = (): React.JSX.Element => (
@@ -187,7 +190,6 @@ export const Features = (): React.JSX.Element => (
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable react/no-multi-comp */

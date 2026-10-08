@@ -187,7 +187,7 @@ test("rejects a declared oversized request without reading its body", async () =
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "1"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- route.test route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including controller); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including contentLength). */
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- route.test route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including controller); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including contentLength). */
 
 test.each([undefined, "1"])(
   "bounds multipart consumption with content-length %s and cancels the source",
@@ -197,7 +197,9 @@ test.each([undefined, "1"])(
     const body = new ReadableStream<Uint8Array>(
       {
         cancel,
-        pull(controller): void {
+        pull(
+          controller: Readonly<ReadableStreamDefaultController<Uint8Array>>
+        ): void {
           chunksRead += 1;
           controller.enqueue(
             // oxlint-disable-next-line no-ternary -- Keep controller.enqueue argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -235,7 +237,7 @@ test.each([undefined, "1"])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
 

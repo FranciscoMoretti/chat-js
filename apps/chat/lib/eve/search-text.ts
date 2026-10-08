@@ -1,10 +1,48 @@
 import type { MessageStreamEvent } from "eve/client";
 
+type SearchTextEvent =
+  | {
+      readonly type: "history.seeded";
+      readonly data: {
+        // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
+        readonly messages: Parameters<typeof eveSeedSearchText>[0];
+      };
+    }
+  | {
+      readonly type: "history.restored";
+      readonly data: { readonly events: readonly SearchTextEvent[] };
+    }
+  | {
+      readonly type: "message.received";
+      // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
+      readonly data: Parameters<typeof incomingMessageSearchText>[0]["data"] & {
+        readonly kind?: Extract<
+          MessageStreamEvent,
+          { type: "message.received" }
+        >["data"]["kind"];
+      };
+      readonly meta: { readonly id: string };
+    }
+  | {
+      readonly type: "message.completed";
+      readonly data: { readonly message: string | null };
+      readonly meta: { readonly id: string };
+    }
+  | {
+      readonly type: Exclude<
+        MessageStreamEvent["type"],
+        | "history.seeded"
+        | "history.restored"
+        | "message.received"
+        | "message.completed"
+      >;
+    };
+
 const MAX_SEARCH_QUERY_LENGTH = 255;
 
 interface EveSearchText {
-  key: string;
-  text: string;
+  readonly key: string;
+  readonly text: string;
 }
 
 /**
@@ -60,35 +98,35 @@ const incomingMessageSearchText = (event: {
   return [];
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
  * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
  * @returns {EveSearchText[]} Display text with stable event/seed keys, including restored history and excluding empty content.
  */
-const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
-  if (event.type === "history.seeded") {
-    return eveSeedSearchText(event.data.messages);
-  }
-  if (event.type === "history.restored") {
-    return event.data.events.flatMap(eveEventSearchText);
-  }
-  if (event.type === "message.received" && !event.data.kind) {
-    return incomingMessageSearchText(event);
-  }
-  if (
-    event.type === "message.completed" &&
-    typeof event.data.message === "string" &&
-    event.data.message.trim() !== ""
-  ) {
-    return [{ key: `event:${event.meta.id}`, text: event.data.message }];
-  }
-  return [];
-};
+const eveEventSearchText =
+  /* oxlint-disable typescript/no-unnecessary-type-parameters -- The generic readonly reader accepts full SDK event/message literals without rejecting their additional fields. */
+  <Event extends SearchTextEvent>(event: Event): EveSearchText[] => {
+    if (event.type === "history.seeded") {
+      return eveSeedSearchText(event.data.messages);
+    }
+    if (event.type === "history.restored") {
+      return event.data.events.flatMap(eveEventSearchText);
+    }
+    if (event.type === "message.received" && !event.data.kind) {
+      return incomingMessageSearchText(event);
+    }
+    if (
+      event.type === "message.completed" &&
+      typeof event.data.message === "string" &&
+      event.data.message.trim() !== ""
+    ) {
+      return [{ key: `event:${event.meta.id}`, text: event.data.message }];
+    }
+    return [];
+  };
+/* oxlint-enable typescript/no-unnecessary-type-parameters */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (EveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

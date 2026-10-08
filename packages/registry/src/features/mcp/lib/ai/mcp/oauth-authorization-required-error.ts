@@ -1,14 +1,23 @@
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...parameters: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? {
-        readonly [Property in keyof Value]: ReadonlyNativeSurface<
-          Value[Property]
-        >;
-      }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (OAuthAuthorizationRequiredError); the enabled import/no-default-export convention rejects the default-export alternative. */
 /**

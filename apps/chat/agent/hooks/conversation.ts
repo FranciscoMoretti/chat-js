@@ -1,3 +1,4 @@
+import type { HookContext } from "eve/hooks";
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-documents"; "../../lib/db/eve-queries"; "../../lib/eve/conversation-scope"; "../../lib/eve/project-instructions" dependency within this package instead of introducing an alias or barrel API.
  */
@@ -17,16 +18,28 @@ import { projectInstructions } from "../../lib/eve/project-instructions";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * no-magic-numbers (#517): default export uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): default export preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, unicorn/no-null -- import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
+no-magic-numbers (#517): default export uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): default export uses undefined for absent or optional values; context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): default export preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+
 export default defineHook({
   events: {
-    "session.waiting": async (event, context) => {
+    "session.waiting": async (
+      event: Readonly<{
+        data: Readonly<{
+          checkpoint?: Readonly<{
+            checkpointId: string;
+            beforeTurnId: string;
+          }> | null;
+        }>;
+      }>,
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
       if (context.session.parent || !event.data.checkpoint) {
         return;
       }
@@ -45,7 +58,14 @@ export default defineHook({
         Number(event.data.checkpoint.beforeTurnId.slice("turn_".length))
       );
     },
-    "turn.started": async (event, context) => {
+    "turn.started": async (
+      event: { readonly data: { readonly sequence: number } },
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
       projectInstructions.update(() => ({ content: null }));
       const scope = await resolveEveConversationScope(
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -81,4 +101,4 @@ export default defineHook({
   },
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, unicorn/no-null */

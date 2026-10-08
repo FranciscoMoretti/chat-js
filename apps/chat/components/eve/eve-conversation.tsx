@@ -36,7 +36,7 @@ import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 /* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
-import type { EveMessageInput } from "@/lib/eve/message-input";
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -71,11 +71,16 @@ import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
 /* oxlint-disable react/jsx-no-literals -- EveConversation renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
 
 const sameComposerDraft = (
-  draft: ReturnType<typeof restoreDraft>,
-  sent: ReturnType<typeof restoreDraft>
+  draft: {
+    readonly text: string;
+    readonly attachments: readonly Readonly<DraftAttachment>[];
+  },
+  sent: {
+    readonly text: string;
+    readonly attachments: readonly Readonly<DraftAttachment>[];
+  }
 ): boolean =>
   draft.text.trim() === sent.text.trim() &&
   draft.attachments.length === sent.attachments.length &&
@@ -83,7 +88,6 @@ const sameComposerDraft = (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from sent.attachments[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     (file, index) => file.url === sent.attachments[index]?.url
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -106,7 +110,7 @@ const nextTurnBoundary = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useConversationInput: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, unicorn/no-null -- useConversationInput: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const useConversationInput = (
   ownerId: string,
@@ -161,7 +165,7 @@ const useConversationInput = (
   };
   /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- retainedToolSelection: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including comparison: { selectedTool?: UiToolName } | undefined); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -194,7 +198,7 @@ const EveConversation = ({
   conversationId: string;
   ownerId: string;
   header: ReactNode;
-  initialMessage?: EveMessageInput;
+  readonly initialMessage?: Parameters<typeof restoreDraft>[0];
   draftScopeId?: string;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
@@ -247,7 +251,7 @@ const EveConversation = ({
       ? snapshot.nodes.get(selectedNode.parentId)
       : undefined;
   }
-  const messages = agent.data.messages
+  const messages: readonly ReadonlyEveMessage[] = agent.data.messages
     .filter((message) => {
       if (
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -286,7 +290,7 @@ const EveConversation = ({
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (
-    message: (typeof messages)[number]
+    message: Readonly<Pick<(typeof messages)[number], "metadata">>
   ): string | undefined => {
     // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const reference = message.metadata?.turnId
@@ -384,7 +388,7 @@ const EveConversation = ({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitMessage's awaited sequencing and rejected-Promise behavior. */
   const submitMessage = async (
     message: string,
-    attachments: DraftAttachment[],
+    attachments: readonly Readonly<DraftAttachment>[],
     modelId: string,
     clearComposer: boolean,
     selectedTool?: UiToolName

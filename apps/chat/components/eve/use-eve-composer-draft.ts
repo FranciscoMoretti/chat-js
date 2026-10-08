@@ -13,6 +13,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import { draftAttachment } from "@/lib/eve/draft";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DraftAttachment } from "@/lib/eve/draft";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null -- composerDraft: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -23,7 +24,7 @@ const composerDraft = z.object({
   text: z.string(),
 });
 /* oxlint-enable unicorn/no-null */
-type Draft = z.infer<typeof composerDraft>;
+type Draft = ReadonlyNativeSurface<z.infer<typeof composerDraft>>;
 /* oxlint-disable unicorn/no-null -- emptyDraft: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
@@ -31,13 +32,15 @@ const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
 type ComposerDraftState = Draft & {
   error: string | undefined;
   loaded: boolean;
-  setAttachments: Dispatch<SetStateAction<DraftAttachment[]>>;
+  setAttachments: Dispatch<
+    SetStateAction<readonly Readonly<DraftAttachment>[]>
+  >;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
   setText: Dispatch<SetStateAction<string>>;
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useEveComposerDraft); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useEveComposerDraft: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: Draft); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null -- useEveComposerDraft: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
  * Persist unsent input synchronously, before response navigation can unmount it.
@@ -104,7 +107,7 @@ export const useEveComposerDraft = (
     [update]
   );
   const setAttachments = useCallback(
-    (attachments: SetStateAction<DraftAttachment[]>): void =>
+    (attachments: SetStateAction<readonly Readonly<DraftAttachment>[]>): void =>
       update((draft) => ({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
@@ -131,4 +134,4 @@ export const useEveComposerDraft = (
   return { ...value, error, loaded, setAttachments, setSelectedTool, setText };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */

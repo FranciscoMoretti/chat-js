@@ -7,8 +7,8 @@ import { deduplicateByDomainAndUrl } from "./search-utils";
 
 /* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 type SearchQuery = {
-  maxResults: number;
-  query: string;
+  readonly maxResults: number;
+  readonly query: string;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
@@ -31,24 +31,24 @@ type MultiQuerySearchResponse = {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; query; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable max-lines-per-function, max-statements -- max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; search: ( qu; query: SearchQuery; query; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const multiQueryWebSearchStep = async ({
   queries,
   search,
   dataStream,
   toolCallId,
 }: {
-  queries: SearchQuery[];
-  search: (
+  readonly queries: readonly SearchQuery[];
+  readonly search: (
     query: SearchQuery,
     index: number
-  ) => Promise<{ title: string; url: string; content: string }[]>;
-  dataStream?: ToolProgressWriter;
-  toolCallId: string;
+  ) => Promise<
+    { readonly title: string; readonly url: string; readonly content: string }[]
+  >;
+  readonly dataStream?: Readonly<ToolProgressWriter>;
+  readonly toolCallId: string;
 }): Promise<MultiQuerySearchResponse> => {
   const updateId = generateUUID();
   try {
@@ -56,7 +56,9 @@ const multiQueryWebSearchStep = async ({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
-        queries: queries.map((query) => query.query),
+        queries: queries.map(
+          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
+        ),
         status: "running",
         title: `Executing ${queries.length} searches`,
         toolCallId,
@@ -67,7 +69,7 @@ const multiQueryWebSearchStep = async ({
     });
 
     // Execute searches in parallel
-    const searchPromises = queries.map(async (query, index) => {
+    const searchPromises = queries.map(async (query: SearchQuery, index) => {
       const results = await search(query, index);
 
       return {
@@ -84,18 +86,34 @@ const multiQueryWebSearchStep = async ({
 
     // Send completion annotation with all results
     const allResults = deduplicateByDomainAndUrl(
-      searchResults.flatMap((searchResult) => searchResult.results)
+      searchResults.flatMap(
+        (
+          searchResult: Readonly<{
+            results: readonly Readonly<{
+              title: string;
+              url: string;
+              content: string;
+            }>[];
+          }>
+        ) => searchResult.results
+      )
     );
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
-        queries: queries.map((query) => query.query),
+        queries: queries.map(
+          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
+        ),
         // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
-        results: allResults.map((result) => ({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          ...result,
-          source: "web",
-        })),
+        results: allResults.map(
+          (
+            result: Readonly<{ content: string; title: string; url: string }>
+          ) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            ...result,
+            source: "web",
+          })
+        ),
         status: "completed",
         title: `Executing ${queries.length} searches`,
         toolCallId,
@@ -117,7 +135,9 @@ const multiQueryWebSearchStep = async ({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
-        queries: queries.map((query) => query.query),
+        queries: queries.map(
+          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
+        ),
         status: "completed",
         title: `Executing ${queries.length} searches`,
         toolCallId,
@@ -135,7 +155,7 @@ const multiQueryWebSearchStep = async ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (multiQueryWebSearchStep); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements */
 export { multiQueryWebSearchStep };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

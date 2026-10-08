@@ -7,15 +7,27 @@ import { recordEveUsage } from "../../../../lib/db/eve-billing";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/no-default-export, typescript/strict-boolean-expressions --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 // This worker uses only the local mock model, whose provider cost is known to be zero.
 export default defineHook({
   events: {
-    "step.completed": async (event, context) => {
+    "step.completed": async (
+      event: {
+        readonly meta: { readonly id: string };
+        readonly data: { readonly turnId: string };
+      },
+      context: {
+        readonly session: {
+          readonly id: string;
+          readonly auth: {
+            readonly initiator: { readonly principalId: string } | null;
+          };
+        };
+      }
+    ) => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const ownerId = context.session.auth.initiator?.principalId;
       if (!ownerId) {
@@ -32,4 +44,4 @@ export default defineHook({
   },
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, typescript/strict-boolean-expressions */

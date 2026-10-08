@@ -289,19 +289,20 @@ test.each([
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable eslint/no-magic-numbers -- concurrent writer admission and capture serialize: exactly one is admitted: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- concurrent writer admission and capture serialize: exactly one is admitted: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 test("concurrent writer admission and capture serialize: exactly one is admitted", async () => {
   const results = await Promise.allSettled([
     reserve(sql, capture),
     beginWriter(sql, owner, "root", "race", "tool"),
   ]);
   expect(
-    results.filter((result) => result.status === "fulfilled")
+    results.filter(
+      (result: Readonly<PromiseSettledResult<void>>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -494,17 +495,18 @@ test("tool pairs and bounded input fail closed; incomplete cancelled/failed turn
 
 /* oxlint-disable unicorn/no-null -- optimistic branch head compare prevents concurrent appends from losing messages: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- optimistic branch head compare prevents concurrent appends from losing messages: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- optimistic branch head compare prevents concurrent appends from losing messages: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 test("optimistic branch head compare prevents concurrent appends from losing messages", async () => {
   const results = await Promise.allSettled([add("a", null), add("b", null)]);
   expect(
-    results.filter((result) => result.status === "fulfilled")
+    results.filter(
+      (result: Readonly<PromiseSettledResult<void>>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
   expect(await sql`select id from node`).toHaveLength(1);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -547,7 +549,6 @@ test("resource grants are owner checked and retained after source branch removal
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- separate idle captures retain manual edits even when transcript head is unchanged: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
   await editDocument(sql, owner, "root", { doc: "revision-2" });
@@ -565,7 +566,7 @@ test("separate idle captures retain manual edits even when transcript head is un
     owner,
   });
   const rows = await sql<
-    { documents: Record<string, string> }[]
+    readonly { readonly documents: Readonly<Record<string, string>> }[]
   >`select documents from branch where id in ('early','late') order by id`;
   expect(rows.map((row) => row.documents)).toEqual([
     { doc: "revision-1" },
@@ -574,7 +575,6 @@ test("separate idle captures retain manual edits even when transcript head is un
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 test("fork cannot reuse an unrelated branch or resurrect a deleted child", async () => {
   await checkpoint();

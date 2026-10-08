@@ -7,11 +7,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "@/lib/ai/app-models";
+// oxlint-disable-next-line sort-imports -- This type-only rendering view follows the existing runtime import group.
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 /* oxlint-enable sort-imports */
 
 interface DefaultModelContextType {
@@ -28,12 +30,12 @@ const DefaultModelContext = createContext<DefaultModelContextType | undefined>(
 /* oxlint-enable no-undefined */
 
 interface DefaultModelClientProviderProps {
-  children: ReactNode;
-  defaultModel: AppModelId;
+  readonly children: ReadonlyReactNode;
+  readonly defaultModel: AppModelId;
 }
 
-/* oxlint-disable no-console, typescript/prefer-readonly-parameter-types -- no-console (#514): DefaultModelProvider emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
-typescript/prefer-readonly-parameter-types (#565): DefaultModelProvider accepts { children, defaultModel: initialModel, }: DefaultModelClientProviderProps; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable no-console -- no-console (#514): DefaultModelProvider emits operational command/error diagnostics through console; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const DefaultModelProvider = ({
   children,
   defaultModel: initialModel,
@@ -79,7 +81,7 @@ const DefaultModelProvider = ({
     </DefaultModelContext.Provider>
   );
 };
-/* oxlint-enable no-console, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-console */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-undefined (#519): useDefaultModel uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  splitting exports requires an API and Fast Refresh boundary decision.

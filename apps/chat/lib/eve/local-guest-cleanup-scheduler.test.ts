@@ -90,9 +90,8 @@ test("startup is singleton and sweeps never overlap", async () => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { NODE_ENV: "production" },    { EVE_GATEWAY_SECRET: "" },   { DATABASE_URL: "postgres's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " accepts values; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test.each([
   { NODE_ENV: "production" },
@@ -102,7 +101,25 @@ test.each([
   { DATABASE_URL: "https://localhost/fixture" },
 ])(
   "unsafe or disabled configuration never starts cleanup: %j",
-  async (values) => {
+  async (
+    values: Readonly<
+      | {
+          NODE_ENV: string;
+          EVE_GATEWAY_SECRET?: undefined;
+          DATABASE_URL?: undefined;
+        }
+      | {
+          EVE_GATEWAY_SECRET: string;
+          NODE_ENV?: undefined;
+          DATABASE_URL?: undefined;
+        }
+      | {
+          DATABASE_URL: string;
+          NODE_ENV?: undefined;
+          EVE_GATEWAY_SECRET?: undefined;
+        }
+    >
+  ) => {
     Object.assign(mocks.env, values);
     stop = startLocalEveGuestCleanup();
     await vi.advanceTimersByTimeAsync(120_000);
@@ -112,7 +129,7 @@ test.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("remote worker or World and a config disabled after startup cannot sweep") uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

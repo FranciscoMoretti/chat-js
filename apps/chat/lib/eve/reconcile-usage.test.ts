@@ -90,11 +90,10 @@ beforeEach(() => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): it("keeps four reads busy when one conversation is slow") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("keeps four reads busy when one conversation is slow") uses 4, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("keeps four reads busy when one conversation is slow") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it("keeps four reads busy when one conversation is slow") accepts [id]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("keeps four reads busy when one conversation is slow") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("keeps four reads busy when one conversation is slow", async () => {
@@ -106,31 +105,20 @@ it("keeps four reads busy when one conversation is slow", async () => {
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
   gates[1].resolve(undefined);
   await expect.poll(() => mocks.read.mock.calls.length).toBe(5);
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["0", "1", "2", "3", "4"]);
   for (const gate of gates) {
     gate.resolve(undefined);
   }
   await reconciliation;
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["0", "1", "2", "3", "4", "5", "6", "7"]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): it("stops scheduling on failure and waits for in-flight billing reads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -185,9 +173,8 @@ it("rejects uncertain ownership bindings before reading any stream", async () =>
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("skips only streams whose exact position matches the durable billing cursor") uses 10, 11 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("skips only streams whose exact position matches the durable billing cursor") accepts [id]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("skips only streams whose exact position matches the durable billing cursor", async () => {
   mocks.bindings.mockResolvedValue([
@@ -202,14 +189,13 @@ it("skips only streams whose exact position matches the durable billing cursor",
     ])
   );
   await reconcileEveOwnerUsage("owner");
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "appended",
-    "missing",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["appended", "missing"]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("refuses a stream shorter than its durable billing cursor") uses 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

@@ -38,11 +38,10 @@ const restoredId = "00000000-0000-4000-8000-000000000006";
  */
 let restoredContent: string | undefined;
 /* oxlint-enable init-declarations */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): trpcClient uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
 no-undefined (#519): trpcClient uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): trpcClient accepts input; init; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
 typescript/promise-function-async (#606): trpcClient preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
 typescript/strict-boolean-expressions (#610): trpcClient intentionally keeps the existing falsy-value behavior of request.revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -50,7 +49,11 @@ unicorn/no-null (#570): trpcClient preserves explicit null in its scenario paylo
 const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      fetch(input, init): Promise<Response> {
+      fetch(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the native Request class arm for instanceof discrimination before forwarding the remaining URL/string to new URL; a full readonly mapped Request survives the false branch and fails that receiver (TS2345).
+        input: string | URL | Request,
+        init: { readonly body?: unknown } | undefined
+      ): Promise<Response> {
         // oxlint-disable-next-line no-ternary -- Keep URL argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
@@ -190,6 +193,6 @@ const trpcClient = createTRPCClient<AppRouter>({
   ],
 });
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (conversationId, existingId, queryClient, trpcClient); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 export { conversationId, existingId, queryClient, trpcClient };
 /* oxlint-enable import/no-named-export */

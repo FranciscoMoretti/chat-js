@@ -43,7 +43,6 @@ const StepTypeIcon = ({
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The `children` value is an opaque ReactNode forwarded to motion.div; a deep readonly projection of ReactElement/ReactPortal is not assignable to motion's children contract (TS2322). */
 const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   <div className="flex w-full flex-row items-stretch justify-start gap-2">
     <div className="flex min-h-full shrink-0 flex-col items-center justify-start px-2">
@@ -71,7 +70,6 @@ const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
     </motion.div>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-max-depth */
@@ -118,7 +116,7 @@ const ResearchTasks = ({
 /* oxlint-enable react/no-multi-comp */
 
 interface StepWrapperProps {
-  readonly children: ReactNode;
+  readonly children: ReadonlyNativeSurface<ReactNode>;
   readonly isLast: boolean;
   readonly update: ReadonlyNativeSurface<ResearchUpdate>;
 }

@@ -1,8 +1,42 @@
-import type { FileUIPart, ModelMessage, UserModelMessage } from "ai";
+import type { FileUIPart, ModelMessage } from "ai";
 import { z } from "zod";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+
+interface ImageContextUserMessage {
+  readonly role: "user";
+  readonly content:
+    | string
+    | readonly (
+        | {
+            readonly type: "file";
+            readonly mediaType: string;
+            readonly data: unknown;
+            readonly filename?: string;
+          }
+        | { readonly type: "text" | "image" }
+      )[];
+}
+type ImageContextMessage =
+  | ImageContextUserMessage
+  | {
+      readonly role: "tool";
+      readonly content: readonly (
+        | {
+            readonly type: "tool-result";
+            readonly toolName: string;
+            readonly toolCallId: string;
+            readonly output: {
+              readonly type: string;
+              readonly value?: unknown;
+            };
+          }
+        | { readonly type: "tool-approval-response" }
+      )[];
+    }
+  | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> };
+
 /* oxlint-enable sort-imports */
 
 const imageResult = z.object({
@@ -11,15 +45,15 @@ const imageResult = z.object({
 });
 
 const latestImageAttachments = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit during native user-message narrowing; the outer list is already readonly.
-  messages: readonly ModelMessage[]
+  messages: readonly ImageContextMessage[]
 ): FileUIPart[] => {
   const user = messages.findLast(
     (message: {
       readonly role: ModelMessage["role"];
-    }): message is UserModelMessage => message.role === "user"
+    }): message is ImageContextUserMessage => message.role === "user"
   );
   const attachments: FileUIPart[] = [];
+  /* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/strict-boolean-expressions -- Array.isArray uses a native any[] predicate that widens this readonly content; preserve the existing array guard and validated file-part branch. */
   if (user && Array.isArray(user.content)) {
     for (const part of user.content) {
       if (
@@ -37,6 +71,7 @@ const latestImageAttachments = (
       }
     }
   }
+  /* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/strict-boolean-expressions */
   return attachments;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
@@ -49,46 +84,48 @@ const latestImageAttachments = (
  * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
  * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
  */
-export const eveImageContext = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit when parsing tool output; the outer list is already readonly.
-  messages: readonly ModelMessage[]
-): {
-  attachments: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
-} => {
-  const attachments = latestImageAttachments(messages);
-  /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
-  let lastGeneratedImage: {
-    imageUrl: string;
-    name: string;
-  } | null = null;
-  /* oxlint-enable unicorn/no-null */
-  for (const message of messages) {
-    if (message.role !== "tool") {
-      continue;
-    }
-    for (const part of message.content) {
-      if (
-        part.type !== "tool-result" ||
-        part.toolName !== "generateImage" ||
-        part.output.type !== "json"
-      ) {
+export const eveImageContext =
+  /* oxlint-disable typescript/no-unnecessary-type-parameters -- The generic readonly reader accepts full SDK event/message literals without rejecting their additional fields. */
+  <Message extends ImageContextMessage>(
+    messages: readonly Message[]
+  ): {
+    attachments: FileUIPart[];
+    lastGeneratedImage: { imageUrl: string; name: string } | null;
+  } => {
+    const attachments = latestImageAttachments(messages);
+    /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
+    let lastGeneratedImage: {
+      imageUrl: string;
+      name: string;
+    } | null = null;
+    /* oxlint-enable unicorn/no-null */
+    for (const message of messages) {
+      if (message.role !== "tool") {
         continue;
       }
-      const parsed = imageResult.safeParse(part.output.value);
-      if (
-        parsed.success &&
-        parsed.data.imageUrl.startsWith("/api/files/") &&
-        keyFromFileUrl(parsed.data.imageUrl) !== null
-      ) {
-        lastGeneratedImage = {
-          imageUrl: parsed.data.imageUrl,
-          name: `generated-image-${part.toolCallId}.png`,
-        };
+      for (const part of message.content) {
+        if (
+          part.type !== "tool-result" ||
+          part.toolName !== "generateImage" ||
+          part.output.type !== "json"
+        ) {
+          continue;
+        }
+        const parsed = imageResult.safeParse(part.output.value);
+        if (
+          parsed.success &&
+          parsed.data.imageUrl.startsWith("/api/files/") &&
+          keyFromFileUrl(parsed.data.imageUrl) !== null
+        ) {
+          lastGeneratedImage = {
+            imageUrl: parsed.data.imageUrl,
+            name: `generated-image-${part.toolCallId}.png`,
+          };
+        }
       }
     }
-  }
-  return { attachments, lastGeneratedImage };
-};
+    return { attachments, lastGeneratedImage };
+  };
+/* oxlint-enable typescript/no-unnecessary-type-parameters */
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable max-statements, no-continue */

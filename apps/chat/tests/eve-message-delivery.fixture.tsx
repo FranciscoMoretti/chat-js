@@ -25,12 +25,12 @@ const event = (operationId: string): MessageStreamEvent => ({
 /* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react/jsx-max-depth (#548): Fixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/prefer-readonly-parameter-types (#565): Fixture accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): Fixture intentionally keeps the existing falsy-value behavior of delivery.pending?.operationId; operationId; delivery.pending.rejection; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/strict-boolean-expressions -- max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+react/jsx-max-depth (#548): Fixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): Fixture intentionally keeps the existing falsy-value behavior of delivery.pending?.operationId; operationId; delivery.pending.rejection; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+
 const Fixture = (): React.JSX.Element => {
   const delivery = useEveMessageDelivery("fixture-session");
   const [draft, setDraft] = useState("");
@@ -43,7 +43,9 @@ const Fixture = (): React.JSX.Element => {
         <textarea
           aria-label="Message"
           className="min-h-24 w-full rounded-md border p-3"
-          onChange={(change) => setDraft(change.currentTarget.value)}
+          onChange={(change: {
+            readonly currentTarget: { readonly value: string };
+          }) => setDraft(change.currentTarget.value)}
           value={draft}
         />
       </label>
@@ -138,7 +140,7 @@ const Fixture = (): React.JSX.Element => {
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/strict-boolean-expressions */
 
 const root = document.querySelector("#root");
 if (!root) {

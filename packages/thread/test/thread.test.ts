@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import type { UIMessage } from "ai";
+/* oxlint-disable sort-imports -- Keep the existing runtime test import before this type-only declaration; Oxfmt groups runtime and type imports in this order. */
+import type { DataUIPart, UIMessage, UIMessageChunk } from "ai";
+/* oxlint-enable sort-imports */
 
 import { getMessageText } from "#thread-source/message-utils";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -725,6 +727,52 @@ describe("Thread", (): void => {
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("replayed");
     expect(message.metadata).toEqual({ model: "saved" });
+    expect(chat.getChildren("user-1")).toHaveLength(1);
+  });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  test("forwards resume data identity and nested provider metadata", async (): Promise<void> => {
+    const transport = new ControlledTransport();
+    const received: unknown[] = [];
+    const providerMetadata = { provider: { tokens: ["one", { value: 2 }] } };
+    const metadata = { model: "incoming", nested: ["retained"] };
+    const dataChunk: UIMessageChunk = {
+      data: providerMetadata,
+      transient: true,
+      type: "data-reference",
+    };
+    const chat = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          metadata: { model: "saved" },
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
+        },
+      ],
+      onData: (part: Readonly<DataUIPart<Record<string, unknown>>>): void => {
+        received.push(part);
+      },
+      transport,
+    });
+    const reconnect = transport.prepareReconnect();
+    const resumed = chat.resumeStream();
+    reconnect.enqueue({ messageMetadata: metadata, type: "start" });
+    reconnect.enqueue(dataChunk);
+    reconnect.enqueue({ id: "text", providerMetadata, type: "text-start" });
+    reconnect.enqueue({ delta: "replayed", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
+    reconnect.close();
+    await resumed;
+
+    const message = requireMessage(chat.getMessage("assistant-1"));
+    expect(received).toHaveLength(1);
+    expect(received[0]).toBe(dataChunk);
+    expect(message.metadata).toEqual(metadata);
+    expect(message.parts).toEqual([
+      { providerMetadata, state: "done", text: "replayed", type: "text" },
+    ]);
     expect(chat.getChildren("user-1")).toHaveLength(1);
   });
   /* oxlint-enable oxc/no-async-await */

@@ -57,7 +57,6 @@ const outputSchema = (schema: z.ZodType) =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveResearch); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveResearch's asynchronous iteration and rejection behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */

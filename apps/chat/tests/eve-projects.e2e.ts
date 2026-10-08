@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines -- Two minimal readonly callback types put this E2E file one line above the configured limit. */
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
@@ -5,15 +6,15 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -22,20 +23,20 @@ import {
   getEveCreation,
   listEveConversations,
 } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { assignEveConversationProject } from "../lib/db/queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChatProject,
   eveConversation,
   project,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
@@ -92,8 +93,7 @@ async function conversation() {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): test("assignment, filtered history and removal retain native identity") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("assignment, filtered history and removal retain native identity") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 // oxlint-disable-next-line max-statements -- Keep assignment, filtered-list checks, and detachment assertions in their existing database order.
@@ -120,7 +120,8 @@ test("assignment, filtered history and removal retain native identity", async ()
   });
   expect(
     conversationsWithoutProject.items.some(
-      (item) => item.conversationId === row.id
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
     )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
@@ -131,7 +132,7 @@ test("assignment, filtered history and removal retain native identity", async ()
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
  * unicorn/max-nested-calls (#568): test("both application checks and database constraints reject cross-owner assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -176,8 +177,7 @@ test("both application checks and database constraints reject cross-owner assign
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): test("deleting a project detaches its Eve conversations without erasing their session accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("deleting a project detaches its Eve conversations without erasing their session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 // oxlint-disable-next-line max-statements -- Verify deletion detaches the conversation before checking its unassigned listing and rejected reassignment.
@@ -199,7 +199,8 @@ test("deleting a project detaches its Eve conversations without erasing their se
   });
   expect(
     conversationsWithoutProject.items.some(
-      (item) => item.conversationId === row.id
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
     )
   ).toBe(true);
   expect(
@@ -208,7 +209,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
  * no-magic-numbers (#517): test("conversation deletion fences assignment and removes metadata without touching t uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

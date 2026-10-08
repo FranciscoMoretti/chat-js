@@ -119,9 +119,8 @@ it("returns readiness only after the matching immutable checkpoint is available"
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("keeps uncertain capture retryable using the exact same coordinates") uses 409, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("keeps uncertain capture retryable using the exact same coordinates") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("keeps uncertain capture retryable using the exact same coordinates", async () => {
   mocks.ready.mockRejectedValueOnce(new Error("pending"));
@@ -130,13 +129,17 @@ it("keeps uncertain capture retryable using the exact same coordinates", async (
   const resolvedResult6 = await POST(request(), context);
   expect(resolvedResult6.status).toBe(200);
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #598: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    mocks.capture.mock.calls.map((call) => JSON.parse(call[2].body))
+    mocks.capture.mock.calls.map(
+      (call: Readonly<(typeof mocks.capture.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #598: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        JSON.parse(call[2].body)
+      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access */
+    )
   ).toEqual([input, input]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("recovers an existing receipt without sending another native command") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -152,17 +155,22 @@ it("recovers an existing receipt without sending another native command", async 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { stage: "read", target: () => mocks.read },   { stage: "ready", target: () => mocks.rea's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
  * no-magic-numbers (#517): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/explicit-function-return-type (#560): Keep it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () ='s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = accepts { stage, target }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   { stage: "read", target: () => mocks.read },
   { stage: "ready", target: () => mocks.ready },
 ])(
   "returns exact durable rejection coordinates from $stage",
-  async ({ stage, target }) => {
+  async ({
+    stage,
+    target,
+  }: {
+    readonly stage: string;
+    readonly target: () => typeof mocks.read;
+  }) => {
     const { CheckpointRejectedError } =
       await import("@/lib/eve/checkpoint-rejection");
     target().mockRejectedValueOnce(
@@ -183,4 +191,4 @@ it.each([
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */

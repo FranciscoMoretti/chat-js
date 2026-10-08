@@ -2,9 +2,7 @@ import type { Sql } from "postgres";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ensureWorkflowBackend); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureWorkflowBackend's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): ensureWorkflowBackend accepts connection: Sql; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+
 /**
  * Refuse a deployment that would reinterpret existing run IDs in another world.
  * @param {Sql} connection - Database connection used to lock and register the workflow backend in one transaction.
@@ -12,9 +10,11 @@ import type { Sql } from "postgres";
  * @returns {Promise<void>} Resolves after preserving or creating the matching registration; rejects on a conflicting backend or database failure.
  */
 export const ensureWorkflowBackend = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original Postgres connection opens a transaction that acquires a lock and inserts the workflow backend; preserve the native writer contract.
   connection: Sql,
   world: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original Postgres transaction acquires an advisory lock and inserts the workflow backend; preserve the native writer contract.
   await connection.begin(async (tx) => {
     await tx`select pg_advisory_xact_lock(hashtextextended('eve-workflow-backend', 0))`;
     const [registered] = await tx<{ world: string }[]>`
@@ -31,4 +31,3 @@ export const ensureWorkflowBackend = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

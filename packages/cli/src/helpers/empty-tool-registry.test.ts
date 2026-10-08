@@ -26,7 +26,6 @@ import { scaffoldFromTemplate } from "./scaffold";
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("a fresh app can type-check its renderer boundary with no optional tools", async () => {
   const destination = await mkdtemp(
     nodePath.join(tmpdir(), "chatjs-empty-renderers-")
@@ -93,8 +92,10 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
     );
     const diagnostics = ts.getPreEmitDiagnostics(program);
     expect(
-      diagnostics.map((diagnostic) =>
-        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+      diagnostics.map(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- flattenDiagnosticMessageText requires the original recursive DiagnosticMessageChain; a deeply readonly diagnostic fails its native TypeScript receiver.
+        (diagnostic) =>
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
       )
     ).toEqual([]);
   } finally {
@@ -102,7 +103,6 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
   }
 }, 30_000);
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable node/no-sync */

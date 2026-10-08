@@ -1,45 +1,69 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/connection-options" dependency within this package instead of introducing an alias or barrel API.
  */
+
 import { expect, test } from "@playwright/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { and, eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { Client } from "eve/client";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import separate from runtime bindings; it has no runtime module-order effect.
+import type { MessageStreamEvent } from "eve/client";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveDocumentHead, userCredit } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+type DeleteDocumentEventReader =
+  | Readonly<{
+      type: "step.started";
+      data: Readonly<{ modelId: string; turnId: string }>;
+    }>
+  | Readonly<{ type: "turn.started"; data: Readonly<{ turnId: string }> }>
+  | Readonly<{
+      type: Exclude<
+        MessageStreamEvent["type"],
+        "step.started" | "turn.started"
+      >;
+      data?: unknown;
+    }>;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("installed deleteDocument requires approval, survives reload, and honors rejecti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("installed deleteDocument requires approval, survives reload, and honors rejecti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("installed deleteDocument requires approval, survives reload, and honors rejecti uses 240_000, -1, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("installed deleteDocument requires approval, survives reload, and honors rejecti accepts { page, }; testInfo; route; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("installed deleteDocument requires approval, survives reload, and honors rejecti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("installed deleteDocument requires approval, survives reload, and honors rejecti intentionally keeps the existing falsy-value behavior of chatId; document?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("installed deleteDocument requires approval, survives reload, and honors rejection", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
@@ -163,13 +187,18 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   const afterApproval = await native.snapshot();
   const resumedSteps = afterApproval.events
     .slice(beforeApproval.events.length)
-    .filter((event) => event.type === "step.started");
+    .filter(
+      (
+        event: DeleteDocumentEventReader
+      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+        event.type === "step.started"
+    );
   expect(resumedSteps.length).toBeGreaterThan(0);
   for (const step of resumedSteps) {
     expect(step.data.modelId).toBe("gateway/openai/gpt-4.1-mini");
     expect(
       afterApproval.events.some(
-        (event) =>
+        (event: DeleteDocumentEventReader) =>
           event.type === "turn.started" &&
           event.data.turnId === step.data.turnId
       )
@@ -177,4 +206,4 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */

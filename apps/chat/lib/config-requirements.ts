@@ -14,10 +14,10 @@ const normalizedCredentialGroups = (
     .join(" or ");
 
 interface EnvRequirement {
-  allOf?: EnvRequirement[];
-  description?: string;
-  options: EnvVarName[][];
-  runtimeAuth?: string;
+  readonly allOf?: readonly EnvRequirement[];
+  readonly description?: string;
+  readonly options: readonly (readonly EnvVarName[])[];
+  readonly runtimeAuth?: string;
 }
 
 const formatRequirementDescription = (

@@ -51,7 +51,7 @@ test("does not append an edited turn after the source transcript", () => {
     })
   ).toBe(true);
 });
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-optimistic-response-group.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including button). */
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- eve-optimistic-response-group.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including button). */
 
 test("renders stable disabled generating cards from the durable comparison request", () => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -75,10 +75,15 @@ test("renders stable disabled generating cards from the durable comparison reque
     const buttons = renderer?.root.findAllByType("button") ?? [];
     expect(buttons).toHaveLength(2);
     // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This eve-optimistic-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    expect(buttons.map((button) => button.props.disabled)).toEqual([
-      true,
-      true,
-    ]);
+    expect(
+      buttons.map(
+        (button: {
+          readonly props: Readonly<Record<string, unknown>>;
+          readonly type: unknown;
+          readonly children: readonly unknown[];
+        }) => button.props.disabled
+      )
+    ).toEqual([true, true]);
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toJSON from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const output = JSON.stringify(renderer?.toJSON());
     expect(output).toContain("Compare this request");
@@ -90,4 +95,4 @@ test("renders stable disabled generating cards from the durable comparison reque
     act(() => renderer?.unmount());
   }
 });
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
@@ -9,11 +12,9 @@ import {
 import { eveRequest } from "./server";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, max-statements, no-magic-numbers -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): readEveCheckpoint uses 15_000, 409, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): readEveCheckpoint accepts signal: AbortSignal = AbortSignal.timeout(15_000); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-*/
+no-magic-numbers (#517): readEveCheckpoint uses 15_000, 409, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * A missing checkpoint is pending; every other lookup failure stays unresolved.
  * @param {string} ownerId Authenticated owner sent to the native checkpoint endpoint.
@@ -28,7 +29,7 @@ const readEveCheckpoint = async (
   sessionId: string,
   beforeTurnId: string,
   checkpointId?: string,
-  signal: AbortSignal = AbortSignal.timeout(15_000)
+  signal: ReadonlyNativeSurface<AbortSignal> = AbortSignal.timeout(15_000)
 ): Promise<boolean> => {
   // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const path = `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint${typeof checkpointId === "string" && checkpointId.length > 0 ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
@@ -76,7 +77,7 @@ const readEveCheckpoint = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-params, no-magic-numbers, unicorn/max-nested-calls -- max-params (#511): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): waitForEveCheckpoint uses 15_000, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

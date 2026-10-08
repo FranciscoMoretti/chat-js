@@ -22,13 +22,15 @@ import { cn } from "@/lib/utils";
 
 type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Artifact: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactProps). */
-
-const Artifact = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactProps): React.JSX.Element => (
+const Artifact = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(
       "bg-background flex flex-col overflow-hidden rounded-lg border shadow-sm",
@@ -38,17 +40,20 @@ const Artifact = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactHeaderProps). */
+/* oxlint-disable react/no-multi-comp -- ArtifactHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactHeader = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactHeaderProps): React.JSX.Element => (
+const ArtifactHeader = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactHeaderProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(
       "bg-muted/50 flex items-center justify-between border-b px-4 py-3",
@@ -58,21 +63,25 @@ const ArtifactHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ArtifactCloseProps = ComponentProps<typeof Button>;
 /* oxlint-disable react/jsx-no-literals -- ArtifactClose renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactClose = ({
-  className,
-  children,
-  size = "sm",
-  variant = "ghost",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactCloseProps): React.JSX.Element => (
+const ArtifactClose = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    size = "sm",
+    variant = "ghost",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactCloseProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <Button
     // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -95,58 +104,70 @@ const ArtifactClose = ({
   </Button>
 );
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactTitleProps). */
+/* oxlint-disable react/no-multi-comp -- ArtifactTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactTitle = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactTitleProps): React.JSX.Element => (
+const ArtifactTitle = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactTitleProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <p
     className={cn("text-foreground text-sm font-medium", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactTitle's native p attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactDescriptionProps). */
+/* oxlint-disable react/no-multi-comp -- ArtifactDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactDescription = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactDescriptionProps): React.JSX.Element => (
+const ArtifactDescription = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactDescriptionProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <p
     className={cn("text-muted-foreground text-sm", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactDescription's native p attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactActionsProps). */
+/* oxlint-disable react/no-multi-comp -- ArtifactActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactActions = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactActionsProps): React.JSX.Element => (
+const ArtifactActions = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactActionsProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn("flex items-center gap-1", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactActions's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ArtifactActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
@@ -154,19 +175,24 @@ type ArtifactActionProps = ComponentProps<typeof Button> & {
   icon?: LucideIcon;
 };
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
-const ArtifactAction = ({
-  tooltip,
-  label,
-  icon: Icon,
-  children,
-  className,
-  size = "sm",
-  variant = "ghost",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, label, icon, children, className, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactActionProps): React.JSX.Element => {
+// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
+const ArtifactAction = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    tooltip,
+    label,
+    icon: Icon,
+    children,
+    className,
+    size = "sm",
+    variant = "ghost",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, label, icon, children, className, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactActionProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const button = (
     <Button
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -211,17 +237,21 @@ const ArtifactAction = ({
 
   return button;
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
 
 type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactContentProps). */
+/* oxlint-disable react/no-multi-comp -- ArtifactContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ArtifactContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ArtifactContentProps): React.JSX.Element => (
+const ArtifactContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ArtifactContentProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn("flex-1 overflow-auto p-4", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactContent's native div attributes, preserving caller events and accessibility props.
@@ -229,7 +259,7 @@ const ArtifactContent = ({
   />
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Artifact, ArtifactAction, ArtifactActions, ArtifactClose, ArtifactContent, ArtifactDescription, ArtifactHeader, ArtifactTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 export {
   Artifact,
   ArtifactAction,

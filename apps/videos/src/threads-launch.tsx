@@ -41,15 +41,14 @@ const Author = (): React.JSX.Element => (
 /* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 
 /* oxlint-disable eslint/no-magic-numbers -- Status: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Status: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Status = ({
   state,
   t,
   background = false,
 }: {
-  state: ReplyState;
-  t: number;
-  background?: boolean;
+  readonly state: ReplyState;
+  readonly t: number;
+  readonly background?: boolean;
 }): React.JSX.Element | string => {
   if (state === "streaming") {
     return (
@@ -67,7 +66,6 @@ const Status = ({
   }
   return "✓ Complete";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-enable eslint/id-length */
@@ -202,7 +200,6 @@ const MessageActions = ({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable eslint/id-length -- getPromptText: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- getPromptText: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const getPromptText = (s: StoryState, content: LaunchScript): string => {
   if (s.editing) {
     return s.editText;
@@ -212,11 +209,9 @@ const getPromptText = (s: StoryState, content: LaunchScript): string => {
   }
   return content.prompt;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/id-length -- getReplyDescription: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- getReplyDescription: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   if (s.states[id] === "streaming") {
     return `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`;
@@ -227,7 +222,6 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   return "Alternative answer";
 };
 /* oxlint-disable react/jsx-no-literals -- PromptMessage renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 
 /* oxlint-disable react/no-multi-comp -- PromptMessage: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -235,15 +229,14 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
 
 /* oxlint-disable eslint/no-magic-numbers -- PromptMessage: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptMessage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const PromptMessage = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div className="user">
     <div className="role">You</div>
@@ -282,7 +275,6 @@ const PromptMessage = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- Chat renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -296,15 +288,14 @@ const PromptMessage = ({
 /* oxlint-disable eslint/no-magic-numbers -- Chat: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- Chat: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Chat: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Chat = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div
     // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -409,7 +400,6 @@ const Chat = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ConversationTree renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -423,15 +413,14 @@ const Chat = ({
 
 /* oxlint-disable eslint/no-magic-numbers -- ConversationTree: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- ConversationTree: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ConversationTree: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ConversationTree = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div className="map" style={{ opacity: s.reveal }}>
     <div className="maptitle">YOUR CONVERSATION</div>
@@ -588,7 +577,6 @@ const ConversationTree = ({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThreadsLaunch); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ThreadsLaunch renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -603,12 +591,11 @@ const ConversationTree = ({
 
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsLaunch: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- ThreadsLaunch: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsLaunch: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable typescript/strict-boolean-expressions -- ThreadsLaunch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const ThreadsLaunch = ({
   content,
 }: {
-  content: LaunchScript;
+  readonly content: LaunchScript;
 }): React.JSX.Element => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -637,9 +624,11 @@ export const ThreadsLaunch = ({
           { at: 32.8, x: 249, y: 572 },
           { at: 41.9, x: 964, y: 522 },
           { at: 44.5, x: 962, y: 555 },
-        ].map(({ at, x, y }) => (
-          <ClickPulse key={at} age={t - at} x={x} y={y} />
-        ))}
+        ].map(
+          ({ at, x, y }: Readonly<{ at: number; x: number; y: number }>) => (
+            <ClickPulse key={at} age={t - at} x={x} y={y} />
+          )
+        )}
         {cursor && <Pointer {...cursor} />}
       </div>
       {presentation.caption && (
@@ -685,7 +674,6 @@ export const ThreadsLaunch = ({
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
 

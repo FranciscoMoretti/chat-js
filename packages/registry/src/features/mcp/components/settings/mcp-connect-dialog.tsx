@@ -57,16 +57,17 @@ import { useTRPC } from "@/trpc/react";
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const McpConnectDialog = ({
   open,
   onClose,
   connector,
 }: {
-  open: boolean;
-  onClose: () => void;
-  connector: McpConnector | null;
+  readonly open: boolean;
+  readonly onClose: () => void;
+  readonly connector: Readonly<
+    Pick<McpConnector, "id" | "name" | "type" | "url">
+  > | null;
 }): React.JSX.Element => {
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -110,12 +111,14 @@ export const McpConnectDialog = ({
     authorize(
       { id: connector.id },
       {
-        onError: (err): void => {
+        onError: (err: { readonly message: string }): void => {
           if (attempt.current === currentAttempt) {
             toast.error(err.message || "Failed to start connection");
           }
         },
-        onSuccess: ({ authorizationUrl }): void => {
+        onSuccess: ({
+          authorizationUrl,
+        }: Readonly<{ authorizationUrl: string }>): void => {
           if (attempt.current !== currentAttempt) {
             return;
           }
@@ -298,7 +301,6 @@ export const McpConnectDialog = ({
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
 

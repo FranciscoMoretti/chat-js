@@ -332,9 +332,8 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, typescript/strict-boolean-expressions --
  * max-statements (#512): test("only an exact durable checkpoint rejection releases a comparison for editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("only an exact durable checkpoint rejection releases a comparison for editing") accepts [url]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test("only an exact durable checkpoint rejection releases a comparison for editing") intentionally keeps the existing falsy-value behavior of fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint")); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
@@ -383,14 +382,19 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   await expect(
     resolveCreationRequest(storage, "owner", operation, scope)
   ).rejects.toBeInstanceOf(CreationRejectedError);
-  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
-    true
-  );
+
+  expect(
+    fetcher.mock.calls.every(
+      ([url]: Readonly<(typeof fetcher.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        url.endsWith("/checkpoint")
+      /* oxlint-enable typescript/no-unsafe-call, typescript/no-unsafe-member-access */
+    )
+  ).toBe(true);
   // The UI owns releasing the matching pending request; the original draft is never erased here.
   expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This create-response-group.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

@@ -1,32 +1,45 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
  */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/max-lines -- #786 adds receiver-specific notes to native Playwright callbacks; keep the established renderer fixture scenarios together. */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-statements (#512): test("installed renderer states stay readable at desktop and mobile sizes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("installed renderer states stay readable at desktop and mobile sizes") uses 0, 2, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("installed renderer states stay readable at desktop and mobile sizes") uses execFileSync("bun", ["tests/eve-renderer-fixture.ts"], { encoding: "utf-8", }) within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("installed renderer states stay readable at desktop and mobile sizes") accepts { page, }; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("installed renderer states stay readable at desktop and mobile sizes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("installed renderer states stay readable at desktop and mobile sizes", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   expect(styles.length).toBeGreaterThan(0);
   const content = execFileSync("bun", ["tests/eve-renderer-fixture.ts"], {
     encoding: "utf-8",
@@ -52,27 +65,37 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-statements (#512): test("native video renderer covers progress, completion and failure states") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native video renderer covers progress, completion and failure states") uses 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("native video renderer covers progress, completion and failure states") uses execFileSync("bun", ["tests/eve-video-renderer-fixture.ts"], { encoding: "utf-8", }) within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("native video renderer covers progress, completion and failure states") accepts { page, }; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native video renderer covers progress, completion and failure states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("native video renderer covers progress, completion and failure states", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.mp4", (route) =>
-    route.abort()
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.mp4",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync("bun", ["tests/eve-video-renderer-fixture.ts"], {
     encoding: "utf-8",
   });
@@ -105,30 +128,42 @@ test("native video renderer covers progress, completion and failure states", asy
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-statements (#512): test("native image renderer covers progress, completion and failure states") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native image renderer covers progress, completion and failure states") uses 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("native image renderer covers progress, completion and failure states") uses execFileSync( "bun", ["tests/eve-video-renderer-fixture.ts", "--image"], { encodin within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("native image renderer covers progress, completion and failure states") accepts { page, }; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native image renderer covers progress, completion and failure states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+/* oxlint-disable eslint/max-lines-per-function -- #786 adds receiver-specific notes to native Playwright callbacks; keep this renderer scenario sequence together. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("native image renderer covers progress, completion and failure states", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
-    route.fulfill({
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
-      contentType: "image/svg+xml",
-    })
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.png",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
+        contentType: "image/svg+xml",
+      })
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-video-renderer-fixture.ts", "--image"],
@@ -163,26 +198,35 @@ test("native image renderer covers progress, completion and failure states", asy
     });
   }
 });
+/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-statements (#512): test("native research renderer covers progress, clarification, report and failures") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native research renderer covers progress, clarification, report and failures") uses 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("native research renderer covers progress, clarification, report and failures") uses execFileSync( "bun", ["tests/eve-research-renderer-fixture.tsx"], { encoding: "utf-8" within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("native research renderer covers progress, clarification, report and failures") accepts { page, }; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native research renderer covers progress, clarification, report and failures") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("native research renderer covers progress, clarification, report and failures", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-research-renderer-fixture.tsx"],
@@ -213,25 +257,33 @@ test("native research renderer covers progress, clarification, report and failur
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native MCP renderer covers pending, result, denial and errors") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native MCP renderer covers pending, result, denial and errors") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native MCP renderer covers pending, result, denial and errors") uses 2, 0, 6, 5, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("native MCP renderer covers pending, result, denial and errors") uses execFileSync("bun", [ "build", "tests/eve-mcp-renderer-fixture.tsx", "--target=browse; readFileSync(bundlePath, "utf-8") within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("native MCP renderer covers pending, result, denial and errors") accepts { page, }; testInfo; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native MCP renderer covers pending, result, denial and errors") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addScriptTag() on the original Page/locator receiver to change the live browser or route state.
 test("native MCP renderer covers pending, result, denial and errors", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const bundlePath = testInfo.outputPath("mcp-fixture.js");
   execFileSync("bun", [
     "build",
@@ -289,22 +341,26 @@ test("native MCP renderer covers pending, result, denial and errors", async ({
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync --
  * max-statements (#512): test("public tool projection preserves readable results without approval controls or  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("public tool projection preserves readable results without approval controls or  uses 0, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("public tool projection preserves readable results without approval controls or  uses execFileSync("bun", ["tests/eve-public-tools.fixture.ts"], { encoding: "utf-8", }) within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("public tool projection preserves readable results without approval controls or  accepts { page, }; testInfo; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("public tool projection preserves readable results without approval controls or private envelopes", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync("bun", ["tests/eve-public-tools.fixture.ts"], {
     encoding: "utf-8",
   });
@@ -342,4 +398,4 @@ test("public tool projection preserves readable results without approval control
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync */

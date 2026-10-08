@@ -29,13 +29,13 @@ config({
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMigrate's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): runMigrate emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): runMigrate uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): runMigrate reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/prefer-readonly-parameter-types (#565): runMigrate accepts entry; migration; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ *
  * typescript/strict-boolean-expressions (#610): runMigrate intentionally keeps the existing falsy-value behavior of historyProblem; titleIndex; usageIndex; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const runMigrate = async (): Promise<void> => {
@@ -95,14 +95,21 @@ const runMigrate = async (): Promise<void> => {
       ) as "hasChatJsTables"
     `;
     const historyProblem = getMigrationHistoryProblem({
-      applied: applied.map((entry) => ({
-        createdAt: Number(entry.createdAt),
-        hash: entry.hash,
-      })),
-      available: migrations.map((migration) => ({
-        createdAt: migration.folderMillis,
-        hash: migration.hash,
-      })),
+      applied: applied.map(
+        (entry: Readonly<{ createdAt: string; hash: string }>) => ({
+          createdAt: Number(entry.createdAt),
+          hash: entry.hash,
+        })
+      ),
+      available: migrations.map(
+        (migration: {
+          readonly folderMillis: number;
+          readonly hash: string;
+        }) => ({
+          createdAt: migration.folderMillis,
+          hash: migration.hash,
+        })
+      ),
       hasChatJsTables,
     });
     if (historyProblem) {
@@ -148,7 +155,7 @@ const runMigrate = async (): Promise<void> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-console --
  * no-console (#514): void (async () => { try { await runMigrate(); } catch ( emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.

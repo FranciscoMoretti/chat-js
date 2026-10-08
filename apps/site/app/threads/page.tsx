@@ -11,6 +11,7 @@ import {
   Route,
   Workflow,
 } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import type { Metadata } from "next";
 import React from "react";
 
@@ -62,7 +63,15 @@ const compatibility = [
   "ChatTransport",
 ] as const;
 
-const additions = [
+type AdditionIcon = (
+  props: Readonly<Pick<LucideProps, "className">>
+) => React.ReactNode;
+
+const additions: readonly Readonly<{
+  description: string;
+  icon: AdditionIcon;
+  title: string;
+}>[] = [
   {
     description:
       "Select any message and expose its root-to-node path as chat.messages.",
@@ -87,7 +96,7 @@ const additions = [
     icon: Layers3,
     title: "Parallel responses",
   },
-] as const;
+];
 
 const architectureRows = [
   {
@@ -116,7 +125,6 @@ const architectureRows = [
 /* oxlint-disable react/jsx-max-depth -- ThreadsPage: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsPage: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsPage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable react/forbid-component-props -- GitBranch, ArrowRight, Check, Braces, RefreshCw, CircleStop, Workflow accept the supplied styling props; preserve this composition's layout and appearance. */
 const ThreadsPage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">

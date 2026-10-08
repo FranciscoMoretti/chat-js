@@ -12,9 +12,7 @@ type TransactionCallback = Extract<
 type FilePurgeTransaction = Parameters<TransactionCallback>[number];
 
 type FilePurgeReadTransaction = Readonly<Pick<FilePurgeTransaction, "select">>;
-type FilePurgeWriteTransaction = Readonly<
-  Pick<FilePurgeTransaction, "execute" | "select" | "update" | "delete">
->;
+type FilePurgeWriteTransaction = FilePurgeTransaction;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
 const deletingFamilyIds = async (
@@ -56,6 +54,7 @@ const prepareEveFamilyFilePurge = async (
   ownerId: string,
   rootId: string
 ): Promise<string[]> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -104,6 +103,7 @@ const completeEveFilePurge = async (
   if (keys.length === 0) {
     return;
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -133,6 +133,7 @@ const releaseEveFamilyFileReferences = async (
   ownerId: string,
   rootId: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .delete operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`

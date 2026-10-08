@@ -16,7 +16,7 @@ const receiptSchema = z.object({
  * no-magic-numbers (#517): assertPayloadPurgeReady uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 const assertPayloadPurgeReady = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve TransactionSql's overloaded callable tag/helper and native query-array capability used to verify fences and configured queue state.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   query: TransactionSql,
   taskIdentifier: string,
   inventory: {
@@ -61,12 +61,13 @@ const assertPayloadPurgeReady = async (
  * Erase the pinned provider's fenced payload tables for an authorized session.
  * Retains only resource identities as an atomic retry receipt. Accounting and
  * application tables are untouched. This is not sandbox/blob or full app deletion.
- * @param {Readonly<Pick<Sql, "begin">>} connection Native transaction-opening capability; query callbacks retain native transaction types.
+ * @param {Sql} connection Native transaction-opening capability; query callbacks retain native transaction types.
  * @param {{ readonly sessionId: string; readonly taskIdentifier: string }} input Authorized retired session and configured queue task, validated before opening the purge transaction.
  * @returns {Promise<{ runIds: string[]; streamIds: string[] }>} Atomic resource-identity retry receipt after fenced native payload deletion, or the validated previously saved receipt. Rejects if ownership, retirement, fences or queue-clearance checks fail.
  */
 export const purgeEvePostgresSessionPayloads = async (
-  connection: Readonly<Pick<Sql, "begin">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Open the native Postgres transaction with connection.begin; preserve its overloaded transaction callback and connection lifecycle contract.
+  connection: Sql,
   input: {
     readonly sessionId: string;
     readonly taskIdentifier: string;
@@ -77,8 +78,11 @@ export const purgeEvePostgresSessionPayloads = async (
     .parse(input);
   return await connection.begin(
     "isolation level read committed",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native transaction callback must retain callable SQL tag/helper and array encoding methods for the locked payload purge and receipt insert.
-    async (query) => {
+
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native transaction executes database writes and retains the Postgres tagged-query and interpolation overloads.
+      query
+    ) => {
       // Shared with queue cleanup, which persists additional run associations.
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-queue-purge:${scope.taskIdentifier}:${scope.sessionId}`}, 0))`;
       const [saved] =

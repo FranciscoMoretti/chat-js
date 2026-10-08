@@ -1,6 +1,5 @@
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { randomUUID } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
@@ -8,6 +7,7 @@ import type {
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+/* oxlint-enable import/no-nodejs-modules */
 /* oxlint-enable sort-imports */
 import { z } from "zod";
 
@@ -32,6 +32,8 @@ import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Oxfmt separates the readonly type import after runtime modules; sort-imports orders their binding names together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const log = createModuleLogger("mcp-oauth-provider");
 const refreshTokensSchema = z.object({
@@ -108,8 +110,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     oauthClientSecret?: string | null;
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the native URL callback contract, including its mutable searchParams receiver; shallow Readonly<URL> still fails the enabled recursive readonly rule.
-    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    onRedirectToAuthorization: (
+      authUrl: ReadonlyNativeSurface<URL>
+    ) => Promise<void>;
     // Optional: adopt existing state (for callback reconciliation)
     state?: string;
   };
@@ -118,15 +121,16 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Constructor retains and later resets the caller's state property, and exposes the same metadata object through the mutable SDK getter; a readonly ownership change would alter those aliases.
   public constructor(config: {
-    mcpConnectorId: string;
-    oauthClientId?: string | null;
-    oauthClientSecret?: string | null;
-    serverUrl: string;
-    clientMetadata: OAuthClientMetadata;
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the native URL callback contract, including its mutable searchParams receiver; shallow Readonly<URL> still fails the enabled recursive readonly rule.
-    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    readonly mcpConnectorId: string;
+    readonly oauthClientId?: string | null;
+    readonly oauthClientSecret?: string | null;
+    readonly serverUrl: string;
+    readonly clientMetadata: OAuthClientMetadata;
+    readonly onRedirectToAuthorization: (
+      authUrl: ReadonlyNativeSurface<URL>
+    ) => Promise<void>;
     // Optional: adopt existing state (for callback reconciliation)
-    state?: string;
+    readonly state?: string;
   }) {
     this.config = config;
   }
@@ -362,8 +366,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
    */
   public fetch =
     /* oxlint-disable eslint/max-lines-per-function -- SDK transport and refresh requests share this entry point and connector-lock transaction; reducing the refresh workflow length remains under review. */ async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native Request and RequestInit unchanged into Request; readonly header/body projections are not accepted by the native transport constructor.
-      input: string | URL | Request,
+      input: string | ReadonlyNativeSurface<URL | Request>,
       // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native Request and RequestInit unchanged into Request; readonly header/body projections are not accepted by the native transport constructor.
       init?: RequestInit
     ): Promise<Response> => {
@@ -469,8 +472,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve redirectToAuthorization's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the native URL callback contract, including its mutable searchParams receiver; shallow Readonly<URL> still fails the enabled recursive readonly rule.
-  public async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
+  public async redirectToAuthorization(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This writer sets state on the caller's original authorizationUrl.searchParams; preserve that caller-visible native mutation.
+    authorizationUrl: URL
+  ): Promise<void> {
     // If the SDK calls redirect twice, keep the first URL stable.
     authorizationUrl.searchParams.set("state", this.state());
     // Otherwise the UI might open URL #1 while the DB ended up with verifier #2.

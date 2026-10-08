@@ -18,11 +18,14 @@ import "streamdown/styles.css";
 const plugins = { code, math, mermaid };
 
 type ResponseProps = ComponentProps<typeof Streamdown>;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Response: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ResponseProps). */
 
 const Response = memo(
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ({ className, ...props }: ResponseProps): React.JSX.Element => (
+  (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    { className, ...props }: ResponseProps
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ): React.JSX.Element => (
     <Streamdown
       // oxlint-disable-next-line react/forbid-component-props -- Streamdown accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
@@ -34,12 +37,22 @@ const Response = memo(
       {...props}
     />
   ),
-  (prevProps, nextProps) =>
+  (
+    prevProps: {
+      readonly children?: string | undefined;
+      readonly isAnimating?: boolean | undefined;
+      readonly mode?: "static" | "streaming" | undefined;
+    },
+    nextProps: {
+      readonly children?: string | undefined;
+      readonly isAnimating?: boolean | undefined;
+      readonly mode?: "static" | "streaming" | undefined;
+    }
+  ) =>
     prevProps.children === nextProps.children &&
     prevProps.isAnimating === nextProps.isAnimating &&
     prevProps.mode === nextProps.mode
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 Response.displayName = "Response";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Response); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

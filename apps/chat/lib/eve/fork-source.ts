@@ -2,6 +2,7 @@ import type { EveMessage } from "eve/client";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveForkInput, EveForkKind } from "./contracts";
+import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 /* oxlint-enable sort-imports */
 
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
@@ -9,9 +10,11 @@ const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;
 
 /* oxlint-disable typescript/strict-boolean-expressions --
 typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
-const eveUserForkBoundary = (
-  message: Pick<EveMessage, "id" | "role" | "metadata">
-): string | undefined => {
+const eveUserForkBoundary = (message: {
+  readonly id: string;
+  readonly role: EveMessage["role"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
+}): string | undefined => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (message.role !== "user" || message.metadata?.optimistic) {
     return;

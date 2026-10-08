@@ -13,13 +13,14 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 const Progress = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     value,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, value from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<typeof ProgressPrimitiveRoot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
   const indicatorStyle = React.useMemo(
     (): { readonly transform: string } => ({

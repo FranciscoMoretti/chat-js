@@ -10,23 +10,21 @@ import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve serializeSignedCookie's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-params (#511): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): serializeSignedCookie uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): serializeSignedCookie accepts opt: { path?: string; httpOnly?: boolean; sameSite?: string; secure?: boolean; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): serializeSignedCookie intentionally keeps the existing falsy-value behavior of opt.path; opt.httpOnly; opt.secure; opt.sameSite; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/strict-boolean-expressions -- max-params (#511): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): serializeSignedCookie uses 0, 1 in its existing protocol/math/layout contract; httpOnly?: boolean; sameSite?: string; secure?: boolean; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): serializeSignedCookie intentionally keeps the existing falsy-value behavior of opt.path; opt.httpOnly; opt.secure; opt.sameSite; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+
 const serializeSignedCookie = async (
   name: string,
   value: string,
   secret: string,
   opt: {
-    path?: string;
-    httpOnly?: boolean;
-    sameSite?: string;
-    secure?: boolean;
-    expires?: Date;
+    readonly path?: string;
+    readonly httpOnly?: boolean;
+    readonly sameSite?: string;
+    readonly secure?: boolean;
+    readonly expires?: Readonly<Pick<Date, "toUTCString">>;
   }
 ): Promise<string> => {
   const key = await crypto.subtle.importKey(
@@ -65,7 +63,7 @@ const serializeSignedCookie = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

@@ -25,9 +25,6 @@ describe("isSocialAuthProvider", () => {
 });
 /* oxlint-enable no-undefined, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): describe("sortSocialAuthProvidersByLastUsed") accepts { id }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 describe("sortSocialAuthProvidersByLastUsed", () => {
   const providers = [
     { id: "google" as const, label: "Google" },
@@ -37,19 +34,32 @@ describe("sortSocialAuthProvidersByLastUsed", () => {
 
   it("moves the remembered provider to the front", () => {
     expect(
-      sortSocialAuthProvidersByLastUsed(providers, "github").map(({ id }) => id)
+      sortSocialAuthProvidersByLastUsed(providers, "github").map(
+        ({
+          id,
+        }: Readonly<
+          | { id: "google"; label: string }
+          | { id: "github"; label: string }
+          | { id: "vercel"; label: string }
+        >) => id
+      )
     ).toEqual(["github", "google", "vercel"]);
   });
 
   it("keeps the original order for unknown remembered providers", () => {
     expect(
       sortSocialAuthProvidersByLastUsed(providers, "discord").map(
-        ({ id }) => id
+        ({
+          id,
+        }: Readonly<
+          | { id: "google"; label: string }
+          | { id: "github"; label: string }
+          | { id: "vercel"; label: string }
+        >) => id
       )
     ).toEqual(["google", "github", "vercel"]);
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 describe("getEnabledSocialAuthProviders", () => {
   it("derives enabled providers from authentication config", () => {

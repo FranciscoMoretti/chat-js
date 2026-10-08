@@ -17,7 +17,7 @@ import { z } from "zod";
  * @returns {Promise<{ jobs: { id: string; locked: boolean; runId: string | null }[]; unsupportedJobIds: string[] }>} Matching queued jobs, including parent/root associations, and task jobs lacking supported run metadata. Run-less health checks are excluded; oversized inventory rejects.
  */
 export const readEvePostgresQueueInventory = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Sql/TransactionSql has overloaded tag and value-helper call signatures; Readonly mapped objects discard those signatures required by this metadata query.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   connection: Sql | TransactionSql,
   input: {
     readonly runIds: readonly string[];

@@ -29,10 +29,8 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable import/no-default-export -- import/no-default-export (#526): Preserve the existing default export import contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
@@ -40,7 +38,13 @@ export default defineAgent({
   experimental: { workflow: { world: resolveWorkflowWorld() } },
   model: defineDynamic({
     events: {
-      "step.started": async (_event, context) => {
+      "step.started": async (
+        _event: unknown,
+        context: Readonly<{
+          // oxlint-disable-next-line no-magic-numbers -- The numeric index selects the original callback parameter in this type-only lookup; it does not add a runtime constant.
+          session: Parameters<typeof installedToolAvailabilityMiddleware>[0];
+        }>
+      ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
@@ -60,4 +64,4 @@ export default defineAgent({
   }),
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-default-export */

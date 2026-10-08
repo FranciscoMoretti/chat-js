@@ -1,9 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveMessage, MessageStreamEvent } from "eve/client";
 /* oxlint-enable sort-imports */
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
 import { useEffect, useRef, useState, useTransition } from "react";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -29,6 +28,12 @@ import {
   prepareResponseGroupCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessageInput,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
@@ -43,18 +48,30 @@ import { useEveRuntime } from "./eve-logical-context";
 import { useEveAttachments } from "./use-eve-attachments";
 /* oxlint-enable sort-imports */
 
-type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
+type Operation<Request = NonNullable<ReturnType<typeof readCreationRequest>>> =
+  Request extends { message: EveMessageInput | ReadonlyEveMessageInput }
+    ? Omit<Request, "message"> & { readonly message: ReadonlyEveMessageInput }
+    : never;
 
 interface EditContext {
-  events?: readonly MessageStreamEvent[];
-  modelSelection?: SelectedModelValue;
-  response?: EveMessage;
+  // oxlint-disable-next-line no-magic-numbers -- The numeric index selects the original callback parameter in this type-only lookup; it does not add a runtime constant.
+  readonly events?: Parameters<typeof responseModel>[0];
+  readonly modelSelection?: SelectedModelValue;
+  readonly response?: ReadonlyEveMessage;
 }
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including response: EveMessage). */
+/* oxlint-disable no-undefined -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value */
 
 const responseModelSelection = (
-  response: EveMessage,
-  events: readonly MessageStreamEvent[]
+  response: {
+    readonly metadata?:
+      | {
+          readonly turnId?: string | undefined;
+          readonly modelId?: string | undefined;
+        }
+      | undefined;
+  },
+  // oxlint-disable-next-line no-magic-numbers -- The numeric index selects the original callback parameter in this type-only lookup; it does not add a runtime constant.
+  events: Parameters<typeof responseModel>[0]
 ): Extract<SelectedModelValue, string> | undefined => {
   const modelId = responseModel(
     events,
@@ -68,9 +85,9 @@ const responseModelSelection = (
   }
   return undefined;
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: Operation); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
 
 const operationModelSelection = (
   operation: Operation
@@ -91,14 +108,14 @@ const operationModelSelection = (
   return undefined;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useEveFork); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- useEveFork: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message: EveMessageInput); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editingMessageId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- useEveFork: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editingMessageId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useEveFork = (
   ownerId: string,
   conversationId: string,
   onComparisonStarted?: (
-    message: EveMessageInput,
+    message: ReadonlyEveMessageInput,
     selectedTool: UiToolName | undefined,
     clearComposer: boolean
   ) => void
@@ -134,9 +151,13 @@ export const useEveFork = (
 
   useEffect(() => {
     try {
-      const operation = readCreationRequest(sessionStorage, ownerId, {
-        conversationId,
-      });
+      const operation: Operation | undefined = readCreationRequest(
+        sessionStorage,
+        ownerId,
+        {
+          conversationId,
+        }
+      );
       if (operation) {
         if (!operation.fork) {
           // oxlint-disable-next-line react/todo -- Preserve the explicit missing-fork recovery error.
@@ -157,7 +178,14 @@ export const useEveFork = (
           typeof operation.message === "string"
             ? operation.message
             : operation.message
-                .filter((part) => part.type === "text")
+                .filter(
+                  (
+                    part
+                  ): part is Extract<
+                    Exclude<ReadonlyEveMessageInput, string>[number],
+                    { readonly type: "text" }
+                  > => part.type === "text"
+                )
                 .map((part) => part.text)
                 .join("\n")
         );
@@ -166,7 +194,14 @@ export const useEveFork = (
           typeof operation.message === "string"
             ? []
             : operation.message
-                .filter((part) => part.type === "file")
+                .filter(
+                  (
+                    part
+                  ): part is Extract<
+                    Exclude<ReadonlyEveMessageInput, string>[number],
+                    { readonly type: "file" }
+                  > => part.type === "file"
+                )
                 .map((part) => ({
                   contentType: part.mediaType,
                   digest: "",
@@ -258,10 +293,10 @@ export const useEveFork = (
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve begin's awaited sequencing and rejected-Promise behavior. */
   const begin = (
-    message: EveMessage,
+    message: ReadonlyEveMessage,
     regeneration?: {
-      response: EveMessage;
-      events: readonly MessageStreamEvent[];
+      readonly response: ReadonlyEveMessage;
+      readonly events: Parameters<typeof responseModel>[0];
     },
     editContext?: EditContext
   ): Promise<void> =>
@@ -287,7 +322,7 @@ export const useEveFork = (
         family.data.branches
       );
       const text = message.parts
-        .filter((part) => part.type === "text")
+        .filter((part: ReadonlyEveMessagePart) => part.type === "text")
         .map((part) => part.text)
         .join("\n");
       const originalTool = eveMessageTool(message);
@@ -305,7 +340,9 @@ export const useEveFork = (
       let attachments: DraftAttachment[];
       try {
         // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        attachments = message.parts.some((part) => part.type === "file")
+        attachments = message.parts.some(
+          (part: ReadonlyEveMessagePart) => part.type === "file"
+        )
           ? await restoreAttachments.mutateAsync({
               conversationId,
               messageId: message.id,
@@ -354,8 +391,8 @@ export const useEveFork = (
       setFailure("");
     },
     compare: (
-      message: EveMessageInput,
-      modelIds: string[],
+      message: ReadonlyEveMessageInput,
+      modelIds: readonly string[],
       beforeTurnId: string,
       requestedTool?: UiToolName,
       clearComposer = true
@@ -474,6 +511,6 @@ export const useEveFork = (
   /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- use-eve-fork keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

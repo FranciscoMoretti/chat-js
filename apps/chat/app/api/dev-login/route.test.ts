@@ -42,9 +42,8 @@ vi.mock("@/lib/auth", () => ({
 /* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: { AUTH_SECRET: state.secret } }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/lib/db/client") accepts row: Record<string, unknown>; existing; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 // Keep the route's database writes and Better Auth's reads in the same store.
 vi.mock("@/lib/db/client", async () => {
@@ -52,7 +51,7 @@ vi.mock("@/lib/db/client", async () => {
   return {
     db: {
       insert: (table: unknown) => ({
-        values: (row: Record<string, unknown>) => {
+        values: (row: Readonly<Record<string, unknown>>) => {
           // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           const target = table === user ? state.data.user : state.data.session;
           if (table !== user) {
@@ -60,7 +59,12 @@ vi.mock("@/lib/db/client", async () => {
             return { returning: () => [row] };
           }
           const insertUser = (ignoreConflict: boolean) => {
-            if (target.some((existing) => existing.email === row.email)) {
+            if (
+              target.some(
+                (existing: Readonly<Record<string, unknown>>) =>
+                  existing.email === row.email
+              )
+            ) {
               if (ignoreConflict) {
                 return [];
               }
@@ -80,7 +84,7 @@ vi.mock("@/lib/db/client", async () => {
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -89,10 +93,9 @@ afterEach(() => {
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["http://localhost:3100", "https://localhost:3100"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali uses 302, 0, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it.each(["http://localhost:3100", "https://localhost:3100"])(
@@ -113,9 +116,9 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
     });
     state.auth = auth;
     const responses = await Promise.all(Array.from({ length: 4 }, () => GET()));
-    expect(responses.map((result) => result.status)).toEqual([
-      302, 302, 302, 302,
-    ]);
+    expect(
+      responses.map((result: { readonly status: number }) => result.status)
+    ).toEqual([302, 302, 302, 302]);
     const [response] = responses;
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("/");
@@ -135,7 +138,7 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not create a session outside development") uses 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

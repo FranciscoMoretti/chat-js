@@ -62,11 +62,10 @@ const ConnectorDetailsBodyFallback = () => (
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const ConnectorDetailsContent = async ({
   params,
 }: {
-  params: Promise<{ connectorId: string }>;
+  readonly params: Readonly<Promise<{ readonly connectorId: string }>>;
 }) => {
   const { connectorId } = await params;
   await connection();
@@ -86,7 +85,6 @@ const ConnectorDetailsContent = async ({
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -96,11 +94,10 @@ const ConnectorDetailsContent = async ({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const ConnectorDetailsPage = ({
   params,
 }: {
-  params: Promise<{ connectorId: string }>;
+  readonly params: Readonly<Promise<{ readonly connectorId: string }>>;
 }) => (
   <Suspense
     fallback={
@@ -113,7 +110,6 @@ const ConnectorDetailsPage = ({
     <ConnectorDetailsContent params={params} />
   </Suspense>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable typescript/explicit-function-return-type */

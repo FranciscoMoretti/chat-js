@@ -41,16 +41,15 @@ const hasConflictingCost = (
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve debitTurnUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): debitTurnUsage accepts tx: UsageTransaction; input: { ownerId: string; sessionId: string; turnId: string; eventId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+
 const debitTurnUsage = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
   tx: UsageTransaction,
   input: {
-    ownerId: string;
-    sessionId: string;
-    turnId: string;
-    eventId: string;
+    readonly ownerId: string;
+    readonly sessionId: string;
+    readonly turnId: string;
+    readonly eventId: string;
   }
 ): Promise<void> => {
   // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
@@ -83,12 +82,11 @@ const debitTurnUsage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): recordEveUsage accepts input: { eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+
 typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -104,12 +102,12 @@ unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/AP
  * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
  */
 const recordEveUsage = async (input: {
-  eventId: string;
-  sessionId: string;
-  turnId: string;
-  ownerId: string;
-  costUsd?: number;
-  generationId?: string;
+  readonly eventId: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly ownerId: string;
+  readonly costUsd?: number;
+  readonly generationId?: string;
 }): Promise<boolean> => {
   if (
     !input.eventId ||
@@ -143,6 +141,7 @@ const recordEveUsage = async (input: {
     }
     return true;
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert, .update operations under caller-held locks; preserve the native writer contract.
   return await db.transaction(async (tx) => {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
@@ -204,7 +203,7 @@ const recordEveUsage = async (input: {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /**
  * This cursor is billing progress, never a second copy of the transcript.
@@ -272,19 +271,22 @@ const advanceEveUsageCursor = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withManagedUsageReconciliation's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): withManagedUsageReconciliation accepts unpricedSessions: Set<string>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+
 typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
  * @param {string} ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
- * @param {(sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>} reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
+ * @param {(sweepDue: boolean, unpricedSessions: Readonly<ReadonlySet<string>>) => Promise<void>} reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
  */
 const withManagedUsageReconciliation = async (
   ownerId: string,
-  reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
+  reconcile: (
+    sweepDue: boolean,
+    unpricedSessions: Readonly<ReadonlySet<string>>
+  ) => Promise<void>
 ): Promise<void> => {
   // Recovery queries use the app pool. Holding its only connection here would
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
@@ -296,6 +298,7 @@ const withManagedUsageReconciliation = async (
     prepare: false,
   });
   try {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
     await drizzle(connection).transaction(async (tx) => {
       await tx.execute(sql`select set_config('lock_timeout', '5s', true)`);
       await tx.execute(
@@ -350,7 +353,7 @@ const withManagedUsageReconciliation = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveUsageCursor, getEveUsageCursor, recordEveUsage, withManagedUsageReconciliation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 export {
   advanceEveUsageCursor,
   getEveUsageCursor,

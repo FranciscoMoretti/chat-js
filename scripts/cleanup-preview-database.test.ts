@@ -2,13 +2,13 @@ import { describe, expect, it } from "bun:test";
 
 import { cleanupPreviewDatabase } from "./cleanup-preview-database.mjs";
 
-const preview = {
+const preview: Branch = {
   created_at: "2026-09-28T00:00:00Z",
   id: "br-preview",
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
-const rootBranch = {
+const rootBranch: Branch = {
   created_at: "2026-01-01T00:00:00Z",
   default: true,
   id: "br-root",
@@ -17,6 +17,10 @@ const rootBranch = {
   parent_id: null,
   protected: false,
 };
+interface Call {
+  readonly method: string;
+  readonly url: string;
+}
 interface Branch {
   readonly created_at: string;
   readonly default?: boolean;
@@ -34,7 +38,7 @@ interface RunOptions {
   readonly deleteStatus?: number;
   readonly pages?: readonly {
     readonly branches: readonly Branch[];
-    readonly pagination: { readonly next: string };
+    readonly pagination: Readonly<{ next: string }>;
   }[];
   readonly stateBeforeDelete?: string;
   readonly openBeforeDelete?: boolean;
@@ -69,6 +73,10 @@ const expectRejection = async (
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+type RunResult = Readonly<{
+  calls: readonly Call[];
+  result: Awaited<ReturnType<typeof cleanupPreviewDatabase>>;
+}>;
 const run = async ({
   state = "closed",
   repo = "owner/repo",
@@ -78,8 +86,8 @@ const run = async ({
   pages = [{ branches, pagination: { next: "" } }],
   stateBeforeDelete = state,
   openBeforeDelete = open,
-}: RunOptions = {}) => {
-  const calls: { method: string; url: string }[] = [];
+}: RunOptions = {}): Promise<RunResult> => {
+  const calls: Call[] = [];
   let getCount = 0;
   let listCount = 0;
   let pageIndex = 0;
@@ -139,6 +147,7 @@ const run = async ({
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
+
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -146,7 +155,6 @@ const run = async ({
 
 /* oxlint-disable eslint/max-lines-per-function -- preview database cleanup: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- preview database cleanup: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {
@@ -165,7 +173,7 @@ describe("preview database cleanup", (): void => {
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("accepts root branches with null or absent parent_id beside the preview", async (): Promise<void> => {
-    const absentParent = {
+    const absentParent: Branch = {
       created_at: rootBranch.created_at,
       id: rootBranch.id,
       name: rootBranch.name,
@@ -188,7 +196,7 @@ describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])'s awaited sequencing and rejected-Promise behavior. */
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
-    async (options): Promise<void> => {
+    async (options: RunOptions): Promise<void> => {
       const { calls } = await run(options);
       expect(calls).toEqual([]);
     }
@@ -197,7 +205,7 @@ describe("preview database cleanup", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])'s awaited sequencing and rejected-Promise behavior. */
   it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])(
     "preserves a preview whose PR use changes during lookup %j",
-    async (options): Promise<void> => {
+    async (options: RunOptions): Promise<void> => {
       const { calls, result } = await run(options);
       expect(calls.every((call): boolean => call.method === "GET")).toBe(true);
       expect(result).toContain("Skipped");
@@ -288,6 +296,5 @@ describe("preview database cleanup", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

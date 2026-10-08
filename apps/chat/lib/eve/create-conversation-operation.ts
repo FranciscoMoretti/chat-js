@@ -15,6 +15,7 @@ import { getEveCreation } from "@/lib/db/eve-queries";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -45,16 +46,13 @@ const logger = createModuleLogger("eve/admission");
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createEveConversationOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveConversationOperation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * init-declarations (#507): createEveConversationOperation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- * init-declarations (#507): createEveConversationOperation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createEveConversationOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): createEveConversationOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): createEveConversationOperation accepts input: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): createEveConversationOperation intentionally keeps the existing falsy-value behavior of existing; await readEveGuestOwner(ownerId); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+ * typescript/strict-boolean-expressions (#610): createEveConversationOperation intentionally keeps the existing falsy-value behavior of existing; await readEveGuestOwner(ownerId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 export const createEveConversationOperation = async (
   ownerId: string,
-  input: z.infer<typeof createConversationInput>,
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
   guestReservationId?: string
 ): Promise<Response> => {
   try {
@@ -151,4 +149,4 @@ export const createEveConversationOperation = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions */

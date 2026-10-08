@@ -22,8 +22,7 @@ const SESSION_RETIRE_TIMEOUT_MS = 30_000;
 const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveSessionForDeletion's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion accepts event; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable max-statements, typescript/strict-boolean-expressions -- max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retires a deletion-pending session and settles its usage before erasure is allowed.
@@ -56,7 +55,7 @@ const retireEveSessionForDeletion = async (
   });
   if (
     !snapshot.events.some(
-      (event) =>
+      (event: { readonly type: string }) =>
         event.type === "session.completed" || event.type === "session.failed"
     )
   ) {
@@ -81,7 +80,7 @@ const retireEveSessionForDeletion = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveFamilyForDeletion's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**

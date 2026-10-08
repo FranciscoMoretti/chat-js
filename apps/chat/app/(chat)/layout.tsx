@@ -21,6 +21,8 @@ import { config } from "@/lib/config";
 /* oxlint-enable import/max-dependencies */
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 /* oxlint-enable sort-imports */
@@ -33,22 +35,24 @@ import { preloadQuery } from "@/trpc/preload-query";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { TRPCReactProvider } from "@/trpc/react";
 /* oxlint-enable sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
-
-import { auth } from "../../lib/auth";
 /* oxlint-enable import/no-relative-parent-imports */
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- The existing route imports its app-owned server helper; preserve the direct module dependency and evaluation order.
+import { auth } from "../../lib/auth";
+/* oxlint-enable sort-imports */
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ChatLayoutDynamic's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, }: { children: React.ReactNode; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including session?.user?.id); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including session?.user?.id); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ChatLayoutDynamic = async ({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: ReadonlyReactNode;
 }): Promise<ReactJSX.Element> => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
@@ -73,7 +77,9 @@ const ChatLayoutDynamic = async ({
   let defaultModel: AppModelId = cookieModel ?? default_chat_model;
 
   if (typeof cookieModel === "string" && cookieModel !== "") {
-    const modelExists = chatModels.some((model) => model.id === cookieModel);
+    const modelExists = chatModels.some(
+      (model: { readonly id: string }) => model.id === cookieModel
+    );
     if (!modelExists) {
       defaultModel = default_chat_model;
     } else if (isAnonymous) {
@@ -136,14 +142,14 @@ const ChatLayoutDynamic = async ({
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ChatLayout's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatLayout: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: React.ReactNode }). */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- ChatLayout: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 const ChatLayout = async ({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: ReadonlyReactNode;
 }): Promise<ReactJSX.Element> => {
   const cookieStore = await cookies();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from cookieStore.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -173,6 +179,6 @@ const ChatLayout = async ({
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */
 // oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this layout module and create-component-tree selects its default component ChatLayout.
 export default ChatLayout;

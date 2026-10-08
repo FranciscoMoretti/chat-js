@@ -1,5 +1,8 @@
 import type { ToolContext } from "eve/tools";
 
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
 /* oxlint-enable sort-imports */
@@ -18,14 +21,14 @@ type CodeExecutionContext = Pick<
 /* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): CodeExecutionOutput preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 type CodeExecutionOutput = { chart: ToolOutput; message: string };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): CodeExecutor accepts context: CodeExecutionContext; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 /** Executes exact source and owns its single usage receipt under the invoking tool call. */
 type CodeExecutor = (
   input: CodeExecutionInput,
-  context: CodeExecutionContext
+  context: ReadonlyNativeSurface<CodeExecutionContext>
 ) => Promise<ToolResult<CodeExecutionOutput>>;
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (CodeExecutionContext, CodeExecutionInput, CodeExecutionOutput, CodeExecutor); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export type {
   CodeExecutionContext,
   CodeExecutionInput,

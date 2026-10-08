@@ -71,8 +71,11 @@ const resolveEveEnvironment = (
  * Run during agent module initialization, before EVE constructs its World.
  * @param {Environment} source Mutable server environment whose workflow URL is set to the selected nonempty PostgreSQL default.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This initializer writes WORKFLOW_POSTGRES_URL into the caller-owned environment before EVE constructs its World.
-const configureWorkflowEnvironment = (source: Environment): void => {
+
+const configureWorkflowEnvironment = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This shared environment writer assigns WORKFLOW_POSTGRES_URL on the original server environment.
+  source: Environment
+): void => {
   const url = resolveWorkflowDatabaseUrl(source);
   if (typeof url === "string" && url !== "") {
     source.WORKFLOW_POSTGRES_URL = url;

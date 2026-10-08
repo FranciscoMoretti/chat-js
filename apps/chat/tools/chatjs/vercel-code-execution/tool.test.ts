@@ -14,18 +14,16 @@ const mocks = vi.hoisted(() => ({
   python: vi.fn(),
   resolveAuth: vi.fn(),
 }));
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./execution-sandbox") accepts error: Error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 vi.mock("./execution-sandbox", () => ({
   cleanupSandbox: mocks.cleanup,
   codeSandboxCleanupCapability: { createCleanupSession: vi.fn() },
   createSandbox: mocks.create,
-  getErrorMessage: (error: Error): string => error.message,
+  getErrorMessage: (error: Readonly<Error>): string => error.message,
   getSandboxRuntime: (language: string): string => language,
   resolveSandboxAuth: mocks.resolveAuth,
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 vi.mock("@/tools/chatjs/_shared/code-execution/python", () => ({
   executePythonInSandbox: mocks.python,
 }));

@@ -23,9 +23,8 @@ const mocks = vi.hoisted(() => {
 vi.mock("eve/hooks", () => ({
   defineHook: <Value>(value: Value): Value => value,
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/context")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("eve/context") accepts current: EveSearchText[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 vi.mock("eve/context", () => ({
   defineState: (name: string) => {
@@ -39,13 +38,15 @@ vi.mock("eve/context", () => ({
     }
     return {
       get: () => mocks.state,
-      update: (update: (current: EveSearchText[]) => EveSearchText[]): void => {
+      update: (
+        update: (current: Readonly<EveSearchText[]>) => EveSearchText[]
+      ): void => {
         mocks.state = update(mocks.state);
       },
     };
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("./search-backfill", () => ({
   backfillEveSearchConversation: mocks.recover,
 }));
@@ -99,15 +100,18 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
  * typescript/explicit-function-return-type (#560): Keep dispatch's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): dispatch accepts event: HookEvent; hookContext = context; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): dispatch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-const dispatch = (event: HookEvent, hookContext = context) =>
+const dispatch = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original HookEvent to the registered EVE wildcard hook; recursively readonly input-request options are rejected by its native event contract.
+  event: Readonly<HookEvent>,
+  hookContext: Readonly<HookContext> = context
+) =>
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling search.events["*"]; read "*" from search.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   search.events?.["*"]?.(event, hookContext);
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {

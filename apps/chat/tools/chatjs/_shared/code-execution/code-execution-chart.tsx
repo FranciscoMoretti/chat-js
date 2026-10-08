@@ -67,8 +67,7 @@ const pngSchema = z.object({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const CodeExecutionChart = ({ value }: { value: unknown }) => {
+export const CodeExecutionChart = ({ value }: { readonly value: unknown }) => {
   const parsedChart = chartSchema.safeParse(value);
   // oxlint-disable-next-line no-ternary -- Keep chart as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const chart: BaseChart | null = parsedChart.success ? parsedChart.data : null;
@@ -100,7 +99,6 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */

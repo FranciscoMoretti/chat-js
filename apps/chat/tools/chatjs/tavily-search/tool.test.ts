@@ -21,12 +21,11 @@ vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collect's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): collect accepts value: T | Promise<T> | AsyncIterable<T>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
+/* oxlint-disable id-length, typescript/explicit-function-return-type -- * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary. */
+const collect = async <T>(
+  value: Readonly<T> | Readonly<Promise<T>> | Readonly<AsyncIterable<T>>
+) => {
   const result = await value;
   if (
     typeof result !== "object" ||
@@ -39,7 +38,7 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

@@ -61,19 +61,19 @@ const getActionText = (
 /* oxlint-enable unicorn/no-null */
 
 interface DocumentToolResultProps {
-  followLive?: boolean;
-  disabled?: boolean;
-  isReadonly: boolean;
-  messageId: string;
-  result: {
-    id: string;
-    title: string;
-    kind: ArtifactKind;
-    revisionId?: string;
+  readonly followLive?: boolean;
+  readonly disabled?: boolean;
+  readonly isReadonly: boolean;
+  readonly messageId: string;
+  readonly result: {
+    readonly id: string;
+    readonly title: string;
+    readonly kind: ArtifactKind;
+    readonly revisionId?: string;
   };
-  type: "create" | "update" | "read";
+  readonly type: "create" | "update" | "read";
 }
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- PureDocumentToolResult: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, unicorn/no-null -- PureDocumentToolResult: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureDocumentToolResult = ({
   disabled = false,
@@ -124,16 +124,16 @@ const PureDocumentToolResult = ({
     </button>
   );
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */
 
 const DocumentToolResult = memo(PureDocumentToolResult);
 
 interface DocumentToolCallProps {
-  args: { title?: string };
-  isReadonly: boolean;
-  type: "create" | "update" | "read";
+  readonly args: { readonly title?: string };
+  readonly isReadonly: boolean;
+  readonly type: "create" | "update" | "read";
 }
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureDocumentToolCall: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including args.title); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- PureDocumentToolCall: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including args.title); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureDocumentToolCall = ({
   type,
@@ -178,7 +178,7 @@ const PureDocumentToolCall = ({
     </button>
   );
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const DocumentToolCall = memo(PureDocumentToolCall, () => true);
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

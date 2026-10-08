@@ -22,14 +22,12 @@ interface NativePurgeInventory {
 }
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withRetiredNativeSession's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * id-length (#506): withRetiredNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, max-params, max-statements, typescript/strict-boolean-expressions -- * id-length (#506): withRetiredNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-params (#511): withRetiredNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): withRetiredNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): withRetiredNativeSession accepts connection: Sql; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): withRetiredNativeSession intentionally keeps the existing falsy-value behavior of retired; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+ * typescript/strict-boolean-expressions (#610): withRetiredNativeSession intentionally keeps the existing falsy-value behavior of retired; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const withRetiredNativeSession = async <T>(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Reserve the native connection for the session advisory lock and retirement receipt; the reserved connection is released after the shared database writes.
   connection: Sql,
   sessionId: string,
   retire: () => Promise<void>,
@@ -60,19 +58,19 @@ const withRetiredNativeSession = async <T>(
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withNativeSession's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-params, max-statements, typescript/strict-boolean-expressions */
 
-/* oxlint-disable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): withNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, max-params, typescript/promise-function-async -- * id-length (#506): withNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-params (#511): withNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): withNativeSession accepts connection: Sql; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): withNativeSession preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+ * typescript/promise-function-async (#606): withNativeSession preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const withNativeSession = async <T>(
   databaseUrl: string,
   sessionId: string,
   retire: () => Promise<void>,
-  afterRetirement: (connection: Sql) => Promise<T>
+  afterRetirement: (
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original pool to the native retirement, fencing and purge writers; their connection reservation and transaction lifecycle require the Postgres Sql contract.
+    connection: Sql
+  ) => Promise<T>
 ): Promise<T> => {
   // Own the pool so concurrent cleanups cannot reserve all shared connections
   // while waiting for another connection to execute their stage transactions.
@@ -87,18 +85,16 @@ const withNativeSession = async <T>(
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareNativeSession's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, max-params, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-statements (#512): prepareNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): prepareNativeSession accepts connection: Sql; scope: { sessionId: string; taskIdentifier: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): prepareNativeSession intentionally keeps the existing falsy-value behavior of purged; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable max-statements, typescript/strict-boolean-expressions -- * max-statements (#512): prepareNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * typescript/strict-boolean-expressions (#610): prepareNativeSession intentionally keeps the existing falsy-value behavior of purged; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const prepareNativeSession = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original pool to the native retirement, fencing and purge writers; their connection reservation and transaction lifecycle require the Postgres Sql contract.
   connection: Sql,
   scope: {
-    sessionId: string;
-    taskIdentifier: string;
+    readonly sessionId: string;
+    readonly taskIdentifier: string;
   }
 ): Promise<NativePurgeInventory> => {
   const [purged] =
@@ -134,10 +130,8 @@ const prepareNativeSession = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveNativeSession's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --typescript/prefer-readonly-parameter-types (#565): purgeEveNativeSession accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Internal provider stage. Caller authorizes a deleting binding; retirement must settle usage.
  * @param {string} databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
@@ -148,8 +142,8 @@ const prepareNativeSession = async (
 const purgeEveNativeSession = async (
   databaseUrl: string,
   scope: {
-    sessionId: string;
-    taskIdentifier: string;
+    readonly sessionId: string;
+    readonly taskIdentifier: string;
   },
   retire: () => Promise<void>
 ): ReturnType<typeof purgeEvePostgresSessionPayloads> =>
@@ -157,18 +151,18 @@ const purgeEveNativeSession = async (
     databaseUrl,
     scope.sessionId,
     retire,
-    async (connection) => {
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original pool to the native retirement, fencing and purge writers; their connection reservation and transaction lifecycle require the Postgres Sql contract.
+      connection
+    ) => {
       await prepareNativeSession(connection, scope);
       return await purgeEvePostgresSessionPayloads(connection, scope);
     }
   );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveNativeSessionPurge's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): prepareEveNativeSessionPurge accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable typescript/promise-function-async -- typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Fence native work and clear its queued deliveries while retaining transcript payloads for resource inventory.
  * @param {string} databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
@@ -179,17 +173,23 @@ typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves
 const prepareEveNativeSessionPurge = async (
   databaseUrl: string,
   scope: {
-    sessionId: string;
-    taskIdentifier: string;
+    readonly sessionId: string;
+    readonly taskIdentifier: string;
   },
   retire: () => Promise<void>
 ): Promise<NativePurgeInventory> =>
-  await withNativeSession(databaseUrl, scope.sessionId, retire, (connection) =>
-    prepareNativeSession(connection, scope)
+  await withNativeSession(
+    databaseUrl,
+    scope.sessionId,
+    retire,
+    (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original pool to the native retirement, fencing and purge writers; their connection reservation and transaction lifecycle require the Postgres Sql contract.
+      connection
+    ) => prepareNativeSession(connection, scope)
   );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveNativeSessions's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): retireEveNativeSessions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

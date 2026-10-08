@@ -28,6 +28,7 @@ import type { DraftAttachment } from "@/lib/eve/draft";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 import type { composerTools } from "@/tools/chatjs/composer-tools";
 
@@ -55,7 +56,7 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including files: AttachmentUploadInput). */
+/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result */
 
 vi.mock("@/features/installed-uploads", async () => {
   const { attachmentUploads } =
@@ -75,12 +76,12 @@ vi.mock("@/features/installed-uploads", async () => {
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 24); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including file: File); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 24); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 /* oxlint-disable oxc/no-async-await -- The deferred upload fixture preserves the production awaited completion boundary. */
 vi.mock("@/features/attachment-uploads/upload", () => ({
-  uploadAttachment: async (file: File) => {
+  uploadAttachment: async (file: ReadonlyNativeSurface<File>) => {
     await state.upload(file);
     return {
       contentType: file.type,
@@ -91,7 +92,7 @@ vi.mock("@/features/attachment-uploads/upload", () => ({
   },
 }));
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@/providers/session-provider", () => ({
@@ -174,22 +175,26 @@ vi.mock("@/trpc/react", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including connector); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutate: state.toggle }),
   useQuery: () => ({
-    data: state.connectors.map((connector) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...connector,
-      // oxlint-disable-next-line no-ternary -- Keep userId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      userId: state.globalConnector ? null : "fixture",
-    })),
+    data: state.connectors.map(
+      (
+        connector: Readonly<{ enabled: boolean; id: string; name: string }>
+      ) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        ...connector,
+        // oxlint-disable-next-line no-ternary -- Keep userId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        userId: state.globalConnector ? null : "fixture",
+      })
+    ),
     isError: state.error,
     isPending: state.pending,
   }),
   useQueryClient: () => ({}),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("next/navigation", () => ({
@@ -197,18 +202,20 @@ vi.mock("next/navigation", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- composer-menu.browser route: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: React.ComponentProps<"a">). */
+/* oxlint-disable react/jsx-props-no-spreading -- composer-menu.browser route: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes */
 vi.mock("@/components/internal-link", () => ({
-  InternalLink: ({
-    children,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: React.ComponentProps<"a">): React.JSX.Element => (
-    <a {...props}>{children}</a>
-  ),
+  InternalLink: (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    {
+      children,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+      ...props
+    }: React.ComponentProps<"a">
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ): React.JSX.Element => <a {...props}>{children}</a>,
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-props-no-spreading */
 
 /* oxlint-disable no-undefined -- composer-menu.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value;  */
 
@@ -247,7 +254,7 @@ vi.mock("@/components/eve/eve-model-picker", () => ({
 
 const originalControls = [...composerControls];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mount's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const mount = async (
   disabled = false,
@@ -262,7 +269,9 @@ const mount = async (
   const root = createRoot(container);
   /* oxlint-disable react/jsx-no-literals -- Fixture renders the static composer scenario caption used by this visual test. */
   const Fixture = (): ReactJSX.Element => {
-    const [attachments, setAttachments] = useState(state.history);
+    const [attachments, setAttachments] = useState<
+      readonly Readonly<DraftAttachment>[]
+    >(state.history);
     const files = useEveAttachments({ attachments, setAttachments });
     const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
       initialTool
@@ -296,7 +305,12 @@ const mount = async (
             selectedModelId="fixture"
             selectedTool={selectedTool}
             onToolChange={setSelectedTool}
-            onAttach={(...args) => {
+            onAttach={(
+              ...args: readonly [
+                accept: string,
+                capture?: "user" | "environment",
+              ]
+            ) => {
               state.attach(...args);
             }}
           />
@@ -322,7 +336,7 @@ const mount = async (
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable max-statements, no-magic-numbers -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 afterEach(() => {
@@ -347,7 +361,7 @@ afterEach(() => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("one ordered menu selects and clears tools, attaches files, and toggles connectors", async () => {
   const cleanup = await mount();
@@ -357,7 +371,7 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
     );
     expect(
       [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item) => item.textContent
+        (item: { readonly textContent: string }) => item.textContent
       )
     ).toEqual([
       "Attach files",
@@ -416,7 +430,7 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
@@ -477,13 +491,15 @@ test("mobile camera and guest controls respect the same order; disabled composer
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom ordering and omitted MCP need no placeholder", async () => {
   composerControls.splice(
     0,
     composerControls.length,
-    ...originalControls.filter((item) => item.id !== "mcp").toReversed()
+    ...originalControls
+      .filter((item: { readonly id: string }) => item.id !== "mcp")
+      .toReversed()
   );
   const cleanup = await mount();
   try {
@@ -492,7 +508,7 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
     );
     expect(
       [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item) => item.textContent
+        (item: { readonly textContent: string }) => item.textContent
       )
     ).toEqual([
       "Create a video",
@@ -509,7 +525,7 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 /* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 for (const status of ["loading", "error", "empty"] as const) {

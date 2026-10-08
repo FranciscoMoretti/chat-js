@@ -167,7 +167,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 test("chart output validates shapes and fits PNG output", async (): Promise<void> => {
   const container = document.createElement("main");
@@ -215,7 +214,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await act((): void => {
     root.render(
       <>
-        {outputs.map((chart, index) => (
+        {outputs.map((chart: unknown, index) => (
           <section
             key={JSON.stringify(chart)}
             data-testid={`output-${index}`}
@@ -253,20 +252,25 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .toBe(3);
   await expect
     .poll((): boolean =>
-      [...container.querySelectorAll("h3")].every((heading) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        const panel = heading.parentElement?.parentElement?.parentElement;
-        return panel && getComputedStyle(panel).opacity === "1";
-      })
+      [...container.querySelectorAll("h3")].every(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original parentElement chain into native getComputedStyle; recursively readonly DOM collections fail its Element receiver (TS2345).
+        (heading) => {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          const panel = heading.parentElement?.parentElement?.parentElement;
+          return panel && getComputedStyle(panel).opacity === "1";
+        }
+      )
     )
     .toBe(true);
   await expect
     .poll((): boolean =>
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
-      ].every((element) =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        getInstanceByDom(element)?.getZr().animation.isFinished()
+      ].every(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ECharts getInstanceByDom receives the original HTMLElement; deeply readonly DOM child/style collections fail that actual native receiver (TS2345).
+        (element) =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          getInstanceByDom(element)?.getZr().animation.isFinished()
       )
     )
     .toBe(true);
@@ -285,7 +289,6 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */

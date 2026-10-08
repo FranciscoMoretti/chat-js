@@ -9,17 +9,19 @@ import { filterEveTools } from "../../lib/eve/turn-tools";
 import { tools } from "../../tools/chatjs/tools";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable import/no-default-export -- import/no-default-export (#526): Preserve the existing default export import contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 export default defineDynamic({
   events: {
-    "step.started": (_event, context) => {
+    "step.started": (
+      _event: unknown,
+      // oxlint-disable-next-line no-magic-numbers -- The numeric index selects the original callback parameter in this type-only lookup; it does not add a runtime constant.
+      context: Readonly<{ messages: Parameters<typeof eveImageContext>[0] }>
+    ) => {
       const images = eveImageContext(context.messages);
       eveToolImageContext.update(() => images);
       return filterEveTools(tools);
     },
   },
 });
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-default-export */

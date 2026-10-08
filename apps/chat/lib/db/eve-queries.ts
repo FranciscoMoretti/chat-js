@@ -575,7 +575,8 @@ const assertGuestCreationAdmission = async (
  * typescript/strict-boolean-expressions (#610): assignCreationProject intentionally keeps the existing falsy-value behavior of target; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const assignCreationProject = async (
-  tx: Readonly<Pick<CreationTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: CreationTransaction,
   chatId: string,
   ownerId: string,
   projectId: string
@@ -613,7 +614,7 @@ const reserveEveConversation = async (
   fork?: EveForkInput,
   guestReservationId?: string
 ): Promise<ConversationRow[]> =>
-  // oxlint-disable-next-line eslint/complexity -- Reservation keeps identity, admission, project, and fork writes in one transaction.
+  // oxlint-disable-next-line eslint/complexity, typescript/prefer-readonly-parameter-types -- Reservation keeps identity, admission, project, and fork writes in one transaction. This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: CreationTransactionView) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
@@ -777,6 +778,7 @@ const beginEveConversationDeletion = async (
     }
   | undefined
 > =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: CreationTransactionView) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -883,9 +885,7 @@ const matchesEveFork = (
  * no-magic-numbers (#517): CreationTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type CreationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type CreationTransactionView = Readonly<
-  Pick<CreationTransaction, "execute" | "insert" | "select" | "update">
->;
+type CreationTransactionView = CreationTransaction;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve bindConversationSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
@@ -897,6 +897,7 @@ type CreationTransactionView = Readonly<
  * unicorn/no-null (#570): bindConversationSession preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const bindConversationSession = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
   tx: CreationTransactionView,
   ownerId: string,
   reservationId: string,
@@ -1079,6 +1080,7 @@ const createEveConversation = async (
       await initializeEveForkDocuments(ownerId, reservation.id);
     }
     await referenceEveFiles(ownerId, reservation.id, fileKeys);
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
     return await db.transaction(async (tx: CreationTransactionView) => {
       // The reservation is already committed so native hooks can find it.
       // Transaction locks release on worker death; creating rows need no manual repair.
@@ -1533,6 +1535,7 @@ const bindAcceptedEveConversation = async (
   reservationId: string,
   sessionId: string
 ): Promise<BoundConversation> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
   await db.transaction((tx: CreationTransactionView) =>
     bindConversationSession(tx, ownerId, reservationId, sessionId)
   );

@@ -1,38 +1,43 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E fixture runs in Node and intentionally uses this built-in.
+import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E fixture runs in Node and intentionally uses this built-in.
+import { mkdir } from "node:fs/promises";
 /* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-file-purge"; "../lib/db/eve-orphaned-files"; "../lib/db/schema"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
  */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-import { execFileSync } from "node:child_process";
-import { mkdir } from "node:fs/promises";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Request, Response } from "@playwright/test";
+/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveFilePurge } from "../lib/db/eve-file-purge";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { keyFromFileUrl } from "../lib/file-url";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -49,22 +54,26 @@ const redPng = Buffer.from(
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * max-lines-per-function (#510): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("ChatJS upload remains durable through creation retries and message editing") uses 180_000, 60_000, 0, 1, 409, 400, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("ChatJS upload remains durable through creation retries and message editing") uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("ChatJS upload remains durable through creation retries and message editing") accepts { page, }; route; image; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("ChatJS upload remains durable through creation retries and message editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("ChatJS upload remains durable through creation retries and message editing") intentionally keeps the existing falsy-value behavior of retained?.data; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/max-nested-calls (#568): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultNavigationTimeout(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("ChatJS upload remains durable through creation retries and message editing", async ({
   page,
 }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(60_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
@@ -188,8 +197,15 @@ test("ChatJS upload remains durable through creation retries and message editing
       .poll(() =>
         editor
           .getByRole("img", { exact: true, name: "eve-square.png" })
-          .evaluate(
-            (image) =>
+          .evaluate<boolean, HTMLImageElement>(
+            (
+              image: Readonly<
+                Pick<
+                  HTMLImageElement,
+                  "complete" | "naturalHeight" | "naturalWidth"
+                >
+              >
+            ) =>
               image instanceof HTMLImageElement &&
               image.complete &&
               image.naturalWidth > 0
@@ -213,6 +229,7 @@ test("ChatJS upload remains durable through creation retries and message editing
     }>();
     await page.route(
       "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         const response = await route.fetch();
         forkReply.resolve({
@@ -278,21 +295,25 @@ test("ChatJS upload remains durable through creation retries and message editing
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("composer uploads and clears attachments, then reload confirms an in-flight mult uses 0, -1, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("composer uploads and clears attachments, then reload confirms an in-flight mult uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("composer uploads and clears attachments, then reload confirms an in-flight mult accepts { page, }; route; response; image; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("composer uploads and clears attachments, then reload confirms an in-flight mult preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("composer uploads and clears attachments, then reload confirms an in-flight mult intentionally keeps the existing falsy-value behavior of conversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.mouse() on the original Page/locator receiver to change the live browser or route state.
 test("composer uploads and clears attachments, then reload confirms an in-flight multipart send", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
@@ -301,7 +322,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
   const urls: string[] = [];
   async function attach(): Promise<void> {
     const uploaded = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.url().endsWith("/api/files/upload") &&
         response.request().method() === "POST"
     );
@@ -344,8 +365,15 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
         page
           .getByTestId("attachments-preview")
           .getByRole("img", { exact: true, name: "eve-square.png" })
-          .evaluate(
-            (image) =>
+          .evaluate<boolean, HTMLImageElement>(
+            (
+              image: Readonly<
+                Pick<
+                  HTMLImageElement,
+                  "complete" | "naturalHeight" | "naturalWidth"
+                >
+              >
+            ) =>
               image instanceof HTMLImageElement &&
               image.complete &&
               image.naturalWidth > 0
@@ -370,7 +398,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Describe the attached image in two sentences.");
     const accepted = page.waitForRequest(
-      (request) =>
+      (request: Readonly<Pick<Request, "method" | "url">>) =>
         request.method() === "POST" &&
         request.url().includes("/api/eve/v1/session/")
     );
@@ -437,37 +465,50 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an uncertain creation retains the same visible attachment and immutable request uses 0, 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("an uncertain creation retains the same visible attachment and immutable request accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("an uncertain creation retains the same visible attachment and immutable request preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("an uncertain creation retains the same visible attachment and immutable request after reload", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   await page.goto("/");
-  await page.route("**/api/files/upload", (route) =>
-    route.fulfill({
-      json: { url: "/api/files/abcdefghijklmnopqrstuvwx.png" },
-    })
+  await page.route(
+    "**/api/files/upload",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        json: { url: "/api/files/abcdefghijklmnopqrstuvwx.png" },
+      })
   );
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
-    route.fulfill({ body: redPng, contentType: "image/png" })
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.png",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ body: redPng, contentType: "image/png" })
   );
   const requests: string[] = [];
-  await page.route("**/api/agent-conversations", (route) => {
-    requests.push(route.request().postData() ?? "");
-    return route.abort("failed");
-  });
+  await page.route(
+    "**/api/agent-conversations",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => {
+      requests.push(route.request().postData() ?? "");
+      return route.abort("failed");
+    }
+  );
   await page
     .getByRole("group", { exact: true, name: "Message composer" })
     .getByLabel("Attach files", { exact: true })
@@ -525,21 +566,25 @@ test("an uncertain creation retains the same visible attachment and immutable re
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("uploaded attachment has durable authenticated ownership") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("uploaded attachment has durable authenticated ownership") uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("uploaded attachment has durable authenticated ownership") accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("uploaded attachment has durable authenticated ownership") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("uploaded attachment has durable authenticated ownership") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("uploaded attachment has durable authenticated ownership", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
@@ -624,20 +669,24 @@ test("uploaded attachment has durable authenticated ownership", async ({
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-statements (#512): test("a fenced orphan URL stops serving bytes before physical removal") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a fenced orphan URL stops serving bytes before physical removal") uses 1000, 1, 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("a fenced orphan URL stops serving bytes before physical removal") uses execFileSync("bun", [ "--no-env-file", "-e", 'import { deleteFilesByUrls } from ". within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("a fenced orphan URL stops serving bytes before physical removal") accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("a fenced orphan URL stops serving bytes before physical removal") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("a fenced orphan URL stops serving bytes before physical removal") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("a fenced orphan URL stops serving bytes before physical removal", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const upload = await page.request.post("/api/files/upload", {
     multipart: {
@@ -679,6 +728,6 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-attachments.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

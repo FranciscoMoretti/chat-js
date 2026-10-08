@@ -2,7 +2,11 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-const USE_CASES = [
+const USE_CASES: readonly Readonly<{
+  description: string;
+  number: string;
+  title: string;
+}>[] = [
   {
     description:
       "Start from a working Next.js AI chat app starter instead of wiring authentication, model routing, and streaming from scratch.",
@@ -30,7 +34,6 @@ const USE_CASES = [
 /* oxlint-disable react/jsx-max-depth -- UseCases: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 /* oxlint-disable eslint/no-magic-numbers -- UseCases: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- UseCases: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const UseCases = (): React.JSX.Element => (
   <section
     aria-labelledby="use-cases-heading"
@@ -110,7 +113,6 @@ export const UseCases = (): React.JSX.Element => (
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-enable react/jsx-max-depth */

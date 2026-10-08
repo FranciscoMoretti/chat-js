@@ -1,28 +1,31 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  */
+
 import { execFileSync } from "node:child_process";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Keep the type-only browser declarations beside their module and preserve runtime import order.
+import type { Page, Route, TestInfo } from "@playwright/test";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-lines-per-function (#510): test("response cards preserve layout and select native candidates on desktop and mobi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("response cards preserve layout and select native candidates on desktop and mobi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("response cards preserve layout and select native candidates on desktop and mobi uses 20, 1024, 11, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("response cards preserve layout and select native candidates on desktop and mobi uses execFileSync( "bun", [ "-e", 'const result = await Bun.build({entrypoints:["test; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("response cards preserve layout and select native candidates on desktop and mobi accepts { page, }; testInfo; error; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("response cards preserve layout and select native candidates on desktop and mobi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 // Dense state gallery uses the real application CSS and components, without a server or database.
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright fixture supplies the original Page; this test uses route(), goto(), setViewportSize(), keyboard(), and screenshot() to control live browser state.
 test("response cards preserve layout and select native candidates on desktop and mobile", async ({
   page,
-}, testInfo) => {
+}: { page: Page }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     [
@@ -39,11 +42,14 @@ test("response cards preserve layout and select native candidates on desktop and
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://eve-cards.test/", (route) =>
-    route.fulfill({
-      body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
-      contentType: "text/html",
-    })
+  await page.route(
+    "http://eve-cards.test/",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() on the original intercepted request to supply the fixture document.
+    (route: Route) =>
+      route.fulfill({
+        body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+        contentType: "text/html",
+      })
   );
   await page.goto("http://eve-cards.test/");
   await page.addScriptTag({ content: script, type: "module" });
@@ -109,4 +115,4 @@ test("response cards preserve layout and select native candidates on desktop and
   expect(errors).toEqual([]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */

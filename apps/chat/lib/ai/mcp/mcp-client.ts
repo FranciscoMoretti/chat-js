@@ -16,6 +16,8 @@ import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getBaseUrl } from "@/lib/url";
 
 const log = createModuleLogger("mcp-client");
@@ -39,7 +41,6 @@ type McpClientStatus =
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * MCP Client wrapper with OAuth support.
@@ -69,11 +70,11 @@ export class MCPClient {
     id: string,
     name: string,
     serverConfig: {
-      url: string;
-      type: "http" | "sse";
-      headers?: Record<string, string>;
-      oauthClientId?: string | null;
-      oauthClientSecret?: string | null;
+      readonly url: string;
+      readonly type: "http" | "sse";
+      readonly headers?: Readonly<Record<string, string>>;
+      readonly oauthClientId?: string | null;
+      readonly oauthClientSecret?: string | null;
     },
     invalidateCache?: () => void
   ) {
@@ -109,7 +110,9 @@ export class MCPClient {
       mcpConnectorId: this.id,
       oauthClientId: this.serverConfig.oauthClientId,
       oauthClientSecret: this.serverConfig.oauthClientSecret,
-      onRedirectToAuthorization: (authorizationUrl: URL) => {
+      onRedirectToAuthorization: (
+        authorizationUrl: ReadonlyNativeSurface<URL>
+      ) => {
         if (generation !== this.generation) {
           throw new Error("MCP connection was closed");
         }
@@ -142,7 +145,16 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connect's awaited sequencing and rejected-Promise behavior. */
   public async connect(
     oauthState?: string,
-    abortSignal?: AbortSignal
+    abortSignal?: Readonly<
+      Pick<
+        AbortSignal,
+        | "throwIfAborted"
+        | "reason"
+        | "addEventListener"
+        | "removeEventListener"
+        | "aborted"
+      >
+    >
   ): Promise<McpClientInstance | undefined> {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Connect exposes an optional caller AbortSignal; omitted signal still permits shared initialization.
     abortSignal?.throwIfAborted();
@@ -244,7 +256,18 @@ export class MCPClient {
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
    */
-  public async attemptConnection(abortSignal?: AbortSignal): Promise<{
+  public async attemptConnection(
+    abortSignal?: Readonly<
+      Pick<
+        AbortSignal,
+        | "throwIfAborted"
+        | "reason"
+        | "addEventListener"
+        | "removeEventListener"
+        | "aborted"
+      >
+    >
+  ): Promise<{
     status: McpClientStatus;
     needsAuth: boolean;
     error?: string;
@@ -330,6 +353,7 @@ export class MCPClient {
    * Get tools from the MCP server, already in AI SDK format.
    */
   public async tools(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original MCP SDK tools argument tuple; deep readonly schema inputs fail client.tools (TS2345).
     ...args: Parameters<NonNullable<McpClientInstance>["tools"]>
   ): Promise<Record<string, Tool>> {
     const { client } = this;
@@ -408,7 +432,7 @@ export class MCPClient {
    */
   private async handlePotentialAuthError(
     error: unknown,
-    origin: McpClientInstance
+    origin: unknown
   ): Promise<void> {
     if (this.client !== origin) {
       return;
@@ -433,7 +457,6 @@ export class MCPClient {
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/no-undefined */

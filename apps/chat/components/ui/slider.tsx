@@ -15,18 +15,22 @@ import type {
 /* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 /* oxlint-disable react/react-in-jsx-scope -- Slider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Slider = ({
-  className,
-  defaultValue,
-  value,
-  min = 0,
-  max = 100,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultValue, value, min, max from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof SliderPrimitiveRoot>): ReactJSX.Element => {
+const Slider = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    defaultValue,
+    value,
+    min = 0,
+    max = 100,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultValue, value, min, max from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof SliderPrimitiveRoot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const sliderValues = useReactMemo(() => {
     if (Array.isArray(value)) {
       return value;
@@ -83,7 +87,7 @@ const Slider = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Slider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers */
 
 export { Slider };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -130,18 +130,20 @@ const NO_RUN_SNAPSHOT = undefined;
 const NO_RUN_ERROR = undefined;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMessageFromInput's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The SDK input supplies mutable parts and metadata to the constructed message without cloning their identity; recursively readonly parts cannot satisfy the SDK message result. */
 const createMessageFromInput = async <
   Metadata,
   Data extends UIDataTypes,
   Tools extends UITools,
->({
-  fallbackId,
-  input,
-}: Readonly<{
-  fallbackId: string;
-  input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
-}>): Promise<UIMessage<Metadata, Data, Tools>> => {
+>(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK input supplies canonical parts and metadata to the constructed message without cloning their identity; recursively readonly values cannot satisfy its native SDK result.
+  {
+    fallbackId,
+    input,
+  }: Readonly<{
+    fallbackId: string;
+    input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
+  }>
+): Promise<UIMessage<Metadata, Data, Tools>> => {
   const messageId = getInputMessageId(input) ?? fallbackId;
   const { metadata } = input;
   if ("text" in input || "files" in input) {
@@ -173,7 +175,6 @@ const createMessageFromInput = async <
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 abstract class ThreadCore<
   Metadata,

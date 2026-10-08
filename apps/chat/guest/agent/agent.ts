@@ -7,11 +7,9 @@ import { GUEST_SESSION_DURATION_MS } from "../../lib/eve/disposable-guest";
 import { resolveEveModel } from "../../lib/eve/model-selection";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable import/no-default-export, typescript/promise-function-async -- import/no-default-export (#526): Preserve the existing default export import contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+
 export default defineAgent({
   defaultTools: false,
   // Disposable guests use Vercel Workflow when deployed and isolated local storage
@@ -20,7 +18,20 @@ export default defineAgent({
   limits: { sessionTimeoutMs: GUEST_SESSION_DURATION_MS },
   model: defineDynamic({
     events: {
-      "step.started": (_event, context) => {
+      "step.started": (
+        _event: unknown,
+        context: Readonly<{
+          session: Readonly<{
+            auth: Readonly<{
+              initiator: Readonly<{
+                attributes: Readonly<
+                  Record<string, string | readonly string[]>
+                >;
+              }> | null;
+            }>;
+          }>;
+        }>
+      ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const modelId = context.session.auth.initiator?.attributes.modelId;
         if (typeof modelId !== "string") {
@@ -31,4 +42,4 @@ export default defineAgent({
     },
   }),
 });
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/no-default-export, typescript/promise-function-async */

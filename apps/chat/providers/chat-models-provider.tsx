@@ -4,19 +4,24 @@ import { useQuery } from "@tanstack/react-query";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 /* oxlint-enable sort-imports */
-import type { ReactNode } from "react";
 
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+/* oxlint-enable sort-imports */
 
 interface ChatModelsContextType {
-  allModels: AppModelDefinition[];
-  getModelById: (modelId: string) => AppModelDefinition | undefined;
-  models: AppModelDefinition[];
+  readonly allModels: readonly ReadonlyNativeSurface<AppModelDefinition>[];
+  readonly getModelById: (
+    modelId: string
+  ) => ReadonlyNativeSurface<AppModelDefinition> | undefined;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }
 
 /* oxlint-disable no-undefined --
@@ -27,14 +32,14 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
 );
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): ChatModelsProvider keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): ChatModelsProvider accepts { children, models, }: { children: ReactNode; models: AppModelDefinition[]; }; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): ChatModelsProvider keeps its ordered workflow and input contract together; models: AppModelDefinition[]; }; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const ChatModelsProvider = ({
   children,
   models,
 }: {
-  children: ReactNode;
-  models: AppModelDefinition[];
+  readonly children: ReadonlyReactNode;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }): React.JSX.Element => {
   const trpc = useTRPC();
   const { data: session } = useSession();
@@ -48,7 +53,7 @@ const ChatModelsProvider = ({
   });
 
   const allModelsMap = useMemo(() => {
-    const map = new Map<string, AppModelDefinition>();
+    const map = new Map<string, ReadonlyNativeSurface<AppModelDefinition>>();
     for (const model of models) {
       map.set(model.id, model);
     }
@@ -68,7 +73,10 @@ const ChatModelsProvider = ({
   }, [models, preferences]);
 
   const filteredModels = useMemo(
-    () => models.filter((model) => enabledModelsSet.has(model.id)),
+    () =>
+      models.filter((model: Readonly<Pick<AppModelDefinition, "id">>) =>
+        enabledModelsSet.has(model.id)
+      ),
     [models, enabledModelsSet]
   );
 
@@ -87,7 +95,7 @@ const ChatModelsProvider = ({
     </ChatModelsContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-undefined (#519): useChatModels uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  splitting exports requires an API and Fast Refresh boundary decision.

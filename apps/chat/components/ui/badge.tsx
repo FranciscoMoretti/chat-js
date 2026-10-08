@@ -36,13 +36,14 @@ interface BadgeProps
 
 /* oxlint-disable react/react-in-jsx-scope -- Badge uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Badge = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Badge forwards native HTMLAttributes including CSSProperties, children and TrustedHTML; React autoCapitalize/role contain open string & {} aliases which remain flagged with top-level Readonly. The component retains its existing HTMLAttributes and variant input shape.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     variant,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: BadgeProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <div
     className={cn(badgeVariants({ variant }), className)}

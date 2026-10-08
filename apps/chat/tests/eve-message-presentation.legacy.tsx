@@ -1,7 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/ai-elements/message"; "../hooks/use-mobile"; "../lib/utils" dependency within this package instead of introducing an alias or barrel API. */
 import { Copy, Pencil, PencilOff } from "lucide-react";
 import React, { useState } from "react";
-import type { ReactNode } from "react";
+/* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/ai-elements/message"; "../hooks/use-mobile"; "../lib/utils" dependency within this package instead of introducing an alias or barrel API. */
+
+/* oxlint-disable sort-imports -- Keep the new type-only reader imports after the existing runtime modules; declaration sorting conflicts with the pinned formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
@@ -15,12 +17,13 @@ import { useIsMobile } from "../hooks/use-mobile";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "../lib/utils";
 /* oxlint-enable sort-imports */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function -- jsdoc/require-param (#534): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): LegacyMessageActionsReference keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): LegacyMessageActionsReference accepts { isEditing, isLoading, isReadonly, onCancelEdit, onStartEdit, siblings, }: { isEditi; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+max-lines-per-function (#510): LegacyMessageActionsReference keeps its scenario setup, action, and assertions together; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+
 /**
  * Frozen presentation reference from main commit
  * 4584f093835f1667c010c8fc20c502fa3f2bde41.
@@ -37,12 +40,12 @@ const LegacyMessageActionsReference = ({
   onStartEdit,
   siblings,
 }: {
-  isEditing: boolean;
-  isLoading: boolean;
-  isReadonly: boolean;
-  onCancelEdit?: () => void;
-  onStartEdit?: () => void;
-  siblings?: ReactNode;
+  readonly isEditing: boolean;
+  readonly isLoading: boolean;
+  readonly isReadonly: boolean;
+  readonly onCancelEdit?: () => void;
+  readonly onStartEdit?: () => void;
+  readonly siblings?: ReadonlyReactNode;
 }): React.JSX.Element => {
   const isMobile = useIsMobile();
   if (isLoading) {
@@ -96,17 +99,17 @@ const LegacyMessageActionsReference = ({
     </MessageActions>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): LegacyUserMessageReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): LegacyUserMessageReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): LegacyUserMessageReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): LegacyUserMessageReference keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): LegacyUserMessageReference uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 react-perf/jsx-no-new-function-as-prop (#557): LegacyUserMessageReference creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
 react/jsx-max-depth (#548): LegacyUserMessageReference keeps related fixture render states together; extraction changes component, state, and layout boundaries.
-react/no-multi-comp (#552): LegacyUserMessageReference keeps related fixture render states together; extraction changes component, state, and layout boundaries.
-typescript/prefer-readonly-parameter-types (#565): LegacyUserMessageReference accepts { editor, isLoading, isReadonly, messageId, responses, siblings, text, }: { editor?:; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+react/no-multi-comp (#552): LegacyUserMessageReference keeps related fixture render states together; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): LegacyUserMessageReference intentionally keeps the existing falsy-value behavior of selection?.toString(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
+
 /** Frozen UserMessage layout with provider-backed dependencies adapted to props. */
 const LegacyUserMessageReference = ({
   editor,
@@ -117,13 +120,13 @@ const LegacyUserMessageReference = ({
   siblings,
   text,
 }: {
-  editor?: ReactNode;
-  isLoading: boolean;
-  isReadonly: boolean;
-  messageId: string;
-  responses?: ReactNode;
-  siblings?: ReactNode;
-  text: string;
+  readonly editor?: ReadonlyReactNode;
+  readonly isLoading: boolean;
+  readonly isReadonly: boolean;
+  readonly messageId: string;
+  readonly responses?: ReadonlyReactNode;
+  readonly siblings?: ReadonlyReactNode;
+  readonly text: string;
 }): React.JSX.Element => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   return (
@@ -159,7 +162,11 @@ const LegacyUserMessageReference = ({
             aria-label={text}
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
             data-testid="legacy-message-content"
-            onClick={(event) => {
+            onClick={(
+              event: Readonly<{
+                currentTarget: Readonly<Pick<HTMLButtonElement, "contains">>;
+              }>
+            ) => {
               const selection = globalThis.getSelection();
               if (
                 // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -199,6 +206,6 @@ const LegacyUserMessageReference = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LegacyMessageActionsReference, LegacyUserMessageReference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
 export { LegacyMessageActionsReference, LegacyUserMessageReference };
 /* oxlint-enable import/no-named-export */

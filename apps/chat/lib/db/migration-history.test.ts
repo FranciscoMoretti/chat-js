@@ -18,10 +18,9 @@ import {
 const baseline = { createdAt: 2, hash: "eve" };
 const next = { createdAt: 3, hash: "next" };
 
-/* oxlint-disable max-lines-per-function, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, node/no-sync, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): describe("getMigrationHistoryProblem") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * node/no-sync (#538): describe("getMigrationHistoryProblem") uses readFileSync( new URL("migrations/0000_eve_baseline.sql", import.meta.url), "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): describe("getMigrationHistoryProblem") accepts match; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): describe("getMigrationHistoryProblem") intentionally keeps the existing falsy-value behavior of match.groups?.table; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("getMigrationHistoryProblem", () => {
@@ -32,13 +31,15 @@ describe("getMigrationHistoryProblem", () => {
     );
     const baselineTables = [
       ...baselineSql.matchAll(/^CREATE TABLE "(?<table>[^"]+)"/gmu),
-    ].flatMap((match) => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading table from match.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      if (match.groups?.table) {
-        return [match.groups.table];
+    ].flatMap(
+      (match: { readonly groups?: Readonly<Record<string, string>> }) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading table from match.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        if (match.groups?.table) {
+          return [match.groups.table];
+        }
+        return [];
       }
-      return [];
-    });
+    );
     expect(KNOWN_CHATJS_TABLE_NAMES).toEqual(
       expect.arrayContaining(baselineTables)
     );
@@ -127,4 +128,4 @@ describe("getMigrationHistoryProblem", () => {
     ).toMatch(/unknown/u);
   });
 });
-/* oxlint-enable max-lines-per-function, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, node/no-sync, typescript/strict-boolean-expressions */

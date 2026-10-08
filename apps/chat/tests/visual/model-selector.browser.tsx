@@ -230,6 +230,7 @@ const selectBeta = async (name: string): Promise<void> => {
     .element(page.getByRole("option", { name: /Fixture Beta/u }))
     .toBeVisible();
   await takeSnapshot(`model-native-${name}-before`);
+  await page.elementLocator(document.body).screenshot();
   await act(async () => {
     await page.getByRole("option", { name: /Fixture Beta/u }).click();
   });

@@ -9,13 +9,11 @@ import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeUnlockedJobs's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): removeUnlockedJobs accepts query: TransactionSql; jobIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable no-magic-numbers -- * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const removeUnlockedJobs = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   query: TransactionSql,
-  jobIds: string[]
+  jobIds: readonly string[]
 ): Promise<string[]> => {
   if (jobIds.length === 0) {
     return [];
@@ -49,16 +47,13 @@ const removeUnlockedJobs = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresQueue); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresQueue's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): purgeEvePostgresQueue keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): purgeEvePostgresQueue keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): purgeEvePostgresQueue keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): purgeEvePostgresQueue skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): purgeEvePostgresQueue uses 1, 10_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): purgeEvePostgresQueue accepts connection: Sql; input: { sessionId: string; runIds: string[]; taskIdentifier: string; }; query; job; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): purgeEvePostgresQueue intentionally keeps the existing falsy-value behavior of job.runId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+ * typescript/strict-boolean-expressions (#610): purgeEvePostgresQueue intentionally keeps the existing falsy-value behavior of job.runId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Remove queued payloads for an authorized resource set already fenced by the
  * session coordinator. Returns newly discovered queued run IDs for the caller's
@@ -71,11 +66,12 @@ const removeUnlockedJobs = async (
  * @returns {Promise<{ removedJobIds: string[]; runIds: string[] }>} Removed unlocked job identities and the durably retained discovered run inventory.
  */
 export const purgeEvePostgresQueue = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Open the native Postgres transaction with connection.begin; preserve its overloaded transaction callback and connection lifecycle contract.
   connection: Sql,
   input: {
-    sessionId: string;
-    runIds: string[];
-    taskIdentifier: string;
+    readonly sessionId: string;
+    readonly runIds: readonly string[];
+    readonly taskIdentifier: string;
   }
 ): Promise<{ removedJobIds: string[]; runIds: string[] }> => {
   const parsed = z
@@ -90,7 +86,10 @@ export const purgeEvePostgresQueue = async (
   }
   return await connection.begin(
     "isolation level read committed",
-    async (query) => {
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native transaction executes database writes and retains the Postgres tagged-query and interpolation overloads.
+      query
+    ) => {
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-queue-purge:${parsed.taskIdentifier}:${parsed.sessionId}`}, 0))`;
       const configured =
         await query`select identifier from workflow.eve_queue_tasks
@@ -121,15 +120,29 @@ export const purgeEvePostgresQueue = async (
         if (inventory.unsupportedJobIds.length > 0) {
           throw new Error("Resolve unsupported queue messages before cleanup.");
         }
-        if (inventory.jobs.some((job) => job.locked)) {
+        if (
+          inventory.jobs.some(
+            (
+              job: Readonly<{
+                id: string;
+                locked: boolean;
+                runId: string | null;
+              }>
+            ) => job.locked
+          )
+        ) {
           throw new Error("Wait for active queue workers before cleanup.");
         }
-        const newIds = inventory.jobs.flatMap((job) => {
-          if (job.runId && !known.has(job.runId)) {
-            return [job.runId];
+        const newIds = inventory.jobs.flatMap(
+          (
+            job: Readonly<{ id: string; locked: boolean; runId: string | null }>
+          ) => {
+            if (job.runId && !known.has(job.runId)) {
+              return [job.runId];
+            }
+            return [];
           }
-          return [];
-        });
+        );
         if (newIds.length > 0) {
           for (const id of newIds) {
             known.add(id);
@@ -151,7 +164,15 @@ export const purgeEvePostgresQueue = async (
           // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
           removedJobIds: await removeUnlockedJobs(
             query,
-            inventory.jobs.map((job) => job.id)
+            inventory.jobs.map(
+              (
+                job: Readonly<{
+                  id: string;
+                  locked: boolean;
+                  runId: string | null;
+                }>
+              ) => job.id
+            )
           ),
           runIds: [...known].toSorted(),
         };
@@ -162,4 +183,4 @@ export const purgeEvePostgresQueue = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions */

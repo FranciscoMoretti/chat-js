@@ -59,8 +59,9 @@ const Tooltip = (
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TooltipTrigger forwards TooltipPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof TooltipPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <TooltipPrimitiveTrigger
     data-slot="tooltip-trigger"
@@ -74,17 +75,21 @@ const TooltipTrigger = (
 /* oxlint-disable no-magic-numbers, react/no-multi-comp -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TooltipContent forwards TooltipPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const TooltipContent = ({
-  className,
-  sideOffset = 0,
-  children,
-  variant = "primary",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset, children, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveContent> & {
-  variant?: "base" | "primary";
-}): ReactJSX.Element => (
+
+const TooltipContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    sideOffset = 0,
+    children,
+    variant = "primary",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset, children, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof TooltipPrimitiveContent> & {
+    readonly variant?: "base" | "primary";
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <TooltipPrimitivePortal>
     <TooltipPrimitiveContent
       // oxlint-disable-next-line react/forbid-component-props -- TooltipPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.

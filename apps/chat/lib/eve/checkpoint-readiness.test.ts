@@ -58,9 +58,8 @@ it("does not accept an unrelated source receipt or a generic not found", async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("times out without allocating or changing the requested checkpoint") uses 15_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("times out without allocating or changing the requested checkpoint") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("times out without allocating or changing the requested checkpoint") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("times out without allocating or changing the requested checkpoint", async () => {
@@ -77,14 +76,14 @@ it("times out without allocating or changing the requested checkpoint", async ()
   await pending;
   expect(
     request.mock.calls.every(
-      (call) =>
+      (call: Readonly<(typeof request.mock.calls)[number]>) =>
         call[1] === "/eve/chat/v1/session/source/checkpoint?beforeTurnId=turn_0"
     )
   ).toBe(true);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("requires the exact named checkpoint receipt and never falls back to a turn lookup uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -145,18 +144,22 @@ it.each(["source_not_idle", "source_advanced"])(
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { checkpointRejected: true, error: "Identity conflict" },   { checkpointRejected: false,'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ { checkpointRejected: true, error: "Identity conflict" }, { checkpointRejec accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   { checkpointRejected: true, error: "Identity conflict" },
   { checkpointRejected: false, error: "source_advanced" },
   { error: "source_advanced" },
-])("keeps generic checkpoint failures ambiguous", async (body) => {
-  request.mockResolvedValue(Response.json(body, { status: 409 }));
-  await expect(
-    waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
-  ).rejects.toThrow("lookup is unavailable");
-});
+])(
+  "keeps generic checkpoint failures ambiguous",
+  async (
+    body: Readonly<
+      | { checkpointRejected: boolean; error: string }
+      | { error: string; checkpointRejected?: undefined }
+    >
+  ) => {
+    request.mockResolvedValue(Response.json(body, { status: 409 }));
+    await expect(
+      waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
+    ).rejects.toThrow("lookup is unavailable");
+  }
+);
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

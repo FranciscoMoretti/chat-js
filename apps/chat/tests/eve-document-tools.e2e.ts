@@ -1,23 +1,27 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E fixture runs in Node and intentionally uses this built-in.
+import { execFileSync } from "node:child_process";
 /* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/config"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Request, TestInfo } from "@playwright/test";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { and, desc, eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "../lib/config";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -25,11 +29,11 @@ import {
   eveDocumentRevision,
   userCredit,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -39,22 +43,31 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * max-statements (#512): test("document tool states remain readable on desktop and mobile") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("document tool states remain readable on desktop and mobile") uses 2, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("document tool states remain readable on desktop and mobile") uses execFileSync( "bun", ["tests/eve-document-renderer-fixture.ts"], { encoding: "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("document tool states remain readable on desktop and mobile") accepts { page, }; testInfo; route; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("document tool states remain readable on desktop and mobile") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("document tool states remain readable on desktop and mobile", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll(
+      (links: readonly Readonly<Pick<HTMLLinkElement, "outerHTML">>[]) =>
+        links
+          .map((link: { readonly outerHTML: string }) => link.outerHTML)
+          .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-document-renderer-fixture.ts"],
@@ -79,21 +92,21 @@ test("document tool states remain readable on desktop and mobile", async ({
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native documents open in ChatJS, retain versions after reload, and honor shared keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native documents open in ChatJS, retain versions after reload, and honor shared keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native documents open in ChatJS, retain versions after reload, and honor shared uses 240_000, 20_000, 0, 1, 3, 120_000, 390, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("native documents open in ChatJS, retain versions after reload, and honor shared uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep test("native documents open in ChatJS, retain versions after reload, and honor shared's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): test("native documents open in ChatJS, retain versions after reload, and honor shared accepts { page, browser, }; testInfo; route; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native documents open in ChatJS, retain versions after reload, and honor shared preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultTimeout(), page.addInitScript(), page.route() on the original Page/locator receiver to change the live browser or route state.
 test("native documents open in ChatJS, retain versions after reload, and honor shared access", async ({
   page,
   browser,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   // Keep the development-only floating query inspector out of product controls and captures.
@@ -105,7 +118,11 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.context().addCookies([
     {
@@ -242,7 +259,11 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Cobalt pears.");
   // Rich previews may have read the previous revision. Make its cache stale before testing a failed refetch.
   await page.clock.setFixedTime(new Date(Date.now() + 120_000));
-  await page.route("**/api/trpc/eve.document*", (route) => route.abort());
+  await page.route(
+    "**/api/trpc/eve.document*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await panel
     .getByRole("button", { exact: true, name: "View changes" })
     .click();
@@ -341,7 +362,11 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Version 3 of 3");
   const editor = panel.locator(".lexical-editor");
   await expect(editor).toHaveAttribute("contenteditable", "true");
-  await page.route("**/api/trpc/eve.saveDocument*", (route) => route.abort());
+  await page.route(
+    "**/api/trpc/eve.saveDocument*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await editor.fill("Retained manual draft");
   await expect(panel.getByRole("button", { name: "Retry save" })).toBeVisible();
   await panel.screenshot({
@@ -390,6 +415,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   const release = Promise.withResolvers<undefined>();
   await page.route(
     "**/api/trpc/eve.saveDocument*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     async (route) => {
       const response = await route.fetch();
       accepted.resolve(undefined);
@@ -439,7 +465,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Keep this composer draft.");
   const actionRequest = page.waitForRequest(
-    (request) =>
+    (request: Readonly<Pick<Request, "method" | "url">>) =>
       request.method() === "POST" &&
       request.url().includes("/api/eve/v1/session/")
   );
@@ -533,6 +559,6 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-document-tools.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

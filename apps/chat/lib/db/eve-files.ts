@@ -13,9 +13,8 @@ import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 const FIRST_ROW_INDEX = 0;
 
 // Native capabilities used by locked storage writes and reservations.
-type FileTransaction = Readonly<
-  Pick<typeof db, "execute" | "select" | "insert">
->;
+// oxlint-disable-next-line no-magic-numbers -- Indexed callback type preserves the actual native transaction contract.
+type FileTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isEveFileUnavailable's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined -- no-undefined (#519): isEveFileUnavailable uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
@@ -111,6 +110,7 @@ const writeEveUpload = async <T>(
   key: string,
   write: () => Promise<T>
 ): Promise<T> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FileTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -182,6 +182,7 @@ const referenceEveFiles = async (
   ) {
     throw new Error("Invalid attachment references.");
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FileTransaction) => {
     // Serializes with deletion and fork reservation, before observing state.
     await tx.execute(
@@ -281,6 +282,7 @@ const reserveEveGeneratedFile = async (
   if (!isFileStorageKey(key)) {
     throw new Error("Invalid storage key.");
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FileTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -322,6 +324,7 @@ const writeEveGeneratedFile = async <T>(
   key: string,
   write: () => Promise<T>
 ): Promise<T> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: FileTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -357,13 +360,14 @@ const writeEveGeneratedFile = async <T>(
 no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Caller holds the owner family lock and has authorized the document revision.
- * @param {Readonly<Pick<typeof db, "select" | "insert">>} tx - Caller transaction holding the owner family lock.
+ * @param {FileTransaction} tx - Caller transaction holding the owner family lock.
  * @param {string} ownerId - Owner required for every active document file.
  * @param {string} conversationId - Conversation that retains the document references.
  * @param {readonly string[]} fileIds - Storage keys referenced by the authorized revision.
  */
 const retainEveDocumentFiles = async (
-  tx: Readonly<Pick<typeof db, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   conversationId: string,
   fileIds: readonly string[]

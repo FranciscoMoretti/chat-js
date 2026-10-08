@@ -32,13 +32,13 @@ const searchQueriesSchema = z
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeMultiQuerySearch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): executeMultiQuerySearch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): executeMultiQuerySearch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): executeMultiQuerySearch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): executeMultiQuerySearch uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/explicit-function-return-type (#560): Keep executeMultiQuerySearch's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep executeMultiQuerySearch's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): executeMultiQuerySearch accepts { search_queries, search, dataStream, toolCallId, writeTopLevelUpdates, title, comple; query: { query: string; maxResults: number }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/explicit-module-boundary-types (#562): Keep executeMultiQuerySearch's return type inferred from its schema, SDK, or implementation result; query: { query: string; maxResults: number }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): executeMultiQuerySearch intentionally keeps the existing falsy-value behavior of error; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+
 // Common search execution logic
 const executeMultiQuerySearch = async ({
   search_queries,
@@ -49,16 +49,21 @@ const executeMultiQuerySearch = async ({
   title,
   completeTitle,
 }: {
-  search_queries: { query: string; maxResults: number }[];
-  search: (
-    query: { query: string; maxResults: number },
+  readonly search_queries: readonly {
+    readonly query: string;
+    readonly maxResults: number;
+  }[];
+  readonly search: (
+    query: { readonly query: string; readonly maxResults: number },
     index: number
-  ) => Promise<{ title: string; url: string; content: string }[]>;
-  dataStream?: ToolProgressWriter;
-  toolCallId: string;
-  writeTopLevelUpdates: boolean;
-  title: string;
-  completeTitle: string;
+  ) => Promise<
+    { readonly title: string; readonly url: string; readonly content: string }[]
+  >;
+  readonly dataStream?: Readonly<ToolProgressWriter>;
+  readonly toolCallId: string;
+  readonly writeTopLevelUpdates: boolean;
+  readonly title: string;
+  readonly completeTitle: string;
 }) => {
   const log = createModuleLogger("tools/web-search");
   log.debug(
@@ -116,6 +121,6 @@ const executeMultiQuerySearch = async ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 export { DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema };
 /* oxlint-enable import/no-named-export */

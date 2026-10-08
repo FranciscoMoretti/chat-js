@@ -31,10 +31,13 @@ interface CodeBlockContextType {
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- lineNumberTransformer: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including node). */
 
 const lineNumberTransformer: ShikiTransformer = {
-  line(node, line) {
+  line(
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- The Shiki transformer prepends to node.children; retain this native AST writer contract. */
+    node,
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ line
+  ) {
     node.children.unshift({
       children: [{ type: "text", value: String(line) }],
       properties: {
@@ -54,7 +57,7 @@ const lineNumberTransformer: ShikiTransformer = {
   name: "line-numbers",
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve highlightCode's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 const highlightCode = async (
@@ -83,17 +86,21 @@ const highlightCode = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- CodeBlock: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions -- CodeBlock: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
 
-const CodeBlock = ({
-  code,
-  language,
-  showLineNumbers = false,
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes code, language, showLineNumbers, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: CodeBlockProps): ReactJSX.Element => {
+const CodeBlock = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    code,
+    language,
+    showLineNumbers = false,
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes code, language, showLineNumbers, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: CodeBlockProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const [html, setHtml] = useState<string>("");
   const [darkHtml, setDarkHtml] = useState<string>("");
 
@@ -154,30 +161,32 @@ const CodeBlock = ({
     </CodeBlockContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- CodeBlockCopyButtonProps: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including error: Error). */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions */
 
 type CodeBlockCopyButtonProps = Omit<
   ComponentProps<typeof Button>,
   "onCopy" | "onError"
 > & {
   readonly onCopy?: () => void | Promise<void>;
-  readonly onError?: (error: Error) => void | Promise<void>;
+  readonly onError?: (error: Readonly<Error>) => void | Promise<void>;
   timeout?: number;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- CodeBlockCopyButton: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2000); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including navigator?.clipboard?.writeText); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
-const CodeBlockCopyButton = ({
-  onCopy,
-  onError,
-  timeout = 2000,
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes onCopy, onError, timeout, children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: CodeBlockCopyButtonProps): ReactJSX.Element => {
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, typescript/strict-void-return -- CodeBlockCopyButton: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2000); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including navigator?.clipboard?.writeText); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+
+const CodeBlockCopyButton = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    onCopy,
+    onError,
+    timeout = 2000,
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes onCopy, onError, timeout, children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: CodeBlockCopyButtonProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const [isCopied, setIsCopied] = useState(false);
   const [, startCopyTransition] = useTransition();
   const { code } = useContext(CodeBlockContext);
@@ -225,7 +234,7 @@ const CodeBlockCopyButton = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CodeBlock, CodeBlockCopyButton, highlightCode); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, typescript/strict-void-return */
 /* oxlint-disable react/only-export-components -- #620: Consumers import CodeBlock, CodeBlockCopyButton, highlightCode from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { CodeBlock, CodeBlockCopyButton, highlightCode };
 /* oxlint-enable import/no-named-export */

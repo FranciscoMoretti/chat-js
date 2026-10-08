@@ -7,10 +7,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined -- initialArtifactData: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
@@ -27,15 +30,14 @@ const initialArtifactData: UIArtifact = {
 };
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- Selector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including state: UIArtifact). */
+/* oxlint-disable id-length -- Selector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
 
 type Selector<T> = (state: UIArtifact) => T;
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length */
 
 type MetadataUpdater = (current: ArtifactMetadata) => ArtifactMetadata;
 
 type MetadataStore = Record<string, ArtifactMetadata>;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ArtifactContextType: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact: UIArtifact). */
 
 interface ArtifactContextType {
   artifact: UIArtifact;
@@ -48,19 +50,19 @@ interface ArtifactContextType {
     metadata: ArtifactMetadata | MetadataUpdater
   ) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable no-undefined -- ArtifactContext: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
 /* oxlint-enable no-undefined */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- ArtifactProvider:   typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: ReactNode }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ArtifactProvider = ({
   children,
 }: {
-  children: ReactNode;
+  readonly children: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const [artifactState, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
@@ -68,7 +70,7 @@ const ArtifactProvider = ({
 
   const setArtifact = useCallback(
     (updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)) => {
-      setArtifactState((currentArtifact) => {
+      setArtifactState((currentArtifact: UIArtifact) => {
         if (typeof updaterFn === "function") {
           return updaterFn(currentArtifact);
         }
@@ -80,7 +82,7 @@ const ArtifactProvider = ({
 
   const setMetadata = useCallback(
     (documentId: string, metadata: ArtifactMetadata | MetadataUpdater) => {
-      setMetadataStore((current) => ({
+      setMetadataStore((current: Readonly<MetadataStore>) => ({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...current,
         // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Artifact metadata intentionally varies with document kind; narrowing it requires a discriminated metadata/store API migration.
@@ -110,7 +112,7 @@ const ArtifactProvider = ({
     </ArtifactContext.Provider>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 const useArtifactContext = (): ArtifactContextType => {
   const context = useContext(ArtifactContext);
@@ -141,7 +143,7 @@ interface ArtifactHookValue {
   setMetadata: (metadataArg: ArtifactMetadata | MetadataUpdater) => void;
 }
 
-const hideArtifact = (currentArtifact: Readonly<UIArtifact>): UIArtifact => {
+const hideArtifact = (currentArtifact: UIArtifact): UIArtifact => {
   if (currentArtifact.status === "streaming") {
     /* oxlint-disable oxc/no-rest-spread-properties -- Preserve all current streaming fields while hiding the artifact; Object.assign conflicts with eslint/prefer-object-spread. */
     return { ...currentArtifact, isVisible: false };

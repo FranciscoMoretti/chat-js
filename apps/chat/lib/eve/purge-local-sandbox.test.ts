@@ -159,10 +159,9 @@ test("validates all records before deletion and rejects another session or share
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): test("validates the whole family and removes all VMs before resolving snapshot depend keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("validates the whole family and removes all VMs before resolving snapshot depend uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("validates the whole family and removes all VMs before resolving snapshot depend accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
@@ -191,8 +190,8 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     return Promise.resolve();
   });
   await purgeLocalEveSandboxes([parent, child]);
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This purge-local-sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(remove.mock.calls.map(([name]) => name)).toEqual([
+
+  expect(remove.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
     parent.snapshotName,
     child.snapshotName,
     parent.snapshotName,
@@ -200,7 +199,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("retains resources created before metadata and across replacements") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

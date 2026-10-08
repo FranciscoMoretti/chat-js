@@ -3,13 +3,13 @@
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
 import { snapshotPublicEveCopyDocuments } from "../lib/db/eve-copy-documents";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -20,12 +20,12 @@ import {
   eveImportedDocumentCheckpointEntry,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -154,9 +154,8 @@ const resources = {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("captures all accessible ancestors without private branches, unrelated documents uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("captures all accessible ancestors without private branches, unrelated documents accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("captures all accessible ancestors without private branches, unrelated documents, or runtime ownership fields", async () => {
   const result = await snapshotPublicEveCopyDocuments(
@@ -167,14 +166,14 @@ test("captures all accessible ancestors without private branches, unrelated docu
   );
   expect(result.documents).toHaveLength(1);
   expect(result.documents[0].headRevisionId).toBe(visibleRevision);
-  expect(result.documents[0].revisions.map((row) => row.id)).toEqual([
-    rootRevision,
-    visibleRevision,
-  ]);
-  expect(result.documents[0].revisions.map((row) => row.content)).toEqual([
-    "First published version",
-    "Second published version",
-  ]);
+  expect(
+    result.documents[0].revisions.map((row: { readonly id: string }) => row.id)
+  ).toEqual([rootRevision, visibleRevision]);
+  expect(
+    result.documents[0].revisions.map(
+      (row: { readonly content: string }) => row.content
+    )
+  ).toEqual(["First published version", "Second published version"]);
   for (const forbidden of [
     privateRevision,
     hiddenDocumentId,
@@ -188,7 +187,7 @@ test("captures all accessible ancestors without private branches, unrelated docu
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 test("rejects a referenced private revision or a missing document instead of partially copying", async () => {
   await expect(
@@ -251,13 +250,13 @@ test("requires publication even for an empty resource manifest", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): test("observes revocation committed while preparation is waiting on the source row") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("observes revocation committed while preparation is waiting on the source row") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("observes revocation committed while preparation is waiting on the source row", async () => {
   const updated = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.update() to perform the native database transaction/write operation.
   const revocation = db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
@@ -284,7 +283,7 @@ test("observes revocation committed while preparation is waiting on the source r
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("snapshots native and imported boundaries independently of later document heads" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

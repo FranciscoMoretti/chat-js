@@ -11,6 +11,28 @@ import type { FollowupContext } from "./followup-context";
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
 
+type NativeFollowupUsage = NonNullable<HookModelCall["usage"]>;
+type ReadonlyFollowupUsage = Readonly<
+  Omit<NativeFollowupUsage, "inputTokenDetails" | "outputTokenDetails" | "raw">
+> & {
+  readonly inputTokenDetails: Readonly<
+    NativeFollowupUsage["inputTokenDetails"]
+  >;
+  readonly outputTokenDetails: Readonly<
+    NativeFollowupUsage["outputTokenDetails"]
+  >;
+  readonly raw?: Readonly<NonNullable<NativeFollowupUsage["raw"]>>;
+};
+type ReadonlyFollowupProviderMetadata = {
+  readonly [
+    Provider in keyof NonNullable<HookModelCall["providerMetadata"]>
+  ]: Readonly<NonNullable<HookModelCall["providerMetadata"]>[Provider]>;
+};
+interface FollowupStep {
+  readonly providerMetadata?: ReadonlyFollowupProviderMetadata;
+  readonly usage?: ReadonlyFollowupUsage;
+}
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (generateEveFollowupSuggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateEveFollowupSuggestions's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
@@ -20,8 +42,9 @@ import { resolveEveModel } from "./model-selection";
  * @param {Readonly<FollowupContext>} context User and completed assistant text supplying auxiliary suggestion generation.
  * @returns {Promise<TurnCompletedHookResult | undefined>} No result when disabled/empty; otherwise native model usage and validated suggestion metadata, retaining billed attempts even when output parsing fails.
  */
+// oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
 export const generateEveFollowupSuggestions = async (
-  context: Readonly<FollowupContext>
+  context: FollowupContext
 ): Promise<TurnCompletedHookResult | undefined> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
@@ -52,8 +75,8 @@ export const generateEveFollowupSuggestions = async (
           role: "user",
         },
       ],
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native SDK step usage/providerMetadata are forwarded unchanged into HookModelCall receipts; readonly JSON collections change the native receipt input contract.
-      onStepEnd(step): void {
+
+      onStepEnd(step: FollowupStep): void {
         modelCalls.push({
           modelId,
           providerMetadata: step.providerMetadata,

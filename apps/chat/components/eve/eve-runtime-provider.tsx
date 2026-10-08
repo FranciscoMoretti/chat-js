@@ -258,7 +258,6 @@ const EveRuntimeProvider = ({
   const [registry] = useState(() => new Map<string, Runtime>());
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve open's awaited sequencing and rejected-Promise behavior. */
   const open = useCallback(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EveRuntimeContext's receiving callback contract is OpenRequest, including mutable nested message input; retain that native type at this boundary.
     async (request: OpenRequest, navigate = true) => {
       // Query resolves the requested chat identity before looking up its owning runtime.
       const identity = await queryClient.query(
@@ -343,7 +342,6 @@ const EveRuntimeProvider = ({
 
 /* oxlint-disable react/no-multi-comp -- EveRuntimeRoute: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
-/* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the route component's native OpenRequest prop contract; a shallow readonly projection still exposes mutable nested message input. */
 const EveRuntimeRoute = ({
   id,
   sessionId,

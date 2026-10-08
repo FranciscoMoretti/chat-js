@@ -2,8 +2,9 @@
 
 import { Share } from "lucide-react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
 /* oxlint-enable sort-imports */
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
 import React from "react";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
@@ -15,16 +16,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 
 interface ShareMenuItemProps {
-  children?: ReactNode;
-  onShare: () => void;
+  readonly children?: ReadonlyReactNode;
+  readonly onShare: () => void;
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ShareMenuItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ShareMenuItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ShareMenuItem: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onShare, children }: ShareMenuItemProps). */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ShareMenuItem: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 export const ShareMenuItem = ({
   onShare,
@@ -41,7 +43,9 @@ export const ShareMenuItem = ({
           <DropdownMenuItem
             // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
             className="cursor-pointer opacity-50"
-            onSelect={(event) => event.preventDefault()}
+            onSelect={(event: { readonly preventDefault: () => void }) =>
+              event.preventDefault()
+            }
           >
             <Share size={16} />
             <span>Share</span>
@@ -71,4 +75,4 @@ export const ShareMenuItem = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

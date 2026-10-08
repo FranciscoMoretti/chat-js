@@ -81,9 +81,8 @@ const refreshRequest = (refreshToken: string) =>
     method: "POST",
   });
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts { tokens }: { tokens: Record<string, unknown> }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -107,21 +106,25 @@ beforeEach(() => {
   };
   mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.setClientInfo.mockImplementation(
-    ({ clientInfo }: { clientInfo: Record<string, unknown> }) => {
+    ({
+      clientInfo,
+    }: {
+      readonly clientInfo: Readonly<Record<string, unknown>>;
+    }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, clientInfo };
       return stored;
     }
   );
   mocks.setCodeVerifier.mockImplementation(
-    ({ codeVerifier }: { codeVerifier: string }) => {
+    ({ codeVerifier }: { readonly codeVerifier: string }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, codeVerifier };
       return stored;
     }
   );
   mocks.save.mockImplementation(
-    ({ tokens }: { tokens: Record<string, unknown> }) => {
+    ({ tokens }: { readonly tokens: Readonly<Record<string, unknown>> }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, tokens };
       return stored;
@@ -183,7 +186,7 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

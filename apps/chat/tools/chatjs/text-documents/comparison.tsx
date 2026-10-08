@@ -35,7 +35,6 @@ const DiffView = dynamic(
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const EveDocumentComparison = ({
   conversationId,
   documentId,
@@ -43,11 +42,11 @@ export const EveDocumentComparison = ({
   content,
   version,
 }: {
-  conversationId: string;
-  documentId: string;
-  previousRevisionId: string;
-  content: string;
-  version: number;
+  readonly conversationId: string;
+  readonly documentId: string;
+  readonly previousRevisionId: string;
+  readonly content: string;
+  readonly version: number;
 }) => {
   const trpc = useTRPC();
   const previous = useQuery(
@@ -92,7 +91,6 @@ export const EveDocumentComparison = ({
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */
 

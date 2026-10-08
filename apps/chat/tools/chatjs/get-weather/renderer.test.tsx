@@ -40,14 +40,11 @@ const weather: WeatherAtLocation = {
 };
 /* oxlint-enable id-length, no-magic-numbers */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-new-object-as-prop (#558): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * typescript/prefer-readonly-parameter-types (#565): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 accepts hours; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- * react-perf/jsx-no-new-object-as-prop (#558): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting. */
 test.each([
   ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
   ["2026-09-08T20:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
-])("keeps a complete forecast row at %s", (time, hours) => {
+])("keeps a complete forecast row at %s", (time, hours: readonly string[]) => {
   const html = renderToStaticMarkup(
     <GetWeatherRenderer
       isReadonly
@@ -67,4 +64,4 @@ test.each([
   expect(html).not.toContain(">10AM</div>");
   expect(html).not.toContain(">11AM</div>");
 });
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */

@@ -4,78 +4,119 @@
  */
 
 import { expect, test } from "@playwright/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+import type { ConsoleMessage, TestInfo } from "@playwright/test";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { Client } from "eve/client";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import separate from runtime bindings; it has no runtime module-order effect.
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { listEveSubagents } from "../lib/db/eve-subagents";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, userCredit } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+
+type ResearchEventReader =
+  | {
+      readonly type: "action.result";
+      readonly data: Readonly<
+        Omit<
+          Extract<MessageStreamEvent, { type: "action.result" }>["data"],
+          "result"
+        > & {
+          readonly result: Readonly<
+            Extract<
+              MessageStreamEvent,
+              { type: "action.result" }
+            >["data"]["result"]
+          >;
+        }
+      >;
+    }
+  | {
+      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+      readonly data?: unknown;
+    };
 
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
 const researchSummary = /^Researched for /u;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): test.afterEach uses -1, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.afterEach accepts { page }; testInfo; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test.afterEach intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-test.afterEach(async ({ page }, testInfo) => {
-  if (testInfo.status === testInfo.expectedStatus) {
-    return;
+test.afterEach(
+  async (
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.goto(), page.request.get(), and page.route() on the original page during its authenticated integration scenario.
+    { page },
+    testInfo: Readonly<Pick<TestInfo, "status" | "expectedStatus">>
+  ) => {
+    if (testInfo.status === testInfo.expectedStatus) {
+      return;
+    }
+    const id = z
+      .uuid()
+      .safeParse(new URL(page.url()).pathname.split("/").at(-1));
+    if (!id.success) {
+      return;
+    }
+    const [conversation] = await db
+      .select()
+      .from(eveConversation)
+      .where(eq(eveConversation.id, id.data));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    if (conversation?.sessionId) {
+      await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
+        .attach(conversation.sessionId)
+        .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
+    }
   }
-  const id = z.uuid().safeParse(new URL(page.url()).pathname.split("/").at(-1));
-  if (!id.success) {
-    return;
-  }
-  const [conversation] = await db
-    .select()
-    .from(eveConversation)
-    .where(eq(eveConversation.id, id.data));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (conversation?.sessionId) {
-    await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
-      .attach(conversation.sessionId)
-      .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
-  }
-});
+);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native deep research saves a reloadable report in ChatJS with a usage receipt") uses 900_000, 15_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("native deep research saves a reloadable report in ChatJS with a usage receipt") accepts { page, }; message; route; data; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native deep research saves a reloadable report in ChatJS with a usage receipt") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("native deep research saves a reloadable report in ChatJS with a usage receipt", async ({
   page,
 }) => {
   test.setTimeout(900_000);
   const duplicateKeyErrors: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error" && message.text().includes("same key")) {
-      duplicateKeyErrors.push(message.text());
+  page.on(
+    "console",
+    (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
+      if (message.type() === "error" && message.text().includes("same key")) {
+        duplicateKeyErrors.push(message.text());
+      }
     }
-  });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  );
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
@@ -92,7 +133,14 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
       target: userCredit.userId,
     });
   const created = await page.evaluate(
-    async (data) => {
+    async (
+      data: Readonly<{
+        message: string;
+        modelId: string;
+        operationId: string;
+        selectedTool: string;
+      }>
+    ) => {
       const response = await fetch("/api/agent-conversations", {
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
@@ -149,7 +197,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const results = snapshot.events.filter(
-    (event) =>
+    (event: ResearchEventReader) =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "deepResearch"
@@ -186,24 +234,29 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, binding.sessionId));
-  const childModels = usage.filter((row) =>
+  const childModels = usage.filter((row: { readonly eventId: string }) =>
     row.eventId.startsWith("eve-child:")
   );
-  const childSearch = usage.filter((row) =>
+  const childSearch = usage.filter((row: { readonly eventId: string }) =>
     children.some((child) =>
       row.eventId.startsWith(`eve-tool:${child.sessionId}:`)
     )
   );
   expect(childModels.length).toBeGreaterThan(0);
-  expect(childSearch.some((row) => Number(row.costUsd) > 0)).toBe(true);
   expect(
-    [...childModels, ...childSearch].every(
-      (row) => row.costUsd !== null && Number(row.costUsd) >= 0
+    childSearch.some(
+      (row: { readonly costUsd: string | null }) => Number(row.costUsd) > 0
     )
   ).toBe(true);
-  expect(new Set(usage.map((row) => row.turnId))).toEqual(
-    new Set(children.map((child) => child.rootTurnId))
-  );
+  expect(
+    [...childModels, ...childSearch].every(
+      (row: { readonly costUsd: string | null }) =>
+        row.costUsd !== null && Number(row.costUsd) >= 0
+    )
+  ).toBe(true);
+  expect(
+    new Set(usage.map((row: { readonly turnId: string }) => row.turnId))
+  ).toEqual(new Set(children.map((child) => child.rootTurnId)));
   // Full replay must preserve both receipt count and the root-turn rounding charge.
   await reconcileEveUsage(conversation.ownerId, binding.sessionId, true);
   const replayed = await db
@@ -211,14 +264,20 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, binding.sessionId));
   expect(
-    replayed.toSorted((leftUsage, rightUsage) =>
-      leftUsage.eventId.localeCompare(rightUsage.eventId)
+    replayed.toSorted(
+      (
+        leftUsage: { readonly eventId: string },
+        rightUsage: { readonly eventId: string }
+      ) => leftUsage.eventId.localeCompare(rightUsage.eventId)
     )
   ).toEqual(
-    usage.toSorted((leftUsage, rightUsage) =>
-      leftUsage.eventId.localeCompare(rightUsage.eventId)
+    usage.toSorted(
+      (
+        leftUsage: { readonly eventId: string },
+        rightUsage: { readonly eventId: string }
+      ) => leftUsage.eventId.localeCompare(rightUsage.eventId)
     )
   );
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */

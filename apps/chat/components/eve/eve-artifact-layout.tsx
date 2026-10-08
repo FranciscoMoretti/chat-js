@@ -2,13 +2,12 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveMessage } from "eve/client";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useCallback, useEffect, useState } from "react";
 /* oxlint-enable sort-imports */
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
@@ -35,6 +34,14 @@ import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
 /* oxlint-enable sort-imports */
 import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+// oxlint-disable-next-line import/max-dependencies -- The full readonly reader imports describe existing data and callable contracts; keep the direct feature dependencies visible.
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-disable import/max-dependencies -- @/tools/chatjs/document-run import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentRun } from "@/tools/chatjs/document-run";
@@ -56,28 +63,37 @@ import {
 } from "./eve-document-context";
 /* oxlint-enable sort-imports */
 import { useDocumentDraft } from "./use-document-draft";
+/* oxlint-enable sort-imports */
 
 const artifactRegionProps = { role: "region" as const };
-const emptyEveMessages: readonly EveMessage[] = [];
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- DocumentActionProps: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including request: DocumentAssistantRequest). */
+const emptyEveMessages: readonly ReadonlyEveMessage[] = [];
 
 interface DocumentActionProps {
-  messages?: readonly EveMessage[];
-  replaying?: boolean;
-  onStopExecution?: (conversationId: string) => Promise<void>;
-  isExecutionBusy?: (conversationId: string) => boolean;
-  getExecutionMessages?: (conversationId: string) => readonly EveMessage[];
-  onDocumentAction?: (request: DocumentAssistantRequest) => Promise<void>;
-  documentActionsDisabled?: boolean;
+  readonly messages?: readonly ReadonlyEveMessage[];
+  readonly replaying?: boolean;
+  readonly onStopExecution?: (conversationId: string) => Promise<void>;
+  readonly isExecutionBusy?: (conversationId: string) => boolean;
+  readonly getExecutionMessages?: (
+    conversationId: string
+  ) => readonly ReadonlyEveMessage[];
+  readonly onDocumentAction?: (
+    request: DocumentAssistantRequest
+  ) => Promise<void>;
+  readonly documentActionsDisabled?: boolean;
 }
 /* oxlint-disable react/jsx-no-literals -- DocumentSaveStatus renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- DocumentSaveStatus: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editing.error); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+
+/* oxlint-disable react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return -- DocumentSaveStatus: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editing.error); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const DocumentSaveStatus = ({
   editing,
 }: {
-  editing: ReturnType<typeof useDocumentDraft>;
+  readonly editing: {
+    readonly retry: () => Promise<void>;
+    readonly discard: () => void;
+    readonly storageError: boolean;
+    readonly error: string | undefined;
+  };
 }): React.JSX.Element => {
   const [, startEventAction] = React.useTransition();
   const handleRetry = editing.retry;
@@ -119,8 +135,8 @@ const DocumentSaveStatus = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- EveArtifactPanel renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions -- EveArtifactPanel: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including current); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including artifact.followLive). */
+/* oxlint-enable react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/promise-function-async, typescript/strict-boolean-expressions -- EveArtifactPanel: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including artifact.followLive). */
 
 // This panel coordinates editor, revision, assistant, and recovery states.
 // oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
@@ -133,10 +149,10 @@ const EveArtifactPanel = ({
   executionBusy,
   onStop,
 }: {
-  conversationId: string;
-  executionBusy?: boolean;
-  onStop?: () => Promise<void>;
-  readOnly: boolean;
+  readonly conversationId: string;
+  readonly executionBusy?: boolean;
+  readonly onStop?: () => Promise<void>;
+  readonly readOnly: boolean;
 } & DocumentActionProps): ReactJSX.Element => {
   const { artifact, closeArtifact, setArtifact } = useArtifact();
   // oxlint-disable-next-line no-ternary -- Keep selectedRevisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -172,7 +188,10 @@ const EveArtifactPanel = ({
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from document.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const revision = document.data?.revision;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from revision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const index = history.findIndex((item) => item.id === revision?.id);
+  const index = history.findIndex(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish read and fallback, including one receiver evaluation; the app guidance prefers optional chaining.
+    (item: { readonly id: string }) => item.id === revision?.id
+  );
   const previewing =
     artifact.status === "streaming" && artifact.followLive !== false;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading canEdit from document.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -423,7 +442,7 @@ const EveArtifactPanel = ({
                 onAction={
                   // oxlint-disable-next-line no-ternary -- Keep onAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   onDocumentAction
-                    ? (request) => {
+                    ? (request: DocumentAssistantRequest) => {
                         selectRevision(undefined);
                         return onDocumentAction(request);
                       }
@@ -480,9 +499,9 @@ const EveArtifactPanel = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions -- Layout: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 65); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId). */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions -- Layout: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 65); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId). */
 
 const Layout = ({
   children,
@@ -495,9 +514,9 @@ const Layout = ({
   getExecutionMessages,
   onStopExecution,
 }: {
-  children: ReactNode;
-  conversationId?: string;
-  readOnly?: boolean;
+  readonly children: ReadonlyReactNode;
+  readonly conversationId?: string;
+  readonly readOnly?: boolean;
 } & DocumentActionProps) => {
   const { artifact, setArtifact } = useArtifact();
   const ownerId = artifact.conversationId ?? conversationId;
@@ -511,7 +530,10 @@ const Layout = ({
     }
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading flatMap from ownerMessages; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const call = ownerMessages
-      ?.flatMap((message) => message.parts)
+      ?.flatMap(
+        (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
+          message.parts
+      )
       .find(
         (part) =>
           part.type === "dynamic-tool" &&
@@ -593,15 +615,15 @@ const Layout = ({
   );
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveArtifactLayout); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
-/* oxlint-disable react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EveArtifactLayout: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-disable react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp -- EveArtifactLayout: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 export const EveArtifactLayout = (
   props: {
-    children: ReactNode;
-    conversationId?: string;
-    logicalChatId?: string;
-    readOnly?: boolean;
+    readonly children: ReadonlyReactNode;
+    readonly conversationId?: string;
+    readonly logicalChatId?: string;
+    readonly readOnly?: boolean;
   } & DocumentActionProps
 ): React.JSX.Element => (
   <ArtifactProvider key={props.logicalChatId ?? props.conversationId ?? "new"}>
@@ -613,6 +635,6 @@ export const EveArtifactLayout = (
   </ArtifactProvider>
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/jsx-props-no-spreading, react/no-multi-comp */
 
 /* oxlint-disable max-lines -- eve-artifact-layout keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

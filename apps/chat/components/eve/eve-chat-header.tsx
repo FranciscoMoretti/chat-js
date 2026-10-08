@@ -80,10 +80,10 @@ const EveSharedBadge = (): React.JSX.Element => (
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- projectAppearance: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including project: { icon: string; iconColor: string } | undefined). */
+/* oxlint-disable typescript/explicit-function-return-type -- projectAppearance: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; iconColor: string } | undefined). */
 
 const projectAppearance = (
-  project: { icon: string; iconColor: string } | undefined
+  project: { readonly icon: string; readonly iconColor: string } | undefined
 ) => ({
   color:
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing "gray" fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading iconColor from project; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -92,8 +92,8 @@ const projectAppearance = (
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from project; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   icon: PROJECT_ICONS.find((value) => value === project?.icon) ?? "folder",
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveChatHeader: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- EveChatHeader: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const EveChatHeader = ({
   chatId,
@@ -247,9 +247,14 @@ const EveChatHeader = ({
                       className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
                       maxLength={255}
                       value={draft}
-                      onChange={(event) => setDraft(event.target.value)}
+                      onChange={(event: {
+                        readonly target: { readonly value: string };
+                      }) => setDraft(event.target.value)}
                       onBlur={save}
-                      onKeyDown={(event) => {
+                      onKeyDown={(event: {
+                        readonly key: string;
+                        readonly preventDefault: () => void;
+                      }) => {
                         if (event.key === "Enter") {
                           event.preventDefault();
                           save();
@@ -278,6 +283,6 @@ const EveChatHeader = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveChatHeader, EveSharedBadge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 export { EveChatHeader, EveSharedBadge };
 /* oxlint-enable import/no-named-export */

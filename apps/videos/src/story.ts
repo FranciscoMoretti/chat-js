@@ -6,6 +6,69 @@ type PathId = "city" | "food";
 
 type ReplyState = "streaming" | "stopped" | "complete";
 
+type CaptionBeat = Readonly<{ end: number; label: string; start: number }>;
+
+type CursorMove = readonly [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+
+type StoryState = Readonly<{
+  answer: string;
+  budget: boolean;
+  editText: string;
+  edited: boolean;
+  editing: boolean;
+  family: boolean;
+  following: boolean;
+  followup: Readonly<{
+    prompt: string;
+    reply: string;
+    state: "streaming" | "complete";
+    text: string;
+    title: string;
+  }>;
+  foodVisible: boolean;
+  note: string;
+  portoAnswer: string;
+  portoState: "streaming" | "complete";
+  reveal: number;
+  selected: PathId;
+  states: Readonly<Record<PathId, ReplyState>>;
+  texts: Readonly<Record<PathId, string>>;
+}>;
+
+interface LaunchScript {
+  readonly budget: {
+    readonly prompt: string;
+    readonly reply: string;
+    readonly title: string;
+  };
+  readonly city: { readonly label: string; readonly text: string };
+  readonly family: {
+    readonly prompt: string;
+    readonly reply: string;
+    readonly title: string;
+  };
+  readonly food: { readonly label: string; readonly text: string };
+  readonly package: string;
+  readonly porto: {
+    readonly label: string;
+    readonly preservedNote: string;
+    readonly prompt: string;
+    readonly reply: string;
+    readonly title: string;
+  };
+  readonly prompt: string;
+  readonly title: string;
+  readonly url: string;
+}
+
 const script = {
   budget: {
     prompt: "Make it vegetarian.",
@@ -37,11 +100,13 @@ const script = {
   prompt: "Plan a weekend in Lisbon.",
   title: "Lisbon weekend",
   url: "chatjs.dev/threads",
-};
+} satisfies LaunchScript;
 
-type LaunchScript = typeof script;
-
-const beats = [
+const beats: readonly Readonly<{
+  at: number;
+  subtitle: string;
+  title: string;
+}>[] = [
   {
     at: 0,
     subtitle: "Regenerate. Switch answers. Keep chatting.",
@@ -74,7 +139,6 @@ const textAt = (text: string, fraction: number): string =>
   text.slice(0, Math.floor(clamp(fraction) * text.length));
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable eslint/no-magic-numbers -- editTextAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- editTextAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   let prefixLength = 0;
   while (
@@ -91,7 +155,6 @@ const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   }
   return `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- noteAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
@@ -113,8 +176,7 @@ const noteAt = (timeSeconds: number): string => {
 /* oxlint-disable typescript/explicit-function-return-type -- stateAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/id-length -- stateAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- stateAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- stateAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const stateAt = (t: number, content: LaunchScript = script) => {
+const stateAt = (t: number, content: LaunchScript = script): StoryState => {
   let selected: PathId = "city";
   if (t >= 12.2 && t < 19) {
     selected = "food";
@@ -134,11 +196,11 @@ const stateAt = (t: number, content: LaunchScript = script) => {
   const followup = family ? content.family : content.budget;
   // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const progress = clamp((t - (family ? 24.6 : 34.6)) / 2.4);
-  const texts = {
+  const texts: Readonly<Record<PathId, string>> = {
     city: textAt(content.city.text, (t - 3.5) / 3),
     food: textAt(content.food.text, (t - 12.2) / 10),
   };
-  const states: Record<PathId, ReplyState> = {
+  const states: Readonly<Record<PathId, ReplyState>> = {
     // oxlint-disable-next-line no-ternary -- Keep city as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     city: t < 6.5 ? "streaming" : "complete",
     // oxlint-disable-next-line no-ternary -- Keep food as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -170,28 +232,24 @@ const stateAt = (t: number, content: LaunchScript = script) => {
     texts,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
 
-type StoryState = ReturnType<typeof stateAt>;
-
-const captionBeats = [
+const captionBeats: readonly CaptionBeat[] = [
   { end: 11.5, label: "Try another answer", start: 10 },
   { end: 18, label: "Switch while replies stream", start: 16.5 },
   { end: 24, label: "Continue either conversation", start: 22.5 },
   { end: 32, label: "Continue the other", start: 30.5 },
   { end: 41.5, label: "Edit any message. Keep both versions.", start: 40 },
-];
+] as const;
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- presentationAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- presentationAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- presentationAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable unicorn/no-null -- presentationAt: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- presentationAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const presentationAt = (wallTime: number) => {
   // Cut only completed-reply holds; keep action and streaming speed unchanged.
   const time =
@@ -217,7 +275,6 @@ const presentationAt = (wallTime: number) => {
     opacity: Math.min(ease(elapsed / 0.15), ease((duration - elapsed) / 0.15)),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -228,9 +285,8 @@ const presentationAt = (wallTime: number) => {
 /* oxlint-disable eslint/id-length -- cursorAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- cursorAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable unicorn/no-null -- cursorAt: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- cursorAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const cursorAt = (t: number) => {
-  const moves = [
+  const moves: readonly CursorMove[] = [
     [11.5, 12.5, 0.2, 600, 740, 178, 716],
     [18.1, 19.5, 0.4, 600, 740, 178, 716],
     [32.1, 33.5, 0.4, 600, 620, 249, 572],
@@ -246,7 +302,6 @@ const cursorAt = (t: number) => {
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (beats, captionBeats, clamp, cursorAt, DURATION, ease, FPS, presentationAt, script, stateAt); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */

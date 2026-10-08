@@ -36,9 +36,9 @@ import { cn } from "@/lib/utils";
 const emptyUploadQueue: string[] = [];
 
 interface AttachmentViewData {
-  contentType: string;
-  name: string;
-  url: string;
+  readonly contentType: string;
+  readonly name: string;
+  readonly url: string;
 }
 /* oxlint-disable react/jsx-no-literals -- AttachmentIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
@@ -87,7 +87,7 @@ const AttachmentIcon = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- AttachmentPill renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result */
 
 /* oxlint-disable react/forbid-component-props -- Loader2Icon, Button accept the supplied styling props; preserve this composition's layout and appearance. */
 const AttachmentPill = ({
@@ -95,9 +95,9 @@ const AttachmentPill = ({
   isUploading,
   onRemove,
 }: {
-  attachment: AttachmentViewData;
-  isUploading: boolean;
-  onRemove?: () => void;
+  readonly attachment: AttachmentViewData;
+  readonly isUploading: boolean;
+  readonly onRemove?: () => void;
 }): ReactJSX.Element => {
   const { name, url, contentType } = attachment;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -142,7 +142,7 @@ const AttachmentPill = ({
           <Button
             aria-label="Remove attachment"
             className="absolute inset-0 size-5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
-            onClick={(event) => {
+            onClick={(event: { readonly stopPropagation: () => void }) => {
               event.stopPropagation();
               onRemove();
             }}
@@ -161,8 +161,8 @@ const AttachmentPill = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return -- AttachmentItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-void-return -- AttachmentItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 /* oxlint-disable react/forbid-component-props -- PromptInputHoverCardContent, Button, ExternalLink, Download accept the supplied styling props; preserve this composition's layout and appearance. */
 const AttachmentItem = ({
@@ -172,11 +172,11 @@ const AttachmentItem = ({
   onImageClick,
   variant = "card",
 }: {
-  attachment: AttachmentViewData;
-  isUploading?: boolean;
-  onRemove?: () => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
-  variant?: "card" | "pill";
+  readonly attachment: AttachmentViewData;
+  readonly isUploading?: boolean;
+  readonly onRemove?: () => void;
+  readonly onImageClick?: (imageUrl: string, imageName?: string) => void;
+  readonly variant?: "card" | "pill";
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const { name, url, contentType } = attachment;
@@ -213,7 +213,7 @@ const AttachmentItem = ({
         <button
           aria-label={attachmentLabel}
           className="inline-block cursor-default text-left"
-          onClick={(event) => {
+          onClick={(event: { readonly stopPropagation: () => void }) => {
             event.stopPropagation();
             if (isImage && onImageClick) {
               onImageClick(url, name);
@@ -232,7 +232,7 @@ const AttachmentItem = ({
           <div className="flex gap-1">
             <Button
               className="size-7"
-              onClick={(event) => {
+              onClick={(event: { readonly stopPropagation: () => void }) => {
                 event.stopPropagation();
                 window.open(url, "_blank");
               }}
@@ -245,7 +245,7 @@ const AttachmentItem = ({
             <Button
               className="size-7"
 
-              onClick={(event) => {
+              onClick={(event: { readonly stopPropagation: () => void }) => {
                 startEventAction(async () => {
                   event.stopPropagation();
                   /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
@@ -289,9 +289,9 @@ const AttachmentItem = ({
   /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- AttachmentList: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including attachment: AttachmentViewData); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, unicorn/no-null -- AttachmentList: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const AttachmentList = ({
   attachments,
@@ -302,13 +302,13 @@ const AttachmentList = ({
   testId = "attachments",
   className,
 }: {
-  attachments: AttachmentViewData[];
-  uploadQueue?: string[];
-  onRemoveAction?: (attachment: AttachmentViewData) => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
-  variant?: "card" | "pill";
-  testId?: string;
-  className?: string;
+  readonly attachments: readonly AttachmentViewData[];
+  readonly uploadQueue?: readonly string[];
+  readonly onRemoveAction?: (attachment: AttachmentViewData) => void;
+  readonly onImageClick?: (imageUrl: string, imageName?: string) => void;
+  readonly variant?: "card" | "pill";
+  readonly testId?: string;
+  readonly className?: string;
 }): ReactJSX.Element | null => {
   if (attachments.length === 0 && uploadQueue.length === 0) {
     return null;
@@ -319,7 +319,7 @@ const AttachmentList = ({
       className={cn("flex flex-row flex-wrap items-end gap-2", className)}
       data-testid={testId}
     >
-      {attachments.map((attachment): React.JSX.Element => (
+      {attachments.map((attachment: AttachmentViewData): React.JSX.Element => (
         <AttachmentItem
           attachment={attachment}
           key={attachment.url}
@@ -349,7 +349,7 @@ const AttachmentList = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AttachmentList); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, unicorn/no-null */
 
 /* oxlint-disable max-lines -- attachment-list keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { AttachmentList };

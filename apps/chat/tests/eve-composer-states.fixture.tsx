@@ -6,6 +6,9 @@ import React, { useState } from "react";
 import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
 /* oxlint-enable sort-imports */
@@ -52,43 +55,51 @@ const states: {
 ];
 /* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types -- * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/prefer-readonly-parameter-types (#565): Fixture accepts { name, status, cancellable, stopDisabled, parts }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+/* oxlint-disable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components -- no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+
 const Fixture = (): React.JSX.Element => {
   const [stopped, setStopped] = useState("");
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-4">
       <h1>Conversation states</h1>
-      {states.map(({ name, status, cancellable, stopDisabled, parts }) => (
-        <section aria-label={name} key={name}>
-          <h2>{name}</h2>
-          <EveThinkingMessage
-            // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            status={name === "Resuming" ? "resuming" : (status ?? "ready")}
-            // oxlint-disable-next-line no-ternary -- Keep messages JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
-          />
-          <ControlledChatComposer
-            disabled={status !== "ready"}
-            draft=""
-            onDraftChange={() => setStopped("draft changed")}
-            // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            onStop={cancellable ? () => setStopped(name) : undefined}
-            onSubmit={() => setStopped("unexpected submission")}
-            status={status}
-            stopDisabled={stopDisabled}
-          />
-        </section>
-      ))}
+      {states.map(
+        ({
+          name,
+          status,
+          cancellable,
+          stopDisabled,
+          parts,
+        }: ReadonlyNativeSurface<(typeof states)[number]>) => (
+          <section aria-label={name} key={name}>
+            <h2>{name}</h2>
+            <EveThinkingMessage
+              // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              status={name === "Resuming" ? "resuming" : (status ?? "ready")}
+              // oxlint-disable-next-line no-ternary -- Keep messages JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
+            />
+            <ControlledChatComposer
+              disabled={status !== "ready"}
+              draft=""
+              onDraftChange={() => setStopped("draft changed")}
+              // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              onStop={cancellable ? () => setStopped(name) : undefined}
+              onSubmit={() => setStopped("unexpected submission")}
+              status={status}
+              stopDisabled={stopDisabled}
+            />
+          </section>
+        )
+      )}
       <output>{stopped}</output>
     </main>
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components */
 
 const root = document.querySelector("#root");
 if (!root) {

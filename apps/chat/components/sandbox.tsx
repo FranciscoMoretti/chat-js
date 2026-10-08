@@ -23,15 +23,15 @@ import {
 /* oxlint-enable sort-imports */
 
 interface SandboxComposedProps {
-  code: string;
-  language?: BundledLanguage;
-  output?: string;
-  state: ToolUIPart["state"];
-  title?: string;
+  readonly code: string;
+  readonly language?: BundledLanguage;
+  readonly output?: string;
+  readonly state: ToolUIPart["state"];
+  readonly title?: string;
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SandboxComposed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- SandboxComposed renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const SandboxComposed = ({
   code,
@@ -66,4 +66,4 @@ export const SandboxComposed = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */

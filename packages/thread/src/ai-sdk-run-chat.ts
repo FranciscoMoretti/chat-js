@@ -8,7 +8,6 @@ import type {
 } from "ai";
 import { AbstractChat } from "ai";
 
-import type { ReadonlyMessageValue } from "./message-utils";
 import { ThreadRunState } from "./thread-run-state";
 
 const FIRST_PARAMETER_INDEX = 0;
@@ -23,6 +22,32 @@ type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
   readonly headers?: Readonly<Record<string, string>> | Readonly<Headers>;
   readonly body?: Readonly<object>;
 };
+
+type ReadonlyResumeJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly ReadonlyResumeJsonValue[]
+  | ReadonlyResumeJsonObject;
+
+interface ReadonlyResumeJsonObject {
+  // oxlint-disable-next-line typescript/consistent-indexed-object-style -- This recursive JSON interface closes the value union; putting its recursion through Record produces TS2456.
+  readonly [key: string]: ReadonlyResumeJsonValue | undefined;
+}
+
+type ReadonlyResumeMetadata = Readonly<
+  Record<string, ReadonlyResumeJsonObject>
+>;
+
+// Preserve every chunk field while protecting the SDK's recursive JSON metadata.
+type ReadonlyResumeChunk<Chunk = UIMessageChunk> = Chunk extends UIMessageChunk
+  ? {
+      readonly [Key in keyof Chunk]: Key extends "providerMetadata"
+        ? ReadonlyResumeMetadata | undefined
+        : Chunk[Key];
+    }
+  : never;
 
 type FinishEventReader<TMessage extends UIMessage> = Readonly<
   Omit<
@@ -133,7 +158,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     let first = true;
     return new TransformStream<UIMessageChunk, UIMessageChunk>({
       transform(
-        chunk: ReadonlyMessageValue<UIMessageChunk>,
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the complete readonly SDK chunk without changing its identity. The finite recursive readonly JSON view passes the installed SDK enqueue receiver, but the pinned rule still flags this recursive SDK union.
+        chunk: ReadonlyResumeChunk,
         controller: Readonly<TransformStreamDefaultController<UIMessageChunk>>
       ): void {
         let chunkToEnqueue = chunk;

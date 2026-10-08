@@ -5,9 +5,6 @@ import { expect, it } from "vitest";
 
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it("shares transcript content without authorization challenges or runtime metadata") accepts message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
     {
@@ -33,11 +30,12 @@ it("shares transcript content without authorization challenges or runtime metada
   expect(json).toContain("An account connection was requested.");
   expect(json).not.toContain("secret-code");
   expect(json).not.toContain("webhookUrl");
-  expect(messages.every((message) => !Object.hasOwn(message, "metadata"))).toBe(
-    true
-  );
+  expect(
+    messages.every(
+      (message: Readonly<object>) => !Object.hasOwn(message, "metadata")
+    )
+  ).toBe(true);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("retains clarification prompts and answers without their response identifiers", () => {
   const parts = sharedEvePart({
@@ -183,9 +181,8 @@ it("removes owner approval and execution fields while preserving every tool stat
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each([ { kind: "chatjs.tool-result", output: { message: "Unsupported version" }, s uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ { kind: "chatjs.tool-result", output: { message: "Unsupported version" }, s accepts output; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   {
@@ -207,7 +204,7 @@ it.each([
     privateRuntimeToken: "secret",
     usage: { costUsd: 99 },
   },
-])("does not expose malformed platform result envelopes", (output) => {
+])("does not expose malformed platform result envelopes", (output: unknown) => {
   const parts = sharedEvePart({
     input: { code: "1 + 1" },
     output,
@@ -224,7 +221,7 @@ it.each([
   expect(JSON.stringify(parts)).not.toContain("secret");
   expect(JSON.stringify(parts)).not.toContain("99");
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 it("preserves streaming and partial published tool content without runtime fields", () => {
   const base = {
@@ -259,9 +256,6 @@ it("preserves streaming and partial published tool content without runtime field
   }
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it("projects the original native model without private turn identities") accepts message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("projects the original native model without private turn identities", () => {
   const messages = sharedEveMessages([
     {
@@ -282,8 +276,9 @@ it("projects the original native model without private turn identities", () => {
   ]);
   expect(
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading metadata from messages.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    messages.find((message) => message.role === "assistant")?.metadata
+    messages.find(
+      (message: { readonly role: string }) => message.role === "assistant"
+    )?.metadata
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

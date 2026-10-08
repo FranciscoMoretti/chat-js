@@ -39,8 +39,9 @@ const Sheet = (
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetTrigger forwards SheetPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof SheetPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <SheetPrimitiveTrigger
     data-slot="sheet-trigger"
@@ -55,8 +56,9 @@ const SheetTrigger = (
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetClose uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetClose = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetClose forwards SheetPrimitiveClose's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof SheetPrimitiveClose>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <SheetPrimitiveClose
     data-slot="sheet-close"
@@ -71,8 +73,9 @@ const SheetClose = (
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetPortal = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetPortal passes Element | DocumentFragment | null | undefined container identity unchanged to SheetPrimitivePortal, whose portal insertion uses the live native DOM surface.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof SheetPrimitivePortal>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <SheetPrimitivePortal
     data-slot="sheet-portal"
@@ -86,12 +89,16 @@ const SheetPortal = (
 /* oxlint-disable react/no-multi-comp -- SheetOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetOverlay uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetOverlay forwards SheetPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetOverlay = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveOverlay>): ReactJSX.Element => (
+
+const SheetOverlay = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof SheetPrimitiveOverlay>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <SheetPrimitiveOverlay
     // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveOverlay accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -110,16 +117,20 @@ const SheetOverlay = ({
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- SheetContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetContent forwards SheetPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetContent = ({
-  className,
-  children,
-  side = "right",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, side from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveContent> & {
-  side?: "top" | "right" | "bottom" | "left";
-}): ReactJSX.Element => (
+
+const SheetContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    side = "right",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, side from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof SheetPrimitiveContent> & {
+    readonly side?: "top" | "right" | "bottom" | "left";
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitiveContent
@@ -161,12 +172,16 @@ const SheetContent = ({
 /* oxlint-disable react/no-multi-comp -- SheetHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetHeader = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+
+const SheetHeader = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-1.5 p-4", className)}
     data-slot="sheet-header"
@@ -180,12 +195,16 @@ const SheetHeader = ({
 /* oxlint-disable react/no-multi-comp -- SheetFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetFooter = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+
+const SheetFooter = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("mt-auto flex flex-col gap-2 p-4", className)}
     data-slot="sheet-footer"
@@ -199,12 +218,16 @@ const SheetFooter = ({
 /* oxlint-disable react/no-multi-comp -- SheetTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetTitle forwards SheetPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetTitle = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveTitle>): ReactJSX.Element => (
+
+const SheetTitle = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof SheetPrimitiveTitle>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <SheetPrimitiveTitle
     // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveTitle accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-foreground font-semibold", className)}
@@ -219,12 +242,16 @@ const SheetTitle = ({
 /* oxlint-disable react/no-multi-comp -- SheetDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetDescription forwards SheetPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const SheetDescription = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveDescription>): ReactJSX.Element => (
+
+const SheetDescription = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof SheetPrimitiveDescription>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <SheetPrimitiveDescription
     // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveDescription accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-muted-foreground text-sm", className)}

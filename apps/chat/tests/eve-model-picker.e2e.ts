@@ -1,24 +1,28 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options" dependency within this package instead of introducing an alias or barrel API.
  */
+
 import { expect, test } from "@playwright/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { Client } from "eve/client";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only event import separate from runtime bindings without changing module evaluation order.
+import type { MessageStreamEvent } from "eve/client";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, userCredit } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -30,24 +34,27 @@ const modelId = "openai/gpt-5-nano";
 const modelName = "GPT-5 nano";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * init-declarations (#507): test("the single-model picker dispatches and retains the selected native model") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("the single-model picker dispatches and retains the selected native model") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("the single-model picker dispatches and retains the selected native model") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("the single-model picker dispatches and retains the selected native model") uses 120_000, 0, 8, 200, -1, 60_000, 404, 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("the single-model picker dispatches and retains the selected native model") accepts { page, }; testInfo; route; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("the single-model picker dispatches and retains the selected native model") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("the single-model picker dispatches and retains the selected native model") intentionally keeps the existing falsy-value behavior of conversation?.sessionId; conversationId; origin; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("the single-model picker dispatches and retains the selected native model", async ({
   page,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(120_000);
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await page.route(
+      "https://unpkg.com/react-scan/**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+      (route) => route.abort()
     );
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
@@ -118,7 +125,10 @@ test("the single-model picker dispatches and retains the selected native model",
       .attach(conversation.sessionId)
       .snapshot();
     const modelStep = snapshot.events.find(
-      (event) => event.type === "step.started"
+      (
+        event: Readonly<Pick<MessageStreamEvent, "type">>
+      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+        event.type === "step.started"
     );
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from modelStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);
@@ -148,4 +158,4 @@ test("the single-model picker dispatches and retains the selected native model",
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */

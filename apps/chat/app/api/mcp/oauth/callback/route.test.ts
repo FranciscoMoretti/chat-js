@@ -135,9 +135,8 @@ it("provider cancellation deletes only pending state and returns a safe connecto
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   {     mcpConnectorId: "connector",     state: "state",     tokens: { access's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ accepts session; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it.each([
@@ -149,7 +148,16 @@ it.each([
   },
 ])(
   "provider errors do not delete an authenticated or unmatched session: %j",
-  async (session) => {
+  async (
+    session: Readonly<
+      | {
+          mcpConnectorId: string;
+          state: string;
+          readonly tokens: { readonly access_token: string };
+        }
+      | undefined
+    >
+  ) => {
     mocks.params = {
       code: null,
       error: "access_denied",
@@ -174,7 +182,7 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */
 
 /* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it("an attempt completed between lookup and deletion retains its client") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

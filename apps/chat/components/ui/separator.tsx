@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Separator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Separator = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Separator forwards Radix SeparatorPrimitiveRoot native div refs (including writable current), CSSProperties, children and TrustedHTML; React autoCapitalize/role include open string & {} aliases flagged even with top-level Readonly.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     orientation = "horizontal",
@@ -20,6 +20,7 @@ const Separator = (
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation, decorative from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<typeof SeparatorPrimitiveRoot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <SeparatorPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- SeparatorPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.

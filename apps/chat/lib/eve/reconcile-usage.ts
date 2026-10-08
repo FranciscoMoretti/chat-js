@@ -183,18 +183,15 @@ const reconcileEveUsage = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileAllOwnerUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): reconcileAllOwnerUsage uses 4 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): reconcileAllOwnerUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): reconcileAllOwnerUsage accepts unpricedSessions = new Set<string>(); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reconcileAllOwnerUsage intentionally keeps the existing falsy-value behavior of row.sessionId; child.rootSessionId; next.done; next.value.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+ * typescript/strict-boolean-expressions (#610): reconcileAllOwnerUsage intentionally keeps the existing falsy-value behavior of row.sessionId; child.rootSessionId; next.done; next.value.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const reconcileAllOwnerUsage = async (
   ownerId: string,
-  unpricedSessions = new Set<string>()
+  unpricedSessions: Readonly<ReadonlySet<string>> = new Set<string>()
 ): Promise<void> => {
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
@@ -282,10 +279,9 @@ const reconcileAllOwnerUsage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveOwnerUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): reconcileEveOwnerUsage accepts unpricedSessions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions -- no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/strict-boolean-expressions (#610): reconcileEveOwnerUsage intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const reconcileEveOwnerUsage = async (
   ownerId: string,
@@ -300,7 +296,7 @@ const reconcileEveOwnerUsage = async (
   // settled history must not be streamed on every message or new conversation.
   await withManagedUsageReconciliation(
     ownerId,
-    async (sweepDue, unpricedSessions) => {
+    async (sweepDue, unpricedSessions: Readonly<ReadonlySet<string>>) => {
       if (sweepDue || unpricedSessions.size > 0) {
         // Older cursors can have passed failed attempts before their explicit
         // zero-charge classification; replay that evidence rather than strand it.
@@ -314,6 +310,6 @@ const reconcileEveOwnerUsage = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };
 /* oxlint-enable import/no-named-export */

@@ -18,6 +18,8 @@ import {
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
+// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
 /* oxlint-enable sort-imports */
@@ -32,8 +34,9 @@ const log = createModuleLogger("mcp-oauth-callback");
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const GET = async (request: NextRequest): Promise<NextResponse> => {
+export const GET = async (
+  request: ReadonlyNativeSurface<NextRequest>
+): Promise<NextResponse> => {
   const {
     code,
     state,
@@ -47,9 +50,9 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     connected,
     errorMessage,
   }: {
-    connectorId?: string;
-    connected?: boolean;
-    errorMessage?: string;
+    readonly connectorId?: string;
+    readonly connected?: boolean;
+    readonly errorMessage?: string;
   }): NextResponse => {
     // oxlint-disable-next-line no-ternary -- Keep path as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const path = hasNonEmptyValue(connectorId)
@@ -182,4 +185,3 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

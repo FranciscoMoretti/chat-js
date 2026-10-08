@@ -17,9 +17,8 @@ const replacements = {
   "internal-link.tsx": "InternalLink",
   "session-provider.tsx": "useSession",
 };
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): result uses 2, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): result accepts builder; args; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder waits for its comparison bundle before publishing it to stdout.
 const result = await build({
@@ -31,6 +30,7 @@ const result = await build({
   plugins: [
     {
       name: "strict-comparison-fixture-boundaries",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Register onResolve/onLoad callbacks on Bun's original shared PluginBuilder; these calls mutate the build's resolver/loader registry.
       setup(builder) {
         builder.onResolve({ filter: imageImport }, () => ({
           path: "fixture-next-image",
@@ -59,6 +59,10 @@ const result = await build({
           {
             filter: replacedModule,
           },
+          /**
+           * @param {Readonly<{path: string}>} args Resolved module path used to select a fixture replacement.
+           * @returns {{contents: string, loader: "tsx"}} Source that re-exports the matching fixture mock.
+           */
           (args) => {
             const name = replacements[args.path.split("/").at(-1) ?? ""];
             if (!name) {
@@ -75,14 +79,22 @@ const result = await build({
   ],
   target: "browser",
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): if (!result.success) { throw new Error(result.logs.map( accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-enable no-magic-numbers */
+
 if (!result.success) {
-  throw new Error(result.logs.map((entry) => entry.message).join("\n"));
+  throw new Error(
+    result.logs
+      .map(
+        /**
+         * @param {Readonly<{message: string}>} entry Build diagnostic to include in the failure output.
+         * @returns {string} Diagnostic message displayed in the build error.
+         */
+        (entry) => entry.message
+      )
+      .join("\n")
+  );
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): process.stdout.write uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

@@ -139,17 +139,16 @@ describe("file content response", () => {
 });
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./db/file-storage-keys")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./db/file-storage-keys") accepts keys: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdsForStorageKeys: (keys: string[]) =>
+  fileIdsForStorageKeys: (keys: readonly string[]) =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     ),
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */

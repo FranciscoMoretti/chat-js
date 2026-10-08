@@ -48,9 +48,7 @@ type ReserveEveCopyInput = Readonly<{
   modelId: string;
   plan: EveCopyPlan;
 }>;
-type CopyWriteTransaction = Readonly<
-  Pick<CopyTransaction, "execute" | "insert" | "select">
->;
+type CopyWriteTransaction = CopyTransaction;
 /* oxlint-enable no-magic-numbers */
 const hashPattern = /^[a-f0-9]{64}$/u;
 const FIRST_ROW_INDEX = 0;
@@ -151,7 +149,8 @@ class EveCopySourceChangedError extends CreationConflictError {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve lockEveCopyOwners's awaited sequencing and rejected-Promise behavior. */
 
 const lockEveCopyOwners = async (
-  tx: Readonly<Pick<CopyTransaction, "execute">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute operations under caller-held locks; preserve the native writer contract.
+  tx: CopyTransaction,
   owners: readonly string[]
 ): Promise<void> => {
   for (const owner of [...new Set(owners)].toSorted()) {
@@ -173,46 +172,43 @@ const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
 ): Promise<void> => {
-  await db.transaction(
-    async (
-      tx: Readonly<Pick<CopyTransaction, "execute" | "insert" | "select">>
-    ) => {
-      await lockEveCopyOwners(tx, [ownerId]);
-      const existingRows = await tx
-        .select({ id: eveConversation.id })
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.ownerId, ownerId),
-            eq(eveConversation.operationId, operationId)
-          )
-        );
-      const existing = existingRows.at(FIRST_ROW_INDEX);
-      if (existing) {
-        return;
-      }
-      if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
-        return;
-      }
-      const conversationId = crypto.randomUUID();
-      const chatId = crypto.randomUUID();
-      await tx.insert(eveChat).values({
-        id: chatId,
-        ownerId,
-        title: "",
-        titleStatus: "fallback",
-      });
-      await tx.insert(eveConversation).values({
-        chatId,
-        creationKind: "copy",
-        firstMessage: "",
-        id: conversationId,
-        operationId,
-        ownerId,
-        state: "deleted",
-      });
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  await db.transaction(async (tx: CopyTransaction) => {
+    await lockEveCopyOwners(tx, [ownerId]);
+    const existingRows = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.operationId, operationId)
+        )
+      );
+    const existing = existingRows.at(FIRST_ROW_INDEX);
+    if (existing) {
+      return;
     }
-  );
+    if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
+      return;
+    }
+    const conversationId = crypto.randomUUID();
+    const chatId = crypto.randomUUID();
+    await tx.insert(eveChat).values({
+      id: chatId,
+      ownerId,
+      title: "",
+      titleStatus: "fallback",
+    });
+    await tx.insert(eveConversation).values({
+      chatId,
+      creationKind: "copy",
+      firstMessage: "",
+      id: conversationId,
+      operationId,
+      ownerId,
+      state: "deleted",
+    });
+  });
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
@@ -536,8 +532,21 @@ no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing proto
  */
 const reserveEveCopyOperation = async (
   ownerId: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The Drizzle JSONB insert requires the existing EveCopyPlan type; a readonly plan fails its native insert overload. Keep the original object and schema contract until the database JSON type can accept a readonly plan.
-  input: ReserveEveCopyInput
+
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original SDK seed enters Drizzle JSONB values unchanged; readonly seed.messages fails its native EveCopySeed array contract at the insert overload (TS2769/TS2589).
+  input: Readonly<
+    Pick<
+      ReserveEveCopyInput,
+      | "plan"
+      | "projectionHash"
+      | "sourceOwnerId"
+      | "operationId"
+      | "sourceConversationId"
+      | "sourceSessionId"
+      | "modelId"
+      | "title"
+    >
+  >
 ): Promise<EveCopyOperation> => {
   validateCopyPlan(input.plan);
   if (!hashPattern.test(input.projectionHash)) {
@@ -546,6 +555,7 @@ const reserveEveCopyOperation = async (
   const planHash = createHash("sha256")
     .update(JSON.stringify(input.plan))
     .digest("hex");
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   return await db.transaction(async (tx: CopyWriteTransaction) => {
     await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
     const existingRows = await tx

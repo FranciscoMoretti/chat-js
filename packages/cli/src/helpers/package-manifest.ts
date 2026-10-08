@@ -90,8 +90,8 @@ const resolveBetterAuthVersion = (
   return "";
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper writes matching dependency versions into the caller-owned dependency map; readonly entries would prohibit those updates. */
 const pinBetterAuthVersions = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This helper writes matching dependency versions into the caller-owned dependency map; readonly entries would prohibit those updates.
   dependencyGroup: DependencyMap | null | undefined,
   version: string
 ): void => {
@@ -105,10 +105,9 @@ const pinBetterAuthVersions = (
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform replaces and removes entries in the supplied scripts map before the original manifest is serialized. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This transform replaces and removes entries in the supplied scripts map before the original manifest is serialized.
 const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
@@ -137,11 +136,10 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts["ai:devtools"] = "npx @ai-sdk/devtools";
   scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform edits the supplied scripts map in place, including Forge commands and removal of obsolete distribution aliases. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This transform edits the supplied scripts map in place, including Forge commands and removal of obsolete distribution aliases.
 const normalizeElectronScripts = (scripts: ScriptMap): void => {
   const prebuild =
     "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
@@ -173,11 +171,10 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
   delete scripts["publish:mac"];
   delete scripts["publish:win"];
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map. */
 const normalizeElectronDevDependencies = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map.
   devDependencies: DependencyMap | null | undefined,
   tsxVersion?: string
 ): void => {
@@ -190,15 +187,14 @@ const normalizeElectronDevDependencies = (
     devDependencies.tsx = tsxVersion;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This normalizer returns the original manifest after updating its dependency, script, override, type and packageManager fields; callers rely on in-place normalization. */
 const normalizeScaffoldedPackageJson = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This normalizer returns the original manifest after updating its dependency, script, override, type and packageManager fields; callers rely on in-place normalization.
   packageJson: PackageJson,
   options?: Readonly<{
     packageManager?: PackageManager;
@@ -266,7 +262,6 @@ const normalizeScaffoldedPackageJson = (
 
   return packageJson;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */

@@ -41,7 +41,7 @@ export const prepareEveOrphanedFilePurge = async (
     ...new Set(candidates.map((file) => file.ownerId)),
   ].toSorted()) {
     files.push(
-      // oxlint-disable-next-line eslint/no-await-in-loop, typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; await each owner lock and fencing transaction before processing the next owner.
+      // oxlint-disable-next-line eslint/no-await-in-loop, typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; await each owner lock and fencing transaction before processing the next owner. This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
       ...(await db.transaction(async (tx) => {
         await tx.execute(
           sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`

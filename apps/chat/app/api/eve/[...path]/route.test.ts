@@ -43,11 +43,10 @@ vi.mock("@/lib/eve/reconcile-usage", () => ({
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 
 const operationId = "00000000-0000-4000-8000-000000000001";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): request accepts headers: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
-const request = (headers: Record<string, string> = {}) =>
+const request = (headers: Readonly<Record<string, string>> = {}) =>
   new Request("http://localhost:3790/api/eve/v1/session/native", {
     body: JSON.stringify({
       message: "original",
@@ -62,7 +61,7 @@ const request = (headers: Record<string, string> = {}) =>
     },
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 beforeEach(() => {
   vi.resetAllMocks();

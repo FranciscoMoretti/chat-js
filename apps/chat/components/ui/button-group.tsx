@@ -24,15 +24,17 @@ const buttonGroupVariants = cva(
     },
   }
 );
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ButtonGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const ButtonGroup = ({
-  className,
-  orientation,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: React.ComponentProps<"div"> &
-  VariantProps<typeof buttonGroupVariants>): React.JSX.Element => (
+const ButtonGroup = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    orientation,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(buttonGroupVariants({ orientation }), className)}
     data-orientation={orientation}
@@ -41,17 +43,21 @@ const ButtonGroup = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ButtonGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const ButtonGroupText = ({
-  className,
-  asChild = false,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: React.ComponentProps<"div"> & {
-  asChild?: boolean;
-}): React.JSX.Element => {
+/* oxlint-disable react/no-multi-comp -- ButtonGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+
+const ButtonGroupText = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    asChild = false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: React.ComponentProps<"div"> & {
+    readonly asChild?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "div";
 
@@ -67,16 +73,20 @@ const ButtonGroupText = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ButtonGroupSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- ButtonGroupSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ButtonGroupSeparator = ({
-  className,
-  orientation = "vertical",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: React.ComponentProps<typeof Separator>): React.JSX.Element => (
+const ButtonGroupSeparator = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    orientation = "vertical",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: React.ComponentProps<typeof Separator>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <Separator
     // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -90,7 +100,7 @@ const ButtonGroupSeparator = ({
   />
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ButtonGroup, ButtonGroupSeparator, ButtonGroupText, buttonGroupVariants); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/only-export-components -- button-group.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 

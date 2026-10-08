@@ -2,7 +2,6 @@
 
 import { Copy, Pencil, PencilOff } from "lucide-react";
 import React from "react";
-import type { ReactNode } from "react";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
@@ -11,8 +10,12 @@ import {
 } from "@/components/ai-elements/message";
 /* oxlint-enable sort-imports */
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+/* oxlint-enable sort-imports */
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageActionsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function -- jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision */
 
 /** Shared message toolbar; each runtime supplies its actions and version state. */
 export const MessageActionsView = ({
@@ -26,15 +29,15 @@ export const MessageActionsView = ({
   siblings,
   feedback,
 }: {
-  role: string;
-  isLoading?: boolean;
-  isEditing?: boolean;
-  editDisabled?: boolean;
-  onStartEdit?: () => void;
-  onCancelEdit?: () => void;
-  onCopy: () => void;
-  siblings?: ReactNode;
-  feedback?: ReactNode;
+  readonly role: string;
+  readonly isLoading?: boolean;
+  readonly isEditing?: boolean;
+  readonly editDisabled?: boolean;
+  readonly onStartEdit?: () => void;
+  readonly onCancelEdit?: () => void;
+  readonly onCopy: () => void;
+  readonly siblings?: ReadonlyReactNode;
+  readonly feedback?: ReadonlyReactNode;
 }): React.JSX.Element => {
   const isMobile = useIsMobile();
   if (isLoading) {
@@ -91,4 +94,4 @@ export const MessageActionsView = ({
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function */

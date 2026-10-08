@@ -26,6 +26,9 @@ import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   description: config.appDescription,
@@ -77,18 +80,17 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-/* oxlint-disable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * node/no-process-env (#537): RootLayout reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * react/jsx-max-depth (#548): RootLayout keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): RootLayout accepts { children, }: Readonly<{ children: React.ReactNode; }>; { id, Component }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): RootLayout preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable node/no-process-env, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- node/no-process-env (#537): RootLayout reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+react/jsx-max-depth (#548): RootLayout keeps related render components together; }>; { id, Component }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): RootLayout preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+
+// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
 const RootLayout = ({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>): React.JSX.Element => (
+}: {
+  readonly children: ReadonlyReactNode;
+}): React.JSX.Element => (
   <html
     className={`${geist.variable} ${geistMono.variable}`}
     // `next-themes` injects an extra classname to the body element to avoid
@@ -131,14 +133,20 @@ const RootLayout = ({
           {children}
         </ThemeProvider>
       </NuqsAdapter>
-      {installedLayoutComponents.map(({ id, Component }) => (
-        <Component key={id} />
-      ))}
+      {installedLayoutComponents.map(
+        (
+          /* oxlint-disable typescript/prefer-readonly-parameter-types -- This reader retains the native React component constructor and callable signatures; the faithful readonly control preserves them and the native rule still flags that graph. */
+          { id, Component }
+          /* oxlint-enable typescript/prefer-readonly-parameter-types */
+        ) => (
+          <Component key={id} />
+        )
+      )}
     </body>
   </html>
 );
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };

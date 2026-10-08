@@ -18,7 +18,8 @@ export const claimExpiredEveGuestFamilies = async (): Promise<
   { id: string; ownerId: string }[]
 > =>
   await db.transaction(
-    async (tx: Readonly<Pick<typeof db, "select" | "update">>) => {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
+    async (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => {
       const rows = await tx
         .select({ id: eveConversation.id, ownerId: eveConversation.ownerId })
         .from(eveConversation)

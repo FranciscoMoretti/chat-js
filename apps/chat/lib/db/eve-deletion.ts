@@ -134,7 +134,8 @@ const readOwnedEveDeletionIdentity = (
  */
 const readEveFamilyApplicationContent = (
   query: Readonly<Pick<typeof db, "select">>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle table columns retain their class identity for select/from/inArray; a mapped readonly column surface loses the SDK column contract.
+
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original Drizzle table feeds from/select generic receivers; deep readonly projection loses the native column/table contract (TS2322).
   table: Readonly<
     | typeof eveFileReference
     | typeof eveImportedDocumentCheckpointEntry
@@ -241,7 +242,7 @@ const completeEveConversationDeletion = async (
   routeId: string
 ): Promise<void> => {
   await db.transaction(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, max-lines-per-function, max-statements -- Preserve the native Drizzle transaction passed unchanged to tombstoneEveResponseGroups; its protected schema/index members reject a mapped Readonly transaction. Preserve the ordered owner lock, family precondition, response-group tombstones, sandbox/content checks, provenance deletion and identity tombstones within the same transaction; extracting awaited phases needs separate suspension/trace verification.
+    // oxlint-disable-next-line max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types -- Preserve the native Drizzle transaction passed unchanged to tombstoneEveResponseGroups; its protected schema/index members reject a mapped Readonly transaction. Preserve the ordered owner lock, family precondition, response-group tombstones, sandbox/content checks, provenance deletion and identity tombstones within the same transaction; extracting awaited phases needs separate suspension/trace verification. This original transaction performs .execute, .delete, .update operations under caller-held locks; preserve the native writer contract.
     async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`

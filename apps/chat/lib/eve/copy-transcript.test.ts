@@ -2,7 +2,6 @@ import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
@@ -13,6 +12,8 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
+/* oxlint-enable sort-imports */
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 /* oxlint-enable sort-imports */
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
@@ -29,10 +30,13 @@ const allocations = {
   revisions: new Map([[revisionId, copiedRevision]]),
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): history accepts messages: EveMessage[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const history = (messages: EveMessage[]): MessageStreamEvent[] => [
+const history = (
+  messages: readonly Readonly<
+    Omit<EveMessage, "parts"> & {
+      readonly parts: readonly ReadonlyEveMessagePart[];
+    }
+  >[]
+): MessageStreamEvent[] => [
   {
     data: { messages },
     meta: { at: "2026-09-12T00:00:00Z", id: "seed-event" },
@@ -44,7 +48,6 @@ const history = (messages: EveMessage[]): MessageStreamEvent[] => [
     type: "session.waiting",
   },
 ];
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("prepares exactly the public content without execution, approval or billing identities", () => {
   const events = history([
@@ -122,9 +125,6 @@ it("rewrites nested tool inputs, results, document identities and prose using on
   );
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ { documents: allocations.documents, files: new Map<string, string>(), revis accepts mapping; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   {
     documents: allocations.documents,
@@ -143,7 +143,11 @@ it.each([
   },
 ])(
   "never falls back to a source resource when an allocation is missing",
-  (mapping) => {
+  (mapping: {
+    readonly documents: Readonly<ReadonlyMap<string, string>>;
+    readonly files: Readonly<ReadonlyMap<string, string>>;
+    readonly revisions: Readonly<ReadonlyMap<string, string>>;
+  }) => {
     expect(() =>
       rewriteEveCopyResources(
         { documentId, revisionId, url: sourceUrl },
@@ -153,7 +157,6 @@ it.each([
     ).toThrow("Missing copied");
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("preserves inline attachments and tool error or denial content without approval receipts", () => {
   const result = prepareEveCopyTranscript(
@@ -205,9 +208,6 @@ it("preserves inline attachments and tool error or denial content without approv
   expect(JSON.stringify(result.seed)).not.toContain("private-receipt");
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each<EveMessage["parts"][number]>([ { state: "streaming", text: "Partial", type: " accepts part; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each<EveMessage["parts"][number]>([
   { state: "streaming", text: "Partial", type: "text" },
   {
@@ -234,14 +234,16 @@ it.each<EveMessage["parts"][number]>([
     toolName: "tool",
     type: "dynamic-tool",
   },
-])("refuses incomplete visible parts rather than dropping them", (part) => {
-  expect(() =>
-    prepareEveCopyTranscript(
-      history([{ id: "answer", parts: [part], role: "assistant" }])
-    )
-  ).toThrow(EveCopyNotReadyError);
-});
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+])(
+  "refuses incomplete visible parts rather than dropping them",
+  (part: ReadonlyEveMessagePart) => {
+    expect(() =>
+      prepareEveCopyTranscript(
+        history([{ id: "answer", parts: [part], role: "assistant" }])
+      )
+    ).toThrow(EveCopyNotReadyError);
+  }
+);
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("requires a durable idle boundary, including when a new turn has no assistant text uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -407,10 +409,9 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable id-length, no-magic-numbers, typescript/promise-function-async --
  * id-length (#506): it("externalizes six distinct inline images through durable destination allocations") uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): it("externalizes six distinct inline images through durable destination allocations") uses 1024, 8, 6, 24, 2048, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("externalizes six distinct inline images through durable destination allocations") accepts file; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("externalizes six distinct inline images through durable destination allocations") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("externalizes six distinct inline images through durable destination allocations", async () => {
@@ -433,7 +434,7 @@ it("externalizes six distinct inline images through durable destination allocati
   const files = eveCopyInlineAttachments(prepared.seed);
   expect(files).toHaveLength(6);
   const inlineFiles = new Map(
-    files.map((file, index) => [
+    files.map((file: { readonly id: string }, index) => [
       file.id,
       `${String(index).padStart(24, "a")}.png`,
     ])
@@ -457,7 +458,7 @@ it("externalizes six distinct inline images through durable destination allocati
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("refuses missing inline allocations and metadata changes before dispatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.

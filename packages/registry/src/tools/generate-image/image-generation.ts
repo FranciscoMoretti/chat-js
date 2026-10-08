@@ -23,13 +23,26 @@ const log = createModuleLogger("ai.tools.generate-image");
 const EMPTY_IMAGE_BYTES = 0;
 const GENERATED_IMAGE_COUNT = 1;
 const NO_GENERATED_IMAGES = 0;
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNativeSurface<Value[Key]> }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 type ImageStoreFile = (
   filename: string,
   body: ReadonlyNativeSurface<Buffer>,

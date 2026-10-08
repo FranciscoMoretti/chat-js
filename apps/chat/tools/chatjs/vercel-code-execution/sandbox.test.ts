@@ -310,11 +310,10 @@ it("does not report successful cleanup until deletion has completed", async () =
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("codeSandboxCleanupCapability") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): describe("codeSandboxCleanupCapability") accepts identity; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): describe("codeSandboxCleanupCapability") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): describe("codeSandboxCleanupCapability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -380,54 +379,57 @@ describe("codeSandboxCleanupCapability", () => {
   it.each([
     { name: "foreign", persistent: false },
     { name: "owned", persistent: true },
-  ])("refuses unsafe sandbox identity %#", async (identity) => {
-    Object.assign(envMock, {
-      VERCEL_PROJECT_ID: "project",
-      VERCEL_TEAM_ID: "team",
-      VERCEL_TOKEN: "opaque",
-    });
-    const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
-      createdAt: 0,
-      cwd: "/tmp",
-      id: "session",
-      memory: 128,
-      region: "test",
-      requestedAt: 0,
-      status: "stopped",
-      timeout: 30_000,
-      updatedAt: 0,
-      vcpus: 1,
-    });
-    const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
-    const sandbox = new Sandbox({
-      routes: [],
-      sandbox: {
+  ])(
+    "refuses unsafe sandbox identity %#",
+    async (identity: Readonly<{ name: string; persistent: boolean }>) => {
+      Object.assign(envMock, {
+        VERCEL_PROJECT_ID: "project",
+        VERCEL_TEAM_ID: "team",
+        VERCEL_TOKEN: "opaque",
+      });
+      const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
         createdAt: 0,
-        currentSessionId: "session",
-        name: identity.name,
-        persistent: identity.persistent,
-        status: "running",
+        cwd: "/tmp",
+        id: "session",
+        memory: 128,
+        region: "test",
+        requestedAt: 0,
+        status: "stopped",
+        timeout: 30_000,
         updatedAt: 0,
-      },
-    });
-    vi.spyOn(sandbox, "delete").mockImplementation(remove);
-    vi.spyOn(sandbox, "stop").mockImplementation(stop);
-    const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
-    try {
-      const { codeSandboxCleanupCapability } =
-        await import("./execution-sandbox");
-      const cleanup = codeSandboxCleanupCapability.createCleanupSession();
-      await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
-        "identity or persistence"
-      );
-      expect(stop).not.toHaveBeenCalled();
-      expect(remove).not.toHaveBeenCalled();
-    } finally {
-      get.mockRestore();
+        vcpus: 1,
+      });
+      const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+      const sandbox = new Sandbox({
+        routes: [],
+        sandbox: {
+          createdAt: 0,
+          currentSessionId: "session",
+          name: identity.name,
+          persistent: identity.persistent,
+          status: "running",
+          updatedAt: 0,
+        },
+      });
+      vi.spyOn(sandbox, "delete").mockImplementation(remove);
+      vi.spyOn(sandbox, "stop").mockImplementation(stop);
+      const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
+      try {
+        const { codeSandboxCleanupCapability } =
+          await import("./execution-sandbox");
+        const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+        await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
+          "identity or persistence"
+        );
+        expect(stop).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+      } finally {
+        get.mockRestore();
+      }
     }
-  });
+  );
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This sandbox.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

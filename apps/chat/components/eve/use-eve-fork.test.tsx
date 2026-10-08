@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { useEveFork } from "./use-eve-fork";
 
@@ -105,15 +108,14 @@ const storage = () => {
 };
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- userMessage: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including parts: EveMessage["parts"] = []). */
-
-const userMessage = (parts: EveMessage["parts"] = []): EveMessage => ({
+const userMessage = (
+  parts: readonly ReadonlyEveMessagePart[] = []
+): EveMessage => ({
   id: "seed_message_0",
   metadata: { custom: eveToolMetadata("webSearch") },
   parts: [{ text: "Find the answer", type: "text" }, ...parts],
   role: "user" as const,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const responseMessage = (): EveMessage => ({
   id: "seed_message_1",
@@ -121,17 +123,19 @@ const responseMessage = (): EveMessage => ({
   parts: [{ text: "The answer", type: "text" }],
   role: "assistant",
 });
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- ForkProbe: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value: ReturnType<typeof useEveFork>); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- ForkProbe: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value: ReturnType<typeof useEveFork>); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ForkProbe = ({
   onValue,
 }: {
-  readonly onValue: (value: ReturnType<typeof useEveFork>) => void;
+  readonly onValue: (
+    value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+  ) => void;
 }): null => {
   onValue(useEveFork(ownerId, conversationId));
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable id-length, no-undefined, typescript/explicit-function-return-type -- required: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -165,13 +169,13 @@ afterEach(() => {
   mocks.openRuntime.mockReset();
   vi.unstubAllGlobals();
 });
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
 
 describe("useEveFork", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("opens an inline edit with the original response model and tool", async () => {
     vi.stubGlobal("sessionStorage", storage());
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -180,7 +184,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -229,7 +235,7 @@ describe("useEveFork", () => {
       })
     );
     vi.stubGlobal("sessionStorage", pendingStorage);
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -238,7 +244,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -280,7 +288,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockRejectedValue(
       new CreationRejectedError("Source is no longer available.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -289,7 +297,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -323,7 +333,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockRejectedValue(
       new CreationRejectedError("Source is no longer available.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -332,7 +342,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -373,7 +385,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockRejectedValue(
       new CreationRejectedError("Source is no longer available.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -382,7 +394,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -430,7 +444,7 @@ describe("useEveFork", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -439,7 +453,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -479,10 +495,10 @@ describe("useEveFork", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("clears fulfilled edit state in the client navigation transition", async () => {
     const pendingStorage = storage();
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     vi.stubGlobal("sessionStorage", pendingStorage);
     mocks.resolveCreationRequest.mockImplementation(
-      (currentStorage: Storage) => {
+      (currentStorage: Readonly<Pick<Storage, "removeItem">>) => {
         currentStorage.removeItem(
           `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
         );
@@ -501,7 +517,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -552,7 +570,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockRejectedValue(
       new Error("Creation is unconfirmed.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -561,7 +579,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -601,7 +621,7 @@ describe("useEveFork", () => {
     const delayed = deferred<string>();
     vi.stubGlobal("sessionStorage", pendingStorage);
     mocks.resolveCreationRequest.mockImplementation(
-      async (currentStorage: Storage) => {
+      async (currentStorage: Readonly<Pick<Storage, "removeItem">>) => {
         const id = await delayed.promise;
         currentStorage.removeItem(
           `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
@@ -609,7 +629,7 @@ describe("useEveFork", () => {
         return { group: undefined, id, sessionId: "session" };
       }
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -618,7 +638,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -677,7 +699,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockRejectedValueOnce(
       new Error("Comparison is unconfirmed.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -686,7 +708,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -737,7 +761,7 @@ describe("useEveFork", () => {
       url: "/api/files/restored-notes.pdf",
     };
     mocks.restoreAttachments.mockResolvedValueOnce([attachment]);
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -745,7 +769,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -790,7 +816,7 @@ describe("useEveFork", () => {
     mocks.restoreAttachments.mockRejectedValue(
       new Error("Unable to restore attachment.")
     );
-    let fork: ReturnType<typeof useEveFork> | undefined;
+    let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
@@ -799,7 +825,9 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ForkProbe
-          onValue={(value) => {
+          onValue={(
+            value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
+          ) => {
             fork = value;
           }}
         />
@@ -840,6 +868,6 @@ describe("useEveFork", () => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-disable max-lines -- use-eve-fork.test keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

@@ -6,7 +6,7 @@ import type { ContextType } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 /* oxlint-enable sort-imports */
-import type { EveMessageInput } from "@/lib/eve/message-input";
+import type { ReadonlyEveMessageInput } from "@/lib/eve/readonly-message-types";
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveLogicalContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -34,16 +34,16 @@ export const useLogicalChat = (): NonNullable<
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (OpenRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 export interface OpenRequest {
-  id: string;
-  sessionId: string;
-  ownerId: string;
-  chatId?: string;
-  title?: string;
-  operation?: { message: EveMessageInput };
+  readonly id: string;
+  readonly sessionId: string;
+  readonly ownerId: string;
+  readonly chatId?: string;
+  readonly title?: string;
+  readonly operation?: { readonly message: ReadonlyEveMessageInput };
 }
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveRuntimeContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including runtime: OpenRequest); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // oxlint-disable-next-line import/group-exports -- #711: Keep EveRuntimeContext inline: Oxlint 1.82 classifies a grouped context specifier as a component and rejects the hooks; one-var rejects combining declarations.
 export const EveRuntimeContext = createContext<
@@ -51,7 +51,7 @@ export const EveRuntimeContext = createContext<
 >(null);
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (useEveRuntime); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 // oxlint-disable-next-line import/group-exports -- #711: Keep useEveRuntime inline with its context: grouped hooks violate exports-last beside inline contexts; placing them first violates no-use-before-define. Grouping every value instead triggers Oxlint 1.82 Fast Refresh classification.
 export const useEveRuntime = (): NonNullable<

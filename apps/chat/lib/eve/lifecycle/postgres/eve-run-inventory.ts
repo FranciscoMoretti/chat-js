@@ -30,7 +30,7 @@ no-magic-numbers (#517): readEvePostgresRunInventoryInTransaction uses 1 in its 
  * @returns {Promise<{ activeRunIds: string[]; ambiguousStreamIds: string[]; missingRunIds: string[]; runs: z.output<typeof runRow>[]; sandboxCoverage: ReturnType<typeof classifyEveSandboxRuns>; streamIds: string[] }>} Validated runs and associated streams, active run identities, unresolved declared run references, streams shared with unrelated or unassigned chunks, and ancestry-only sandbox classification. Rejects on missing session rows, invalid provider rows or oversized run/stream lists; this snapshot does not authorize deletion.
  */
 const readEvePostgresRunInventoryInTransaction = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TransactionSql is an overloaded callable tag/helper with native typed members; a mapped readonly object removes its callable signatures. Preserve the native query capability.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
   query: TransactionSql,
   sessionId: string,
   additionalRunIds: readonly string[] = []
@@ -132,19 +132,22 @@ const readEvePostgresRunInventoryInTransaction = async (
  * The caller must authorize the session before using this internal primitive.
  * This snapshot inventories known run/stream relationships, not queue, sandbox,
  * or blob coverage. It is not a retirement barrier or a purge receipt.
- * @param {Readonly<Pick<Sql, "begin">>} connection Native transaction-opening capability used to establish a repeatable-read read-only snapshot.
+ * @param {Sql} connection Native transaction-opening capability used to establish a repeatable-read read-only snapshot.
  * @param {string} sessionId Caller-authorized native session identity whose graph is requested.
  * @returns {ReturnType<typeof readEvePostgresRunInventoryInTransaction>} The same validated run/stream inventory as the transaction reader, under the opened snapshot; rejects when inventory validation or the native transaction fails.
  */
 const readEvePostgresRunInventory = async (
-  connection: Readonly<Pick<Sql, "begin">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Open the native Postgres transaction with connection.begin; preserve its overloaded transaction callback and connection lifecycle contract.
+  connection: Sql,
   sessionId: string
 ): ReturnType<typeof readEvePostgresRunInventoryInTransaction> =>
   await connection.begin(
     "isolation level repeatable read read only",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the native callable TransactionSql supplied by begin for the isolated run/stream inventory read.
-    async (query) =>
-      await readEvePostgresRunInventoryInTransaction(query, sessionId)
+
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
+      query
+    ) => await readEvePostgresRunInventoryInTransaction(query, sessionId)
   );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEvePostgresRunInventory, readEvePostgresRunInventoryInTransaction); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */

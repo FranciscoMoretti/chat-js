@@ -1,17 +1,20 @@
 import type { electronAuthClient } from "./lib/auth-client";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- global: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 declare global {
   type Bridges = typeof electronAuthClient.$Infer.Bridges;
   type ElectronRendererAuthState =
     | {
-        status: "idle";
-        message: null;
+        readonly status: "idle";
+        readonly message: null;
       }
     | {
-        status: "awaiting-browser" | "finishing" | "timed-out" | "error";
-        message: string;
-        detail?: string | null;
+        readonly status:
+          | "awaiting-browser"
+          | "finishing"
+          | "timed-out"
+          | "error";
+        readonly message: string;
+        readonly detail?: string | null;
       };
   interface Window extends Bridges {
     electronAPI?: {
@@ -26,4 +29,3 @@ declare global {
     };
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

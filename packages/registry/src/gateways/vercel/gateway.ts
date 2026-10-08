@@ -50,7 +50,7 @@ class VercelGateway
   public readonly type = "vercel" as const;
 
   public createLanguageModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SDK custom model IDs use string & {}; this is an immutable string. Readonly maps that intersection into a non-string object rejected by the provider factory.
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: Parameters<
       (typeof gateway)["languageModel"]
     >[typeof MODEL_ID_PARAMETER_INDEX]
@@ -58,13 +58,15 @@ class VercelGateway
     return this.getProvider()(modelId);
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
-  public createImageModel(modelId: VercelImageModelId): ImageModel {
+  public createImageModel(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
+    modelId: VercelImageModelId
+  ): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
   public createVideoModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: VercelVideoModelId
   ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);

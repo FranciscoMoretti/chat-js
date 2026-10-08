@@ -75,6 +75,7 @@ const showStreamingArtifact = async (): Promise<void> => {
     .element(page.getByTestId("artifact-state"))
     .toHaveTextContent("fixtureVersion");
   await takeSnapshot("artifact-streaming");
+  await page.elementLocator(document.body).screenshot();
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Await native query, React and browser lifecycle completion before state assertions, captures and cleanup. */

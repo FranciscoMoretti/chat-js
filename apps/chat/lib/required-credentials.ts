@@ -4,7 +4,6 @@ import {
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The exported error exposes the original EnvRequirement objects through its requirements property; converting inputs to deeply readonly would change that mutable public contract or require cloning. */
 /** Shared explicit failure for installed integrations; never carries secret values. */
 class MissingCredentialsError extends Error {
   public readonly code = "CHATJS_MISSING_CREDENTIALS";
@@ -23,9 +22,8 @@ class MissingCredentialsError extends Error {
     this.requirements = requirements;
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- Return the original mutable requirement for an unsatisfied leaf and null for satisfied leaves; callers expose those same objects through MissingCredentialsError. */
+/* oxlint-disable unicorn/no-null -- Return the original mutable requirement for an unsatisfied leaf and null for satisfied leaves; callers expose those same objects through MissingCredentialsError. */
 const missingRequirement = (
   requirement: EnvRequirement,
   env: Readonly<NodeJS.ProcessEnv>
@@ -50,9 +48,8 @@ const missingRequirement = (
   }
   return requirement;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- MissingCredentialsError preserves mutable requirement objects from this input; deep readonly requirements cannot be returned through its existing public property. */
 const requireCredentials = (
   integration: string,
   requirements: readonly EnvRequirement[],
@@ -71,6 +68,6 @@ const requireCredentials = (
   }
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (MissingCredentialsError, requireCredentials); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { MissingCredentialsError, requireCredentials };
 /* oxlint-enable import/no-named-export */

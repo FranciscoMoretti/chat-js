@@ -11,9 +11,8 @@ import { eveCodeSandbox, eveConversation } from "./schema";
 
 const FIRST_ROW_INDEX = 0;
 
-type SandboxTransaction = Readonly<
-  Pick<typeof db, "execute" | "insert" | "select">
->;
+// oxlint-disable-next-line no-magic-numbers -- Indexed callback type preserves the actual native transaction contract.
+type SandboxTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type CodeSandboxForDeletion = Pick<
   typeof eveCodeSandbox.$inferSelect,
@@ -42,6 +41,7 @@ const reserveEveCodeSandbox = async (
     readonly projectId: string;
   }
 ): Promise<string> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: SandboxTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`

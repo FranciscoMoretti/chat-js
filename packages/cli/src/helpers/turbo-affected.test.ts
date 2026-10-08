@@ -17,7 +17,7 @@ let fixture: string;
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Bun.spawnSync receives this command unchanged and requires a mutable string[]; readonly string[] fails its actual declaration (TS2345).
 const run = (command: string[]) =>
   Bun.spawnSync(command, {
     cwd: fixture,
@@ -28,14 +28,12 @@ const run = (command: string[]) =>
       TURBO_SCM_HEAD: "",
     },
   });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const git = (...args: string[]): string => {
+const git = (...args: readonly string[]): string => {
   const result = run(["git", ...args]);
   if (result.exitCode !== 0) {
     throw new Error(result.stderr.toString());
@@ -43,7 +41,6 @@ const git = (...args: string[]): string => {
   return result.stdout.toString().trim();
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 beforeAll(async (): Promise<void> => {

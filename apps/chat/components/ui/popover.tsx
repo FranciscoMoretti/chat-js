@@ -33,8 +33,9 @@ const Popover = (
 
 /* oxlint-disable react/react-in-jsx-scope -- PopoverTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const PopoverTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- PopoverTrigger forwards PopoverPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof PopoverPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <PopoverPrimitiveTrigger
     data-slot="popover-trigger"
@@ -48,14 +49,18 @@ const PopoverTrigger = (
 /* oxlint-disable no-magic-numbers, react/no-multi-comp -- PopoverContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- PopoverContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- PopoverContent forwards PopoverPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const PopoverContent = ({
-  className,
-  align = "center",
-  sideOffset = 4,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof PopoverPrimitiveContent>): ReactJSX.Element => (
+
+const PopoverContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    align = "center",
+    sideOffset = 4,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof PopoverPrimitiveContent>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <PopoverPrimitivePortal>
     <PopoverPrimitiveContent
       align={align}
@@ -78,8 +83,9 @@ const PopoverContent = ({
 
 /* oxlint-disable react/react-in-jsx-scope -- PopoverAnchor uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const PopoverAnchor = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- PopoverAnchor forwards PopoverPrimitiveAnchor's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof PopoverPrimitiveAnchor>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <PopoverPrimitiveAnchor
     data-slot="popover-anchor"

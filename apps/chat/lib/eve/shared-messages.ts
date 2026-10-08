@@ -7,11 +7,17 @@ import type {
   MessageStreamEvent,
 } from "eve/client";
 
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 /* oxlint-enable sort-imports */
 import { responseModelReferences } from "./response-model";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
 /* oxlint-enable sort-imports */
@@ -151,7 +157,7 @@ const sharedTool = (
 
 /* oxlint-disable max-statements -- max-statements (#512): sharedEvePart whitelists public part fields, strips authorization challenges and appends display-only request/answer text; keep these privacy decisions visible under one projection. */
 const sharedEvePart = (
-  part: ReadonlyNativeSurface<EveMessagePart>
+  part: ReadonlyNativeSurface<ReadonlyEveMessagePart>
 ): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
@@ -213,8 +219,8 @@ const sharedEveMessages = (
     state = reduceEvent(state, event);
   }
   const models = responseModelReferences(events);
-  // oxlint-disable-next-line oxc/no-map-spread, typescript/prefer-readonly-parameter-types -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order. Native reduced message metadata is forwarded to eveMessageTool, whose Pick<EveMessage, "metadata"> contract contains mutable JSON collections.
-  return state.messages.map((message): SharedEveMessage => {
+  // oxlint-disable-next-line oxc/no-map-spread -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order.
+  return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
       // oxlint-disable-next-line no-ternary -- Keep selectedTool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.

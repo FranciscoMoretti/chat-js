@@ -13,8 +13,8 @@ import { recordEveConversationActivity } from "@/lib/db/eve-queries";
 export const ingestEveActivity = async (
   ownerId: string,
   sessionId: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native MessageStreamEvent includes recursive history/subagent data; mapped readonly instantiation exceeds compiler limits, so preserve the native union contract on this parameter.
-  event: MessageStreamEvent
+
+  event: Readonly<Pick<MessageStreamEvent, "type" | "meta">>
 ): Promise<void> => {
   if (event.type === "message.received" || event.type === "message.completed") {
     await recordEveConversationActivity(

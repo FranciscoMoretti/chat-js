@@ -1,7 +1,10 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/response-group-contracts" dependency within this package instead of introducing an alias or barrel API.
  */
+
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+import type { Response, TestInfo } from "@playwright/test";
 
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -9,18 +12,22 @@ import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 const nano = /GPT-5 Nano/iu;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("nested comparisons retain both groups, duplicate-model slots and retry attempts uses 240_000, 2, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("nested comparisons retain both groups, duplicate-model slots and retry attempts accepts { page, }; testInfo; route; value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("nested comparisons retain both groups, duplicate-model slots and retry attempts preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("nested comparisons retain both groups, duplicate-model slots and retry attempts under one chat URL", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-response-groups", {
@@ -98,7 +105,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("");
   const retry = page.waitForResponse(
-    (value) =>
+    (value: Readonly<Pick<Response, "url" | "request">>) =>
       value.url().endsWith("/api/agent-conversations") &&
       value.request().method() === "POST"
   );
@@ -125,7 +132,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Do not use tools. Reply with exactly jade.");
   const editedGroup = page.waitForResponse(
-    (value) =>
+    (value: Readonly<Pick<Response, "url" | "request">>) =>
       value.url().endsWith("/api/agent-response-groups") &&
       value.request().method() === "POST"
   );
@@ -141,28 +148,36 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): test("new-chat recovery survives an ambiguous reply and reload without a new operatio keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("new-chat recovery survives an ambiguous reply and reload without a new operatio uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("new-chat recovery survives an ambiguous reply and reload without a new operatio accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("new-chat recovery survives an ambiguous reply and reload without a new operatio preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const submissions: unknown[] = [];
-  await page.route("**/api/agent-conversations", (route) => {
-    submissions.push(route.request().postDataJSON());
-    return route.fulfill({
-      json: { error: "Temporary transport failure" },
-      status: 503,
-    });
-  });
+  await page.route(
+    "**/api/agent-conversations",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => {
+      submissions.push(route.request().postDataJSON());
+      return route.fulfill({
+        json: { error: "Temporary transport failure" },
+        status: 503,
+      });
+    }
+  );
   await page
     .getByLabel("Message", { exact: true })
     .fill("Keep this exact request");
@@ -187,4 +202,4 @@ test("new-chat recovery survives an ambiguous reply and reload without a new ope
   ).toBeEnabled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */

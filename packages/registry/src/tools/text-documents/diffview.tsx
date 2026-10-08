@@ -85,8 +85,12 @@ class DiffTextNode extends TextNode {
     return this.__diffType;
   }
 
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.createDOM caches class-name arrays on the original config.theme.text object. Its optional editor argument is forwarded unchanged as the native LexicalEditor, including private nominal members. */
-  public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
+  public createDOM(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.createDOM receives and caches theme class-name arrays on the original EditorConfig; recursive readonly arrays fail that actual Lexical receiver (TS2345).
+    config: EditorConfig,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Pass the original LexicalEditor to TextNode.createDOM; recursive readonly projections drop its nominal members and fail that actual Lexical receiver (TS2345).
+    editor?: LexicalEditor
+  ): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
 
@@ -117,12 +121,12 @@ class DiffTextNode extends TextNode {
 
     return element;
   }
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.updateDOM receives the original previous native node, mutates the original DOM subtree and caches theme class names on the original config. Deep readonly projections fail those native receiver contracts; shallow views retain nested mutable fields. */
   public updateDOM(
     prevNode: this,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.updateDOM mutates this original DOM subtree; deeply readonly DOM children/styles fail its native HTMLElement receiver (TS2345).
     dom: HTMLElement,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.updateDOM caches class-name arrays on the original EditorConfig; recursively readonly theme data fails that actual Lexical receiver (TS2345).
     config: EditorConfig
   ): boolean {
     const prevDiffType = prevNode.getDiffType();
@@ -136,7 +140,6 @@ class DiffTextNode extends TextNode {
 
     return super.updateDOM(prevNode, dom, config);
   }
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 }
 /* oxlint-enable eslint/no-underscore-dangle */
 /* oxlint-enable eslint/no-magic-numbers */

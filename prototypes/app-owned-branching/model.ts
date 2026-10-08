@@ -43,11 +43,24 @@ const message = z
 
 type Message = z.infer<typeof message>;
 
-type DeepReadonly<Value> = Value extends readonly unknown[]
-  ? { readonly [Index in keyof Value]: DeepReadonly<Value[Index]> }
-  : Value extends object
-    ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
-    : Value;
+type DeepReadonly<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
+  ? Value
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends readonly unknown[]
+        ? { readonly [Index in keyof Value]: DeepReadonly<Value[Index]> }
+        : Value extends object
+          ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
+          : Value;
 
 interface Branch {
   id: string;
@@ -68,8 +81,6 @@ interface Checkpoint {
   sandbox: string;
   status: "pending" | "ready" | "failed";
 }
-
-type DB = Sql | TransactionSql;
 
 type ReadonlySqlTag = <
   RowType extends readonly (object | undefined)[] = postgres.Row[],
@@ -160,11 +171,11 @@ const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
 
 /* oxlint-disable eslint/max-params -- requireResources: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- requireResources: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- requireResources: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const requireResources = async (
-  sql: DB,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This reader uses the native SQL tag and identifier helper only for SELECT; a callable-preserving DeepReadonly<Sql | TransactionSql> compiler control passes both exact receiver calls, but Oxlint flags that recursive callable surface.
+  sql: DeepReadonly<Sql | TransactionSql>,
   owner: string,
-  ids: string[],
+  ids: readonly string[],
   kind: "file" | "document"
 ): Promise<void> => {
   if (ids.length === 0) {
@@ -178,12 +189,11 @@ const requireResources = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve append's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- append: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const append = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   input: DeepReadonly<{
     owner: string;
@@ -196,6 +206,7 @@ const append = async (
   const parsed = message.parse(input.message);
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding payload excludes annotation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { annotation, ...payload } = parsed;
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     await requireResources(
@@ -224,16 +235,16 @@ const append = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve editDocument's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-params -- editDocument: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- editDocument: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const editDocument = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   owner: string,
   branch: string,
   revisions: Readonly<Record<string, string>>
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
     if (hasBarrier(ownedBranchRecord.barrier)) {
@@ -245,18 +256,18 @@ const editDocument = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beginWriter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable eslint/max-params -- beginWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- beginWriter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const beginWriter = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   owner: string,
   branch: string,
   id: string,
   kind: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
     if (hasBarrier(ownedBranchRecord.barrier)) {
@@ -267,17 +278,17 @@ const beginWriter = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve endWriter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable eslint/max-params -- endWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- endWriter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const endWriter = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   owner: string,
   branch: string,
   id: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     await ownedBranch(tx, owner, branch);
     await tx`delete from writer where id=${id} and branch=${branch}`;
@@ -285,18 +296,18 @@ const endWriter = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserve's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable eslint/max-statements -- reserve: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/no-magic-numbers -- reserve: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- reserve: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 // Durable steps may retry this operation. The operation identity fixes the first
 // admitted boundary; retry never resamples documents or the live sandbox.
 const reserve = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   input: Readonly<{ owner: string; source: string; id: string; intent: string }>
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.source);
     const existingRows = await tx<
@@ -328,7 +339,6 @@ const reserve = async (
   });
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -341,8 +351,8 @@ interface SnapshotProvider {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve complete's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- complete: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-params -- complete: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- complete: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const complete = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   provider: Readonly<SnapshotProvider>,
   owner: string,
@@ -369,6 +379,7 @@ const complete = async (
     await provider.restore(id, `parent:${id}`);
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling afterRestore; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     afterRestore?.();
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
     await sql.begin(async (tx) => {
       const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
@@ -392,13 +403,12 @@ const complete = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fork's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-magic-numbers -- fork: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- fork: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const fork = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   provider: Readonly<SnapshotProvider>,
   input: Readonly<{ owner: string; checkpoint: string; child: string }>
@@ -410,6 +420,7 @@ const fork = async (
   if (checkpoint?.status !== "ready") {
     throw new Error("checkpoint not ready or not owned");
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const prior =
       await tx`select id from child_request where id=${input.child}`;
@@ -433,6 +444,7 @@ const fork = async (
   // Deterministic child identity + provider replay protects the allocation gap.
   const sandbox = `child:${input.child}`;
   await provider.restore(checkpoint.id, sandbox);
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const [request] = await tx<
       { deleted: boolean }[]
@@ -451,11 +463,9 @@ const fork = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeBranch's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- removeBranch: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- removeBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /** Retention proof only: keep immutable nodes/resources/checkpoints for children.
  * Production needs reachability GC + per-owner retention/deletion policy.
  * @param {Sql} sql - Connection owning the deletion transaction.
@@ -463,10 +473,12 @@ const fork = async (
  * @param {string} branch - Branch identity to remove without deleting retained resources.
  */
 const removeBranch = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   owner: string,
   branch: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     await tx`select id from child_request where id=${branch} for update`;
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
@@ -481,17 +493,16 @@ const removeBranch = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- writeFile: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- writeFile: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Write through an admitted writer token that outlives the OS process/job.
  * @param {Sql} sql - Connection owning the writer validation and update transaction.
  * @param {Readonly<{ owner: string; branch: string; writer: string; path: string; bytes: string; }>} input - Owner, branch, writer token, and file contents for the update.
  */
 const writeFile = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This function opens its owner transaction with native sql.begin(); the callback performs the operation's database writes.
   sql: Sql,
   input: Readonly<{
     owner: string;
@@ -501,6 +512,7 @@ const writeFile = async (
     bytes: string;
   }>
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native transaction callback issues INSERT, UPDATE, or DELETE queries through the owner transaction.
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     const tokens =
@@ -517,28 +529,28 @@ const writeFile = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve modelHistory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- modelHistory: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Produce a model transcript without application annotations.
- * @param {DB} sql - Connection used to read the immutable message prefix.
+ * @param {ReadonlySqlTag} sql - Read-only tag used to read the immutable message prefix.
  * @param {string} owner - Tenant whose message nodes may be read.
  * @param {string | null} head - Last node in the prefix, or null for an empty history.
- * @returns {Promise<Pick<Message, "parts" | "role">[]>} Ordered message roles and parts without application annotations.
+ * @returns {Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]>} Ordered read-only message roles and parts without application annotations.
  */
 const modelHistory = async (
-  sql: DB,
+  sql: ReadonlySqlTag,
   owner: string,
   head: string | null
-): Promise<Pick<Message, "parts" | "role">[]> => {
+): Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]> => {
   const messages = await history(sql, owner, head);
-  return messages.map(({ parts, role }) => ({ parts, role }));
+  return messages.map(({ parts, role }: DeepReadonly<Message>) => ({
+    parts,
+    role,
+  }));
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (append, beginWriter, complete, editDocument, endWriter, fork, history, message, modelHistory, removeBranch, reserve, validatePrefix, writeFile); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- modelHistory: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */
 export {

@@ -7,32 +7,44 @@ type EveCopySeed = NonNullable<
 /* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): EveCopyPlan preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 /** Server-prepared immutable intent. Never accept this payload from a browser. */
 type EveCopyPlan = {
-  seed: EveCopySeed;
-  documentCheckpoints: {
-    messageIndex: number;
-    heads: { documentId: string; revisionId: string }[];
+  readonly seed: EveCopySeed;
+  readonly documentCheckpoints: readonly {
+    readonly messageIndex: number;
+    readonly heads: readonly {
+      readonly documentId: string;
+      readonly revisionId: string;
+    }[];
   }[];
-  sourceHeads: { documentId: string; revisionId: string }[];
-  files: {
-    key: string;
-    source:
-      | { kind: "stored"; key: string }
-      | { kind: "inline"; base64: string };
-    sha256: string;
-    size: number;
-    mediaType: string;
+  readonly sourceHeads: readonly {
+    readonly documentId: string;
+    readonly revisionId: string;
   }[];
-  documents: {
-    documentId: string;
-    headRevisionId: string;
-    revisions: {
-      id: string;
-      parentRevisionId: string | null;
-      title: string;
-      content: string;
-      fileIds: string[];
-      kind: "text" | "code" | "sheet";
-      createdAt: string;
+  readonly files: readonly {
+    readonly key: string;
+    readonly source:
+      | {
+          readonly kind: "stored";
+          readonly key: string;
+        }
+      | {
+          readonly kind: "inline";
+          readonly base64: string;
+        };
+    readonly sha256: string;
+    readonly size: number;
+    readonly mediaType: string;
+  }[];
+  readonly documents: readonly {
+    readonly documentId: string;
+    readonly headRevisionId: string;
+    readonly revisions: readonly {
+      readonly id: string;
+      readonly parentRevisionId: string | null;
+      readonly title: string;
+      readonly content: string;
+      readonly fileIds: readonly string[];
+      readonly kind: "text" | "code" | "sheet";
+      readonly createdAt: string;
     }[];
   }[];
 };

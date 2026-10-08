@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 
 import type { EveSearchText } from "@/lib/eve/search-text";
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -15,10 +16,10 @@ type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveSearchText's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-params, no-magic-numbers, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 max-params (#511): writeEveSearchText keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): writeEveSearchText uses 8000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): writeEveSearchText accepts tx: SearchTransaction; entries: readonly EveSearchText[]; entry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+
 typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Writes search chunks only while the owner’s conversation binding is active.
@@ -30,6 +31,7 @@ typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally k
  * @param {readonly EveSearchText[]} entries Search keys and text chunks to persist.
  */
 const writeEveSearchText = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   tx: SearchTransaction,
   ownerId: string,
   conversationId: string,
@@ -50,7 +52,7 @@ const writeEveSearchText = async (
     return;
   }
   // Bound vectors and insert batches even for unusually large pasted messages.
-  const chunks = entries.flatMap((entry) => {
+  const chunks = entries.flatMap((entry: EveSearchText) => {
     const result: EveSearchText[] = [];
     for (let offset = 0; offset < entry.text.length; offset += 8000) {
       result.push({
@@ -68,7 +70,12 @@ const writeEveSearchText = async (
         chunks
           .slice(index, index + 100)
           // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          .map((entry) => ({ ...entry, conversationId, ownerId }))
+          .map((entry: EveSearchText) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Persist the existing source chunk fields before the conversation and owner overrides; Object.assign conflicts with prefer-object-spread.
+            ...entry,
+            conversationId,
+            ownerId,
+          }))
       )
       .onConflictDoUpdate({
         set: { text: sql`excluded.text` },
@@ -79,11 +86,11 @@ const writeEveSearchText = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve indexEveSearchText's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): indexEveSearchText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): indexEveSearchText accepts entries: readonly EveSearchText[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+
 typescript/promise-function-async (#606): indexEveSearchText preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const indexEveSearchText = async (
   ownerId: string,
@@ -91,13 +98,14 @@ const indexEveSearchText = async (
   entries: readonly EveSearchText[]
 ): Promise<void> => {
   if (entries.length > 0) {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
     await db.transaction((tx) =>
       writeEveSearchText(tx, ownerId, conversationId, entries)
     );
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
@@ -125,17 +133,17 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions --
  * max-statements (#512): highlightSearchExcerpt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): highlightSearchExcerpt skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): highlightSearchExcerpt uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): highlightSearchExcerpt accepts words: Record<string, string>; { prefix, text }; { text }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ *
  * typescript/strict-boolean-expressions (#610): highlightSearchExcerpt intentionally keeps the existing falsy-value behavior of token.groups?.term; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const highlightSearchExcerpt = (
   excerpt: string,
   query: string,
-  words: Record<string, string>
+  words: Readonly<Record<string, string>>
 ): string => {
   const terms: { prefix: boolean; text: string }[] = [];
   const groups = [false];
@@ -164,13 +172,17 @@ const highlightSearchExcerpt = (
   return excerpt.replace(markedWord, (marked, word: string) => {
     const normalized = words[word] ?? word;
     const lengths = terms
-      .filter(({ prefix, text }) => {
-        if (prefix) {
-          return normalized.startsWith(text);
+      .filter(
+        ({ prefix, text }: Readonly<{ prefix: boolean; text: string }>) => {
+          if (prefix) {
+            return normalized.startsWith(text);
+          }
+          return normalized === text;
         }
-        return normalized === text;
-      })
-      .map(({ text }) => text.length);
+      )
+      .map(
+        ({ text }: Readonly<{ prefix: boolean; text: string }>) => text.length
+      );
     const length = Math.max(0, ...lengths);
 
     if (length) {
@@ -180,12 +192,12 @@ const highlightSearchExcerpt = (
   });
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null --
 max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): searchEveConversations uses 2, 1, 0, 20, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): searchEveConversations accepts input: { search: string; cursor?: { rank: number; updatedAt: string; id: string } | n; { highlightQuery, highlightWords, ...item }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+
 unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Searches an owner’s bound conversations and returns one ranked result per chat.
@@ -197,8 +209,12 @@ unicorn/no-null (#570): searchEveConversations preserves explicit null in its st
 const searchEveConversations = async (
   ownerId: string,
   input: {
-    search: string;
-    cursor?: { rank: number; updatedAt: string; id: string } | null;
+    readonly search: string;
+    readonly cursor?: {
+      readonly rank: number;
+      readonly updatedAt: string;
+      readonly id: string;
+    } | null;
   }
 ): Promise<{
   items: Omit<EveSearchResult, "highlightQuery" | "highlightWords">[];
@@ -270,15 +286,22 @@ const searchEveConversations = async (
   const page = items
     .slice(0, 20)
     // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Rest binding item excludes highlightQuery, highlightWords from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    .map(({ highlightQuery, highlightWords, ...item }) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...item,
-      excerpt: highlightSearchExcerpt(
-        item.excerpt,
+    .map(
+      ({
         highlightQuery,
-        highlightWords
-      ),
-    }));
+        highlightWords,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Preserve the original own-key exclusion of highlight fields when forwarding the search result.
+        ...item
+      }: ReadonlyNativeSurface<EveSearchResult>) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        ...item,
+        excerpt: highlightSearchExcerpt(
+          item.excerpt,
+          highlightQuery,
+          highlightWords
+        ),
+      })
+    );
   const last = page.at(-1);
   return {
     items: page,
@@ -291,6 +314,6 @@ const searchEveConversations = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (indexEveSearchText, searchEveConversations, writeEveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };
 /* oxlint-enable import/no-named-export */

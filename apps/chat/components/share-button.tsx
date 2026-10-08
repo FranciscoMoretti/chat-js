@@ -25,8 +25,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
@@ -259,7 +262,7 @@ const ShareDialogView = ({
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShareDialog: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- ShareDialog: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 // Extracted dialog component that can be controlled externally
 /* oxlint-disable react/forbid-component-props -- DialogContent accept the supplied styling props; preserve this composition's layout and appearance. */
@@ -269,10 +272,10 @@ const ShareDialog = ({
   children,
   renderContent,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children?: React.ReactNode;
-  renderContent: (onClose: () => void) => React.ReactNode;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly children?: ReadonlyReactNode;
+  readonly renderContent: (onClose: () => void) => React.ReactNode;
 }): React.JSX.Element => {
   const handleDialogOpenChange = (isOpen: boolean): void => {
     onOpenChange(isOpen);
@@ -289,17 +292,21 @@ const ShareDialog = ({
 };
 /* oxlint-disable react/jsx-no-literals -- ShareButton renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShareButton: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- ShareButton: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/forbid-component-props -- Button, PopoverContent accept the supplied styling props; preserve this composition's layout and appearance. */
-const ShareButton = ({
-  className,
-  renderContent,
-}: {
-  renderContent: (onClose: () => void) => React.ReactNode;
-} & React.ComponentProps<typeof Button>): React.JSX.Element => {
+const ShareButton = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    renderContent,
+  }: {
+    readonly renderContent: (onClose: () => void) => React.ReactNode;
+  } & React.ComponentProps<typeof Button>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -339,6 +346,6 @@ const ShareButton = ({
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ShareButton, ShareDialog, ShareDialogView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */
 export { ShareButton, ShareDialog, ShareDialogView };
 /* oxlint-enable import/no-named-export */

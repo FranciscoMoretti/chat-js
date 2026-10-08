@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Request, Response, TestInfo } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import { z } from "zod";
 
 const bindingSchema = z.object({
@@ -7,26 +10,28 @@ const bindingSchema = z.object({
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("anonymous chat stays disposable and disappears on reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("anonymous chat stays disposable and disappears on reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("anonymous chat stays disposable and disappears on reload") uses 120_000, 0, 200, 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("anonymous chat stays disposable and disappears on reload") accepts { page, }; testInfo; route; request; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("anonymous chat stays disposable and disappears on reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.on(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("anonymous chat stays disposable and disappears on reload", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(120_000);
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
+  await page.route(
+    "**/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ body: "", contentType: "text/javascript" })
   );
   const requests: string[] = [];
   const errors: string[] = [];
-  page.on("request", (request) =>
+  page.on("request", (request: Readonly<Pick<Request, "url">>) =>
     requests.push(new URL(request.url()).pathname)
   );
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "How can I help you today?" })
@@ -49,8 +54,9 @@ test("anonymous chat stays disposable and disappears on reload", async ({
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Reply with exactly: temporary chat works");
-  const creation = page.waitForResponse((response) =>
-    response.url().endsWith("/api/eve-guest")
+  const creation = page.waitForResponse(
+    (response: Readonly<Pick<Response, "url">>) =>
+      response.url().endsWith("/api/eve-guest")
   );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const response = await creation;
@@ -92,23 +98,27 @@ test("anonymous chat stays disposable and disappears on reload", async ({
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addStyleTag() on the original Page/locator receiver to change the live browser or route state.
 test("guest bootstrap failures preserve the draft and expired sessions offer a fresh start", async ({
   page,
-}, testInfo) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "**/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ body: "", contentType: "text/javascript" })
   );
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({ json: { error: "Unavailable" }, status: 502 })
+  await page.route(
+    "**/api/eve-guest",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ json: { error: "Unavailable" }, status: 502 })
   );
   await page.goto("/");
   await page.addStyleTag({
@@ -126,20 +136,26 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
     path: testInfo.outputPath("guest-bootstrap-error.png"),
   });
   await page.unroute("**/api/eve-guest");
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({
-      json: {
-        credential: "expired-fixture",
-        expiresAt: 0,
-        sessionId: "expired-session",
-      },
-    })
+  await page.route(
+    "**/api/eve-guest",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        json: {
+          credential: "expired-fixture",
+          expiresAt: 0,
+          sessionId: "expired-session",
+        },
+      })
   );
-  await page.route("**/eve/guest/v1/session/**", (route) =>
-    route.fulfill({
-      json: { error: "This temporary chat has expired." },
-      status: 401,
-    })
+  await page.route(
+    "**/eve/guest/v1/session/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        json: { error: "This temporary chat has expired." },
+        status: 401,
+      })
   );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -163,18 +179,20 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("guest shell keeps release controls and New Chat clears the in-memory draft") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("guest shell keeps release controls and New Chat clears the in-memory draft") accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("guest shell keeps release controls and New Chat clears the in-memory draft") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addStyleTag() on the original Page/locator receiver to change the live browser or route state.
 test("guest shell keeps release controls and New Chat clears the in-memory draft", async ({
   page,
-}, testInfo) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "**/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ body: "", contentType: "text/javascript" })
   );
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
@@ -206,38 +224,46 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): test("New Chat discards late bootstrap results and retires their session") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("New Chat discards late bootstrap results and retires their session") uses 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("New Chat discards late bootstrap results and retires their session") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("New Chat discards late bootstrap results and retires their session") accepts { page, }; route; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("New Chat discards late bootstrap results and retires their session") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("New Chat discards late bootstrap results and retires their session", async ({
   page,
 }) => {
   const started = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
   const messages: string[] = [];
-  await page.route("**/api/eve-guest", async (route) => {
-    started.resolve(undefined);
-    await release.promise;
-    await route.fulfill({
-      json: {
-        credential: "fixture",
-        expiresAt: Date.now() + 60_000,
-        sessionId: "discarded-session",
-      },
-    });
-  });
-  await page.route("**/eve/guest/v1/session/**", (route) => {
-    if (route.request().method() === "POST") {
-      messages.push(new URL(route.request().url()).pathname);
+  await page.route(
+    "**/api/eve-guest",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    async (route) => {
+      started.resolve(undefined);
+      await release.promise;
+      await route.fulfill({
+        json: {
+          credential: "fixture",
+          expiresAt: Date.now() + 60_000,
+          sessionId: "discarded-session",
+        },
+      });
     }
-    return route.fulfill({ json: { ok: true } });
-  });
+  );
+  await page.route(
+    "**/eve/guest/v1/session/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => {
+      if (route.request().method() === "POST") {
+        messages.push(new URL(route.request().url()).pathname);
+      }
+      return route.fulfill({ json: { ok: true } });
+    }
+  );
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Discard this private message");
@@ -246,8 +272,9 @@ test("New Chat discards late bootstrap results and retires their session", async
   await page.getByRole("link", { name: /New Chat/u }).click();
   await expect(composer).toHaveText("");
   await composer.fill("Fresh draft");
-  const retired = page.waitForRequest((request) =>
-    request.url().endsWith("/discarded-session/reset")
+  const retired = page.waitForRequest(
+    (request: Readonly<Pick<Request, "url">>) =>
+      request.url().endsWith("/discarded-session/reset")
   );
   release.resolve(undefined);
   await retired;
@@ -257,27 +284,32 @@ test("New Chat discards late bootstrap results and retires their session", async
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("back-forward cache restoration starts a fresh guest chat") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("back-forward cache restoration starts a fresh guest chat") accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("back-forward cache restoration starts a fresh guest chat") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("back-forward cache restoration starts a fresh guest chat", async ({
   page,
 }) => {
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({
-      json: {
-        credential: "fixture",
-        expiresAt: 0,
-        sessionId: "retired-session",
-      },
-    })
+  await page.route(
+    "**/api/eve-guest",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        json: {
+          credential: "fixture",
+          expiresAt: 0,
+          sessionId: "retired-session",
+        },
+      })
   );
-  await page.route("**/eve/guest/v1/session/**", (route) =>
-    route.fulfill({ json: { error: "Expired" }, status: 401 })
+  await page.route(
+    "**/eve/guest/v1/session/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.fulfill({ json: { error: "Expired" }, status: 401 })
   );
   await page.goto("/");
   await page
@@ -298,4 +330,4 @@ test("back-forward cache restoration starts a fresh guest chat", async ({
   await expect(page.getByRole("log")).toHaveCount(0);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */

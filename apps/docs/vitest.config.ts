@@ -10,6 +10,7 @@ import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 import { playwright } from "@vitest/browser-playwright";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ViteDevServer } from "vite";
 import type { Plugin } from "vitest/config";
 /* oxlint-enable sort-imports */
 import { defineConfig } from "vitest/config";
@@ -18,31 +19,33 @@ const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
 /* oxlint-disable node/no-sync -- serveBuiltDocs: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- serveBuiltDocs: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const serveBuiltDocs = (): Plugin => ({
-  configureServer(server) {
-    server.middlewares.use((request, _response, next) => {
-      const [pathname = "/", query] = (request.url ?? "/").split("?");
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Vite's native server owns the middleware registry; this plugin registers the Connect callback through its mutable use() API.
+  configureServer(server: ViteDevServer) {
+    server.middlewares.use(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback rewrites request.url to serve built documentation paths; Connect requires a writable incoming request.
+      (request, _response: unknown, next) => {
+        const [pathname = "/", query] = (request.url ?? "/").split("?");
 
-      if (pathname === "/docs" || pathname.startsWith("/docs/")) {
-        let publicPath = pathname.slice("/docs".length) || "/";
-        const candidate = path.join(dist, publicPath);
+        if (pathname === "/docs" || pathname.startsWith("/docs/")) {
+          let publicPath = pathname.slice("/docs".length) || "/";
+          const candidate = path.join(dist, publicPath);
 
-        if (existsSync(candidate) && statSync(candidate).isDirectory()) {
-          publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
+          if (existsSync(candidate) && statSync(candidate).isDirectory()) {
+            publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
+          }
+
+          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          request.url = `${publicPath}${query ? `?${query}` : ""}`;
         }
 
-        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        request.url = `${publicPath}${query ? `?${query}` : ""}`;
+        next();
       }
-
-      next();
-    });
+    );
   },
   enforce: "pre",
   name: "serve-built-docs",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable import/no-default-export -- vitest.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */

@@ -52,9 +52,7 @@ type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
 // Native transaction methods shared by locked document write operations.
-type DocumentWriteTransaction = Readonly<
-  Pick<DocumentTransaction, "execute" | "select" | "insert">
->;
+type DocumentWriteTransaction = DocumentTransaction;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyDocuments's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
@@ -75,109 +73,103 @@ const purgeEveFamilyDocuments = async (
   ownerId: string,
   rootId: string
 ): Promise<void> =>
-  await db.transaction(
-    async (
-      tx: Readonly<Pick<DocumentTransaction, "execute" | "select" | "delete">>
-    ) => {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-      );
-      const family = await tx
-        .select({
-          id: eveConversation.id,
-          state: eveConversation.state,
-        })
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.ownerId, ownerId),
-            eq(eveConversation.chatId, rootId)
-          )
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .delete operations under caller-held locks; preserve the native writer contract.
+  await db.transaction(async (tx: DocumentTransaction) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const family = await tx
+      .select({
+        id: eveConversation.id,
+        state: eveConversation.state,
+      })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.chatId, rootId)
         )
-        .orderBy(eveConversation.id);
-      if (
-        family.length === 0 ||
-        family.some((row) => row.state !== "deleting")
-      ) {
-        throw new Error(
-          "The entire conversation family must be pending deletion."
-        );
-      }
-      const ids = family.map((row) => row.id);
-      for (const id of ids) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-        await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
-        );
-      }
-      await tx
-        .delete(eveImportedDocumentCheckpointEntry)
-        .where(
-          and(
-            eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
-            inArray(eveImportedDocumentCheckpointEntry.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveImportedDocumentCheckpoint)
-        .where(
-          and(
-            eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
-            inArray(eveImportedDocumentCheckpoint.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveNamedDocumentCheckpointEntry)
-        .where(
-          and(
-            eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
-            inArray(eveNamedDocumentCheckpointEntry.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveNamedDocumentCheckpoint)
-        .where(
-          and(
-            eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
-            inArray(eveNamedDocumentCheckpoint.conversationId, ids)
-          )
-        );
-      // Keep the FK constraints intact: unexpected references from a surviving
-      // conversation fail the transaction instead of destroying its ancestry.
-      await tx
-        .delete(eveDocumentCheckpointEntry)
-        .where(
-          and(
-            eq(eveDocumentCheckpointEntry.ownerId, ownerId),
-            inArray(eveDocumentCheckpointEntry.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveDocumentCheckpoint)
-        .where(
-          and(
-            eq(eveDocumentCheckpoint.ownerId, ownerId),
-            inArray(eveDocumentCheckpoint.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveDocumentHead)
-        .where(
-          and(
-            eq(eveDocumentHead.ownerId, ownerId),
-            inArray(eveDocumentHead.conversationId, ids)
-          )
-        );
-      await tx
-        .delete(eveDocumentRevision)
-        .where(
-          and(
-            eq(eveDocumentRevision.ownerId, ownerId),
-            inArray(eveDocumentRevision.conversationId, ids)
-          )
-        );
+      )
+      .orderBy(eveConversation.id);
+    if (family.length === 0 || family.some((row) => row.state !== "deleting")) {
+      throw new Error(
+        "The entire conversation family must be pending deletion."
+      );
     }
-  );
+    const ids = family.map((row) => row.id);
+    for (const id of ids) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
+      );
+    }
+    await tx
+      .delete(eveImportedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveImportedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpoint.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveNamedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveNamedDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveNamedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveNamedDocumentCheckpoint.conversationId, ids)
+        )
+      );
+    // Keep the FK constraints intact: unexpected references from a surviving
+    // conversation fail the transaction instead of destroying its ancestry.
+    await tx
+      .delete(eveDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveDocumentCheckpoint.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.ownerId, ownerId),
+          inArray(eveDocumentHead.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentRevision)
+      .where(
+        and(
+          eq(eveDocumentRevision.ownerId, ownerId),
+          inArray(eveDocumentRevision.conversationId, ids)
+        )
+      );
+  });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
@@ -227,13 +219,14 @@ const orderRevisionHistory = <
  */
 /**
  * Upgrade pre-checkpoint native history before the first manual write changes its inference.
- * @param {Readonly<Pick<DocumentTransaction, "select" | "insert">>} tx - Caller transaction retaining the family and document locks.
+ * @param {DocumentTransaction} tx - Caller transaction retaining the family and document locks.
  * @param {string} ownerId - Owner of the conversation and its historical revisions.
  * @param {string} conversationId - Conversation whose missing turn snapshots are backfilled.
  * @param {readonly number[]} turns - Nonnegative native turn indexes that need durable snapshots.
  */
 const backfillDocumentCheckpoints = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: DocumentTransaction,
   ownerId: string,
   conversationId: string,
   turns: readonly number[]
@@ -346,7 +339,8 @@ const backfillDocumentCheckpoints = async (
  * typescript/strict-boolean-expressions (#610): prepareManualRevision intentionally keeps the existing falsy-value behavior of input.expectedRevisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const prepareManualRevision = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward this original live transaction to backfillDocumentCheckpoints, which inserts checkpoint rows; preserve its native writer contract.
+  tx: DocumentTransaction,
   input: ReadonlyNativeSurface<z.infer<typeof revisionInput>>,
   historicalTurns?: readonly number[]
 ): Promise<void> => {
@@ -390,7 +384,7 @@ const saveEveDocumentRevision = async (
   signal?.throwIfAborted();
   const input = revisionInput.parse(value);
   return await db.transaction(
-    // oxlint-disable-next-line eslint/complexity -- Keep the atomic transaction boundary.
+    // oxlint-disable-next-line eslint/complexity, typescript/prefer-readonly-parameter-types -- Keep the atomic transaction boundary. This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
     async (tx: DocumentWriteTransaction) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
@@ -578,7 +572,8 @@ const getEveDocumentHistory = async (
  * unicorn/max-nested-calls (#568): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 const inheritImportedDocumentCheckpoints = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: DocumentTransaction,
   ownerId: string,
   sourceId: string,
   conversationId: string,
@@ -640,7 +635,8 @@ const inheritImportedDocumentCheckpoints = async (
  * typescript/strict-boolean-expressions (#610): initializeImportedForkDocuments intentionally keeps the existing falsy-value behavior of checkpoint; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const initializeImportedForkDocuments = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: DocumentTransaction,
   ownerId: string,
   sourceId: string,
   conversationId: string,
@@ -715,7 +711,8 @@ const parseForkTurnIndex = (turnId: string): number => {
  * unicorn/max-nested-calls (#568): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 const inheritDocumentCheckpoints = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: DocumentTransaction,
   ownerId: string,
   sourceId: string,
   conversationId: string,
@@ -780,7 +777,8 @@ const inheritDocumentCheckpoints = async (
  * typescript/strict-boolean-expressions (#610): initializeNamedForkDocuments intentionally keeps the existing falsy-value behavior of checkpoint; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const initializeNamedForkDocuments = async (
-  tx: Readonly<Pick<DocumentTransaction, "select" | "insert">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
+  tx: DocumentTransaction,
   ownerId: string,
   conversationId: string,
   sourceId: string,
@@ -854,6 +852,7 @@ const initializeEveForkDocuments = async (
   ownerId: string,
   conversationId: string
 ): Promise<void> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
@@ -1008,6 +1007,7 @@ const captureEveDocumentCheckpoint = async (
   turnIndex: number
 ): Promise<void> => {
   z.number().int().nonnegative().parse(turnIndex);
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
@@ -1075,6 +1075,7 @@ const captureEveNamedDocumentCheckpoint = async (
 ): Promise<void> => {
   z.uuid().parse(checkpointId);
   z.number().int().nonnegative().parse(turnIndex);
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     // Coordinate with deletion as well as manual/model document writes.
     await tx.execute(
@@ -1325,80 +1326,77 @@ const removeEveDocumentFromConversation = async (
   status: "success";
   title: string;
 }> =>
-  await db.transaction(
-    async (
-      tx: Readonly<Pick<DocumentTransaction, "execute" | "select" | "delete">>
-    ) => {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .delete operations under caller-held locks; preserve the native writer contract.
+  await db.transaction(async (tx: DocumentTransaction) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
+    );
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${scope.conversationId}`}, 0))`
+    );
+    signal.throwIfAborted();
+    const [conversation] = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, scope.conversationId),
+          eq(eveConversation.ownerId, scope.ownerId),
+          eq(eveConversation.state, "bound")
+        )
       );
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${scope.conversationId}`}, 0))`
-      );
-      signal.throwIfAborted();
-      const [conversation] = await tx
-        .select()
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.id, scope.conversationId),
-            eq(eveConversation.ownerId, scope.ownerId),
-            eq(eveConversation.state, "bound")
-          )
-        );
-      if (!conversation) {
-        throw new Error("Conversation not found.");
-      }
-      const [revision] = await tx
-        .select()
-        .from(eveDocumentRevision)
-        .where(
-          and(
-            eq(eveDocumentRevision.id, input.expectedRevisionId),
-            eq(eveDocumentRevision.documentId, input.documentId),
-            eq(eveDocumentRevision.ownerId, scope.ownerId)
-          )
-        );
-      if (!revision) {
-        throw new Error("Document not found.");
-      }
-      if (revision.title !== input.title) {
-        throw new Error("Document changed. Request approval again.");
-      }
-      const [head] = await tx
-        .select()
-        .from(eveDocumentHead)
-        .where(
-          and(
-            eq(eveDocumentHead.conversationId, scope.conversationId),
-            eq(eveDocumentHead.documentId, input.documentId),
-            eq(eveDocumentHead.ownerId, scope.ownerId)
-          )
-        );
-      if (head && head.revisionId !== input.expectedRevisionId) {
-        throw new Error("Document changed. Request approval again.");
-      }
-      // An absent head is already removed; a retry must not erase a newly saved revision.
-      await tx
-        .delete(eveDocumentHead)
-        .where(
-          and(
-            eq(eveDocumentHead.conversationId, scope.conversationId),
-            eq(eveDocumentHead.documentId, input.documentId),
-            eq(eveDocumentHead.ownerId, scope.ownerId),
-            eq(eveDocumentHead.revisionId, input.expectedRevisionId)
-          )
-        );
-      signal.throwIfAborted();
-      return {
-        documentId: input.documentId,
-        result:
-          "Document removed from this conversation. Historical snapshots and other branches are unchanged.",
-        status: "success" as const,
-        title: revision.title,
-      };
+    if (!conversation) {
+      throw new Error("Conversation not found.");
     }
-  );
+    const [revision] = await tx
+      .select()
+      .from(eveDocumentRevision)
+      .where(
+        and(
+          eq(eveDocumentRevision.id, input.expectedRevisionId),
+          eq(eveDocumentRevision.documentId, input.documentId),
+          eq(eveDocumentRevision.ownerId, scope.ownerId)
+        )
+      );
+    if (!revision) {
+      throw new Error("Document not found.");
+    }
+    if (revision.title !== input.title) {
+      throw new Error("Document changed. Request approval again.");
+    }
+    const [head] = await tx
+      .select()
+      .from(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, scope.conversationId),
+          eq(eveDocumentHead.documentId, input.documentId),
+          eq(eveDocumentHead.ownerId, scope.ownerId)
+        )
+      );
+    if (head && head.revisionId !== input.expectedRevisionId) {
+      throw new Error("Document changed. Request approval again.");
+    }
+    // An absent head is already removed; a retry must not erase a newly saved revision.
+    await tx
+      .delete(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, scope.conversationId),
+          eq(eveDocumentHead.documentId, input.documentId),
+          eq(eveDocumentHead.ownerId, scope.ownerId),
+          eq(eveDocumentHead.revisionId, input.expectedRevisionId)
+        )
+      );
+    signal.throwIfAborted();
+    return {
+      documentId: input.documentId,
+      result:
+        "Document removed from this conversation. Historical snapshots and other branches are unchanged.",
+      status: "success" as const,
+      title: revision.title,
+    };
+  });
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (captureEveDocumentCheckpoint, captureEveNamedDocumentCheckpoint, getAccessibleEveDocument, getEveDocumentHistory, getEveDocumentRevision, initializeEveForkDocuments, purgeEveFamilyDocuments, removeEveDocumentFromConversation, saveEveDocumentRevision); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */

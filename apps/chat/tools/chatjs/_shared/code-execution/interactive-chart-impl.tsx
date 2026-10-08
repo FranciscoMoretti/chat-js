@@ -25,38 +25,38 @@ const CHART_COLORS = [
 ];
 
 interface LineScatterElement {
-  label: string;
-  points: [number | string, number][];
+  readonly label: string;
+  readonly points: readonly (readonly [number | string, number])[];
 }
 
 interface BarElement {
-  group: string;
-  label: string;
-  value: number;
+  readonly group: string;
+  readonly label: string;
+  readonly value: number;
 }
 
 interface BaseChartCommon {
-  title: string;
-  x_label?: string;
-  y_label?: string;
+  readonly title: string;
+  readonly x_label?: string;
+  readonly y_label?: string;
 }
 
 type LineChart = BaseChartCommon & {
-  type: "line";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+  readonly type: "line";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
 type ScatterChart = BaseChartCommon & {
-  type: "scatter";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+  readonly type: "scatter";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
 type BarChart = BaseChartCommon & {
-  type: "bar";
-  x_scale?: undefined;
-  elements: BarElement[];
+  readonly type: "bar";
+  readonly x_scale?: undefined;
+  readonly elements: readonly BarElement[];
 };
 
 type BaseChart = LineChart | ScatterChart | BarChart;
@@ -71,9 +71,8 @@ type BaseChart = LineChart | ScatterChart | BarChart;
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
+const InteractiveChart = ({ chart }: { readonly chart: BaseChart }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   // oxlint-disable-next-line no-ternary -- Keep textColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -157,7 +156,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
                 },
               }
             : undefined,
-        data: e.points.map((p: [number | string, number]) => {
+        data: e.points.map((p: readonly [number | string, number]) => {
           const x =
             // oxlint-disable-next-line no-ternary -- Keep x as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
@@ -228,21 +227,26 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
         data[item.group].push(item);
       }
 
-      const series = Object.entries(data).map(([group, elements], index) => ({
-        data: elements.map((e) => [e.label, e.value]),
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: "rgba(0,0,0,0.3)",
+      const series = Object.entries(data).map(
+        (
+          [group, elements]: readonly [string, readonly BarElement[]],
+          index
+        ) => ({
+          data: elements.map((e: Readonly<BarElement>) => [e.label, e.value]),
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: "rgba(0,0,0,0.3)",
+            },
           },
-        },
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
-        name: group,
-        stack: "total",
-        type: "bar",
-      }));
+          itemStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          },
+          name: group,
+          stack: "total",
+          type: "bar",
+        })
+      );
 
       return {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -303,7 +307,6 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
 };
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (BarChart, BaseChart, LineChart, ScatterChart); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/jsx-max-depth */
 

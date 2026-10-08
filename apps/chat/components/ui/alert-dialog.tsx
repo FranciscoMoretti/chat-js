@@ -39,8 +39,9 @@ const AlertDialog = (
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogTrigger forwards AlertDialogPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof AlertDialogPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <AlertDialogPrimitiveTrigger
     data-slot="alert-dialog-trigger"
@@ -55,8 +56,9 @@ const AlertDialogTrigger = (
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogPortal = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogPortal passes Element | DocumentFragment | null | undefined container identity unchanged to AlertDialogPrimitivePortal, whose portal insertion uses the live native DOM surface.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof AlertDialogPrimitivePortal>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <AlertDialogPrimitivePortal
     data-slot="alert-dialog-portal"
@@ -70,14 +72,16 @@ const AlertDialogPortal = (
 /* oxlint-disable react/no-multi-comp -- AlertDialogOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogOverlay uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogOverlay forwards AlertDialogPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogOverlay = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveOverlay
->): ReactJSX.Element => (
+
+const AlertDialogOverlay = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveOverlay>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPrimitiveOverlay
     // oxlint-disable-next-line react/forbid-component-props -- AlertDialogPrimitiveOverlay accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -95,14 +99,16 @@ const AlertDialogOverlay = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogContent forwards AlertDialogPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveContent
->): ReactJSX.Element => (
+
+const AlertDialogContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveContent>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitiveContent
@@ -123,12 +129,16 @@ const AlertDialogContent = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogHeader = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+
+const AlertDialogHeader = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
     data-slot="alert-dialog-header"
@@ -142,12 +152,16 @@ const AlertDialogHeader = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogFooter = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+
+const AlertDialogFooter = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn(
       "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
@@ -164,12 +178,16 @@ const AlertDialogFooter = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogTitle forwards AlertDialogPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogTitle = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof AlertDialogPrimitiveTitle>): ReactJSX.Element => (
+
+const AlertDialogTitle = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveTitle>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPrimitiveTitle
     // oxlint-disable-next-line react/forbid-component-props -- AlertDialogPrimitiveTitle accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-lg font-semibold", className)}
@@ -184,14 +202,16 @@ const AlertDialogTitle = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogDescription forwards AlertDialogPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogDescription = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveDescription
->): ReactJSX.Element => (
+
+const AlertDialogDescription = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveDescription>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPrimitiveDescription
     // oxlint-disable-next-line react/forbid-component-props -- AlertDialogPrimitiveDescription accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-muted-foreground text-sm", className)}
@@ -206,14 +226,16 @@ const AlertDialogDescription = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogAction forwards AlertDialogPrimitiveAction's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogAction = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveAction
->): ReactJSX.Element => (
+
+const AlertDialogAction = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveAction>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPrimitiveAction
     // oxlint-disable-next-line react/forbid-component-props -- AlertDialogPrimitiveAction accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(buttonVariants(), className)}
@@ -227,14 +249,16 @@ const AlertDialogAction = ({
 /* oxlint-disable react/no-multi-comp -- AlertDialogCancel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogCancel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogCancel forwards AlertDialogPrimitiveCancel's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const AlertDialogCancel = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveCancel
->): ReactJSX.Element => (
+
+const AlertDialogCancel = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof AlertDialogPrimitiveCancel>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <AlertDialogPrimitiveCancel
     // oxlint-disable-next-line react/forbid-component-props -- AlertDialogPrimitiveCancel accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(buttonVariants({ variant: "outline" }), className)}

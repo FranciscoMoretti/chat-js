@@ -6,15 +6,12 @@ import { expect, test, vi } from "vitest";
 
 import { CodeExecution } from "./renderer";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/components/sandbox") accepts { code }: { code: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 vi.mock("@/components/sandbox", () => ({
-  SandboxComposed: ({ code }: { code: string }): React.JSX.Element => (
+  SandboxComposed: ({ code }: { readonly code: string }): React.JSX.Element => (
     <pre>{code}</pre>
   ),
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.

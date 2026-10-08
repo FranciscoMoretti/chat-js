@@ -96,7 +96,7 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- RootLayout: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- RootLayout only forwards children to ThemeProvider's ReactNode child slot; a faithful recursive readonly control compiles at that receiver, but Oxlint still flags the recursive ReactNode union and this app has no shared readonly ReactNode contract.
 const RootLayout = ({
   children,
 }: Readonly<{
@@ -121,7 +121,6 @@ const RootLayout = ({
   </html>
 );
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
