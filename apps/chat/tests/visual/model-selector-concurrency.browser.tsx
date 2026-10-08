@@ -1,5 +1,5 @@
-/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
 /* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
+import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -105,4 +105,78 @@ test("a suspended selection render cannot change the visible count callback", as
 /* oxlint-enable max-statements */
 /* oxlint-enable oxc/no-async-await */
 
+const crossRowCases = [
+  {
+    initialSelection: committedCounts,
+    operation: "select",
+    primaryUpdate: { [primary]: 2 },
+    result: { [primary]: 2, [secondary]: 1 },
+  },
+  {
+    initialSelection: { [primary]: 1, [secondary]: 1 },
+    operation: "count",
+    primaryUpdate: { [primary]: 2, [secondary]: 1 },
+    result: { [primary]: 2, [secondary]: 2 },
+  },
+];
+/* oxlint-disable oxc/no-async-await -- Await real count menu, row selection, and controlled React commits. */
+/* oxlint-disable max-statements -- Keep the first model update and dependent second-row action in one native regression sequence. */
+test.each(crossRowCases)(
+  "$operation on another row preserves the first model's committed count",
+  async ({
+    initialSelection,
+    operation,
+    primaryUpdate,
+    result,
+  }: {
+    readonly initialSelection: SelectedModelValue;
+    readonly operation: string;
+    readonly primaryUpdate: SelectedModelValue;
+    readonly result: SelectedModelValue;
+  }) => {
+    const action = vi.fn<(selection: SelectedModelValue) => void>();
+    /* oxlint-disable react/no-multi-comp, react/only-export-components -- This controlled fixture is mounted only by the native browser test. */
+    const Fixture = (): React.JSX.Element => {
+      const [value, setValue] =
+        React.useState<SelectedModelValue>(initialSelection);
+      const change = React.useCallback((next: SelectedModelValue): void => {
+        setValue(next);
+        action(next);
+      }, []);
+      return (
+        <ModelSelector
+          onModelSelectionChangeAction={change}
+          selectedModelId={primary}
+          selectedModelSelection={value}
+        />
+      );
+    };
+    /* oxlint-enable react/no-multi-comp, react/only-export-components */
+    const fixture = await mount(<Fixture />);
+    try {
+      await page.getByTestId("model-selector").click();
+      await page
+        .getByRole("option", { name: /Primary model/u })
+        .getByRole("button", { exact: true, name: "1×" })
+        .click();
+      await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+      expect(action).toHaveBeenLastCalledWith(primaryUpdate);
+      const row = page.getByRole("option", { name: /Secondary model/u });
+      if (operation === "select") {
+        await row.click();
+      } else {
+        await row.getByRole("button", { exact: true, name: "1×" }).click();
+        await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+      }
+      expect(action).toHaveBeenLastCalledWith(result);
+      await expect
+        .element(page.getByRole("menuitem", { exact: true, name: "2x" }))
+        .not.toBeInTheDocument();
+      await takeSnapshot(`model-selector-cross-row-${operation}`);
+    } finally {
+      await unmount(fixture);
+    }
+  }
+);
+/* oxlint-enable max-statements */
 /* oxlint-enable oxc/no-async-await */

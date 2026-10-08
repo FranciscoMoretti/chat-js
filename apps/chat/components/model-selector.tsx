@@ -66,15 +66,12 @@ import { config } from "@/lib/config";
 import { getEnabledFeatures } from "@/lib/features-config";
 // oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ModelSelectorLogo } from "./model-selector-logo";
@@ -178,7 +175,7 @@ const PureCommandItem = ({
   disabled,
   isSelected,
   count,
-  selectionControl,
+  showSelectionControl,
   onSelect,
   onCountChange,
 }: {
@@ -186,9 +183,9 @@ const PureCommandItem = ({
   readonly disabled?: boolean;
   readonly isSelected: boolean;
   readonly count?: number;
-  readonly selectionControl?: ReadonlyReactNode;
-  readonly onSelect: () => void;
-  readonly onCountChange?: (delta: number) => void;
+  readonly showSelectionControl: boolean;
+  readonly onSelect: (id: AppModelId) => void;
+  readonly onCountChange?: (id: AppModelId, delta: number) => void;
 }): ReactJSX.Element => {
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
@@ -215,12 +212,18 @@ const PureCommandItem = ({
         disabled && "cursor-not-allowed opacity-50"
       )}
       onSelect={() => {
-        void (!disabled && onSelect());
+        void (!disabled && onSelect(model.id));
       }}
       value={searchValue}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        {selectionControl}
+        {showSelectionControl && (
+          <Checkbox
+            checked={isSelected}
+            // oxlint-disable-next-line react/forbid-component-props -- Checkbox accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="pointer-events-none"
+          />
+        )}
         <div className="shrink-0">
           <ModelSelectorLogo modelId={model.id} />
         </div>
@@ -273,7 +276,7 @@ const PureCommandItem = ({
                     readonly stopPropagation: () => void;
                   }) => {
                     event.stopPropagation();
-                    onCountChange(modelCount - count);
+                    onCountChange(model.id, modelCount - count);
                   }}
                 >
                   {modelCount}x
@@ -295,34 +298,8 @@ const PureCommandItem = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined -- CommandItem: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value */
-
-const CommandItem = memo(
-  PureCommandItem,
-  (
-    prev: {
-      readonly model: { readonly id: string };
-      readonly disabled?: boolean | undefined;
-      readonly isSelected: boolean;
-      readonly count?: number | undefined;
-      readonly onCountChange?: unknown;
-    },
-    next: {
-      readonly model: { readonly id: string };
-      readonly disabled?: boolean | undefined;
-      readonly isSelected: boolean;
-      readonly count?: number | undefined;
-      readonly onCountChange?: unknown;
-    }
-  ) =>
-    prev.model.id === next.model.id &&
-    prev.disabled === next.disabled &&
-    prev.isSelected === next.isSelected &&
-    prev.count === next.count &&
-    (prev.onCountChange !== undefined) === (next.onCountChange !== undefined)
-);
+const CommandItem = memo(PureCommandItem);
 /* oxlint-disable react/jsx-no-literals -- PureModelSelector renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable no-undefined */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureModelSelector = ({
@@ -860,29 +837,16 @@ const PureModelSelector = ({
                         key={model.id}
                         model={model}
                         onCountChange={
-                          // oxlint-disable-next-line no-ternary -- Keep onCountChange JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                          // oxlint-disable-next-line no-ternary -- Keep the mode's optional count handler as a lazy value selection; pinned unicorn/prefer-ternary rejects the if/else assignment alternative.
+                          useMultipleModels ? handleCountChange : undefined
+                        }
+                        onSelect={
+                          // oxlint-disable-next-line no-ternary -- Select the mode's memoized model handler without creating a new callback for each row.
                           useMultipleModels
-                            ? (delta): void =>
-                                handleCountChange(model.id, delta)
-                            : undefined
+                            ? toggleMultiModel
+                            : selectSingleModel
                         }
-                        onSelect={() => {
-                          if (useMultipleModels) {
-                            toggleMultiModel(model.id);
-                            return;
-                          }
-                          selectSingleModel(model.id);
-                        }}
-                        selectionControl={
-                          // oxlint-disable-next-line no-ternary -- Keep selectionControl JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                          useMultipleModels ? (
-                            <Checkbox
-                              checked={isSelected}
-                              // oxlint-disable-next-line react/forbid-component-props -- Checkbox accepts className in its styling contract; preserve this caller's layout and appearance.
-                              className="pointer-events-none"
-                            />
-                          ) : null
-                        }
+                        showSelectionControl={useMultipleModels}
                       />
                     );
                   }
