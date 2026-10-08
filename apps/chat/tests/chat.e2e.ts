@@ -23,4 +23,3 @@ test("development login tool is available on the login page", async ({
   await expect(devLogin).toHaveAttribute("href", "/api/dev-login");
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

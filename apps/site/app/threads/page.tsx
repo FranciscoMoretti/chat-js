@@ -372,7 +372,6 @@ const ThreadsPage = (): React.JSX.Element => (
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-enable react/jsx-max-depth */
