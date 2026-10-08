@@ -1,11 +1,9 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
-import type * as AI from "ai";
 import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { toolResultSchema } from "@/lib/eve/tool-result";
+// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 /* oxlint-enable sort-imports */
@@ -14,7 +12,6 @@ import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { generateImageResult } from "./schemas";
 /* oxlint-enable sort-imports */
 import { generateImageTool } from "./tool";
-/* oxlint-enable import/no-namespace */
 
 const mocks = vi.hoisted(() => ({
   catalog: vi.fn(),
@@ -27,9 +24,9 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-vi.mock("ai", async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof AI>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  ...(await original<typeof AI>()),
+vi.mock(import("ai"), async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+  ...(await original()),
   generateImage: mocks.image,
   generateText: mocks.text,
 }));
@@ -84,16 +81,17 @@ vi.mock("@/lib/url", () => ({
 }));
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve execute's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep execute's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): execute accepts context = testToolContext(); deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const execute = async (context = testToolContext()) =>
+/* oxlint-disable typescript/explicit-function-return-type -- * typescript/explicit-function-return-type (#560): Keep execute's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary. */
+const execute = async (
+  context: ReadonlyNativeSurface<
+    ReturnType<typeof testToolContext>
+  > = testToolContext()
+) =>
   toolResultSchema.parse(
     await generateImageTool.execute({ prompt: "Blue sky" }, context)
   );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -173,14 +171,17 @@ it("retains provider cost if authorized storage fails", async () => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/prefer-readonly-parameter-types (#565): it("forwards cancellation to EVE") accepts { abortSignal }: { abortSignal: AbortSignal }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): it("forwards cancellation to EVE") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): it("forwards cancellation to EVE") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 it("forwards cancellation to EVE", async () => {
   const controller = new AbortController();
   mocks.image.mockImplementation(
-    ({ abortSignal }: { abortSignal: AbortSignal }) => {
+    ({
+      abortSignal,
+    }: {
+      readonly abortSignal: Readonly<
+        Pick<AbortSignal, "addEventListener" | "reason">
+      >;
+    }) => {
       const pending = Promise.withResolvers<never>();
       abortSignal.addEventListener(
         "abort",
@@ -198,7 +199,7 @@ it("forwards cancellation to EVE", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the selected native model and accounts nested model tokens") uses 0.000011 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

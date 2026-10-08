@@ -1,20 +1,18 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The ChatjsUI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+import type { ZodType } from "zod";
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only UI contract beside the other type imports without changing runtime import order.
+import type { ui as chatjsUi } from "@/tools/chatjs/ui";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type * as ChatjsUI from "@/tools/chatjs/ui";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-namespace */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/components/eve/eve-document-tool")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -26,15 +24,12 @@ vi.mock("@/components/eve/eve-document-tool", () => ({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): vi.mock("@/tools/chatjs/ui") uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/tools/chatjs/ui") accepts { tool, messageId, isReadonly }; { updates }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable id-length -- * id-length (#506): vi.mock("@/tools/chatjs/ui") uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");
   const { defineToolRenderer } = await import("@/lib/ai/define-tool-renderer");
-  const original = await importOriginal<typeof ChatjsUI>();
+  const original = await importOriginal<{ ui: typeof chatjsUi }>();
   return {
     ui: {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original.ui own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -42,14 +37,27 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
       "tool-customEcho": defineToolRenderer({
         inputSchema: z.object({ text: z.string() }),
         outputSchema: z.object({ echoed: z.string() }),
-        render: ({ tool, messageId, isReadonly }) =>
+        render: ({
+          tool,
+          messageId,
+          isReadonly,
+        }: ReadonlyNativeSurface<
+          ToolRendererProps<
+            ZodType<{ text: string }>,
+            ZodType<{ echoed: string }>
+          >
+        >) =>
           reactCreateElement(
             "p",
             { "data-message": messageId, "data-readonly": isReadonly },
             // oxlint-disable-next-line no-ternary -- Keep reactCreateElement argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             tool.state === "output-available" ? tool.output.echoed : "Loading"
           ),
-        renderProgress: ({ updates }) =>
+        renderProgress: ({
+          updates,
+        }: {
+          readonly updates: readonly { readonly label: string }[];
+        }) =>
           reactCreateElement(
             "aside",
             {},
@@ -61,7 +69,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length */
 
 /* oxlint-disable max-params --
  * max-params (#511): renderResult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

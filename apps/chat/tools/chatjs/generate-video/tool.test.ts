@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
-import type * as AI from "ai";
 import { MockVideoModelV4 } from "ai/test";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
@@ -13,7 +9,6 @@ import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { generateVideoResult } from "./schemas";
 /* oxlint-enable sort-imports */
 import { generateVideoTool } from "./tool";
-/* oxlint-enable import/no-namespace */
 
 const mocks = vi.hoisted(() => ({
   definition: vi.fn(),
@@ -22,9 +17,9 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-vi.mock("ai", async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof AI>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  ...(await original<typeof AI>()),
+vi.mock(import("ai"), async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+  ...(await original()),
   experimental_generateVideo: mocks.generate,
 }));
 /* oxlint-enable oxc/no-async-await */

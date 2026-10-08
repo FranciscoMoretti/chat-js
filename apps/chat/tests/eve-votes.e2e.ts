@@ -1,48 +1,46 @@
-/* oxlint-disable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-namespace (#528): The EveClient namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type * as EveClient from "eve/client";
-/* oxlint-enable sort-imports */
-import type { MessageStreamEvent } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable eslint/sort-imports -- Keep the type-only client event binding beside the runtime client module contract. */
+import type { Client, MessageStreamEvent } from "eve/client";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { getEveMessageVotes } from "../lib/db/queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveVote, user } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { voteEveMessage } from "../lib/eve/vote-message";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("eve/client", async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof EveClient>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  ...(await original<typeof EveClient>()),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<{ Client: typeof Client }>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+  ...(await original<{ Client: typeof Client }>()),
   Client: class {
     public sessions = { attach: native.attach };
   },

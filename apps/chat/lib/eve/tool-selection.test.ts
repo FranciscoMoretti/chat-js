@@ -1,5 +1,4 @@
-/* oxlint-disable import/no-namespace, import/no-relative-parent-imports --
- * import/no-namespace (#528): The InstalledFeatures namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/tool-selection"; "../ai/types" dependency within this package instead of introducing an alias or barrel API.
  */
 import {
@@ -12,8 +11,11 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
+/* oxlint-disable sort-imports -- Keep separate type declarations and runtime module order. */
+import type {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
 /* oxlint-enable sort-imports */
 
 import selectionHook from "../../agent/hooks/tool-selection";
@@ -38,12 +40,15 @@ import {
   filterEveTools,
 } from "./turn-tools";
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
-  const actual = await importOriginal<typeof InstalledFeatures>();
+  const actual = await importOriginal<{
+    installedDocumentKinds: typeof installedDocumentKinds;
+    installedToolNames: typeof installedToolNames;
+  }>();
   for (const kind of actual.installedDocumentKinds) {
     mocks.kinds.add(kind);
   }
@@ -162,14 +167,13 @@ it("includes tool selection in creation identity while preserving existing autom
   expect(search).not.toBe(eveCreationContentHash("changed", "webSearch"));
 });
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through  accepts ...modelIds; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it.each([["model-a"], ["model-a", "model-b"]])(
   "retains exact selected tools through retry and rejected-project recovery: %j",
-  (...modelIds) => {
+  (...modelIds: Readonly<[string, string] | [string]>) => {
     const entries = new Map<string, string>();
     const storage = {
       getItem: (key: string) => entries.get(key) ?? null,
@@ -213,7 +217,7 @@ it.each([["model-a"], ["model-a", "model-b"]])(
   }
 );
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
   const original = new ContextContainer();
