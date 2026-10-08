@@ -1,11 +1,8 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
-/* oxlint-enable sort-imports */
-import { resolveEvePrincipal } from "@/lib/eve/principal";
-// oxlint-disable-next-line sort-imports -- This readonly view preserves the native request/session members and follows the existing runtime import group.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { z } from "zod";
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
+import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */

@@ -2,8 +2,35 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { POST } from "./route";
 
+const HTTP_STATUS = {
+  accepted: 202,
+  badRequest: 400,
+  conflict: 409,
+  forbidden: 403,
+  notFound: 404,
+  ok: 200,
+  unauthorized: 401,
+};
+interface CapturedRequestInit {
+  readonly body: string;
+  readonly method: string;
+  readonly signal: Readonly<AbortSignal>;
+}
+type CaptureCall = readonly [
+  owner: string,
+  path: string,
+  init: Readonly<CapturedRequestInit>,
+];
+
 const mocks = vi.hoisted(() => ({
-  capture: vi.fn(),
+  capture:
+    vi.fn<
+      (
+        owner: string,
+        path: string,
+        init: CapturedRequestInit
+      ) => Promise<Response>
+    >(),
   principal: vi.fn(),
   read: vi.fn(),
   ready: vi.fn(),
@@ -25,16 +52,15 @@ const input = {
   checkpointId: "8f644d88-b2df-48b3-8c25-922e9ba31f30",
 };
 const context = { params: Promise.resolve({ id }) };
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const request = (origin = "http://localhost:3790", body: unknown = input) =>
+const request = (
+  origin = "http://localhost:3790",
+  body: unknown = input
+): Request =>
   new Request(`${origin}/api/agent-conversations/${id}/checkpoint`, {
     body: JSON.stringify(body),
     headers: { "content-type": "application/json", origin },
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
@@ -44,58 +70,50 @@ beforeEach(() => {
   });
   mocks.read.mockResolvedValue(false);
   mocks.capture.mockResolvedValue(
-    Response.json({ status: "accepted" }, { status: 202 })
+    Response.json({ status: "accepted" }, { status: HTTP_STATUS.accepted })
   );
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-statements (#512): it("requires authentication, same origin and bound ownership before native access") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("requires authentication, same origin and bound ownership before native access") uses 401, 403, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("requires authentication, same origin and bound ownership before native access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): it("requires authentication, same origin and bound ownership before native access") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+
+/* oxlint-disable max-statements, no-undefined, unicorn/no-null -- Keep the ordered auth, origin and ownership checks in one scenario; null and undefined model distinct absent SDK results. */
 it("requires authentication, same origin and bound ownership before native access", async () => {
   mocks.principal.mockResolvedValueOnce(null);
   const resolvedResult1 = await POST(request(), context);
-  expect(resolvedResult1.status).toBe(401);
+  expect(resolvedResult1.status).toBe(HTTP_STATUS.unauthorized);
   const resolvedResult2 = await POST(
     request("https://foreign.invalid"),
     context
   );
-  expect(resolvedResult2.status).toBe(403);
+  expect(resolvedResult2.status).toBe(HTTP_STATUS.forbidden);
   expect(mocks.source).not.toHaveBeenCalled();
   mocks.source.mockResolvedValueOnce(undefined);
   const resolvedResult3 = await POST(request(), context);
-  expect(resolvedResult3.status).toBe(404);
+  expect(resolvedResult3.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.source).toHaveBeenCalledWith("owner", id);
   expect(mocks.capture).not.toHaveBeenCalled();
 });
+/* oxlint-enable max-statements, no-undefined, unicorn/no-null */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, no-undefined --
- * no-magic-numbers (#517): it("rejects malformed coordinates before looking up the source") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("rejects malformed coordinates before looking up the source") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
+
+/* oxlint-disable no-undefined -- The missing origin/body argument exercises the request helper's optional-argument contract. */
 it("rejects malformed coordinates before looking up the source", async () => {
   const resolvedResult4 = await POST(
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     request(undefined, { ...input, beforeTurnId: "turn_-1" }),
     context
   );
-  expect(resolvedResult4.status).toBe(400);
+  expect(resolvedResult4.status).toBe(HTTP_STATUS.badRequest);
   expect(mocks.source).not.toHaveBeenCalled();
   expect(mocks.capture).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-undefined */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("returns readiness only after the matching immutable checkpoint is available") uses 200, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+
 it("returns readiness only after the matching immutable checkpoint is available", async () => {
   const response = await POST(request(), context);
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(HTTP_STATUS.ok);
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(await response.json()).toEqual({
     conversationId: id,
@@ -103,12 +121,12 @@ it("returns readiness only after the matching immutable checkpoint is available"
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
   });
-  expect(mocks.capture.mock.calls[0].slice(0, 2)).toEqual([
+  const [[ownerId, checkpointPath, capturedRequest]] = mocks.capture.mock.calls;
+  expect([ownerId, checkpointPath]).toEqual([
     "owner",
     "/eve/chat/v1/session/native-source/checkpoint",
   ]);
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(JSON.parse(mocks.capture.mock.calls[0][2].body)).toEqual(input);
+  expect(JSON.parse(capturedRequest.body)).toEqual(input);
   expect(mocks.ready).toHaveBeenCalledWith(
     "owner",
     "native-source",
@@ -118,50 +136,41 @@ it("returns readiness only after the matching immutable checkpoint is available"
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("keeps uncertain capture retryable using the exact same coordinates") uses 409, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+
 it("keeps uncertain capture retryable using the exact same coordinates", async () => {
   mocks.ready.mockRejectedValueOnce(new Error("pending"));
   const resolvedResult5 = await POST(request(), context);
-  expect(resolvedResult5.status).toBe(409);
+  expect(resolvedResult5.status).toBe(HTTP_STATUS.conflict);
   const resolvedResult6 = await POST(request(), context);
-  expect(resolvedResult6.status).toBe(200);
+  expect(resolvedResult6.status).toBe(HTTP_STATUS.ok);
   expect(
-    mocks.capture.mock.calls.map(
-      (call: Readonly<(typeof mocks.capture.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #598: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        JSON.parse(call[2].body)
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access */
-    )
+    mocks.capture.mock.calls.map((call: CaptureCall) => {
+      const [ownerId, checkpointPath, capturedRequest] = call;
+      expect(ownerId).toBe("owner");
+      expect(checkpointPath).toBe(
+        "/eve/chat/v1/session/native-source/checkpoint"
+      );
+      const parsedRequest: unknown = JSON.parse(capturedRequest.body);
+      return parsedRequest;
+    })
   ).toEqual([input, input]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("recovers an existing receipt without sending another native command") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("recovers an existing receipt without sending another native command", async () => {
   mocks.read.mockResolvedValue(true);
   const resolvedResult7 = await POST(request(), context);
-  expect(resolvedResult7.status).toBe(200);
+  expect(resolvedResult7.status).toBe(HTTP_STATUS.ok);
   expect(mocks.capture).not.toHaveBeenCalled();
   expect(mocks.ready).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { stage: "read", target: () => mocks.read },   { stage: "ready", target: () => mocks.rea's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () ='s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 it.each([
-  { stage: "read", target: () => mocks.read },
-  { stage: "ready", target: () => mocks.ready },
+  { stage: "read", target: (): typeof mocks.read => mocks.read },
+  { stage: "ready", target: (): typeof mocks.read => mocks.ready },
 ])(
   "returns exact durable rejection coordinates from $stage",
   async ({
@@ -177,7 +186,7 @@ it.each([
       new CheckpointRejectedError("source_advanced")
     );
     const response = await POST(request(), context);
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(HTTP_STATUS.conflict);
     expect(await response.json()).toMatchObject({
       checkpointRejected: true,
       conversationId: id,
@@ -191,4 +200,3 @@ it.each([
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */

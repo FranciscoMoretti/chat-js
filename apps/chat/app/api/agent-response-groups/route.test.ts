@@ -3,9 +3,17 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { GET } from "./[id]/route";
 import { POST } from "./route";
 
+const HTTP_STATUS = {
+  forbidden: 403,
+  notFound: 404,
+  ok: 200,
+  tooManyRequests: 429,
+  unauthorized: 401,
+};
+
 const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
-  after: vi.fn(),
+  after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   get: vi.fn(),
   persistTitle: vi.fn(),
@@ -34,60 +42,50 @@ const input = {
   modelIds: ["a", "b"],
   operationId: "00000000-0000-4000-8000-000000000001",
 };
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const request = (origin = "http://localhost:3790") =>
+const request = (origin = "http://localhost:3790"): Request =>
   new Request("http://localhost:3790/api/agent-response-groups", {
     body: JSON.stringify(input),
     headers: { origin },
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, no-undefined --
- * no-magic-numbers (#517): test("authenticates and checks origin before dispatching with server-owned identity") uses 403, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("authenticates and checks origin before dispatching with server-owned identity") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
+
+/* oxlint-disable no-undefined -- Assert the omitted optional third argument in the adapter call explicitly. */
 test("authenticates and checks origin before dispatching with server-owned identity", async () => {
   const resolvedResult1 = await POST(request("https://foreign.invalid"));
-  expect(resolvedResult1.status).toBe(403);
+  expect(resolvedResult1.status).toBe(HTTP_STATUS.forbidden);
   expect(mocks.create).not.toHaveBeenCalled();
   const resolvedResult2 = await POST(request());
-  expect(resolvedResult2.status).toBe(200);
+  expect(resolvedResult2.status).toBe(HTTP_STATUS.ok);
   expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
     "owner",
     input,
     undefined
   );
 });
+/* oxlint-enable no-undefined */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers, unicorn/no-null --
- * no-magic-numbers (#517): test("unauthenticated requests cannot create groups") uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("unauthenticated requests cannot create groups") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+
+/* oxlint-disable unicorn/no-null -- The principal mock uses null for the unauthenticated state. */
 test("unauthenticated requests cannot create groups", async () => {
   mocks.principal.mockResolvedValue(null);
   const resolvedResult3 = await POST(request());
-  expect(resolvedResult3.status).toBe(401);
+  expect(resolvedResult3.status).toBe(HTTP_STATUS.unauthorized);
 });
+/* oxlint-enable unicorn/no-null */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("reads only through the authenticated owner's scope and does not cache bindings" uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+
 test("reads only through the authenticated owner's scope and does not cache bindings", async () => {
   const params = Promise.resolve({ id: input.operationId });
   const resolvedResult5 = await GET(request(), { params });
-  expect(resolvedResult5.status).toBe(404);
+  expect(resolvedResult5.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.get).toHaveBeenCalledWith("owner", input.operationId);
   mocks.get.mockResolvedValue({ candidates: [], id: input.operationId });
   const resolvedResult6 = await GET(request(), { params });
@@ -97,29 +95,26 @@ test("reads only through the authenticated owner's scope and does not cache bind
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
- * max-statements (#512): test("guest comparisons cannot dispatch without successful batch admission") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("guest comparisons cannot dispatch without successful batch admission") uses 429, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("guest comparisons cannot dispatch without successful batch admission") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable max-statements, unicorn/no-null -- Keep this ordered admission and response contract together; Response(null) models an empty upstream rejection body. */
 test("guest comparisons cannot dispatch without successful batch admission", async () => {
   mocks.principal.mockResolvedValue({
     kind: "guest",
     ownerId: "guest",
     tokenHash: "hash",
   });
-  mocks.admit.mockResolvedValue(new Response(null, { status: 429 }));
+  mocks.admit.mockResolvedValue(
+    new Response(null, { status: HTTP_STATUS.tooManyRequests })
+  );
   const resolvedResult7 = await POST(request());
-  expect(resolvedResult7.status).toBe(429);
+  expect(resolvedResult7.status).toBe(HTTP_STATUS.tooManyRequests);
   expect(mocks.create).not.toHaveBeenCalled();
   const reservations = [
     { operationId: input.operationId, reservationId: "quota" },
   ];
   mocks.admit.mockResolvedValue(reservations);
   const resolvedResult8 = await POST(request());
-  expect(resolvedResult8.status).toBe(200);
+  expect(resolvedResult8.status).toBe(HTTP_STATUS.ok);
   expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
     "guest",
     input,
@@ -128,13 +123,10 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
   await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
   expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
+/* oxlint-enable max-statements, unicorn/no-null */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("schedules one title generation for an initial comparison chat") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("schedules one title generation for an initial comparison chat", async () => {
   mocks.create.mockResolvedValue({
     candidates: [
@@ -158,10 +150,10 @@ test("schedules one title generation for an initial comparison chat", async () =
 
   const response = await POST(request());
 
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(HTTP_STATUS.ok);
   expect(mocks.after).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.after.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  await mocks.after.mock.calls[0]?.[0]();
+  const [[afterResponseCallback]] = mocks.after.mock.calls;
+  await afterResponseCallback();
   expect(mocks.persistTitle).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
     message: "Compare",
@@ -170,7 +162,6 @@ test("schedules one title generation for an initial comparison chat", async () =
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 test("does not retitle a forked comparison chat", async () => {
   mocks.create.mockResolvedValue({

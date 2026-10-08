@@ -6,6 +6,12 @@ import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-
 
 import { POST } from "./route";
 
+const HTTP_STATUS = {
+  accepted: 202,
+  badRequest: 400,
+  serviceUnavailable: 503,
+};
+
 const mocks = vi.hoisted(() => ({
   bound: vi.fn(),
   canSpend: vi.fn(),
@@ -43,10 +49,7 @@ vi.mock("@/lib/eve/reconcile-usage", () => ({
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 
 const operationId = "00000000-0000-4000-8000-000000000001";
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const request = (headers: Readonly<Record<string, string>> = {}) =>
+const request = (headers: Readonly<Record<string, string>> = {}): Request =>
   new Request("http://localhost:3790/api/eve/v1/session/native", {
     body: JSON.stringify({
       message: "original",
@@ -61,8 +64,6 @@ const request = (headers: Readonly<Record<string, string>> = {}) =>
     },
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
-
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.bound.mockResolvedValue({ id: "conversation" });
@@ -72,21 +73,22 @@ beforeEach(() => {
   mocks.eveRequest.mockResolvedValue(
     Response.json(
       { sessionId: "native", status: "accepted" },
-      { headers: { "x-eve-session-id": "native" }, status: 202 }
+      {
+        headers: { "x-eve-session-id": "native" },
+        status: HTTP_STATUS.accepted,
+      }
     )
   );
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("requires a message operation ID before dispatch") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+
 test("requires a message operation ID before dispatch", async () => {
   const response = await POST(request(), {
     params: Promise.resolve({ path: ["v1", "session", "native"] }),
   });
 
-  expect(response.status).toBe(400);
+  expect(response.status).toBe(HTTP_STATUS.badRequest);
   expect(await response.json()).toMatchObject({
     code: "chatjs_command_rejected",
   });
@@ -94,18 +96,14 @@ test("requires a message operation ID before dispatch", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("stamps the validated operation into server-owned durable metadata") uses 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("stamps the validated operation into server-owned durable metadata", async () => {
   const response = await POST(
     request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
     { params: Promise.resolve({ path: ["v1", "session", "native"] }) }
   );
 
-  expect(response.status).toBe(202);
+  expect(response.status).toBe(HTTP_STATUS.accepted);
   expect(mocks.eveRequest).toHaveBeenCalledExactlyOnceWith(
     "owner",
     "/eve/chat/v1/session/native",
@@ -127,11 +125,7 @@ test("stamps the validated operation into server-owned durable metadata", async 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("keeps a busy admission retryable without dispatching or rejecting its message") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("keeps a busy admission retryable without dispatching or rejecting its message", async () => {
   mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());
   const response = await POST(
@@ -140,7 +134,7 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
       params: Promise.resolve({ path: ["v1", "session", "native"] }),
     }
   );
-  expect(response.status).toBe(503);
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(response.headers.get("Retry-After")).toBe("2");
   expect(await response.json()).toMatchObject({
     code: "usage_reconciliation_busy",
@@ -149,4 +143,3 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

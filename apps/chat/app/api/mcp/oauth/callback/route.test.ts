@@ -9,6 +9,10 @@ import { MissingCredentialsError } from "@/lib/required-credentials";
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): mocks preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+const HTTP_STATUS = {
+  temporaryRedirect: 307,
+};
+
 const mocks = vi.hoisted(() => {
   const params: {
     code: string | null;
@@ -46,20 +50,15 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getMcpConnectorById: vi.fn(),
   getSessionByState: mocks.getSession,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn(), info: vi.fn() }),
+  createModuleLogger: (): {
+    error: (...arguments_: readonly unknown[]) => unknown;
+    info: (...arguments_: readonly unknown[]) => unknown;
+  } => ({ error: vi.fn(), info: vi.fn() }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/nuqs/mcp-search-params.server")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/nuqs/mcp-search-params.server", () => ({
-  loadMcpOAuthCallbackSearchParams: () => mocks.params,
+  loadMcpOAuthCallbackSearchParams: (): typeof mocks.params => mocks.params,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -76,9 +75,6 @@ beforeEach(() => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("redirects an OAuth callback with an explicit setup error before accessing connect uses 307 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
     throw new MissingCredentialsError("mcp", [
@@ -90,7 +86,7 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
       "https://chat.example.test/api/mcp/oauth/callback?code=code&state=state"
     )
   );
-  expect(response.status).toBe(307);
+  expect(response.status).toBe(HTTP_STATUS.temporaryRedirect);
   const location = new URL(response.headers.get("location") ?? "");
   expect(location.pathname).toBe("/settings/connectors");
   expect(location.searchParams.get("error")).toBe(
@@ -100,7 +96,6 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, unicorn/no-null --
  * max-statements (#512): it("provider cancellation deletes only pending state and returns a safe connector-sco keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

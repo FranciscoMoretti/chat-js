@@ -1,39 +1,33 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-import { getEveConnectionOptions } from "@/lib/eve/connection-options";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   issueGuestCredential,
   newGuestClaims,
 } from "@/lib/eve/disposable-guest";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { env } from "@/lib/env";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { sameOrigin } from "@/lib/eve/request-policy";
-// oxlint-disable-next-line sort-imports -- This readonly view preserves the native request/session members and follows the existing runtime import group.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { z } from "zod";
+/* oxlint-disable sort-imports -- Keep config.anonymous validation after env/model/request initialization: config defaults and validation can throw before the original env validation if this binding moves first. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): input uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-const input = z.object({ modelId: z.string().min(1) }).strict();
-/* oxlint-enable no-magic-numbers */
+const MINIMUM_MODEL_ID_LENGTH = 1;
+const GUEST_CREATION_TIMEOUT_MS = 60_000;
+
+const input = z
+  .object({ modelId: z.string().min(MINIMUM_MODEL_ID_LENGTH) })
+  .strict();
+
 const createdSession = z.object({
   sessionId: z.string().regex(/^[A-Za-z0-9_-]+$/u),
 });
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null -- max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null -- max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): POST uses 60_000 in its existing protocol/math/layout contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; host; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 /**
@@ -58,9 +52,10 @@ export const POST = async (
       { status: 400 }
     );
   }
-  // oxlint-disable-next-line no-ternary -- Keep host as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const host = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.APP_URL;
-  if (!host) {
+  const hasVercelHost = Boolean(env.VERCEL_URL);
+  // oxlint-disable-next-line no-ternary -- Preserve the lazy host selection and second configured VERCEL_URL read; assignment branches conflict with unicorn/prefer-ternary.
+  const host = hasVercelHost ? `https://${env.VERCEL_URL}` : env.APP_URL;
+  if (typeof host !== "string" || host === "") {
     return Response.json(
       { error: "Configure APP_URL before starting guest chats." },
       { status: 503 }
@@ -85,7 +80,7 @@ export const POST = async (
       },
       method: "POST",
       redirect: "error",
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(GUEST_CREATION_TIMEOUT_MS),
     }
   );
   if (!response.ok) {
@@ -107,4 +102,4 @@ export const POST = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */

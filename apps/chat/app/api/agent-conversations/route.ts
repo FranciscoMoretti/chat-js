@@ -1,29 +1,23 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import {
   conversationBinding,
   createConversationInput,
 } from "@/lib/eve/contracts";
-/* oxlint-enable sort-imports */
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import {
   admitGuestCreation,
   settleGuestCreation,
 } from "@/lib/eve/guest-admission";
-/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
-// oxlint-disable-next-line sort-imports -- This readonly view preserves the native request/session members and follows the existing runtime import group.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */

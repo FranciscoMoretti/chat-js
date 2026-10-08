@@ -2,9 +2,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 // oxlint-disable-next-line sort-imports -- This readonly view preserves the native request/session members and follows the existing runtime import group.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createTRPCContext } from "@/trpc/init";
-/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { appRouter } from "@/trpc/routers/_app";
 

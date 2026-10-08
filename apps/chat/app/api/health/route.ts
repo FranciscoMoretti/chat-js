@@ -5,22 +5,19 @@ import { checkDatabase } from "@/lib/db/health";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): eveHealth uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MINIMUM_WORKFLOW_ID_LENGTH = 1;
+const EVE_HEALTH_TIMEOUT_MS = 4000;
+const READINESS_TIMEOUT_MS = 4500;
+
 const eveHealth = z.object({
   ok: z.literal(true),
   status: z.literal("ready"),
-  workflowId: z.string().min(1),
+  workflowId: z.string().min(MINIMUM_WORKFLOW_ID_LENGTH),
 });
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, no-magic-numbers --
- * init-declarations (#507): GET assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * no-magic-numbers (#517): GET uses 4000, 4500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-disable init-declarations -- * init-declarations (#507): GET assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment. */
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
   // Both workers must be ready before the host sends traffic to this instance.
@@ -35,7 +32,7 @@ export const GET = async (): Promise<Response> => {
             {
               cache: "no-store",
               redirect: "error",
-              signal: AbortSignal.timeout(4000),
+              signal: AbortSignal.timeout(EVE_HEALTH_TIMEOUT_MS),
             }
           );
           if (!response.ok) {
@@ -48,7 +45,7 @@ export const GET = async (): Promise<Response> => {
       new Promise<never>((_resolve, reject) => {
         timeout = setTimeout(
           () => reject(new Error("Readiness timed out")),
-          4500
+          READINESS_TIMEOUT_MS
         );
       }),
     ]);
@@ -67,4 +64,4 @@ export const GET = async (): Promise<Response> => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, no-magic-numbers */
+/* oxlint-enable init-declarations */
