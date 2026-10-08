@@ -49,8 +49,9 @@ const KNOWN_CHATJS_TABLE_NAMES = [
   "Vote",
 ] as const;
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): getMigrationHistoryProblem uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+const NO_RECORDED_MIGRATIONS = 0;
 
+/* oxlint-disable unicorn/no-null --
 unicorn/no-null (#570): getMigrationHistoryProblem preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const getMigrationHistoryProblem = ({
   applied,
@@ -61,7 +62,7 @@ const getMigrationHistoryProblem = ({
   readonly available: MigrationIdentity[];
   readonly hasChatJsTables: boolean;
 }>): string | null => {
-  if (applied.length === 0) {
+  if (applied.length === NO_RECORDED_MIGRATIONS) {
     if (hasChatJsTables) {
       return "This database contains ChatJS tables but no EVE baseline migration record.";
     }
@@ -86,7 +87,7 @@ const getMigrationHistoryProblem = ({
   return "This database uses a migration history from before the EVE-only baseline.";
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 export { getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (MigrationIdentity); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

@@ -2,15 +2,16 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep direct schema import after client and eve-copy-journal; schema builds pgTable objects and the journal imports client and eve-queries. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopyFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+type CopySourceTransaction = Readonly<Pick<typeof db, "execute" | "select">>;
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): readPublicEveCopyFile intentionally keeps the existing falsy-value behavior of reference; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+const FIRST_ROW_INDEX = 0;
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopyFile's awaited sequencing and rejected-Promise behavior. */
+
 /** Read only active files retained by this exact public source; supplied URLs are not authority.
  * @param {{ readonly id: string; readonly ownerId: string; readonly sessionId: string }} source Exact public source identity whose owner is locked while its file reference is checked.
  * @param {string} key Stored file identity that must remain active and referenced by this bound public source.
@@ -26,10 +27,9 @@ export const readPublicEveCopyFile = async (
   key: string,
   read: (key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>
 ): Promise<Blob> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original transaction is passed to lockEveCopyOwners for advisory-lock writes before the shared file read; its native receiver rejects a readonly projection (TS2345).
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: CopySourceTransaction) => {
     await lockEveCopyOwners(tx, [source.ownerId]);
-    const [reference] = await tx
+    const referenceRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveConversation)
       .innerJoin(
@@ -58,6 +58,7 @@ export const readPublicEveCopyFile = async (
         )
       )
       .for("share");
+    const reference = referenceRows.at(FIRST_ROW_INDEX);
     if (!reference) {
       throw new Error("Published copy file is unavailable.");
     }
@@ -66,4 +67,3 @@ export const readPublicEveCopyFile = async (
   });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */

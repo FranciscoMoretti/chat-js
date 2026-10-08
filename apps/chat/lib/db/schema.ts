@@ -1,3 +1,4 @@
+import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -20,26 +21,24 @@ import {
 } from "drizzle-orm/pg-core";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
-/* oxlint-enable sort-imports */
-
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveWorkflowBackend uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const INITIAL_USER_CREDIT_BALANCE_CENTS = 50;
+const INITIAL_USAGE_STREAM_INDEX = 0;
+const NO_USAGE_CHARGE_CENTS = 0;
+const WORKFLOW_BACKEND_SINGLETON_ID = 1;
+
 /** One application database belongs to one durable workflow world. */
 const eveWorkflowBackend = pgTable(
   "EveWorkflowBackend",
   {
-    id: integer("id").primaryKey().default(1),
+    id: integer("id").primaryKey().default(WORKFLOW_BACKEND_SINGLETON_ID),
     world: text("world").notNull(),
   },
   (table: { readonly id: unknown }) => [
     check("EveWorkflowBackend_singleton", sql`${table.id} = 1`),
   ]
 );
-/* oxlint-enable no-magic-numbers */
 
 const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -61,16 +60,16 @@ const user = pgTable("user", {
 
 type User = InferSelectModel<typeof user>;
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): userCredit uses 50 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const userCredit = pgTable("UserCredit", {
   /** Balance in cents. Default = $0.50 */
-  credits: integer("credits").notNull().default(50),
+  credits: integer("credits")
+    .notNull()
+    .default(INITIAL_USER_CREDIT_BALANCE_CENTS),
   userId: text("userId")
     .primaryKey()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
-/* oxlint-enable no-magic-numbers */
 
 type UserCredit = InferSelectModel<typeof userCredit>;
 
@@ -368,8 +367,7 @@ const eveChat = pgTable(
 
 type EveChat = InferSelectModel<typeof eveChat>;
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers -- max-lines-per-function (#510): eveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): eveConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): eveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 // One logical chat may contain several private native EVE sessions.
 const eveConversation = pgTable(
@@ -408,7 +406,9 @@ const eveConversation = pgTable(
     })
       .notNull()
       .default("creating"),
-    usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+    usageStreamIndex: integer("usageStreamIndex")
+      .notNull()
+      .default(INITIAL_USAGE_STREAM_INDEX),
     visibility: varchar("visibility", { enum: ["private", "public"] })
       .notNull()
       .default("private"),
@@ -483,7 +483,7 @@ const eveConversation = pgTable(
     ),
   ]
 );
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
+/* oxlint-enable max-lines-per-function */
 
 /** Temporary copy preparation is discarded once native history is bound. */
 const eveConversationCopy = pgTable(
@@ -704,8 +704,6 @@ const eveCodeSandbox = pgTable(
   ]
 );
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveSubagentSession uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 /** Native child identity and billing progress; transcript stays in EVE. */
 const eveSubagentSession = pgTable(
   "EveSubagentSession",
@@ -715,7 +713,9 @@ const eveSubagentSession = pgTable(
     parentSessionId: text("parentSessionId").notNull(),
     rootTurnId: text("rootTurnId").notNull(),
     sessionId: text("sessionId").primaryKey(),
-    usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+    usageStreamIndex: integer("usageStreamIndex")
+      .notNull()
+      .default(INITIAL_USAGE_STREAM_INDEX),
   },
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
@@ -732,13 +732,13 @@ const eveSubagentSession = pgTable(
     check("EveSubagentSession_cursor", sql`${table.usageStreamIndex} >= 0`),
   ]
 );
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */ const eveUsage = pgTable(
+const eveUsage = pgTable(
   "EveUsage",
   {
-    chargedCents: integer("chargedCents").notNull().default(0),
+    chargedCents: integer("chargedCents")
+      .notNull()
+      .default(NO_USAGE_CHARGE_CENTS),
     costUsd: numeric("costUsd", { precision: 24, scale: 12 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     eventId: text("eventId").primaryKey(),
@@ -757,7 +757,6 @@ const eveSubagentSession = pgTable(
       .where(sql`${table.costUsd} is null`),
   ]
 );
-/* oxlint-enable no-magic-numbers */
 
 const eveDocumentRevision = pgTable(
   "EveDocumentRevision",

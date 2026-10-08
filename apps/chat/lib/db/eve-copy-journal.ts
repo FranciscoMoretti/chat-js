@@ -1,27 +1,24 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+import { createHash } from "node:crypto";
 import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
-/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep copy-transcript module initialization after zod; it creates resource regexes and a boundary Set and imports document contracts. */
 import { eveCopyResources } from "@/lib/eve/copy-transcript";
+/* oxlint-enable sort-imports */
 import { isFileStorageKey } from "@/lib/file-url";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep client env validation and Postgres pool creation after copy-transcript and file-url module evaluation. */
 import { db } from "./client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep eve-queries traversal after direct client initialization; eve-queries imports client, schema and eve-documents. */
 import { CreationConflictError } from "./eve-queries";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep schema pgTable construction in the existing traversal after client and eve-queries, which also imports schema. */
 import {
   eveChat,
   eveConversation,
@@ -48,7 +45,9 @@ type ReserveEveCopyInput = Readonly<{
   modelId: string;
   plan: EveCopyPlan;
 }>;
-type CopyWriteTransaction = CopyTransaction;
+type CopyWriteTransaction = Readonly<
+  Pick<CopyTransaction, "execute" | "insert" | "select">
+>;
 /* oxlint-enable no-magic-numbers */
 const hashPattern = /^[a-f0-9]{64}$/u;
 const FIRST_ROW_INDEX = 0;
@@ -149,8 +148,7 @@ class EveCopySourceChangedError extends CreationConflictError {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve lockEveCopyOwners's awaited sequencing and rejected-Promise behavior. */
 
 const lockEveCopyOwners = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute operations under caller-held locks; preserve the native writer contract.
-  tx: CopyTransaction,
+  tx: Readonly<Pick<CopyTransaction, "execute">>,
   owners: readonly string[]
 ): Promise<void> => {
   for (const owner of [...new Set(owners)].toSorted()) {
@@ -172,8 +170,7 @@ const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
 ): Promise<void> => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  await db.transaction(async (tx: CopyTransaction) => {
+  await db.transaction(async (tx: CopyWriteTransaction) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const existingRows = await tx
       .select({ id: eveConversation.id })
@@ -269,7 +266,7 @@ const assertEveCopySourceAvailable = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCopy's awaited sequencing and rejected-Promise behavior. */
 const readEveCopy = async (
-  tx: Pick<CopyTransaction, "select">,
+  tx: Readonly<Pick<CopyTransaction, "select">>,
   ownerId: string,
   conversationId: string
 ): Promise<EveCopyOperation> => {
@@ -555,7 +552,6 @@ const reserveEveCopyOperation = async (
   const planHash = createHash("sha256")
     .update(JSON.stringify(input.plan))
     .digest("hex");
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   return await db.transaction(async (tx: CopyWriteTransaction) => {
     await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
     const existingRows = await tx

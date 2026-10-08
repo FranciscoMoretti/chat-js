@@ -2,9 +2,11 @@ import { expect, it } from "vitest";
 
 import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
 
-/* oxlint-disable max-params, typescript/explicit-function-return-type, unicorn/no-null --
+const DEEP_FAMILY_RUN_COUNT = 10_000;
+const FIRST_CHILD_RUN_INDEX = 1;
+
+/* oxlint-disable max-params, unicorn/no-null --
  * max-params (#511): run keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep run's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): run preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const run = (
@@ -12,8 +14,13 @@ const run = (
   kind: string,
   parentId: string | null = null,
   eveParentId: string | null = null
-) => ({ eveParentId, id, parentId, workflowName: `workflow//eve//${kind}` });
-/* oxlint-enable max-params, typescript/explicit-function-return-type, unicorn/no-null */
+): {
+  eveParentId: string | null;
+  id: string;
+  parentId: string | null;
+  workflowName: string;
+} => ({ eveParentId, id, parentId, workflowName: `workflow//eve//${kind}` });
+/* oxlint-enable max-params, unicorn/no-null */
 it("identifies independent child receipts and covers ordinary work", () => {
   expect(
     classifyEveSandboxRuns([
@@ -80,14 +87,16 @@ it.each(["0.52.2", "0.61.0"])(
     ).toEqual(["sleep"]);
   }
 );
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("handles deep families without recursive stack growth") uses 10_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("handles deep families without recursive stack growth", () => {
   const runs = [run("0", "workflowEntry")];
-  for (let index = 1; index < 10_000; index += 1) {
-    runs.push(run(String(index), "turnWorkflow", String(index - 1)));
+  for (
+    let index = FIRST_CHILD_RUN_INDEX;
+    index < DEEP_FAMILY_RUN_COUNT;
+    index += FIRST_CHILD_RUN_INDEX
+  ) {
+    runs.push(
+      run(String(index), "turnWorkflow", String(index - FIRST_CHILD_RUN_INDEX))
+    );
   }
   expect(classifyEveSandboxRuns(runs).unresolvedRunIds).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers */

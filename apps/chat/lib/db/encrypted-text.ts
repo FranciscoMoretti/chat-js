@@ -12,6 +12,7 @@ const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const ALGORITHM = "aes-256-gcm";
+const AES_GCM_IV_BYTE_LENGTH = 16;
 
 const getKey = (): Buffer => {
   const key = env.MCP_ENCRYPTION_KEY;
@@ -21,12 +22,9 @@ const getKey = (): Buffer => {
   return Buffer.from(key, "base64");
 };
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): encrypt uses 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const encrypt = (plaintext: string): string => {
   const key = getKey();
-  const iv = randomBytes(16);
+  const iv = randomBytes(AES_GCM_IV_BYTE_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
   const encrypted = Buffer.concat([
     cipher.update(plaintext, "utf-8"),
@@ -35,8 +33,6 @@ const encrypt = (plaintext: string): string => {
   const authTag = cipher.getAuthTag();
   return `${iv.toString("base64")}:${authTag.toString("base64")}:${encrypted.toString("base64")}`;
 };
-/* oxlint-enable no-magic-numbers */
-
 const decrypt = (encrypted: string): string => {
   const key = getKey();
   const [ivB64, authTagB64, dataB64] = encrypted.split(":");

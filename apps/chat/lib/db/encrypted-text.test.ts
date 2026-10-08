@@ -1,4 +1,4 @@
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
+/* oxlint-disable sort-imports -- Keep the Vitest mock setup and encrypted-text module imports in authored order; this fixture relies on Vitest hoisting the environment mock before module evaluation. */
 import { pgTable } from "drizzle-orm/pg-core";
 import { expect, test, vi } from "vitest";
 

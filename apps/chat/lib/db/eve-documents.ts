@@ -1,49 +1,54 @@
 import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
+import type { EveCopyBoundary } from "@/lib/eve/copy-boundaries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep zod before document-contract Zod schema construction, then keep client env validation and Postgres pool creation after those contracts. */
 import { artifactKinds } from "@/lib/artifacts/artifact-kind";
-/* oxlint-enable sort-imports */
 import { documentFileIds } from "@/lib/eve/document-contracts";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
+import { isFileStorageKey } from "@/lib/file-url";
 
 import { db } from "./client";
-import { retainEveDocumentFiles } from "./eve-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep schema pgTable construction after the client import and document contracts; moving this multiple binding ahead changes the module initializer traversal. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
+  eveFileReference,
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
+  eveStoredFile,
 } from "./schema";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): revisionInput uses 2_000_000, 1, 512, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const FIRST_ROW_INDEX = 0;
+const FIRST_TURN_INDEX = 0;
+const MINIMUM_TEXT_LENGTH = 1;
+const MAXIMUM_CONTENT_LENGTH = 2_000_000;
+const MAXIMUM_OPERATION_ID_LENGTH = 512;
+const MAXIMUM_TITLE_LENGTH = 1000;
 
 const revisionInput = z.object({
-  content: z.string().max(2_000_000),
+  content: z.string().max(MAXIMUM_CONTENT_LENGTH),
   conversationId: z.uuid(),
   documentId: z.uuid(),
   expectedRevisionId: z.uuid().nullable(),
   fileIds: documentFileIds,
   kind: z.enum(artifactKinds),
-  operationId: z.string().min(1).max(512),
-  ownerId: z.string().min(1),
-  title: z.string().min(1).max(1000),
+  operationId: z
+    .string()
+    .min(MINIMUM_TEXT_LENGTH)
+    .max(MAXIMUM_OPERATION_ID_LENGTH),
+  ownerId: z.string().min(MINIMUM_TEXT_LENGTH),
+  title: z.string().min(MINIMUM_TEXT_LENGTH).max(MAXIMUM_TITLE_LENGTH),
   turnIndex: z.number().int().nonnegative().nullable(),
 });
-/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): DocumentTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -52,7 +57,196 @@ type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
 // Native transaction methods shared by locked document write operations.
-type DocumentWriteTransaction = DocumentTransaction;
+type DocumentWriteTransaction = Readonly<
+  Pick<DocumentTransaction, "execute" | "insert" | "select">
+>;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retainEveDocumentFiles's awaited sequencing and rejected-Promise behavior. */
+
+/* oxlint-disable max-params, no-magic-numbers -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+/**
+ * Caller holds the owner family lock and has authorized the document revision.
+ * @param {DocumentTransaction} tx - Caller transaction holding the owner family lock.
+ * @param {string} ownerId - Owner required for every active document file.
+ * @param {string} conversationId - Conversation that retains the document references.
+ * @param {readonly string[]} fileIds - Storage keys referenced by the authorized revision.
+ */
+const retainEveDocumentFiles = async (
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
+  ownerId: string,
+  conversationId: string,
+  fileIds: readonly string[]
+): Promise<void> => {
+  const candidates = [...new Set(fileIds)];
+  if (candidates.some((id) => !isFileStorageKey(id))) {
+    throw new Error("Invalid document file reference.");
+  }
+  if (candidates.length === 0) {
+    return;
+  }
+  const files = await tx
+    .select({ key: eveStoredFile.key })
+    .from(eveStoredFile)
+    .where(
+      and(
+        eq(eveStoredFile.ownerId, ownerId),
+        eq(eveStoredFile.state, "active"),
+        inArray(eveStoredFile.key, candidates)
+      )
+    );
+  if (files.length !== candidates.length) {
+    throw new Error("Document references an unavailable or unowned file.");
+  }
+  await tx
+    .insert(eveFileReference)
+    .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
+    .onConflictDoNothing();
+};
+
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-params, no-magic-numbers */
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve snapshotCopyCheckpoints's awaited sequencing and rejected-Promise behavior. */
+
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
+ * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): snapshotCopyCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+
+ *
+ */
+const snapshotCopyCheckpoints = async (
+  tx: Readonly<Pick<DocumentTransaction, "select">>,
+  input: ReadonlyNativeSurface<{
+    readonly conversationId: string;
+    readonly ownerId: string;
+    readonly documentIds: readonly string[];
+    readonly boundaries: readonly EveCopyBoundary[];
+    readonly byId: ReadonlyMap<
+      string,
+      {
+        readonly documentId: string;
+      }
+    >;
+  }>
+): Promise<
+  {
+    heads: { documentId: string; revisionId: string }[];
+    messageIndex: number;
+  }[]
+> => {
+  const { conversationId, ownerId, documentIds, boundaries, byId } = input;
+  const checkpointHeaders = new Set<string>();
+  const checkpointEntries = new Map<
+    string,
+    {
+      documentId: string;
+      revisionId: string;
+    }[]
+  >();
+  const turns = boundaries
+    .filter((boundary: EveCopyBoundary) => boundary.sourceKind === "turn")
+    .map((boundary: EveCopyBoundary) => boundary.sourceIndex);
+  const imported = boundaries
+    .filter((boundary: EveCopyBoundary) => boundary.sourceKind === "imported")
+    .map((boundary: EveCopyBoundary) => boundary.sourceIndex);
+  if (turns.length > 0 && documentIds.length > 0) {
+    const headers = await tx
+      .select({ index: eveDocumentCheckpoint.turnIndex })
+      .from(eveDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveDocumentCheckpoint.conversationId, conversationId),
+          eq(eveDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveDocumentCheckpoint.turnIndex, turns)
+        )
+      );
+    for (const header of headers) {
+      checkpointHeaders.add(`turn:${header.index}`);
+    }
+    const entries = await tx
+      .select()
+      .from(eveDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveDocumentCheckpointEntry.conversationId, conversationId),
+          eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveDocumentCheckpointEntry.turnIndex, turns),
+          inArray(eveDocumentCheckpointEntry.documentId, documentIds)
+        )
+      );
+    for (const entry of entries) {
+      const key = `turn:${entry.turnIndex}`;
+      const values = checkpointEntries.get(key) ?? [];
+      values.push({
+        documentId: entry.documentId,
+        revisionId: entry.revisionId,
+      });
+      checkpointEntries.set(key, values);
+    }
+  }
+  if (imported.length > 0 && documentIds.length > 0) {
+    const headers = await tx
+      .select({ index: eveImportedDocumentCheckpoint.messageIndex })
+      .from(eveImportedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpoint.conversationId, conversationId),
+          eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpoint.messageIndex, imported)
+        )
+      );
+    for (const header of headers) {
+      checkpointHeaders.add(`imported:${header.index}`);
+    }
+    const entries = await tx
+      .select()
+      .from(eveImportedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpointEntry.conversationId, conversationId),
+          eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpointEntry.messageIndex, imported),
+          inArray(eveImportedDocumentCheckpointEntry.documentId, documentIds)
+        )
+      );
+    for (const entry of entries) {
+      const key = `imported:${entry.messageIndex}`;
+      const values = checkpointEntries.get(key) ?? [];
+      values.push({
+        documentId: entry.documentId,
+        revisionId: entry.revisionId,
+      });
+      checkpointEntries.set(key, values);
+    }
+  }
+  const checkpoints = boundaries.map((boundary: EveCopyBoundary) => {
+    const key = `${boundary.sourceKind}:${boundary.sourceIndex}`;
+    if (documentIds.length > 0 && !checkpointHeaders.has(key)) {
+      throw new Error("Published document boundary is unavailable.");
+    }
+    const heads = checkpointEntries.get(key) ?? [];
+    for (const head of heads) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentId from byId.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      if (byId.get(head.revisionId)?.documentId !== head.documentId) {
+        throw new Error(
+          "Published document boundary is outside accessible ancestry."
+        );
+      }
+    }
+    return {
+      heads: heads.toSorted(
+        (
+          leftHead: Readonly<{ documentId: string; revisionId: string }>,
+          rightHead: Readonly<{ documentId: string; revisionId: string }>
+        ) => leftHead.documentId.localeCompare(rightHead.documentId)
+      ),
+      messageIndex: boundary.messageIndex,
+    };
+  });
+  return checkpoints;
+};
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyDocuments's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
@@ -73,103 +267,109 @@ const purgeEveFamilyDocuments = async (
   ownerId: string,
   rootId: string
 ): Promise<void> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .delete operations under caller-held locks; preserve the native writer contract.
-  await db.transaction(async (tx: DocumentTransaction) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const family = await tx
-      .select({
-        id: eveConversation.id,
-        state: eveConversation.state,
-      })
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.ownerId, ownerId),
-          eq(eveConversation.chatId, rootId)
-        )
-      )
-      .orderBy(eveConversation.id);
-    if (family.length === 0 || family.some((row) => row.state !== "deleting")) {
-      throw new Error(
-        "The entire conversation family must be pending deletion."
-      );
-    }
-    const ids = family.map((row) => row.id);
-    for (const id of ids) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+  await db.transaction(
+    async (
+      tx: Readonly<Pick<DocumentTransaction, "delete" | "execute" | "select">>
+    ) => {
       await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );
+      const family = await tx
+        .select({
+          id: eveConversation.id,
+          state: eveConversation.state,
+        })
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.ownerId, ownerId),
+            eq(eveConversation.chatId, rootId)
+          )
+        )
+        .orderBy(eveConversation.id);
+      if (
+        family.length === 0 ||
+        family.some((row) => row.state !== "deleting")
+      ) {
+        throw new Error(
+          "The entire conversation family must be pending deletion."
+        );
+      }
+      const ids = family.map((row) => row.id);
+      for (const id of ids) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
+        );
+      }
+      await tx
+        .delete(eveImportedDocumentCheckpointEntry)
+        .where(
+          and(
+            eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+            inArray(eveImportedDocumentCheckpointEntry.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveImportedDocumentCheckpoint)
+        .where(
+          and(
+            eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+            inArray(eveImportedDocumentCheckpoint.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveNamedDocumentCheckpointEntry)
+        .where(
+          and(
+            eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
+            inArray(eveNamedDocumentCheckpointEntry.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveNamedDocumentCheckpoint)
+        .where(
+          and(
+            eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
+            inArray(eveNamedDocumentCheckpoint.conversationId, ids)
+          )
+        );
+      // Keep the FK constraints intact: unexpected references from a surviving
+      // conversation fail the transaction instead of destroying its ancestry.
+      await tx
+        .delete(eveDocumentCheckpointEntry)
+        .where(
+          and(
+            eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+            inArray(eveDocumentCheckpointEntry.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveDocumentCheckpoint)
+        .where(
+          and(
+            eq(eveDocumentCheckpoint.ownerId, ownerId),
+            inArray(eveDocumentCheckpoint.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveDocumentHead)
+        .where(
+          and(
+            eq(eveDocumentHead.ownerId, ownerId),
+            inArray(eveDocumentHead.conversationId, ids)
+          )
+        );
+      await tx
+        .delete(eveDocumentRevision)
+        .where(
+          and(
+            eq(eveDocumentRevision.ownerId, ownerId),
+            inArray(eveDocumentRevision.conversationId, ids)
+          )
+        );
     }
-    await tx
-      .delete(eveImportedDocumentCheckpointEntry)
-      .where(
-        and(
-          eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
-          inArray(eveImportedDocumentCheckpointEntry.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveImportedDocumentCheckpoint)
-      .where(
-        and(
-          eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
-          inArray(eveImportedDocumentCheckpoint.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveNamedDocumentCheckpointEntry)
-      .where(
-        and(
-          eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
-          inArray(eveNamedDocumentCheckpointEntry.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveNamedDocumentCheckpoint)
-      .where(
-        and(
-          eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
-          inArray(eveNamedDocumentCheckpoint.conversationId, ids)
-        )
-      );
-    // Keep the FK constraints intact: unexpected references from a surviving
-    // conversation fail the transaction instead of destroying its ancestry.
-    await tx
-      .delete(eveDocumentCheckpointEntry)
-      .where(
-        and(
-          eq(eveDocumentCheckpointEntry.ownerId, ownerId),
-          inArray(eveDocumentCheckpointEntry.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveDocumentCheckpoint)
-      .where(
-        and(
-          eq(eveDocumentCheckpoint.ownerId, ownerId),
-          inArray(eveDocumentCheckpoint.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveDocumentHead)
-      .where(
-        and(
-          eq(eveDocumentHead.ownerId, ownerId),
-          inArray(eveDocumentHead.conversationId, ids)
-        )
-      );
-    await tx
-      .delete(eveDocumentRevision)
-      .where(
-        and(
-          eq(eveDocumentRevision.ownerId, ownerId),
-          inArray(eveDocumentRevision.conversationId, ids)
-        )
-      );
-  });
+  );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
@@ -184,19 +384,19 @@ const ancestorIds = (
     select revision."id", revision."parentRevisionId" from "EveDocumentRevision" revision join ancestry on revision."id" = ancestry."parentRevisionId"
   ) select "id" from ancestry)`;
 
-/* oxlint-disable id-length, max-statements -- * id-length (#506): orderRevisionHistory uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements -- * id-length (#506): orderRevisionHistory uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): orderRevisionHistory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const orderRevisionHistory = <
-  T extends {
+  Revision extends {
     readonly id: string;
     readonly parentRevisionId: string | null;
   },
 >(
-  revisions: readonly T[],
+  revisions: readonly Revision[],
   headId: string
-): T[] => {
+): Revision[] => {
   const byId = new Map(revisions.map((revision) => [revision.id, revision]));
-  const history: T[] = [];
+  const history: Revision[] = [];
   let revisionId: string | null = headId;
   while (revisionId !== null && revisionId !== "") {
     const revision = byId.get(revisionId);
@@ -210,7 +410,7 @@ const orderRevisionHistory = <
   return history.toReversed();
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve backfillDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, max-statements */
+/* oxlint-enable max-statements */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers -- * max-lines-per-function (#510): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -225,8 +425,7 @@ const orderRevisionHistory = <
  * @param {readonly number[]} turns - Nonnegative native turn indexes that need durable snapshots.
  */
 const backfillDocumentCheckpoints = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   ownerId: string,
   conversationId: string,
   turns: readonly number[]
@@ -335,17 +534,19 @@ const backfillDocumentCheckpoints = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareManualRevision's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): prepareManualRevision intentionally keeps the existing falsy-value behavior of input.expectedRevisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const prepareManualRevision = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward this original live transaction to backfillDocumentCheckpoints, which inserts checkpoint rows; preserve its native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   input: ReadonlyNativeSurface<z.infer<typeof revisionInput>>,
   historicalTurns?: readonly number[]
 ): Promise<void> => {
   if (input.turnIndex === null) {
-    if (!(input.expectedRevisionId && historicalTurns)) {
+    if (
+      !(
+        input.expectedRevisionId !== null &&
+        input.expectedRevisionId !== "" &&
+        historicalTurns
+      )
+    ) {
       throw new Error(
         "Manual edits require an existing document and native history."
       );
@@ -360,13 +561,12 @@ const prepareManualRevision = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveDocumentRevision's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): saveEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): saveEveDocumentRevision intentionally keeps the existing falsy-value behavior of conversation; replay; head; previous; distinguishing empty, zero, and absent states requires a domain behavior decision.
+
 unicorn/no-null (#570): saveEveDocumentRevision preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Save a revision and move only this conversation's head, atomically and replay-safely.
@@ -384,7 +584,7 @@ const saveEveDocumentRevision = async (
   signal?.throwIfAborted();
   const input = revisionInput.parse(value);
   return await db.transaction(
-    // oxlint-disable-next-line eslint/complexity, typescript/prefer-readonly-parameter-types -- Keep the atomic transaction boundary. This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
+    // oxlint-disable-next-line eslint/complexity -- Keep the atomic transaction boundary.
     async (tx: DocumentWriteTransaction) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
@@ -394,7 +594,7 @@ const saveEveDocumentRevision = async (
       );
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       signal?.throwIfAborted();
-      const [conversation] = await tx
+      const conversationRows = await tx
         .select()
         .from(eveConversation)
         .where(
@@ -404,10 +604,11 @@ const saveEveDocumentRevision = async (
             eq(eveConversation.state, "bound")
           )
         );
+      const conversation = conversationRows.at(FIRST_ROW_INDEX);
       if (!conversation) {
         throw new Error("Conversation not found.");
       }
-      const [replay] = await tx
+      const replayRows = await tx
         .select()
         .from(eveDocumentRevision)
         .where(
@@ -416,6 +617,7 @@ const saveEveDocumentRevision = async (
             eq(eveDocumentRevision.operationId, input.operationId)
           )
         );
+      const replay = replayRows.at(FIRST_ROW_INDEX);
       if (replay) {
         if (
           replay.documentId !== input.documentId ||
@@ -431,7 +633,7 @@ const saveEveDocumentRevision = async (
         }
         return replay;
       }
-      const [head] = await tx
+      const headRows = await tx
         .select()
         .from(eveDocumentHead)
         .where(
@@ -440,15 +642,17 @@ const saveEveDocumentRevision = async (
             eq(eveDocumentHead.documentId, input.documentId)
           )
         );
+      const head = headRows.at(FIRST_ROW_INDEX);
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revisionId from head; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
       if ((head?.revisionId ?? null) !== input.expectedRevisionId) {
         throw new Error("Document changed. Reload before saving.");
       }
       if (head) {
-        const [previous] = await tx
+        const previousRows = await tx
           .select()
           .from(eveDocumentRevision)
           .where(eq(eveDocumentRevision.id, head.revisionId));
+        const previous = previousRows.at(FIRST_ROW_INDEX);
         if (
           !previous ||
           previous.kind !== input.kind ||
@@ -502,10 +706,8 @@ const saveEveDocumentRevision = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDocumentHistory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/strict-boolean-expressions (#610): getEveDocumentHistory intentionally keeps the existing falsy-value behavior of head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Traverse the selected revision's ancestry, never all revisions with the same document ID.
  * @param {string} ownerId - Owner authorized to inspect the selected conversation.
@@ -523,7 +725,7 @@ const getEveDocumentHistory = async (
     "createdAt" | "id" | "kind" | "parentRevisionId" | "title" | "turnIndex"
   >[]
 > => {
-  const [head] = await db
+  const headRows = await db
     .select({ revisionId: eveDocumentHead.revisionId })
     .from(eveDocumentHead)
     .innerJoin(
@@ -540,6 +742,7 @@ const getEveDocumentHistory = async (
         eq(eveDocumentHead.ownerId, ownerId)
       )
     );
+  const head = headRows.at(FIRST_ROW_INDEX);
   if (!head) {
     return [];
   }
@@ -563,7 +766,6 @@ const getEveDocumentHistory = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve inheritImportedDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, unicorn/max-nested-calls --
  * max-params (#511): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -572,8 +774,7 @@ const getEveDocumentHistory = async (
  * unicorn/max-nested-calls (#568): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 const inheritImportedDocumentCheckpoints = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   ownerId: string,
   sourceId: string,
   conversationId: string,
@@ -628,21 +829,20 @@ const inheritImportedDocumentCheckpoints = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeImportedForkDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers, no-undefined, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers --
  * max-lines-per-function (#510): initializeImportedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): initializeImportedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): initializeImportedForkDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): initializeImportedForkDocuments intentionally keeps the existing falsy-value behavior of checkpoint; distinguishing empty, zero, and absent states requires a domain behavior decision.
+
  */
 const initializeImportedForkDocuments = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   ownerId: string,
   sourceId: string,
   conversationId: string,
   messageIndex: number
 ): Promise<void> => {
-  const [checkpoint] = await tx
+  const checkpointRows = await tx
     .select()
     .from(eveImportedDocumentCheckpoint)
     .where(
@@ -652,6 +852,7 @@ const initializeImportedForkDocuments = async (
         eq(eveImportedDocumentCheckpoint.messageIndex, messageIndex)
       )
     );
+  const checkpoint = checkpointRows.at(FIRST_ROW_INDEX);
   if (!checkpoint) {
     throw new Error("Imported document boundary is unavailable.");
   }
@@ -688,36 +889,31 @@ const initializeImportedForkDocuments = async (
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): parseForkTurnIndex uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const parseForkTurnIndex = (turnId: string): number => {
   const turnIndex = Number(turnId.slice("turn_".length));
-  if (!Number.isSafeInteger(turnIndex) || turnIndex < 0) {
+  if (!Number.isSafeInteger(turnIndex) || turnIndex < FIRST_TURN_INDEX) {
     throw new Error("Invalid fork boundary.");
   }
   return turnIndex;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve inheritDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, unicorn/max-nested-calls --
  * max-lines-per-function (#510): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): inheritDocumentCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep inheritDocumentCheckpoints's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+
  * unicorn/max-nested-calls (#568): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 const inheritDocumentCheckpoints = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   ownerId: string,
   sourceId: string,
   conversationId: string,
   beforeTurn: number
-) => {
+): Promise<(typeof eveDocumentCheckpoint.$inferSelect)[]> => {
   const inheritedCheckpoints = await tx
     .select()
     .from(eveDocumentCheckpoint)
@@ -768,24 +964,23 @@ const inheritDocumentCheckpoints = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeNamedForkDocuments's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers --
  * max-lines-per-function (#510): initializeNamedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): initializeNamedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): initializeNamedForkDocuments uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): initializeNamedForkDocuments intentionally keeps the existing falsy-value behavior of checkpoint; distinguishing empty, zero, and absent states requires a domain behavior decision.
+
  */
 const initializeNamedForkDocuments = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
-  tx: DocumentTransaction,
+  tx: Readonly<Pick<DocumentTransaction, "insert" | "select">>,
   ownerId: string,
   conversationId: string,
   sourceId: string,
   checkpointId: string,
   beforeTurn: number
 ): Promise<void> => {
-  const [checkpoint] = await tx
+  const checkpointRows = await tx
     .select()
     .from(eveNamedDocumentCheckpoint)
     .where(
@@ -795,6 +990,7 @@ const initializeNamedForkDocuments = async (
         eq(eveNamedDocumentCheckpoint.checkpointId, checkpointId)
       )
     );
+  const checkpoint = checkpointRows.at(FIRST_ROW_INDEX);
   if (!checkpoint || checkpoint.turnIndex !== beforeTurn) {
     throw new Error(
       "Named document checkpoint is not ready or has a different source turn."
@@ -835,13 +1031,13 @@ const initializeNamedForkDocuments = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeEveForkDocuments's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): initializeEveForkDocuments uses 13, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): initializeEveForkDocuments intentionally keeps the existing falsy-value behavior of target?.parentConversationId; target.forkMessageId; target.forkCheckpointId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Call before exposing a newly bound fork; source edits after its boundary stay excluded.
  * @param {string} ownerId - Owner of the newly bound fork and its inherited snapshots.
@@ -852,12 +1048,11 @@ const initializeEveForkDocuments = async (
   ownerId: string,
   conversationId: string
 ): Promise<void> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
     );
-    const [target] = await tx
+    const targetRows = await tx
       .select()
       .from(eveConversation)
       .where(
@@ -866,20 +1061,24 @@ const initializeEveForkDocuments = async (
           eq(eveConversation.ownerId, ownerId)
         )
       );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (!target?.parentConversationId) {
+    const target = targetRows.at(FIRST_ROW_INDEX);
+    if (
+      !target ||
+      target.parentConversationId === null ||
+      target.parentConversationId === ""
+    ) {
       throw new Error("Fork conversation not found.");
     }
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
     );
-    if (target.forkMessageId) {
+    if (target.forkMessageId !== null && target.forkMessageId !== "") {
       await initializeImportedForkDocuments(
         tx,
         ownerId,
         target.parentConversationId,
         conversationId,
-        Number(target.forkMessageId.slice(13))
+        Number(target.forkMessageId.slice("seed_message_".length))
       );
       return;
     }
@@ -891,7 +1090,7 @@ const initializeEveForkDocuments = async (
       target.parentConversationId,
       conversationId
     );
-    if (target.forkCheckpointId) {
+    if (target.forkCheckpointId !== null && target.forkCheckpointId !== "") {
       await initializeNamedForkDocuments(
         tx,
         ownerId,
@@ -990,11 +1189,11 @@ const initializeEveForkDocuments = async (
   });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve captureEveDocumentCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): captureEveDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): captureEveDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Capture once before model execution; even an empty manifest is a durable checkpoint.
  * @param {string} ownerId - Owner of the bound conversation whose heads are captured.
@@ -1007,12 +1206,11 @@ const captureEveDocumentCheckpoint = async (
   turnIndex: number
 ): Promise<void> => {
   z.number().int().nonnegative().parse(turnIndex);
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
     );
-    const [conversation] = await tx
+    const conversationRows = await tx
       .select({ id: eveConversation.id })
       .from(eveConversation)
       .where(
@@ -1022,7 +1220,8 @@ const captureEveDocumentCheckpoint = async (
           eq(eveConversation.state, "bound")
         )
       );
-    if (!conversation) {
+
+    if (conversationRows.length === 0) {
       throw new Error("Conversation not found.");
     }
     const inserted = await tx
@@ -1052,14 +1251,14 @@ const captureEveDocumentCheckpoint = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve captureEveNamedDocumentCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): captureEveNamedDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): captureEveNamedDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Native serialized capture calls this before publishing its named checkpoint.
  * @param {string} ownerId - Owner of the bound conversation and current document heads.
@@ -1075,7 +1274,6 @@ const captureEveNamedDocumentCheckpoint = async (
 ): Promise<void> => {
   z.uuid().parse(checkpointId);
   z.number().int().nonnegative().parse(turnIndex);
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .insert operations under caller-held locks; preserve the native writer contract.
   await db.transaction(async (tx: DocumentWriteTransaction) => {
     // Coordinate with deletion as well as manual/model document writes.
     await tx.execute(
@@ -1084,7 +1282,7 @@ const captureEveNamedDocumentCheckpoint = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
     );
-    const [conversation] = await tx
+    const conversationRows = await tx
       .select({ id: eveConversation.id })
       .from(eveConversation)
       .where(
@@ -1094,10 +1292,11 @@ const captureEveNamedDocumentCheckpoint = async (
           eq(eveConversation.state, "bound")
         )
       );
+    const conversation = conversationRows.at(FIRST_ROW_INDEX);
     if (!conversation) {
       throw new Error("Conversation not found.");
     }
-    const [existing] = await tx
+    const existingRows = await tx
       .select()
       .from(eveNamedDocumentCheckpoint)
       .where(
@@ -1107,6 +1306,7 @@ const captureEveNamedDocumentCheckpoint = async (
           eq(eveNamedDocumentCheckpoint.ownerId, ownerId)
         )
       );
+    const existing = existingRows.at(FIRST_ROW_INDEX);
     if (existing) {
       if (existing.turnIndex !== turnIndex) {
         throw new Error(
@@ -1137,7 +1337,7 @@ const captureEveNamedDocumentCheckpoint = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readDocumentRevision's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers */
 
 /**
  * Internal only: the caller must first prove this revision belongs to the accessible ancestry.
@@ -1165,9 +1365,9 @@ const readDocumentRevision = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDocumentRevision's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, no-magic-numbers, typescript/strict-boolean-expressions -- max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-magic-numbers -- max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Content is loaded only for the selected, accessible revision.
  * @param {string} ownerId - Owner authorized to traverse the selected conversation ancestry.
@@ -1187,13 +1387,14 @@ const getEveDocumentRevision = async (
     conversationId,
     documentId
   );
-  // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const selected = revisionId
-    ? history.find(
-        (revision: ReadonlyNativeSurface<(typeof history)[number]>) =>
-          revision.id === revisionId
-      )
-    : history.at(-1);
+  const selected =
+    // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; the pinned unicorn/prefer-ternary rule rejects if/else assignment.
+    (revisionId ?? "") === ""
+      ? history.at(-1)
+      : history.find(
+          (revision: ReadonlyNativeSurface<(typeof history)[number]>) =>
+            revision.id === revisionId
+        );
   if (!selected) {
     return;
   }
@@ -1202,14 +1403,14 @@ const getEveDocumentRevision = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAccessibleEveDocument's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined -- max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getAccessibleEveDocument uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): getAccessibleEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): getAccessibleEveDocument intentionally keeps the existing falsy-value behavior of conversation; revisionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Public readers receive document content, never storage ownership or operation metadata.
  * @param {string | undefined} viewerId - Authenticated viewer, or no identity for a public reader.
@@ -1234,7 +1435,7 @@ const getAccessibleEveDocument = async (
     }
   | undefined
 > => {
-  const [conversation] = await db
+  const conversationRows = await db
     .select()
     .from(eveConversation)
     .where(
@@ -1243,6 +1444,7 @@ const getAccessibleEveDocument = async (
         eq(eveConversation.state, "bound")
       )
     );
+  const conversation = conversationRows.at(FIRST_ROW_INDEX);
   if (
     !conversation ||
     (conversation.ownerId !== viewerId && conversation.visibility !== "public")
@@ -1254,13 +1456,14 @@ const getAccessibleEveDocument = async (
     conversationId,
     documentId
   );
-  // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const selected = revisionId
-    ? history.find(
-        (item: ReadonlyNativeSurface<(typeof history)[number]>) =>
-          item.id === revisionId
-      )
-    : history.at(-1);
+  const selected =
+    // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; the pinned unicorn/prefer-ternary rule rejects if/else assignment.
+    (revisionId ?? "") === ""
+      ? history.at(-1)
+      : history.find(
+          (item: ReadonlyNativeSurface<(typeof history)[number]>) =>
+            item.id === revisionId
+        );
   // oxlint-disable-next-line no-ternary -- Keep revision as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const revision = selected
     ? await readDocumentRevision(conversation.ownerId, documentId, selected.id)
@@ -1269,7 +1472,7 @@ const getAccessibleEveDocument = async (
     return;
   }
   // Recheck visibility after the potentially slow ancestry/content read.
-  const [current] = await db
+  const currentRows = await db
     .select()
     .from(eveConversation)
     .where(
@@ -1278,6 +1481,7 @@ const getAccessibleEveDocument = async (
         eq(eveConversation.state, "bound")
       )
     );
+  const current = currentRows.at(FIRST_ROW_INDEX);
   if (
     !current ||
     (current.ownerId !== viewerId && current.visibility !== "public")
@@ -1300,11 +1504,11 @@ const getAccessibleEveDocument = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeEveDocumentFromConversation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements -- max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): removeEveDocumentFromConversation intentionally keeps the existing falsy-value behavior of conversation; revision; head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Remove only this conversation's current pointer; snapshots and other branches retain their revisions.
  * @param {{ documentId: string; expectedRevisionId: string; title: string }} input - Approved document identity, expected revision and title to recheck.
@@ -1326,80 +1530,86 @@ const removeEveDocumentFromConversation = async (
   status: "success";
   title: string;
 }> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .delete operations under caller-held locks; preserve the native writer contract.
-  await db.transaction(async (tx: DocumentTransaction) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
-    );
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${scope.conversationId}`}, 0))`
-    );
-    signal.throwIfAborted();
-    const [conversation] = await tx
-      .select()
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.id, scope.conversationId),
-          eq(eveConversation.ownerId, scope.ownerId),
-          eq(eveConversation.state, "bound")
-        )
+  await db.transaction(
+    async (
+      tx: Readonly<Pick<DocumentTransaction, "delete" | "execute" | "select">>
+    ) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
       );
-    if (!conversation) {
-      throw new Error("Conversation not found.");
-    }
-    const [revision] = await tx
-      .select()
-      .from(eveDocumentRevision)
-      .where(
-        and(
-          eq(eveDocumentRevision.id, input.expectedRevisionId),
-          eq(eveDocumentRevision.documentId, input.documentId),
-          eq(eveDocumentRevision.ownerId, scope.ownerId)
-        )
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${scope.conversationId}`}, 0))`
       );
-    if (!revision) {
-      throw new Error("Document not found.");
+      signal.throwIfAborted();
+      const conversationRows = await tx
+        .select()
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.id, scope.conversationId),
+            eq(eveConversation.ownerId, scope.ownerId),
+            eq(eveConversation.state, "bound")
+          )
+        );
+      const conversation = conversationRows.at(FIRST_ROW_INDEX);
+      if (!conversation) {
+        throw new Error("Conversation not found.");
+      }
+      const revisionRows = await tx
+        .select()
+        .from(eveDocumentRevision)
+        .where(
+          and(
+            eq(eveDocumentRevision.id, input.expectedRevisionId),
+            eq(eveDocumentRevision.documentId, input.documentId),
+            eq(eveDocumentRevision.ownerId, scope.ownerId)
+          )
+        );
+      const revision = revisionRows.at(FIRST_ROW_INDEX);
+      if (!revision) {
+        throw new Error("Document not found.");
+      }
+      if (revision.title !== input.title) {
+        throw new Error("Document changed. Request approval again.");
+      }
+      const headRows = await tx
+        .select()
+        .from(eveDocumentHead)
+        .where(
+          and(
+            eq(eveDocumentHead.conversationId, scope.conversationId),
+            eq(eveDocumentHead.documentId, input.documentId),
+            eq(eveDocumentHead.ownerId, scope.ownerId)
+          )
+        );
+      const head = headRows.at(FIRST_ROW_INDEX);
+      if (head && head.revisionId !== input.expectedRevisionId) {
+        throw new Error("Document changed. Request approval again.");
+      }
+      // An absent head is already removed; a retry must not erase a newly saved revision.
+      await tx
+        .delete(eveDocumentHead)
+        .where(
+          and(
+            eq(eveDocumentHead.conversationId, scope.conversationId),
+            eq(eveDocumentHead.documentId, input.documentId),
+            eq(eveDocumentHead.ownerId, scope.ownerId),
+            eq(eveDocumentHead.revisionId, input.expectedRevisionId)
+          )
+        );
+      signal.throwIfAborted();
+      return {
+        documentId: input.documentId,
+        result:
+          "Document removed from this conversation. Historical snapshots and other branches are unchanged.",
+        status: "success" as const,
+        title: revision.title,
+      };
     }
-    if (revision.title !== input.title) {
-      throw new Error("Document changed. Request approval again.");
-    }
-    const [head] = await tx
-      .select()
-      .from(eveDocumentHead)
-      .where(
-        and(
-          eq(eveDocumentHead.conversationId, scope.conversationId),
-          eq(eveDocumentHead.documentId, input.documentId),
-          eq(eveDocumentHead.ownerId, scope.ownerId)
-        )
-      );
-    if (head && head.revisionId !== input.expectedRevisionId) {
-      throw new Error("Document changed. Request approval again.");
-    }
-    // An absent head is already removed; a retry must not erase a newly saved revision.
-    await tx
-      .delete(eveDocumentHead)
-      .where(
-        and(
-          eq(eveDocumentHead.conversationId, scope.conversationId),
-          eq(eveDocumentHead.documentId, input.documentId),
-          eq(eveDocumentHead.ownerId, scope.ownerId),
-          eq(eveDocumentHead.revisionId, input.expectedRevisionId)
-        )
-      );
-    signal.throwIfAborted();
-    return {
-      documentId: input.documentId,
-      result:
-        "Document removed from this conversation. Historical snapshots and other branches are unchanged.",
-      status: "success" as const,
-      title: revision.title,
-    };
-  });
+  );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (captureEveDocumentCheckpoint, captureEveNamedDocumentCheckpoint, getAccessibleEveDocument, getEveDocumentHistory, getEveDocumentRevision, initializeEveForkDocuments, purgeEveFamilyDocuments, removeEveDocumentFromConversation, saveEveDocumentRevision); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
@@ -1412,5 +1622,6 @@ export {
   purgeEveFamilyDocuments,
   removeEveDocumentFromConversation,
   saveEveDocumentRevision,
+  snapshotCopyCheckpoints,
 };
 /* oxlint-enable import/no-named-export */

@@ -2,18 +2,19 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveSeedSearchText } from "@/lib/eve/search-text";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep search-text module evaluation before client env validation and Postgres pool creation. */
 import { db } from "./client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep journal evaluation after direct client initialization; journal imports client, schema, eve-queries and copy-transcript. */
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
 /* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep direct schema pgTable construction after client, journal, eve-queries and eve-search module traversal. */
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAcceptedEveCopySeed's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAcceptedEveCopySeed's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.
@@ -39,10 +40,9 @@ const resolveAcceptedEveCopySeed = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve dispatchEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 
-typescript/strict-boolean-expressions (#610): dispatchEveCopy intentionally keeps the existing falsy-value behavior of conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
@@ -58,66 +58,75 @@ const dispatchEveCopy = async (
   create: (operationId: string) => Promise<string>
 ): Promise<{ id: string; sessionId: string }> => {
   try {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
-    return await db.transaction(async (tx) => {
-      const [lock] = await tx.execute<{
-        locked: boolean;
-      }>(
-        sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
-      );
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      if (!lock?.locked) {
-        throw new CreationConflictError(
-          "Copy creation is still in progress. Retry the same operation."
+    return await db.transaction(
+      async (
+        tx: Readonly<
+          Pick<typeof db, "execute" | "insert" | "select" | "update">
+        >
+      ) => {
+        const [lock] = await tx.execute<{
+          locked: boolean;
+        }>(
+          sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
         );
-      }
-      const { copy, conversation } = await readEveCopy(
-        tx,
-        ownerId,
-        conversationId
-      );
-      if (
-        copy.phase === "bound" &&
-        conversation.state === "bound" &&
-        conversation.sessionId
-      ) {
-        return { id: conversation.id, sessionId: conversation.sessionId };
-      }
-      if (
-        copy.phase !== "accepted" ||
-        !copy.seed ||
-        !["creating", "uncertain"].includes(conversation.state)
-      ) {
-        throw new CreationConflictError(
-          "This saved copy cannot be dispatched."
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        if (!lock?.locked) {
+          throw new CreationConflictError(
+            "Copy creation is still in progress. Retry the same operation."
+          );
+        }
+        const { copy, conversation } = await readEveCopy(
+          tx,
+          ownerId,
+          conversationId
         );
-      }
-      const sessionId = await create(conversation.id);
-      if (!sessionId) {
-        throw new Error("Copy creation did not return a native session.");
-      }
-      await tx
-        .update(eveConversation)
-        .set({ sessionId, state: "bound" })
-        .where(eq(eveConversation.id, conversation.id));
-      await tx
-        .update(eveChat)
-        .set({ activeConversationId: conversation.id, updatedAt: new Date() })
-        .where(
-          and(eq(eveChat.id, conversation.chatId), eq(eveChat.ownerId, ownerId))
+        if (
+          copy.phase === "bound" &&
+          conversation.state === "bound" &&
+          conversation.sessionId !== null &&
+          conversation.sessionId !== ""
+        ) {
+          return { id: conversation.id, sessionId: conversation.sessionId };
+        }
+        if (
+          copy.phase !== "accepted" ||
+          !copy.seed ||
+          !["creating", "uncertain"].includes(conversation.state)
+        ) {
+          throw new CreationConflictError(
+            "This saved copy cannot be dispatched."
+          );
+        }
+        const sessionId = await create(conversation.id);
+        if (!sessionId) {
+          throw new Error("Copy creation did not return a native session.");
+        }
+        await tx
+          .update(eveConversation)
+          .set({ sessionId, state: "bound" })
+          .where(eq(eveConversation.id, conversation.id));
+        await tx
+          .update(eveChat)
+          .set({ activeConversationId: conversation.id, updatedAt: new Date() })
+          .where(
+            and(
+              eq(eveChat.id, conversation.chatId),
+              eq(eveChat.ownerId, ownerId)
+            )
+          );
+        await writeEveSearchText(
+          tx,
+          ownerId,
+          conversation.id,
+          eveSeedSearchText(copy.seed.messages)
         );
-      await writeEveSearchText(
-        tx,
-        ownerId,
-        conversation.id,
-        eveSeedSearchText(copy.seed.messages)
-      );
-      await tx
-        .update(eveConversationCopy)
-        .set({ phase: "bound", seed: null })
-        .where(eq(eveConversationCopy.conversationId, conversation.id));
-      return { id: conversation.id, sessionId };
-    });
+        await tx
+          .update(eveConversationCopy)
+          .set({ phase: "bound", seed: null })
+          .where(eq(eveConversationCopy.conversationId, conversation.id));
+        return { id: conversation.id, sessionId };
+      }
+    );
   } catch (error) {
     if (!(error instanceof CreationConflictError)) {
       await db
@@ -137,10 +146,10 @@ const dispatchEveCopy = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
-typescript/strict-boolean-expressions (#610): rejectUnacceptedEveCopy intentionally keeps the existing falsy-value behavior of conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable unicorn/no-null --
+
 unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
@@ -153,37 +162,38 @@ const rejectUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
 ): Promise<{ id: string; neverDispatched: boolean }> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
-  await db.transaction(async (tx) => {
-    await lockEveCopyOwners(tx, [ownerId]);
-    const { copy, conversation } = await readEveCopy(
-      tx,
-      ownerId,
-      conversationId
-    );
-    if (
-      copy.phase === "accepted" ||
-      copy.phase === "bound" ||
-      conversation.sessionId
-    ) {
-      throw new CreationConflictError(
-        "Accepted copies require normal native recovery or deletion."
+  await db.transaction(
+    async (tx: Readonly<Pick<typeof db, "execute" | "select" | "update">>) => {
+      await lockEveCopyOwners(tx, [ownerId]);
+      const { copy, conversation } = await readEveCopy(
+        tx,
+        ownerId,
+        conversationId
       );
-    }
-    await tx
-      .update(eveConversationCopy)
-      .set({ phase: "rejected", plan: null, seed: null })
-      .where(eq(eveConversationCopy.conversationId, conversationId));
-    if (conversation.state !== "deleted") {
+      if (
+        copy.phase === "accepted" ||
+        copy.phase === "bound" ||
+        (conversation.sessionId !== null && conversation.sessionId !== "")
+      ) {
+        throw new CreationConflictError(
+          "Accepted copies require normal native recovery or deletion."
+        );
+      }
       await tx
-        .update(eveConversation)
-        .set({ state: "deleting", visibility: "private" })
-        .where(eq(eveConversation.id, conversationId));
+        .update(eveConversationCopy)
+        .set({ phase: "rejected", plan: null, seed: null })
+        .where(eq(eveConversationCopy.conversationId, conversationId));
+      if (conversation.state !== "deleted") {
+        await tx
+          .update(eveConversation)
+          .set({ state: "deleting", visibility: "private" })
+          .where(eq(eveConversation.id, conversationId));
+      }
+      return { id: conversationId, neverDispatched: true };
     }
-    return { id: conversationId, neverDispatched: true };
-  });
+  );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };
 /* oxlint-enable import/no-named-export */

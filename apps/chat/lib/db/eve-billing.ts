@@ -1,19 +1,12 @@
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
+import { databaseConnection } from "./connection";
+import { db } from "./client";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { env } from "@/lib/env";
 import postgres from "postgres";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
-/* oxlint-enable sort-imports */
-
-import { db } from "./client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { databaseConnection } from "./connection";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep schema table/custom-type construction after the native client pool; client already evaluates the same Drizzle, Postgres and env prerequisites in that order. */
 import {
   eveConversation,
   eveGuest,
@@ -23,16 +16,15 @@ import {
 } from "./schema";
 /* oxlint-enable sort-imports */
 
-const FIRST_PARAMETER_INDEX = 0;
-const NO_CHARGED_CENTS = 0;
+const ZERO_CENTS = 0;
 const MINIMUM_COST_USD = 0;
 const COST_DECIMAL_PLACES = 12;
 const MINIMUM_USAGE_STREAM_INDEX = 0;
 const SINGLE_USAGE_MATCH_LIMIT = 1;
 
-type UsageTransaction = Parameters<
-  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
->[typeof FIRST_PARAMETER_INDEX];
+type UsageTransaction = Readonly<
+  Pick<typeof db, "select" | "insert" | "update">
+>;
 
 const hasConflictingCost = (
   stored: string | null,
@@ -43,7 +35,6 @@ const hasConflictingCost = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve debitTurnUsage's awaited sequencing and rejected-Promise behavior. */
 
 const debitTurnUsage = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
   tx: UsageTransaction,
   input: {
     readonly ownerId: string;
@@ -66,10 +57,9 @@ const debitTurnUsage = async (
         eq(eveUsage.ownerId, input.ownerId)
       )
     );
-  const delta =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading due from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading paid from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining.
-    (totals?.due ?? NO_CHARGED_CENTS) - (totals?.paid ?? NO_CHARGED_CENTS);
-  if (delta > NO_CHARGED_CENTS) {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading due from totals; preserve one receiver evaluation, skipped accesses and the existing ZERO_CENTS fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading paid from totals; preserve one receiver evaluation, skipped accesses and the existing ZERO_CENTS fallback. The app guidance prefers optional chaining.
+  const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
+  if (delta > ZERO_CENTS) {
     await tx
       .update(userCredit)
       .set({ credits: sql`${userCredit.credits} - ${delta}` })
@@ -83,11 +73,10 @@ const debitTurnUsage = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveUsage's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 
-typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
@@ -130,7 +119,8 @@ const recordEveUsage = async (input: {
         isNotNull(eveUsage.costUsd)
       )
     );
-  if (settled) {
+  const hasSettledUsage = Boolean(settled);
+  if (hasSettledUsage) {
     const incoming =
       // oxlint-disable-next-line no-ternary -- Keep incoming as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
@@ -141,14 +131,14 @@ const recordEveUsage = async (input: {
     }
     return true;
   }
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert, .update operations under caller-held locks; preserve the native writer contract.
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: UsageTransaction) => {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
       .from(eveGuest)
       .where(eq(eveGuest.ownerId, input.ownerId))
       .for("update");
-    if (!guest) {
+    const isGuest = Boolean(guest);
+    if (!isGuest) {
       await tx
         .insert(userCredit)
         .values({ userId: input.ownerId })
@@ -168,7 +158,8 @@ const recordEveUsage = async (input: {
       .select()
       .from(eveUsage)
       .where(eq(eveUsage.eventId, input.eventId));
-    if (existing) {
+    const hasExistingUsage = Boolean(existing);
+    if (hasExistingUsage) {
       if (
         existing.ownerId !== input.ownerId ||
         existing.sessionId !== input.sessionId ||
@@ -193,7 +184,7 @@ const recordEveUsage = async (input: {
     }
     // Guest admission spends message quota. Keep provider costs without granting
     // signup credit or mixing monetary debits into that separate allowance.
-    if (!guest) {
+    if (!isGuest) {
       await debitTurnUsage(tx, input);
     }
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from existing; preserve one receiver evaluation, skipped accesses and the existing existing?.costUsd fallback. The app guidance prefers optional chaining.
@@ -203,7 +194,7 @@ const recordEveUsage = async (input: {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, unicorn/no-null */
 
 /**
  * This cursor is billing progress, never a second copy of the transcript.
@@ -271,10 +262,9 @@ const advanceEveUsageCursor = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withManagedUsageReconciliation's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 
-typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
@@ -298,8 +288,11 @@ const withManagedUsageReconciliation = async (
     prepare: false,
   });
   try {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
-    await drizzle(connection).transaction(async (tx) => {
+    const usageDb = drizzle(connection);
+    type UsageLockTransaction = Readonly<
+      Pick<typeof usageDb, "select" | "selectDistinct" | "execute" | "update">
+    >;
+    await usageDb.transaction(async (tx: UsageLockTransaction) => {
       await tx.execute(sql`select set_config('lock_timeout', '5s', true)`);
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
@@ -310,7 +303,8 @@ const withManagedUsageReconciliation = async (
         })
         .from(user)
         .where(eq(user.id, ownerId));
-      if (!owner) {
+      const hasOwner = Boolean(owner);
+      if (!hasOwner) {
         throw new Error("Usage reconciliation requires a registered owner.");
       }
       const unpricedSessions = await tx
@@ -327,7 +321,8 @@ const withManagedUsageReconciliation = async (
         .from(eveUsage)
         .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
         .limit(SINGLE_USAGE_MATCH_LIMIT);
-      if (unpriced) {
+      const hasUnpricedUsage = Boolean(unpriced);
+      if (hasUnpricedUsage) {
         throw new Error(
           "Completed usage needs provider cost reconciliation before starting more work."
         );
@@ -341,8 +336,9 @@ const withManagedUsageReconciliation = async (
       }
     });
   } catch (error) {
-    // oxlint-disable-next-line no-ternary -- Keep cause as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const cause = error instanceof Error && error.cause ? error.cause : error;
+    const cause =
+      // oxlint-disable-next-line no-ternary -- Preserve the original truthy cause selection and getter evaluation order.
+      error instanceof Error && Boolean(error.cause) ? error.cause : error;
     if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
       throw new EveUsageReconciliationBusyError();
     }
@@ -353,7 +349,7 @@ const withManagedUsageReconciliation = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveUsageCursor, getEveUsageCursor, recordEveUsage, withManagedUsageReconciliation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements */
 export {
   advanceEveUsageCursor,
   getEveUsageCursor,

@@ -1,14 +1,28 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction. */
 import { eveConversation, eveSubagentSession } from "./schema";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveSubagent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const getEveSubagent = async (ownerId: string, sessionId: string) => {
+const FIRST_USAGE_STREAM_INDEX = 0;
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+type EveSubagentBinding = Pick<
+  typeof eveSubagentSession.$inferSelect,
+  | "conversationId"
+  | "parentSessionId"
+  | "rootTurnId"
+  | "sessionId"
+  | "usageStreamIndex"
+> & { rootSessionId: typeof eveConversation.$inferSelect.sessionId };
+
+const getEveSubagent = async (
+  ownerId: string,
+  sessionId: string
+): Promise<EveSubagentBinding> => {
   const [binding] = await db
     .select({
       conversationId: eveSubagentSession.conversationId,
@@ -37,15 +51,12 @@ const getEveSubagent = async (ownerId: string, sessionId: string) => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveSubagent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, no-undefined --
 max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Registers a native child session under an owned root conversation or subagent.
  * Existing lineage is checked after insertion so conflicting ownership fails.
@@ -62,7 +73,7 @@ const registerEveSubagent = async (
   parentSessionId: string,
   sessionId: string,
   parentTurnId: string
-) => {
+): Promise<EveSubagentBinding> => {
   const [root] = await db
     .select({ id: eveConversation.id, sessionId: eveConversation.sessionId })
     .from(eveConversation)
@@ -73,15 +84,22 @@ const registerEveSubagent = async (
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
-  // oxlint-disable-next-line no-ternary -- Keep parent as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const parent = root
-    ? undefined
-    : await getEveSubagent(ownerId, parentSessionId);
+  const parent =
+    // oxlint-disable-next-line no-ternary -- Keep parent as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    hasQueryRow(root)
+      ? undefined
+      : await getEveSubagent(ownerId, parentSessionId);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading conversationId from parent; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining.
   const conversationId = root?.id ?? parent?.conversationId;
-  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep rootTurnId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const rootTurnId = root ? parentTurnId : parent?.rootTurnId;
-  if (!conversationId || !rootTurnId || sessionId === parentSessionId) {
+  const rootTurnId =
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep rootTurnId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    hasQueryRow(root) ? parentTurnId : parent?.rootTurnId;
+  if (
+    !conversationId ||
+    typeof rootTurnId !== "string" ||
+    rootTurnId === "" ||
+    sessionId === parentSessionId
+  ) {
     throw new Error("Native child has no owned parent conversation.");
   }
   await db
@@ -90,7 +108,7 @@ const registerEveSubagent = async (
     .onConflictDoNothing();
   const bound = await getEveSubagent(ownerId, sessionId);
   if (
-    !bound ||
+    !hasQueryRow(bound) ||
     bound.conversationId !== conversationId ||
     bound.parentSessionId !== parentSessionId ||
     bound.rootTurnId !== rootTurnId
@@ -103,13 +121,19 @@ const registerEveSubagent = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveSubagents's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, no-undefined */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): listEveSubagents intentionally keeps the existing falsy-value behavior of rootSessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
+/* oxlint-disable no-undefined -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
+const listEveSubagents = async (
+  ownerId: string,
+  rootSessionId?: string
+): Promise<
+  Pick<
+    EveSubagentBinding,
+    "rootSessionId" | "rootTurnId" | "sessionId" | "usageStreamIndex"
+  >[]
+> =>
   await db
     .select({
       rootSessionId: eveConversation.sessionId,
@@ -129,20 +153,24 @@ const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
       and(
         eq(eveConversation.ownerId, ownerId),
         // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
+        typeof rootSessionId === "string" && rootSessionId !== ""
+          ? eq(eveConversation.sessionId, rootSessionId)
+          : undefined
       )
     );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveSubagentUsageCursor's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const advanceEveSubagentUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
 ): Promise<void> => {
-  if (!Number.isSafeInteger(streamIndex) || streamIndex < 0) {
+  if (
+    !Number.isSafeInteger(streamIndex) ||
+    streamIndex < FIRST_USAGE_STREAM_INDEX
+  ) {
     throw new Error("Invalid native child usage cursor.");
   }
   await db
@@ -159,7 +187,7 @@ const advanceEveSubagentUsageCursor = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveSubagentUsageCursor, getEveSubagent, listEveSubagents, registerEveSubagent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */
+
 export {
   advanceEveSubagentUsageCursor,
   getEveSubagent,

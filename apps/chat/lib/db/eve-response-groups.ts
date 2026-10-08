@@ -1,30 +1,28 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveResponseGroupCandidates } from "@/lib/eve/response-group-candidates";
-/* oxlint-enable sort-imports */
-import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
-/* oxlint-enable sort-imports */
+import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Loading the database client here validates env and creates the Postgres client after response-group contract modules initialize. */
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction. */
 import { eveConversation, eveResponseGroup } from "./schema";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
+import type { z } from "zod";
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+const isNonemptyString = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
 
 const FIRST_PARAMETER_INDEX = 0;
 const EMPTY_FAMILY_SIZE = 0;
@@ -33,8 +31,12 @@ const SINGLE_MATCH_LIMIT = 1;
 type ResponseGroupTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
-type ResponseGroupTombstoneTransaction = ResponseGroupTransaction;
-type ResponseGroupWriteTransaction = ResponseGroupTransaction;
+type ResponseGroupTombstoneTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "update">
+>;
+type ResponseGroupWriteTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "execute" | "insert" | "update">
+>;
 type ResponseGroupRow = typeof eveResponseGroup.$inferSelect;
 type ConversationRow = typeof eveConversation.$inferSelect;
 type ReservedResponseGroup = ReadonlyNativeSurface<
@@ -45,15 +47,13 @@ type ReservedResponseGroup = ReadonlyNativeSurface<
 >;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveGroupRow's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
  * max-lines-per-function (#510): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  *
- * typescript/strict-boolean-expressions (#610): reserveGroupRow intentionally keeps the existing falsy-value behavior of existing; sourceId; source; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): reserveGroupRow preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const reserveGroupRow = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update, .insert operations under caller-held locks; preserve the native writer contract.
   tx: ResponseGroupWriteTransaction,
   ownerId: string,
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
@@ -74,40 +74,41 @@ const reserveGroupRow = async (
   if (existing?.deleted) {
     throw new Error("This response group has been deleted.");
   }
-  if (existing && existing.inputHash !== inputHash) {
+  if (hasQueryRow(existing) && existing.inputHash !== inputHash) {
     throw new Error(
       "This response group already has a different message, model order, tool selection, or source."
     );
   }
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from input.fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   const sourceId = input.fork?.conversationId ?? null;
-  // oxlint-disable-next-line no-ternary -- Keep [source] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const [source] = sourceId
-    ? await tx
-        .select()
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.id, sourceId),
-            eq(eveConversation.ownerId, ownerId)
+  const [source] =
+    // oxlint-disable-next-line no-ternary -- Keep [source] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    typeof sourceId === "string" && sourceId !== ""
+      ? await tx
+          .select()
+          .from(eveConversation)
+          .where(
+            and(
+              eq(eveConversation.id, sourceId),
+              eq(eveConversation.ownerId, ownerId)
+            )
           )
-        )
-    : [];
-  if (sourceId && !source) {
+      : [];
+  if (typeof sourceId === "string" && sourceId !== "" && !hasQueryRow(source)) {
     throw new Error("Source conversation not found.");
   }
   // An exact replay can recover the missing association of a pre-contract group.
   // Commit it even when the source has since retired, so deletion can find it.
-  if (existing && !existing.sourceIdentityKnown) {
+  if (hasQueryRow(existing) && !existing.sourceIdentityKnown) {
     await tx
       .update(eveResponseGroup)
       .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
       .where(condition);
   }
-  if (source && source.state !== "bound") {
+  if (hasQueryRow(source) && source.state !== "bound") {
     return;
   }
-  if (existing) {
+  if (hasQueryRow(existing)) {
     // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return existing;
   }
@@ -134,19 +135,15 @@ const reserveGroupRow = async (
   return group;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- *
- * typescript/strict-boolean-expressions (#610): requireGroup intentionally keeps the existing falsy-value behavior of result.inputHash; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const requireGroup = (
   result: ReadonlyNativeSurface<Awaited<ReturnType<typeof reserveGroupRow>>>
 ): ReservedResponseGroup => {
   if (!result) {
     throw new Error("Source conversation is unavailable.");
   }
-  if (!(result.candidates && result.inputHash)) {
+  if (!(result.candidates && isNonemptyString(result.inputHash))) {
     throw new Error("Response group content is unavailable.");
   }
   return {
@@ -157,7 +154,6 @@ const requireGroup = (
   };
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/promise-function-async --
 typescript/promise-function-async (#606): reserveEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -172,8 +168,7 @@ const reserveEveResponseGroup = async (
   ownerId: string,
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ReservedResponseGroup> => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
-  const result = await db.transaction((tx) =>
+  const result = await db.transaction((tx: ResponseGroupWriteTransaction) =>
     reserveGroupRow(tx, ownerId, value)
   );
   return requireGroup(result);
@@ -190,7 +185,6 @@ const reserveEveResponseGroup = async (
  * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group; the caller controls the shared transaction commit.
  */
 const reserveEveResponseGroupInTransaction = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
   tx: ResponseGroupWriteTransaction,
   ownerId: string,
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
@@ -199,9 +193,7 @@ const reserveEveResponseGroupInTransaction = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tombstoneEveResponseGroups's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
-typescript/strict-boolean-expressions (#610): tombstoneEveResponseGroups intentionally keeps the existing falsy-value behavior of unknown; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): tombstoneEveResponseGroups keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --unicorn/max-nested-calls (#568): tombstoneEveResponseGroups keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
@@ -211,7 +203,6 @@ unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in it
  * @param {{ id: string; operationId: string; }[]} family Conversation and operation identities defining the deleted family.
  */
 const tombstoneEveResponseGroups = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .update operations under caller-held locks; preserve the native writer contract.
   tx: ResponseGroupTombstoneTransaction,
   ownerId: string,
   family: readonly Readonly<{
@@ -230,7 +221,8 @@ const tombstoneEveResponseGroups = async (
       )
     )
     .limit(SINGLE_MATCH_LIMIT);
-  if (unknown) {
+  const hasUnknownSource = hasQueryRow(unknown);
+  if (hasUnknownSource) {
     throw new Error(
       "Recover saved response group requests before deleting conversations."
     );
@@ -257,11 +249,9 @@ const tombstoneEveResponseGroups = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveResponseGroupRejection's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-params, typescript/strict-boolean-expressions --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-
-typescript/strict-boolean-expressions (#610): recordEveResponseGroupRejection intentionally keeps the existing falsy-value behavior of group?.candidates?.some( (candidate) => candidate.operationId === operationId ); distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable max-params --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 /**
  * Clear an old rejection before retry; only a definitive result may replace it.
@@ -279,8 +269,7 @@ const recordEveResponseGroupRejection = async (
     readonly code?: "project_not_found";
   }
 ): Promise<void> => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .execute, .update operations under caller-held locks; preserve the native writer contract.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: ResponseGroupWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -292,10 +281,10 @@ const recordEveResponseGroupRejection = async (
     const [group] = await tx.select().from(eveResponseGroup).where(condition);
     if (
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from group.candidates; read candidates from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      !group?.candidates?.some(
+      group?.candidates?.some(
         (candidate: { readonly operationId: string }) =>
           candidate.operationId === operationId
-      )
+      ) !== true
     ) {
       throw new Error("Response group is unavailable.");
     }
@@ -322,10 +311,9 @@ const recordEveResponseGroupRejection = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params */
 
-/* oxlint-disable max-lines-per-function, typescript/strict-boolean-expressions --max-lines-per-function (#510): getEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): getEveResponseGroup intentionally keeps the existing falsy-value behavior of row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable max-lines-per-function --max-lines-per-function (#510): getEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 /**
  * Owner-only ordered bindings; transcript content remains in native sessions.
@@ -385,7 +373,7 @@ const getEveResponseGroup = async (
             conversation.operationId === candidate.operationId
         );
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        if (row?.state === "bound" && row.sessionId) {
+        if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
           return {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
@@ -416,11 +404,10 @@ const getEveResponseGroup = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroupForConversation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- max-lines-per-function (#510): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/max-nested-calls -- max-lines-per-function (#510): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): getEveResponseGroupForConversation intentionally keeps the existing falsy-value behavior of conversation; member.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 const getEveResponseGroupForConversation = async (
@@ -440,7 +427,7 @@ const getEveResponseGroupForConversation = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!conversation) {
+  if (!hasQueryRow(conversation)) {
     return;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
@@ -468,7 +455,7 @@ const getEveResponseGroupForConversation = async (
     );
   const boundFamily = family.flatMap(
     (member: ReadonlyNativeSurface<(typeof family)[number]>) => {
-      if (member.sessionId) {
+      if (isNonemptyString(member.sessionId)) {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return [{ ...member, sessionId: member.sessionId }];
       }
@@ -571,7 +558,7 @@ const getEveResponseGroupForConversation = async (
     );
   const boundGroupFamilies = groupFamilies.flatMap(
     (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) => {
-      if (member.sessionId) {
+      if (isNonemptyString(member.sessionId)) {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return [{ ...member, sessionId: member.sessionId }];
       }
@@ -618,7 +605,7 @@ const getEveResponseGroupForConversation = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveResponseGroup, getEveResponseGroupForConversation, recordEveResponseGroupRejection, reserveEveResponseGroup, reserveEveResponseGroupInTransaction, tombstoneEveResponseGroups); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines -- #509: This eve-response-groups.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
  */

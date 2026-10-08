@@ -5,22 +5,46 @@ import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveConversation, eveSearchText } from "./schema";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+const SEARCH_CHUNK_LENGTH = 8000;
+const SEARCH_WRITE_BATCH_SIZE = 100;
+const SEARCH_PAGE_SIZE = 20;
+const QUOTE_PAIR_SIZE = 2;
+const UNQUOTED_SEGMENT_REMAINDER = 1;
+const FIRST_INDEX = 0;
+const LAST_ITEM_OFFSET = -1;
+const EMPTY_RESULT_COUNT = 0;
+
+type SearchTransaction = Readonly<Pick<typeof db, "select" | "insert">>;
+const splitSearchChunks = (
+  entries: readonly EveSearchText[]
+): EveSearchText[] =>
+  entries.flatMap((entry: EveSearchText) => {
+    const result: EveSearchText[] = [];
+    for (
+      let offset = FIRST_INDEX;
+      offset < entry.text.length;
+      offset += SEARCH_CHUNK_LENGTH
+    ) {
+      result.push({
+        key: `${entry.key}:${offset}`,
+        text: entry.text.slice(
+          offset,
+          offset + SEARCH_CHUNK_LENGTH + MAX_SEARCH_QUERY_LENGTH
+        ),
+      });
+    }
+    return result;
+  });
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveSearchText's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-params --
 max-params (#511): writeEveSearchText keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): writeEveSearchText uses 8000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-
-typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Writes search chunks only while the owner’s conversation binding is active.
  * The binding lock serializes the write with deletion, and existing keys are
@@ -31,7 +55,6 @@ typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally k
  * @param {readonly EveSearchText[]} entries Search keys and text chunks to persist.
  */
 const writeEveSearchText = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This original transaction performs .insert operations under caller-held locks; preserve the native writer contract.
   tx: SearchTransaction,
   ownerId: string,
   conversationId: string,
@@ -48,28 +71,24 @@ const writeEveSearchText = async (
       )
     )
     .for("update");
-  if (!conversation) {
+  const hasConversation = Boolean(conversation);
+  if (!hasConversation) {
     return;
   }
   // Bound vectors and insert batches even for unusually large pasted messages.
-  const chunks = entries.flatMap((entry: EveSearchText) => {
-    const result: EveSearchText[] = [];
-    for (let offset = 0; offset < entry.text.length; offset += 8000) {
-      result.push({
-        key: `${entry.key}:${offset}`,
-        text: entry.text.slice(offset, offset + 8000 + MAX_SEARCH_QUERY_LENGTH),
-      });
-    }
-    return result;
-  });
-  for (let index = 0; index < chunks.length; index += 100) {
+  const chunks = splitSearchChunks(entries);
+  for (
+    let index = FIRST_INDEX;
+    index < chunks.length;
+    index += SEARCH_WRITE_BATCH_SIZE
+  ) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each insert within the locked transaction.
     await tx
       .insert(eveSearchText)
       .values(
         chunks
-          .slice(index, index + 100)
-          // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          .slice(index, index + SEARCH_WRITE_BATCH_SIZE)
+          // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Preserve persisted entry keys and overrides; explicit fields would drop extra enumerable source properties.
           .map((entry: EveSearchText) => ({
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Persist the existing source chunk fields before the conversation and owner overrides; Object.assign conflicts with prefer-object-spread.
             ...entry,
@@ -86,10 +105,9 @@ const writeEveSearchText = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve indexEveSearchText's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): indexEveSearchText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable typescript/promise-function-async --
 
 typescript/promise-function-async (#606): indexEveSearchText preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const indexEveSearchText = async (
@@ -97,15 +115,14 @@ const indexEveSearchText = async (
   conversationId: string,
   entries: readonly EveSearchText[]
 ): Promise<void> => {
-  if (entries.length > 0) {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original live transaction into reservation/admission helpers that persist rows and locks; the native helper receiver rejects a readonly projection (TS2345).
-    await db.transaction((tx) =>
+  if (entries.length > EMPTY_RESULT_COUNT) {
+    await db.transaction((tx: SearchTransaction) =>
       writeEveSearchText(tx, ownerId, conversationId, entries)
     );
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
@@ -133,10 +150,9 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-continue, typescript/strict-boolean-expressions --
  * max-statements (#512): highlightSearchExcerpt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): highlightSearchExcerpt skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): highlightSearchExcerpt uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  *
  * typescript/strict-boolean-expressions (#610): highlightSearchExcerpt intentionally keeps the existing falsy-value behavior of token.groups?.term; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -149,14 +165,14 @@ const highlightSearchExcerpt = (
   const groups = [false];
   let negateNext = false;
   for (const token of query.matchAll(queryToken)) {
-    const negated = (groups.at(-1) ?? false) !== negateNext;
-    if (token[0] === "!") {
+    const negated = (groups.at(LAST_ITEM_OFFSET) ?? false) !== negateNext;
+    if (token[FIRST_INDEX] === "!") {
       negateNext = !negateNext;
       continue;
     }
-    if (token[0] === "(") {
+    if (token[FIRST_INDEX] === "(") {
       groups.push(negated);
-    } else if (token[0] === ")") {
+    } else if (token[FIRST_INDEX] === ")") {
       groups.pop();
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading term from token.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     } else if (!negated && token.groups?.term) {
@@ -183,20 +199,19 @@ const highlightSearchExcerpt = (
       .map(
         ({ text }: Readonly<{ prefix: boolean; text: string }>) => text.length
       );
-    const length = Math.max(0, ...lengths);
+    const length = Math.max(EMPTY_RESULT_COUNT, ...lengths);
 
     if (length) {
-      return `⟦${word.slice(0, length)}⟧${word.slice(length)}`;
+      return `⟦${word.slice(FIRST_INDEX, length)}⟧${word.slice(length)}`;
     }
     return marked;
   });
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-continue, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, unicorn/no-null --
 max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): searchEveConversations uses 2, 1, 0, 20, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 
 unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
@@ -223,7 +238,8 @@ const searchEveConversations = async (
   const { cursor } = input;
   const query = input.search.trim();
   const prefixLastWord =
-    finalUnquotedWord.test(query) && query.split('"').length % 2 === 1;
+    finalUnquotedWord.test(query) &&
+    query.split('"').length % QUOTE_PAIR_SIZE === UNQUOTED_SEGMENT_REMAINDER;
   const items = await db.execute<EveSearchResult>(sql`
     with parsed as (select websearch_to_tsquery('simple', ${query}) as terms),
     query as (
@@ -284,8 +300,8 @@ const searchEveConversations = async (
     order by rank desc, "updatedAt" desc, id
   `);
   const page = items
-    .slice(0, 20)
-    // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Rest binding item excludes highlightQuery, highlightWords from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    .slice(FIRST_INDEX, SEARCH_PAGE_SIZE)
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Preserve the result own-key snapshot after excluding highlight fields.
     .map(
       ({
         highlightQuery,
@@ -302,18 +318,18 @@ const searchEveConversations = async (
         ),
       })
     );
-  const last = page.at(-1);
+  const last = page.at(LAST_ITEM_OFFSET);
   return {
     items: page,
     nextCursor:
       // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      items.length > 20 && last
+      items.length > SEARCH_PAGE_SIZE && last
         ? { id: last.id, rank: last.rank, updatedAt: last.updatedAt }
         : null,
   };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (indexEveSearchText, searchEveConversations, writeEveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };
 /* oxlint-enable import/no-named-export */
