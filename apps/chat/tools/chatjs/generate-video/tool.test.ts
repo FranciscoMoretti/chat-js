@@ -1,14 +1,8 @@
-import { MockVideoModelV4 } from "ai/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { MockVideoModelV4 } from "ai/test";
 import { generateVideoResult } from "./schemas";
-/* oxlint-enable sort-imports */
 import { generateVideoTool } from "./tool";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   definition: vi.fn(),

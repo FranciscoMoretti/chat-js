@@ -1,17 +1,12 @@
+import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+import { expect, test, vi } from "vitest";
+import { EveToolResult } from "@/components/eve/eve-tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ZodType } from "zod";
+import type { ui as chatjsUi } from "@/tools/chatjs/ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { expect, test, vi } from "vitest";
-import type { ZodType } from "zod";
-
-import { EveToolResult } from "@/components/eve/eve-tool-result";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { createToolError, createToolResult } from "@/lib/eve/tool-result";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ui as chatjsUi } from "@/tools/chatjs/ui";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): vi.mock("@/components/eve/eve-document-tool") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.

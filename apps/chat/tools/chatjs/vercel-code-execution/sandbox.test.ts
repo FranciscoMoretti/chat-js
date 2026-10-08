@@ -1,8 +1,14 @@
-import { getVercelOidcTokenSync } from "@vercel/oidc";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { APIError, Sandbox } from "@vercel/sandbox";
-/* oxlint-enable sort-imports */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { getVercelOidcTokenSync } from "@vercel/oidc";
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): envMock uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -244,7 +250,7 @@ describe("resolveSandboxAuth", () => {
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<never>();
-  const stop = vi.fn<Sandbox["stop"]>(() => gate.promise);
+  const stop = vi.fn<Sandbox["stop"]>().mockReturnValue(gate.promise);
   const log = { info: vi.fn(), warn: vi.fn() };
   const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
@@ -256,19 +262,23 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   const rejection = expect(observed).rejects.toThrow("stop unavailable");
   await Promise.resolve();
   expect(settled).toBe(false);
-  expect(stop).toHaveBeenCalledWith({
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    signal: expect.any(AbortSignal),
-  });
+  expect(stop).toHaveBeenCalledOnce();
+  const [[stopOptions]] = stop.mock.calls;
+  assert(stopOptions);
+  expect(stopOptions.signal).toBeInstanceOf(AbortSignal);
+  expect(stopOptions).toEqual({ signal: stopOptions.signal });
   gate.reject(new Error("stop unavailable"));
   await rejection;
   expect(log.info).not.toHaveBeenCalled();
   expect(log.warn).toHaveBeenCalledOnce();
-  expect(remove).toHaveBeenCalledWith({
+  expect(remove).toHaveBeenCalledOnce();
+  const [[deleteOptions]] = remove.mock.calls;
+  assert(deleteOptions);
+  expect(deleteOptions).toEqual({
     deleteOrphanSnapshots: true,
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    signal: expect.any(AbortSignal),
+    signal: deleteOptions.signal,
   });
+  expect(deleteOptions.signal).toBeInstanceOf(AbortSignal);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
@@ -290,15 +300,14 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, typescript/promise-function-async --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("does not report successful cleanup until deletion has completed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): it("does not report successful cleanup until deletion has completed") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("does not report successful cleanup until deletion has completed", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();
   const stop = vi.fn<Sandbox["stop"]>();
-  const remove = vi.fn<Sandbox["delete"]>(() => gate.promise);
+  const remove = vi.fn<Sandbox["delete"]>().mockReturnValue(gate.promise);
   const log = { info: vi.fn(), warn: vi.fn() };
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   const rejected = expect(pending).rejects.toThrow("delete unavailable");
@@ -308,7 +317,7 @@ it("does not report successful cleanup until deletion has completed", async () =
   await rejected;
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/promise-function-async */
+/* oxlint-enable max-statements */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

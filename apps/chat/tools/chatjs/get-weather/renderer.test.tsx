@@ -1,10 +1,7 @@
+import { expect, test } from "vitest";
+import { GetWeatherRenderer } from "./renderer";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
-
-import { GetWeatherRenderer } from "./renderer";
 import type { weatherResult } from "./schemas";
 import type { z } from "zod";
 

@@ -1,10 +1,7 @@
-import { Sandbox } from "@vercel/sandbox";
-import pino from "pino";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
+import { Sandbox } from "@vercel/sandbox";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
+import pino from "pino";
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock(

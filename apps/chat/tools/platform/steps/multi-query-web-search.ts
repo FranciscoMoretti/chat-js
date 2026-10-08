@@ -26,10 +26,95 @@ type MultiQuerySearchResponse = {
   searches: MultiQuerySearchResult[];
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
+type SearchProvider = (
+  query: SearchQuery,
+  index: number
+) => Promise<Readonly<MultiQuerySearchResult["results"][number]>[]>;
 
-/* oxlint-disable max-lines-per-function, max-statements -- The shared try/catch owns running/completed writes, concurrent searches, and failure progress under one update ID; moving writes outside it changes callback-error handling. */
+const writeSearchStatus = ({
+  dataStream,
+  queries,
+  status,
+  toolCallId,
+  updateId,
+}: {
+  readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+  readonly queries: readonly SearchQuery[];
+  readonly status: "running" | "completed";
+  readonly toolCallId: string;
+  readonly updateId: string;
+}): void => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Skip query getters and payload construction when no writer is installed, using the app's preferred nullish guard.
+  dataStream?.write({
+    data: {
+      queries: queries.map((query) => query.query),
+      status,
+      title: `Executing ${queries.length} searches`,
+      toolCallId,
+      type: "web",
+    },
+    id: updateId,
+    type: "data-researchUpdate",
+  });
+};
 
+const createSearchTasks = (
+  queries: readonly SearchQuery[],
+  search: SearchProvider
+): Promise<MultiQuerySearchResult>[] =>
+  // oxlint-disable-next-line oxc/no-async-await -- Each provider result is normalized after its own await; Promise.all in the caller retains concurrent launch and ordered aggregation.
+  queries.map(async (query, index) => {
+    const results = await search(query, index);
+    return {
+      query,
+      results: deduplicateByDomainAndUrl(results).map((result) => ({
+        content: result.content,
+        title: result.title,
+        url: result.url,
+      })),
+    };
+  });
+
+const writeSearchResults = ({
+  dataStream,
+  queries,
+  searchResults,
+  toolCallId,
+  updateId,
+}: {
+  readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+  readonly queries: readonly SearchQuery[];
+  readonly searchResults: readonly Readonly<{
+    results: readonly Readonly<MultiQuerySearchResult["results"][number]>[];
+  }>[];
+  readonly toolCallId: string;
+  readonly updateId: string;
+}): void => {
+  const allResults = deduplicateByDomainAndUrl(
+    searchResults.flatMap((searchResult) => searchResult.results)
+  );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve unconditional cross-query deduplication above and skip only the final payload when the writer is absent.
+  dataStream?.write({
+    data: {
+      queries: queries.map((query) => query.query),
+      // oxlint-disable-next-line sort-keys -- Preserve the original serialized progress-result order, with source following content/title/url.
+      results: allResults.map((result) => ({
+        content: result.content,
+        title: result.title,
+        url: result.url,
+        source: "web",
+      })),
+      status: "completed",
+      title: `Executing ${queries.length} searches`,
+      toolCallId,
+      type: "web",
+    },
+    id: updateId,
+    type: "data-researchUpdate",
+  });
+};
+
+// oxlint-disable-next-line oxc/no-async-await -- The shared catch owns provider and progress-writer failures after awaited concurrent aggregation.
 const multiQueryWebSearchStep = async ({
   queries,
   search,
@@ -37,122 +122,44 @@ const multiQueryWebSearchStep = async ({
   toolCallId,
 }: {
   readonly queries: readonly SearchQuery[];
-  readonly search: (
-    query: SearchQuery,
-    index: number
-  ) => Promise<
-    { readonly title: string; readonly url: string; readonly content: string }[]
-  >;
+  readonly search: SearchProvider;
   readonly dataStream?: Readonly<ToolProgressWriter>;
   readonly toolCallId: string;
 }): Promise<MultiQuerySearchResponse> => {
   const updateId = generateUUID();
   try {
-    // Send initial annotation showing all queries being executed
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    dataStream?.write({
-      data: {
-        queries: queries.map(
-          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
-        ),
-        status: "running",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
+    writeSearchStatus({
+      dataStream,
+      queries,
+      status: "running",
+      toolCallId,
+      updateId,
     });
-
-    // Execute searches in parallel
-    const searchPromises = queries.map(async (query: SearchQuery, index) => {
-      const results = await search(query, index);
-
-      return {
-        query,
-        results: deduplicateByDomainAndUrl(results).map((obj) => ({
-          content: obj.content,
-          title: obj.title,
-          url: obj.url,
-        })),
-      };
+    const searchTasks = createSearchTasks(queries, search);
+    const searchResults = await Promise.all(searchTasks);
+    writeSearchResults({
+      dataStream,
+      queries,
+      searchResults,
+      toolCallId,
+      updateId,
     });
-
-    const searchResults = await Promise.all(searchPromises);
-
-    // Send completion annotation with all results
-    const allResults = deduplicateByDomainAndUrl(
-      searchResults.flatMap(
-        (
-          searchResult: Readonly<{
-            results: readonly Readonly<{
-              title: string;
-              url: string;
-              content: string;
-            }>[];
-          }>
-        ) => searchResult.results
-      )
-    );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    dataStream?.write({
-      data: {
-        queries: queries.map(
-          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
-        ),
-        results: allResults.map(
-          (
-            result: Readonly<{ content: string; title: string; url: string }>
-            // oxlint-disable-next-line sort-keys -- Keep the original serialized progress-result order, adding source after content/title/url.
-          ) => ({
-            content: result.content,
-            title: result.title,
-            url: result.url,
-            source: "web",
-          })
-        ),
-        status: "completed",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
-    });
-
-    return {
-      searches: searchResults,
-    };
+    return { searches: searchResults };
   } catch (error: unknown) {
     const errorMessage =
-      // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      // oxlint-disable-next-line no-ternary -- Preserve the lazy Error.message/fallback selection; the pinned prefer-ternary rule rejects equivalent if/else assignments.
       error instanceof Error ? error.message : "Unknown error occurred";
-
-    // Send error annotation
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    dataStream?.write({
-      data: {
-        queries: queries.map(
-          (query: Readonly<Pick<SearchQuery, "query">>) => query.query
-        ),
-        status: "completed",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
+    writeSearchStatus({
+      dataStream,
+      queries,
+      status: "completed",
+      toolCallId,
+      updateId,
     });
-
-    return {
-      error: errorMessage,
-      searches: [],
-    };
+    return { error: errorMessage, searches: [] };
   }
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (multiQueryWebSearchStep); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements */
 export { multiQueryWebSearchStep };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
