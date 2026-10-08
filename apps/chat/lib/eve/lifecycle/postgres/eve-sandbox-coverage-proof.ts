@@ -1,14 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { isDeepStrictEqual } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
- */
 import type { Sql, TransactionSql } from "postgres";
 import type { PostgresLifecycleQuery } from "./compatibility";
-import { isDeepStrictEqual } from "node:util";
 import postgres from "postgres";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 import { z } from "zod";
-
-/* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_ROW_INDEX = 0;
 const EMPTY_COUNT = 0;
@@ -23,6 +17,15 @@ const savedSchema = z.object({
   sessionIds: z.array(z.string()),
 });
 
+// Both operands come from parsed or canonicalized dense string arrays. Retained
+// proof compares ordered run identities, without object/prototype equality.
+const sameRunInventory = (
+  left: readonly string[],
+  right: readonly string[]
+): boolean =>
+  left.length === right.length &&
+  left.every((runId, index) => runId === right[index]);
+
 const assertCompleteSandboxInventory = (
   inventory: {
     readonly runs: readonly { readonly id: string }[];
@@ -35,7 +38,7 @@ const assertCompleteSandboxInventory = (
 ): void => {
   const actual = inventory.runs.map((run) => run.id).toSorted();
   if (
-    !isDeepStrictEqual(actual, runIds) ||
+    !sameRunInventory(actual, runIds) ||
     inventory.activeRunIds.length > EMPTY_COUNT ||
     inventory.missingRunIds.length > EMPTY_COUNT ||
     inventory.ambiguousStreamIds.length > EMPTY_COUNT ||
@@ -84,7 +87,7 @@ const readMatchingSavedCoverage = (
   const saved = savedSchema.parse(raw);
   if (
     saved.appRoot !== input.appRoot ||
-    !isDeepStrictEqual(saved.runIds, runIds)
+    !sameRunInventory(saved.runIds, runIds)
   ) {
     throw new Error(
       "Sandbox coverage scope changed. Reconcile cleanup before retrying."

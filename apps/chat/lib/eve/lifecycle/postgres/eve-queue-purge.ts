@@ -24,6 +24,15 @@ interface QueueInventory {
   readonly unsupportedJobIds: readonly string[];
 }
 
+const assertCompleteQueueRemoval = (
+  removed: readonly { readonly id: string }[],
+  locked: readonly { readonly id: string }[]
+): void => {
+  if (removed.length !== locked.length) {
+    throw new Error("Queue cleanup did not remove every locked job.");
+  }
+};
+
 const removeUnlockedJobs = async (
   query: QueueQuery,
   jobIds: readonly string[]
@@ -43,18 +52,15 @@ const removeUnlockedJobs = async (
   if (locked.some((job) => job.active)) {
     throw new Error("Wait for active queue workers before cleanup.");
   }
-  const removed =
-    // oxlint-disable-next-line no-ternary -- Keep removed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    locked.length > EMPTY_COUNT
-      ? z
-          .array(z.object({ id: z.string() }))
-          .parse(
-            await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
-          )
-      : [];
-  if (removed.length !== locked.length) {
-    throw new Error("Queue cleanup did not remove every locked job.");
+  if (locked.length === EMPTY_COUNT) {
+    return [];
   }
+  const removed = z
+    .array(z.object({ id: z.string() }))
+    .parse(
+      await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
+    );
+  assertCompleteQueueRemoval(removed, locked);
   return removed.map((job) => job.id).toSorted();
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresQueue); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
