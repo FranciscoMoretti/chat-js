@@ -1,55 +1,36 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getInstanceByDom } from "echarts";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import "../../../apps/chat/app/globals.css";
+/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
-import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable sort-imports */
-
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  weatherInput,
-  weatherResult,
-} from "../src/tools/get-weather/schemas";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   retrievedInput,
   retrievedResult,
 } from "../src/tools/retrieve-url/schemas";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type {
+  weatherInput,
+  weatherResult,
+} from "../src/tools/get-weather/schemas";
+/* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
-
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "../../../apps/chat/app/globals.css";
-/* oxlint-enable sort-imports */
+import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
+/* oxlint-enable import/no-relative-parent-imports */
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { createRoot } from "react-dom/client";
+import { getInstanceByDom } from "echarts";
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-enable import/max-dependencies */
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -62,12 +43,10 @@ vi.mock(
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 // Focus this capture on chart output, independently of the code editor.
-vi.mock("@/components/sandbox", () => ({ SandboxComposed: () => null }));
+vi.mock("@/components/sandbox", () => ({ SandboxComposed: (): null => null }));
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */

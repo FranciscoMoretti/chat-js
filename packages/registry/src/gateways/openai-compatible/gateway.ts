@@ -1,16 +1,16 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-/* oxlint-enable sort-imports */
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-/* oxlint-enable sort-imports */
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import type { ImageModel } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
 const providerModelSchema = z.object({
@@ -23,6 +23,7 @@ const providerModelListSchema = z.object({
   data: z.array(z.unknown()),
 });
 
+const EMPTY_MODEL_COUNT = 0;
 const UNKNOWN_MODEL_LIMIT = 0;
 const UNKNOWN_MODEL_TIMESTAMP = 0;
 const toAiGatewayModel = (
@@ -51,14 +52,15 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
     return [toAiGatewayModel(model.data)];
   });
   // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
-  // oxlint-disable-next-line no-magic-numbers -- Zero is the empty-array cardinality for the catalog validation boundary.
-  if (body.data.length > 0 && result.length === 0) {
+  if (
+    body.data.length > EMPTY_MODEL_COUNT &&
+    result.length === EMPTY_MODEL_COUNT
+  ) {
     throw new Error("Provider catalog contains no valid models.");
   }
   return result;
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class OpenAICompatibleGateway
   extends GatewayRuntime
@@ -104,6 +106,7 @@ class OpenAICompatibleGateway
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line eslint/max-statements -- Preserve the native fetch, response validation, ordered log calls, and catch fallback in one operation; the exact unmasked statement count is recorded in the lane evidence.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
@@ -155,8 +158,6 @@ class OpenAICompatibleGateway
   }
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, OpenAICompatibleGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
+// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, OpenAICompatibleGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { OpenAICompatibleGateway as Gateway, OpenAICompatibleGateway };
-/* oxlint-enable import/no-named-export */

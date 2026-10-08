@@ -1,24 +1,17 @@
+import type { Page, Route } from "playwright";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createRequire } from "node:module";
+/* oxlint-enable import/no-nodejs-modules */
+import { defineConfig } from "vitest/config";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+import { fileURLToPath } from "node:url";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { fileURLToPath } from "node:url";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
-import { uiverifyPlugin } from "@uiverify/vitest/plugin";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { playwright } from "@vitest/browser-playwright";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line sort-imports -- Oxfmt groups playwright after @vitest/browser-playwright; sort-imports instead requires this multiple-name type declaration before the single-name runtime declaration.
-import type { Page, Route } from "playwright";
-import { defineConfig } from "vitest/config";
-
 import { registeredProjectsPlugin } from "./registered-projects-plugin";
+import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)

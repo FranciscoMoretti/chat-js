@@ -1,28 +1,21 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
-import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
-import { MessageAttachment } from "@/components/ai-elements/message";
-// oxlint-disable-next-line sort-imports -- The formatter orders the component source paths while the rule orders Favicon before MessageAttachment.
 import { Favicon } from "@/components/favicon";
-import { ImageModal } from "@/components/image-modal";
-
+import { MessageAttachment } from "@/components/ai-elements/message";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-// oxlint-disable-next-line sort-imports -- The formatter places the package-local GenerateImageRenderer import after app component imports.
+/* oxlint-disable sort-imports -- MessageAttachment loads streamdown/styles.css before GenerateImageRenderer loads ImageModal and Sonner's injected stylesheet; preserve that style insertion order. */
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "../../../apps/chat/tests/visual/sandbox.css";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+import { ImageModal } from "@/components/image-modal";
+import { createRoot } from "react-dom/client";
+import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- MessageAttachment imports streamdown/styles.css before this fixture stylesheet; preserve the native browser style insertion order. */
+import "../../../apps/chat/tests/visual/sandbox.css";
+/* oxlint-enable sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */

@@ -1,10 +1,9 @@
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-import gatewayPackage from "@chat-js/gateways/package.json";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
-/* oxlint-enable sort-imports */
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
 import { gatewayMetadata } from "./metadata";
+
+import gatewayPackage from "@chat-js/gateways/package.json";
 
 const environment = {
   litellm: [["LITELLM_BASE_URL"]],
@@ -12,6 +11,16 @@ const environment = {
   "openai-compatible": [["OPENAI_COMPATIBLE_BASE_URL"]],
   openrouter: [["OPENROUTER_API_KEY"]],
   vercel: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]],
+};
+
+const schemaDependencies: Readonly<
+  Record<keyof typeof environment, readonly string[]>
+> = {
+  litellm: [],
+  openai: ["zod"],
+  "openai-compatible": ["zod"],
+  openrouter: ["zod"],
+  vercel: [],
 };
 
 const isGatewayType = (id: string): id is keyof typeof environment =>
@@ -36,10 +45,7 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       dependencies: [
         `${gatewayPackage.name}@${gatewayPackage.version}`,
         `${metadata.dependency}@${metadata.version}`,
-        // oxlint-disable-next-line no-ternary -- Select only the adapters that directly import zod; preserve their explicit installation dependencies.
-        ...(id === "openai" || id === "openai-compatible" || id === "openrouter"
-          ? ["zod"]
-          : []),
+        ...schemaDependencies[id],
       ],
       files: [
         {

@@ -1,16 +1,11 @@
+import type { Plugin } from "vite";
+/* oxlint-disable import/no-nodejs-modules -- This Vite loader runs on the Node host and reads the actual component source using native filesystem and URL APIs. */
+import { fileURLToPath } from "node:url";
+/* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- This Vite loader runs on the Node host and reads the actual component source using native filesystem and URL APIs. */
 import { readFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Vite loader runs on the Node host and reads the actual component source using native filesystem and URL APIs. */
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
-import { fileURLToPath } from "node:url";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
 import ts from "typescript";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
-import type { Plugin } from "vite";
-/* oxlint-enable sort-imports */
 
 const virtualId = "@/tests/visual/registered-projects";
 const resolvedId = "\0registered-projects.tsx";
@@ -64,7 +59,7 @@ const registeredProjectsPlugin = (): Plugin => ({
     if (id === resolvedId) {
       return await loadRegisteredProjects();
     }
-    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks return undefined when this virtual-module plugin does not handle the requested ID. */
+    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks use undefined for unhandled IDs; pinned consistent-return and no-useless-return reject bare returns, so retain the explicit native sentinel. */
     return undefined;
     /* oxlint-enable eslint/no-undefined */
   },
@@ -73,7 +68,7 @@ const registeredProjectsPlugin = (): Plugin => ({
     if (id === virtualId || id.endsWith("/tests/visual/registered-projects")) {
       return resolvedId;
     }
-    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks return undefined when this virtual-module plugin does not handle the requested ID. */
+    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks use undefined for unhandled IDs; pinned consistent-return and no-useless-return reject bare returns, so retain the explicit native sentinel. */
     return undefined;
     /* oxlint-enable eslint/no-undefined */
   },

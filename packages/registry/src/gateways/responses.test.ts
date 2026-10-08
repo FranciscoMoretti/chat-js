@@ -138,3 +138,79 @@ test("an explicit empty catalog stays empty instead of using fallback", async ()
     expect(await gateway.fetchModels()).toEqual([]);
   }
 });
+
+const capabilityModelResponse = {
+  data: [
+    {
+      architecture: {
+        input_modalities: ["image", "file"],
+        output_modalities: ["text", "image"],
+      },
+      id: "all-capabilities",
+      supported_parameters: ["reasoning", "include_reasoning", "tools"],
+    },
+    {
+      architecture: {
+        input_modalities: ["text"],
+        output_modalities: ["image"],
+      },
+      id: "image-only",
+    },
+    {
+      id: "reasoning-alias",
+      supported_parameters: ["include_reasoning"],
+    },
+    { id: "plain" },
+  ],
+};
+
+const expectedCapabilityModels = [
+  {
+    hasTags: true,
+    id: "all-capabilities",
+    tags: ["vision", "file-input", "image-generation", "reasoning", "tool-use"],
+    type: "language",
+  },
+  {
+    hasTags: true,
+    id: "image-only",
+    tags: ["image-generation"],
+    type: "image",
+  },
+  {
+    hasTags: true,
+    id: "reasoning-alias",
+    tags: ["reasoning"],
+    type: "language",
+  },
+  { hasTags: true, id: "plain", tags: [], type: "language" },
+];
+
+test("OpenRouter preserves capability tag order and explicit empty-tag fields", async (): Promise<void> => {
+  const gateway = new OpenRouterGateway({
+    env: { OPENROUTER_API_KEY: "test" },
+    fetch: mock().mockResolvedValue(Response.json(capabilityModelResponse)),
+  });
+  const models = await gateway.fetchModels();
+  expect(
+    models.map(
+      (model: {
+        readonly id: string;
+        readonly tags?: readonly string[];
+        readonly type: string;
+      }) => ({
+        hasTags: Object.hasOwn(model, "tags"),
+        id: model.id,
+        tags: model.tags ?? [],
+        type: model.type,
+      })
+    )
+  ).toEqual(expectedCapabilityModels);
+  const plainModel = models.find(
+    (model: { readonly id: string }) => model.id === "plain"
+  );
+  if (!plainModel) {
+    throw new Error("Missing plain model fixture");
+  }
+  expect(plainModel.tags).toBeUndefined();
+});

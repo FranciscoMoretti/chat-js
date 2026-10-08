@@ -1,26 +1,21 @@
-import { createGateway } from "@ai-sdk/gateway";
-import type { gateway } from "@ai-sdk/gateway";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-/* oxlint-enable sort-imports */
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
-/* oxlint-enable sort-imports */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-import type { StrictLiterals } from "@chat-js/gateways/provider-types";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
-/* oxlint-enable sort-imports */
 import type { ImageModel } from "ai";
+import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+
+import { createGateway } from "@ai-sdk/gateway";
+import type { gateway } from "@ai-sdk/gateway";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
 type VercelImageModelId = Parameters<
@@ -35,8 +30,6 @@ type VercelLanguageModelId = StrictLiterals<
 
 const EMPTY_MODEL_TYPE_COUNT = 0;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 class VercelGateway
   extends GatewayRuntime
   implements
@@ -89,6 +82,7 @@ class VercelGateway
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- This ordered gateway fetch validates and filters the native catalog, reports unsupported types, and catches failures before fallback; native counts are 27 statements and 66 lines against limits 10/50.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -158,8 +152,5 @@ class VercelGateway
   }
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, VercelGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, VercelGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { VercelGateway as Gateway, VercelGateway };
-/* oxlint-enable import/no-named-export */

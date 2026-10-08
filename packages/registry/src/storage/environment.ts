@@ -24,6 +24,18 @@ const ABSENT_ADAPTER_OPTION = undefined;
 
 const STORAGE_OPTION_HINT = /(?:or )?pass `(?<option>[^`]+)`/u;
 
+const getStorageOptionName = (description: string): string | undefined => {
+  const match = STORAGE_OPTION_HINT.exec(description);
+  if (!match) {
+    return ABSENT_ADAPTER_OPTION;
+  }
+  const { groups } = match;
+  if (!groups) {
+    return ABSENT_ADAPTER_OPTION;
+  }
+  return groups.option;
+};
+
 const toVariable = (
   variable: Readonly<{
     aliases?: readonly string[];
@@ -57,8 +69,7 @@ const collectCredentialModes = (
     if (variables.length > EMPTY_VARIABLE_COUNT) {
       credentialModes.push(variables);
     } else {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      const optionName = STORAGE_OPTION_HINT.exec(mode.label)?.groups?.option;
+      const optionName = getStorageOptionName(mode.label);
       hasUnvalidatedCredentialMode ||=
         optionName === ABSENT_ADAPTER_OPTION ||
         adapterOptions[optionName] !== ABSENT_ADAPTER_OPTION;
@@ -89,9 +100,7 @@ const requiresEnvironmentVariable = (
   variable: Readonly<EnvVar>,
   adapterOptions: Readonly<Record<string, unknown>>
 ): boolean => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const optionName = STORAGE_OPTION_HINT.exec(variable.description)?.groups
-    ?.option;
+  const optionName = getStorageOptionName(variable.description);
   return (
     variable.readBy === "files-sdk" &&
     !(
@@ -103,6 +112,32 @@ const requiresEnvironmentVariable = (
   );
 };
 
+const getConfigurationRequirements = (
+  metadata: Readonly<{
+    env: Readonly<{ required?: readonly Readonly<EnvVar>[] }>;
+    name: string;
+  }>,
+  adapterOptions: Readonly<Record<string, unknown>>
+): StorageEnvironmentRequirement[] => {
+  const requiredVariables = metadata.env.required;
+  const required =
+    requiredVariables &&
+    requiredVariables.filter((variable: Readonly<EnvVar>) =>
+      requiresEnvironmentVariable(variable, adapterOptions)
+    );
+  const requirements: StorageEnvironmentRequirement[] = [];
+  if (required && required.length > EMPTY_VARIABLE_COUNT) {
+    requirements.push({
+      description: `${metadata.name} configuration`,
+      options: [
+        required.map((variable: Readonly<EnvVar>) => toVariable(variable)),
+      ],
+    });
+  }
+
+  return requirements;
+};
+
 const getStorageEnvironmentRequirements = (
   provider: ProviderSlug,
   adapterOptions: Readonly<Record<string, unknown>> = {}
@@ -112,24 +147,7 @@ const getStorageEnvironmentRequirements = (
     return [];
   }
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from metadata.env.required; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const required = metadata.env.required?.filter((variable: Readonly<EnvVar>) =>
-    requiresEnvironmentVariable(variable, adapterOptions)
-  );
-  const requirements: StorageEnvironmentRequirement[] =
-    // oxlint-disable-next-line no-ternary -- Keep requirements as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    required && required.length > EMPTY_VARIABLE_COUNT
-      ? [
-          {
-            description: `${metadata.name} configuration`,
-            options: [
-              required.map((variable: Readonly<EnvVar>) =>
-                toVariable(variable)
-              ),
-            ],
-          },
-        ]
-      : [];
+  const requirements = getConfigurationRequirements(metadata, adapterOptions);
 
   const options = credentialOptions(
     metadata.env.credentialModes ?? [],
