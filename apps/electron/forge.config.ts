@@ -33,14 +33,13 @@ const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
 /* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const runBunScript = (
   script: string,
   env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, node/no-process-env -- Preserve process.env own keys before positional script overrides; eslint/prefer-object-spread rejects Object.assign and Forge must inherit the host environment.
     env: { ...process.env, ...env },
     stdio: "inherit",
   });
@@ -52,7 +51,6 @@ const runBunScript = (
   }
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
 
 const ensurePrebuild = (): void => {

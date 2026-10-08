@@ -19,15 +19,13 @@ import { APP_SCHEME, APP_URL } from "../config";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env -- auth-client.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
+// oxlint-disable-next-line node/no-process-env -- This Electron process boundary chooses its local auth-storage mode from NODE_ENV.
 if (process.env.NODE_ENV !== "production") {
   Object.defineProperty(safeStorage, "isEncryptionAvailable", {
     configurable: true,
     value: (): boolean => false,
   });
 }
-/* oxlint-enable node/no-process-env */
-
 /* oxlint-disable typescript/explicit-function-return-type -- memoryStorage: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable unicorn/no-null -- memoryStorage: The SDK/wire/OS contract uses null as an explicit absence value. */
 const memoryStorage = () => {
@@ -43,11 +41,9 @@ const memoryStorage = () => {
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable node/no-process-env -- electronAuthStorage: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const electronAuthStorage =
-  // oxlint-disable-next-line no-ternary -- Keep electronAuthStorage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  // oxlint-disable-next-line no-ternary, node/no-process-env -- Keep lazy storage selection at the auth process boundary; no-ternary conflicts with the pinned unicorn/prefer-ternary rule for if/else assignment.
   process.env.NODE_ENV === "production" ? storage() : memoryStorage();
-/* oxlint-enable node/no-process-env */
 
 const electronAuthClient = createAuthClient({
   baseURL: APP_URL,

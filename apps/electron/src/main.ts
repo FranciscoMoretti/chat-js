@@ -36,17 +36,17 @@ if (isSquirrelStartupEvent()) {
   app.quit();
 }
 
-/* oxlint-disable node/no-process-env -- main.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable typescript/strict-boolean-expressions -- main.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 // Disable GPU acceleration in WSL / headless environments to prevent D3D12 crashes.
-if (process.env.WSL_DISTRO_NAME || process.env.WSLENV) {
+const isWslOrHeadless =
+  // oxlint-disable-next-line node/no-process-env -- Electron startup owns this host-environment check at the process boundary.
+  (process.env.WSL_DISTRO_NAME ?? "") !== "" ||
+  // oxlint-disable-next-line node/no-process-env -- Check WSLENV only when WSL_DISTRO_NAME is absent or empty.
+  (process.env.WSLENV ?? "") !== "";
+if (isWslOrHeadless) {
   app.disableHardwareAcceleration();
   app.commandLine.appendSwitch("disable-gpu");
   app.commandLine.appendSwitch("disable-software-rasterizer");
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable node/no-process-env */
-
 let isQuitting = false;
 /* oxlint-disable unicorn/no-null -- mainWindow: The SDK/wire/OS contract uses null as an explicit absence value. */
 let mainWindow: BrowserWindow | null = null;
@@ -63,6 +63,27 @@ let currentAuthOverlayMessage: string | null = null;
 let isAuthFlowInProgress = false;
 let currentAuthFlowId = 0;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+interface AuthOverlayWindow {
+  readonly isDestroyed: BrowserWindow["isDestroyed"];
+  readonly webContents: {
+    readonly executeJavaScript: Electron.WebContents["executeJavaScript"];
+    readonly isLoadingMainFrame: Electron.WebContents["isLoadingMainFrame"];
+    readonly once: Electron.WebContents["once"];
+  };
+}
+
+interface AuthSessionWindow {
+  readonly webContents: {
+    readonly session: {
+      readonly cookies: {
+        readonly get: Electron.Cookies["get"];
+        readonly remove: Electron.Cookies["remove"];
+        readonly set: Electron.Cookies["set"];
+      };
+    };
+  };
+}
 
 type AuthRendererState =
   | {
@@ -121,8 +142,7 @@ const broadcastAuthState = (): void => {
 /* oxlint-disable unicorn/no-null -- setAuthOverlay: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- setAuthOverlay: This command or desktop boundary reports startup, progress and failures to its operator. */
 const setAuthOverlay = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This owner calls BrowserWindow.setOverlayIcon() and webContents.send() to update the live Electron window and renderer.
-  win: BrowserWindow | null,
+  win: AuthOverlayWindow | null,
   options:
     | {
         readonly visible: false;
@@ -334,8 +354,7 @@ ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
 /* oxlint-disable unicorn/no-null -- syncAuthSessionCookies: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable typescript/promise-function-async -- syncAuthSessionCookies: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const syncAuthSessionCookies = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This owner reads the live BrowserWindow.webContents.session and removes matching cookies through session.cookies.remove().
-  win?: BrowserWindow | null
+  win?: AuthSessionWindow | null
 ): Promise<void> => {
   const targetWindow = win ?? mainWindow;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading webContents from targetWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -426,9 +445,7 @@ const getAppAssetPath = (...segments: readonly string[]): string =>
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateFromDeepLink's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- authenticateFromDeepLink: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable unicorn/no-null -- authenticateFromDeepLink: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- authenticateFromDeepLink: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable typescript/strict-boolean-expressions -- authenticateFromDeepLink: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
   try {
     if (!isAuthFlowInProgress) {
@@ -436,12 +453,12 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     }
 
     const parsed = new URL(url);
-    // oxlint-disable-next-line no-ternary -- Keep token as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const token = parsed.hash.startsWith("#token=")
-      ? parsed.hash.slice("#token=".length)
-      : null;
+    if (!parsed.hash.startsWith("#token=")) {
+      return false;
+    }
 
-    if (!token) {
+    const token = parsed.hash.slice("#token=".length);
+    if (token === "") {
       return false;
     }
 
@@ -465,9 +482,7 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForElectronSession's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- waitForElectronSession: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
@@ -576,7 +591,6 @@ const scheduleAuthRefresh = (): void => {
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- createWindow: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing WINDOW_DEFAULTS own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -602,9 +616,10 @@ const createWindow = (): BrowserWindow => {
   void win.loadURL(APP_URL);
 
   win.webContents.on("did-finish-load", (): void => {
-    if (currentAuthOverlayMessage) {
+    const overlayMessage = currentAuthOverlayMessage;
+    if (overlayMessage !== null && overlayMessage !== "") {
       void setAuthOverlay(win, {
-        message: currentAuthOverlayMessage,
+        message: overlayMessage,
         visible: true,
       });
     }
@@ -630,9 +645,6 @@ const createWindow = (): BrowserWindow => {
 
   return win;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-
-/* oxlint-disable typescript/strict-boolean-expressions -- createTray: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createTray = (): Tray => {
   const iconPath = getAppAssetPath("build", "icon.png");
   const trayIcon = nativeImage.createFromPath(iconPath);
@@ -663,7 +675,7 @@ const createTray = (): Tray => {
 
   trayInstance.on("click", (): void => {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isVisible from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    if (mainWindow?.isVisible()) {
+    if (mainWindow?.isVisible() === true) {
       mainWindow.hide();
     } else {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -675,8 +687,6 @@ const createTray = (): Tray => {
 
   return trayInstance;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-
 const setupApplicationMenu = (): void => {
   if (process.platform !== "darwin") {
     return;
@@ -788,7 +798,6 @@ app.on("open-url", (_event: unknown, url): void => {
   /* oxlint-enable oxc/no-async-await */
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions -- second-instance: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 app.on(
   "second-instance",
   (_event: unknown, commandLine: readonly string[]): void => {
@@ -796,7 +805,7 @@ app.on(
       value.startsWith(`${APP_SCHEME}://`)
     );
 
-    if (deepLinkUrl) {
+    if (typeof deepLinkUrl === "string" && deepLinkUrl !== "") {
       /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
       void (async (): Promise<void> => {
         const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
@@ -808,8 +817,6 @@ app.on(
     }
   }
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
-
 app.on("before-quit", (): void => {
   isQuitting = true;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading destroy from tray; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
