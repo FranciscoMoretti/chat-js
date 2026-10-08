@@ -1,56 +1,46 @@
-import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { act, create } from "react-test-renderer";
-/* oxlint-enable sort-imports */
-import { describe, expect, it, vi } from "vitest";
-
-import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { config } from "@/lib/config";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
-/* oxlint-enable sort-imports */
+import { act, create } from "react-test-renderer";
+import { describe, expect, it, vi } from "vitest";
+import type { AppModelDefinition } from "@/lib/ai/app-models";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { config } from "@/lib/config";
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): vi.mock("@tanstack/react-query") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@tanstack/react-query")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({ data: undefined }),
+  useQuery: (): { data: undefined } => ({ data: undefined }),
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/explicit-function-return-type -- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/app-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary. */
 vi.mock("@/lib/ai/app-models", () => ({
-  getDefaultEnabledModels: (models: readonly { readonly id: string }[]) =>
-    new Set(models.map((model) => model.id)),
+  getDefaultEnabledModels: (
+    models: readonly { readonly id: string }[]
+  ): Set<string> => new Set(models.map((model) => model.id)),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/providers/session-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): vi.mock("@/providers/session-provider") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 vi.mock("@/providers/session-provider", () => ({
-  useSession: () => ({ data: null }),
+  useSession: (): { data: null } => ({ data: null }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/trpc/react")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/trpc/react", () => ({
-  useTRPC: () => ({
+  useTRPC: (): {
+    settings: {
+      getModelPreferences: { queryOptions: () => Record<string, never> };
+    };
+  } => ({
     settings: {
       getModelPreferences: {
-        queryOptions: () => ({}),
+        queryOptions: (): Record<string, never> => ({}),
       },
     },
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -85,19 +75,18 @@ const updatedModels: AppModelDefinition[] = [
   },
 ];
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- * typescript/explicit-function-return-type (#560): Keep ContextProbe's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): ContextProbe preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
+/* oxlint-disable unicorn/no-null -- ContextProbe returns the existing React empty-render sentinel; undefined changes its public return contract. */
 const ContextProbe = ({
   onValue,
 }: {
   readonly onValue: (
     value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
   ) => void;
-}) => {
+}): null => {
   onValue(useChatModels());
   return null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/strict-void-return -- * init-declarations (#507): describe("ChatModelsProvider") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

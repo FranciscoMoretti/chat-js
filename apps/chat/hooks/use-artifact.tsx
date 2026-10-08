@@ -1,5 +1,6 @@
 "use client";
 
+import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
 import React, {
   createContext,
   useCallback,
@@ -8,13 +9,7 @@ import React, {
   useState,
 } from "react";
 import type { JSX as ReactJSX } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined -- initialArtifactData: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 
@@ -30,10 +25,7 @@ const initialArtifactData: UIArtifact = {
 };
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable id-length -- Selector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
-
-type Selector<T> = (state: UIArtifact) => T;
-/* oxlint-enable id-length */
+type Selector<Selected> = (state: UIArtifact) => Selected;
 
 type MetadataUpdater = (current: ArtifactMetadata) => ArtifactMetadata;
 

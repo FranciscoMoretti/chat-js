@@ -3,10 +3,8 @@
  */
 import { defineDynamic, defineInstructions } from "eve/instructions";
 
-import { selectedEveTools } from "../../lib/eve/selected-tools";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveTurnTool } from "../../lib/eve/turn-tools";
-/* oxlint-enable sort-imports */
+import { selectedEveTools } from "../../lib/eve/selected-tools";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-default-export --

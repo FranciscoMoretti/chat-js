@@ -1,7 +1,8 @@
+import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between zod and @/lib/db/queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   createProject,
   deleteProject,
@@ -9,21 +10,15 @@ import {
   getProjectsByUserId,
   updateProject,
 } from "@/lib/db/queries";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
+
 import { generateUUID } from "@/lib/utils";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/utils and @/trpc/init still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (projectRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve projectRouter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- * no-magic-numbers (#517): projectRouter uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): projectRouter intentionally keeps the existing falsy-value behavior of project; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): projectRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/* oxlint-disable unicorn/max-nested-calls -- * unicorn/max-nested-calls (#568): projectRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 export const projectRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -31,7 +26,7 @@ export const projectRouter = createTRPCRouter({
         icon: z.enum(PROJECT_ICONS).optional(),
         iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
         instructions: z.string().default(""),
-        name: z.string().min(1),
+        name: z.string().nonempty(),
       })
     )
     .mutation(
@@ -108,6 +103,7 @@ export const projectRouter = createTRPCRouter({
         readonly input: ReadonlyNativeSurface<{ id: string }>;
       }) => {
         const project = await getProjectById({ id: input.id });
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!project) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -146,6 +142,7 @@ export const projectRouter = createTRPCRouter({
         readonly input: ReadonlyNativeSurface<{ id: string }>;
       }) => {
         const project = await getProjectById({ id: input.id });
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!project) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -182,6 +179,7 @@ export const projectRouter = createTRPCRouter({
         }>;
       }) => {
         const project = await getProjectById({ id: input.id });
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!project) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -210,7 +208,7 @@ export const projectRouter = createTRPCRouter({
           icon: z.enum(PROJECT_ICONS).optional(),
           iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
           instructions: z.string().optional(),
-          name: z.string().min(1).optional(),
+          name: z.string().nonempty().optional(),
         }),
       })
     )
@@ -268,6 +266,7 @@ export const projectRouter = createTRPCRouter({
         }>;
       }) => {
         const project = await getProjectById({ id: input.id });
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!project) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -287,4 +286,4 @@ export const projectRouter = createTRPCRouter({
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable unicorn/max-nested-calls */

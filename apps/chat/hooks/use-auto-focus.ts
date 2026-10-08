@@ -18,17 +18,13 @@ const isTypingSurface = (element: unknown): boolean =>
 
 /* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const useAutoFocus = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Lexical focus, keyboard dispatch and useImperativeHandle require the original native editor, event or writable ref identity. */
-  {
-    autoFocus,
-    editor,
-  }: {
-    readonly autoFocus: boolean;
-    readonly editor: LexicalEditor | null;
-  }
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): void => {
+export const useAutoFocus = ({
+  autoFocus,
+  editor,
+}: {
+  readonly autoFocus: boolean;
+  readonly editor: Readonly<Pick<LexicalEditor, "focus">> | null;
+}): void => {
   useEffect(() => {
     if (!(autoFocus && editor)) {
       return;

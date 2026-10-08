@@ -2,54 +2,51 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@trpc/server" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
+import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between zod and @/lib/db/eve-documents still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/db/eve-documents and @/lib/db/eve-queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   getEveChatIdentity,
   listEveConversationBranches,
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
 import { searchEveConversations } from "@/lib/db/eve-search";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/db/eve-search and @/lib/db/queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   assignEveConversationProject,
   getEveMessageVotes,
 } from "@/lib/db/queries";
-/* oxlint-enable sort-imports */
-import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveHistoryInput } from "@/lib/eve/history-input";
-/* oxlint-enable sort-imports */
+import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
+
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
-/* oxlint-enable sort-imports */
+
 import { voteEveMessage } from "@/lib/eve/vote-message";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/eve/vote-message and @/trpc/init still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/trpc/init";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable import/max-dependencies */
+
+const MAX_CONVERSATION_TITLE_LENGTH = 255;
+const MAX_MESSAGE_ID_LENGTH = 512;
+const MAX_OWNER_SCOPE_LENGTH = 128;
 
 const eveProcedure = protectedProcedure;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveOwnedProcedure's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): eveOwnedProcedure intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const eveOwnedProcedure = publicProcedure.use(
   async ({
     ctx,
@@ -63,12 +60,12 @@ const eveOwnedProcedure = publicProcedure.use(
   > & { readonly ctx: { readonly user?: { readonly id: string } | null } }) => {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     let ownerId = ctx.user?.id;
-    if (!ownerId) {
+    if (typeof ownerId !== "string" || ownerId === "") {
       const principal = await resolveEvePrincipal(await headers());
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       ownerId = principal?.ownerId;
     }
-    if (!ownerId) {
+    if (typeof ownerId !== "string" || ownerId === "") {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return await next({ ctx: { eveOwnerId: ownerId } });
@@ -77,11 +74,8 @@ const eveOwnedProcedure = publicProcedure.use(
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRouter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- * no-magic-numbers (#517): eveRouter uses 1, 255, 512, 128 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/promise-function-async (#606): eveRouter preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): eveRouter intentionally keeps the existing falsy-value behavior of ownerId; row; input.ownerScope; updated; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable typescript/promise-function-async, unicorn/max-nested-calls -- * typescript/promise-function-async (#606): eveRouter preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): eveRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 export const eveRouter = createTRPCRouter({
   assignProject: eveProcedure
@@ -155,7 +149,7 @@ export const eveRouter = createTRPCRouter({
       }) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         let ownerId = ctx.user?.id;
-        if (!ownerId) {
+        if (typeof ownerId !== "string" || ownerId === "") {
           const principal = await resolveEvePrincipal(await headers());
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           ownerId = principal?.ownerId;
@@ -183,6 +177,7 @@ export const eveRouter = createTRPCRouter({
         readonly input: { readonly id: string };
       }) => {
         const row = await getEveChatIdentity(ctx.eveOwnerId, input.id);
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!row) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -205,7 +200,12 @@ export const eveRouter = createTRPCRouter({
         projectId?: string | null | undefined;
       }>;
     }) => {
-      if (input.ownerScope && input.ownerScope !== ctx.eveOwnerId) {
+      const { ownerScope } = input;
+      if (
+        typeof ownerScope === "string" &&
+        ownerScope !== "" &&
+        input.ownerScope !== ctx.eveOwnerId
+      ) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return await listEveConversations(ctx.eveOwnerId, input);
@@ -226,6 +226,7 @@ export const eveRouter = createTRPCRouter({
           input.id,
           { isPinned: input.isPinned }
         );
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!updated) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -233,7 +234,12 @@ export const eveRouter = createTRPCRouter({
       }
     ),
   rename: eveOwnedProcedure
-    .input(z.object({ id: z.uuid(), title: z.string().trim().min(1).max(255) }))
+    .input(
+      z.object({
+        id: z.uuid(),
+        title: z.string().trim().nonempty().max(MAX_CONVERSATION_TITLE_LENGTH),
+      })
+    )
     .mutation(
       async ({
         ctx,
@@ -247,6 +253,7 @@ export const eveRouter = createTRPCRouter({
           input.id,
           { title: input.title }
         );
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!updated) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -257,7 +264,7 @@ export const eveRouter = createTRPCRouter({
     .input(
       z.object({
         conversationId: z.uuid(),
-        messageId: z.string().min(1).max(512),
+        messageId: z.string().nonempty().max(MAX_MESSAGE_ID_LENGTH),
       })
     )
     .mutation(
@@ -313,8 +320,8 @@ export const eveRouter = createTRPCRouter({
             updatedAt: z.iso.datetime(),
           })
           .nullish(),
-        ownerScope: z.string().min(1).max(128),
-        search: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH),
+        ownerScope: z.string().nonempty().max(MAX_OWNER_SCOPE_LENGTH),
+        search: z.string().trim().nonempty().max(MAX_SEARCH_QUERY_LENGTH),
       })
     )
     .query(
@@ -356,6 +363,7 @@ export const eveRouter = createTRPCRouter({
         const row = await updateEveConversationMetadata(ctx.user.id, input.id, {
           visibility: input.visibility,
         });
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
         if (!row) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -366,7 +374,7 @@ export const eveRouter = createTRPCRouter({
     .input(
       z.object({
         conversationId: z.uuid(),
-        messageId: z.string().min(1).max(512),
+        messageId: z.string().nonempty().max(MAX_MESSAGE_ID_LENGTH),
         type: z.enum(["up", "down"]),
       })
     )
@@ -406,4 +414,4 @@ export const eveRouter = createTRPCRouter({
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable typescript/promise-function-async, unicorn/max-nested-calls */

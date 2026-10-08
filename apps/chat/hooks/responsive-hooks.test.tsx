@@ -1,14 +1,9 @@
+import { act, create } from "react-test-renderer";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { act, create } from "react-test-renderer";
-/* oxlint-enable sort-imports */
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import { useMediaQuery } from "./use-media-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useIsMobile } from "./use-mobile";
-/* oxlint-enable sort-imports */
+import { useMediaQuery } from "./use-media-query";
 import { useMounted } from "./use-mounted";
 
 declare global {
@@ -70,7 +65,25 @@ const MediaQueryValue = ({
 };
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type -- installMatchMedia: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+type MediaListenerMock = ReturnType<
+  typeof vi.fn<(eventType: string, listener: () => void) => void>
+>;
+
+interface BrowserMediaQuery {
+  addEventListener: MediaListenerMock;
+  readonly matches: boolean;
+  removeEventListener: MediaListenerMock;
+}
+
+interface MatchMediaFixture {
+  addEventListener: MediaListenerMock;
+  browserWindow: {
+    innerWidth: number;
+    matchMedia: ReturnType<typeof vi.fn<() => BrowserMediaQuery>>;
+  };
+  removeEventListener: MediaListenerMock;
+  setMatches: (nextMatches: boolean) => void;
+}
 
 const installMatchMedia = ({
   initialMatches,
@@ -78,18 +91,20 @@ const installMatchMedia = ({
 }: {
   readonly initialMatches: boolean;
   readonly innerWidth: number;
-}) => {
+}): MatchMediaFixture => {
   let matches = initialMatches;
   const listeners = new Set<() => void>();
-  const addEventListener = vi.fn((_: string, listener: () => void) => {
+  const addEventListener = vi.fn((eventType: string, listener: () => void) => {
     listeners.add(listener);
   });
-  const removeEventListener = vi.fn((_: string, listener: () => void) => {
-    listeners.delete(listener);
-  });
+  const removeEventListener = vi.fn(
+    (eventType: string, listener: () => void) => {
+      listeners.delete(listener);
+    }
+  );
   const mediaQueryList = {
     addEventListener,
-    get matches() {
+    get matches(): boolean {
       return matches;
     },
     removeEventListener,
@@ -120,7 +135,6 @@ const installMatchMedia = ({
     },
   };
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 afterEach(() => {
   if (originalMatchMedia) {

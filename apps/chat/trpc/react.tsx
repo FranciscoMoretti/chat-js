@@ -4,31 +4,25 @@
  * import/max-dependencies (#524): import from "@tanstack/react-query" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
 import { QueryClientProvider, isServer } from "@tanstack/react-query";
+import React, { useState } from "react";
+import type { AppRouter } from "@/trpc/routers/_app";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @tanstack/react-query-devtools and @trpc/client still needs a supported client equivalence check; preserve the existing order meanwhile.
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
-/* oxlint-enable sort-imports */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import React, { useState } from "react";
-/* oxlint-enable sort-imports */
+
 import superjson from "superjson";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between superjson and @/lib/env still needs a supported client equivalence check; preserve the existing order meanwhile.
 import { env } from "@/lib/env";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
+
 import { getBaseUrl } from "@/lib/url";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { AppRouter } from "@/trpc/routers/_app";
 
 import { isAbortedRequest } from "./is-aborted-request";
 /* oxlint-enable import/max-dependencies */
 import { makeQueryClient } from "./query-client";
-/* oxlint-enable sort-imports */
 
 const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 

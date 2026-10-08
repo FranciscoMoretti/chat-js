@@ -1,20 +1,16 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/environment"; "../lib/eve/model-selection"; "../lib/eve/tool-availability"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
-import { wrapLanguageModel } from "ai";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { defineAgent, defineDynamic } from "eve";
-/* oxlint-enable sort-imports */
+import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { configureWorkflowEnvironment } from "../lib/eve/environment";
-/* oxlint-enable sort-imports */
 import { resolveEveModel } from "../lib/eve/model-selection";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Sorting tool-availability before model-selection changes the first supported startup failure: an existing native chatjs.turn-tool codec collision precedes invalid environment validation; preserve the configuration-first contract. */
 import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 /* oxlint-enable sort-imports */
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
+import { wrapLanguageModel } from "ai";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --

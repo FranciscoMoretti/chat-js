@@ -1,22 +1,17 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-search"; "../../lib/eve/conversation-scope"; "../../lib/eve/search-backfill"; "../../lib/eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  */
-import { defineState } from "eve/context";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+import type { EveSearchText } from "../../lib/eve/search-text";
 import type { HookContext } from "eve/hooks";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineHook } from "eve/hooks";
-/* oxlint-enable sort-imports */
+import { defineState } from "eve/context";
 
 import { indexEveSearchText } from "../../lib/db/eve-search";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Sorting backfill before defineHook/defineState changes the first supported startup failure: invalid environment validation precedes an existing native eve.auth codec collision; preserve the EVE ContextKey collision-first contract. */
 import { backfillEveSearchConversation } from "../../lib/eve/search-backfill";
 /* oxlint-enable sort-imports */
 import { eveEventSearchText } from "../../lib/eve/search-text";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveSearchText } from "../../lib/eve/search-text";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const maxPendingEntries = 256;

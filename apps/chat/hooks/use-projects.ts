@@ -1,33 +1,40 @@
 "use client";
 
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { AppRouter } from "@/trpc/routers/_app";
 import type { Project } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { UseMutationResult } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useRenameProject); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async -- useRenameProject: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
-export const useRenameProject = () => {
+interface ProjectRenameSnapshot {
+  previous?: Project[];
+  detail?: Project | null;
+}
+
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useRenameProject); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable max-lines-per-function, no-undefined, typescript/promise-function-async -- useRenameProject: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+
+export const useRenameProject = (): UseMutationResult<
+  inferRouterOutputs<AppRouter>["project"]["update"],
+  TRPCClientErrorLike<AppRouter>,
+  inferRouterInputs<AppRouter>["project"]["update"],
+  ProjectRenameSnapshot
+> => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return useMutation(
-    trpc.project.update.mutationOptions<{
-      previous?: Project[];
-      detail?: Project | null;
-    }>({
+    trpc.project.update.mutationOptions<ProjectRenameSnapshot>({
       onError: (
         _error: unknown,
         _variables,
         /* oxlint-disable typescript/prefer-readonly-parameter-types -- Rollback passes the original cached array to the typed React Query updater; readonly nested arrays are rejected by that native cache receiving contract. */
-        context:
-          | Readonly<{ previous?: Project[]; detail?: Project | null }>
-          | undefined
+        context: Readonly<ProjectRenameSnapshot> | undefined
         /* oxlint-enable typescript/prefer-readonly-parameter-types */
       ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading previous from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -89,4 +96,4 @@ export const useRenameProject = () => {
   /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, no-undefined, typescript/promise-function-async */

@@ -1,10 +1,7 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as sleep } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { setTimeout as sleep } from "node:timers/promises";
 
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
-import type { TRPCDefaultErrorShape } from "@trpc/server";
 /**
  * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
  * 1. You want to modify request context (see Part 1).
@@ -13,21 +10,19 @@ import type { TRPCDefaultErrorShape } from "@trpc/server";
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { TRPCError, initTRPC } from "@trpc/server";
-/* oxlint-enable sort-imports */
+import type { TRPCDefaultErrorShape } from "@trpc/server";
 import { headers } from "next/headers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between next/headers and react still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { cache } from "react";
-/* oxlint-enable sort-imports */
+import { setTimeout as sleep } from "node:timers/promises";
 import superjson from "superjson";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between superjson and zod still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { ZodError, flattenError } from "zod";
 
-import { auth } from "@/lib/auth";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { auth } from "@/lib/auth";
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTRPCContext's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -106,10 +101,12 @@ const { createCallerFactory } = trpc;
  */
 const createTRPCRouter = trpc.router;
 
+const MIN_DEVELOPMENT_DELAY_MS = 100;
+const DEVELOPMENT_DELAY_RANGE_MS = 400;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve timingMiddleware's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-console, no-magic-numbers --
+/* oxlint-disable no-console --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): timingMiddleware uses 400, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 /**
  * Middleware for timing procedure execution and adding an artificial delay in development.
@@ -123,6 +120,7 @@ const timingMiddleware = trpc.middleware(
     path,
   }: ReadonlyNativeSurface<
     Pick<
+      // oxlint-disable-next-line no-magic-numbers -- Zero selects the existing first SDK middleware parameter in this type-only contract.
       Parameters<ReturnType<typeof trpc.middleware>["_middlewares"][0]>[0],
       "next" | "path"
     >
@@ -132,7 +130,9 @@ const timingMiddleware = trpc.middleware(
     // oxlint-disable-next-line eslint/no-underscore-dangle -- @trpc/server 11.16.0 marks TRPCRootObject._config @internal; its isDev value is the SDK's authoritative runtime configuration.
     if (trpc._config.isDev) {
       // Add an artificial delay in development.
-      const waitMs = Math.floor(Math.random() * 400) + 100;
+      const waitMs =
+        Math.floor(Math.random() * DEVELOPMENT_DELAY_RANGE_MS) +
+        MIN_DEVELOPMENT_DELAY_MS;
       await sleep(waitMs);
     }
 
@@ -145,7 +145,7 @@ const timingMiddleware = trpc.middleware(
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, no-magic-numbers */
+/* oxlint-enable no-console */
 
 /**
  * Public (unauthenticated) procedure
