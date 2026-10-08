@@ -71,9 +71,8 @@ test("conversation retains its draft across rerenders and shows delivery recover
         .getByRole("textbox")
         .fill("Preserve this draft across a render");
     });
-    await act(async (): Promise<void> => {
+    act((): void => {
       controller.commands.update(conversationId, { cancelling: false });
-      await Promise.resolve();
     });
     await expect
       .element(page.getByRole("textbox"))
