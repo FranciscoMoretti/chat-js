@@ -1,6 +1,12 @@
 import { expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- Native Webpack resolution tests use the actual repository paths.
+// oxlint-disable-next-line import/no-nodejs-modules -- The URL portability regression creates, reads and removes a temporary filesystem fixture.
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The URL portability fixture uses the operating system's temporary directory.
+import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Native Webpack resolution tests use repository paths; preserve Oxfmt builtin ordering.
 import path from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Native file URLs need platform-aware path conversion; preserve Oxfmt's builtin import grouping.
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // oxlint-disable-next-line sort-imports -- Preserve the runtime import before the separate type binding, as formatted by Oxfmt.
 import { BundlerInternals, webpack } from "@remotion/bundler";
@@ -9,17 +15,16 @@ import type { WebpackConfiguration } from "@remotion/bundler";
 // oxlint-disable-next-line import/no-relative-parent-imports -- Exercise the same override imported by the still-rendering script.
 import { webpackOverride } from "../webpack";
 
+const resolvePath = (specifier: string): string =>
+  fileURLToPath(import.meta.resolve(specifier));
+
 type Alias = NonNullable<NonNullable<WebpackConfiguration["resolve"]>["alias"]>;
 const sourceDirectory = path.resolve(import.meta.dir, "../src");
 const storyFile = path.join(sourceDirectory, "story.ts");
 const indexFile = path.join(sourceDirectory, "index.tsx");
 const peerAliases = {
-  react: path.dirname(
-    import.meta.resolve("react/package.json").replace("file://", "")
-  ),
-  "react-dom": path.dirname(
-    import.meta.resolve("react-dom/package.json").replace("file://", "")
-  ),
+  react: path.dirname(resolvePath("react/package.json")),
+  "react-dom": path.dirname(resolvePath("react-dom/package.json")),
 };
 
 const aliasCases: { alias: Alias; name: string }[] = [
@@ -31,9 +36,7 @@ const aliasCases: { alias: Alias; name: string }[] = [
       ignored: false,
       react: false,
       "react-dom": ["/missing-react-dom"],
-      "react/jsx-runtime": import.meta
-        .resolve("react/jsx-runtime")
-        .replace("file://", ""),
+      "react/jsx-runtime": resolvePath("react/jsx-runtime"),
       source: sourceDirectory,
     },
     name: "map",
@@ -46,7 +49,7 @@ const aliasCases: { alias: Alias; name: string }[] = [
       { alias: storyFile, name: "exact", onlyModule: true },
       { alias: false, name: "ignored" },
       {
-        alias: import.meta.resolve("react/jsx-runtime").replace("file://", ""),
+        alias: resolvePath("react/jsx-runtime"),
         name: "react/jsx-runtime",
       },
       { alias: false, name: "react" },
@@ -88,9 +91,25 @@ const remotionOptions = {
   "bundlerOverride" | "webpackOverride"
 >;
 
-/* oxlint-disable oxc/no-async-await -- Await the native Remotion override/configuration promises so test failures reach Bun's runner; prefer-await-to-then rejects replacing the awaits with promise chains. */
+/* oxlint-disable oxc/no-async-await -- Await native filesystem and Remotion promises so test failures reach Bun's runner; prefer-await-to-then rejects replacing the awaits with promise chains. */
 /* oxlint-disable oxc/no-optional-chaining -- Inspect optional native Webpack resolve/alias results with their nullish guards. */
 /* oxlint-disable oxc/no-rest-spread-properties -- Build native Remotion input/expected configuration by own-key composition; prefer-object-spread rejects Object.assign. */
+it("resolves an encoded file URL to its native path", async () => {
+  const prefix = path.join(tmpdir(), "webpack-url-");
+  const directory = await realpath(await mkdtemp(prefix));
+  try {
+    const file = path.join(directory, "module space # café.js");
+    await writeFile(file, "module.exports = {};");
+    const fileUrl = pathToFileURL(file).href;
+    expect(resolvePath(fileUrl)).toBe(file);
+    expect(await readFile(resolvePath(fileUrl), "utf-8")).toBe(
+      "module.exports = {};"
+    );
+  } finally {
+    await rm(directory, { recursive: true });
+  }
+});
+
 it.each(aliasCases)(
   "preserves native resolution for $name aliases",
   async (
@@ -110,15 +129,9 @@ it.each(aliasCases)(
       ["exact", storyFile],
       ["ignored", false],
       ["source/story.ts", storyFile],
-      ["react", import.meta.resolve("react").replace("file://", "")],
-      [
-        "react-dom/client",
-        import.meta.resolve("react-dom/client").replace("file://", ""),
-      ],
-      [
-        "react/jsx-runtime",
-        import.meta.resolve("react/jsx-runtime").replace("file://", ""),
-      ],
+      ["react", resolvePath("react")],
+      ["react-dom/client", resolvePath("react-dom/client")],
+      ["react/jsx-runtime", resolvePath("react/jsx-runtime")],
     ];
     for (const [request, result] of resolutions) {
       expect(resolve(request)).toBe(result);
@@ -147,7 +160,7 @@ const exactPeerCases: {
   },
   {
     alias: { react: false, react$: false },
-    expectedReact: import.meta.resolve("react").replace("file://", ""),
+    expectedReact: resolvePath("react"),
     name: "map with broad peer first",
   },
   {
@@ -155,7 +168,7 @@ const exactPeerCases: {
       { alias: false, name: "react" },
       { alias: false, name: "react", onlyModule: true },
     ],
-    expectedReact: import.meta.resolve("react").replace("file://", ""),
+    expectedReact: resolvePath("react"),
     name: "array with broad peer first",
   },
 ];
@@ -173,11 +186,9 @@ it.each(exactPeerCases)(
     const resolve = resolveWith(config.resolve?.alias ?? {});
     expect(resolve("react")).toBe(expectedReact);
     expect(resolve("react/jsx-dev-runtime")).toBe(
-      import.meta.resolve("react/jsx-dev-runtime").replace("file://", "")
+      resolvePath("react/jsx-dev-runtime")
     );
-    expect(resolve("react-dom/client")).toBe(
-      import.meta.resolve("react-dom/client").replace("file://", "")
-    );
+    expect(resolve("react-dom/client")).toBe(resolvePath("react-dom/client"));
     expect(JSON.stringify(alias)).toBe(original);
   }
 );
