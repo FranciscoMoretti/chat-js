@@ -1,4 +1,4 @@
-// oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
+/* oxlint-disable import/max-dependencies -- The two creation error constructors are separate modules to keep this file and each class module within max-classes-per-file; both must remain locally imported for the existing throw/instanceof behavior and named exports. */
 import {
   and,
   desc,
@@ -24,12 +24,14 @@ import {
   eveResponseGroup,
   project,
 } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+import { CreationConflictError } from "./creation-conflict-error";
+import { CreationProjectNotFoundError } from "./creation-project-not-found-error";
+/* oxlint-enable sort-imports */
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
@@ -429,23 +431,6 @@ const getEveChatIdentity = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
-class CreationConflictError extends Error {
-  public readonly code: "creation_conflict" | "creation_in_progress";
-  public constructor(
-    message?: string,
-    options?: Readonly<
-      ErrorOptions & {
-        code?: "creation_conflict" | "creation_in_progress";
-      }
-    >
-  ) {
-    super(message, options);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from options; preserve one receiver evaluation, skipped accesses and the existing "creation_conflict" fallback. The app guidance prefers optional chaining.
-    this.code = options?.code ?? "creation_conflict";
-    this.name = "CreationConflictError";
-  }
-}
-
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
 ): void => {
@@ -488,13 +473,6 @@ const getEveCreation = async (
   return row;
 };
 /* oxlint-enable oxc/no-async-await */
-class CreationProjectNotFoundError extends Error {
-  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
-    super(message, options);
-    this.name = "CreationProjectNotFoundError";
-  }
-}
-
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertResponseGroupCandidateAvailable's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -1568,8 +1546,6 @@ export {
   beginEveConversationDeletion,
   bindAcceptedEveConversation,
   createEveConversation,
-  CreationConflictError,
-  CreationProjectNotFoundError,
   getBoundEveConversationForSession,
   getDeletingEveConversationForSession,
   getEveChatIdentity,
@@ -1590,4 +1566,6 @@ export {
   settleEveRootFallbackTitle,
   updateEveConversationMetadata,
 };
+export { CreationConflictError } from "./creation-conflict-error";
+export { CreationProjectNotFoundError } from "./creation-project-not-found-error";
 /* oxlint-enable import/no-named-export */
