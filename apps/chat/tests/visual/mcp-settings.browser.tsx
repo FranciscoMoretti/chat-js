@@ -30,12 +30,15 @@ import "./sandbox.css";
 
 /* oxlint-disable typescript/explicit-function-return-type -- mocks: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const mocks = vi.hoisted(() => {
-  // oxlint-disable-next-line unicorn/consistent-function-scoping -- vi.hoisted must initialize the mock factory before module imports.
-  const query = (name: string) => ({
+// oxlint-disable-next-line eslint/func-style -- vi.hoisted runs before module statements; a function declaration is initialized before its factory executes.
+function query(name: string) {
+  return {
     queryKey: () => [name],
     queryOptions: () => ({ queryKey: [name] }),
-  });
+  };
+}
+
+const mocks = vi.hoisted(() => {
   const mutation = { mutationOptions: () => ({}) };
   return {
     approvalRequired: false,

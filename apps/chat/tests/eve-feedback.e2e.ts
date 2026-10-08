@@ -10,7 +10,6 @@ import { readFileSync } from "node:fs";
 
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 /* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
 // oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
@@ -34,6 +33,11 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
+
+const votesRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
+  url.pathname.includes("eve.votes");
+const mutationRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
+  url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-void-return --
  * max-lines-per-function (#510): test("assistant feedback survives reload, recovers from errors and stays out of publi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -112,8 +116,6 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await page.reload();
     await expect(down).toHaveAttribute("aria-pressed", "true");
 
-    const votesRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
-      url.pathname.includes("eve.votes");
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     await page.route(votesRoute, (route) =>
       route.fulfill({
@@ -139,8 +141,6 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     const staleReadStarted = Promise.withResolvers<undefined>();
     const releaseStaleRead = Promise.withResolvers<undefined>();
     const staleReadFinished = Promise.withResolvers<undefined>();
-    const mutationRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
-      url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
     await page.route(
       mutationRoute,
       // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.continue() to resolve the intercepted live request through the original native Route receiver.

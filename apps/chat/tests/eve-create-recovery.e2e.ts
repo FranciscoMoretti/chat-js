@@ -4,7 +4,6 @@
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
@@ -259,16 +258,11 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
-  let releaseRetry: () => void = (): void => {
-    /* The gate is not ready to release before the retry route is intercepted. */
-  };
-  const retryGate = new Promise<void>((resolve) => {
-    releaseRetry = resolve;
-  });
+  const retryGate = Promise.withResolvers<undefined>();
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
-      await retryGate;
+      await retryGate.promise;
       await route.continue();
     },
     { times: 1 }
@@ -280,7 +274,8 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-pending-mobile.png"),
   });
-  releaseRetry();
+  // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
+  retryGate.resolve(undefined);
   await expect(page.locator(".is-assistant")).toContainText(
     "project-recovery-ok",
     { timeout: 90_000 }

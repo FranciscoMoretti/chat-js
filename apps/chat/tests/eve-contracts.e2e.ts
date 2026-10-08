@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 /* oxlint-disable eslint/sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -54,6 +53,9 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line typescript/promise-function-async -- The creation callback returns Promise.resolve while oxc/no-async-await forbids async functions in this fixture.
+const randomSessionId = (): Promise<string> =>
+  Promise.resolve(crypto.randomUUID());
 // oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates its owner before registering conversation contract scenarios.
 await db
   .insert(user)
@@ -603,18 +605,17 @@ test.each(["deleting", "deleted"] as const)(
  * typescript/promise-function-async (#606): test("deletion fences the entire owned family and is retryable") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("deletion fences the entire owned family and is retryable", async () => {
-  const start = (): Promise<string> => Promise.resolve(crypto.randomUUID());
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "delete family",
-    start
+    randomSessionId
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "child",
-    start,
+    randomSessionId,
     { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });

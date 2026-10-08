@@ -4,7 +4,6 @@
  */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { mkdir } from "node:fs/promises";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -105,14 +104,9 @@ test("history pages and searches older conversations without exposing other owne
       await expand.click();
     }
     const search = page.getByRole("textbox", { name: "Search conversations" });
-    let releaseSearch: () => void = (): void => {
-      /* Assigned synchronously below. */
-    };
-    const searchGate = new Promise<void>((resolve) => {
-      releaseSearch = resolve;
-    });
+    const searchGate = Promise.withResolvers<undefined>();
     await page.route("**/api/trpc/eve.list**", async (route) => {
-      await searchGate;
+      await searchGate.promise;
       await route.continue();
     });
     await search.fill(prefix);
@@ -126,7 +120,8 @@ test("history pages and searches older conversations without exposing other owne
         path: "tests/eve-results/screenshots/eve-history-loading.png",
       });
     } finally {
-      releaseSearch();
+      // oxlint-disable-next-line no-undefined -- Promise.withResolvers<undefined> requires the explicit no-value signal.
+      searchGate.resolve(undefined);
     }
     await page.unroute("**/api/trpc/eve.list**");
     await expect(
