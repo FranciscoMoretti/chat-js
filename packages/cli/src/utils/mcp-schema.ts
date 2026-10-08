@@ -46,23 +46,26 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
         readonly name: Readonly<Pick<ts.Node, "getText">>;
       }): boolean => declaration.name.getText(parsed) === "mcpConnector"
     );
-  const [, columns] =
-    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading initializer from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep [, columns] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    connector?.initializer && ts.isCallExpression(connector.initializer)
-      ? connector.initializer.arguments
-      : [];
   if (
-    // oxlint-disable-next-line no-undefined -- A parsed call can omit the second argument even though TypeScript indexes its NodeArray as an Expression.
-    columns !== undefined &&
-    ts.isObjectLiteralExpression(columns) &&
-    columns.properties.some(
-      (property: CompilerNodeReader): boolean =>
-        ts.isPropertyAssignment(property) &&
-        (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
-        property.name.text === "requireApproval"
-    )
+    connector &&
+    connector.initializer &&
+    ts.isCallExpression(connector.initializer)
   ) {
-    return;
+    const [, columns] = connector.initializer.arguments;
+    if (
+      // oxlint-disable-next-line no-undefined -- A parsed call can omit the second argument even though TypeScript indexes its NodeArray as an Expression.
+      columns !== undefined &&
+      ts.isObjectLiteralExpression(columns) &&
+      columns.properties.some(
+        (property: CompilerNodeReader): boolean =>
+          ts.isPropertyAssignment(property) &&
+          (ts.isIdentifier(property.name) ||
+            ts.isStringLiteral(property.name)) &&
+          property.name.text === "requireApproval"
+      )
+    ) {
+      return;
+    }
   }
   throw new Error(
     'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run your db:generate script, review the generated migration, and run your db:migrate script against the intended database using your package manager before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'

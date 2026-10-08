@@ -438,8 +438,7 @@ const validateToolDependencies = (
       (item: ReadonlyInput<Registration>): boolean =>
         registrationKey(item) === "runCodeDocument"
     ) &&
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading codeExecutorExport from executor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    !executor?.codeExecutorExport
+    (!executor || !executor.codeExecutorExport)
   ) {
     throw new Error(
       "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."

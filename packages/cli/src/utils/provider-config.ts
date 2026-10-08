@@ -104,8 +104,7 @@ const readProviderLiteral = async (
       (item: { readonly name: Readonly<Pick<ts.Node, "getText">> }) =>
         item.name.getText(parsed) === name
     );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  if (!declaration?.initializer) {
+  if (!declaration || !declaration.initializer) {
     throw new Error(
       `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
     );
@@ -186,8 +185,8 @@ const readProviderId = async (
   if (!source.trim()) {
     return;
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const value = declaration?.initializer && unwrap(declaration.initializer);
+  const value =
+    declaration && declaration.initializer && unwrap(declaration.initializer);
   if (!value || !ts.isStringLiteralLike(value)) {
     throw new Error(
       `Cannot determine the installed ${kind} in ${file}. Use a literal ${name} before automatic replacement, or integrate the provider manually.`
@@ -258,11 +257,11 @@ const gatewayConfigEdit = async (
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
       return undefined;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declarations.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const initializer = declarations.find(
-      (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
-        declaration.name.getText(parsed) === value.text
-    )?.initializer;
+    const declaration = declarations.find(
+      (candidate: ReadonlyNative<ts.VariableDeclaration>): boolean =>
+        candidate.name.getText(parsed) === value.text
+    );
+    const initializer = declaration && declaration.initializer;
     if (initializer === undefined) {
       return undefined;
     }

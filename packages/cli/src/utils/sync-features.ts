@@ -155,8 +155,8 @@ const planContribution = async (
         item.name.getText(parsed) === name
     );
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    !declaration?.initializer ||
+    !declaration ||
+    !declaration.initializer ||
     !ts.isArrayLiteralExpression(declaration.initializer)
   ) {
     throw new Error(
@@ -410,8 +410,7 @@ const syncFeatures = async (
       "@/features/attachment-uploads/integration",
       ["attach-files", "take-photo"],
       (binding): string => `...${binding}.controls`,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      previous?.content
+      previous && previous.content
     );
     if (previous) {
       previous.content = edit.content;
