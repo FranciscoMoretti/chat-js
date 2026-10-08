@@ -1,19 +1,14 @@
 "use client";
 
+import "streamdown/styles.css";
+
+import React, { memo } from "react";
+import type { ComponentProps } from "react";
+import { Streamdown } from "streamdown";
+import { cn } from "@/lib/utils";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import React, { memo } from "react";
-/* oxlint-enable sort-imports */
-import type { ComponentProps } from "react";
-import { Streamdown } from "streamdown";
-
-import { cn } from "@/lib/utils";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "streamdown/styles.css";
-/* oxlint-enable sort-imports */
 
 const plugins = { code, math, mermaid };
 

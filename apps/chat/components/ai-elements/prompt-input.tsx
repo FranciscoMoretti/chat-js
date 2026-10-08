@@ -1,33 +1,5 @@
 "use client";
 
-import type { ChatStatus } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import {
-  CornerDownLeftIcon,
-  Loader2Icon,
-  MicIcon,
-  PlusIcon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentProps,
-  HTMLAttributes,
-  JSX as ReactJSX,
-  RefObject,
-} from "react";
-/* oxlint-enable sort-imports */
-import React, {
-  Children,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Command,
   CommandEmpty,
@@ -37,7 +9,20 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-/* oxlint-enable sort-imports */
+import type {
+  ComponentProps,
+  HTMLAttributes,
+  JSX as ReactJSX,
+  RefObject,
+} from "react";
+import {
+  CornerDownLeftIcon,
+  Loader2Icon,
+  MicIcon,
+  PlusIcon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +39,13 @@ import {
   InputGroupAddon,
   InputGroupButton,
 } from "@/components/ui/input-group";
+import React, {
+  Children,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Select,
   SelectContent,
@@ -61,15 +53,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-/* oxlint-disable sort-imports -- Keep the readonly type-only dependency beside the existing utility import without changing runtime evaluation order. */
+import type { ChatStatus } from "ai";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers -- PromptInputHoverCard: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
+
+const IMMEDIATE_HOVER_DELAY = 0;
+const SINGLE_BUTTON_CHILD = 1;
+const SPEECH_RESULT_STEP = 1;
+const FIRST_SPEECH_ALTERNATIVE = 0;
 
 const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
+  openDelay = IMMEDIATE_HOVER_DELAY,
+  closeDelay = IMMEDIATE_HOVER_DELAY,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes openDelay, closeDelay from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputHoverCardProps): React.JSX.Element => (
@@ -80,9 +75,8 @@ const PromptInputHoverCard = ({
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable react/no-multi-comp -- PromptInputHoverCardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputHoverCardContent: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputHoverCardContent = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputHoverCardContentProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -106,7 +100,7 @@ type PromptInputProps = HTMLAttributes<HTMLFormElement> & {
   inputGroupClassName?: string;
 };
 
-/* oxlint-disable react/no-multi-comp -- PromptInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInput: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInput = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -139,7 +133,7 @@ type PromptInputHeaderProps = Omit<
   "align"
 >;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputHeader: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputHeader = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputHeaderProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -165,7 +159,7 @@ type PromptInputFooterProps = Omit<
   "align"
 >;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputFooter: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputFooter = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputFooterProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -188,7 +182,7 @@ const PromptInputFooter = (
 
 type PromptInputToolsProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTools: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTools: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTools = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputToolsProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -209,7 +203,7 @@ const PromptInputTools = (
 
 type PromptInputButtonProps = ComponentProps<typeof InputGroupButton>;
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- PromptInputButton: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputButton: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputButton = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputButtonProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -223,8 +217,9 @@ const PromptInputButton = (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): React.JSX.Element => {
   const newSize =
+    size ??
     // oxlint-disable-next-line react/no-react-children, no-ternary -- The public button accepts opaque ReactNode children: Children.count counts null/boolean array entries, traverses nested arrays, and treats a Fragment as one child; toArray drops empty entries, while array inspection cannot preserve nesting or Fragment semantics. Changing this requires a narrower caller API.; no-ternary: Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    size ?? (Children.count(props.children) > 1 ? "sm" : "icon-sm");
+    (Children.count(props.children) > SINGLE_BUTTON_CHILD ? "sm" : "icon-sm");
 
   return (
     <InputGroupButton
@@ -238,11 +233,11 @@ const PromptInputButton = (
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputActionMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- PromptInputActionMenu: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy. */
 const PromptInputActionMenu = (
   props: PromptInputActionMenuProps
 ): React.JSX.Element => (
@@ -255,7 +250,7 @@ const PromptInputActionMenu = (
 
 type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuTrigger: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputActionMenuTrigger = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputActionMenuTriggerProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -289,7 +284,7 @@ type PromptInputActionMenuContentProps = ComponentProps<
   typeof DropdownMenuContent
 >;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuContent: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 const PromptInputActionMenuContent = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputActionMenuContentProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
   {
@@ -311,7 +306,7 @@ const PromptInputActionMenuContent = (
 
 type PromptInputActionMenuItemProps = ComponentProps<typeof DropdownMenuItem>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputActionMenuItem: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 const PromptInputActionMenuItem = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputActionMenuItemProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
   {
@@ -337,7 +332,7 @@ type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
   status?: ChatStatus;
 };
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSubmit: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSubmit: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSubmit = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSubmitProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -470,7 +465,119 @@ type PromptInputSpeechButtonProps = ComponentProps<typeof PromptInputButton> & {
   onTranscriptionChange?: (text: string) => void;
 };
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type SpeechResultEvent = Readonly<{
+  resultIndex: number;
+  results: Readonly<
+    ArrayLike<
+      Readonly<{
+        isFinal: boolean;
+        readonly [index: number]: Readonly<{ transcript: string }>;
+      }>
+    >
+  >;
+}>;
+
+/* oxlint-disable react/no-multi-comp, unicorn/no-null -- PromptInputSpeechButton: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const collectFinalTranscript = (event: SpeechResultEvent): string => {
+  let finalTranscript = "";
+
+  for (
+    let index = event.resultIndex;
+    index < event.results.length;
+    index += SPEECH_RESULT_STEP
+  ) {
+    const result = event.results[index];
+    if (result.isFinal) {
+      const { [FIRST_SPEECH_ALTERNATIVE]: alternative } = result;
+      if (typeof alternative === "object" && alternative !== null) {
+        finalTranscript += alternative.transcript;
+      }
+    }
+  }
+  return finalTranscript;
+};
+
+const initializeSpeechRecognition = (
+  SpeechRecognition: new () => SpeechRecognition,
+  onResult: NonNullable<SpeechRecognition["onresult"]>,
+  setIsListening: (listening: boolean) => void
+): SpeechRecognition => {
+  const speechRecognition = new SpeechRecognition();
+
+  speechRecognition.continuous = true;
+  speechRecognition.interimResults = true;
+  speechRecognition.lang = "en-US";
+
+  speechRecognition.onstart = (): void => {
+    setIsListening(true);
+  };
+
+  speechRecognition.onend = (): void => {
+    setIsListening(false);
+  };
+
+  speechRecognition.onresult = onResult;
+
+  speechRecognition.addEventListener("error", (event: unknown) => {
+    // oxlint-disable-next-line no-console -- Browser speech errors are surfaced through the existing error diagnostic before resetting listening state; reportError would additionally dispatch a global error.
+    console.error("Speech recognition error:", event);
+    setIsListening(false);
+  });
+  return speechRecognition;
+};
+
+const useSpeechRecognition = (
+  onResult: NonNullable<SpeechRecognition["onresult"]>
+): Readonly<{
+  isListening: boolean;
+  recognition: SpeechRecognition | null;
+  toggleListening: () => void;
+}> => {
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
+    null
+  );
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  useEffect(() => {
+    if (
+      "window" in globalThis &&
+      ("SpeechRecognition" in globalThis.window ||
+        "webkitSpeechRecognition" in globalThis.window)
+    ) {
+      const SpeechRecognition =
+        globalThis.window.SpeechRecognition ??
+        globalThis.window.webkitSpeechRecognition;
+      const speechRecognition = initializeSpeechRecognition(
+        SpeechRecognition,
+        onResult,
+        setIsListening
+      );
+
+      recognitionRef.current = speechRecognition;
+      // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.
+      setRecognition(speechRecognition);
+    }
+    return (): void => {
+      if (recognitionRef.current !== null) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [onResult]);
+
+  const toggleListening = useCallback(() => {
+    if (recognition === null) {
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  }, [recognition, isListening]);
+  return { isListening, recognition, toggleListening };
+};
 
 const PromptInputSpeechButton = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSpeechButtonProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -483,106 +590,31 @@ const PromptInputSpeechButton = (
   }: PromptInputSpeechButtonProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
-  const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
-    null
-  );
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const onResult = useCallback(
+    (event: SpeechResultEvent): void => {
+      const finalTranscript = collectFinalTranscript(event);
+      if (
+        finalTranscript !== "" &&
+        typeof textareaRef === "object" &&
+        textareaRef.current !== null
+      ) {
+        const textarea = textareaRef.current;
+        const currentValue = textarea.value;
+        const newValue =
+          // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          currentValue + (currentValue === "" ? "" : " ") + finalTranscript;
 
-  useEffect(() => {
-    if (
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
-      typeof window !== "undefined" &&
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
-      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-    ) {
-      const SpeechRecognition =
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const speechRecognition = new SpeechRecognition();
-
-      speechRecognition.continuous = true;
-      speechRecognition.interimResults = true;
-      speechRecognition.lang = "en-US";
-
-      speechRecognition.onstart = (): void => {
-        setIsListening(true);
-      };
-
-      speechRecognition.onend = (): void => {
-        setIsListening(false);
-      };
-
-      speechRecognition.onresult = (
-        event: Readonly<{
-          resultIndex: number;
-          results: Readonly<
-            ArrayLike<
-              Readonly<{
-                isFinal: boolean;
-                readonly [index: number]: Readonly<{ transcript: string }>;
-              }>
-            >
-          >;
-        }>
-      ): void => {
-        let finalTranscript = "";
-
-        for (
-          let index = event.resultIndex;
-          index < event.results.length;
-          index += 1
-        ) {
-          const result = event.results[index];
-          if (result.isFinal) {
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading transcript from result[0]; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
-            finalTranscript += result[0]?.transcript ?? "";
-          }
+        textarea.value = newValue;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        if (typeof onTranscriptionChange === "function") {
+          onTranscriptionChange(newValue);
         }
-
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading current from textareaRef; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        if (finalTranscript && textareaRef?.current) {
-          const textarea = textareaRef.current;
-          const currentValue = textarea.value;
-          const newValue =
-            // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            currentValue + (currentValue ? " " : "") + finalTranscript;
-
-          textarea.value = newValue;
-          textarea.dispatchEvent(new Event("input", { bubbles: true }));
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onTranscriptionChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-          onTranscriptionChange?.(newValue);
-        }
-      };
-
-      speechRecognition.addEventListener("error", (event: unknown) => {
-        console.error("Speech recognition error:", event);
-        setIsListening(false);
-      });
-
-      recognitionRef.current = speechRecognition;
-      // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.
-      setRecognition(speechRecognition);
-    }
-
-    return (): void => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
       }
-    };
-  }, [textareaRef, onTranscriptionChange]);
-
-  const toggleListening = useCallback(() => {
-    if (!recognition) {
-      return;
-    }
-
-    if (isListening) {
-      recognition.stop();
-    } else {
-      recognition.start();
-    }
-  }, [recognition, isListening]);
+    },
+    [textareaRef, onTranscriptionChange]
+  );
+  const { isListening, recognition, toggleListening } =
+    useSpeechRecognition(onResult);
 
   return (
     <PromptInputButton
@@ -604,11 +636,11 @@ const PromptInputSpeechButton = (
     </PromptInputButton>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 type PromptInputSelectProps = ComponentProps<typeof Select>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSelect: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSelect: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSelect = (
   props: ReadonlyNativeSurface<PromptInputSelectProps>
@@ -622,7 +654,7 @@ const PromptInputSelect = (
 
 type PromptInputSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSelectTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSelectTrigger: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSelectTrigger = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSelectTriggerProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -648,7 +680,7 @@ const PromptInputSelectTrigger = (
 
 type PromptInputSelectContentProps = ComponentProps<typeof SelectContent>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSelectContent: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSelectContent = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSelectContentProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -670,7 +702,7 @@ const PromptInputSelectContent = (
 
 type PromptInputSelectItemProps = ComponentProps<typeof SelectItem>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSelectItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSelectItem: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSelectItem = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSelectItemProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -692,7 +724,7 @@ const PromptInputSelectItem = (
 
 type PromptInputSelectValueProps = ComponentProps<typeof SelectValue>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputSelectValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputSelectValue: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputSelectValue = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputSelectValueProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -716,7 +748,7 @@ type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
 type PromptInputHoverCardTriggerProps = ComponentProps<typeof HoverCardTrigger>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputHoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputHoverCardTrigger: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputHoverCardTrigger = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputHoverCardTriggerProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -734,7 +766,7 @@ type PromptInputHoverCardContentProps = ComponentProps<typeof HoverCardContent>;
 
 type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTabsList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTabsList: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTabsList = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputTabsListProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -755,7 +787,7 @@ const PromptInputTabsList = (
 
 type PromptInputTabProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTab: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTab: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTab = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputTabProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -776,7 +808,7 @@ const PromptInputTab = (
 
 type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTabLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTabLabel: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTabLabel = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputTabLabelProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -803,7 +835,7 @@ const PromptInputTabLabel = (
 
 type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTabBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTabBody: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTabBody = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputTabBodyProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -824,7 +856,7 @@ const PromptInputTabBody = (
 
 type PromptInputTabItemProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputTabItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputTabItem: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputTabItem = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputTabItemProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -848,7 +880,7 @@ const PromptInputTabItem = (
 
 type PromptInputCommandProps = ComponentProps<typeof Command>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommand: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommand: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommand = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -870,7 +902,7 @@ const PromptInputCommand = (
 
 type PromptInputCommandInputProps = ComponentProps<typeof CommandInput>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandInput: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandInput = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandInputProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -892,7 +924,7 @@ const PromptInputCommandInput = (
 
 type PromptInputCommandListProps = ComponentProps<typeof CommandList>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandList: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandList = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandListProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -914,7 +946,7 @@ const PromptInputCommandList = (
 
 type PromptInputCommandEmptyProps = ComponentProps<typeof CommandEmpty>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandEmpty: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandEmpty: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandEmpty = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandEmptyProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -936,7 +968,7 @@ const PromptInputCommandEmpty = (
 
 type PromptInputCommandGroupProps = ComponentProps<typeof CommandGroup>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandGroup: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandGroup = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandGroupProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -958,7 +990,7 @@ const PromptInputCommandGroup = (
 
 type PromptInputCommandItemProps = ComponentProps<typeof CommandItem>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandItem: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandItem = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandItemProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -980,7 +1012,7 @@ const PromptInputCommandItem = (
 
 type PromptInputCommandSeparatorProps = ComponentProps<typeof CommandSeparator>;
 
-/* oxlint-disable react/no-multi-comp -- PromptInputCommandSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- PromptInputCommandSeparator: react/no-multi-comp: these native composition primitives form one exported PromptInput family; per-component files would add forwarding-only module boundaries without separating state or policy */
 
 const PromptInputCommandSeparator = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptInputCommandSeparatorProps: forward the complete native React/primitive prop contract, including children, refs and callback identities. The faithful readonly data projection preserving primitive, callable and constructor signatures is still flagged by the pinned rule; changing those native signatures would alter the forwarding contract. */
@@ -1001,7 +1033,7 @@ const PromptInputCommandSeparator = (
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (PromptInput, PromptInputActionMenu, PromptInputActionMenuContent, PromptInputActionMenuItem, PromptInputActionMenuTrigger, PromptInputButton, PromptInputCommand, PromptInputCommandEmpty, PromptInputCommandGroup, PromptInputCommandInput, PromptInputCommandItem, PromptInputCommandList, PromptInputCommandSeparator, PromptInputFooter, PromptInputHeader, PromptInputHoverCard, PromptInputHoverCardContent, PromptInputHoverCardTrigger, PromptInputSelect, PromptInputSelectContent, PromptInputSelectItem, PromptInputSelectTrigger, PromptInputSelectValue, PromptInputSpeechButton, PromptInputSubmit, PromptInputTab, PromptInputTabBody, PromptInputTabItem, PromptInputTabLabel, PromptInputTabsList, PromptInputTools); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable max-lines -- prompt-input keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
+/* oxlint-disable max-lines -- The exported PromptInput family keeps native composition defaults, styling overrides and prop/ref forwarding together. Per-component files would add forwarding-only boundaries, while a barrel would preserve the same API and leave the same policy duplicated across those files. */
 export {
   PromptInput,
   PromptInputActionMenu,

@@ -1,17 +1,12 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ChevronDownIcon, WrenchIcon } from "lucide-react";
-/* oxlint-enable sort-imports */
 import React from "react";
-
+import type { ToolUIPart } from "ai";
 import { getStatusBadge } from "@/components/ai-elements/tool";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve Tool/getStatusBadge-before-Collapsible order: pinned SWC/Node 24 cold loads keep crypto.randomUUID before ReactDOM hooks (dev) and checkDCE (prod); sorting reverses them.
 import { CollapsibleTrigger } from "@/components/ui/collapsible";
-// oxlint-disable-next-line sort-imports -- This type-only rendering view follows the existing runtime import group.
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface McpToolHeaderProps {

@@ -1,15 +1,10 @@
 "use client";
 
-import { ArrowDownIcon } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useCallback } from "react";
-/* oxlint-enable sort-imports */
-import type { ComponentProps } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
-/* oxlint-enable sort-imports */
-
+import { ArrowDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 type ConversationProps = ComponentProps<typeof StickToBottom>;
@@ -102,7 +97,7 @@ const ConversationEmptyState = (
 
 type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- ConversationScrollButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable react/no-multi-comp -- Keep the scroll control beside Conversation because it consumes the shared stick-to-bottom context and is exported through the existing conversation module. */
 
 const ConversationScrollButton = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
@@ -112,7 +107,7 @@ const ConversationScrollButton = (
     ...props
   }: ConversationScrollButtonProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-) => {
+): false | React.JSX.Element => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
@@ -143,7 +138,7 @@ const ConversationScrollButton = (
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable react/no-multi-comp */
 export {
   Conversation,
   ConversationContent,

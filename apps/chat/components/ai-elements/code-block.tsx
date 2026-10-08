@@ -1,22 +1,20 @@
 "use client";
 
+import type { BundledLanguage, ShikiTransformer } from "shiki";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, JSX as ReactJSX } from "react";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
   useTransition,
 } from "react";
-import { codeToHtml } from "shiki";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { BundledLanguage, ShikiTransformer } from "shiki";
-/* oxlint-enable sort-imports */
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { codeToHtml } from "shiki";
 
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
@@ -27,6 +25,9 @@ type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
 interface CodeBlockContextType {
   code: string;
 }
+
+const COPY_BUTTON_TIMEOUT_MS = 2000;
+const COPY_BUTTON_ICON_SIZE = 14;
 
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
@@ -58,13 +59,11 @@ const lineNumberTransformer: ShikiTransformer = {
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve highlightCode's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
-
 const highlightCode = async (
   code: string,
   language: BundledLanguage,
   showLineNumbers = false
-) => {
+): Promise<[string, string]> => {
   // oxlint-disable-next-line no-ternary -- Keep transformers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const transformers: ShikiTransformer[] = showLineNumbers
     ? [lineNumberTransformer]
@@ -84,29 +83,18 @@ const highlightCode = async (
   ]);
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions -- CodeBlock: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
-
-const CodeBlock = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    code,
-    language,
-    showLineNumbers = false,
-    className,
-    children,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes code, language, showLineNumbers, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: CodeBlockProps
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): ReactJSX.Element => {
+const useHighlightedCode = (
+  code: string,
+  language: BundledLanguage,
+  showLineNumbers: boolean
+): { readonly html: string; readonly darkHtml: string } => {
   const [html, setHtml] = useState<string>("");
   const [darkHtml, setDarkHtml] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateHighlightedCode's awaited sequencing and rejected-Promise behavior. */
+    /* oxlint-disable oxc/no-async-await -- The configured promise/prefer-await-to-then rule rejects a Promise continuation; retain this awaited highlight lifecycle and rejection propagation. */
     const updateHighlightedCode = async (): Promise<void> => {
       const [light, dark] = await highlightCode(
         code,
@@ -125,6 +113,30 @@ const CodeBlock = (
       cancelled = true;
     };
   }, [code, language, showLineNumbers]);
+
+  return { darkHtml, html };
+};
+
+/* oxlint-disable react/jsx-max-depth, typescript/strict-boolean-expressions -- CodeBlock: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
+
+const CodeBlock = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    code,
+    language,
+    showLineNumbers = false,
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes code, language, showLineNumbers, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: CodeBlockProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
+  const { html, darkHtml } = useHighlightedCode(
+    code,
+    language,
+    showLineNumbers
+  );
 
   const contextValue = useMemo(() => ({ code }), [code]);
 
@@ -161,7 +173,7 @@ const CodeBlock = (
     </CodeBlockContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions */
+/* oxlint-enable react/jsx-max-depth, typescript/strict-boolean-expressions */
 
 type CodeBlockCopyButtonProps = Omit<
   ComponentProps<typeof Button>,
@@ -172,14 +184,61 @@ type CodeBlockCopyButtonProps = Omit<
   timeout?: number;
 };
 
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, typescript/strict-void-return -- CodeBlockCopyButton: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2000); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including navigator?.clipboard?.writeText); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+const useCopyCode = (
+  code: string,
+  {
+    timeout,
+    onCopy,
+    onError,
+  }: Readonly<
+    Pick<CodeBlockCopyButtonProps, "onCopy" | "onError"> & { timeout: number }
+  >
+): { readonly isCopied: boolean; readonly handleClick: () => void } => {
+  const [isCopied, setIsCopied] = useState(false);
+  const [, startCopyTransition] = useTransition();
+
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyToClipboard's awaited sequencing and rejected-Promise behavior. */
+  const copyToClipboard = useCallback(async (): Promise<void> => {
+    /* oxlint-disable unicorn/prefer-global-this, oxc/no-optional-chaining -- typeof window supports the unbound SSR global; globalThis.window's equivalent typeof check conflicts with unicorn/no-typeof-undefined. Native browser Clipboard can be absent in insecure contexts. */
+    if (
+      typeof window === "undefined" ||
+      typeof navigator?.clipboard?.writeText !== "function"
+    ) {
+      await (typeof onError === "function" &&
+        onError(new Error("Clipboard API not available")));
+      return;
+    }
+    /* oxlint-enable unicorn/prefer-global-this, oxc/no-optional-chaining */
+
+    try {
+      await navigator.clipboard.writeText(code);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), timeout);
+      await (typeof onCopy === "function" && onCopy());
+    } catch (error) {
+      await (typeof onError === "function" &&
+        onError(
+          // oxlint-disable-next-line no-ternary -- The native clipboard callback needs a lazy Error normalization only when an error handler exists.
+          error instanceof Error ? error : new Error(String(error))
+        ));
+    }
+  }, [code, onCopy, onError, timeout]);
+  /* oxlint-enable oxc/no-async-await */
+
+  const handleClick = useCallback((): void => {
+    startCopyTransition(copyToClipboard);
+  }, [copyToClipboard, startCopyTransition]);
+  return { handleClick, isCopied };
+};
+
+/* oxlint-disable react/no-multi-comp -- CodeBlockCopyButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const CodeBlockCopyButton = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     onCopy,
     onError,
-    timeout = 2000,
+    timeout = COPY_BUTTON_TIMEOUT_MS,
     children,
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes onCopy, onError, timeout, children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
@@ -187,34 +246,12 @@ const CodeBlockCopyButton = (
   }: CodeBlockCopyButtonProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
-  const [isCopied, setIsCopied] = useState(false);
-  const [, startCopyTransition] = useTransition();
   const { code } = useContext(CodeBlockContext);
-
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyToClipboard's awaited sequencing and rejected-Promise behavior. */
-  const copyToClipboard = async (): Promise<void> => {
-    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: This tests for a browser window; globalThis also exists during server rendering. Optional chain: Keep the existing nullish guard when reading writeText from navigator.clipboard; read clipboard from navigator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-      await onError?.(new Error("Clipboard API not available"));
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(code);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), timeout);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCopy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-      await onCopy?.();
-    } catch (error) {
-      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      await onError?.(
-        // oxlint-disable-next-line no-ternary -- Normalize the callback error lazily; if/else value assignment conflicts with pinned unicorn/prefer-ternary.
-        error instanceof Error ? error : new Error(String(error))
-      );
-    }
-  };
-  /* oxlint-enable oxc/no-async-await */
+  const { isCopied, handleClick } = useCopyCode(code, {
+    onCopy,
+    onError,
+    timeout,
+  });
   // oxlint-disable-next-line no-ternary -- Keep Icon as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Icon = isCopied ? CheckIcon : CopyIcon;
 
@@ -222,19 +259,18 @@ const CodeBlockCopyButton = (
     <Button
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("shrink-0", className)}
-
-      onClick={() => startCopyTransition(copyToClipboard)}
+      onClick={handleClick}
       size="icon"
       variant="ghost"
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CodeBlockCopyButton's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <Icon size={COPY_BUTTON_ICON_SIZE} />}
     </Button>
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CodeBlock, CodeBlockCopyButton, highlightCode); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/only-export-components -- #620: Consumers import CodeBlock, CodeBlockCopyButton, highlightCode from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { CodeBlock, CodeBlockCopyButton, highlightCode };
 /* oxlint-enable import/no-named-export */

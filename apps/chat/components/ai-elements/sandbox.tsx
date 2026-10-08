@@ -1,38 +1,30 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ChevronDownIcon, Code } from "lucide-react";
-/* oxlint-enable sort-imports */
-import type { ComponentProps } from "react";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-/* oxlint-enable sort-imports */
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Collapsible initializes ReactDOM DevTools/checkDCE before CodeBlock/Button initializes utils/UUID crypto.randomUUID capture; preserve the original cold loader schedule. */
 import { CodeBlock, CodeBlockCopyButton } from "./code-block";
 /* oxlint-enable sort-imports */
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ComponentProps } from "react";
+import React from "react";
+import type { ToolUIPart } from "ai";
+import { cn } from "@/lib/utils";
 import { getStatusBadge } from "./tool";
 
 type SandboxRootProps = ComponentProps<typeof Collapsible>;
 
-const Sandbox = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxRootProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const Sandbox = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxRootProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <Collapsible
     // oxlint-disable-next-line react/forbid-component-props -- Collapsible accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("not-prose group mb-4 w-full rounded-md border", className)}
@@ -86,15 +78,13 @@ type SandboxContentProps = ComponentProps<typeof CollapsibleContent>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxContent = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxContentProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxContent = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxContentProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <CollapsibleContent
     // oxlint-disable-next-line react/forbid-component-props -- CollapsibleContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -111,15 +101,13 @@ type SandboxTabsProps = ComponentProps<typeof Tabs>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxTabs: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxTabs = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxTabsProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxTabs = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxTabsProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <Tabs
     // oxlint-disable-next-line react/forbid-component-props -- Tabs accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("w-full", className)}
@@ -133,15 +121,13 @@ type SandboxTabsBarProps = ComponentProps<"div">;
 
 /* oxlint-disable react/no-multi-comp -- SandboxTabsBar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxTabsBar = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxTabsBarProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxTabsBar = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxTabsBarProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <div
     className={cn(
       "border-border flex w-full items-center border-t border-b",
@@ -157,15 +143,13 @@ type SandboxTabsListProps = ComponentProps<typeof TabsList>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxTabsList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxTabsList = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxTabsListProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxTabsList = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxTabsListProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <TabsList
     // oxlint-disable-next-line react/forbid-component-props -- TabsList accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("h-auto rounded-none border-0 bg-transparent p-0", className)}
@@ -179,15 +163,13 @@ type SandboxTabsTriggerProps = ComponentProps<typeof TabsTrigger>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxTabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxTabsTrigger = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxTabsTriggerProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxTabsTrigger = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxTabsTriggerProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <TabsTrigger
     // oxlint-disable-next-line react/forbid-component-props -- TabsTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -204,15 +186,13 @@ type SandboxTabContentProps = ComponentProps<typeof TabsContent>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxTabContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxTabContent = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxTabContentProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxTabContent = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxTabContentProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <TabsContent
     // oxlint-disable-next-line react/forbid-component-props -- TabsContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("mt-0 text-sm", className)}
@@ -226,15 +206,13 @@ type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
 
 /* oxlint-disable react/no-multi-comp -- SandboxCode: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxCode = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxCodeProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxCode = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxCodeProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <CodeBlock
     // oxlint-disable-next-line react/forbid-component-props -- CodeBlock accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("min-h-10 border-0", className)}
@@ -254,15 +232,13 @@ type SandboxOutputProps = Omit<ComponentProps<typeof CodeBlock>, "language">;
 
 /* oxlint-disable react/no-multi-comp -- SandboxOutput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const SandboxOutput = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: SandboxOutputProps
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+const SandboxOutput = ({
+  className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  ...props
+}: SandboxOutputProps): React.JSX.Element => (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): React.JSX.Element => (
   <CodeBlock
     // oxlint-disable-next-line react/forbid-component-props -- CodeBlock accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("min-h-10 border-0", className)}

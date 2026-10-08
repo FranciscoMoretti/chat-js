@@ -1,19 +1,15 @@
 "use client";
 
-import type { ComponentProps } from "react";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve Button-before-Tooltip order: pinned SWC/Node 24 cold loads keep crypto.randomUUID before ReactDOM hooks (dev) and checkDCE (prod); sorting reverses them.
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-enable sort-imports */
+import type { ComponentProps } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 type ActionsProps = ComponentProps<"div">;

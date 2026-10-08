@@ -1,23 +1,17 @@
 "use client";
 
-import { XIcon } from "lucide-react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { LucideIcon } from "lucide-react";
-/* oxlint-enable sort-imports */
-import React from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentProps, HTMLAttributes } from "react";
-/* oxlint-enable sort-imports */
-
 import { Button } from "@/components/ui/button";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve Button-before-Tooltip order: pinned SWC/Node 24 cold loads keep crypto.randomUUID before ReactDOM hooks (dev) and checkDCE (prod); sorting reverses them.
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-enable sort-imports */
+import type { LucideIcon } from "lucide-react";
+import React from "react";
+import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ArtifactProps = HTMLAttributes<HTMLDivElement>;
@@ -175,9 +169,9 @@ type ArtifactActionProps = ComponentProps<typeof Button> & {
   icon?: LucideIcon;
 };
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
-// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
+// oxlint-disable-next-line max-lines-per-function -- Keep the optional tooltip around the same button so icon, child, label and forwarded native props retain their existing identity.
 const ArtifactAction = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
@@ -193,6 +187,11 @@ const ArtifactAction = (
   }: ArtifactActionProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): React.JSX.Element => {
+  let accessibleLabel = tooltip;
+  if (typeof label === "string" && label !== "") {
+    accessibleLabel = label;
+  }
+
   const button = (
     <Button
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -217,8 +216,7 @@ const ArtifactAction = (
           children
         )
       }
-      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
-      <span className="sr-only">{label || tooltip}</span>
+      <span className="sr-only">{accessibleLabel}</span>
     </Button>
   );
 
@@ -237,7 +235,7 @@ const ArtifactAction = (
 
   return button;
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */
 
 type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
 

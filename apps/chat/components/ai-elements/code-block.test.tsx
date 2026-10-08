@@ -1,16 +1,13 @@
-import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
-/* oxlint-enable sort-imports */
 import { expect, test, vi } from "vitest";
-
 import { CodeBlock } from "./code-block";
+import React from "react";
 
 const pending = vi.hoisted(() => new Map<string, ((html: string) => void)[]>());
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async -- code-block.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable typescript/promise-function-async -- code-block.test route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 vi.mock("shiki", () => ({
-  codeToHtml: (code: string) => {
+  codeToHtml: (code: string): Promise<string> => {
     const { promise, resolve } = Promise.withResolvers<string>();
     const resolvers = pending.get(code) ?? [];
     resolvers.push(resolve);
@@ -18,7 +15,7 @@ vi.mock("shiki", () => ({
     return promise;
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

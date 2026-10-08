@@ -80,6 +80,16 @@ const completeInlineCode = (value: string): string => {
   return value;
 };
 
+const removeIncompleteLinkOrImage = (text: string): string => {
+  const match = incompleteLinkOrImagePattern.exec(text);
+  const groups = match && match.groups;
+  const marker = groups && groups.marker;
+  if (typeof marker === "string" && marker !== "") {
+    return text.slice(textStartOffset, text.lastIndexOf(marker));
+  }
+  return text;
+};
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (parseIncompleteMarkdown); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
@@ -92,14 +102,7 @@ export const parseIncompleteMarkdown = (text: string): string => {
     return text;
   }
 
-  const incompleteMarker =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading marker from incompleteLinkOrImagePattern.exec(...).groups; read groups from incompleteLinkOrImagePattern.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    incompleteLinkOrImagePattern.exec(text)?.groups?.marker;
-  let result =
-    // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    typeof incompleteMarker === "string" && incompleteMarker !== ""
-      ? text.slice(textStartOffset, text.lastIndexOf(incompleteMarker))
-      : text;
+  let result = removeIncompleteLinkOrImage(text);
 
   result = appendClosingMarker({
     closingMarker: "**",

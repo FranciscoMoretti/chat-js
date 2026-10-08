@@ -1,14 +1,10 @@
 "use client";
 
 import type { ComponentProps, JSX as ReactJSX } from "react";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve Button-before-ScrollArea order: pinned SWC/Node 24 cold loads keep crypto.randomUUID before ReactDOM hooks (dev) and checkDCE (prod); sorting reverses them.
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-/* oxlint-enable sort-imports */
+import React from "react";
 import { cn } from "@/lib/utils";
 
 type SuggestionsProps = ComponentProps<typeof ScrollArea>;
@@ -45,7 +41,7 @@ type SuggestionProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
   onClick?: (suggestion: string) => void;
 };
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions -- Suggestion: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
+/* oxlint-disable react/no-multi-comp -- Suggestion: this related component stays beside Suggestions; truthy optional children select the existing rendering fallback, with empty strings, 0, and false falling back to suggestion. */
 
 const Suggestion = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
@@ -61,11 +57,17 @@ const Suggestion = (
   }: SuggestionProps
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
-  const handleClick = (): void => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-    onClick?.(suggestion);
-  };
+  const handleClick = React.useCallback((): void => {
+    if (onClick) {
+      onClick(suggestion);
+    }
+  }, [onClick, suggestion]);
 
+  let content: React.ReactNode = suggestion;
+  const hasChildren = Boolean(children);
+  if (hasChildren) {
+    content = children;
+  }
   return (
     <Button
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -77,13 +79,12 @@ const Suggestion = (
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestion's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
-      {children || suggestion}
+      {content}
     </Button>
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Suggestion, Suggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-enable react/no-multi-comp */
 export { Suggestion, Suggestions };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (SuggestionProps, SuggestionsProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
