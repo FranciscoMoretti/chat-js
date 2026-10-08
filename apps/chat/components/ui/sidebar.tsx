@@ -89,23 +89,27 @@ const useSidebar = (): SidebarContextProps => {
   return context;
 };
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent). */
+/* oxlint-disable max-lines-per-function, no-magic-numbers -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarProvider = ({
-  defaultOpen = true,
-  open: openProp,
-  onOpenChange: setOpenProp,
-  className,
-  style,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultOpen, open, onOpenChange, className, style, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div"> & {
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}): ReactJSX.Element => {
+const SidebarProvider = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    defaultOpen = true,
+    open: openProp,
+    onOpenChange: setOpenProp,
+    className,
+    style,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultOpen, open, onOpenChange, className, style, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div"> & {
+    readonly defaultOpen?: boolean;
+    readonly open?: boolean;
+    readonly onOpenChange?: (open: boolean) => void;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useReactState(false);
 
@@ -135,7 +139,7 @@ const SidebarProvider = ({
           value: String(openState),
         });
       } else {
-        // oxlint-disable-next-line unicorn/no-document-cookie -- Preserve the cookie fallback for browsers without Cookie Store support.
+        // oxlint-disable-next-line unicorn/no-document-cookie -- Keep the synchronous fallback for browsers without Cookie Store support; the server reads this cookie to restore sidebar state.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       }
     },
@@ -153,7 +157,11 @@ const SidebarProvider = ({
 
   // Adds a keyboard shortcut to toggle the sidebar.
   useReactEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
+    const handleKeyDown = (
+      event: Readonly<
+        Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "preventDefault">
+      >
+    ): void => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
@@ -213,23 +221,27 @@ const SidebarProvider = ({
 };
 /* oxlint-disable react/jsx-no-literals -- Sidebar renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-enable max-lines-per-function, no-magic-numbers */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- Sidebar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Sidebar = ({
-  side = "left",
-  variant = "sidebar",
-  collapsible = "offcanvas",
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes side, variant, collapsible, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div"> & {
-  side?: "left" | "right";
-  variant?: "sidebar" | "floating" | "inset";
-  collapsible?: "offcanvas" | "icon" | "none";
-}): ReactJSX.Element => {
+const Sidebar = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    side = "left",
+    variant = "sidebar",
+    collapsible = "offcanvas",
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes side, variant, collapsible, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div"> & {
+    readonly side?: "left" | "right";
+    readonly variant?: "sidebar" | "floating" | "inset";
+    readonly collapsible?: "offcanvas" | "icon" | "none";
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
@@ -335,17 +347,21 @@ const Sidebar = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- SidebarTrigger renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarTrigger = ({
-  className,
-  onClick,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, onClick from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof Button>): ReactJSX.Element => {
+const SidebarTrigger = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    onClick,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, onClick from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof Button>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -354,7 +370,11 @@ const SidebarTrigger = ({
       className={cn("size-7", className)}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      onClick={(event) => {
+      onClick={(
+        /* oxlint-disable typescript/prefer-readonly-parameter-types -- The original native event is forwarded to its caller or native handler; retain event methods and mutable target DOM identity. */
+        event
+        /* oxlint-enable typescript/prefer-readonly-parameter-types */
+      ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onClick?.(event);
         toggleSidebar();
@@ -371,16 +391,20 @@ const SidebarTrigger = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"button">). */
+/* oxlint-disable react/no-multi-comp -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarRail uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarRail = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"button">): ReactJSX.Element => {
+const SidebarRail = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"button">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -407,16 +431,20 @@ const SidebarRail = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInset: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"main">). */
+/* oxlint-disable react/no-multi-comp -- SidebarInset: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarInset uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarInset = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"main">): ReactJSX.Element => (
+const SidebarInset = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"main">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <main
     className={cn(
       "bg-background relative flex w-full flex-1 flex-col",
@@ -429,16 +457,20 @@ const SidebarInset = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<typeof Input>). */
+/* oxlint-disable react/no-multi-comp -- SidebarInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarInput = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof Input>): ReactJSX.Element => (
+const SidebarInput = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof Input>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <Input
     // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("bg-background h-8 w-full shadow-none", className)}
@@ -449,16 +481,20 @@ const SidebarInput = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarHeader = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarHeader = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="header"
@@ -468,16 +504,20 @@ const SidebarHeader = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarFooter = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarFooter = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="footer"
@@ -487,16 +527,20 @@ const SidebarFooter = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarSeparator = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof Separator>): ReactJSX.Element => (
+const SidebarSeparator = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof Separator>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <Separator
     // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -510,16 +554,20 @@ const SidebarSeparator = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn(
       "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
@@ -532,16 +580,20 @@ const SidebarContent = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarGroup = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarGroup = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
     data-sidebar="group"
@@ -551,17 +603,23 @@ const SidebarGroup = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarGroupLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarGroupLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarGroupLabel = ({
-  className,
-  asChild = false,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div"> & { asChild?: boolean }): ReactJSX.Element => {
+const SidebarGroupLabel = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    asChild = false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div"> & {
+    readonly asChild?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "div";
 
@@ -581,19 +639,23 @@ const SidebarGroupLabel = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarGroupAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarGroupAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarGroupAction = ({
-  className,
-  asChild = false,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"button"> & {
-  asChild?: boolean;
-}): ReactJSX.Element => {
+const SidebarGroupAction = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    asChild = false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"button"> & {
+    readonly asChild?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
 
@@ -615,16 +677,20 @@ const SidebarGroupAction = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarGroupContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarGroupContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarGroupContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarGroupContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("w-full text-sm", className)}
     data-sidebar="group-content"
@@ -634,16 +700,20 @@ const SidebarGroupContent = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenu uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenu = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"ul">): ReactJSX.Element => (
+const SidebarMenu = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"ul">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <ul
     className={cn("flex w-full min-w-0 flex-col gap-1", className)}
     data-sidebar="menu"
@@ -653,16 +723,20 @@ const SidebarMenu = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuItem = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"li">): ReactJSX.Element => (
+const SidebarMenuItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"li">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <li
     className={cn("group/menu-item relative", className)}
     data-sidebar="menu-item"
@@ -672,7 +746,7 @@ const SidebarMenuItem = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 const sidebarMenuButtonVariants = cva(
   "peer/menu-button ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
@@ -692,23 +766,27 @@ const sidebarMenuButtonVariants = cva(
     },
   }
 );
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- SidebarMenuButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including tooltip). */
+/* oxlint-disable react/no-multi-comp, typescript/strict-boolean-expressions -- SidebarMenuButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including tooltip). */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuButton = ({
-  asChild = false,
-  isActive = false,
-  variant = "default",
-  size = "default",
-  tooltip,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes asChild, isActive, variant, size, tooltip, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"button"> & {
-  asChild?: boolean;
-  isActive?: boolean;
-  tooltip?: string | ReactComponentProps<typeof TooltipContent>;
-} & VariantProps<typeof sidebarMenuButtonVariants>): ReactJSX.Element => {
+const SidebarMenuButton = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    asChild = false,
+    isActive = false,
+    variant = "default",
+    size = "default",
+    tooltip,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes asChild, isActive, variant, size, tooltip, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"button"> & {
+    readonly asChild?: boolean;
+    readonly isActive?: boolean;
+    readonly tooltip?: string | ReactComponentProps<typeof TooltipContent>;
+  } & VariantProps<typeof sidebarMenuButtonVariants>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
@@ -748,21 +826,25 @@ const SidebarMenuButton = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable react/no-multi-comp, typescript/strict-boolean-expressions */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuAction = ({
-  className,
-  asChild = false,
-  showOnHover = false,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild, showOnHover from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"button"> & {
-  asChild?: boolean;
-  showOnHover?: boolean;
-}): ReactJSX.Element => {
+const SidebarMenuAction = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    asChild = false,
+    showOnHover = false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild, showOnHover from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"button"> & {
+    readonly asChild?: boolean;
+    readonly showOnHover?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
 
@@ -789,16 +871,20 @@ const SidebarMenuAction = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuBadge: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuBadge: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuBadge uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuBadge = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const SidebarMenuBadge = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn(
       "text-sidebar-foreground pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums select-none",
@@ -816,19 +902,23 @@ const SidebarMenuBadge = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSkeleton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuSkeleton = ({
-  className,
-  showIcon = false,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, showIcon from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div"> & {
-  showIcon?: boolean;
-}): ReactJSX.Element => (
+const SidebarMenuSkeleton = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    showIcon = false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, showIcon from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div"> & {
+    readonly showIcon?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <div
     className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
     data-sidebar="menu-skeleton"
@@ -854,16 +944,20 @@ const SidebarMenuSkeleton = ({
   </div>
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSub uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuSub = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"ul">): ReactJSX.Element => (
+const SidebarMenuSub = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"ul">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <ul
     className={cn(
       "border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5",
@@ -877,16 +971,20 @@ const SidebarMenuSub = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuSubItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSubItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuSubItem = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"li">): ReactJSX.Element => (
+const SidebarMenuSubItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"li">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <li
     className={cn("group/menu-sub-item relative", className)}
     data-sidebar="menu-sub-item"
@@ -896,23 +994,27 @@ const SidebarMenuSubItem = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuSubButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSubButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SidebarMenuSubButton = ({
-  asChild = false,
-  size = "md",
-  isActive = false,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes asChild, size, isActive, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"a"> & {
-  asChild?: boolean;
-  size?: "sm" | "md";
-  isActive?: boolean;
-}): ReactJSX.Element => {
+const SidebarMenuSubButton = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    asChild = false,
+    size = "md",
+    isActive = false,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes asChild, size, isActive, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"a"> & {
+    readonly asChild?: boolean;
+    readonly size?: "sm" | "md";
+    readonly isActive?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "a";
 
@@ -938,7 +1040,7 @@ const SidebarMenuSubButton = ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInput, SidebarInset, SidebarMenu, SidebarMenuAction, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail, SidebarSeparator, SidebarTrigger, useSidebar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/only-export-components -- sidebar.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
