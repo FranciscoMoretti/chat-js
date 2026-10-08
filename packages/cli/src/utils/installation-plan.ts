@@ -203,8 +203,7 @@ export const planInstallation = async (
     })
   );
   const replacements = installed.flatMap(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public plan returns this original mutable installed descriptor in replacements.
-    (previous: ToolDefinition) => {
+    (previous: ReadonlyNative<ToolDefinition>) => {
       const next = [...expected.values()].find(
         (item: ReadonlyNative<ToolDefinition>) =>
           item.id !== previous.id &&
@@ -231,13 +230,13 @@ export const planInstallation = async (
             !replacements.some(
               ({
                 previous,
-              }: ReadonlyNative<{ previous: ToolDefinition }>): boolean =>
-                previous.id === item.id
+              }: ReadonlyNative<{
+                previous: ReadonlyNative<ToolDefinition>;
+              }>): boolean => previous.id === item.id
             )
         )
         .map(
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The target preserves mutable descriptors whose environment options are returned by the public plan.
-          (item: ToolDefinition) => [item.id, item] as const
+          (item: ReadonlyNative<ToolDefinition>) => [item.id, item] as const
         ),
       ...expected.entries(),
     ]).values(),
@@ -308,10 +307,12 @@ export const planInstallation = async (
           })
         );
   const targetFeatures = new Map([
-    ...installedFeatures.flat().map(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the mutable descriptor environment options returned by the public plan.
-      (feature: FeatureDefinition) => [feature.id, feature] as const
-    ),
+    ...installedFeatures
+      .flat()
+      .map(
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          [feature.id, feature] as const
+      ),
     ...features.entries(),
   ]);
   const featureIds = new Set(targetFeatures.keys());
@@ -335,17 +336,16 @@ export const planInstallation = async (
   return {
     environmentVariables: [
       ...target().flatMap(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These existing mutable environment options are returned as the public plan output.
-        (tool: ToolDefinition) => tool.envRequirements
+        (tool: ReadonlyNative<ToolDefinition>) => tool.envRequirements
       ),
       ...[...targetFeatures.values()].flatMap(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These existing mutable environment options are returned as the public plan output.
-        (feature: FeatureDefinition) => feature.envRequirements ?? []
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          feature.envRequirements ?? []
       ),
     ].flatMap(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Return original mutable environment option objects without narrowing the public result.
-      (requirement: ToolDefinition["envRequirements"][number]) =>
-        requirement.options.flat()
+      (
+        requirement: ReadonlyNative<ToolDefinition["envRequirements"][number]>
+      ) => requirement.options.flat()
     ),
     expected: [...expected.values()],
     features: [...features.values()],

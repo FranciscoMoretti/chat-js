@@ -185,12 +185,12 @@ const readToolDefinition = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const collectDefinitions = async (
   cwd: string,
   directory: string,
-  entries: Awaited<ReturnType<typeof readdir>>,
+  entries: readonly Readonly<Awaited<ReturnType<typeof readdir>>[number]>[],
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This collector replaces existing descriptors with splice and appends discovered descriptors with push in the caller-owned accumulator.
   definitions: ToolDefinition[],
   index = 0
 ): Promise<void> => {
@@ -205,7 +205,8 @@ const collectDefinitions = async (
     const definition = await readToolDefinition(cwd, directory, entry.name);
     if (definition) {
       const existing = definitions.findIndex(
-        (item): boolean => item.id === definition.id
+        (item: ReadonlyInput<ToolDefinition>): boolean =>
+          item.id === definition.id
       );
       if (existing !== -1) {
         definitions.splice(existing, 1);
@@ -217,7 +218,6 @@ const collectDefinitions = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-statements */
@@ -468,7 +468,6 @@ const toolRegistrationTargets = [
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readInstalledTools's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
   await preflight(cwd, toolRegistrationTargets);
@@ -507,7 +506,9 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   );
   const definitions: ToolDefinition[] = [];
   await collectDefinitions(cwd, directory, entries, definitions);
-  const ids = new Set(definitions.map((item): string => item.id));
+  const ids = new Set(
+    definitions.map((item: ReadonlyInput<ToolDefinition>): string => item.id)
+  );
   const previousProviders = await readOptional(
     pathModule.join(dir, "providers.ts")
   );
@@ -524,13 +525,15 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
       `Missing descriptor for previously registered tool: ${missing}. Restore chatjs.json before syncing.`
     );
   }
-  return definitions.toSorted((leftDefinition, rightDefinition): number =>
-    leftDefinition.id.localeCompare(rightDefinition.id)
+  return definitions.toSorted(
+    (
+      leftDefinition: ReadonlyInput<ToolDefinition>,
+      rightDefinition: ReadonlyInput<ToolDefinition>
+    ): number => leftDefinition.id.localeCompare(rightDefinition.id)
   );
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateToolInstallation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -560,7 +563,6 @@ const validateToolInstallation = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const syncTools = async (
   cwd: string,
@@ -578,9 +580,13 @@ const syncTools = async (
   const dir = pathModule.join(cwd, "tools/chatjs");
   const toolsPath = pathModule.join(dir, "tools.ts");
   const uiPath = pathModule.join(dir, "ui.ts");
-  const documents = definitions.filter((item) => item.documentKind);
+  const documents = definitions.filter(
+    (item: ReadonlyInput<ToolDefinition>) => item.documentKind
+  );
   const registrations = registrationsFor(definitions);
-  const keys = registrations.map((item): string => registrationKey(item));
+  const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
+    registrationKey(item)
+  );
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
   const [customTools, customUi] = await Promise.all([
@@ -614,19 +620,22 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "document-ui.ts"),
     generatedSource(
-      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item, index): string => `import { documentUi as document${index} } from "./${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
+      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "./${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
     )
   );
   await writeFile(
     pathModule.join(dir, "installed-features.ts"),
     generatedSource(
-      `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+      `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item: ReadonlyInput<ToolDefinition>): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
     )
   );
   const composerTools = registrations
-    .filter((item) => item.composer)
-    .toSorted((leftRegistration, rightRegistration): number =>
-      leftRegistration.key.localeCompare(rightRegistration.key)
+    .filter((item: ReadonlyInput<Registration>) => item.composer)
+    .toSorted(
+      (
+        leftRegistration: ReadonlyInput<Registration>,
+        rightRegistration: ReadonlyInput<Registration>
+      ): number => leftRegistration.key.localeCompare(rightRegistration.key)
     );
   await writeFile(
     pathModule.join(dir, "composer-tools.ts"),
@@ -635,22 +644,31 @@ const syncTools = async (
         // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         composerTools.length > 0
           ? `import { ${composerTools
-              .map((item, index) => ({
+              .map((item: ReadonlyInput<Registration>, index) => ({
                 alias: `Icon${index}`,
                 // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
                 icon: item.composer?.icon,
               }))
-              .toSorted((left, right): number =>
-                left.alias.localeCompare(right.alias)
+              .toSorted(
+                (
+                  left: Readonly<{ alias: string; icon: string | undefined }>,
+                  right: Readonly<{ alias: string; icon: string | undefined }>
+                ): number => left.alias.localeCompare(right.alias)
               )
-              .map((item): string => `${item.icon} as ${item.alias}`)
+              .map(
+                (
+                  item: Readonly<{ alias: string; icon: string | undefined }>
+                ): string => `${item.icon} as ${item.alias}`
+              )
               .join(", ")} } from "lucide-react";\n`
           : ""
         // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading name from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading shortName from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
+      }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item: ReadonlyInput<Registration>, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
-  const runner = definitions.find((item) => item.documentRunExport);
+  const runner = definitions.find(
+    (item: ReadonlyInput<ToolDefinition>) => item.documentRunExport
+  );
   await writeFile(
     pathModule.join(dir, "document-run.ts"),
     generatedSource(
@@ -662,7 +680,9 @@ const syncTools = async (
     pathModule.join(dir, "providers.ts"),
     generatedSource(providerBody)
   );
-  const executor = definitions.find((item) => item.codeExecutorExport);
+  const executor = definitions.find(
+    (item: ReadonlyInput<ToolDefinition>) => item.codeExecutorExport
+  );
   await writeFile(
     pathModule.join(dir, "code-executor.ts"),
     generatedSource(
@@ -670,18 +690,22 @@ const syncTools = async (
       `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "./${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
     )
   );
-  const workflows = registrations.filter((item) => item.workflow);
+  const workflows = registrations.filter(
+    (item: ReadonlyInput<Registration>) => item.workflow
+  );
   await writeFile(
     pathModule.join(dir, "workflow-types.ts"),
     generatedSource(
-      `${workflows.map((item, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n};\n`
+      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n};\n`
     )
   );
-  const availability = definitions.filter((item) => item.availabilityExport);
+  const availability = definitions.filter(
+    (item: ReadonlyInput<ToolDefinition>) => item.availabilityExport
+  );
   await writeFile(
     pathModule.join(dir, "tool-availability.ts"),
     generatedSource(
-      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
+      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
     )
   );
   await writeFile(toolsPath, generatedSource(toolBody));
@@ -691,7 +715,6 @@ const syncTools = async (
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readInstalledTools, syncTools, toolRegistrationTargets, validateToolInstallation); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
