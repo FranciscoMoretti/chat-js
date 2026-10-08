@@ -3,7 +3,6 @@
  * import/no-nodejs-modules (#529): This test harness requires import { execFile } from "node:child_process";; import { promisify } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -312,8 +311,9 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   await row.getByRole("button", { exact: true, name: "More" }).click();
   await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
   const result = page.waitForResponse(
-    (response) =>
-      response.url().endsWith(url) && response.request().method() === "DELETE"
+    (httpResponse) =>
+      httpResponse.url().endsWith(url) &&
+      httpResponse.request().method() === "DELETE"
   );
   await page
     .getByRole("dialog", { name: "Delete conversation and branches?" })

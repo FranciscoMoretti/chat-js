@@ -2,7 +2,6 @@
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/eve-response-groups"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
@@ -68,8 +67,8 @@ afterAll(async () => {
     .from(eveConversation)
     .where(eq(eveConversation.ownerId, owner));
   for (const row of rows.filter(
-    (row: Readonly<{ parentConversationId: string | null }>) =>
-      row.parentConversationId
+    (candidate: Readonly<{ parentConversationId: string | null }>) =>
+      candidate.parentConversationId
   )) {
     await db.delete(eveConversation).where(eq(eveConversation.id, row.id));
   }

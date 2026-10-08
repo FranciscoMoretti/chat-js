@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomUUID } from "node:crypto";; import { createServer } from "node:http";; import type { IncomingMessage, ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  */
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { createHash, randomUUID } from "node:crypto";
@@ -122,7 +121,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   let origin = "";
 
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- sendJson writes status/headers through writeHead then ends the original response; preserve this live ServerResponse writer, without a readonly method facade returning a mutable receiver.
-  function reject(response: ServerResponse): void {
+  function rejectUnauthorizedRequest(response: ServerResponse): void {
     response
       .writeHead(401, {
         "www-authenticate": `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
@@ -302,7 +301,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replace from request.headers.authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const token = request.headers.authorization?.replace(BEARER_PREFIX, "");
     if (!(token && accessTokens.has(token))) {
-      reject(response);
+      rejectUnauthorizedRequest(response);
       return;
     }
     const rpc = rpcInput.parse(JSON.parse(await readBody(request)));

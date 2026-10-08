@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queries"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/server" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
@@ -329,8 +328,11 @@ test("a missing project preserves an unreserved request until definitive rejecti
   };
   const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   await page.evaluate(
-    ({ key, operation }) =>
-      sessionStorage.setItem(key, JSON.stringify(operation)),
+    ({ key: pendingStorageKey, operation: pendingOperation }) =>
+      sessionStorage.setItem(
+        pendingStorageKey,
+        JSON.stringify(pendingOperation)
+      ),
     { key, operation }
   );
   await page.goto(`/project/${projectId}`);
@@ -390,12 +392,12 @@ test("a missing project preserves an unreserved request until definitive rejecti
     operation.message
   );
   const saved = await page.evaluate(
-    ({ key, ownerId }) => ({
+    ({ key: savedStorageKey, ownerId }) => ({
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
       next: JSON.parse(
         sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
       ),
-      old: sessionStorage.getItem(key),
+      old: sessionStorage.getItem(savedStorageKey),
     }),
     { key, ownerId: session.user.id }
   );
@@ -462,7 +464,7 @@ test("a rejected project composer retains its request across project deletion", 
   ).toBeVisible();
   const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   const retained = await page.evaluate(
-    (key) => sessionStorage.getItem(key),
+    (storageKeyArgument) => sessionStorage.getItem(storageKeyArgument),
     key
   );
   expect(retained).not.toBeNull();
@@ -475,9 +477,12 @@ test("a rejected project composer retains its request across project deletion", 
   expect(removed.ok()).toBe(true);
   await page.reload();
   await expect(recovery).toContainText("Preserve rejected composer");
-  expect(await page.evaluate((key) => sessionStorage.getItem(key), key)).toBe(
-    retained
-  );
+  expect(
+    await page.evaluate(
+      (storageKeyArgument) => sessionStorage.getItem(storageKeyArgument),
+      key
+    )
+  ).toBe(retained);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
