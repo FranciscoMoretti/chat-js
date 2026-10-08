@@ -1,5 +1,4 @@
 /* oxlint-disable eslint/max-lines-per-function -- This suite groups independent lifecycle races around the same ownership fixture. */
-/* oxlint-disable eslint/require-await, typescript/require-await -- Asynchronous provider stubs intentionally settle immediately unless a scenario injects a lifecycle race. */
 /* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- Test fixture factories preserve inferred mutable state so each case can inject failures at the provider boundary. */
 /* oxlint-disable eslint/no-magic-numbers -- Concrete SDK deadlines, status codes and expected counts are protocol assertions. */
@@ -13,7 +12,7 @@ import type { DaytonaResource } from "./sandbox";
 const setup = () => {
   const events: string[] = [];
   const controller = new AbortController();
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resource's required Promise and rejection contract. DaytonaResource.delete resolves void for a fixture with no external resource. DaytonaResource.process.executeCommand resolves the execution receipt after recording execute. */
+  /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- DaytonaResource.delete and process.executeCommand are Promise-returning SDK methods; these fixtures resolve after recording their respective operations. */
   const resource = {
     delete: async () => {
       // No external resource exists in this fixture.
@@ -31,8 +30,8 @@ const setup = () => {
     },
     state: "started",
   } satisfies DaytonaResource;
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve selected's required Promise and rejection contract. selected.cleanup.deleteAndConfirmAbsent resolves after recording deletion. selected.create resolves the allocation after recording create. */
+  /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
+  /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- The selected provider exposes Promise-returning cleanup.deleteAndConfirmAbsent and create methods; these fixtures resolve after recording their operations. */
   const selected = {
     cleanup: {
       deleteAndConfirmAbsent: async () => {
@@ -45,8 +44,8 @@ const setup = () => {
       return resource;
     },
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownership's required Promise and rejection contract. ownership.created resolves after recording ownership confirmation. ownership.release resolves after recording release. ownership.reserve resolves the allocation identifier. */
+  /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
+  /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- SandboxOwnership.reserve, created and release are Promise-returning transaction methods; these fixtures resolve after recording each operation. */
   const ownership = {
     created: async () => {
       events.push("confirm");
@@ -59,7 +58,7 @@ const setup = () => {
       return "allocation";
     },
   };
-  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
   return { controller, events, ownership, resource, selected };
 };
 const input = {
@@ -92,6 +91,7 @@ describe("Daytona allocation lifecycle", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.create rejects with create reply lost, exercising ambiguous provider completion. */
   test("an ambiguous create remains reserved and cannot execute or release", async () => {
     const state = setup();
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- selected.create returns the provider's Promise; this fixture models a rejected create response.
     state.selected.create = async () => {
       throw new Error("create reply lost");
     };
@@ -109,6 +109,7 @@ describe("Daytona allocation lifecycle", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.create aborts the signal then resolves the late allocation. */
   test("cancellation during create deletes the eventual allocation without executing", async () => {
     const state = setup();
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- selected.create returns the provider's Promise while this fixture aborts and resolves a late allocation.
     state.selected.create = async () => {
       state.controller.abort();
       return state.resource;
@@ -127,6 +128,7 @@ describe("Daytona allocation lifecycle", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. resource.process.executeCommand aborts the signal then resolves late command output. */
   test("cancellation during a command deletes once and never returns its result", async () => {
     const state = setup();
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- executeCommand returns the Daytona SDK's Promise while this fixture aborts and resolves late output.
     state.resource.process.executeCommand = async () => {
       state.controller.abort();
       return { exitCode: 0, result: "late output" };
@@ -151,6 +153,7 @@ describe("Daytona allocation lifecycle", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.cleanup.deleteAndConfirmAbsent rejects with delete failed. */
   test("failed deletion retains ownership for cleanup after restart", async () => {
     const state = setup();
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- deleteAndConfirmAbsent returns its declared Promise and this fixture tests rejection propagation.
     state.selected.cleanup.deleteAndConfirmAbsent = async () => {
       throw new Error("delete failed");
     };
@@ -168,6 +171,7 @@ describe("Daytona allocation lifecycle", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. ownership.created rejects with database unavailable. */
   test("failed durable confirmation still deletes the known resource", async () => {
     const state = setup();
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ownership.created returns its declared Promise and this fixture tests rejection propagation.
     state.ownership.created = async () => {
       throw new Error("database unavailable");
     };
@@ -235,6 +239,7 @@ test.each([false, true])(
   async (extra) => {
     const state = setup();
     let calls = 0;
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- executeCommand returns the Daytona SDK's Promise; this fixture resolves receipts based on invocation order.
     state.resource.process.executeCommand = async () => {
       calls += 1;
       if (extra && calls === 1) {

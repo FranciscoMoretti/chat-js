@@ -25,17 +25,17 @@ const setServerRegistration = (value: "registered" | "missing"): void => {
   calls.length = 0;
 };
 const getServerCalls = (): readonly string[] => calls;
-/* oxlint-disable oxc/no-async-await -- Keep the actual asynchronous Next header and Better Auth session signatures while returning fixed local service responses. */
-// oxlint-disable-next-line eslint/require-await, typescript/require-await -- React act and native asynchronous auth/header APIs expose completion promises even when the fixture operation is synchronous.
+/* oxlint-disable oxc/no-async-await -- Keep the Next headers API's Promise-returning signature while returning a fixed local fixture response. */
+// oxlint-disable-next-line eslint/require-await, typescript/require-await -- Next's native headers() API returns a Promise, so this fixture preserves the route's receiving contract.
 const fixtureHeaders = async (): Promise<Headers> => {
   calls.push("headers");
   return new Headers({ "x-fixture-session": registration });
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Keep the actual asynchronous Next header and Better Auth session signatures while returning fixed local service responses. */
+/* oxlint-disable oxc/no-async-await -- Preserve Better Auth's Promise-returning getSession callback used by the generated native server component fixture. */
 const fixtureAuth = {
   api: {
-    /* oxlint-disable eslint/require-await, typescript/require-await -- Keep Better Auth’s native completion promise while returning the fixed local session synchronously. */
+    /* oxlint-disable eslint/require-await, typescript/require-await -- Better Auth getSession returns a Promise; the generated RegisteredEveProjects fixture consumes this exact API contract. */
     getSession: async ({
       headers,
     }: {
@@ -53,6 +53,6 @@ const fixtureAuth = {
   },
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable import/no-named-export -- Keep the named fixture bindings (fixtureAuth, fixtureHeaders, getServerCalls, setServerRegistration); enabled import/no-default-export and app guidance require named module APIs. */
+/* oxlint-disable import/no-named-export -- Keep the named fixture bindings; enabled import/no-default-export and app guidance require named module APIs. */
 export { fixtureAuth, fixtureHeaders, getServerCalls, setServerRegistration };
 /* oxlint-enable import/no-named-export */
