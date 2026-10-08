@@ -1,44 +1,45 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/eve/cleanup-orphaned-files"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable import/first -- The mocked dependency must be registered before the module under test is loaded. */
 import { eq } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { keyFromFileUrl } from "../lib/file-url";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
+// Keep this as the final static import to preserve prior dependency evaluation order.
+// oxfmt-ignore
+import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const storage = vi.hoisted(() => ({
   fail: false,
   objects: new Map<string, Date>(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("../lib/file-storage")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("../lib/file-storage") accepts urls: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): vi.mock("../lib/file-storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("../lib/file-storage", () => ({
-  deleteFilesByUrls: (urls: string[]): Promise<void> => {
+  deleteFilesByUrls: (urls: readonly string[]): Promise<void> => {
     if (storage.fail) {
       return Promise.reject(new Error("Provider unavailable"));
     }
@@ -53,13 +54,7 @@ vi.mock("../lib/file-storage", () => ({
     }
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/cleanup-orphaned-files" dependency within this package instead of introducing an alias or barrel API.
- */
-import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
-/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
