@@ -1,9 +1,4 @@
-/* oxlint-disable import/max-dependencies -- Oxlint counts 19 dependencies here against its maximum of 10; this installer composes the cross-package runtime adapters and readonly descriptor contract. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import fs, {
   mkdir,
   mkdtemp,
@@ -12,52 +7,41 @@ import fs, {
   rm,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import path from "node:path";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { format } from "oxfmt";
-import ultracite from "ultracite/oxfmt";
-/* oxlint-enable sort-imports */
-import { z } from "zod";
-
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- The pinned rule sorts these declarations by binding, but the source path order requires ReadonlyInput after configureGatewayProvider. */
 import type { ReadonlyInput } from "../../cli/src/helpers/readonly-input";
-/* oxlint-enable sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { configureStorageProvider } from "../../cli/src/helpers/storage-provider";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../../cli/src/registry/gateways";
+import { demoInstallation } from "../installation";
 /* oxlint-enable import/no-relative-parent-imports */
+import { format } from "oxfmt";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installItems } from "../../cli/src/registry/shadcn";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../../cli/src/registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { planInstallation } from "../../cli/src/utils/installation-plan";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { preflight } from "../../cli/src/utils/preflight";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/max-dependencies -- This importer reaches the 11th dependency here; the canonical installer composes 18 dependencies against the configured maximum of 10.
+import { registry } from "../registry";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { resolveGateway } from "../../cli/src/registry/gateways";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { resolveStorage } from "../../cli/src/registry/storage";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { syncFeatures } from "../../cli/src/utils/sync-features";
@@ -65,14 +49,11 @@ import { syncFeatures } from "../../cli/src/utils/sync-features";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { syncTools } from "../../cli/src/utils/sync-tools";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { demoInstallation } from "../installation";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { registry } from "../registry";
-/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+import ultracite from "ultracite/oxfmt";
+import { z } from "zod";
 
 // Explicit demo exceptions, scoped to one value/import. Everything else is checked.
 const demoSource = (file: string, source: string): string => {
@@ -86,15 +67,19 @@ const demoSource = (file: string, source: string): string => {
   return source;
 };
 
+const NO_FORMATTING_ERRORS = 0;
+const URL_PATH_PREFIX_WIDTH = 1;
+const NO_ROLLBACK_FAILURES = 0;
+const NO_FILE_CHANGES = 0;
+const CLI_ARGUMENTS_OFFSET = 2;
+
 const registryRoot = path.resolve(import.meta.dir, "..");
 
-/* oxlint-enable import/max-dependencies */
 const demoRoot = path.resolve(registryRoot, "../../apps/chat");
 
 const baselinePath = path.join(registryRoot, "demo-baseline.json");
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve formatted's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatted = async (file: string, content: string): Promise<string> => {
   if (
     content.startsWith("// Generated by chat-js sync.") &&
@@ -103,15 +88,14 @@ const formatted = async (file: string, content: string): Promise<string> => {
     return content;
   }
   const result = await format(file, content, ultracite);
-  if (result.errors.length > 0) {
+  if (result.errors.length > NO_FORMATTING_ERRORS) {
     throw new Error(`Could not format demo source: ${file}`);
   }
   return result.code;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 const digest = (content: string): string =>
-  createHash("sha256").update(content).digest("hex");
+  new Bun.CryptoHasher("sha256").update(content).digest("hex");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optionalRead's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const optionalRead = async (file: string): Promise<string | null> => {
@@ -149,13 +133,14 @@ const filesBelow = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateDemo's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Install canonical sources through the CLI's planner and shadcn transforms. */
+/**
+ * Install canonical sources through the CLI's planner and shadcn transforms.
+ * @returns {Promise<Map<string, string>>} Canonical relative paths and their installed source contents.
+ */
 const generateDemo = async (): Promise<Map<string, string>> => {
   const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-demo-"));
+  // oxlint-disable-next-line eslint/init-declarations -- The absent cleanup callback remains undefined until Bun.serve succeeds; explicit undefined initialization triggers eslint/no-undefined.
   let stopServer: (() => void) | undefined;
   try {
     // This source-only registry retains registry dependencies, but omits package
@@ -213,7 +198,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     const server = Bun.serve({
       fetch(request: Readonly<Pick<Request, "url">>) {
         const name = new URL(request.url).pathname
-          .slice(1)
+          .slice(URL_PATH_PREFIX_WIDTH)
           .replace(/\.json$/u, "");
         const item = items.find(
           (candidate: ReadonlyInput<(typeof items)[number]>) =>
@@ -333,10 +318,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
 
 const DEMO_BASELINE_VERSION = 1;
@@ -349,15 +331,14 @@ const baselineSchema = z.strictObject({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceDemoFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Stage every write before replacing files; retain originals until the baseline commits. */
+type DemoWrite = Readonly<{ target: string; content: string; exists: boolean }>;
+
+/**
+ * Stage every write before replacing files; retain originals until the baseline commits.
+ * @param {readonly DemoWrite[]} updates Ordered destination writes, with the baseline committed last.
+ */
 const replaceDemoFiles = async (
-  updates: readonly {
-    readonly target: string;
-    readonly content: string;
-    readonly exists: boolean;
-  }[]
+  updates: readonly DemoWrite[]
 ): Promise<void> => {
   const staged: {
     target: string;
@@ -409,7 +390,7 @@ const replaceDemoFiles = async (
         failures.push(rollbackError);
       }
     }
-    if (failures.length > 0) {
+    if (failures.length > NO_ROLLBACK_FAILURES) {
       retainBackups = true;
       throw new AggregateError(
         [error, ...failures],
@@ -431,24 +412,25 @@ const replaceDemoFiles = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncDemo's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Check all files before writing any: a failed protection check never partially syncs. */
-const syncDemo = async (options: {
-  readonly root: string;
-  readonly baseline: string;
-  readonly expected: Pick<ReadonlyMap<string, string>, "get" | "has" | "keys">;
-  readonly check?: boolean;
-  readonly discard?: boolean;
-}): Promise<void> => {
+type DemoSyncOptions = Readonly<{
+  root: string;
+  baseline: string;
+  expected: Pick<ReadonlyMap<string, string>, "get" | "has" | "keys">;
+  check?: boolean;
+  discard?: boolean;
+}>;
+
+/**
+ * Check all files before writing any: a failed protection check never partially syncs.
+ * @param {DemoSyncOptions} options Destination, baseline, canonical source and protection options.
+ */
+const syncDemo = async (options: DemoSyncOptions): Promise<void> => {
   const { root, baseline, expected, check = false, discard = false } = options;
   await preflight(path.dirname(baseline), [path.basename(baseline)]);
   const previous = await optionalRead(baseline);
@@ -487,13 +469,13 @@ const syncDemo = async (options: {
     }
     return content !== null && content !== expected.get(file);
   });
-  if (edited.length > 0 && !discard) {
+  if (edited.length > NO_FILE_CHANGES && !discard) {
     throw new Error(
       `Edited registry-owned demo files:\n${edited.join("\n")}\nMove changes upstream or explicitly regenerate with bun demo:sync --discard.`
     );
   }
   const staleOwnership = files.filter((file) => !expected.has(file));
-  if (staleOwnership.length > 0) {
+  if (staleOwnership.length > NO_FILE_CHANGES) {
     throw new Error(
       `Preset removed owned files; removal is outside demo sync scope:\n${staleOwnership.join("\n")}`
     );
@@ -513,7 +495,7 @@ const syncDemo = async (options: {
   );
   const baselineDrift = previous !== baselineContent;
   if (check) {
-    if (drift.length > 0 || baselineDrift) {
+    if (drift.length > NO_FILE_CHANGES || baselineDrift) {
       throw new Error(
         // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
@@ -531,15 +513,12 @@ const syncDemo = async (options: {
   ]);
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 if (import.meta.main) {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(CLI_ARGUMENTS_OFFSET);
   if (
     args.some((arg) => arg !== "--check" && arg !== "--discard") ||
     (args.includes("--check") && args.includes("--discard"))
@@ -559,6 +538,5 @@ if (import.meta.main) {
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (baselinePath, demoRoot, demoSource, generateDemo, syncDemo); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-/* oxlint-enable eslint/no-magic-numbers */
 export { baselinePath, demoRoot, demoSource, generateDemo, syncDemo };
 /* oxlint-enable import/no-named-export */

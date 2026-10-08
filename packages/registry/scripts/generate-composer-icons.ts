@@ -1,15 +1,13 @@
+/// <reference lib="es2023" />
+/// <reference types="node" />
+/* oxlint-disable import/no-namespace -- Enumerate Lucide runtime component exports, including documented aliases outside lucide.icons, to generate the complete composer catalog verified by the parity test. */
+import * as lucide from "lucide-react";
+/* oxlint-enable import/no-namespace */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/no-namespace -- Enumerate Lucide runtime component exports, including documented aliases outside lucide.icons, to generate the complete composer catalog verified by the parity test. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import * as lucide from "lucide-react";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-namespace */
-
 const components = new Set<unknown>(Object.values(lucide.icons));
-// oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- Reflect all Lucide module exports, including aliases, to generate the exact available icon catalog.
 const names = Object.entries(lucide)
   .filter(([, value]: readonly [string, unknown]) => components.has(value))
   .map(([name]: readonly [string, unknown]) => name)

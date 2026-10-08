@@ -1,16 +1,12 @@
 /* oxlint-disable import/no-nodejs-modules -- This Bun-only registry builder deletes and writes its dist directory and registry.json using asynchronous filesystem operations. */
 import { mkdir, rm, writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
+import { format } from "oxfmt";
 /* oxlint-disable import/no-nodejs-modules -- This Bun-only registry builder joins output paths below import.meta.dir using the host platform filesystem separator. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-
-import { spawn } from "bun";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { format } from "oxfmt";
-/* oxlint-enable sort-imports */
-
 import { registry } from "./registry";
+import { spawn } from "bun";
 
 const JSON_INDENTATION = 2;
 const FORMATTED_LINE_WIDTH = 80;

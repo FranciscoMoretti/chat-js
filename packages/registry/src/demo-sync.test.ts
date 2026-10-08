@@ -9,30 +9,25 @@ import fs, {
   writeFile,
 } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import path from "node:path";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
 /* oxlint-disable import/no-relative-parent-imports -- Exercise the canonical package demo installer; @/ resolves application source and package exports expose only registry JSON artifacts. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateDemo, syncDemo } from "../scripts/demo-sync";
-/* oxlint-enable sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
+import { jsonObject, parseJsonObject } from "./test-json";
 import {
   observeGeneratorFailure,
   prepareReplacement,
   replacementFailure,
   verifyRollback,
 } from "./demo-sync-test-support";
+
 import type { ReadonlyNativeSurface } from "./demo-sync-test-support";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { jsonObject, parseJsonObject } from "./test-json";
-/* oxlint-enable sort-imports */
+
+/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
+import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
+import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_DIRECTORY_INDEX = 0;
 const directories: string[] = [];

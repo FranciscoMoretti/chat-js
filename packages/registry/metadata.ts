@@ -1,8 +1,5 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { composerIconNames } from "./composer-icons.generated";
-/* oxlint-enable sort-imports */
+import { z } from "zod";
 
 const CONTRACT_VERSION = 1;
 const REQUIRED_ITEM_COUNT = 1;

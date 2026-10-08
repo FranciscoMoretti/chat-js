@@ -1,15 +1,18 @@
-/* oxlint-disable eslint/max-lines-per-function -- The suite groups independent provider boundary tests sharing one typed fixture. */
 /* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Fixture callbacks retain mutable SDK state so each case can inject lifecycle races or provider failures. */
-/* oxlint-disable eslint/no-magic-numbers -- Concrete SDK deadlines, status codes and expected counts are protocol assertions. */
-import { describe, expect, test } from "bun:test";
-
-import { DaytonaNotFoundError } from "@daytona/sdk";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { commandSandbox, createDaytonaProvider } from "./sandbox";
-/* oxlint-enable sort-imports */
+import { describe, expect, test } from "bun:test";
+import type { CreateSandboxFromSnapshotParams } from "@daytona/sdk";
+import { DaytonaNotFoundError } from "@daytona/sdk";
 import type { DaytonaResource } from "./sandbox";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+const ATTEMPTS_PER_CALL = 1;
+const NOT_FOUND_STATUS = 404;
+const DELETE_TIMEOUT_SECONDS = 60;
+const COMMAND_TIMEOUT_SECONDS = 300;
+const FAILED_COMMAND_EXIT_CODE = 1;
+const FIRST_DELETE_ATTEMPT = 1;
+const EXPECTED_DELETE_ATTEMPTS = 2;
 
 const credentials = { apiKey: "test-only", organizationId: "org-a" };
 /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- DaytonaResource.delete and process.executeCommand are Promise-returning SDK methods; these fixtures settle after the recorded operation. */
@@ -27,12 +30,16 @@ const resource = (
   ...overrides,
 });
 /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
+/* oxlint-disable eslint/max-lines-per-function -- This registration callback groups the daytona durable resource boundary cases under one suite name and shared fixture. */
 describe("Daytona durable resource boundary", () => {
   /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- DaytonaClient.create and get are Promise-returning SDK methods; each fixture resolves the resource for this scenario. */
   test("creates a private ephemeral named resource with a wall-clock TTL", async () => {
     const calls: unknown[] = [];
     const adapter = createDaytonaProvider(credentials, {
-      create: async (params, options) => {
+      create: async (
+        params: ReadonlyNativeSurface<CreateSandboxFromSnapshotParams>,
+        options?: Readonly<{ timeout?: number }>
+      ) => {
         calls.push(params, options);
         return resource();
       },
@@ -90,7 +97,9 @@ describe("Daytona durable resource boundary", () => {
     const calls: unknown[] = [];
     let deleted = false;
     const sandbox = resource({
-      delete: async (...args) => {
+      delete: async (
+        ...args: Readonly<Parameters<DaytonaResource["delete"]>>
+      ) => {
         calls.push(args);
         deleted = true;
       },
@@ -100,13 +109,13 @@ describe("Daytona durable resource boundary", () => {
       get: async () => {
         calls.push("get");
         if (deleted) {
-          throw new DaytonaNotFoundError("gone", 404);
+          throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
         }
         return sandbox;
       },
     });
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
-    expect(calls).toEqual(["get", [60, true], "get"]);
+    expect(calls).toEqual(["get", [DELETE_TIMEOUT_SECONDS, true], "get"]);
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
   });
   /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
@@ -136,7 +145,11 @@ describe("Daytona durable resource boundary", () => {
     const sandbox = commandSandbox(
       resource({
         process: {
-          executeCommand: async (...args) => {
+          executeCommand: async (
+            ...args: ReadonlyNativeSurface<
+              Parameters<DaytonaResource["process"]["executeCommand"]>
+            >
+          ) => {
             calls.push(args);
             return { exitCode: 1, result: "traceback" };
           },
@@ -153,12 +166,12 @@ describe("Daytona durable resource boundary", () => {
         String.raw`'python3' '-c' 'print('\''hello'\''); # $(touch /tmp/escaped)'`,
         "/tmp",
         {},
-        300,
+        COMMAND_TIMEOUT_SECONDS,
       ],
     ]);
     expect(await result.stdout()).toBe("traceback");
     expect(await result.stderr()).toBe("");
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(FAILED_COMMAND_EXIT_CODE);
   });
   /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
   /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- DaytonaResource.process.executeCommand retains the SDK's Promise contract while this scenario verifies an aborted command is not started. */
@@ -185,14 +198,15 @@ describe("Daytona durable resource boundary", () => {
   /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
 });
 
+/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-disable oxc/no-async-await, eslint/require-await, typescript/require-await -- DaytonaResource.delete and DaytonaClient.create/get retain their Promise contracts while this scenario verifies retry and rejection behavior. */
 test("a new provider session retries cleanup after restart without allocating", async () => {
   let deleted = false;
   let attempts = 0;
   const sandbox = resource({
     delete: async () => {
-      attempts += 1;
-      if (attempts === 1) {
+      attempts += ATTEMPTS_PER_CALL;
+      if (attempts === FIRST_DELETE_ATTEMPT) {
         throw new Error("transient delete failure");
       }
       deleted = true;
@@ -204,7 +218,7 @@ test("a new provider session retries cleanup after restart without allocating", 
     },
     get: async (): Promise<DaytonaResource> => {
       if (deleted) {
-        throw new DaytonaNotFoundError("gone", 404);
+        throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
       }
       return sandbox;
     },
@@ -218,7 +232,7 @@ test("a new provider session retries cleanup after restart without allocating", 
     credentials,
     client
   ).cleanup.deleteAndConfirmAbsent("allocation-a");
-  expect(attempts).toBe(2);
+  expect(attempts).toBe(EXPECTED_DELETE_ATTEMPTS);
   expect(deleted).toBe(true);
 });
 /* oxlint-enable oxc/no-async-await, eslint/require-await, typescript/require-await */
