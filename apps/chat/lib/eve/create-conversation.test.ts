@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   CreationRejectedError,
@@ -18,15 +20,14 @@ afterEach(() => {
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("aborts a stalled creation without resending or changing its operation") uses 30_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("aborts a stalled creation without resending or changing its operation") accepts init: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("aborts a stalled creation without resending or changing its operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("aborts a stalled creation without resending or changing its operation", async () => {
   vi.useFakeTimers();
   const fetchMock = vi.fn(
-    (_url: string, init: RequestInit) =>
+    (_url: string, init: ReadonlyNativeSurface<RequestInit>) =>
       // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
       new Promise<Response>((_resolve, reject) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -50,7 +51,7 @@ it("aborts a stalled creation without resending or changing its operation", asyn
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns the existing binding on retry and clears its deadline") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -137,9 +138,8 @@ it("identifies a missing project only on a definitive rejection", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("automatically retries busy creation with the same operation identity") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("automatically retries busy creation with the same operation identity") accepts [, init]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("automatically retries busy creation with the same operation identity", async () => {
   vi.useFakeTimers();
@@ -159,11 +159,15 @@ it("automatically retries busy creation with the same operation identity", async
   await vi.advanceTimersByTimeAsync(2000);
   await expect(result).resolves.toMatchObject({ sessionId: "session" });
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetchMock.mock.calls.map(([, init]) => init.body)).toEqual([
-    JSON.stringify(operation),
-    JSON.stringify(operation),
-  ]);
+
+  expect(
+    fetchMock.mock.calls.map(
+      ([, init]: Readonly<(typeof fetchMock.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        init.body
+      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
+    )
+  ).toEqual([JSON.stringify(operation), JSON.stringify(operation)]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */

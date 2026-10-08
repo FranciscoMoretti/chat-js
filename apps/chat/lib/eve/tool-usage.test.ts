@@ -17,9 +17,8 @@ const context = () => ({ abortSignal: new AbortController().signal });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
  * no-magic-numbers (#517): test("distinguishes explicitly free work from unreported usage") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("distinguishes explicitly free work from unreported usage") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): test("distinguishes explicitly free work from unreported usage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test("distinguishes explicitly free work from unreported usage", async () => {
@@ -36,11 +35,10 @@ test("distinguishes explicitly free work from unreported usage", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("retains reported costs only for explicitly reported domain failures") uses 0.02, 0.03 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("retains reported costs only for explicitly reported domain failures") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("retains reported costs only for explicitly reported domain failures") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("retains reported costs only for explicitly reported domain failures", async () => {
@@ -58,37 +56,38 @@ test("retains reported costs only for explicitly reported domain failures", asyn
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   new Error("Unexpected provider failure"),   { authorization: "required" }, ])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
- * typescript/prefer-readonly-parameter-types (#565): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  accepts failure; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async, unicorn/max-nested-calls --
  * typescript/promise-function-async (#606): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test.each([
   new Error("Unexpected provider failure"),
   { authorization: "required" },
-])("preserves native exceptions unchanged: %s", async (failure) => {
-  await expect(
-    executeWithToolUsage(context(), () => {
-      // oxlint-disable-next-line typescript/only-throw-error -- #601: Preserve the plain-object provider failure's rejection identity.
-      throw failure;
-    })
-  ).rejects.toBe(failure);
-  await expect(
-    Array.fromAsync(
-      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
-      executeWithToolProgress(context(), () => Promise.reject(failure))
-    )
-  ).rejects.toBe(failure);
-});
+])(
+  "preserves native exceptions unchanged: %s",
+  async (failure: Readonly<Error | { authorization: string }>) => {
+    await expect(
+      executeWithToolUsage(context(), () => {
+        // oxlint-disable-next-line typescript/only-throw-error -- #601: Preserve the plain-object provider failure's rejection identity.
+        throw failure;
+      })
+    ).rejects.toBe(failure);
+    await expect(
+      Array.fromAsync(
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #785: Preserve the plain-object provider rejection reason; the assertion checks rejection identity.
+        executeWithToolProgress(context(), () => Promise.reject(failure))
+      )
+    ).rejects.toBe(failure);
+  }
+);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable typescript/promise-function-async, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("cancellation propagates before and during execution") uses 0.04 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("cancellation propagates before and during execution") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("cancellation propagates before and during execution", async () => {
   const controller = new AbortController();
@@ -109,11 +108,10 @@ test("cancellation propagates before and during execution", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
@@ -129,7 +127,7 @@ test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("an unresolved provider cost prevents a known subtotal from becoming a final cha uses 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
