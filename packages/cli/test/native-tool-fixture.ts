@@ -5,6 +5,8 @@ import path from "node:path";
 
 import { run } from "./run-command";
 
+const NATIVE_RUNTIME_TIMEOUT_MS = 180_000;
+
 const definition = {
   contractVersion: 1,
   id: "paid-counter",
@@ -70,7 +72,6 @@ export const PaidCounterRenderer = defineToolRenderer({
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /** Run the installed app's registration through a real, isolated EVE worker. */
 const verifyNativeToolRuntime = async (cwd: string) => {
   const fixture = path.join(cwd, "native-runtime");
@@ -162,12 +163,11 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
       "--timeout",
       "60000",
     ],
-    180_000
+    NATIVE_RUNTIME_TIMEOUT_MS
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (nativeToolFixture, verifyNativeToolRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */

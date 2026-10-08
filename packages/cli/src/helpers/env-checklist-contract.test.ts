@@ -65,6 +65,5 @@ test("preserves auth insertion order and skips unused requirement-description ge
     (entry: { readonly vars: string }) => entry.vars === "CUSTOM_TOKEN"
   );
   expect(custom).toHaveProperty("oneOfGroup");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading oneOfGroup from custom; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  expect(custom?.oneOfGroup).toBeUndefined();
+  expect(custom && custom.oneOfGroup).toBeUndefined();
 });

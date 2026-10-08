@@ -1,4 +1,3 @@
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The CLI normalizer determines the selected package-manager version through its native subprocess API.
 import { execFileSync } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
@@ -57,6 +56,8 @@ const parsePackageJson = (
   return value;
 };
 
+const USER_AGENT_VERSION_CAPTURE = 1;
+
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [
   "@better-auth/core",
@@ -106,9 +107,8 @@ const pinBetterAuthVersions = (
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This transform replaces and removes entries in the supplied scripts map before the original manifest is serialized.
-const normalizeChatAppScripts = (scripts: ScriptMap): void => {
+const configureChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
   scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
@@ -121,6 +121,11 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
   scripts["db:migrate"] = "tsx lib/db/migrate.ts";
+};
+
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This normalizer updates the original scripts map and removes repository-only database commands before serialization.
+const normalizeChatAppScripts = (scripts: ScriptMap): void => {
+  configureChatAppScripts(scripts);
   for (const name of Object.keys(scripts)) {
     if (
       name.startsWith("db:branch:") ||
@@ -136,24 +141,26 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts["ai:devtools"] = "npx @ai-sdk/devtools";
   scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
 };
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This transform edits the supplied scripts map in place, including Forge commands and removal of obsolete distribution aliases.
-const normalizeElectronScripts = (scripts: ScriptMap): void => {
-  const prebuild =
-    "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
+const configureElectronRuntimeScripts = (scripts: ScriptMap): string => {
   const build =
     "esbuild src/main.ts --bundle --platform=node --format=cjs --outfile=dist/main.js --external:electron --external:electron-updater --alias:@=.. && esbuild src/preload.ts --bundle --platform=browser --format=cjs --outfile=dist/preload.js --external:electron --alias:@=..";
 
   scripts.forge = "node ./scripts/run-forge.cjs";
   scripts["generate-icons"] = "tsx scripts/generate-icons.ts";
-  scripts.prebuild = prebuild;
+  scripts.prebuild =
+    "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
   scripts.build = build;
   scripts.start = "node ./scripts/run-forge.cjs start";
   scripts.dev = "node ./scripts/run-forge.cjs start";
   scripts.package = "node ./scripts/run-forge.cjs package";
   scripts.make = "node ./scripts/run-forge.cjs make";
+  return build;
+};
+
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These platform-specific Forge commands are installed into the original scripts map.
+const configureElectronDistributionScripts = (scripts: ScriptMap): void => {
   scripts["make:mac"] =
     "node ./scripts/run-forge.cjs make --platform=darwin --arch=universal";
   scripts["make:win"] =
@@ -161,17 +168,27 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
   scripts["make:linux"] =
     "node ./scripts/run-forge.cjs make --platform=linux --arch=x64";
   scripts.publish = "node ./scripts/run-forge.cjs publish";
-  scripts["electron:build"] = build;
-  scripts["electron:dev"] = scripts.dev;
-  scripts["electron:make"] = scripts.make;
-  scripts["electron:publish"] = scripts.publish;
+};
+
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Remove obsolete aliases from the original caller-owned scripts map; readonly keys would prohibit deletion.
+const removeLegacyElectronDistributionScripts = (scripts: ScriptMap): void => {
   delete scripts["dist:mac"];
   delete scripts["dist:win"];
   delete scripts["dist:linux"];
   delete scripts["publish:mac"];
   delete scripts["publish:win"];
 };
-/* oxlint-enable eslint/max-statements */
+
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This normalizer updates original Electron aliases and deletes obsolete distribution aliases.
+const normalizeElectronScripts = (scripts: ScriptMap): void => {
+  const build = configureElectronRuntimeScripts(scripts);
+  configureElectronDistributionScripts(scripts);
+  scripts["electron:build"] = build;
+  scripts["electron:dev"] = scripts.dev;
+  scripts["electron:make"] = scripts.make;
+  scripts["electron:publish"] = scripts.publish;
+  removeLegacyElectronDistributionScripts(scripts);
+};
 
 const normalizeElectronDevDependencies = (
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map.
@@ -188,23 +205,18 @@ const normalizeElectronDevDependencies = (
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-const normalizeScaffoldedPackageJson = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This normalizer returns the original manifest after updating its dependency, script, override, type and packageManager fields; callers rely on in-place normalization.
-  packageJson: PackageJson,
-  options?: Readonly<{
-    packageManager?: PackageManager;
-    persistPackageManager?: boolean;
-    template?: "chat-app" | "electron";
-    tsxVersion?: string;
-  }>
-): PackageJson => {
-  const betterAuthVersion = resolveBetterAuthVersion(packageJson);
+interface ScaffoldPackageOptions {
+  readonly packageManager?: PackageManager;
+  readonly persistPackageManager?: boolean;
+  readonly template?: "chat-app" | "electron";
+  readonly tsxVersion?: string;
+}
 
+const normalizeBetterAuthPackages = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Pin matching dependency maps and replace the original manifest's overrides after resolving its version.
+  packageJson: PackageJson,
+  betterAuthVersion: string
+): void => {
   if (typeof betterAuthVersion === "string" && betterAuthVersion !== "") {
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
@@ -214,9 +226,14 @@ const normalizeScaffoldedPackageJson = (
       "@better-auth/core": betterAuthVersion,
     };
   }
+};
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading template from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  switch (options?.template) {
+const normalizeTemplatePackageJson = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Apply the selected template's type, scripts, and development dependencies to the original manifest.
+  packageJson: PackageJson,
+  options?: ScaffoldPackageOptions
+): void => {
+  switch (options && options.template) {
     case "chat-app": {
       packageJson.type = "module";
       if (packageJson.scripts) {
@@ -230,8 +247,7 @@ const normalizeScaffoldedPackageJson = (
       }
       normalizeElectronDevDependencies(
         packageJson.devDependencies,
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tsxVersion from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        options?.tsxVersion
+        options && options.tsxVersion
       );
       break;
     }
@@ -239,34 +255,43 @@ const normalizeScaffoldedPackageJson = (
       break;
     }
   }
+};
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading persistPackageManager from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  if (options?.persistPackageManager !== false) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading packageManager from options; preserve one receiver evaluation, skipped accesses and the existing "bun" fallback.
-    const packageManager = options?.packageManager ?? "bun";
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from process.env.npm_config_user_agent.match(...); read match from process.env.npm_config_user_agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const launcherVersion = process.env.npm_config_user_agent?.match(
-      new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`, "u")
-    )?.[1];
-    const version =
-      launcherVersion ??
-      execFileSync(packageManager, ["--version"], {
-        cwd: tmpdir(),
-        encoding: "utf-8",
-      }).trim();
-    if (!/^\d+\.\d+\.\d+/u.test(version)) {
-      throw new Error(`Cannot determine ${packageManager} version.`);
-    }
-    packageJson.packageManager = `${packageManager}@${version}`;
+/* oxlint-disable node/no-process-env -- Resolve the package-manager launcher version from its native environment before invoking the version command. */
+/* oxlint-disable node/no-sync -- Package normalization synchronously records the selected manager's version before returning the original manifest. */
+const packageManagerVersion = (packageManager: PackageManager): string => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from process.env.npm_config_user_agent.match(...); read match from process.env.npm_config_user_agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+  const launcherVersion = process.env.npm_config_user_agent?.match(
+    new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`, "u")
+  )?.[USER_AGENT_VERSION_CAPTURE];
+  const version =
+    launcherVersion ??
+    execFileSync(packageManager, ["--version"], {
+      cwd: tmpdir(),
+      encoding: "utf-8",
+    }).trim();
+  if (!/^\d+\.\d+\.\d+/u.test(version)) {
+    throw new Error(`Cannot determine ${packageManager} version.`);
   }
-
-  return packageJson;
+  return version;
 };
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+
+const normalizeScaffoldedPackageJson = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This normalizer returns the original manifest after updating dependency, script, override, type, and packageManager fields; callers rely on in-place normalization.
+  packageJson: PackageJson,
+  options?: ScaffoldPackageOptions
+): PackageJson => {
+  const betterAuthVersion = resolveBetterAuthVersion(packageJson);
+  normalizeBetterAuthPackages(packageJson, betterAuthVersion);
+  normalizeTemplatePackageJson(packageJson, options);
+  if ((options && options.persistPackageManager) !== false) {
+    const packageManager = (options && options.packageManager) ?? "bun";
+    packageJson.packageManager = `${packageManager}@${packageManagerVersion(packageManager)}`;
+  }
+  return packageJson;
+};
 
 // oxlint-disable-next-line import/no-named-export -- Keep the established normalizer and canonical validator named API; no-default-export rejects its default-export alternative.
 export { normalizeScaffoldedPackageJson, parsePackageJson };

@@ -10,6 +10,7 @@ import pathModule from "node:path";
 
 const repoRoot = pathModule.resolve(import.meta.dir, "../../../..");
 const turbo = pathModule.join(repoRoot, "node_modules/.bin/turbo");
+const successExitCode = 0;
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 let fixture: string;
 /* oxlint-enable eslint/init-declarations */
@@ -32,16 +33,14 @@ const run = (command: string[]) =>
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const git = (...args: readonly string[]): string => {
   const result = run(["git", ...args]);
-  if (result.exitCode !== 0) {
+  if (result.exitCode !== successExitCode) {
     throw new Error(result.stderr.toString());
   }
   return result.stdout.toString().trim();
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 beforeAll(async (): Promise<void> => {
   fixture = await mkdtemp(pathModule.join(tmpdir(), "chatjs-turbo-affected-"));
@@ -87,10 +86,9 @@ afterAll(async (): Promise<void> => {
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ["apps/docs/index.mdx", false],   ["apps/site/app/page.tsx", false],   ["README.md", f's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve each path case's awaited Git, Turbo query, and task-planning checks. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 test.each([
@@ -144,8 +142,7 @@ test.each([
       "HEAD",
       "--exit-code",
     ]);
-    // oxlint-disable-next-line no-ternary -- Keep expect(result.exitCode, result.stderr.toString()).toBe  as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    expect(result.exitCode, result.stderr.toString()).toBe(affected ? 1 : 0);
+    expect(result.exitCode, result.stderr.toString()).toBe(Number(affected));
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const output = JSON.parse(result.stdout.toString());
     // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -165,7 +162,9 @@ test.each([
         env: { ...process.env, TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
       }
     );
-    expect(execution.exitCode, execution.stderr.toString()).toBe(0);
+    expect(execution.exitCode, execution.stderr.toString()).toBe(
+      successExitCode
+    );
     const plannedTasks = new Set(
       // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       JSON.parse(execution.stdout.toString()).tasks.map(
@@ -191,6 +190,5 @@ test.each([
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

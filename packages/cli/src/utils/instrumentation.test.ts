@@ -19,7 +19,6 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -31,7 +30,7 @@ for (const runtime of ["nodejs", "edge"]) {
       // oxlint-disable-next-line no-ternary -- Keep registrations as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const registrations = fail
         ? [
-            (context: unknown) => {
+            (context: unknown): never => {
               received.push(context);
               events.push("optional");
               throw failure;
@@ -77,5 +76,4 @@ for (const runtime of ["nodejs", "edge"]) {
     /* oxlint-enable oxc/no-async-await */
   }
 }
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */

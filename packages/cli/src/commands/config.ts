@@ -17,6 +17,8 @@ import { inferPackageManager } from "#cli/utils/get-package-manager";
 import { handleError } from "#cli/utils/handle-error";
 /* oxlint-enable sort-imports */
 
+const EXIT_SUCCESS = 0;
+
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
 import { applyDefaults } from "./lib/config-schema";
@@ -86,8 +88,7 @@ export const config = new Command()
       }
 
       const [code] = closeEvent;
-      // oxlint-disable-next-line no-magic-numbers -- Native subprocess exit status zero denotes successful configuration evaluation.
-      if (code !== 0) {
+      if (code !== EXIT_SUCCESS) {
         throw new Error(`Failed to resolve config:\n${stderr.join("").trim()}`);
       }
     } catch (error) {

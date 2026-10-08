@@ -11,12 +11,10 @@ import { config } from "./commands/config";
 import { create } from "./commands/create";
 import { sync } from "./commands/sync";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-process.on("SIGINT", () => process.exit(0));
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-process.on("SIGTERM", () => process.exit(0));
-/* oxlint-enable eslint/no-magic-numbers */
+const SUCCESS_EXIT_CODE = 0;
+
+process.on("SIGINT", () => process.exit(SUCCESS_EXIT_CODE));
+process.on("SIGTERM", () => process.exit(SUCCESS_EXIT_CODE));
 
 const program = new Command()
   .name("chat-js")

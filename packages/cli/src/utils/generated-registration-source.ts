@@ -38,8 +38,11 @@ const singleValueRegistration = (line: string): boolean => {
   ) {
     return true;
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from /^export \{(?<bindings>[^}]*)\}/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const reexport = /^export \{(?<bindings>[^}]*)\}/u.exec(line)?.groups;
+  const match = /^export \{(?<bindings>[^}]*)\}/u.exec(line);
+  if (!match) {
+    return false;
+  }
+  const reexport = match.groups;
   if (!reexport) {
     return false;
   }
@@ -114,10 +117,8 @@ const renderRegistration = (
   if (grouped && declaration) {
     return {
       source,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (declaration.kind === "type"           ? { type: declaration.name }           : { value: declaration.name }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      ...(declaration.kind === "type"
-        ? { type: declaration.name }
-        : { value: declaration.name }),
+      // oxlint-disable-next-line no-ternary -- Keep the selected generated property name as a value expression; assigning either key through if/else conflicts with pinned unicorn/prefer-ternary.
+      [declaration.kind === "type" ? "type" : "value"]: declaration.name,
     };
   }
   return { source };

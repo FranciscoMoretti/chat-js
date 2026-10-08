@@ -15,7 +15,7 @@ import {
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "./scaffold-content";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   {     excluded: [       "evals/my-eval.eval.ts",       "tests/visual/eve-tool-results.'s awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; each case awaits fixture creation, copying, assertions, and cleanup. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */

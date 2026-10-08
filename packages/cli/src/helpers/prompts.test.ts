@@ -17,7 +17,7 @@ import {
   promptDocumentTypes,
   promptObservability,
 } from "./prompts";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -70,7 +70,7 @@ it("rejects a default for media the gateway cannot support", () => {
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
 it("defaults media tool installation selections to false with --yes", async () => {
   const { builtInTools } = await promptAssistantTools(
     [],

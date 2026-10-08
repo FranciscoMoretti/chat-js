@@ -13,22 +13,30 @@ import { builtInGateways, resolveGateway } from "./gateways";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+const FIRST_GATEWAY_INDEX = 0;
+const EPHEMERAL_PORT = 0;
+
 it("validates gateway integration metadata with the standard registry schema", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-metadata-"));
   const source = path.join(cwd, "gateway.json");
   try {
-    await writeFile(source, JSON.stringify(builtInGateways[0]));
+    await writeFile(
+      source,
+      JSON.stringify(builtInGateways[FIRST_GATEWAY_INDEX])
+    );
     const resolvedGateway = await resolveGateway(source);
     expect(resolvedGateway.definition.id).toBe("vercel");
     await writeFile(
       source,
       JSON.stringify({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        ...builtInGateways[0],
+        ...builtInGateways[FIRST_GATEWAY_INDEX],
         meta: {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0].meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          chatjs: { ...builtInGateways[0].meta.chatjs, contractVersion: 999 },
+          chatjs: {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0].meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            ...builtInGateways[FIRST_GATEWAY_INDEX].meta.chatjs,
+            contractVersion: 999,
+          },
         },
       })
     );
@@ -39,18 +47,16 @@ it("validates gateway integration metadata with the standard registry schema", a
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   const server = Bun.serve({
     fetch: (request: Readonly<Pick<Request, "url">>) => {
       if (new URL(request.url).pathname === "/gateway.json") {
         return Response.redirect(new URL("/target.json", request.url));
       }
-      return Response.json(builtInGateways[0]);
+      return Response.json(builtInGateways[FIRST_GATEWAY_INDEX]);
     },
     hostname: "127.0.0.1",
-    port: 0,
+    port: EPHEMERAL_PORT,
   });
   try {
     expect(resolveGateway("http://example.com/gateway.json")).rejects.toThrow(
@@ -64,4 +70,3 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */

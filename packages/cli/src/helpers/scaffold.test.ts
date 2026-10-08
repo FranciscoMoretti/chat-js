@@ -41,6 +41,9 @@ import {
 
 const tempDirs: string[] = [];
 const SUCCESS_EXIT_CODE = 0;
+const FIRST_TEMP_DIRECTORY_INDEX = 0;
+const EXPECTED_SINGLE_ITEM_COUNT = 1;
+const MINIMUM_NONEMPTY_FILE_LENGTH = 0;
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalUserAgent = process.env.npm_config_user_agent;
 /* oxlint-enable node/no-process-env */
@@ -134,7 +137,6 @@ const runGeneratedGatewaySnapshotWarningTest = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   if (originalUserAgent === undefined) {
@@ -144,13 +146,12 @@ afterEach(async (): Promise<void> => {
   }
   await Promise.all(
     tempDirs
-      .splice(0)
+      .splice(FIRST_TEMP_DIRECTORY_INDEX)
       .map((dir): Promise<void> => rm(dir, { force: true, recursive: true }))
   );
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 
@@ -245,11 +246,10 @@ describe("buildConfigTs", (): void => {
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldFromTemplate", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
@@ -279,7 +279,7 @@ describe("scaffoldFromTemplate", (): void => {
     }
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("omits maintainer harnesses while preserving application source and starter tests", async (): Promise<void> => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
@@ -350,7 +350,9 @@ describe("scaffoldFromTemplate", (): void => {
       "utf-8"
     );
     expect(lint).not.toContain("tests/eve-fixture");
-    expect(lint.match(/options: \{ typeAware: true \}/gu)).toHaveLength(1);
+    expect(lint.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
+      EXPECTED_SINGLE_ITEM_COUNT
+    );
     const lintManifest: unknown = JSON.parse(
       await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
@@ -388,7 +390,7 @@ describe("scaffoldFromTemplate", (): void => {
     }
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("leaves the storage slot and provider peers to registry installation", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
@@ -409,7 +411,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(false);
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("writes a standalone-safe root package.json", async (): Promise<void> => {
     const destination = makeTempDir("chat-app");
 
@@ -489,7 +491,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(true);
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("rewrites the generated web app to be npm-friendly", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-npm");
 
@@ -583,7 +585,7 @@ describe("scaffoldFromTemplate", (): void => {
     await runGeneratedGatewaySnapshotWarningTest(destination, "bun");
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("allows known native package build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const destination = makeTempDir("chat-app-pnpm");
@@ -616,7 +618,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(workspaceConfig).toContain("sharp: true");
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("starts generated apps with an empty installable tool registry", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-tools");
 
@@ -652,7 +654,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).not.toContain("GetWeatherRenderer");
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
     const projectDir = makeTempDir("chat-app-fallback");
     const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
@@ -686,7 +688,7 @@ describe("scaffoldFromTemplate", (): void => {
         "utf-8"
       );
       expect(lintConfig.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
-        1
+        EXPECTED_SINGLE_ITEM_COUNT
       );
       const lintManifest: unknown = JSON.parse(
         await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
@@ -749,15 +751,13 @@ describe("scaffoldFromTemplate", (): void => {
 });
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("scaffoldFromGit", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line max-statements -- Keep the Git fixture setup, scaffold operation, and JSON output assertions in the same integration scenario.
   it("leaves repositories without the ChatJS storage seam untouched", async (): Promise<void> => {
     const source = makeTempDir("plain-git-source");
@@ -781,7 +781,7 @@ describe("scaffoldFromGit", (): void => {
       ],
     ]) {
       const result = Bun.spawnSync(["git", ...args], { cwd: source });
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(SUCCESS_EXIT_CODE);
     }
 
     await scaffoldFromGit(source, destination);
@@ -798,20 +798,18 @@ describe("scaffoldFromGit", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldElectron", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-node-prebuild");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -870,11 +868,11 @@ describe("scaffoldElectron", (): void => {
       )
     );
     for (const icon of icons) {
-      expect(icon.length).toBeGreaterThan(0);
+      expect(icon.length).toBeGreaterThan(MINIMUM_NONEMPTY_FILE_LENGTH);
     }
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -989,7 +987,7 @@ describe("scaffoldElectron", (): void => {
     ]);
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("pins Better Auth versions in the generated electron app", async (): Promise<void> => {
     const projectDir = makeTempDir("electron");
 
@@ -1063,7 +1061,7 @@ describe("scaffoldElectron", (): void => {
     ).not.toContain("bun ");
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const projectDir = makeTempDir("electron-pnpm");
@@ -1104,7 +1102,6 @@ describe("scaffoldElectron", (): void => {
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/max-lines-per-function */

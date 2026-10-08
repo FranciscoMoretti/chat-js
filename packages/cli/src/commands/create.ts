@@ -110,40 +110,51 @@ const resolveCreateTarget = (
   };
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
+const NEXT_ENTRY = 1;
+const FIRST_ENTRY = 0;
+const JSON_INDENT = 2;
+const FIRST_CHARACTER = 0;
+const NEXT_CHARACTER = 1;
+const EMPTY_SELECTION_COUNT = 0;
+
+const printEnvGroup = (
+  entries: readonly Readonly<EnvVarEntry>[],
+  entry: Readonly<EnvVarEntry>,
+  firstIndex: number
+): number => {
+  logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
+  let entryIndex = firstIndex;
+  while (
+    entryIndex < entries.length &&
+    entries[entryIndex].oneOfGroup === entry.oneOfGroup
+  ) {
+    const option = entries[entryIndex];
+    logger.log(
+      `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
+    );
+    entryIndex += NEXT_ENTRY;
+  }
+  return entryIndex - NEXT_ENTRY;
+};
+
 const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
-
-  for (let entryIndex = 0; entryIndex < entries.length; entryIndex += 1) {
+  for (
+    let entryIndex = FIRST_ENTRY;
+    entryIndex < entries.length;
+    entryIndex += NEXT_ENTRY
+  ) {
     const entry = entries[entryIndex];
-
-    if (!(typeof entry.oneOfGroup === "string" && entry.oneOfGroup !== "")) {
+    if (typeof entry.oneOfGroup === "string" && entry.oneOfGroup !== "") {
+      entryIndex = printEnvGroup(entries, entry, entryIndex);
+    } else {
       logger.log(
         `  ${highlighter.warn("*")} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
       );
-      continue;
     }
-
-    logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
-    while (
-      entryIndex < entries.length &&
-      entries[entryIndex].oneOfGroup === entry.oneOfGroup
-    ) {
-      const option = entries[entryIndex];
-      logger.log(
-        `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
-      );
-      entryIndex += 1;
-    }
-    entryIndex -= 1;
   }
 };
-/* oxlint-enable eslint/no-continue */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
 const createOptionsSchema = z.object({
   attachments: z.boolean().optional(),
@@ -184,6 +195,20 @@ const createOptionsSchema = z.object({
 type CreateOptions = z.infer<typeof createOptionsSchema>;
 type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
 
+interface CreateSetup {
+  assistantTools: AssistantTools;
+  auth: Awaited<ReturnType<typeof promptAuth>>;
+  coreFeatures: Awaited<ReturnType<typeof promptCoreFeatures>>;
+  documentTypes: Awaited<ReturnType<typeof promptDocumentTypes>>;
+  gateway: Awaited<ReturnType<typeof resolveGateway>>["definition"]["id"];
+  gatewaySelection: Awaited<ReturnType<typeof resolveGateway>>;
+  observability: Awaited<ReturnType<typeof promptObservability>>;
+  plan: Awaited<ReturnType<typeof planInstallation>>;
+  storage: Awaited<ReturnType<typeof promptStorage>>;
+  usesStorage: boolean;
+  withElectron: boolean;
+}
+
 interface ProjectTarget {
   appName: string;
   appPrefix: string;
@@ -196,7 +221,6 @@ interface ProjectTarget {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectToolSources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const collectToolSources = async (
   options: Readonly<CreateOptions>,
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Selection resolves deep research dependencies and explicit provider choices by updating the shared builtInTools flags consumed by configuration writing.
@@ -265,19 +289,17 @@ const collectToolSources = async (
       }
       toolSources.push(source);
     }
-    await addSelection(index + 1);
+    await addSelection(index + NEXT_ENTRY);
   };
 
-  await addSelection(0);
+  await addSelection(FIRST_ENTRY);
   return toolSources;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptProjectTarget's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptProjectTarget = async (
   options: Readonly<CreateOptions>
 ): Promise<ProjectTarget> => {
@@ -298,7 +320,10 @@ const promptProjectTarget = async (
       : projectName;
   const appName = projectName
     .split("-")
-    .map((word): string => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(
+      (word): string =>
+        word.charAt(FIRST_CHARACTER).toUpperCase() + word.slice(NEXT_CHARACTER)
+    )
     .join(" ");
 
   return {
@@ -312,7 +337,6 @@ const promptProjectTarget = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadInstallableTools's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 const loadInstallableTools = async (
   options: Readonly<CreateOptions>,
@@ -342,13 +366,12 @@ const loadInstallableTools = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCreateSetup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
 const promptCreateSetup = async (
   options: Readonly<CreateOptions>,
   targetDir: string
-) => {
+): Promise<CreateSetup> => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
   const coreFeatures = await promptCoreFeatures(
@@ -476,7 +499,6 @@ const promptCreateSetup = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -496,7 +518,6 @@ const scaffoldProject = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeConfiguration's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const writeConfiguration = async (
   project: Readonly<ProjectTarget>,
   setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
@@ -511,7 +532,7 @@ const writeConfiguration = async (
     packageJson.name = project.projectName;
     await writeFile(
       packageJsonPath,
-      `${JSON.stringify(packageJson, null, 2)}\n`
+      `${JSON.stringify(packageJson, null, JSON_INDENT)}\n`
     );
     await writeFile(
       path.join(project.targetDir, "chat.config.ts"),
@@ -533,7 +554,6 @@ const writeConfiguration = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
 const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
@@ -688,7 +708,6 @@ const printNextSteps = (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const createProject = async (
   options: Readonly<CreateOptions>
 ): Promise<void> => {
@@ -703,7 +722,7 @@ const createProject = async (
       ([key, value]: readonly [string, unknown]): boolean =>
         !["target", "fromGit", "yes"].includes(key) && value !== undefined
     );
-    if (selectionOptions.length > 0) {
+    if (selectionOptions.length > EMPTY_SELECTION_COUNT) {
       throw new Error(
         "--from-git preserves the cloned application. Use chat-js add after cloning to change installed tools; selection flags apply only to fresh scaffolds."
       );
@@ -731,7 +750,6 @@ const createProject = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (create); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */
 

@@ -13,6 +13,8 @@ import { create } from "./create";
 /* oxlint-enable sort-imports */
 
 const tempDirs: string[] = [];
+const FIRST_TEMP_DIRECTORY = 0;
+const EXIT_SUCCESS = 0;
 
 const makeTempDir = (name: string): string => {
   const dir = path.join(
@@ -24,22 +26,21 @@ const makeTempDir = (name: string): string => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
+    tempDirs
+      .splice(FIRST_TEMP_DIRECTORY)
+      .map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it.each([false, true])(
   "preserves cloned source without registry access (ChatJS: %s)",
   async (chatjs) => {
@@ -80,7 +81,9 @@ it.each([false, true])(
         "initial",
       ],
     ]) {
-      expect(Bun.spawnSync(["git", ...args], { cwd: source }).exitCode).toBe(0);
+      expect(Bun.spawnSync(["git", ...args], { cwd: source }).exitCode).toBe(
+        EXIT_SUCCESS
+      );
     }
     await create.parseAsync([destination, "--from-git", source, "--yes"], {
       from: "user",
@@ -105,7 +108,6 @@ it.each([false, true])(
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
