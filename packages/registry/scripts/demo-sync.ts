@@ -33,7 +33,7 @@ import { z } from "zod";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep these separate readonly descriptor type imports in their package source order. */
+/* oxlint-disable sort-imports -- The pinned rule sorts these declarations by binding, but the source path order requires ReadonlyInput after configureGatewayProvider. */
 import type { ReadonlyInput } from "../../cli/src/helpers/readonly-input";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
