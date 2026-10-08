@@ -62,13 +62,13 @@ const getSafeReturnTo = (url: URL): string | null => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve proxy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): Next.js statically discovers the proxy entrypoint and inline config matcher; retain their declaration exports together (#619).
+/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): proxy accepts req: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 needs inline config for matcher extraction, so this named entrypoint remains a separate export; one-var rejects a combined declaration.
 export const proxy = async (req: NextRequest) => {
   const url = req.nextUrl;
   const { pathname } = url;
@@ -105,11 +105,9 @@ export const proxy = async (req: NextRequest) => {
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): Next.js extractExportedConstValue requires inline export const config to discover this proxy matcher (#619).
- */
+// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 extractExportedConstValue reads inline export const config; a grouped clause drops the matcher. one-var rejects combining it with proxy.
 export const config = {
   matcher: [
     /*
@@ -128,4 +126,3 @@ export const config = {
   ],
 };
 /* oxlint-enable import/no-named-export */
-/* oxlint-enable import/group-exports */

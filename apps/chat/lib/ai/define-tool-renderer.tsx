@@ -58,8 +58,7 @@ const InvalidResult = (): React.JSX.Element => (
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/only-export-components */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep defineToolRenderer directly exported: grouping the factory in Oxlint 1.82 classifies its local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
-jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -72,6 +71,7 @@ typescript/explicit-module-boundary-types (#562): Keep defineToolRenderer's retu
 typescript/prefer-readonly-parameter-types (#565): defineToolRenderer accepts { inputSchema, streamingInputSchema, outputSchema, updateSchema, renderProgress: Prog; { tool, messageId, isReadonly, }: { tool: unknown; messageId: string; isRe; props: { tool: unknown; messageId: string; isReadonly: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): defineToolRenderer intentionally keeps the existing falsy-value behavior of input?.success; value?.success; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Keep executable tools on the server and validate their persisted data at the UI boundary. */
+// oxlint-disable-next-line import/group-exports -- #711: Oxlint 1.82 checks export ancestors: a grouped factory clause exposes ValidatedToolBody and ValidatedToolRenderer as local components; one-var rejects combining value declarations.
 export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   inputSchema,
   streamingInputSchema,
@@ -201,9 +201,9 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isValidatedToolRenderer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-// oxlint-disable-next-line import/group-exports -- Keep defineToolRenderer directly exported to preserve Oxlint Fast Refresh factory classification; group the remaining value export here.
+// oxlint-disable-next-line import/group-exports -- #711: Keep the factory inline for Oxlint 1.82 nested-component classification; this second value export cannot join it without violating one-var.
 export { isValidatedToolRenderer };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ValidatedToolRenderer, ToolRendererProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
