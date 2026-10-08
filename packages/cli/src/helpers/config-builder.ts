@@ -86,8 +86,33 @@ const compareEntryKeys = (
   [right]: readonly [string, unknown]
 ): number => left.localeCompare(right);
 
+const formatSymbol = (value: symbol): string => {
+  const { description = "" } = value;
+  if (description === "") {
+    return "Symbol()";
+  }
+  return `Symbol(${description})`;
+};
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const formatNumber = (value: number): string => {
+  if (Number.isSafeInteger(value) && Math.abs(value) >= 10_000) {
+    return String(value).replaceAll(/\d(?=(?:\d{3})+$)/gu, "$&_");
+  }
+  return String(value);
+};
+
+const formatOtherPrimitive = (value: unknown): string => {
+  if (typeof value === "symbol") {
+    return formatSymbol(value);
+  }
+  if (typeof value === "function" || typeof value === "bigint") {
+    return value.toString();
+  }
+  return "undefined";
+};
+
 const formatValue = (value: unknown, indent: number): string => {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
@@ -99,14 +124,10 @@ const formatValue = (value: unknown, indent: number): string => {
   if (typeof value === "string") {
     return JSON.stringify(value);
   }
-  if (
-    typeof value === "number" &&
-    Number.isSafeInteger(value) &&
-    Math.abs(value) >= 10_000
-  ) {
-    return String(value).replaceAll(/\d(?=(?:\d{3})+$)/gu, "$&_");
+  if (typeof value === "number") {
+    return formatNumber(value);
   }
-  if (typeof value === "number" || typeof value === "boolean") {
+  if (typeof value === "boolean") {
     return String(value);
   }
 
@@ -136,8 +157,7 @@ const formatValue = (value: unknown, indent: number): string => {
       .join(",\n")},\n${spaces}}`;
   }
 
-  // oxlint-disable-next-line typescript/no-base-to-string -- Objects and arrays are handled above; remaining symbols or callable config values preserve the existing source serializer fallback.
-  return String(value);
+  return formatOtherPrimitive(value);
 };
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
