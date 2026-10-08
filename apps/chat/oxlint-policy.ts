@@ -61,7 +61,7 @@ export const auditedRestrictionRules = {
   "react/only-export-components": "error",
   // Components using the automatic JSX runtime explain that compiler contract locally.
   "react/react-in-jsx-scope": "error",
-  // Conflicting declaration ordering is reviewed locally; named members remain sorted.
+  // Oxfmt leaves import ordering to this rule; evaluation-order exceptions belong at the source.
   "sort-imports": "error",
   "typescript/consistent-type-definitions": "error",
   "typescript/explicit-function-return-type": "error",
