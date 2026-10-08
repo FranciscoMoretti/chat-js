@@ -12,7 +12,6 @@ import React, {
   useCallback,
   useMemo,
   useOptimistic,
-  useRef,
   useState,
   useTransition,
 } from "react";
@@ -352,10 +351,6 @@ const PureModelSelector = ({
   const [optimisticSelection, setOptimisticSelection] = useOptimistic(
     selectedModelSelection
   );
-  // Ref so callbacks don't capture stale optimisticSelection in their closure
-  const optimisticSelectionRef = useRef(optimisticSelection);
-  // oxlint-disable-next-line react/refs -- Keep callbacks synchronized with the optimistic selection.
-  optimisticSelectionRef.current = optimisticSelection;
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
   const [useMultipleModels, setUseMultipleModels] = useState(
@@ -397,14 +392,16 @@ const PureModelSelector = ({
 
   const models = useMemo<ModelItem[]>(
     () =>
-      chatModels.map((chatModel) => ({
-        disabled:
-          isAnonymous &&
-          !(
-            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-          ).includes(chatModel.id),
-        model: chatModel,
-      })),
+      chatModels.map(
+        (chatModel: ReadonlyNativeSurface<AppModelDefinition>) => ({
+          disabled:
+            isAnonymous &&
+            !(
+              ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+            ).includes(chatModel.id),
+          model: chatModel,
+        })
+      ),
     [isAnonymous, chatModels]
   );
 
@@ -560,7 +557,7 @@ const PureModelSelector = ({
 
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
-      const { current } = optimisticSelectionRef;
+      const current = optimisticSelection;
       const currentCounts: SelectedModelCounts =
         // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof current === "string" ? { [current]: 1 } : current;
@@ -589,12 +586,12 @@ const PureModelSelector = ({
 
       dispatchSelection(nextSelection);
     },
-    [dispatchSelection]
+    [dispatchSelection, optimisticSelection]
   );
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
-      const { current } = optimisticSelectionRef;
+      const current = optimisticSelection;
       const currentCounts: SelectedModelCounts =
         // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof current === "string" ? { [current]: 1 } : current;
@@ -623,7 +620,7 @@ const PureModelSelector = ({
 
       dispatchSelection(nextSelection);
     },
-    [dispatchSelection]
+    [dispatchSelection, optimisticSelection]
   );
 
   const handleMultipleModelsToggle = useCallback(

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSX as ReactJSX } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 /* oxlint-enable sort-imports */
 import { toast } from "sonner";
 
@@ -102,32 +102,34 @@ export const ModelsTable = ({
     return enabled;
   }, [allModels, preferences]);
 
-  // Stable sort order: computed once on initial load, never changes
-  const initialSortRef = useRef<AppModelId[] | null>(null);
+  // Capture the initial enabled-first ordering for this table's lifetime.
+  // oxlint-disable-next-line react/hook-use-state -- This lazy initial value preserves ordering across preference updates; it is never replaced.
+  const [initialSort] = useState<readonly AppModelId[]>(() => {
+    const enabledSet = new Set(
+      enabledModels.map((model: { readonly id: AppModelId }) => model.id)
+    );
+    return [
+      ...enabledModels.map((model: { readonly id: AppModelId }) => model.id),
+      ...allModels
+        .filter(
+          (model: { readonly id: AppModelId }) => !enabledSet.has(model.id)
+        )
+        .map((model: { readonly id: AppModelId }) => model.id),
+    ];
+  });
   const sortedModels = useMemo(() => {
-    if (initialSortRef.current === null) {
-      // First render: enabled models first, then the rest
-      const enabledSet = new Set(
-        enabledModels.map((model: { readonly id: string }) => model.id)
-      );
-      const sorted = [
-        ...enabledModels,
-        ...allModels.filter(
-          (model: { readonly id: string }) => !enabledSet.has(model.id)
-        ),
-      ];
-      initialSortRef.current = sorted.map(
-        (model: { readonly id: string }) => model.id
-      );
-      return sorted;
-    }
-    // Subsequent renders: maintain original order
-    const modelMap = new Map(allModels.map((model) => [model.id, model]));
-    // oxlint-disable-next-line react/refs -- Read the stable ordering captured on first render.
-    return initialSortRef.current
+    const modelMap = new Map(
+      allModels.map(
+        (model: ReadonlyNativeSurface<(typeof allModels)[number]>) => [
+          model.id,
+          model,
+        ]
+      )
+    );
+    return initialSort
       .map((id) => modelMap.get(id))
       .filter((model) => model !== undefined);
-  }, [allModels, enabledModels, initialSortRef]);
+  }, [allModels, initialSort]);
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
@@ -177,14 +179,18 @@ export const ModelsTable = ({
         className={className}
       >
         <TableBody>
-          {filteredModels.map((model): React.JSX.Element => (
-            <ModelRow
-              isEnabled={enabledModelsSet.has(model.id)}
-              key={model.id}
-              model={model}
-              onToggle={handleToggle}
-            />
-          ))}
+          {filteredModels.map(
+            (
+              model: ReadonlyNativeSurface<(typeof allModels)[number]>
+            ): React.JSX.Element => (
+              <ModelRow
+                isEnabled={enabledModelsSet.has(model.id)}
+                key={model.id}
+                model={model}
+                onToggle={handleToggle}
+              />
+            )
+          )}
         </TableBody>
       </Table>
 
