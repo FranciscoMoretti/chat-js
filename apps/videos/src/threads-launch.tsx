@@ -1,15 +1,12 @@
-import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AbsoluteFill,
   Sequence,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-/* oxlint-enable sort-imports */
 
 import { Logo } from "./shared/brand";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep brand font loading before presentation CSS insertion; reversing these component dependencies changes their observable initialization order. */
 import { Caption, ClickPulse, Pointer } from "./shared/presentation";
 /* oxlint-enable sort-imports */
 import {
@@ -21,8 +18,9 @@ import {
   stateAt,
 } from "./story";
 import type { LaunchScript, ReplyState, StoryState } from "./story";
+import React from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Keep scene CSS insertion after presentation CSS and brand font loading; moving this side-effect import changes stylesheet insertion order. */
 import "./styles.css";
 /* oxlint-disable react/jsx-no-literals -- Author renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */

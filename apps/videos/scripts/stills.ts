@@ -1,19 +1,15 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
+import { mkdir, readFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:assert/strict import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import assert from "node:assert/strict";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { mkdir, readFile } from "node:fs/promises";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
+import { bundle } from "@remotion/bundler";
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { bundle } from "@remotion/bundler";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep bundler initialization before renderer initialization; the pinned bundler eagerly loads esbuild/Webpack and renderer initializes its native runtime, so moving their declarations needs a loader-effects control. */
 import { renderStill, selectComposition } from "@remotion/renderer";
 /* oxlint-enable sort-imports */
 

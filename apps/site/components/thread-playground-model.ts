@@ -1,11 +1,7 @@
-import { getMessageText } from "@chat-js/thread";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { MessageTreeSnapshot } from "@chat-js/thread";
-/* oxlint-enable sort-imports */
-import type { UseThreadHelpers } from "@chat-js/thread/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
-/* oxlint-enable sort-imports */
+import type { MessageTreeSnapshot } from "@chat-js/thread";
+import type { UseThreadHelpers } from "@chat-js/thread/react";
+import { getMessageText } from "@chat-js/thread";
 
 interface PlaygroundMetadata {
   readonly activeStreamId: string | null;
@@ -270,8 +266,6 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- buildTreeLayout: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
-/* oxlint-disable typescript/explicit-function-return-type -- buildTreeLayout: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/init-declarations -- buildTreeLayout: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
 /* oxlint-disable eslint/no-magic-numbers -- buildTreeLayout: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/id-length -- buildTreeLayout: The local index/OS/library binding retains its conventional API notation. */
@@ -325,8 +319,6 @@ const buildTreeLayout = ({
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 export { buildTreeLayout, createPlaygroundTransport, initialTree };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (LayoutNode, PlaygroundChat, PlaygroundMessage, PlaygroundMetadata); the enabled import/no-default-export convention rejects the default-export alternative. */

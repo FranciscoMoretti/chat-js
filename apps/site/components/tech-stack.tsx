@@ -219,7 +219,7 @@ const TechCard = ({
   );
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (TechStack); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- TechStack renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- TechStack renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-enable eslint/no-magic-numbers */
 

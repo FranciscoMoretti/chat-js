@@ -1,14 +1,14 @@
 import { expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- Native file URLs need platform-aware path conversion.
+import { fileURLToPath, pathToFileURL } from "node:url";
 // oxlint-disable-next-line import/no-nodejs-modules -- The URL portability regression creates, reads and removes a temporary filesystem fixture.
 import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- Native Webpack resolution tests use repository paths.
+import path from "node:path";
 // oxlint-disable-next-line import/no-nodejs-modules -- The URL portability fixture uses the operating system's temporary directory.
 import { tmpdir } from "node:os";
-// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Native Webpack resolution tests use repository paths; preserve Oxfmt builtin ordering.
-import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Native file URLs need platform-aware path conversion; preserve Oxfmt's builtin import grouping.
-import { fileURLToPath, pathToFileURL } from "node:url";
 
-// oxlint-disable-next-line sort-imports -- Preserve the runtime import before the separate type binding, as formatted by Oxfmt.
+// oxlint-disable-next-line sort-imports -- Keep Bun test and Node builtin initialization before BundlerInternals, which eagerly loads esbuild and Webpack; moving this runtime import needs a loader-effects control.
 import { BundlerInternals, webpack } from "@remotion/bundler";
 import type { WebpackConfiguration } from "@remotion/bundler";
 

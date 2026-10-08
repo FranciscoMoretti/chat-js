@@ -23,7 +23,7 @@ const FAQS: readonly Readonly<{ answer: string; question: string }>[] = [
   },
 ];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Faq); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Faq renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- Faq renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/jsx-max-depth -- Faq: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 export const Faq = (): React.JSX.Element => (

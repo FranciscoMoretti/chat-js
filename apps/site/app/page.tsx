@@ -1,23 +1,17 @@
-import type { Metadata } from "next";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { siteConfig, siteLinks } from "@/lib/site-config";
 import { Faq } from "@/components/faq";
-/* oxlint-enable sort-imports */
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
 import { Hero } from "@/components/hero";
 import { LogoCloud } from "@/components/logo-cloud";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Platforms } from "@/components/platforms";
-/* oxlint-disable import/max-dependencies -- the @/components/tech-stack import: The desktop main process coordinates window, auth, filesystem and IPC lifecycles; hiding imports would not separate those responsibilities. */
+// oxlint-disable-next-line import/max-dependencies -- HomePage is the route composition root for ten landing-page sections; direct imports preserve their visible render order alongside its metadata and site configuration.
+import React from "react";
 import { TechStack } from "@/components/tech-stack";
-/* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { siteConfig, siteLinks } from "@/lib/site-config";
-/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {

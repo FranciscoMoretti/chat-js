@@ -1,8 +1,5 @@
-import React from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./presentation.css";
-/* oxlint-enable sort-imports */
+import React from "react";
 
 const Caption = ({
   children,

@@ -1,19 +1,14 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:assert/strict import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+import type { Locator, Page } from "playwright";
+/* oxlint-disable import/no-nodejs-modules -- The fixture uses Node assertions for its browser scenario. */
 import assert from "node:assert/strict";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+import { chromium } from "playwright";
+/* oxlint-disable import/no-nodejs-modules -- Keep native file-URL decoding for the screenshot output directory. */
+import { fileURLToPath } from "node:url";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- Keep the native asynchronous screenshot-directory creation boundary. */
 import { mkdir } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:url import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { fileURLToPath } from "node:url";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Locator, Page } from "playwright";
-/* oxlint-enable sort-imports */
-import { chromium } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.

@@ -3,7 +3,7 @@
 import type { ThreadInit, ThreadRun, ThreadRunHandle } from "@chat-js/thread";
 import { getMessageText } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Preserve useThread's environment initialization before the playground model creates its dated initial messages; globally sorting these declarations moves that model ahead of the native hook module. */
 import {
   Check,
   ChevronLeft,
@@ -18,6 +18,10 @@ import {
   Square,
 } from "lucide-react";
 /* oxlint-enable sort-imports */
+import type {
+  PlaygroundMessage,
+  PlaygroundChat as ThreadChat,
+} from "./thread-playground-model";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -25,12 +29,6 @@ import {
   createPlaygroundTransport,
   initialTree,
 } from "./thread-playground-model";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  PlaygroundMessage,
-  PlaygroundChat as ThreadChat,
-} from "./thread-playground-model";
-/* oxlint-enable sort-imports */
 
 import styles from "./thread-showcase.module.css";
 
@@ -38,6 +36,33 @@ const INSTALL_COMMAND = "bun add @chat-js/thread";
 const MAX_ACTIVE_RUNS = 8;
 
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
+
+type PlaygroundChatView = Readonly<{
+  messages: readonly PlaygroundMessageReader[];
+  status: PlaygroundChat["status"];
+  stop: PlaygroundChat["stop"];
+  stoppedIds: Readonly<Pick<ReadonlySet<string>, "has">>;
+  tree: Readonly<{
+    activeRuns: Readonly<{ length: number }>;
+    childrenByParentId: Readonly<Record<string, readonly string[]>>;
+    cursorId: string | null;
+    getLeaves: (id?: string | null) => readonly PlaygroundMessageReader[];
+    getRunForMessage: (
+      id: string
+    ) => Readonly<Pick<ThreadRun, "status">> | undefined;
+    getSiblings: (id: string) => readonly PlaygroundMessageReader[];
+    messagesById: Readonly<Record<string, PlaygroundMessageReader>>;
+    rootIds: readonly string[];
+    setCursor: PlaygroundChat["tree"]["setCursor"];
+    stopAll: PlaygroundChat["tree"]["stopAll"];
+  }>;
+}>;
+type ReadonlyStringIterable = Readonly<{
+  [Symbol.iterator]: () => Readonly<{
+    next: () => Readonly<IteratorResult<string>>;
+  }>;
+}>;
+
 type ThreadFinishEvent = Parameters<
   NonNullable<ThreadInit<PlaygroundMessage>["onFinish"]>
 >["0"];
@@ -45,11 +70,10 @@ type ThreadFinishEvent = Parameters<
 type PlaygroundMessageReader = Parameters<typeof getMessageText>[0] &
   Readonly<Pick<PlaygroundMessage, "metadata">>;
 
-/* oxlint-disable typescript/explicit-function-return-type -- responseState: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 const responseState = (
   status: ThreadRun["status"] | undefined,
   isStopped: boolean
-) => {
+): "complete" | "error" | "stopped" | "streaming" | "submitted" => {
   if (status === "streaming" || status === "submitted") {
     return status;
   }
@@ -62,7 +86,6 @@ const responseState = (
   return "complete";
 };
 /* oxlint-disable react/jsx-no-literals -- ResponseStatus renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- ResponseStatus: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
@@ -184,7 +207,6 @@ const ThreadInstallCommand = (): React.JSX.Element => {
 
 /* oxlint-disable unicorn/no-null -- Conversation: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 /* oxlint-disable typescript/strict-boolean-expressions -- Conversation: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Conversation owns cursor state through the native tree.setCursor writer API; a reader-only tree contract cannot express that mutation.
 const Conversation = ({
   chat,
   draft,
@@ -195,7 +217,7 @@ const Conversation = ({
   playgroundError,
   responseCount,
 }: {
-  readonly chat: PlaygroundChat;
+  readonly chat: PlaygroundChatView;
   readonly draft: string;
   readonly onBranch: (messageId: string) => Promise<void>;
   readonly onDraftChange: (draft: string) => void;
@@ -547,11 +569,10 @@ const Conversation = ({
 /* oxlint-disable unicorn/no-null -- TreeCanvas: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- TreeCanvas: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TreeCanvas's click handler calls chat.tree.setCursor to move the native thread cursor; the writer API is the owned interaction boundary.
 const TreeCanvas = ({
   chat,
 }: {
-  readonly chat: PlaygroundChat;
+  readonly chat: PlaygroundChatView;
 }): React.JSX.Element => {
   const layout = useMemo(
     () =>
@@ -732,9 +753,20 @@ const TreeCanvas = ({
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable typescript/explicit-function-return-type -- messageInput: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable unicorn/no-null -- messageInput: React refs/rendering and selected-state contracts use null as an explicit empty state. */
-const messageInput = (text: string, title: string, messageId?: string) => ({
+const messageInput = (
+  text: string,
+  title: string,
+  messageId?: string
+): {
+  messageId: string | undefined;
+  metadata: {
+    activeStreamId: null;
+    createdAt: string;
+    title: string;
+  };
+  text: string;
+} => ({
   messageId,
   metadata: {
     activeStreamId: null,
@@ -745,7 +777,6 @@ const messageInput = (text: string, title: string, messageId?: string) => ({
 });
 /* oxlint-disable react/jsx-no-literals -- PlaygroundSession renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- PlaygroundSession: The component shares hook order and closure state; extraction requires a component/state-boundary design. */
 /* oxlint-disable react/no-multi-comp -- PlaygroundSession: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -785,8 +816,8 @@ const PlaygroundSession = (): React.JSX.Element => {
     }>): void => {
       if (isAbort) {
         setStoppedIds(
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React's `SetStateAction<ReadonlySet<string>>` accepts the native readonly collection. This updater only iterates it and creates a fresh Set; the compiler verifies the exact setter receiver, though Oxlint flags its standard-library callback surface.
-          (previous: ReadonlySet<string>) => new Set([...previous, message.id])
+          (previous: ReadonlyStringIterable) =>
+            new Set([...previous, message.id])
         );
       }
     },

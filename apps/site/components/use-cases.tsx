@@ -27,7 +27,7 @@ const USE_CASES: readonly Readonly<{
   },
 ];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UseCases); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- UseCases renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- UseCases renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- UseCases: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 

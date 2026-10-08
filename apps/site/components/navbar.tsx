@@ -1,11 +1,8 @@
 import Link from "next/link";
 import React from "react";
 
-import { siteLinks } from "@/lib/site-config";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ThemeToggle } from "./theme-toggle";
-/* oxlint-enable sort-imports */
+import { siteLinks } from "@/lib/site-config";
 
 const NAV_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   { href: siteLinks.threads, label: "Threads" },
@@ -17,7 +14,7 @@ const NAV_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   },
 ];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Navbar); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Navbar renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- Navbar renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- Navbar: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 

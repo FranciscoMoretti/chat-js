@@ -1,13 +1,11 @@
+import type { WebpackOverrideFn } from "@remotion/bundler";
+
 /* oxlint-disable import/no-nodejs-modules -- the node:module import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { createRequire } from "node:module";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations and Oxfmt grouping; their combined ordering conflicts with sort-imports. */
-import type { WebpackOverrideFn } from "@remotion/bundler";
-/* oxlint-enable sort-imports */
 
 const require = createRequire(path.resolve("package.json"));
 const ALIAS_NOT_FOUND = -1;

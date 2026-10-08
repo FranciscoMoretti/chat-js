@@ -1,9 +1,7 @@
-import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { AbsoluteFill } from "remotion";
-/* oxlint-enable sort-imports */
 
 import { Logo } from "./shared/brand";
+import React from "react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (BrandExample); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- BrandExample renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 

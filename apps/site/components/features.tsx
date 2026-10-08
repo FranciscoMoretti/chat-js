@@ -143,7 +143,7 @@ const SectionLabel = ({
   </div>
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Features); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Features renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- Features renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */

@@ -24,7 +24,7 @@ const Sparkle = ({
   </svg>
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Hero); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Hero renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- Hero renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- Hero: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
