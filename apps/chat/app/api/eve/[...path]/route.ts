@@ -96,25 +96,21 @@ const checkTurnAdmission = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined */
-/* oxlint-disable no-undefined --
- * no-undefined (#519): selectionsConflict uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 const selectionsConflict = (
   header: string | null,
   body: string | undefined
-): boolean => header !== null && body !== undefined && header !== body;
-/* oxlint-enable no-undefined */
-/* oxlint-disable no-undefined -- * no-undefined (#519): parseToolSelection uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+): boolean => header !== null && typeof body === "string" && header !== body;
 const parseToolSelection = (
   header: string | null,
   body: UiToolName | undefined
 ): ReturnType<ReturnType<typeof frontendToolsSchema.optional>["safeParse"]> =>
   frontendToolsSchema
     .optional()
-    .refine(() => header === null || body === undefined || header === body)
+    .refine(
+      () => header === null || typeof body !== "string" || header === body
+    )
     .safeParse(header ?? body);
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, unicorn/no-null -- init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

@@ -16,6 +16,9 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 const MINIMUM_MODEL_ID_LENGTH = 1;
 const GUEST_CREATION_TIMEOUT_MS = 60_000;
 
+const hasConfiguredHost = (value: typeof env.APP_URL): value is string =>
+  Boolean(value);
+
 const input = z
   .object({ modelId: z.string().min(MINIMUM_MODEL_ID_LENGTH) })
   .strict();
@@ -55,7 +58,7 @@ export const POST = async (
   const hasVercelHost = Boolean(env.VERCEL_URL);
   // oxlint-disable-next-line no-ternary -- Preserve the lazy host selection and second configured VERCEL_URL read; assignment branches conflict with unicorn/prefer-ternary.
   const host = hasVercelHost ? `https://${env.VERCEL_URL}` : env.APP_URL;
-  if (typeof host !== "string" || host === "") {
+  if (!hasConfiguredHost(host)) {
     return Response.json(
       { error: "Configure APP_URL before starting guest chats." },
       { status: 503 }
