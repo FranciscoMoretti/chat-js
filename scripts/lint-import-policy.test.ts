@@ -133,11 +133,18 @@ test("root and standalone configs keep the unassigned-import rule narrow", async
 });
 
 test("policy assertions reject lookalike values in unrelated entries", () => {
-  const wrongRootOptions = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.scss"]}]],"other/import-rule": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"files": ["**/next-env.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
-  const wrongNextEnvSeverity = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"files": ["**/next-env.d.ts"],"rules": {"import/no-unassigned-import": "deny"}},{"files": ["**/other-generated.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
+  const wrongRootOptions = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.scss"]}]],"other/import-rule": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"env":null,"files": ["**/next-env.d.ts"],"globals":null,"plugins":null,"rules": {"import/no-unassigned-import": "allow"}}]}`;
+  const validNextEnvSeverity = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"env":null,"files": ["**/next-env.d.ts"],"globals":null,"plugins":null,"rules": {"import/no-unassigned-import": "allow"}},{"files": ["**/other-generated.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
+  const wrongNextEnvSeverity = validNextEnvSeverity.replace(
+    '"files": ["**/next-env.d.ts"],"globals":null,"plugins":null,"rules": {"import/no-unassigned-import": "allow"}',
+    '"files": ["**/next-env.d.ts"],"globals":null,"plugins":null,"rules": {"import/no-unassigned-import": "deny"}'
+  );
 
   expect(wrongRootOptions).toMatch(legacyRuleAllowList);
   expect(() => assertEffectivePolicy(wrongRootOptions)).toThrow();
+
+  expect(validNextEnvSeverity).toMatch(legacyNextEnvOverride);
+  expect(() => assertEffectivePolicy(validNextEnvSeverity)).not.toThrow();
 
   expect(wrongNextEnvSeverity).toMatch(legacyNextEnvOverride);
   expect(() => assertEffectivePolicy(wrongNextEnvSeverity)).toThrow();
