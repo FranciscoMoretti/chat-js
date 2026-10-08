@@ -48,7 +48,10 @@ const useReasoning = (): ReasoningContextValue => {
   return context;
 };
 
-type ReasoningProps = ComponentProps<typeof Collapsible> & {
+type ReasoningProps = Omit<
+  ComponentProps<typeof Collapsible>,
+  "onOpenChange"
+> & {
   isStreaming?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
@@ -58,21 +61,24 @@ type ReasoningProps = ComponentProps<typeof Collapsible> & {
 
 const AUTO_CLOSE_DELAY = 1000;
 const MS_IN_S = 1000;
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, unicorn/no-null -- Reasoning: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const Reasoning = memo(
-  ({
-    className,
-    isStreaming = false,
-    open,
-    defaultOpen = true,
-    // oxlint-disable-next-line typescript/unbound-method -- #613: onOpenChange is a React callback supplied through component props, not an object method relying on a receiver.
-    onOpenChange,
-    duration: durationProp,
-    children,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, isStreaming, open, defaultOpen, onOpenChange, duration, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: ReasoningProps) => {
+  (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    {
+      className,
+      isStreaming = false,
+      open,
+      defaultOpen = true,
+      onOpenChange,
+      duration: durationProp,
+      children,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, isStreaming, open, defaultOpen, onOpenChange, duration, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+      ...props
+    }: ReasoningProps
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ) => {
     const [isOpen, setIsOpen] = useControllableState({
       defaultProp: defaultOpen,
       onChange: onOpenChange,
@@ -140,7 +146,7 @@ const Reasoning = memo(
     );
   }
 );
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, unicorn/no-null */
 
 type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
 /* oxlint-disable react/jsx-no-literals -- getThinkingMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
@@ -161,11 +167,15 @@ const getThinkingMessage = (
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
+/* oxlint-disable react/no-multi-comp -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ReasoningTrigger = memo(
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ({ className, children, ...props }: ReasoningTriggerProps) => {
+  (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    { className, children, ...props }: ReasoningTriggerProps
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ) => {
     const { isStreaming, isOpen, duration } = useReasoning();
 
     return (
@@ -199,21 +209,25 @@ const ReasoningTrigger = memo(
     );
   }
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & {
   children: string;
 };
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningContentProps). */
+/* oxlint-disable react/no-multi-comp -- ReasoningContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ReasoningContent = memo(
-  ({
-    className,
-    children,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: ReasoningContentProps): React.JSX.Element => (
+  (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    {
+      className,
+      children,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+      ...props
+    }: ReasoningContentProps
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ): React.JSX.Element => (
     <CollapsibleContent
       // oxlint-disable-next-line react/forbid-component-props -- CollapsibleContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
@@ -233,7 +247,7 @@ const ReasoningContent = memo(
     </CollapsibleContent>
   )
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 Reasoning.displayName = "Reasoning";
 ReasoningTrigger.displayName = "ReasoningTrigger";

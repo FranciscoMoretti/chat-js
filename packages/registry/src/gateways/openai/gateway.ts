@@ -92,7 +92,7 @@ class OpenAIGateway
   }
 
   public createLanguageModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SDK custom model IDs use string & {}; this is an immutable string. Readonly maps that intersection into a non-string object rejected by the provider factory.
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: ExtractModelIdFromProvider<typeof createOpenAI>
   ): LanguageModelV4 {
     const provider = this.getProvider();
@@ -105,7 +105,7 @@ class OpenAIGateway
   }
 
   // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
   public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }

@@ -66,7 +66,7 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
       "dir"
     );
     const configPath = nodePath.join(destination, "tsconfig.json");
-    // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    // oxlint-disable-next-line typescript/unbound-method -- TypeScript 6.0.2's native sys.readFile closes over its filesystem implementation and never reads this; readConfigFile accepts and invokes it as a standalone reader.
     const config = ts.readConfigFile(configPath, ts.sys.readFile);
     const parsed = ts.parseJsonConfigFileContent(
       config.config,

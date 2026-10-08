@@ -90,7 +90,7 @@ class OpenAICompatibleGateway
   }
 
   // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
   public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
