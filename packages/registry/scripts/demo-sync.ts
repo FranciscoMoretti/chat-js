@@ -1,3 +1,4 @@
+/* oxlint-disable import/max-dependencies -- Oxlint counts 19 dependencies here against its maximum of 10; this installer composes the cross-package runtime adapters and readonly descriptor contract. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
@@ -24,13 +25,16 @@ import path from "node:path";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { format } from "oxfmt";
-/* oxlint-enable sort-imports */
 import ultracite from "ultracite/oxfmt";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep these separate readonly descriptor type imports in their package source order. */
+import type { ReadonlyInput } from "../../cli/src/helpers/readonly-input";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -39,13 +43,11 @@ import { configureStorageProvider } from "../../cli/src/helpers/storage-provider
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { resolveGateway } from "../../cli/src/registry/gateways";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installItems } from "../../cli/src/registry/shadcn";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { resolveStorage } from "../../cli/src/registry/storage";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -86,6 +88,7 @@ const demoSource = (file: string, source: string): string => {
 
 const registryRoot = path.resolve(import.meta.dir, "..");
 
+/* oxlint-enable import/max-dependencies */
 const demoRoot = path.resolve(registryRoot, "../../apps/chat");
 
 const baselinePath = path.join(registryRoot, "demo-baseline.json");
@@ -150,7 +153,6 @@ const filesBelow = async (
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Install canonical sources through the CLI's planner and shadcn transforms. */
 const generateDemo = async (): Promise<Map<string, string>> => {
   const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-demo-"));
@@ -160,44 +162,55 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     // installation: the demo already owns its workspace dependency manifest.
     const items = await Promise.all(
       // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
-      registry.items.map(async (item) => {
-        const files = await Promise.all(
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
-          (item.files ?? []).map(async (file) => ({
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            ...file,
-            content: await readFile(
-              path.join(registryRoot, file.path),
-              "utf-8"
-            ),
-          }))
-        );
-        // oxlint-disable-next-line typescript/no-unsafe-assignment, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        const metadata = item.meta?.chatjs;
-        // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading kind from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        if (metadata?.kind === "tool" || metadata?.kind === "feature") {
-          const target =
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, no-ternary -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.; no-ternary: Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            metadata.kind === "tool"
-              ? `~/tools/chatjs/${item.name}/chatjs.json`
-              : `~/features/${item.name}/chatjs.json`;
-          files.push({
-            content: await formatted(target, JSON.stringify(metadata)),
-            path: `${item.name}.json`,
-            target,
-            type: "registry:file",
-          });
+      registry.items.map(
+        async (item: ReadonlyInput<(typeof registry.items)[number]>) => {
+          const files = await Promise.all(
+            // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
+            (item.files ?? []).map(
+              async (
+                file: ReadonlyInput<
+                  NonNullable<(typeof registry.items)[number]["files"]>[number]
+                >
+              ) => ({
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                ...file,
+                content: await readFile(
+                  path.join(registryRoot, file.path),
+                  "utf-8"
+                ),
+              })
+            )
+          );
+          // oxlint-disable-next-line typescript/no-unsafe-assignment, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          const metadata = item.meta?.chatjs;
+          // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading kind from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          if (metadata?.kind === "tool" || metadata?.kind === "feature") {
+            const target =
+              // oxlint-disable-next-line typescript/no-unsafe-member-access, no-ternary -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.; no-ternary: Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              metadata.kind === "tool"
+                ? `~/tools/chatjs/${item.name}/chatjs.json`
+                : `~/features/${item.name}/chatjs.json`;
+            files.push({
+              content: await formatted(target, JSON.stringify(metadata)),
+              path: `${item.name}.json`,
+              target,
+              type: "registry:file",
+            });
+          }
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          return { ...item, dependencies: [], devDependencies: [], files };
         }
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        return { ...item, dependencies: [], devDependencies: [], files };
-      })
+      )
     );
     const server = Bun.serve({
-      fetch(request) {
+      fetch(request: Readonly<Pick<Request, "url">>) {
         const name = new URL(request.url).pathname
           .slice(1)
           .replace(/\.json$/u, "");
-        const item = items.find((candidate) => candidate.name === name);
+        const item = items.find(
+          (candidate: ReadonlyInput<(typeof items)[number]>) =>
+            candidate.name === name
+        );
 
         if (item) {
           return Response.json(item);
@@ -258,9 +271,13 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     await syncTools(temporary, { expected: plan.expected });
     // Composer/settings ordering is application-owned; never initialize or add UI here.
     await syncFeatures(temporary, {
-      expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+      expectedMcp: plan.features.some(
+        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
+          feature.id === "mcp"
+      ),
       expectedUploads: plan.features.some(
-        (feature) => feature.id === "attachment-uploads"
+        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
+          feature.id === "attachment-uploads"
       ),
     });
     // Narrow application-owned exceptions: model catalog is fetched separately;
@@ -300,7 +317,6 @@ const generateDemo = async (): Promise<Map<string, string>> => {
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-lines-per-function */

@@ -1,4 +1,3 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Registry schema entries retain their parsed public descriptor types at this integration boundary. */
 import { expect, test } from "bun:test";
 
 /* oxlint-disable import/no-relative-parent-imports -- These package-local tests exercise the actual published registry descriptors. */
@@ -9,7 +8,7 @@ import { registry } from "../../../registry";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const daytona = registry.items.find(
-  (item) => item.name === "daytona-code-execution"
+  (item: { readonly name: string }) => item.name === "daytona-code-execution"
 );
 // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from daytona.meta; read meta from daytona; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
 const descriptor = toolDefinitionSchema.parse(daytona?.meta?.chatjs);
