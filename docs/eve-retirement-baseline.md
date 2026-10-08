@@ -57,3 +57,7 @@ Subsequent shared support adds a real parked-approval process restart and two ex
 ## Integrated update — 7 October 2026
 
 The initial lint failure is resolved by a normal typed Postgres import and exact development dependency. A/B/C final artifacts are now integrated locally; production EVE/Workflow dependencies remain unchanged. Full lint and all seven workspace type tasks pass. Real PostgreSQL, durable submission/creation, private deletion, browser recovery, explicit operator recovery and incompatible old-run continuation evidence are recorded in the [integration report](eve-retirement-integration-plan.md). The historical results above describe the initial baseline only. Whole-fork retirement remains blocked by supported runtime contracts and the active-run cutover decision.
+
+## Superseding decision — 8 October 2026
+
+Francisco accepts terminal retirement of prelaunch sessions while preserving readable history; old-session resumability and dual-runtime routing are no longer requirements. The [scoped cutover proof and recovery investigation](eve-prelaunch-cutover.md) replace the earlier open migration decision. Crash recovery is not classified as an upstream-only blocker: supported settings, pinned upgrades and narrowly scoped application recovery now have measured comparisons and live-worker negative controls. No live retirement or production dependency change was performed.

@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-08",
+  "queueProofs": [
+    {
+      "actualScans": 24,
+      "baseline": [
+        {
+          "id": "5",
+          "locked_by": "worker-d80485ed6612e59fed"
+        },
+        {
+          "id": "6",
+          "locked_by": "worker-c34a81de6be1067f0b"
+        }
+      ],
+      "directory": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-queue-recovery-llEeZ0",
+      "effects": "one original action per task; no re-enqueue",
+      "negativeControl": "SIGSTOP worker retained original lock; live recovery refused",
+      "noRecoveryWithinMs": 2500,
+      "resumedMs": 102.80124999999998,
+      "scanIntervalMs": 100,
+      "version": "0.16.6"
+    },
+    {
+      "actualScans": 24,
+      "baseline": [
+        {
+          "id": "5",
+          "locked_by": "pool-0de0fb75ea39f0e09c"
+        },
+        {
+          "id": "6",
+          "locked_by": "pool-51399c02ab47576bca"
+        }
+      ],
+      "directory": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-queue-recovery-3lG8xn",
+      "effects": "one original action per task; no re-enqueue",
+      "negativeControl": "SIGSTOP worker retained original lock; live recovery refused",
+      "noRecoveryWithinMs": 2500,
+      "resumedMs": 102.54658300000028,
+      "scanIntervalMs": 100,
+      "version": "0.18.0"
+    }
+  ],
+  "eveProof": {
+    "eve": "0.71.3",
+    "provider": "5.0.0-beta.40 with existing patch",
+    "candidateToSettlementSeconds": 4.209,
+    "settlementToEffectSeconds": 2.004,
+    "evidence": "chatjs-eve-retirement-8Zfm3z",
+    "effects": 1,
+    "resends": 0
+  },
+  "negativeBaseline": {
+    "automaticSeconds": 60,
+    "providerCandidate": "5.0.2",
+    "outcome": "same candidate timeout after candidate migrations; lifecycle schema guard rejects upgrade"
+  }
+}

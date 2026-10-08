@@ -44,3 +44,7 @@ A/B/C final artifacts are integrated locally; see [validated integration and exa
 Fresh local and PostgreSQL smoke, private deletion guards, ledger ownership/CAS, graceful restart, and explicitly supported operator recovery have real-runtime/database evidence. Automatic abrupt PostgreSQL recovery retains dead worker locks for four hours. Old 0.61 active runs fail continuation under 0.71.3 even though snapshot history remains readable. The read-only version preflight prevents that incompatible cutover; it does not migrate runs.
 
 Keep old sessions on the original runtime until an explicit migration/retirement policy is reviewed. Keep every remaining contract above until it has a supported replacement and its own proof. Fresh-runtime success and application preparation do not authorize a production dependency switch.
+
+## Superseding decision — 8 October 2026
+
+Francisco accepts terminal retirement of prelaunch sessions while preserving readable history; old-session resumability and dual-runtime routing are no longer requirements. The [scoped cutover proof and recovery investigation](eve-prelaunch-cutover.md) replace the earlier open migration decision. Crash recovery is not classified as an upstream-only blocker: supported settings, pinned upgrades and narrowly scoped application recovery now have measured comparisons and live-worker negative controls. No live retirement or production dependency change was performed.

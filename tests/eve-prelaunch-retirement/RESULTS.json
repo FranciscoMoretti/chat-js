@@ -1,0 +1,57 @@
+{
+  "dry": [
+    {
+      "activeRunIds": [
+        "wrun_01M4D58DG60GZF9YCGSS9P1678",
+        "wrun_01M4D58DJK5VFWYWP5WYEZPFT6"
+      ],
+      "root": "wrun_01M4D58DG60GZF9YCGSS9P1678",
+      "runIds": [
+        "wrun_01M4D58DG60GZF9YCGSS9P1678",
+        "wrun_01M4D58DJK5VFWYWP5WYEZPFT6"
+      ],
+      "streamIds": [
+        "strm_01M4D58DG60GZF9YCGSS9P1678_user",
+        "strm_01M4D58DG60GZF9YCGSS9P1678_user_ZXZlLmNoZWNrcG9pbnRz",
+        "strm_01M4D58DG60GZF9YCGSS9P1678_user_ZXZlLnNhbmRib3gtaWRlbnRpdHk"
+      ]
+    }
+  ],
+  "effects": 0,
+  "eventsAfter": 10,
+  "eventsBefore": 9,
+  "idempotency": "partial failure after reset then two applies",
+  "lateApproval": "rejected",
+  "lateSend": "rejected",
+  "plan": {
+    "digest": "fbf383f1aab93049180f0ac46c690bce77fc1765b451088996cfa77e473cdc7e",
+    "directory": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-eve-retirement-eEjFII/archive",
+    "scopes": [
+      {
+        "activeRunIds": [
+          "wrun_01M4D58DG60GZF9YCGSS9P1678",
+          "wrun_01M4D58DJK5VFWYWP5WYEZPFT6"
+        ],
+        "root": "wrun_01M4D58DG60GZF9YCGSS9P1678",
+        "runIds": [
+          "wrun_01M4D58DG60GZF9YCGSS9P1678",
+          "wrun_01M4D58DJK5VFWYWP5WYEZPFT6"
+        ],
+        "streamIds": [
+          "strm_01M4D58DG60GZF9YCGSS9P1678_user",
+          "strm_01M4D58DG60GZF9YCGSS9P1678_user_ZXZlLmNoZWNrcG9pbnRz",
+          "strm_01M4D58DG60GZF9YCGSS9P1678_user_ZXZlLnNhbmRib3gtaWRlbnRpdHk"
+        ]
+      }
+    ],
+    "target": [
+      {
+        "database": "lane_d",
+        "address": "127.0.0.1/32",
+        "port": 53054
+      }
+    ]
+  },
+  "resurrection": "fenced",
+  "sessionId": "wrun_01M4D58DG60GZF9YCGSS9P1678"
+}

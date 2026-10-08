@@ -42,7 +42,7 @@ const assertEvePostgresRuntimeCompatibility = async (
   const noMismatches = 0;
   if (mismatches.length > noMismatches) {
     throw new Error(
-      `Active EVE run ${mismatch.id} contains ${mismatch.stepName}, incompatible with step version ${expectedStepVersion}. Keep this database on its original runtime. Do not rewrite event logs or retry admission; a reviewed migration or version-routing design is required before cutover.`
+      `Active EVE run ${mismatch.id} contains ${mismatch.stepName}, incompatible with step version ${expectedStepVersion}. Retire the selected prelaunch sessions on their original runtime with verified history archives before cutover, or use a reviewed migration. Do not rewrite event logs or retry admission.`
     );
   }
 };

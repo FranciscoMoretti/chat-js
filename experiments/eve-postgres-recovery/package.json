@@ -1,0 +1,9 @@
+{
+  "name": "eve-postgres-recovery-proof",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@workflow/world-postgres": "5.0.2",
+    "graphile-worker": "0.18.0"
+  }
+}

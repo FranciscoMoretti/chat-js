@@ -47,3 +47,7 @@ Host-local evidence: `/tmp/e70d-final-{lint,types,c-pg,c-unit,preflight,browser,
 Use [disposable PostgreSQL instructions](../tests/eve-retirement-postgres/README.md), [A tests](../tests/eve-retirement-lane-a/README.md), [B final validation](../experiments/eve-approval-receipt/VALIDATION-2026-10-07.md), and [C experiment](../experiments/eve-delivery-correlation/README.md). Materialize C's hash-pinned shared controller with its `setup-postgres.ts` before root type-aware lint. Use Node 24 for Vitest/Playwright.
 
 Shared cluster `chatjs-retirement-pg.H2ZFmo` remains available for the lanes until the parent confirms teardown. D-only cluster data/logs are retained when stopped. `cluster.sh stop` verifies ownership and stops without deleting evidence. No live database credentials or production databases are used.
+
+## Superseding decision — 8 October 2026
+
+Francisco accepts terminal retirement of prelaunch sessions while preserving readable history; old-session resumability and dual-runtime routing are no longer requirements. The [scoped cutover proof and recovery investigation](eve-prelaunch-cutover.md) replace the earlier open migration decision. Crash recovery is not classified as an upstream-only blocker: supported settings, pinned upgrades and narrowly scoped application recovery now have measured comparisons and live-worker negative controls. No live retirement or production dependency change was performed.
