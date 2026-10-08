@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before #cli/helpers/readonly-input (ReadonlyInput); sort-imports requires the reverse. */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 /* oxlint-enable sort-imports */
 

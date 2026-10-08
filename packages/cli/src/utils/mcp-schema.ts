@@ -1,13 +1,13 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:fs/promises (readFile) before node:path (path); sort-imports requires the reverse. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 /* oxlint-enable sort-imports */
 
 import ts from "typescript";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places typescript (ts) before ./preflight (preflight); sort-imports requires the reverse. */
 import { preflight } from "./preflight";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertMcpApprovalSchema's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */

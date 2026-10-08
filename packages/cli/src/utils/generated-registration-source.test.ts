@@ -3,10 +3,10 @@ import { expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Node/Bun generator contract test uses the host temporary directory.
 import { tmpdir } from "node:os";
-// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Oxfmt groups native modules by path before binding syntax; this Node/Bun test resolves isolated fixture and installed linter paths.
+// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse.
 import path from "node:path";
 
-// oxlint-disable-next-line sort-imports -- Oxfmt places the package-local generator after native imports; retain its module grouping.
+// oxlint-disable-next-line sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ./generated-registration-source (generatedRegistrationSource); sort-imports requires the reverse.
 import { generatedRegistrationSource } from "./generated-registration-source";
 
 const registrationReason =

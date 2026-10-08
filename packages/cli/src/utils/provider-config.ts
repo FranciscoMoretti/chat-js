@@ -1,13 +1,13 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:fs/promises (readFile) before node:path (path); sort-imports requires the reverse. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 /* oxlint-enable sort-imports */
 
 import ts from "typescript";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places typescript (ts) before #cli/registry/gateways (GatewaySelection); sort-imports requires the reverse. */
 import type { GatewaySelection } from "#cli/registry/gateways";
 /* oxlint-enable sort-imports */
 

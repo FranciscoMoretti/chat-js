@@ -1,13 +1,13 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
 import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:crypto (createHash, single) before node:fs/promises (mkdir, multiple); sort-imports requires the reverse. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 /* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (pathModule) before #cli/helpers/readonly-input (ReadonlyInput); sort-imports requires the reverse. */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 /* oxlint-enable sort-imports */
 
@@ -16,7 +16,7 @@ import type { ToolDefinition } from "../../../registry/metadata";
 // oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptors outside the CLI package are bundled into the published executable.
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { validateCustomToolKeys } from "./custom-tool-keys";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./custom-tool-keys (validateCustomToolKeys) before ./generated-registration-source (generatedRegistrationSource); sort-imports requires the reverse. */
 import { generatedRegistrationSource } from "./generated-registration-source";
 /* oxlint-enable sort-imports */
 import { preflight } from "./preflight";

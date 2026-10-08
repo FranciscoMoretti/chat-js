@@ -6,7 +6,7 @@ import path from "node:path";
 import ts from "typescript";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places typescript (ts) before ../../../registry/metadata (FeatureDefinition); sort-imports requires the reverse. */
 import type { FeatureDefinition } from "../../../registry/metadata";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
@@ -14,7 +14,7 @@ import type { FeatureDefinition } from "../../../registry/metadata";
 import { featureDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ../../../registry/metadata (featureDefinitionSchema) before ../../../registry/src/features/attachment-uploads (attachmentUploadFiles); sort-imports requires the reverse. */
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
@@ -23,11 +23,11 @@ import { mcpFiles } from "../../../registry/src/features/mcp";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ../../../registry/src/features/observability (observabilityItems) before ./generated-registration-source (generatedRegistrationSource); sort-imports requires the reverse. */
 import { generatedRegistrationSource } from "./generated-registration-source";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./generated-registration-source (generatedRegistrationSource, single) before ./sync-observability (initializeObservability, multiple); sort-imports requires the reverse. */
 import {
   initializeObservability,
   planObservability,

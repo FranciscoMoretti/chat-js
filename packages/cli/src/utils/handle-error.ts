@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before ./highlighter (highlighter); sort-imports requires the reverse. */
 import { highlighter } from "./highlighter";
 /* oxlint-enable sort-imports */
 import { logger } from "./logger";

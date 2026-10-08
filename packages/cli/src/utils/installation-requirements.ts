@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places zod (z) before ./preflight (preflight); sort-imports requires the reverse. */
 import { preflight } from "./preflight";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places ./preflight (preflight, single) before ./provider-config (readProviderId, multiple); sort-imports requires the reverse. */
 import { readProviderId, readProviderLiteral } from "./provider-config";
 /* oxlint-enable sort-imports */
 

@@ -3,7 +3,7 @@ import { lstat } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:path (path) before ./is-safe-target (isSafeTarget); sort-imports requires the reverse. */
 import { isSafeTarget } from "./is-safe-target";
 /* oxlint-enable sort-imports */
 

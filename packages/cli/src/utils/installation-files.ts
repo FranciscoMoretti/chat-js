@@ -1,6 +1,6 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- Installation walks native directory entries and rejects symbolic links.
 import type { Dirent } from "node:fs";
-/* oxlint-disable sort-imports -- Preserve the formatter's separate native type-import ordering; the declaration-kind ordering rule conflicts with it. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:fs (Dirent, single) before node:fs/promises (readFile, multiple); sort-imports requires the reverse. */
 // oxlint-disable-next-line import/no-nodejs-modules -- Installation reads file bytes and enumerates real directories.
 import { readFile, readdir } from "node:fs/promises";
 /* oxlint-enable sort-imports */
