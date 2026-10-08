@@ -180,7 +180,7 @@ class OpenRouterGateway
   }
 
   // The gateway interface requires an image factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; OpenRouter has no dedicated image factory, so null lets the caller select multimodal generation.
   public createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
@@ -188,7 +188,7 @@ class OpenRouterGateway
   }
 
   // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
   public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
