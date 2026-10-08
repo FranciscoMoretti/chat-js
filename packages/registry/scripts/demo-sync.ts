@@ -181,12 +181,20 @@ const generateDemo = async (): Promise<Map<string, string>> => {
               })
             )
           );
-          // oxlint-disable-next-line typescript/no-unsafe-assignment, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          const metadata = item.meta?.chatjs;
-          // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading kind from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          if (metadata?.kind === "tool" || metadata?.kind === "feature") {
+          const itemMeta: unknown = item.meta;
+          const metadata: unknown =
+            typeof itemMeta === "object" &&
+            itemMeta &&
+            "chatjs" in itemMeta &&
+            itemMeta.chatjs;
+          if (
+            typeof metadata === "object" &&
+            metadata &&
+            "kind" in metadata &&
+            (metadata.kind === "tool" || metadata.kind === "feature")
+          ) {
             const target =
-              // oxlint-disable-next-line typescript/no-unsafe-member-access, no-ternary -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.; no-ternary: Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               metadata.kind === "tool"
                 ? `~/tools/chatjs/${item.name}/chatjs.json`
                 : `~/features/${item.name}/chatjs.json`;
@@ -311,8 +319,9 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     const output = new Map(copies);
     return output;
   } finally {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stopServer; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-    stopServer?.();
+    if (stopServer) {
+      stopServer();
+    }
     await fs.rm(temporary, { force: true, recursive: true });
   }
 };
@@ -425,7 +434,6 @@ const replaceDemoFiles = async (
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /** Check all files before writing any: a failed protection check never partially syncs. */
 const syncDemo = async (options: {
   readonly root: string;
@@ -442,10 +450,13 @@ const syncDemo = async (options: {
     typeof previous === "string" && previous !== ""
       ? baselineSchema.parse(JSON.parse(previous))
       : null;
-  const files = [
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the existing {} fallback.
-    ...new Set([...expected.keys(), ...Object.keys(record?.files ?? {})]),
-  ].toSorted();
+  const fileSet = new Set(expected.keys());
+  if (record !== null) {
+    for (const file of Object.keys(record.files ?? {})) {
+      fileSet.add(file);
+    }
+  }
+  const files = [...fileSet].toSorted();
   await preflight(root, files);
   const current = new Map(
     await Promise.all(
@@ -464,8 +475,7 @@ const syncDemo = async (options: {
     // oxlint-disable-next-line no-ternary -- Keep hash as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const hash = content === null ? null : digest(content);
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    if (record?.files[file]) {
+    if (record !== null && record.files[file]) {
       return hash !== record.files[file];
     }
     return content !== null && content !== expected.get(file);
@@ -514,7 +524,6 @@ const syncDemo = async (options: {
   ]);
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */

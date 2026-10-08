@@ -27,8 +27,9 @@ await mkdir(path.join(cwd, "dist/source"), { recursive: true });
 await Promise.all(
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The build appends descriptor files to each mutable Shadcn RegistryItem before serializing registry.json.
   registry.items.map(async (item) => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const metadata: unknown = item.meta?.chatjs;
+    const meta: unknown = item.meta;
+    const metadata: unknown =
+      typeof meta === "object" && meta && "chatjs" in meta && meta.chatjs;
     if (
       typeof metadata === "object" &&
       metadata &&
