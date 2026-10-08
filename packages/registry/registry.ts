@@ -1,4 +1,3 @@
-/* oxlint-disable import/max-dependencies -- The registry explicitly composes source-owned provider and feature catalogs at its public assembly boundary. */
 import type { RegistryItem } from "shadcn/schema";
 import { registrySchema } from "shadcn/schema";
 
@@ -29,6 +28,7 @@ import {
   savedCodeExecutionItem,
 } from "./src/tools/documents";
 /* oxlint-enable sort-imports */
+/* oxlint-disable-next-line import/max-dependencies -- This required catalog is the 11th source dependency at the registry assembly boundary; the configured maximum is 10. */
 import { researchItem } from "./src/tools/research";
 
 const toolItems = (
