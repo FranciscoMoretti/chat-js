@@ -1,9 +1,6 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { expect, it } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- EVE's bundled Zod must initialize its shared global registry before this module loads external Zod; reversing these runtime imports changes the registry constructor/prototype identity. */
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -13,8 +10,8 @@ import {
   rewriteEveCopyResources,
 } from "./copy-transcript";
 /* oxlint-enable sort-imports */
+import { expect, it } from "vitest";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
-/* oxlint-enable sort-imports */
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const copiedFile = "bbbbbbbbbbbbbbbbbbbbbbbb.png";
@@ -409,8 +406,7 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/promise-function-async --
- * id-length (#506): it("externalizes six distinct inline images through durable destination allocations") uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("externalizes six distinct inline images through durable destination allocations") uses 1024, 8, 6, 24, 2048, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/promise-function-async (#606): it("externalizes six distinct inline images through durable destination allocations") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -419,7 +415,7 @@ it("externalizes six distinct inline images through durable destination allocati
     history([
       {
         id: "user",
-        parts: Array.from({ length: 6 }, (_, index) => ({
+        parts: Array.from({ length: 6 }, (_unusedValue, index) => ({
           mediaType: "image/png",
           type: "file",
           url: `data:image/png;base64,${Buffer.alloc(1024 * 1024, index).toString("base64")}`,
@@ -458,7 +454,7 @@ it("externalizes six distinct inline images through durable destination allocati
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("refuses missing inline allocations and metadata changes before dispatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.

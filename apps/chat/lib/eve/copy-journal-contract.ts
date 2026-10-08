@@ -4,9 +4,8 @@ type EveCopySeed = NonNullable<
   Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): EveCopyPlan preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 /** Server-prepared immutable intent. Never accept this payload from a browser. */
-type EveCopyPlan = {
+interface EveCopyPlan {
   readonly seed: EveCopySeed;
   readonly documentCheckpoints: readonly {
     readonly messageIndex: number;
@@ -47,8 +46,7 @@ type EveCopyPlan = {
       readonly createdAt: string;
     }[];
   }[];
-};
+}
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (EveCopyPlan, EveCopySeed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/consistent-type-definitions */
 export type { EveCopyPlan, EveCopySeed };
 /* oxlint-enable import/no-named-export */

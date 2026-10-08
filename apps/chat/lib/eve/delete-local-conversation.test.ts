@@ -5,7 +5,8 @@ import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 const mocks = vi.hoisted(() => ({
   check: vi.fn(),
   complete: vi.fn(),
-  native: vi.fn(),
+  native:
+    vi.fn<(sessionId: string, retire: () => Promise<void>) => Promise<void>>(),
   provider: vi.fn(),
   resources: vi.fn(),
   retire: vi.fn(),
@@ -77,10 +78,8 @@ test("all resources and native family payloads finish before the application tom
 
   expect(
     mocks.native.mock.calls.map(
-      (call: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        call[0]
-      /* oxlint-enable typescript/no-unsafe-return */
+      ([sessionId]: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        sessionId
     )
   ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
@@ -121,10 +120,8 @@ test("partial native purge retains pending state and retry runs the full orderin
 
   expect(
     mocks.native.mock.calls.map(
-      (call: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        call[0]
-      /* oxlint-enable typescript/no-unsafe-return */
+      ([sessionId]: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        sessionId
     )
   ).toEqual([
     "session-root",

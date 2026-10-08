@@ -1,11 +1,6 @@
-import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 
 const ALLOCATIONS_PARAMETER_INDEX = 1;
 type CopyDocumentSnapshot = Awaited<

@@ -1,12 +1,12 @@
+/* oxlint-disable max-lines -- Preserve existing attachment coverage alongside the regression proving inline getter reads precede queued microtasks; splitting this shared native-client fixture solely for the line threshold would duplicate setup. */
 import { beforeEach, expect, it, vi } from "vitest";
 
+import type { getFileMetadata } from "@/lib/file-storage";
 import { restoreMessageAttachments } from "./restore-message-attachments";
 
-const mocks = vi.hoisted(() => ({
-  access: vi.fn(),
-  conversation: vi.fn(),
-  download: vi.fn(),
-  messages: [] as {
+const mocks = vi.hoisted(() => {
+  const replayOrder: string[] = [];
+  const messages: {
     id: string;
     role: string;
     parts: {
@@ -15,19 +15,25 @@ const mocks = vi.hoisted(() => ({
       url?: string;
       filename?: string;
     }[];
-  }[],
-  metadata: vi.fn(),
-  reduce: vi.fn((state: Readonly<{ messages: readonly unknown[] }>) => state),
-  reserve: vi.fn(),
-  snapshot: vi.fn(),
-  upload: vi.fn(),
-}));
+  }[] = [];
+  return {
+    access: vi.fn(),
+    conversation: vi.fn(),
+    download: vi.fn(),
+    messages,
+    metadata: vi.fn(),
+    reduce: vi.fn((state: Readonly<{ messages: readonly unknown[] }>) => state),
+    replayOrder,
+    reserve: vi.fn(),
+    snapshot: vi.fn(),
+    upload: vi.fn(),
+  };
+});
 vi.mock("../config", () => ({ config: { attachments: { maxBytes: 10 } } }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.conversation,
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../db/eve-files")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("../db/eve-files") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("../db/eve-files", () => ({
@@ -37,38 +43,41 @@ vi.mock("../db/eve-files", () => ({
     _owner: string,
     _key: string,
     write: () => Promise<unknown>
-  ) => write(),
+  ): Promise<unknown> => write(),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-
+/* oxlint-enable typescript/promise-function-async */
 vi.mock("../file-storage", () => ({
   createFileId: (): string => "abcdefghijklmnopqrstuvwx.png",
   downloadFile: mocks.download,
   getFileMetadata: mocks.metadata,
   uploadFileAtKey: mocks.upload,
 }));
-
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./connection-options")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./connection-options", () => ({
-  getEveConnectionOptions: () => ({}),
+  getEveConnectionOptions: (): Record<string, never> => ({}),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/client", () => ({
   Client: class {
-    public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+    public sessions = {
+      attach: (): Pick<typeof mocks, "snapshot"> => ({
+        snapshot: mocks.snapshot,
+      }),
+    };
   },
-  defaultMessageReducer: () => ({
-    initial: () => ({ messages: mocks.messages }),
-    reduce: mocks.reduce,
-  }),
+  defaultMessageReducer: (): {
+    initial: () => Pick<typeof mocks, "messages">;
+    reduce: typeof mocks.reduce;
+  } => {
+    mocks.replayOrder.push("factory");
+    return {
+      initial: (): Pick<typeof mocks, "messages"> => {
+        mocks.replayOrder.push("initial");
+        return { messages: mocks.messages };
+      },
+      reduce: mocks.reduce,
+    };
+  },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 const input = { conversationId: "conversation", messageId: "message" };
 const replayEvents = [
   {
@@ -87,6 +96,7 @@ const replayEvents = [
  */
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.replayOrder.length = 0;
   mocks.conversation.mockResolvedValue({
     sessionId: "session",
     state: "bound",
@@ -122,11 +132,11 @@ beforeEach(() => {
  */
 it("restores exact trusted inline history without an installed upload feature", async () => {
   const attachments = await restoreMessageAttachments("owner", input);
+  const expectedDigest: unknown = expect.stringMatching(/^[a-f0-9]{64}$/u);
   expect(attachments).toEqual([
     expect.objectContaining({
       contentType: "image/png",
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This restore-message-attachments fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      digest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      digest: expectedDigest,
       name: "photo.png",
       url: "/api/files/abcdefghijklmnopqrstuvwx.png",
     }),
@@ -140,7 +150,6 @@ it("restores exact trusted inline history without an installed upload feature", 
     new Uint8Array([1, 2, 3])
   );
 });
-
 it("replays ordered snapshot events through the reducer before restoring", async () => {
   const [first, second] = replayEvents;
   mocks.snapshot.mockResolvedValue({ events: replayEvents });
@@ -159,9 +168,7 @@ it("replays ordered snapshot events through the reducer before restoring", async
   mocks.reduce
     .mockImplementationOnce(() => firstState)
     .mockImplementationOnce(() => finalState);
-
   await restoreMessageAttachments("owner", input);
-
   expect(mocks.reduce.mock.calls).toEqual([
     [{ messages: mocks.messages }, first],
     [firstState, second],
@@ -170,7 +177,6 @@ it("replays ordered snapshot events through the reducer before restoring", async
   expect(mocks.reduce.mock.contexts[0]).toHaveProperty("initial");
   expect(mocks.reduce.mock.contexts[0]).toHaveProperty("reduce", mocks.reduce);
 });
-
 it("propagates reducer failures and stops replay", async () => {
   const [first, second] = replayEvents;
   const failure = new Error("Reducer failed");
@@ -185,9 +191,7 @@ it("propagates reducer failures and stops replay", async () => {
     .mockImplementationOnce(() => {
       throw failure;
     });
-
   await expect(restoreMessageAttachments("owner", input)).rejects.toBe(failure);
-
   expect(mocks.reduce.mock.calls).toEqual([
     [{ messages: mocks.messages }, first],
     [
@@ -227,14 +231,13 @@ it("requires owned bound history and a native user message before copying", asyn
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("rechecks file access and size and never fetches a remote history URL") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("rechecks file access and size and never fetches a remote history URL") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/strict-boolean-expressions (#610): it("rechecks file access and size and never fetches a remote history URL") intentionally keeps the existing falsy-value behavior of part; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 it("rechecks file access and size and never fetches a remote history URL", async () => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from mocks.messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const part = mocks.messages[0]?.parts[0];
+  const part = mocks.messages.at(0)?.parts[0];
   if (!part) {
     throw new Error("Missing native fixture");
   }
@@ -260,8 +263,7 @@ it("rechecks file access and size and never fetches a remote history URL", async
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
-
+/* oxlint-enable max-statements, no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects oversized metadata before downloading or reserving") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -306,7 +308,6 @@ it("rejects a remote reference before storage access", async () => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])("reject keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])("reject uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -341,7 +342,6 @@ it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])(
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
-
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("preflights all files then copies valid mixed history in order") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -364,3 +364,109 @@ it("preflights all files then copies valid mixed history in order", async () => 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
+
+// oxlint-disable-next-line oxc/no-async-await -- Await the completed restore to observe queued microtasks after synchronous inline admission.
+it("admits adjacent inline parts before queued mutations run", async () => {
+  const reads: string[] = [];
+  mocks.messages = [
+    {
+      id: "message",
+      parts: [
+        {
+          filename: "first.png",
+          mediaType: "image/png",
+          type: "file",
+          get url(): string {
+            reads.push("first");
+            queueMicrotask(() => {
+              reads.push("queued");
+            });
+            return "data:image/png;base64,AQID";
+          },
+        },
+        {
+          filename: "second.png",
+          mediaType: "image/png",
+          type: "file",
+          get url(): string {
+            reads.push("second");
+            return "data:image/png;base64,AQID";
+          },
+        },
+      ],
+      role: "user",
+    },
+  ];
+  await restoreMessageAttachments("owner", input);
+  expect(reads).toEqual(["first", "second", "queued"]);
+});
+
+// oxlint-disable-next-line oxc/no-async-await -- Await replay completion to verify native snapshot getter order against reducer initialization.
+it("initializes the reducer before reading original snapshot events", async () => {
+  mocks.snapshot.mockResolvedValue({
+    get events(): never[] {
+      mocks.replayOrder.push("events");
+      return [];
+    },
+  });
+  await restoreMessageAttachments("owner", input);
+  expect(mocks.replayOrder).toEqual(["factory", "initial", "events"]);
+});
+
+/* oxlint-disable oxc/no-async-await -- Await restoration to check original metadata-to-next-part and first-copy continuations. */
+it.each(["next-part", "first-copy"])(
+  "reads original stored history before queued %s mutations",
+  async (target) => {
+    const second = {
+      filename: "second.png",
+      mediaType: "image/png",
+      type: "file",
+      url: "data:image/png;base64,AQID",
+    };
+    const body = new Blob(["abc"], { type: "image/png" });
+    /* oxlint-disable typescript/promise-function-async -- Full native metadata fixture callbacks return their original Blob promises; async wrappers would add reaction turns. */
+    const metadata: Awaited<ReturnType<typeof getFileMetadata>> = {
+      arrayBuffer: () => body.arrayBuffer(),
+      blob: () => Promise.resolve(body),
+      key: "abcdefghijklmnopqrstuvwx.png",
+      name: "first.png",
+      get size(): number {
+        queueMicrotask(() => {
+          if (target === "next-part") {
+            second.url = "invalid-after-metadata";
+          } else {
+            mocks.download.mockRejectedValue(new Error("late download"));
+          }
+        });
+        return body.size;
+      },
+      stream: () => body.stream(),
+      text: () => body.text(),
+      type: body.type,
+    };
+    /* oxlint-enable typescript/promise-function-async */
+    mocks.metadata.mockResolvedValue(metadata);
+    mocks.messages = [
+      {
+        id: "message",
+        parts: [
+          {
+            filename: "first.png",
+            mediaType: "image/png",
+            type: "file",
+            url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+          },
+          second,
+        ],
+        role: "user",
+      },
+    ];
+    const attachments = await restoreMessageAttachments("owner", input);
+    expect(attachments.map((attachment) => attachment.name)).toEqual([
+      "first.png",
+      "second.png",
+    ]);
+    expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
+  }
+);
+/* oxlint-enable oxc/no-async-await */

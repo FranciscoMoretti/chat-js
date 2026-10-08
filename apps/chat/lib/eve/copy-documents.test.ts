@@ -1,11 +1,8 @@
-import { expect, it } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
-/* oxlint-enable sort-imports */
+import { expect, it } from "vitest";
 
 const documentId = "00000000-0000-4000-8000-000000000001";
 const firstId = "00000000-0000-4000-8000-000000000002";

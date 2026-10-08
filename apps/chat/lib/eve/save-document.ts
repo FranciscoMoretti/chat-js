@@ -1,51 +1,68 @@
 import { Client } from "eve/client";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Eve SDK bundled Zod initializes globalThis.__zod_globalRegistry before the DB external Zod import. Moving DB first selects a different registry prototype/constructor; preserve SDK-first registry identity. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "@/lib/db/eve-documents";
 /* oxlint-enable sort-imports */
-import { getEveConversation } from "@/lib/db/eve-queries";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveConnectionOptions } from "./connection-options";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { eveManualDocumentInput } from "./document-contracts";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { documentHistoryTurns } from "./document-history";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+import { documentHistoryTurns } from "./document-history";
+import { eveManualDocumentInput } from "./document-contracts";
+import { getEveConnectionOptions } from "./connection-options";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import type { z } from "zod";
+
+const documentSnapshotTimeoutMs = 15_000;
+
+type SavedDocumentReceipt = Pick<
+  Awaited<ReturnType<typeof saveEveDocumentRevision>>,
+  "content" | "createdAt" | "documentId" | "id" | "kind" | "title"
+>;
+
+const savedDocumentReceipt = (
+  saved: ReadonlyNativeSurface<SavedDocumentReceipt>
+): SavedDocumentReceipt => ({
+  content: saved.content,
+  createdAt: saved.createdAt,
+  documentId: saved.documentId,
+  id: saved.id,
+  kind: saved.kind,
+  title: saved.title,
+});
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (saveManualEveDocument); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveManualEveDocument's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): saveManualEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): saveManualEveDocument uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): saveManualEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): saveManualEveDocument intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): saveManualEveDocument preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-export const saveManualEveDocument = async (
-  ownerId: string,
-  value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
-): Promise<
-  Pick<
-    Awaited<ReturnType<typeof saveEveDocumentRevision>>,
-    "content" | "createdAt" | "documentId" | "id" | "kind" | "title"
+type BoundManualConversation = ReadonlyNativeSurface<
+  NonNullable<Awaited<ReturnType<typeof getEveConversation>>>
+> & { readonly sessionId: string; readonly state: "bound" };
+
+interface ManualDocumentContext {
+  readonly conversation: BoundManualConversation;
+  readonly previous: NonNullable<
+    Awaited<ReturnType<typeof getEveDocumentRevision>>
+  >;
+}
+
+const isBoundManualConversation = (
+  conversation: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof getEveConversation>>
   >
-> => {
-  const input = eveManualDocumentInput.parse(value);
+): conversation is BoundManualConversation =>
+  !(
+    !conversation ||
+    (conversation.sessionId ?? "") === "" ||
+    conversation.state !== "bound"
+  );
+
+const resolveManualDocumentContext = async (
+  ownerId: string,
+  input: ReadonlyNativeSurface<z.output<typeof eveManualDocumentInput>>
+): Promise<ManualDocumentContext> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!(conversation?.sessionId && conversation.state === "bound")) {
+  if (!isBoundManualConversation(conversation)) {
     throw new Error("Conversation not found.");
   }
   const previous = await getEveDocumentRevision(
@@ -57,11 +74,25 @@ export const saveManualEveDocument = async (
   if (!(previous && installedDocumentKinds.has(previous.kind))) {
     throw new Error("Document not found.");
   }
+  return { conversation, previous };
+};
+
+/* oxlint-disable no-undefined, unicorn/no-null -- * no-undefined (#519): saveManualEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * unicorn/no-null (#570): saveManualEveDocument preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+export const saveManualEveDocument = async (
+  ownerId: string,
+  value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
+): Promise<SavedDocumentReceipt> => {
+  const input = eveManualDocumentInput.parse(value);
+  const { conversation, previous } = await resolveManualDocumentContext(
+    ownerId,
+    input
+  );
   assertEveConfigured();
   const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(documentSnapshotTimeoutMs) });
   const turns = documentHistoryTurns(snapshot.events);
   const saved = await saveEveDocumentRevision(
     {
@@ -76,15 +107,8 @@ export const saveManualEveDocument = async (
     undefined,
     turns
   );
-  return {
-    content: saved.content,
-    createdAt: saved.createdAt,
-    documentId: saved.documentId,
-    id: saved.id,
-    kind: saved.kind,
-    title: saved.title,
-  };
+  return savedDocumentReceipt(saved);
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */

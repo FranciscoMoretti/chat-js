@@ -1,5 +1,5 @@
 import { rejectUnacceptedEveCopy } from "@/lib/db/eve-copy-dispatch";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Load the copy-journal Eve transcript dependency before deletion response-group schemas; Eve's compiled Zod installs a shared postProcessor that affects later external-Zod schema construction. */
 import {
   completeEveConversationDeletion,
   getEveDeletionState,
@@ -11,9 +11,19 @@ import { purgeEveFamilyFiles } from "./purge-files";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (deleteUnacceptedEveCopy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
- * max-statements (#512): deleteUnacceptedEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+const purgeUnacceptedEveCopy = async (
+  ownerId: string,
+  conversationId: string,
+  deletion: Readonly<
+    NonNullable<Awaited<ReturnType<typeof getEveDeletionState>>>
+  >
+): Promise<void> => {
+  await rejectUnacceptedEveCopy(ownerId, conversationId);
+  await purgeEveFamilyDocuments(ownerId, deletion.rootId);
+  await purgeEveFamilyFiles(ownerId, deletion.rootId);
+  await completeEveConversationDeletion(ownerId, conversationId);
+};
+
 /** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path.
  * @param {string} ownerId Owner authorizing removal of the undispatched copy.
  * @param {string} conversationId Copy identity checked for deletion state and never-accepted dispatch proof.
@@ -31,10 +41,7 @@ export const deleteUnacceptedEveCopy = async (
     return;
   }
   try {
-    await rejectUnacceptedEveCopy(ownerId, conversationId);
-    await purgeEveFamilyDocuments(ownerId, deletion.rootId);
-    await purgeEveFamilyFiles(ownerId, deletion.rootId);
-    await completeEveConversationDeletion(ownerId, conversationId);
+    await purgeUnacceptedEveCopy(ownerId, conversationId, deletion);
   } catch (error) {
     // A concurrent cleanup may have completed while this caller waited on the family lock.
     const current = await getEveDeletionState(ownerId, conversationId);
@@ -46,4 +53,3 @@ export const deleteUnacceptedEveCopy = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

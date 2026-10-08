@@ -1,37 +1,37 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolContext } from "eve/tools";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  getEveDocumentRevision,
-  saveEveDocumentRevision,
-} from "@/lib/db/eve-documents";
-/* oxlint-enable sort-imports */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
-/* oxlint-enable sort-imports */
-import { resolveEveConversationScope } from "./conversation-scope";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-nodejs-modules -- Deterministic UUIDv8 requires the server Node crypto SHA-256 implementation. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
-/* oxlint-enable sort-imports */
+import {
+  getEveDocumentRevision,
+  saveEveDocumentRevision,
+} from "@/lib/db/eve-documents";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolContext } from "eve/tools";
+import { createHash } from "node:crypto";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { resolveEveConversationScope } from "./conversation-scope";
 /* oxlint-enable import/no-nodejs-modules */
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): documentIdForCall uses 0, 16, 6, 128, 8, 64, 12, 20 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const DOCUMENT_OPERATION_VALUE_INDEX = 1;
+const UUID_START_OFFSET = 0;
+const UUID_BYTE_LENGTH = 16;
+const UUID_VERSION_BYTE_INDEX = 6;
+const UUID_VERSION_PAYLOAD_MODULUS = 16;
+const UUID_VERSION_EIGHT_BITS = 128;
+const UUID_VARIANT_BYTE_INDEX = 8;
+const UUID_VARIANT_PAYLOAD_MODULUS = 64;
+const UUID_RFC_VARIANT_BITS = 128;
+const UUID_FIRST_GROUP_HEX_END = 8;
+const UUID_SECOND_GROUP_HEX_END = 12;
+const UUID_THIRD_GROUP_HEX_END = 16;
+const UUID_FOURTH_GROUP_HEX_END = 20;
+
 /**
  * Deterministic UUIDv8: retrying a create must address exactly the same document.
  *
@@ -43,28 +43,53 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
   const bytes = createHash("sha256")
     .update(JSON.stringify([sessionId, callId]))
     .digest()
-    .subarray(0, 16);
-  bytes[6] = (bytes[6] % 16) + 128;
-  bytes[8] = (bytes[8] % 64) + 128;
+    .subarray(UUID_START_OFFSET, UUID_BYTE_LENGTH);
+  bytes[UUID_VERSION_BYTE_INDEX] =
+    (bytes[UUID_VERSION_BYTE_INDEX] % UUID_VERSION_PAYLOAD_MODULUS) +
+    UUID_VERSION_EIGHT_BITS;
+  bytes[UUID_VARIANT_BYTE_INDEX] =
+    (bytes[UUID_VARIANT_BYTE_INDEX] % UUID_VARIANT_PAYLOAD_MODULUS) +
+    UUID_RFC_VARIANT_BITS;
   const hex = bytes.toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return `${hex.slice(UUID_START_OFFSET, UUID_FIRST_GROUP_HEX_END)}-${hex.slice(UUID_FIRST_GROUP_HEX_END, UUID_SECOND_GROUP_HEX_END)}-${hex.slice(UUID_SECOND_GROUP_HEX_END, UUID_THIRD_GROUP_HEX_END)}-${hex.slice(UUID_THIRD_GROUP_HEX_END, UUID_FOURTH_GROUP_HEX_END)}-${hex.slice(UUID_FOURTH_GROUP_HEX_END)}`;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveDocumentTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveDocumentTool's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null -- * max-lines-per-function (#510): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): executeEveDocumentTool uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): executeEveDocumentTool uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): executeEveDocumentTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-export const executeEveDocumentTool = async (
-  name: string,
+const readEveDocumentTool = async (
   value: unknown,
-  context: ReadonlyNativeSurface<
-    Readonly<Pick<DocumentContext, "session" | "abortSignal" | "callId">>
-  >
-): Promise<
+  context: ReadonlyNativeSurface<DocumentContext>
+): ReturnType<typeof executeEveDocumentTool> => {
+  const input = eveDocumentReadInput.parse(value);
+  const scope = await resolveEveConversationScope(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    context.session.auth.initiator?.principalId,
+    context.session.id,
+    context.abortSignal
+  );
+  const revision = await getEveDocumentRevision(
+    scope.ownerId,
+    scope.conversationId,
+    input.documentId
+  );
+  if (!(revision && installedDocumentKinds.has(revision.kind))) {
+    throw new Error("Document not found.");
+  }
+  return {
+    content: revision.content,
+    date: revision.createdAt.toISOString(),
+    documentId: revision.documentId,
+    fileIds: revision.fileIds,
+    kind: revision.kind,
+    revisionId: revision.id,
+    status: "success",
+    title: revision.title,
+  };
+};
+
+/* oxlint-disable no-undefined, unicorn/no-null -- * no-undefined (#519): executeEveDocumentTool uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * unicorn/no-null (#570): executeEveDocumentTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+type DocumentToolResult =
   | {
       content: string;
       date: string;
@@ -86,39 +111,17 @@ export const executeEveDocumentTool = async (
       title: string;
       content?: undefined;
       fileIds?: undefined;
-    }
-> => {
-  if (name === "readDocument") {
-    const input = eveDocumentReadInput.parse(value);
-    const scope = await resolveEveConversationScope(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      context.session.auth.initiator?.principalId,
-      context.session.id,
-      context.abortSignal
-    );
-    const revision = await getEveDocumentRevision(
-      scope.ownerId,
-      scope.conversationId,
-      input.documentId
-    );
-    if (!(revision && installedDocumentKinds.has(revision.kind))) {
-      throw new Error("Document not found.");
-    }
-    return {
-      content: revision.content,
-      date: revision.createdAt.toISOString(),
-      documentId: revision.documentId,
-      fileIds: revision.fileIds,
-      kind: revision.kind,
-      revisionId: revision.id,
-      status: "success",
-      title: revision.title,
     };
-  }
+
+const writeEveDocumentTool = async (
+  name: string,
+  value: unknown,
+  context: ReadonlyNativeSurface<DocumentContext>
+): Promise<DocumentToolResult> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const operation = Object.entries(eveDocumentOperations).find(
     ([key]: readonly [string, ...unknown[]]) => key === name
-  )?.[1];
+  )?.[DOCUMENT_OPERATION_VALUE_INDEX];
   if (!(operation && installedDocumentKinds.has(operation.kind))) {
     throw new Error("Document tool is unavailable.");
   }
@@ -161,6 +164,19 @@ export const executeEveDocumentTool = async (
     title: revision.title,
   };
 };
+
+export const executeEveDocumentTool = async (
+  name: string,
+  value: unknown,
+  context: ReadonlyNativeSurface<
+    Readonly<Pick<DocumentContext, "session" | "abortSignal" | "callId">>
+  >
+): Promise<DocumentToolResult> => {
+  if (name === "readDocument") {
+    return await readEveDocumentTool(value, context);
+  }
+  return await writeEveDocumentTool(name, value, context);
+};
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */

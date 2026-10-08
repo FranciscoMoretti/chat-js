@@ -1,17 +1,11 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import nodePath from "node:path";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import nodePath from "node:path";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
+import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 
 const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));

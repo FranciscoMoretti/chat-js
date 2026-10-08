@@ -46,3 +46,21 @@ it("hides actions when their source implementation is absent", () => {
   kinds.clear();
   expect(documentAssistantActions("text")).toEqual([]);
 });
+
+const documentKinds: readonly ("text" | "code" | "sheet")[] = [
+  "text",
+  "code",
+  "sheet",
+];
+it.each(documentKinds)("returns fresh mutable actions for %s", (kind) => {
+  const actions = documentAssistantActions(kind);
+  const freshActions = documentAssistantActions(kind);
+  expect(actions).toEqual(freshActions);
+  expect(actions).not.toBe(freshActions);
+  for (const action of actions) {
+    expect(freshActions).not.toContain(action);
+    action.label = "Changed by caller";
+  }
+  actions.length = 0;
+  expect(documentAssistantActions(kind)).toEqual(freshActions);
+});

@@ -1,18 +1,35 @@
+import type { DocumentAssistantRequest } from "./document-contracts";
 import { config } from "@/lib/config";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { DocumentAssistantRequest } from "./document-contracts";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-const documentAssistantActions = (
-  kind: "text" | "code" | "sheet"
-): {
+interface DocumentAssistantAction {
   instruction: string;
   label: string;
   modelId: typeof config.ai.tools.text.polish;
-}[] => {
+}
+
+const sheetDocumentAssistantActions = (): DocumentAssistantAction[] => [
+  {
+    instruction: "Format and clean the spreadsheet data.",
+    label: "Format and clean data",
+    modelId: config.ai.tools.sheet.format,
+  },
+  // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  ...(installedDocumentKinds.has("code")
+    ? [
+        {
+          instruction:
+            "Analyze and visualize the spreadsheet data by creating a new Python code document.",
+          label: "Analyze and visualize data",
+          modelId: config.ai.tools.sheet.analyze,
+        },
+      ]
+    : []),
+];
+
+const documentAssistantActions = (
+  kind: "text" | "code" | "sheet"
+): DocumentAssistantAction[] => {
   if (!installedDocumentKinds.has(kind)) {
     return [];
   }
@@ -42,31 +59,13 @@ const documentAssistantActions = (
       ];
     }
     case "sheet": {
-      return [
-        {
-          instruction: "Format and clean the spreadsheet data.",
-          label: "Format and clean data",
-          modelId: config.ai.tools.sheet.format,
-        },
-        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        ...(installedDocumentKinds.has("code")
-          ? [
-              {
-                instruction:
-                  "Analyze and visualize the spreadsheet data by creating a new Python code document.",
-                label: "Analyze and visualize data",
-                modelId: config.ai.tools.sheet.analyze,
-              },
-            ]
-          : []),
-      ];
+      return sheetDocumentAssistantActions();
     }
     default: {
       return [];
     }
   }
 };
-/* oxlint-enable max-lines-per-function */
 
 const documentAssistantRequest = (
   action: Readonly<ReturnType<typeof documentAssistantActions>[number]>,
