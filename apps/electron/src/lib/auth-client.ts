@@ -1,23 +1,15 @@
-import { electronClient } from "@better-auth/electron/client";
-import { storage } from "@better-auth/electron/storage";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createAuthClient } from "better-auth/client";
-/* oxlint-enable sort-imports */
-import { safeStorage } from "electron";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-relative-parent-imports -- The ../config module is shared by the desktop build and scaffold with this relative layout. */
+import { APP_SCHEME, APP_URL } from "../config";
+/* oxlint-enable import/no-relative-parent-imports */
 import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
 } from "@/lib/electron-auth";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable import/no-relative-parent-imports -- the ../config import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { APP_SCHEME, APP_URL } from "../config";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
+import { createAuthClient } from "better-auth/client";
+import { electronClient } from "@better-auth/electron/client";
+import { safeStorage } from "electron";
+import { storage } from "@better-auth/electron/storage";
 
 // oxlint-disable-next-line node/no-process-env -- This Electron process boundary chooses its local auth-storage mode from NODE_ENV.
 if (process.env.NODE_ENV !== "production") {
@@ -26,20 +18,21 @@ if (process.env.NODE_ENV !== "production") {
     value: (): boolean => false,
   });
 }
-/* oxlint-disable typescript/explicit-function-return-type -- memoryStorage: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable unicorn/no-null -- memoryStorage: The SDK/wire/OS contract uses null as an explicit absence value. */
-const memoryStorage = () => {
+const memoryStorage = (): {
+  getItem: (key: string) => unknown;
+  setItem: (key: string, value: unknown) => void;
+} => {
   const store = new Map<string, unknown>();
 
   return {
-    getItem: (key: string) => store.get(key) ?? null,
+    getItem: (key: string): unknown => store.get(key) ?? null,
     setItem: (key: string, value: unknown): void => {
       store.set(key, value);
     },
   };
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const electronAuthStorage =
   // oxlint-disable-next-line no-ternary, node/no-process-env -- Keep lazy storage selection at the auth process boundary; no-ternary conflicts with the pinned unicorn/prefer-ternary rule for if/else assignment.

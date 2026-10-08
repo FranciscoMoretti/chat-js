@@ -1,9 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- Electron main resolves its preload and desktop asset paths with native platform semantics.
-import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- Electron main backs off between native-cookie and server-session readiness polls.
-import { setTimeout as sleep } from "node:timers/promises";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
 import {
   BrowserWindow,
   Menu,
@@ -13,16 +8,23 @@ import {
   nativeImage,
   shell,
 } from "electron";
-/* oxlint-enable sort-imports */
-import type { MenuItemConstructorOptions } from "electron";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
-/* oxlint-enable sort-imports */
-import { electronAuthClient } from "./lib/auth-client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
-/* oxlint-enable sort-imports */
+import type { MenuItemConstructorOptions } from "electron";
+import { electronAuthClient } from "./lib/auth-client";
+// oxlint-disable-next-line import/no-nodejs-modules -- Electron main resolves its preload and desktop asset paths with native platform semantics.
+import path from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- Electron main backs off between native-cookie and server-session readiness polls.
+import { setTimeout as sleep } from "node:timers/promises";
+
+const AUTH_FLOW_ID_INCREMENT = 1;
+const AUTH_REFRESH_DELAY_MS = 250;
+const AUTH_SESSION_POLL_INTERVAL_MS = 250;
+const AUTH_SESSION_TIMEOUT_MS = 8000;
+const COOKIE_NAME_START_INDEX = 0;
+const COOKIE_SEPARATOR_LENGTH = 1;
+const DEV_ENTRY_ARG_INDEX = 1;
+const DEV_ENTRY_MIN_ARGS = 2;
+const EMPTY_WINDOW_COUNT = 0;
 
 const isSquirrelStartupEvent = (): boolean => {
   if (process.platform !== "win32") {
@@ -107,13 +109,15 @@ if (!gotSingleInstanceLock) {
   app.quit();
 }
 
-/* oxlint-disable eslint/no-magic-numbers -- registerProtocolClient: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- registerProtocolClient: This command or desktop boundary reports startup, progress and failures to its operator. */
 const registerProtocolClient = (): void => {
   if (process.defaultApp) {
-    if (process.platform === "win32" && process.argv.length >= 2) {
+    if (
+      process.platform === "win32" &&
+      process.argv.length >= DEV_ENTRY_MIN_ARGS
+    ) {
       app.setAsDefaultProtocolClient(APP_SCHEME, process.execPath, [
-        path.resolve(process.argv[1]),
+        path.resolve(process.argv[DEV_ENTRY_ARG_INDEX]),
       ]);
       return;
     }
@@ -127,7 +131,13 @@ const registerProtocolClient = (): void => {
   app.setAsDefaultProtocolClient(APP_SCHEME);
 };
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */
+
+const getAuthErrorDetail = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+};
 
 const broadcastAuthState = (): void => {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -269,7 +279,6 @@ const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable unicorn/no-null -- resetAuthFlow: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable eslint/no-magic-numbers -- resetAuthFlow: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const resetAuthFlow = async (): Promise<void> => {
   if (pendingAuthRefreshTimer) {
     clearTimeout(pendingAuthRefreshTimer);
@@ -277,7 +286,7 @@ const resetAuthFlow = async (): Promise<void> => {
   }
 
   isAuthFlowInProgress = false;
-  currentAuthFlowId += 1;
+  currentAuthFlowId += AUTH_FLOW_ID_INCREMENT;
 
   await setAuthState({
     message: null,
@@ -285,7 +294,6 @@ const resetAuthFlow = async (): Promise<void> => {
   });
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
 // Setup the @better-auth/electron main process handler.
@@ -303,20 +311,21 @@ registerProtocolClient();
 ipcMain.removeHandler("better-auth:requestAuth");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- better-auth:requestAuth: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/no-magic-numbers -- better-auth:requestAuth: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 ipcMain.handle(
   "better-auth:requestAuth",
   async (_event: unknown, options): Promise<void> => {
     if (isAuthFlowInProgress) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      mainWindow?.show();
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      mainWindow?.focus();
+      if (mainWindow) {
+        mainWindow.show();
+      }
+      if (mainWindow) {
+        mainWindow.focus();
+      }
       return;
     }
 
     isAuthFlowInProgress = true;
-    currentAuthFlowId += 1;
+    currentAuthFlowId += AUTH_FLOW_ID_INCREMENT;
 
     await setAuthState({
       message: "Waiting for sign-in in your browser...",
@@ -329,8 +338,7 @@ ipcMain.handle(
     } catch (error) {
       isAuthFlowInProgress = false;
       await setAuthState({
-        // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        detail: error instanceof Error ? error.message : String(error),
+        detail: getAuthErrorDetail(error),
         message: "Couldn't open the browser sign-in flow.",
         status: "error",
       });
@@ -340,7 +348,6 @@ ipcMain.handle(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
 ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
@@ -350,19 +357,16 @@ ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAuthSessionCookies's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- syncAuthSessionCookies: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- syncAuthSessionCookies: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable eslint/no-magic-numbers -- syncAuthSessionCookies: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable unicorn/no-null -- syncAuthSessionCookies: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable typescript/promise-function-async -- syncAuthSessionCookies: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const syncAuthSessionCookies = async (
   win?: AuthSessionWindow | null
 ): Promise<void> => {
   const targetWindow = win ?? mainWindow;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading webContents from targetWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const targetSession = targetWindow?.webContents.session;
-
-  if (!targetSession) {
+  if (!targetWindow) {
     return;
   }
+  const targetSession = targetWindow.webContents.session;
 
   const url = new URL(APP_URL);
   const existingCookies = await targetSession.cookies.get({ url: url.origin });
@@ -387,13 +391,13 @@ const syncAuthSessionCookies = async (
     .split(/;\s*/u)
     .map((entry: string): Readonly<{ name: string; value: string }> | null => {
       const index = entry.indexOf("=");
-      if (index < 1) {
+      if (index < COOKIE_SEPARATOR_LENGTH) {
         return null;
       }
 
       return {
-        name: entry.slice(0, index),
-        value: entry.slice(index + 1),
+        name: entry.slice(COOKIE_NAME_START_INDEX, index),
+        value: entry.slice(index + COOKIE_SEPARATOR_LENGTH),
       };
     })
     .filter((cookie) => cookie !== null)
@@ -417,7 +421,6 @@ const syncAuthSessionCookies = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -434,8 +437,11 @@ ipcMain.removeHandler("better-auth:getUser");
 /* oxlint-disable unicorn/no-null -- better-auth:getUser: The SDK/wire/OS contract uses null as an explicit absence value. */
 ipcMain.handle("better-auth:getUser", async () => {
   const sessionResult = await electronAuthClient.getSession();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from sessionResult.data; preserve one receiver evaluation, skipped accesses and the existing null fallback.
-  return sessionResult.data?.user ?? null;
+  const sessionData = sessionResult.data;
+  if (!sessionData) {
+    return null;
+  }
+  return sessionData.user ?? null;
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
@@ -472,8 +478,7 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     console.error("[electron-main] deep link authentication failed", error);
     isAuthFlowInProgress = false;
     await setAuthState({
-      // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      detail: error instanceof Error ? error.message : String(error),
+      detail: getAuthErrorDetail(error),
       message: "We couldn't finish sign-in automatically.",
       status: "error",
     });
@@ -486,9 +491,10 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- waitForElectronSession: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/no-magic-numbers -- waitForElectronSession: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- waitForElectronSession: This command or desktop boundary reports startup, progress and failures to its operator. */
-const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
+const waitForElectronSession = async (
+  timeoutMs = AUTH_SESSION_TIMEOUT_MS
+): Promise<boolean> => {
   const start = Date.now();
 
   while (Date.now() - start < timeoutMs) {
@@ -498,8 +504,8 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
     try {
       // oxlint-disable-next-line no-await-in-loop -- Poll sequentially until the native cookie and server session agree.
       const sessionResult = await electronAuthClient.getSession();
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from sessionResult.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      const hasUser = Boolean(sessionResult.data?.user);
+      const sessionData = sessionResult.data;
+      const hasUser = Boolean(sessionData && sessionData.user);
 
       if (hasCookie && hasUser) {
         return true;
@@ -509,21 +515,19 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
     }
 
     // oxlint-disable-next-line no-await-in-loop -- Back off between session polls rather than issue overlapping requests.
-    await sleep(250);
+    await sleep(AUTH_SESSION_POLL_INTERVAL_MS);
   }
 
   return false;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- scheduleAuthRefresh: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- scheduleAuthRefresh: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable eslint/no-console -- scheduleAuthRefresh: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable unicorn/no-null -- scheduleAuthRefresh: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable eslint/no-magic-numbers -- scheduleAuthRefresh: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const scheduleAuthRefresh = (): void => {
   const targetWindow = mainWindow;
   const authFlowId = currentAuthFlowId;
@@ -574,8 +578,7 @@ const scheduleAuthRefresh = (): void => {
         console.error("[electron-main] auth refresh failed", error);
         isAuthFlowInProgress = false;
         await setAuthState({
-          // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          detail: error instanceof Error ? error.message : String(error),
+          detail: getAuthErrorDetail(error),
           message: "Sign-in refresh failed.",
           status: "error",
         });
@@ -583,9 +586,8 @@ const scheduleAuthRefresh = (): void => {
     })();
     /* oxlint-enable oxc/no-async-await */
     pendingAuthRefreshTimer = null;
-  }, 250);
+  }, AUTH_REFRESH_DELAY_MS);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -653,10 +655,12 @@ const createTray = (): Tray => {
   const contextMenu = Menu.buildFromTemplate([
     {
       click: (): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        mainWindow?.show();
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        mainWindow?.focus();
+        if (mainWindow) {
+          mainWindow.show();
+        }
+        if (mainWindow) {
+          mainWindow.focus();
+        }
       },
       label: `Show ${APP_NAME}`,
     },
@@ -674,14 +678,15 @@ const createTray = (): Tray => {
   trayInstance.setContextMenu(contextMenu);
 
   trayInstance.on("click", (): void => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isVisible from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    if (mainWindow?.isVisible() === true) {
+    if (mainWindow && mainWindow.isVisible()) {
       mainWindow.hide();
     } else {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      mainWindow?.show();
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      mainWindow?.focus();
+      if (mainWindow) {
+        mainWindow.show();
+      }
+      if (mainWindow) {
+        mainWindow.focus();
+      }
     }
   });
 
@@ -765,7 +770,6 @@ ipcMain.handle("chatjs:sync-auth-session", async (): Promise<void> => {
 ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- main.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: Start readiness asynchronously so deep-link and second-instance handlers below register immediately.
 void (async (): Promise<void> => {
   await app.whenReady();
@@ -776,16 +780,14 @@ void (async (): Promise<void> => {
   void setupAutoUpdater();
 
   app.on("activate", (): void => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (BrowserWindow.getAllWindows().length === EMPTY_WINDOW_COUNT) {
       mainWindow = createWindow();
-    } else {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      mainWindow?.show();
+    } else if (mainWindow) {
+      mainWindow.show();
     }
   });
 })();
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
 
 app.on("open-url", (_event: unknown, url): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
@@ -819,8 +821,9 @@ app.on(
 );
 app.on("before-quit", (): void => {
   isQuitting = true;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading destroy from tray; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  tray?.destroy();
+  if (tray) {
+    tray.destroy();
+  }
 });
 
 app.on("window-all-closed", (): void => {
