@@ -49,9 +49,14 @@ beforeEach(() => {
   mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({});
   mocks.create.mockResolvedValue({ close: mocks.close, tools: mocks.tools });
+  mocks.provider.mockImplementation(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The constructor mock assigns fetch onto its instance for the preconnect adapter.
+    function provider(this: { fetch: typeof fetch }) {
+      this.fetch = vi.fn<typeof fetch>();
+    }
+  );
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-
 it("connects, discovers and closes without web cache dependencies", async () => {
   const client = new MCPClient("id", "Test", {
     headers: { Authorization: "test" },
@@ -91,7 +96,6 @@ it("notifies the web owner after disconnect and authentication errors", async ()
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("concurrent connection requests share one transport and close it once") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -116,7 +120,6 @@ it("concurrent connection requests share one transport and close it once", async
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
-
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("a failed connection can be retried without retaining a failed promise") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -135,7 +138,6 @@ it("a failed connection can be retried without retaining a failed promise", asyn
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
-
 it("domain errors mentioning tokens do not invalidate authentication", async () => {
   const invalidate = vi.fn<() => void>();
   const client = new MCPClient(
