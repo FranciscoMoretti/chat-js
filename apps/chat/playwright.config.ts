@@ -8,33 +8,32 @@ import { config } from "dotenv";
 config({
   path: ".env.local",
 });
-/* oxlint-disable no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): PORT uses 3000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+const DEFAULT_PORT = 3000;
+/* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): PORT reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-boolean-expressions (#610): PORT intentionally keeps the existing falsy-value behavior of process.env.PORT; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /* Use process.env.PORT by default and fallback to port 3000 */
-// oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
-const PORT = process.env.PORT || 3000;
-/* oxlint-enable no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions */
+const PORT = (process.env.PORT ?? "") || DEFAULT_PORT;
+/* oxlint-enable node/no-process-env */
 /**
  * Set webServer.url and use.baseURL with the location
  * of the WebServer respecting the correct set port
  */
 const baseURL = `http://localhost:${PORT}`;
-/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions --
+const CI_RETRIES = 2;
+const LOCAL_RETRIES = 1;
+const CI_WORKERS = 1;
+/* oxlint-disable import/no-default-export, no-undefined, node/no-process-env --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- * no-magic-numbers (#517): default export uses 60, 1000, 2, 1, 120 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * node/no-process-env (#537): default export reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of process.env.CI; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   expect: {
-    timeout: 60 * 1000,
+    timeout: 60_000,
   },
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: Boolean(process.env.CI),
@@ -107,10 +106,10 @@ export default defineConfig({
   reporter: "html",
   /* Retry on CI only */
   // oxlint-disable-next-line no-ternary -- Keep retries as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  retries: process.env.CI ? 2 : 1,
+  retries: (process.env.CI ?? "") === "" ? LOCAL_RETRIES : CI_RETRIES,
   testDir: "./tests",
   /* Configure global timeout for each test */
-  timeout: 60 * 1000,
+  timeout: 60_000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -121,12 +120,12 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "bun dev",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    reuseExistingServer: (process.env.CI ?? "") === "",
+    timeout: 120_000,
     url: baseURL,
   },
   /* Opt out of parallel tests on CI. */
   // oxlint-disable-next-line no-ternary -- Keep workers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  workers: process.env.CI ? 1 : undefined,
+  workers: (process.env.CI ?? "") === "" ? undefined : CI_WORKERS,
 });
-/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, no-undefined, node/no-process-env */

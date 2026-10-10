@@ -1,32 +1,33 @@
 "use client";
 
-import { Smile } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ProjectIcon } from "@/components/project-icon";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-/* oxlint-enable sort-imports */
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/project-icon and @/lib/project-icons; keep this adjacent import pair ordered. */
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
 /* oxlint-enable sort-imports */
+
+import { Button } from "@/components/ui/button";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/popover; keep this adjacent import pair ordered. */
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
+
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+
+import React from "react";
+
+import type { JSX as ReactJSX } from "react";
+
+import { Smile } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 interface ProjectIconPickerProps {

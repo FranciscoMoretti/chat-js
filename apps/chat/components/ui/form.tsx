@@ -1,35 +1,30 @@
 "use client";
 
-import type { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
-import { Slot } from "@radix-ui/react-slot";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-/* oxlint-enable sort-imports */
-import {
-  createContext as reactCreateContext,
-  useContext as useReactContext,
-  useId as useReactId,
-  useMemo as useReactMemo,
-} from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Controller,
   FormProvider,
   useFormContext,
   useFormState,
 } from "react-hook-form";
-/* oxlint-enable sort-imports */
 import type {
   ControllerFieldState,
   ControllerProps,
   FieldPath,
   FieldValues,
 } from "react-hook-form";
-
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
+import {
+  createContext as reactCreateContext,
+  useContext as useReactContext,
+  useId as useReactId,
+  useMemo as useReactMemo,
+} from "react";
 import { Label } from "@/components/ui/label";
+import type { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const Form = FormProvider;
@@ -45,16 +40,19 @@ const FormFieldContext = reactCreateContext<FormFieldContextValue | undefined>(
   // oxlint-disable-next-line no-undefined -- React context needs a real absent-provider sentinel so useFormField can reject a missing provider.
   undefined
 );
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- FormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: ControllerProps<TFieldValues, TName>). */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormField uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormField snapshots props before its repeated props.name reads and Controller forwarding; direct props changes getter counts/order.
-  ...props
-}: ControllerProps<TFieldValues, TName>): ReactJSX.Element => {
+>(
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormField snapshots props before its repeated props.name reads and Controller forwarding; direct props changes getter counts/order.
+    ...props
+  }: ControllerProps<TFieldValues, TName>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const contextValue = useReactMemo(() => ({ name: props.name }), [props.name]);
 
   return (
@@ -67,7 +65,6 @@ const FormField = <
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface FormItemContextValue {
   id: string;
@@ -106,19 +103,23 @@ const useFormField = (): FormFieldState => {
     formMessageId: `${id}-form-item-message`,
     id,
     name: fieldContext.name,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fieldState own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Preserve getFieldState's native five-field order after the ID/name fields; an explicit projection in that order fails pinned sort-keys, while sorting it changes this hook's enumerable key order.
     ...fieldState,
   };
 };
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- FormItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const FormItem = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => {
+const FormItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const id = useReactId();
   const contextValue = useReactMemo(() => ({ id }), [id]);
 
@@ -134,16 +135,20 @@ const FormItem = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- FormLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const FormLabel = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof LabelPrimitiveRoot>): ReactJSX.Element => {
+const FormLabel = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof LabelPrimitiveRoot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { error, formItemId } = useFormField();
 
   return (
@@ -159,15 +164,19 @@ const FormLabel = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormControl: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: React.ComponentProps<typeof Slot>). */
+/* oxlint-disable react/no-multi-comp -- FormControl: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormControl uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const FormControl = ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormControl snapshots props before useFormField and Slot forwarding; direct props changes hook/getter order.
-  ...props
-}: ReactComponentProps<typeof Slot>): ReactJSX.Element => {
+const FormControl = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormControl snapshots props before useFormField and Slot forwarding; direct props changes hook/getter order.
+    ...props
+  }: ReactComponentProps<typeof Slot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
@@ -186,16 +195,20 @@ const FormControl = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"p">). */
+/* oxlint-disable react/no-multi-comp -- FormDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const FormDescription = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"p">): ReactJSX.Element => {
+const FormDescription = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"p">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const { formDescriptionId } = useFormField();
 
   return (
@@ -209,21 +222,26 @@ const FormDescription = ({
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- FormMessage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"p">); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including body); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, unicorn/no-null -- FormMessage shares the field context with this component family; null preserves its native empty-render contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormMessage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const FormMessage = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"p">): ReactJSX.Element | null => {
+const FormMessage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"p">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element | null => {
   const { error, formMessageId } = useFormField();
   // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const body = error ? (error.message ?? "") : props.children;
+  const hasMessage = Boolean(body);
 
-  if (!body) {
+  if (!hasMessage) {
     return null;
   }
 
@@ -241,7 +259,7 @@ const FormMessage = ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 /* oxlint-disable react/only-export-components -- form.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 

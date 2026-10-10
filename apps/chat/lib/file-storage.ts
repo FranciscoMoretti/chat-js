@@ -1,25 +1,17 @@
 import type { Body, StoredFile, UploadResult } from "files-sdk";
+import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
+import { FILE_STORAGE_PREFIX } from "./constants";
 import { Files } from "files-sdk";
 import { nanoid } from "nanoid";
 
-/* oxlint-disable sort-imports -- Keep the finite type reader and runtime import within the formatter's local-import group, while preserving runtime initialization order. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { FILE_STORAGE_PREFIX } from "./constants";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Keep constants config validation and PLAYWRIGHT snapshot before db/client environment validation and postgres/drizzle construction; alphabetizing this runtime declaration changes initialization and failure order.
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "./db/file-storage-keys";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
-/* oxlint-enable sort-imports */
-import { storageOptions } from "./storage-options";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createStorageAdapter } from "./storage-provider";
-/* oxlint-enable sort-imports */
+import { storageOptions } from "./storage-options";
 
 const PATH_SEPARATOR = /[\\/]/u;
 // oxlint-disable-next-line no-control-regex -- The upload result's pathname contract removes every ASCII C0 and DEL character while preserving all other filename characters.

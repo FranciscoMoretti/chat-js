@@ -1,14 +1,14 @@
 import Image from "next/image";
 import React from "react";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 
 interface Tech {
-  glowColor: string;
-  icon: ReactNode;
-  name: string;
+  readonly glowColor: string;
+  readonly icon: Readonly<ReactElement>;
+  readonly name: string;
 }
 
-const TECHS: Tech[] = [
+const TECHS: readonly Tech[] = [
   {
     glowColor: "#a1a1a1",
     icon: (
@@ -186,13 +186,12 @@ const TECHS: Tech[] = [
 
 /* oxlint-disable eslint/no-magic-numbers -- TechCard: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- TechCard: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const TechCard = ({
   tech,
   index,
 }: {
-  tech: Tech;
-  index: number;
+  readonly tech: Readonly<Pick<Tech, "glowColor" | "icon" | "name">>;
+  readonly index: number;
 }): React.JSX.Element => {
   const delay = `${0.04 * index}s`;
 
@@ -220,15 +219,13 @@ const TechCard = ({
   );
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (TechStack); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- TechStack renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react/jsx-no-literals -- TechStack renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 
 /* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- TechStack: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const TechStack = (): React.JSX.Element => (
   <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
     {/* Seamless edge blending — tall gradients for a smooth transition */}
@@ -266,16 +263,20 @@ export const TechStack = (): React.JSX.Element => (
 
       {/* Tech grid — 5 columns desktop, 3 tablet, 2 mobile */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        {TECHS.map((tech, technologyIndex) => (
-          <TechCard index={technologyIndex} key={tech.name} tech={tech} />
-        ))}
+        {TECHS.map(
+          (
+            tech: Readonly<Pick<Tech, "glowColor" | "icon" | "name">>,
+            technologyIndex
+          ) => (
+            <TechCard index={technologyIndex} key={tech.name} tech={tech} />
+          )
+        )}
       </div>
     </div>
   </section>
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable react/no-multi-comp */

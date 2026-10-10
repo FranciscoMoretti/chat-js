@@ -1,34 +1,35 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveDeletionState } from "@/lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
-/* oxlint-enable sort-imports */
 import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
+import { env } from "@/lib/env";
+import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 const headers = { "cache-control": "no-store" };
 interface Context {
-  params: Promise<{ id: string }>;
+  readonly params: Readonly<Promise<{ id: string }>>;
 }
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authorize's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep authorize's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): authorize accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): authorize preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const authorize = async (request: Request, context: Context) => {
+/* oxlint-disable unicorn/no-null -- Authorization failures return the native empty Response body. */
+
+const authorize = async (
+  request: ReadonlyNativeSurface<Pick<Request, "headers">>,
+  context: Context
+): Promise<
+  | Response
+  | {
+      id: string;
+      ownerId: string;
+      source: NonNullable<Awaited<ReturnType<typeof getEveDeletionState>>>;
+    }
+> => {
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { headers, status: 401 });
@@ -44,12 +45,9 @@ const authorize = async (request: Request, context: Context) => {
   return { id, ownerId: principal.ownerId, source };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep deletionStatus's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const deletionStatus = (state: string) => {
+const deletionStatus = (state: string): "deleted" | "pending" | "active" => {
   if (state === "deleted") {
     return "deleted";
   }
@@ -59,17 +57,17 @@ const deletionStatus = (state: string) => {
   return "active";
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Returns deletion status without resuming cleanup or exposing conversation payloads.
  * @param {Request} request Same-origin status request.
  * @param {Context} context Route parameters containing the conversation ID.
  * @returns {Promise<Response>} No-store JSON containing the conversation family root and status.
  */
-const GET = async (request: Request, context: Context): Promise<Response> => {
+const GET = async (
+  request: ReadonlyNativeSurface<Request>,
+  context: Context
+): Promise<Response> => {
   const result = await authorize(request, context);
   if (result instanceof Response) {
     return result;
@@ -83,14 +81,46 @@ const GET = async (request: Request, context: Context): Promise<Response> => {
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DELETE's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+// Map the durable state after a failed erasure to the retry/status response.
+const deletionRecoveryResponse = (
+  current: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof getEveDeletionState>>
+  >
+): Response => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  if (current?.state === "deleted") {
+    return Response.json(
+      { rootId: current.rootId, status: "deleted" },
+      { headers }
+    );
+  }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  if (current?.state === "deleting") {
+    return Response.json(
+      {
+        error: "Deletion is incomplete. Retry to continue cleanup.",
+        retryRequired: true,
+        rootId: current.rootId,
+        status: "pending",
+      },
+      { headers, status: 202 }
+    );
+  }
+  return Response.json(
+    {
+      error: "Resolve pending conversation work before deleting.",
+      status: "not_started",
+    },
+    { headers, status: 409 }
+  );
+};
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --
-max-lines-per-function (#510): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): DELETE accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DELETE's awaited sequencing and rejected-Promise behavior. */
+
+/* oxlint-disable max-statements, unicorn/no-null --
+max-statements (#512): DELETE keeps its ordered workflow and input contract together; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+
 /**
  * Deletes an owned conversation family through the local-provider coordinator.
  * Unaccepted copies are removed directly; accepted conversations are fenced and erased locally.
@@ -99,7 +129,7 @@ unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state;
  * @returns {Promise<Response>} No-store JSON with deletion status, or an error response.
  */
 const DELETE = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   context: Context
 ): Promise<Response> => {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
@@ -145,36 +175,11 @@ const DELETE = async (
     );
   } catch {
     const current = await getEveDeletionState(ownerId, id);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (current?.state === "deleted") {
-      return Response.json(
-        { rootId: current.rootId, status: "deleted" },
-        { headers }
-      );
-    }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (current?.state === "deleting") {
-      return Response.json(
-        {
-          error: "Deletion is incomplete. Retry to continue cleanup.",
-          retryRequired: true,
-          rootId: current.rootId,
-          status: "pending",
-        },
-        { headers, status: 202 }
-      );
-    }
-    return Response.json(
-      {
-        error: "Resolve pending conversation work before deleting.",
-        status: "not_started",
-      },
-      { headers, status: 409 }
-    );
+    return deletionRecoveryResponse(current);
   }
 };
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (DELETE, GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */
 export { DELETE, GET };
 /* oxlint-enable import/no-named-export */

@@ -3,25 +3,25 @@
 import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Button initializes utils/UUID before HoverCard initializes ReactDOM; native cold-load SWC/Node traces observe UUID capture before ReactDOM DevTools hooks.
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve Button/UUID before HoverCard/ReactDOM startup; syntax-group sorting reverses this observable cold-load boundary.
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-/* oxlint-enable sort-imports */
 import { Progress } from "@/components/ui/progress";
-import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
+import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
 
 const PERCENT_MAX = 100;
+const FULL_CIRCLE_MULTIPLIER = 2;
+const COMPLETE_FRACTION = 1;
+const NO_KNOWN_TOKENS = 0;
+const NO_KNOWN_COST = 0;
 const ICON_RADIUS = 10;
 const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
@@ -52,8 +52,6 @@ const useContextValue = (): ContextSchema => {
 
 type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Context: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
 const Context = ({
   usedTokens,
   maxTokens,
@@ -61,7 +59,7 @@ const Context = ({
   modelId,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes usedTokens, maxTokens, usage, modelId from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
-}: ContextProps): ReactJSX.Element => {
+}: ReadonlyNativeSurface<ContextProps>): ReactJSX.Element => {
   const contextValue = useMemo(
     () => ({ maxTokens, modelId, usage, usedTokens }),
     [maxTokens, modelId, usage, usedTokens]
@@ -78,15 +76,14 @@ const Context = ({
     </ContextContext.Provider>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- ContextIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- ContextIcon: 2π calculates the SVG circle circumference and 1 represents the complete fraction used to offset the stroke; this icon belongs beside the context usage components. */
 
 const ContextIcon = (): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
-  const circumference = 2 * Math.PI * ICON_RADIUS;
+  const circumference = FULL_CIRCLE_MULTIPLIER * Math.PI * ICON_RADIUS;
   const usedPercent = usedTokens / maxTokens;
-  const dashOffset = circumference * (1 - usedPercent);
+  const dashOffset = circumference * (COMPLETE_FRACTION - usedPercent);
 
   return (
     <svg
@@ -121,17 +118,21 @@ const ContextIcon = (): React.JSX.Element => {
     </svg>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 type ContextTriggerProps = ComponentProps<typeof Button>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: ContextTriggerProps). */
+/* oxlint-disable react/no-multi-comp -- ContextTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ContextTrigger = ({
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextTriggerProps): React.JSX.Element => {
+const ContextTrigger = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextTriggerProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
   const usedPercent = usedTokens / maxTokens;
   const renderedPercent = new Intl.NumberFormat("en-US", {
@@ -157,17 +158,21 @@ const ContextTrigger = ({
     </HoverCardTrigger>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ContextContentProps = ComponentProps<typeof HoverCardContent>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ContextContentProps). */
+/* oxlint-disable react/no-multi-comp -- ContextContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ContextContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextContentProps): React.JSX.Element => (
+const ContextContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextContentProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <HoverCardContent
     // oxlint-disable-next-line react/forbid-component-props -- HoverCardContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("min-w-60 divide-y overflow-hidden p-0", className)}
@@ -175,19 +180,23 @@ const ContextContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ContextContentHeaderProps = ComponentProps<"div">;
 /* oxlint-disable react/jsx-no-literals -- ContextContentHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- ContextContentHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ContextContentHeader = ({
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextContentHeaderProps): React.JSX.Element => {
+const ContextContentHeader = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextContentHeaderProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
   const usedPercent = usedTokens / maxTokens;
   const displayPct = new Intl.NumberFormat("en-US", {
@@ -228,18 +237,22 @@ const ContextContentHeader = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */
 
 type ContextContentBodyProps = ComponentProps<"div">;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: ContextContentBodyProps). */
+/* oxlint-disable react/no-multi-comp -- ContextContentBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const ContextContentBody = ({
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextContentBodyProps): React.JSX.Element => (
+const ContextContentBody = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextContentBodyProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn("w-full p-3", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContentBody's native div attributes, preserving caller events and accessibility props.
@@ -248,19 +261,23 @@ const ContextContentBody = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ContextContentFooterProps = ComponentProps<"div">;
 /* oxlint-disable react/jsx-no-literals -- ContextContentFooter renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentFooter: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-undefined, react/no-multi-comp -- ContextContentFooter: zero supplies missing token counts and absent costs to the pricing API/formatter; undefined means the model or cost was not available, and this footer belongs with the context usage components. */
 
-const ContextContentFooter = ({
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextContentFooterProps): React.JSX.Element => {
+const ContextContentFooter = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextContentFooterProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { modelId, usage } = useContextValue();
   const costUSD =
     // oxlint-disable-next-line no-ternary -- Keep costUSD as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -270,16 +287,16 @@ const ContextContentFooter = ({
           modelId,
           usage: {
             // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading inputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
-            input: usage?.inputTokens ?? 0,
+            input: usage?.inputTokens ?? NO_KNOWN_TOKENS,
             // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading outputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
-            output: usage?.outputTokens ?? 0,
+            output: usage?.outputTokens ?? NO_KNOWN_TOKENS,
           },
         }).costUSD?.totalUSD
       : undefined;
   const totalCost = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(costUSD ?? 0);
+  }).format(costUSD ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -300,12 +317,16 @@ const ContextContentFooter = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, react/no-multi-comp */
 
 type ContextInputUsageProps = ComponentProps<"div">;
+type ContextUsageResult =
+  | Exclude<React.ReactNode, false | undefined>
+  | React.JSX.Element
+  | null;
 /* oxlint-disable react/jsx-no-literals -- TokensWithCost renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- TokensWithCost: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including costText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, react/no-multi-comp, unicorn/no-null -- TokensWithCost: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const TokensWithCost = ({
   tokens,
@@ -325,7 +346,7 @@ const TokensWithCost = ({
     }
     {
       // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      costText ? (
+      typeof costText === "string" && costText !== "" ? (
         <span className="text-muted-foreground ml-2">• {costText}</span>
       ) : null
     }
@@ -333,18 +354,22 @@ const TokensWithCost = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ContextInputUsage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextInputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextInputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable no-undefined, react/no-multi-comp, unicorn/no-null */
+/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- ContextInputUsage: zero supplies missing input-token counts and absent costs; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
-const ContextInputUsage = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextInputUsageProps) => {
+const ContextInputUsage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextInputUsageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading inputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
-  const inputTokens = usage?.inputTokens ?? 0;
+  const inputTokens = usage?.inputTokens ?? NO_KNOWN_TOKENS;
 
   if (children) {
     return children;
@@ -354,18 +379,19 @@ const ContextInputUsage = ({
     return null;
   }
 
-  // oxlint-disable-next-line no-ternary -- Keep inputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const inputCost = modelId
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      getUsage({
-        modelId,
-        usage: { input: inputTokens, output: 0 },
-      }).costUSD?.totalUSD
-    : undefined;
+  const inputCost =
+    // oxlint-disable-next-line no-ternary -- Keep inputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    typeof modelId === "string" && modelId !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        getUsage({
+          modelId,
+          usage: { input: inputTokens, output: NO_KNOWN_TOKENS },
+        }).costUSD?.totalUSD
+      : undefined;
   const inputCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(inputCost ?? 0);
+  }).format(inputCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -379,22 +405,26 @@ const ContextInputUsage = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextOutputUsageProps = ComponentProps<"div">;
 /* oxlint-disable react/jsx-no-literals -- ContextOutputUsage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextOutputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextOutputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- ContextOutputUsage: zero supplies no input-token count and a missing cost; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
-const ContextOutputUsage = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextOutputUsageProps) => {
+const ContextOutputUsage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextOutputUsageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading outputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
-  const outputTokens = usage?.outputTokens ?? 0;
+  const outputTokens = usage?.outputTokens ?? NO_KNOWN_TOKENS;
 
   if (children) {
     return children;
@@ -404,18 +434,19 @@ const ContextOutputUsage = ({
     return null;
   }
 
-  // oxlint-disable-next-line no-ternary -- Keep outputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const outputCost = modelId
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      getUsage({
-        modelId,
-        usage: { input: 0, output: outputTokens },
-      }).costUSD?.totalUSD
-    : undefined;
+  const outputCost =
+    // oxlint-disable-next-line no-ternary -- Keep outputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    typeof modelId === "string" && modelId !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        getUsage({
+          modelId,
+          usage: { input: NO_KNOWN_TOKENS, output: outputTokens },
+        }).costUSD?.totalUSD
+      : undefined;
   const outputCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(outputCost ?? 0);
+  }).format(outputCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -429,19 +460,23 @@ const ContextOutputUsage = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextReasoningUsageProps = ComponentProps<"div">;
 /* oxlint-disable react/jsx-no-literals -- ContextReasoningUsage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextReasoningUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- ContextReasoningUsage: zero supplies absent cost data; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
-const ContextReasoningUsage = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextReasoningUsageProps) => {
+const ContextReasoningUsage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextReasoningUsageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   const { reasoningTokens } = getUsageTokenDetails(usage);
 
@@ -453,18 +488,19 @@ const ContextReasoningUsage = ({
     return null;
   }
 
-  // oxlint-disable-next-line no-ternary -- Keep reasoningCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const reasoningCost = modelId
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      getUsage({
-        modelId,
-        usage: { reasoningTokens },
-      }).costUSD?.totalUSD
-    : undefined;
+  const reasoningCost =
+    // oxlint-disable-next-line no-ternary -- Keep reasoningCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    typeof modelId === "string" && modelId !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        getUsage({
+          modelId,
+          usage: { reasoningTokens },
+        }).costUSD?.totalUSD
+      : undefined;
   const reasoningCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(reasoningCost ?? 0);
+  }).format(reasoningCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -478,19 +514,23 @@ const ContextReasoningUsage = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextCacheUsageProps = ComponentProps<"div">;
 /* oxlint-disable react/jsx-no-literals -- ContextCacheUsage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextCacheUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextCacheUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- ContextCacheUsage: zero supplies absent cache-token counts and cost data; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
-const ContextCacheUsage = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ContextCacheUsageProps) => {
+const ContextCacheUsage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ContextCacheUsageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   const cacheTokens = getUsageTokenDetails(usage).cachedInputTokens;
 
@@ -502,18 +542,23 @@ const ContextCacheUsage = ({
     return null;
   }
 
-  // oxlint-disable-next-line no-ternary -- Keep cacheCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const cacheCost = modelId
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      getUsage({
-        modelId,
-        usage: { cacheReads: cacheTokens, input: 0, output: 0 },
-      }).costUSD?.totalUSD
-    : undefined;
+  const cacheCost =
+    // oxlint-disable-next-line no-ternary -- Keep cacheCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    typeof modelId === "string" && modelId !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        getUsage({
+          modelId,
+          usage: {
+            cacheReads: cacheTokens,
+            input: NO_KNOWN_TOKENS,
+            output: NO_KNOWN_TOKENS,
+          },
+        }).costUSD?.totalUSD
+      : undefined;
   const cacheCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(cacheCost ?? 0);
+  }).format(cacheCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -528,7 +573,7 @@ const ContextCacheUsage = ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Context, ContextCacheUsage, ContextContent, ContextContentBody, ContextContentFooter, ContextContentHeader, ContextInputUsage, ContextOutputUsage, ContextReasoningUsage, ContextTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- context keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export {

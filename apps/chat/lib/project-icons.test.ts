@@ -1,13 +1,11 @@
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
-import { expect, test } from "vitest";
-
 import {
-  getProjectColorName,
-  getProjectIconName,
   PROJECT_COLOR_NAMES,
   PROJECT_ICONS,
+  getProjectColorName,
+  getProjectIconName,
 } from "./project-icons";
-/* oxlint-enable sort-imports */
+
+import { expect, test } from "vitest";
 
 test("saved project values preserve every installed option and fall back for removed options", (): void => {
   for (const icon of PROJECT_ICONS) {

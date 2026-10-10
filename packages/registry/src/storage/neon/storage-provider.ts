@@ -1,3 +1,2 @@
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createStorageAdapter); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/prefer-default-export, import/no-named-export -- The registry installs this named createStorageAdapter contract; the enabled import/no-default-export rule rejects a default export.
 export { neon as createStorageAdapter } from "files-sdk/neon";
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -4,12 +4,13 @@
 /* oxlint-disable oxc/no-async-await -- Browser interactions and snapshots must settle in their authored order. */
 /* oxlint-disable import/max-dependencies -- This browser contract capture composes the affected application components with their real styles and providers. */
 /* oxlint-disable react/only-export-components -- Vitest browser fixtures are test entry points, not Fast Refresh modules. */
-/* oxlint-disable react/jsx-props-no-spreading, react/jsx-max-depth, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- Exercise React Hook Form's native render callback, mutable controller fields, and required nested provider structure. */
+/* oxlint-disable react/jsx-props-no-spreading, react/jsx-max-depth, react-perf/jsx-no-new-function-as-prop -- Exercise React Hook Form's native render callback, mutable controller fields, and required nested provider structure. */
 /* oxlint-disable eslint/max-statements, eslint/no-magic-numbers, no-undefined, unicorn/no-null, react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-jsx-as-prop -- The finite fixture matrix covers JSON, React nodes, absent output, and persisted metadata plus an ordered dialog interaction. */
 /* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
+import type { ControllerRenderProps } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -63,7 +64,11 @@ const FixtureForm = ({
       <FormField
         control={form.control}
         name="name"
-        render={({ field }) => (
+        render={({
+          field,
+        }: Readonly<{
+          field: Readonly<ControllerRenderProps<{ name: string }, "name">>;
+        }>) => (
           <FormItem>
             <FormLabel>Name</FormLabel>
             <FormControl>

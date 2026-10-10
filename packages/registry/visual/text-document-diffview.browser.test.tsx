@@ -1,21 +1,13 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-relative-parent-imports -- The app global stylesheet supplies the registry visual fixture's Tailwind classes. */
+import "../../../apps/chat/app/globals.css";
+/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
-import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
-
 /* oxlint-disable import/no-relative-parent-imports -- This relative import connects a package-local renderer and remains valid in the published standalone layout. */
 import { DiffView } from "../src/tools/text-documents/diffview";
 /* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable import/no-relative-parent-imports -- The app global stylesheet supplies the registry visual fixture's Tailwind classes. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "../../../apps/chat/app/globals.css";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
+import { createRoot } from "react-dom/client";
+import { takeSnapshot } from "@uiverify/vitest";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited render and cleanup sequencing. */
 /* oxlint-disable eslint/max-statements -- Keep the fixture setup, assertions, capture, and cleanup together. */

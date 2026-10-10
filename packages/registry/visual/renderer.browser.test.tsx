@@ -1,55 +1,36 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getInstanceByDom } from "echarts";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import "../../../apps/chat/app/globals.css";
+/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
-import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable sort-imports */
-
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  weatherInput,
-  weatherResult,
-} from "../src/tools/get-weather/schemas";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   retrievedInput,
   retrievedResult,
 } from "../src/tools/retrieve-url/schemas";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type {
+  weatherInput,
+  weatherResult,
+} from "../src/tools/get-weather/schemas";
+/* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
-
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "../../../apps/chat/app/globals.css";
-/* oxlint-enable sort-imports */
+import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
+/* oxlint-enable import/no-relative-parent-imports */
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { createRoot } from "react-dom/client";
+import { getInstanceByDom } from "echarts";
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-enable import/max-dependencies */
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -62,12 +43,10 @@ vi.mock(
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 // Focus this capture on chart output, independently of the code editor.
-vi.mock("@/components/sandbox", () => ({ SandboxComposed: () => null }));
+vi.mock("@/components/sandbox", () => ({ SandboxComposed: (): null => null }));
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -167,7 +146,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 test("chart output validates shapes and fits PNG output", async (): Promise<void> => {
   const container = document.createElement("main");
@@ -215,7 +193,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await act((): void => {
     root.render(
       <>
-        {outputs.map((chart, index) => (
+        {outputs.map((chart: unknown, index) => (
           <section
             key={JSON.stringify(chart)}
             data-testid={`output-${index}`}
@@ -253,20 +231,25 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .toBe(3);
   await expect
     .poll((): boolean =>
-      [...container.querySelectorAll("h3")].every((heading) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        const panel = heading.parentElement?.parentElement?.parentElement;
-        return panel && getComputedStyle(panel).opacity === "1";
-      })
+      [...container.querySelectorAll("h3")].every(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original parentElement chain into native getComputedStyle; recursively readonly DOM collections fail its Element receiver (TS2345).
+        (heading) => {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          const panel = heading.parentElement?.parentElement?.parentElement;
+          return panel && getComputedStyle(panel).opacity === "1";
+        }
+      )
     )
     .toBe(true);
   await expect
     .poll((): boolean =>
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
-      ].every((element) =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        getInstanceByDom(element)?.getZr().animation.isFinished()
+      ].every(
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ECharts getInstanceByDom receives the original HTMLElement; deeply readonly DOM child/style collections fail that actual native receiver (TS2345).
+        (element) =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          getInstanceByDom(element)?.getZr().animation.isFinished()
       )
     )
     .toBe(true);
@@ -285,7 +268,6 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */

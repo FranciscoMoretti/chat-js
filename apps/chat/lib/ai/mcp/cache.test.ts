@@ -10,10 +10,9 @@ vi.mock("next/cache", () => ({
 }));
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["disconnected", "authorizing", "connecting", "incompatible"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, no-magic-numbers, typescript/explicit-function-return-type --
+/* oxlint-disable init-declarations, no-magic-numbers --
  * init-declarations (#507): it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient % assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * no-magic-numbers (#517): it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient % uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient %'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
   "a transient %s result is retried while connected status uses the 60-second cache",
@@ -21,11 +20,8 @@ it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
     mocks.cache.mockImplementation(
       (fetcher: () => Promise<ConnectionStatusResult>) => {
         let stored: ConnectionStatusResult | undefined;
-        return async () => {
-          // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
-          if (!stored) {
-            stored = await fetcher();
-          }
+        return async (): Promise<ConnectionStatusResult> => {
+          stored ??= await fetcher();
           return stored;
         };
       }
@@ -54,4 +50,4 @@ it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, no-magic-numbers, typescript/explicit-function-return-type */
+/* oxlint-enable init-declarations, no-magic-numbers */

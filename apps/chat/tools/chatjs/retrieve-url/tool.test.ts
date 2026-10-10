@@ -1,9 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
-import { toolResultSchema } from "@/lib/eve/tool-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
-/* oxlint-enable sort-imports */
+import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },
@@ -17,13 +14,14 @@ vi.mock("@mendable/firecrawl-js", () => ({
     public extract = mocks.extract;
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn() }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/logger",
+  (): { createModuleLogger: () => { error: () => void } } => ({
+    createModuleLogger: (): { error: () => void } => ({
+      error: vi.fn<() => void>(),
+    }),
+  })
+);
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
@@ -31,31 +29,29 @@ beforeEach(() => {
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test.each(["missing configuration", "invalid URL"])(
+test.each([
+  ["missing configuration", "https://example.com"],
+  ["invalid URL", "file:///private"],
+])(
   "%s produces a zero-cost receipt without calling Firecrawl",
-  async (reason) => {
+  async (reason, url) => {
+    const noChargeUsd = 0;
     if (reason === "missing configuration") {
       mocks.env.FIRECRAWL_API_KEY = "";
     }
     const { retrieveUrl } = await import("./tool");
     const result = await retrieveUrl.execute(
       {
-        url:
-          // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          reason === "invalid URL" ? "file:///private" : "https://example.com",
+        url,
       },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).usage.costUsd).toBe(0);
+    expect(toolResultSchema.parse(result).usage.costUsd).toBe(noChargeUsd);
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 test.each([false, true])(
   "provider completion keeps unknown cost explicit (failure=%s)",

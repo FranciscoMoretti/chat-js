@@ -9,7 +9,6 @@ import type {
   CoreFeatureKey,
   Gateway,
 } from "#cli/types";
-
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -53,7 +52,7 @@ interface EnvChecklistInput {
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
-  // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for a single credential alternative.
+  // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for one alternative; pinned init-declarations requires this initializer.
   let oneOfGroup: string | undefined = undefined;
   if (requirement.options.length > singleAlternative) {
     oneOfGroup = requirement.options

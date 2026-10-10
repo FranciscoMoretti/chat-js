@@ -1,8 +1,8 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { UIMessage } from "ai";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type {
+  CanonicalMessage,
+  ThreadInit,
+  ThreadStateSnapshot,
+} from "./types";
 import {
   useCallback,
   useEffect,
@@ -11,30 +11,21 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-/* oxlint-enable sort-imports */
-
 import type { AbstractThread } from "./abstract-thread";
+import { SnapshotStore } from "./thread-snapshot-store";
 import { Thread } from "./thread";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UseThreadHelpers } from "./thread-hook-helpers";
 import { createThreadHelpers } from "./thread-hook-helpers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { SnapshotStore } from "./thread-snapshot-store";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  CanonicalMessage,
-  ThreadInit,
-  ThreadStateSnapshot,
-} from "./types";
-/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 
-// oxlint-disable-next-line eslint/no-undefined -- An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
-const OMITTED_HOOK_INPUT = undefined;
+// An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
+const OMITTED_HOOK_INPUT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
-const NO_SUPPLIED_THREAD = undefined;
+// The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
+const NO_SUPPLIED_THREAD = globalThis.undefined;
 
 const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering.; no-ternary: Keep useIsomorphicLayoutEffect as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -117,8 +108,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     messages: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["setMessages"]
     >[typeof FIRST_PARAMETER_INDEX]
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setMessages from this.#thread; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  ): void => this.#thread?.setMessages(messages);
+  ): void => {
+    if (this.#thread) {
+      this.#thread.setMessages(messages);
+    }
+  };
 }
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
@@ -229,16 +223,15 @@ const useSelectedController = <TMessage extends UIMessage>({
   });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
+  const [previousThreadId, setPreviousThreadId] = useState(
+    ownOptions && ownOptions.id
+  );
   if (
     previousExternalThread !== externalThread ||
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    previousThreadId !== ownOptions?.id
+    previousThreadId !== (ownOptions && ownOptions.id)
   ) {
     setPreviousExternalThread(externalThread);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    setPreviousThreadId(ownOptions?.id);
+    setPreviousThreadId(ownOptions && ownOptions.id);
     setThread(externalThread ?? createOwnedThread(ownOptions, dispatchers));
   }
   return thread;
@@ -277,16 +270,11 @@ const useThreadController = <TMessage extends UIMessage>(
   // oxlint-disable-next-line no-ternary -- Keep ownOptions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onData from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onData: ownOptions?.onData,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onError from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onError: ownOptions?.onError,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onFinish from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onFinish: ownOptions?.onFinish,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onToolCall from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onToolCall: ownOptions?.onToolCall,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sendAutomaticallyWhen from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    sendAutomaticallyWhen: ownOptions?.sendAutomaticallyWhen,
+    onData: ownOptions && ownOptions.onData,
+    onError: ownOptions && ownOptions.onError,
+    onFinish: ownOptions && ownOptions.onFinish,
+    onToolCall: ownOptions && ownOptions.onToolCall,
+    sendAutomaticallyWhen: ownOptions && ownOptions.sendAutomaticallyWhen,
   };
   const dispatchers = useLatestDispatchers<TMessage>(callbacks);
   const thread = useSelectedController<TMessage>({

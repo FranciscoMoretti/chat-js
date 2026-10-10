@@ -9,35 +9,38 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   dispatchEveCopy,
   rejectUnacceptedEveCopy,
   resolveAcceptedEveCopySeed,
 } from "../lib/db/eve-copy-dispatch";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import {
   getEveCopyOperation,
   reserveEveCopyOperation,
 } from "../lib/db/eve-copy-journal";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   acceptEveCopy,
   writeEveCopyDocuments,
   writeEveCopyFile,
 } from "../lib/db/eve-copy-resources";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import { purgeEveFamilyDocuments } from "../lib/db/eve-documents";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createEveConversation } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveConversationCopy,
@@ -50,15 +53,15 @@ import {
   eveStoredFile,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable eslint/sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyPlan } from "../lib/eve/copy-journal-contract";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -102,12 +105,11 @@ const key = (): string => randomBytes(18).toString("base64url");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): fixture uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): fixture accepts _file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): fixture preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): fixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -217,7 +219,7 @@ async function fixture() {
     readSourceFile: vi.fn(() =>
       Promise.resolve(new Blob([bytes], { type: "image/png" }))
     ),
-    writeDestinationFile: vi.fn((_key: string, _file: Blob) =>
+    writeDestinationFile: vi.fn((_key: string, _file: Readonly<Blob>) =>
       Promise.resolve()
     ),
   };
@@ -236,12 +238,22 @@ async function fixture() {
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepare's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): prepare accepts f: Awaited<ReturnType<typeof fixture>>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
+
 async function prepare(
-  ctx: Awaited<ReturnType<typeof fixture>>
+  ctx: Readonly<{
+    saved: Readonly<{ conversation: Readonly<{ id: string }> }>;
+    targetKey: string;
+    storage: Readonly<{
+      readSourceFile: (
+        key: string
+      ) => Promise<Pick<Blob, "type" | "arrayBuffer">>;
+      writeDestinationFile: (
+        key: string,
+        file: Readonly<Blob>
+      ) => Promise<void>;
+    }>;
+  }>
 ): Promise<void> {
   await writeEveCopyFile(
     ownerId,
@@ -253,22 +265,24 @@ async function prepare(
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-statements, typescript/promise-function-async, unicorn/no-null --
  * max-statements (#512): test("reserves one immutable root and destination resources before writes, rejecting  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("reserves one immutable root and destination resources before writes, rejecting  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("reserves one immutable root and destination resources before writes, rejecting  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("reserves one immutable root and destination resources before writes, rejecting  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+/* oxlint-disable eslint/max-lines-per-function -- #786 adds readonly row-reader contracts; keep this copy-reservation scenario and its assertions together. */
 test("reserves one immutable root and destination resources before writes, rejecting changed intent and cross-kind replay", async () => {
   const ctx = await fixture();
   const replay = await Promise.all(
     Array.from({ length: 3 }, () => reserveEveCopyOperation(ownerId, ctx.input))
   );
-  expect(replay.map((row) => row.conversation.id)).toEqual(
-    Array.from({ length: 3 }, () => ctx.saved.conversation.id)
-  );
+  expect(
+    replay.map(
+      (row: Readonly<{ conversation: Readonly<{ id: string }> }>) =>
+        row.conversation.id
+    )
+  ).toEqual(Array.from({ length: 3 }, () => ctx.saved.conversation.id));
   expect(ctx.saved.conversation).toMatchObject({
     creationKind: "copy",
     parentConversationId: null,
@@ -315,9 +329,10 @@ test("reserves one immutable root and destination resources before writes, rejec
     })
   ).rejects.toThrow("ordinary message");
 });
+/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-statements, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("cannot accept or expose a native seed before file and document receipts commit" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -353,9 +368,8 @@ test("cannot accept or expose a native seed before file and document receipts co
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("an uncertain file write retries the same allocated key and records completion o uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("an uncertain file write retries the same allocated key and records completion o accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("an uncertain file write retries the same allocated key and records completion once", async () => {
   const ctx = await fixture();
@@ -390,12 +404,14 @@ test("an uncertain file write retries the same allocated key and records complet
     ctx.storage
   );
   expect(
-    ctx.storage.writeDestinationFile.mock.calls.map((call) => call[0])
+    ctx.storage.writeDestinationFile.mock.calls.map(
+      (call: ReadonlyNativeSurface<readonly [string, Blob]>) => call[0]
+    )
   ).toEqual([ctx.targetKey, ctx.targetKey]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, typescript/promise-function-async, unicorn/no-null --
  * max-statements (#512): test("accepted copies recover after source revocation and a lost native reply, then d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

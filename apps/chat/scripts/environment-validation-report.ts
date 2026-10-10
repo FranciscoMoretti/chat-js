@@ -1,4 +1,6 @@
 /* oxlint-disable no-console -- These CLI reporting operations emit ordered environment diagnostics, the gateway warning and validation success through console. */
+const EMPTY_DIAGNOSTIC_COUNT = 0;
+
 const formatGatewaySnapshotWarning = (
   generatedForGateway: string,
   configuredGateway: string
@@ -11,8 +13,7 @@ const reportEnvironmentFailure = (
     readonly missing: readonly string[];
   }[]
 ): boolean => {
-  // oxlint-disable-next-line no-magic-numbers -- Zero distinguishes an empty diagnostic list from validation failures.
-  if (errors.length > 0) {
+  if (errors.length > EMPTY_DIAGNOSTIC_COUNT) {
     const message = errors
       .map(
         (validationError: {

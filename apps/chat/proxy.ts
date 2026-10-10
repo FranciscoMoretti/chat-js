@@ -1,4 +1,3 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -45,71 +44,88 @@ const isAuthPage = (pathname: string): boolean =>
   pathname.startsWith("/register") ||
   isDeviceLoginPage(pathname);
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): getSafeReturnTo accepts url: URL; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): getSafeReturnTo intentionally keeps the existing falsy-value behavior of returnTo?.startsWith("/"); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): getSafeReturnTo preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const getSafeReturnTo = (url: URL): string | null => {
+const getSafeReturnTo = (
+  url: Readonly<{ searchParams: Readonly<{ get: URLSearchParams["get"] }> }>
+): string => {
   const returnTo = url.searchParams.get("returnTo");
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from returnTo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!returnTo?.startsWith("/") || returnTo.startsWith("//")) {
-    return null;
+  if (returnTo?.startsWith("/") !== true || returnTo.startsWith("//")) {
+    return "/";
   }
   return returnTo;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (proxy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve proxy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+type ReadonlyRedirectUrl = Readonly<
+  Omit<URL, "searchParams"> & { searchParams: Readonly<URLSearchParams> }
+>;
 
-/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): Next.js statically discovers the proxy entrypoint and inline config matcher; retain their declaration exports together (#619).
- * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): proxy accepts req: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const proxy = async (req: NextRequest) => {
-  const url = req.nextUrl;
-  const { pathname } = url;
-
-  if (isPublicApiRoute(pathname) || isMetadataRoute(pathname)) {
-    return;
-  }
-
-  if (isPlaywrightTestEnvironment) {
-    // Playwright CI runs the app anonymously and should never reach session I/O.
-    return;
-  }
-
-  const session = await auth.api.getSession({ headers: req.headers });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const isLoggedIn = Boolean(session?.user);
-  const isDeviceLoginRoute = isDeviceLoginPage(pathname);
-  const returnTo = getSafeReturnTo(url);
-
+const resolvePageResponse = ({
+  isDeviceLoginRoute,
+  isLoggedIn,
+  pathname,
+  returnTo,
+  url,
+}: {
+  readonly isDeviceLoginRoute: boolean;
+  readonly isLoggedIn: boolean;
+  readonly pathname: string;
+  readonly returnTo: string;
+  readonly url: ReadonlyRedirectUrl;
+}): NextResponse | undefined => {
   if (isLoggedIn && isAuthPage(pathname) && !isDeviceLoginRoute) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: proxy has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-    return NextResponse.redirect(new URL(returnTo ?? "/", url));
+    return NextResponse.redirect(new URL(returnTo, url));
   }
 
   if (isAuthPage(pathname) || isPublicPage(pathname)) {
+    // oxlint-disable-next-line typescript/consistent-return -- Public/authentication pages pass through; protected pages may produce a native redirect response.
     return;
   }
 
   if (!isLoggedIn) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: proxy has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return NextResponse.redirect(new URL("/login", url));
   }
+};
+/* oxlint-disable import/no-named-export -- Next discovers the named proxy entrypoint; app guidance and import/no-default-export also require named exports. */
+/* oxlint-disable oxc/no-async-await -- Await the native session lookup before resolving page access or producing its response. */
+
+// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 needs inline config for matcher extraction, so this named entrypoint remains a separate export; one-var rejects a combined declaration.
+export const proxy = async (
+  req: Readonly<{
+    headers: Readonly<Headers>;
+    nextUrl: ReadonlyRedirectUrl;
+  }>
+): Promise<NextResponse | undefined> => {
+  const url = req.nextUrl;
+  const { pathname } = url;
+
+  if (
+    isPublicApiRoute(pathname) ||
+    isMetadataRoute(pathname) ||
+    isPlaywrightTestEnvironment
+  ) {
+    // API/metadata and anonymous Playwright requests never reach session I/O.
+    return;
+  }
+
+  const session = await auth.api.getSession({ headers: req.headers });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- The session may be absent; retain one guarded user access after the native session lookup.
+  const isLoggedIn = Boolean(session?.user);
+  const isDeviceLoginRoute = isDeviceLoginPage(pathname);
+  const returnTo = getSafeReturnTo(url);
+
+  // oxlint-disable-next-line typescript/consistent-return -- Metadata/public API and fixture requests pass through; page requests may produce the native redirect response.
+  return resolvePageResponse({
+    isDeviceLoginRoute,
+    isLoggedIn,
+    pathname,
+    returnTo,
+    url,
+  });
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): Next.js extractExportedConstValue requires inline export const config to discover this proxy matcher (#619).
- */
+// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 extractExportedConstValue reads inline export const config; a grouped clause drops the matcher. one-var rejects combining it with proxy.
 export const config = {
   matcher: [
     /*
@@ -128,4 +144,3 @@ export const config = {
   ],
 };
 /* oxlint-enable import/no-named-export */
-/* oxlint-enable import/group-exports */

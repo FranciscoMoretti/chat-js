@@ -1,36 +1,27 @@
-import { describe, expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
-import pathModule from "node:path";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { itemAddress } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
-import { resolveStorage } from "#cli/registry/storage";
-
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { storageDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { builtInStorage } from "../../../registry/src/storage/catalog";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   configureStorageProvider,
   parseStorageOptions,
 } from "./storage-provider";
-/* oxlint-enable sort-imports */
+import { describe, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { builtInStorage } from "../../../registry/src/storage/catalog";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
+import { itemAddress } from "#cli/registry/shadcn";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
+import pathModule from "node:path";
+import { resolveStorage } from "#cli/registry/storage";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { storageDefinitionSchema } from "../../../registry/metadata";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
+
+const firstRequirementIndex = 0;
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
     for (const item of builtInStorage) {
@@ -47,9 +38,10 @@ describe("storage registry integration", () => {
     expect(getStorageEnvironmentRequirements("r2", { binding: {} })).toEqual(
       []
     );
+    const firstRequirement =
+      getStorageEnvironmentRequirements("vercel-blob")[firstRequirementIndex];
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from getStorageEnvironmentRequirements(...)[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
+      firstRequirement.options.map(
         (option: readonly { readonly key: string }[]) =>
           option.map((provider: { readonly key: string }) => provider.key)
       )
@@ -63,7 +55,7 @@ describe("storage registry integration", () => {
       expect(() => parseStorageOptions(input)).toThrow("JSON object");
     }
   });
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
@@ -130,6 +122,5 @@ describe("storage registry integration", () => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

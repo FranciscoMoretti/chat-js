@@ -1,12 +1,10 @@
-import type { AnyTRPCRouter } from "@trpc/server";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType, HTMLAttributes, ReactNode } from "react";
-/* oxlint-enable sort-imports */
-
 import type {
   ComposerControl,
   ComposerControlProps,
 } from "@/components/composer/control";
+
+import type { AnyTRPCRouter } from "@trpc/server";
 import type { DraftAttachment } from "@/lib/eve/draft";
 
 /** Preserve inferred procedure types: use `satisfies`, never annotate the map. */

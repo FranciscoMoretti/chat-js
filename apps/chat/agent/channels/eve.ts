@@ -3,14 +3,10 @@
  */
 import { eveChannel } from "eve/channels/eve";
 
-import { resolveAcceptedEveCopySeed } from "../../lib/db/eve-copy-dispatch";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ownsEveSession } from "../../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fetchEveChannelFile } from "../../lib/eve/channel-files";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { ownsEveSession } from "../../lib/db/eve-queries";
+import { resolveAcceptedEveCopySeed } from "../../lib/db/eve-copy-dispatch";
+/* oxlint-disable sort-imports -- Sorting authenticateEveGateway before eveChannel changes the first supported startup failure: invalid environment validation precedes an existing native eve.auth codec collision; preserve the EVE ContextKey collision-first contract. */
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */

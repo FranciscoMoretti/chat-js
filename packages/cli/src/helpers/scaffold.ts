@@ -1,6 +1,3 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
-import { existsSync } from "node:fs";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import {
   access,
@@ -11,48 +8,39 @@ import {
   rmdir,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import pathModule from "node:path";
-
-import { registryUrl } from "#cli/registry/shadcn";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { PackageManager } from "#cli/types";
-/* oxlint-enable sort-imports */
-import { runCommand } from "#cli/utils/run-command";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { initializeFeatureUi } from "#cli/utils/sync-features";
-/* oxlint-enable sort-imports */
-import { syncTools } from "#cli/utils/sync-tools";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { mcpFiles } from "../../../registry/src/features/mcp";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isJsonObject,
   isStringArray,
   parseJsonObject,
   requireJsonObject,
-  // oxlint-disable-next-line import/max-dependencies -- Scaffold integrates filesystem transforms, registry descriptors, JSON validation, and package installation adapters.
 } from "./json-object";
-/* oxlint-enable sort-imports */
-import {
-  normalizeScaffoldedPackageJson,
-  parsePackageJson,
-} from "./package-manifest";
-import { resolvePackageDirectory } from "./resolve-package-directory";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "./scaffold-content";
-/* oxlint-enable sort-imports */
+import {
+  normalizeScaffoldedPackageJson,
+  parsePackageJson,
+} from "./package-manifest";
+import type { PackageManager } from "#cli/types";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
+import { existsSync } from "node:fs";
+import { initializeFeatureUi } from "#cli/utils/sync-features";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { mcpFiles } from "../../../registry/src/features/mcp";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import pathModule from "node:path";
+// oxlint-disable-next-line import/max-dependencies -- Scaffold integrates filesystem transforms, registry descriptors, JSON validation, and package installation adapters.
+import { registryUrl } from "#cli/registry/shadcn";
+import { resolvePackageDirectory } from "./resolve-package-directory";
+import { runCommand } from "#cli/utils/run-command";
+import { syncTools } from "#cli/utils/sync-tools";
 import { vendorPatchedPackage } from "./vendor-patched-package";
+
+const JSON_INDENTATION_SPACES = 2;
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "cbor-extract",
@@ -183,7 +171,6 @@ const writePnpmWorkspaceConfig = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const applyChatTemplateSourceTransforms = async (
   destination: string
@@ -226,7 +213,10 @@ const applyChatTemplateSourceTransforms = async (
     "Template package.json"
   );
   packageJson.packageManager = rootPackageJson.packageManager;
-  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
+  );
 
   await vendorPatchedPackage({
     destination,
@@ -245,7 +235,6 @@ const applyChatTemplateSourceTransforms = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyElectronTemplateSourceTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -298,7 +287,6 @@ const copyElectronTemplateFromRepoSource = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeChatAppFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
@@ -331,7 +319,10 @@ const normalizeChatAppFiles = async (
   );
   vercelJson.installCommand = `${packageManager} install`;
   vercelJson.buildCommand = runScript(packageManager, "build");
-  await writeFile(vercelJsonPath, `${JSON.stringify(vercelJson, null, 2)}\n`);
+  await writeFile(
+    vercelJsonPath,
+    `${JSON.stringify(vercelJson, null, JSON_INDENTATION_SPACES)}\n`
+  );
 
   if (packageManager === "pnpm") {
     await writePnpmWorkspaceConfig(destination);
@@ -341,7 +332,6 @@ const normalizeChatAppFiles = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeElectronFiles's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 
@@ -383,7 +373,6 @@ const normalizeElectronFiles = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve excludeElectronFromRootTypecheck's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const excludeElectronFromRootTypecheck = async (
   projectDir: string
 ): Promise<void> => {
@@ -399,17 +388,18 @@ const excludeElectronFromRootTypecheck = async (
     );
   }
   tsconfig.exclude = [...new Set([...exclusions, "electron"])];
-  await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(
+    tsconfigPath,
+    `${JSON.stringify(tsconfig, null, JSON_INDENTATION_SPACES)}\n`
+  );
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromTemplate's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const scaffoldFromTemplate = async (
   destination: string,
@@ -442,7 +432,10 @@ const scaffoldFromTemplate = async (
       template: "chat-app",
     }
   );
-  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
+  );
   // This is a new scaffold, so remove the reference app's selection before install.
   await rm(pathModule.join(destination, "lib/ai/gateway.ts"));
   const manifest = parseJsonObject(
@@ -480,7 +473,10 @@ const scaffoldFromTemplate = async (
     force: true,
   });
   await rm(pathModule.join(destination, "lib/storage-provider.ts"));
-  await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(manifest, null, JSON_INDENTATION_SPACES)}\n`
+  );
   const componentsPath = pathModule.join(destination, "components.json");
   const components = parseJsonObject(
     await readFile(componentsPath, "utf-8"),
@@ -494,7 +490,10 @@ const scaffoldFromTemplate = async (
     ),
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
-  await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
+  await writeFile(
+    componentsPath,
+    `${JSON.stringify(components, null, JSON_INDENTATION_SPACES)}\n`
+  );
   const optionalFiles = [
     ...mcpFiles,
     "features/mcp/chatjs.json",
@@ -539,7 +538,6 @@ const scaffoldFromTemplate = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -552,7 +550,6 @@ interface ElectronScaffoldOptions {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldElectron's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const scaffoldElectron = async (
   projectDir: string,
   opts: ElectronScaffoldOptions
@@ -597,13 +594,15 @@ const scaffoldElectron = async (
     ),
     electronOptions
   );
-  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
+  );
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromGit's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 

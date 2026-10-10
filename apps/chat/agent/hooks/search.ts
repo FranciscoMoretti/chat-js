@@ -1,20 +1,17 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-search"; "../../lib/eve/conversation-scope"; "../../lib/eve/search-backfill"; "../../lib/eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  */
-import { defineState } from "eve/context";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { EveSearchText } from "../../lib/eve/search-text";
+import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
-/* oxlint-enable sort-imports */
+import { defineState } from "eve/context";
 
 import { indexEveSearchText } from "../../lib/db/eve-search";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Sorting backfill before defineHook/defineState changes the first supported startup failure: invalid environment validation precedes an existing native eve.auth codec collision; preserve the EVE ContextKey collision-first contract. */
 import { backfillEveSearchConversation } from "../../lib/eve/search-backfill";
 /* oxlint-enable sort-imports */
 import { eveEventSearchText } from "../../lib/eve/search-text";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveSearchText } from "../../lib/eve/search-text";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const maxPendingEntries = 256;
@@ -24,19 +21,24 @@ const needsRecovery = defineState("chatjs.search-recovery", () => false);
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * max-lines-per-function (#510): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): default export emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-continue (#515): default export skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): default export uses 0, 1, 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined -- import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
+max-lines-per-function (#510): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-console (#514): default export emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+no-continue (#515): default export skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+no-magic-numbers (#517): default export uses 0, 1, 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): default export uses undefined for absent or optional values; context; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 export default defineHook({
   events: {
-    "*": async (event, context) => {
+    "*": async (
+      event: Parameters<typeof eveEventSearchText>[0],
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
       if (context.session.parent) {
         return;
       }
@@ -47,7 +49,7 @@ export default defineHook({
         return;
       }
       let omitted = 0;
-      pending.update((current) => {
+      pending.update((current: readonly EveSearchText[]) => {
         const retained: EveSearchText[] = [];
         const keys = new Set<string>();
         let characters = 0;
@@ -135,4 +137,4 @@ export default defineHook({
   },
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined */

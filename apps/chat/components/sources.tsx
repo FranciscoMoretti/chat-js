@@ -1,7 +1,4 @@
 import { ArrowRight, FileText } from "lucide-react";
-import React, { useId } from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Dialog,
   DialogContent,
@@ -9,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
+
 import {
   Drawer,
   DrawerContent,
@@ -17,32 +14,30 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getFaviconUrl } from "@/lib/url-utils";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import React, { useId } from "react";
 import { Favicon } from "./favicon";
-/* oxlint-enable sort-imports */
+
 import { FaviconGroup } from "./favicon-group";
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, }: { sources: SearchResultItem[] | undefined; }). */
+
+import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
+
+import { cn } from "@/lib/utils";
+
+import { getFaviconUrl } from "@/lib/url-utils";
+
+import { useMediaQuery } from "@/hooks/use-media-query";
+/* oxlint-disable react/jsx-max-depth -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; }). */
 
 const SourcesList = ({
   sources,
 }: {
-  sources: SearchResultItem[] | undefined;
+  readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
 }): React.JSX.Element => (
   <div className="space-y-3">
     {
       /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from sources; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
-      sources?.map((source: SearchResultItem): React.JSX.Element => (
+      sources?.map((source: Readonly<SearchResultItem>): React.JSX.Element => (
         <a
           aria-label={source.title}
           className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
@@ -68,15 +63,15 @@ const SourcesList = ({
   </div>
 );
 /* oxlint-disable react/jsx-no-literals -- AllSourcesView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AllSourcesView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp -- AllSourcesView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const AllSourcesView = ({
   sources,
   id,
 }: {
-  sources: SearchResultItem[] | undefined;
-  id?: string;
+  readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
+  readonly id?: string;
 }): React.JSX.Element => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const title = "All Sources";
@@ -143,16 +138,16 @@ const AllSourcesView = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ShowSourcesButton renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp */
 
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp -- ShowSourcesButton: react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ShowSourcesButton = ({
   sources,
   dialogId,
 }: {
-  sources: SearchResultItem[];
-  dialogId: string;
+  readonly sources: readonly Readonly<SearchResultItem>[];
+  readonly dialogId: string;
 }): React.JSX.Element => (
   <button
     aria-label="Show all sources"
@@ -185,13 +180,13 @@ const ShowSourcesButton = ({
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Sources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources }: { sources: SearchResultItem[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, unicorn/no-null -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const Sources = ({
   sources,
 }: {
-  sources: SearchResultItem[];
+  readonly sources: readonly Readonly<SearchResultItem>[];
 }): React.JSX.Element | null => {
   const sourcesDialogId = useId();
   if (sources.length === 0) {
@@ -208,4 +203,4 @@ export const Sources = ({
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, unicorn/no-null */

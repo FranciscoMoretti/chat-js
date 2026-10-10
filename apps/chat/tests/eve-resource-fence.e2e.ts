@@ -4,9 +4,9 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import {
   fenceEvePostgresResources,
@@ -14,9 +14,9 @@ import {
 } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
 import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -146,15 +146,15 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-undefined --
  * max-statements (#512): test("fencing waits for admitted writers to commit before rejecting later writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("fencing waits for admitted writers to commit before rejecting later writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("fencing waits for admitted writers to commit before rejecting later writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
   const id = await run();
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native PostgreSQL transaction executes the admitted UPDATE whose commit the fence waits for.
   const writer = query.begin(async (tx) => {
     await tx`update workflow.workflow_runs set output = '{"admitted":true}'::jsonb where id = ${id}`;
     entered.resolve(undefined);
@@ -191,12 +191,11 @@ test("fencing waits for admitted writers to commit before rejecting later writes
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-undefined */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-undefined --
  * max-statements (#512): test("a repeatable-read snapshot from before the fence cannot restore payloads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("a repeatable-read snapshot from before the fence cannot restore payloads") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("a repeatable-read snapshot from before the fence cannot restore payloads") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("a repeatable-read snapshot from before the fence cannot restore payloads", async () => {
   const id = await run();
@@ -204,6 +203,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
   streamIds.push(streamId);
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native PostgreSQL transaction reads the pre-fence snapshot and later issues the INSERT that the installed fence rejects.
   const writer = query.begin("isolation level repeatable read", async (tx) => {
     await tx`select resource from workflow.eve_resource_fences where resource = ${`run:${id}`}`;
     entered.resolve(undefined);
@@ -228,7 +228,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-undefined */
 
 /* oxlint-disable max-statements --
  * max-statements (#512): test("session fencing rolls back for an active child and succeeds after retirement") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -252,10 +252,9 @@ test("session fencing rolls back for an active child and succeeds after retireme
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-undefined --
  * max-statements (#512): test("session fencing re-inventories a collector child committed while its fence wait keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("session fencing re-inventories a collector child committed while its fence wait uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("session fencing re-inventories a collector child committed while its fence wait accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("session fencing re-inventories a collector child committed while its fence waits", async () => {
   const collector = await run();
@@ -267,6 +266,7 @@ test("session fencing re-inventories a collector child committed while its fence
   streamIds.push(childStream);
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.json() to perform the native database transaction/write operation.
   const writer = query.begin(async (tx) => {
     await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
@@ -307,4 +307,4 @@ test("session fencing re-inventories a collector child committed while its fence
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-undefined */

@@ -1,51 +1,30 @@
+import type { ModelMessage, Tool } from "ai";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ModelMessage, Tool } from "ai";
-/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep the Node crypto module initialized before the pinned AI SDK gateway, schema and identifier factories; independence of their runtime initialization is not proven. */
 import { asSchema, jsonSchema } from "ai";
+/* oxlint-enable sort-imports */
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
+import type { McpConnector } from "@/lib/db/schema";
 import type { ToolContext } from "eve/tools";
-
-import { installedFeatures } from "@/features/installed";
 import { requireMcpCredentials } from "@/features/mcp/setup";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createToolId } from "@/lib/ai/mcp-name-id";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep MCP setup environment validation before MCP client OAuth-provider lock-pool, database and logger initialization; these runtime graphs have not been proved to commute. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies.
+import { createToolId } from "@/lib/ai/mcp-name-id";
+import { installedFeatures } from "@/features/installed";
+/* oxlint-disable sort-imports -- Keep MCP client/provider lock-pool initialization before a direct MCP database-query edge; moving that edge earlier changes the first-evaluation trace of lock, database and logger modules. */
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
 } from "@/lib/db/mcp-queries";
 /* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies.
-import type { McpConnector } from "@/lib/db/schema";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
-/* oxlint-enable sort-imports */
-
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...parameters: readonly never[]
-) => unknown
-  ? Value
-  : Value extends object
-    ? {
-        readonly [Property in keyof Value]: ReadonlyNativeSurface<
-          Value[Property]
-        >;
-      }
-    : Value;
 
 // Read-only native session/approval metadata and cancellation used by MCP adapters.
 type McpToolContext = Readonly<{
@@ -85,7 +64,16 @@ const modelToolName = (name: string): string => {
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const withAbort = async <T>(
   operation: () => Promise<T>,
-  signal: ReadonlyNativeSurface<AbortSignal>
+  signal: Readonly<
+    Pick<
+      AbortSignal,
+      | "throwIfAborted"
+      | "reason"
+      | "addEventListener"
+      | "removeEventListener"
+      | "aborted"
+    >
+  >
 ): Promise<T> => {
   signal.throwIfAborted();
   const aborted = Promise.withResolvers<never>();
@@ -100,11 +88,38 @@ const withAbort = async <T>(
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const assertConnector = (
-  connector: McpConnector | undefined,
+  connector:
+    | Readonly<
+        Pick<
+          McpConnector,
+          | "enabled"
+          | "userId"
+          | "id"
+          | "name"
+          | "oauthClientId"
+          | "oauthClientSecret"
+          | "type"
+          | "url"
+          | "requireApproval"
+        >
+      >
+    | undefined,
   ownerId: string
-): McpConnector => {
+): Readonly<
+  Pick<
+    McpConnector,
+    | "enabled"
+    | "userId"
+    | "id"
+    | "name"
+    | "oauthClientId"
+    | "oauthClientSecret"
+    | "type"
+    | "url"
+    | "requireApproval"
+  >
+> => {
   if (
     !(
       installedFeatures.has("mcp") &&
@@ -119,7 +134,6 @@ const assertConnector = (
   return connector;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withConnector's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 
@@ -127,10 +141,25 @@ const assertConnector = (
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+// oxlint-disable-next-line eslint/max-lines-per-function -- Keep the existing connector lifecycle and cleanup sequencing together; expanded readonly type annotations add source lines without runtime statements.
 const withConnector = async <T>(
-  connector: McpConnector,
-  signal: AbortSignal,
+  connector: Readonly<
+    Pick<
+      McpConnector,
+      "id" | "name" | "oauthClientId" | "oauthClientSecret" | "type" | "url"
+    >
+  >,
+  signal: Readonly<
+    Pick<
+      AbortSignal,
+      | "throwIfAborted"
+      | "reason"
+      | "addEventListener"
+      | "removeEventListener"
+      | "aborted"
+    >
+  >,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original AI SDK schema object at asSchema/validated-tool receivers; deep readonly schema identities fail TS2345/TS2322.
   run: (tools: Record<string, Tool>) => Promise<T>
 ): Promise<T> => {
   signal.throwIfAborted();
@@ -167,7 +196,6 @@ const withConnector = async <T>(
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve discoverEveMcpTools's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
@@ -181,7 +209,6 @@ const withConnector = async <T>(
 
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Discovers serializable MCP descriptions while closing every opened connector client.
@@ -191,7 +218,7 @@ const withConnector = async <T>(
  */
 const discoverEveMcpTools = async (
   ownerId: string | undefined,
-  signal: AbortSignal
+  signal: Readonly<AbortSignal>
 ): Promise<
   (Awaited<ReturnType<typeof describeMcpTool>> & {
     name: string;
@@ -239,6 +266,7 @@ const discoverEveMcpTools = async (
       await withConnector(
         assertConnector(connector, ownerId),
         connectorSignal,
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original AI SDK schema object at asSchema/validated-tool receivers; deep readonly schema identities fail TS2345/TS2322.
         async (tools): Promise<void> => {
           for (const [remoteName, tool] of Object.entries(tools)) {
             connectorSignal.throwIfAborted();
@@ -289,7 +317,6 @@ const discoverEveMcpTools = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcpTool's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-continue */
 
@@ -297,7 +324,7 @@ const discoverEveMcpTools = async (
 
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original AI SDK schema object at asSchema/validated-tool receivers; deep readonly schema identities fail TS2345/TS2322.
 const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   const schema = await asSchema(tool.inputSchema).jsonSchema;
   // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
@@ -325,8 +352,10 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
               validate.errors
                 ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
                 .map(
-                  (error): string =>
-                    `${error.instancePath || "/"} ${error.message}`
+                  (error: {
+                    readonly instancePath: string;
+                    readonly message?: string | undefined;
+                  }): string => `${error.instancePath || "/"} ${error.message}`
                 )
                 .join("; ") ?? "schema validation failed"
             }`
@@ -339,10 +368,12 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcpInput's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
+const validateMcpInput = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original AI SDK inputSchema at asSchema; deep readonly schema arrays fail its native generic receiver (TS2345).
+  tool: Readonly<Pick<Tool, "inputSchema">>,
+  input: unknown
+): Promise<void> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling asSchema(...).validate; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   const validated = await asSchema(tool.inputSchema).validate?.(input);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from validated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -356,7 +387,6 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveMcpTool's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 

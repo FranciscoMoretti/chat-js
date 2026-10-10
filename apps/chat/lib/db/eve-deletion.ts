@@ -3,7 +3,7 @@ import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction; the response-group import also consumes that schema. */
 import {
   eveChat,
   eveChatProject,
@@ -26,6 +26,11 @@ import {
 } from "./schema";
 /* oxlint-enable sort-imports */
 
+const SINGLE_MATCH_LIMIT = 1;
+const EMPTY_FAMILY_SIZE = 0;
+type DeletionTransaction = Readonly<
+  Pick<typeof db, "select" | "execute" | "delete" | "update">
+>;
 /** Select the requested root or joined member while retaining the owner filter.
  * @param {string} ownerId - Owner required for either identity alternative.
  * @param {string} conversationId - Root chat ID or joined member conversation ID.
@@ -63,8 +68,7 @@ const assertEveFamilyPendingDeletion = (
   >[]
 ): void => {
   if (
-    // oxlint-disable-next-line no-magic-numbers -- An empty family cannot be committed as deleted; zero is the direct collection-emptiness comparison.
-    family.length === 0 ||
+    family.length === EMPTY_FAMILY_SIZE ||
     family.some(
       (row: Readonly<Pick<typeof eveConversation.$inferSelect, "state">>) =>
         row.state !== "deleting" && row.state !== "deleted"
@@ -97,8 +101,7 @@ const findUnresolvedEveFamilySandbox = (
         eq(eveCodeSandbox.state, "unresolved")
       )
     )
-    // oxlint-disable-next-line no-magic-numbers -- This cleanup-existence probe needs only the first unresolved sandbox.
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
 
 /** Read the owner-filtered root/member identity before family finalization.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability, used with its original receiver.
@@ -134,7 +137,8 @@ const readOwnedEveDeletionIdentity = (
  */
 const readEveFamilyApplicationContent = (
   query: Readonly<Pick<typeof db, "select">>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle table columns retain their class identity for select/from/inArray; a mapped readonly column surface loses the SDK column contract.
+
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original Drizzle table feeds from/select generic receivers; deep readonly projection loses protected column configuration at native receivers (TS2345).
   table: Readonly<
     | typeof eveFileReference
     | typeof eveImportedDocumentCheckpointEntry
@@ -157,8 +161,7 @@ const readEveFamilyApplicationContent = (
     .select({ conversationId: table.conversationId })
     .from(table)
     .where(inArray(table.conversationId, ids))
-    // oxlint-disable-next-line no-magic-numbers -- Stop at the first surviving application-content row; this query tests existence.
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
 
 /** Read the first owner-visible identity and joined member state for a deletion receipt.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability, forwarded without cloning or rebinding.
@@ -194,8 +197,7 @@ const readOwnedEveDeletionReceipt = (
       )
     )
     .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
-    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
 
 /** Read the owner-visible member state when a root receipt has no joined member state.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability.
@@ -222,8 +224,7 @@ const readOwnedEveDeletionMemberState = (
         eq(eveConversation.ownerId, ownerId)
       )
     )
-    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 
@@ -241,8 +242,8 @@ const completeEveConversationDeletion = async (
   routeId: string
 ): Promise<void> => {
   await db.transaction(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, max-lines-per-function, max-statements -- Preserve the native Drizzle transaction passed unchanged to tombstoneEveResponseGroups; its protected schema/index members reject a mapped Readonly transaction. Preserve the ordered owner lock, family precondition, response-group tombstones, sandbox/content checks, provenance deletion and identity tombstones within the same transaction; extracting awaited phases needs separate suspension/trace verification.
-    async (tx) => {
+    // oxlint-disable-next-line max-lines-per-function, max-statements -- Preserve the ordered owner lock, family precondition, response-group tombstones, sandbox/content checks, provenance deletion and identity tombstones within the same transaction; extracting awaited phases needs separate suspension/trace verification.
+    async (tx: DeletionTransaction) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );

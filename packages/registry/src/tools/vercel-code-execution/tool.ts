@@ -1,27 +1,15 @@
-import type { Sandbox } from "@vercel/sandbox";
-import { defineTool } from "eve/tools";
-
-import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CodeExecutionContext,
   CodeExecutor,
 } from "@/lib/eve/code-executor";
-/* oxlint-enable sort-imports */
-import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createModuleLogger } from "@/lib/logger";
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import type { Sandbox } from "@vercel/sandbox";
+import { defineTool } from "eve/tools";
+import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
+// oxlint-disable-next-line sort-imports -- Preserve ownership's database/environment initialization before logger constructs Pino; sorting createModuleLogger first changes the validation and host setup order.
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Preserve database validation and Pino initialization before the sandbox adapter reads OIDC host identity and installs Undici's global dispatcher; native Multiple-before-Single sorting moves those effects earlier.
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -30,9 +18,12 @@ import {
   getSandboxRuntime,
   resolveSandboxAuth,
 } from "./execution-sandbox";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies */
-import { codeExecutionInput, codeExecutionResult } from "./schemas";
+import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
+import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
+// oxlint-disable-next-line import/max-dependencies -- This native tool integrates schemas, provider execution, durable ownership and cleanup; the retained dependency-count boundary remains under review.
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 
 // Vercel Sandbox execution.
 const COST_CENTS = 5;
@@ -49,7 +40,6 @@ const observeCleanup = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */

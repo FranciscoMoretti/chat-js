@@ -1,27 +1,30 @@
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { TestInfo } from "@playwright/test";
 
 import { textPdf } from "./eve-attachment-fixtures";
 
 const projectPath = /\/project\/[a-f\d-]+$/u;
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * init-declarations (#507): for (const project of [false, true]) { test(`first mess assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): for (const project of [false, true]) { test(`first mess keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): for (const project of [false, true]) { test(`first mess keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): for (const project of [false, true]) { test(`first mess uses -1, 0, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): for (const project of [false, true]) { test(`first mess uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): for (const project of [false, true]) { test(`first mess accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): for (const project of [false, true]) { test(`first mess preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): for (const project of [false, true]) { test(`first mess intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 for (const project of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  // oxlint-disable-next-line no-ternary, typescript/prefer-readonly-parameter-types -- Keep the template interpolation lazy as required by unicorn/prefer-ternary; the Page fixture calls route(), goto(), and setViewportSize() on the original receiver to drive the live browser scenario.
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
     page,
-  }, testInfo) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+  }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+    await page.route(
+      "https://unpkg.com/react-scan/**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+      (route) => route.abort()
     );
     await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
     const composer = page.getByRole("group", {
@@ -31,14 +34,18 @@ for (const project of [false, true]) {
     let projectId: string | undefined;
     const release = Promise.withResolvers<undefined>();
     let received = false;
-    await page.route("**/api/agent-conversations", async (route) => {
-      received = true;
-      await release.promise;
-      await route.fulfill({
-        json: { error: "Test creation unavailable" },
-        status: 503,
-      });
-    });
+    await page.route(
+      "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+      async (route) => {
+        received = true;
+        await release.promise;
+        await route.fulfill({
+          json: { error: "Test creation unavailable" },
+          status: 503,
+        });
+      }
+    );
     try {
       await expect(
         composer.getByLabel("Message", { exact: true })
@@ -60,13 +67,16 @@ for (const project of [false, true]) {
         await expect(page).toHaveURL(projectPath);
         projectId = new URL(page.url()).pathname.split("/").at(-1);
         await page.setViewportSize({ height: 844, width: 390 });
-        await page.route("**/api/files/upload", (route) =>
-          route.fulfill({
-            json: {
-              url: "/api/files/012345678901234567890123.pdf",
-            },
-            status: 200,
-          })
+        await page.route(
+          "**/api/files/upload",
+          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+          (route) =>
+            route.fulfill({
+              json: {
+                url: "/api/files/012345678901234567890123.pdf",
+              },
+              status: 200,
+            })
         );
         await page
           .getByRole("group", { exact: true, name: "Message composer" })
@@ -153,28 +163,30 @@ for (const project of [false, true]) {
   });
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 const chatPath = /\/chat\/[a-f\d-]+$/u;
 const visualStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root, .tsqd-parent-container { visibility: hidden !important; }";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): for (const identity of ["registered", "guest"]) { test( keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): for (const identity of ["registered", "guest"]) { test( keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): for (const identity of ["registered", "guest"]) { test( uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): for (const identity of ["registered", "guest"]) { test( uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): for (const identity of ["registered", "guest"]) { test( accepts { page, }; testInfo; route; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): for (const identity of ["registered", "guest"]) { test( preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): for (const identity of ["registered", "guest"]) { test( intentionally keeps the existing falsy-value behavior of document.querySelector('[role="log"]')?.textContent?.includes(text); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 for (const identity of ["registered", "guest"]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.goBack() on the original Page/locator receiver to change the live browser or route state.
   test(`first send keeps its document and optimistic message through stream attachment (${identity})`, async ({
     page,
-  }, testInfo) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+  }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+    await page.route(
+      "https://unpkg.com/react-scan/**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+      (route) => route.abort()
     );
     // oxlint-disable-next-line no-ternary -- Keep page.goto argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
@@ -185,22 +197,33 @@ for (const identity of ["registered", "guest"]) {
     const message = "Do not use tools. Reply with exactly: Runtime ready";
     const creation = Promise.withResolvers<undefined>();
     const stream = Promise.withResolvers<undefined>();
-    await page.route("**/api/agent-conversations", async (route) => {
-      await creation.promise;
-      await route.continue();
-    });
-    await page.route("**/stream?**", async (route) => {
-      await stream.promise;
-      await route.continue();
-    });
+    await page.route(
+      "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.continue() to resolve the intercepted live request through the original native Route receiver.
+      async (route) => {
+        await creation.promise;
+        await route.continue();
+      }
+    );
+    await page.route(
+      "**/stream?**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.continue() to resolve the intercepted live request through the original native Route receiver.
+      async (route) => {
+        await stream.promise;
+        await route.continue();
+      }
+    );
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Network.enable");
     let documents = 0;
-    cdp.on("Network.requestWillBeSent", (event) => {
-      if (event.type === "Document") {
-        documents += 1;
+    cdp.on(
+      "Network.requestWillBeSent",
+      (event: Readonly<{ type?: string }>) => {
+        if (event.type === "Document") {
+          documents += 1;
+        }
       }
-    });
+    );
     const origin = await page.evaluate(() => performance.timeOrigin);
     try {
       await input.fill(message);
@@ -281,4 +304,4 @@ for (const identity of ["registered", "guest"]) {
   });
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-boolean-expressions */

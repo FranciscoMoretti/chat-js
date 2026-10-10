@@ -1,9 +1,7 @@
-import type { Metadata } from "next";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
-/* oxlint-enable sort-imports */
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
+import type { Metadata } from "next";
 import { SignupForm } from "@/components/signup-form";
 
 const metadata: Metadata = {
@@ -12,8 +10,8 @@ const metadata: Metadata = {
 };
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth --
- * react-perf/jsx-no-jsx-as-prop (#555): RegisterPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-max-depth (#548): RegisterPage keeps related render components together; extraction changes component, state, and layout boundaries.
+ * react-perf/jsx-no-jsx-as-prop (#555): Suspense requires the AuthCardSkeleton React node as its fallback prop.
+ * react/jsx-max-depth (#548): native control found two depth-3 sites (limit 2) in the centered two-column registration layout.
  */
 const RegisterPage = (): React.JSX.Element => (
   <div className="container m-auto flex h-dvh w-screen flex-col items-center justify-center px-4">

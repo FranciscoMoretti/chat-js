@@ -1,64 +1,74 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
+import { createHash } from "node:crypto";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
+import { readFile, realpath } from "node:fs/promises";
+/* oxlint-enable eslint/sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
+import path from "node:path";
 /* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { readFile, realpath } from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { readFile, realpath } from "node:fs/promises";
-/* oxlint-enable sort-imports */
-import path from "node:path";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Request, TestInfo } from "@playwright/test";
+/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { eveConversation } from "../lib/db/schema";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * init-declarations (#507): test("compiled idle capture preserves native history and exact document revisions in  assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("compiled idle capture preserves native history and exact document revisions in  uses 180_000, 0, 8, 200, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("compiled idle capture preserves native history and exact document revisions in  uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep test("compiled idle capture preserves native history and exact document revisions in 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): test("compiled idle capture preserves native history and exact document revisions in  accepts { page, }; testInfo; route; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("compiled idle capture preserves native history and exact document revisions in  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("compiled idle capture preserves native history and exact document revisions in  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.on() on the original Page/locator receiver to change the live browser or route state.
 test("compiled idle capture preserves native history and exact document revisions in follow-up comparisons", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -122,7 +132,7 @@ test("compiled idle capture preserves native history and exact document revision
   });
   const captureRequests: { checkpointId: string; beforeTurnId: string }[] = [];
   let groupRequests = 0;
-  page.on("request", (request) => {
+  page.on("request", (request: Readonly<Pick<Request, "method" | "url">>) => {
     if (
       request.method() === "POST" &&
       new URL(request.url()).pathname === "/api/agent-response-groups"
@@ -132,7 +142,10 @@ test("compiled idle capture preserves native history and exact document revision
   });
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
-    async (route) => {
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.abort() to resolve the intercepted live request through the original native Route receiver.
+      route
+    ) => {
       // oxlint-disable-next-line typescript/no-unsafe-argument -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
       captureRequests.push(route.request().postDataJSON());
       const response = await route.fetch();
@@ -194,12 +207,16 @@ test("compiled idle capture preserves native history and exact document revision
     path: testInfo.outputPath("follow-up-recovery.png"),
   });
   let groupPayload: unknown;
-  await page.route("**/api/agent-response-groups", async (route) => {
-    const response = await route.fetch({ timeout: 90_000 });
-    expect(response.status()).toBe(200);
-    groupPayload = await response.json();
-    await route.fulfill({ response });
-  });
+  await page.route(
+    "**/api/agent-response-groups",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    async (route) => {
+      const response = await route.fetch({ timeout: 90_000 });
+      expect(response.status()).toBe(200);
+      groupPayload = await response.json();
+      await route.fulfill({ response });
+    }
+  );
   await recover.click();
   await expect.poll(() => groupPayload, { timeout: 90_000 }).toBeTruthy();
   const group = eveResponseGroupResult.parse(groupPayload);
@@ -255,22 +272,26 @@ test("compiled idle capture preserves native history and exact document revision
   ).toBe(true);
   await page.setViewportSize({ height: 720, width: 1280 });
   await page.unroute("**/api/agent-response-groups");
-  await page.route("**/api/agent-response-groups", (route) => {
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-    const input = route.request().postDataJSON();
-    return route.fulfill({
-      json: {
-        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-        candidates: input.modelIds.map((modelId: string) => ({
-          modelId,
-          operationId: crypto.randomUUID(),
-          state: "rejected",
-          error: "Fixture model unavailable",
-        })),
-        id: crypto.randomUUID(),
-      },
-    });
-  });
+  await page.route(
+    "**/api/agent-response-groups",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) => {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
+      const input = route.request().postDataJSON();
+      return route.fulfill({
+        json: {
+          // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
+          candidates: input.modelIds.map((modelId: string) => ({
+            modelId,
+            operationId: crypto.randomUUID(),
+            state: "rejected",
+            error: "Fixture model unavailable",
+          })),
+          id: crypto.randomUUID(),
+        },
+      });
+    }
+  );
   await page
     .getByRole("group", { exact: true, name: "Message composer" })
     .getByRole("combobox")
@@ -296,21 +317,25 @@ test("compiled idle capture preserves native history and exact document revision
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * init-declarations (#507): test("an advanced source rejects the exact comparison checkpoint and keeps the editab assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("an advanced source rejects the exact comparison checkpoint and keeps the editab keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("an advanced source rejects the exact comparison checkpoint and keeps the editab keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an advanced source rejects the exact comparison checkpoint and keeps the editab uses 1, 409, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("an advanced source rejects the exact comparison checkpoint and keeps the editab accepts { page, context, }; testInfo; route; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("an advanced source rejects the exact comparison checkpoint and keeps the editab preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.on() on the original Page/locator receiver to change the live browser or route state.
 test("an advanced source rejects the exact comparison checkpoint and keeps the editable draft", async ({
   page,
   context,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -337,14 +362,16 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     .from(eveConversation)
     .where(eq(eveConversation.id, source.id));
   const other = await context.newPage();
-  await other.route("https://unpkg.com/react-scan/**", (route) =>
-    route.abort()
+  await other.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
   );
   await other.goto(`/chat/${source.id}`);
   await expect(other.getByText("Ready", { exact: true })).toBeVisible();
   let groups = 0;
   let checkpoint: { checkpointId: string; beforeTurnId: string } | undefined;
-  page.on("request", (request) => {
+  page.on("request", (request: Readonly<Pick<Request, "method" | "url">>) => {
     if (
       new URL(request.url()).pathname === "/api/agent-response-groups" &&
       request.method() === "POST"
@@ -354,6 +381,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
   });
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     async (route) => {
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
       checkpoint = route.request().postDataJSON();
@@ -446,6 +474,6 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-idle-checkpoint-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

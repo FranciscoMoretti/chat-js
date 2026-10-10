@@ -66,7 +66,7 @@ Most exceptions cover individual source lines. Existing next-line directives ret
 
 ## File-level directive limitations
 
-Pinned Oxlint 1.82 reports `import/unambiguous` and `unicorn/filename-case` at offset zero, even when the file starts with a matching disable comment. A native three-file probe confirms this for an ambient declaration, CommonJS entry and underscore-named tool. Keep the existing exact-file configuration exceptions for Electron's ambient/Forge boundaries and EVE's filename-derived public tool names; do not widen them to directories. Source directives remain the default elsewhere.
+Pinned Oxlint 1.82 reports `import/unambiguous` and `unicorn/filename-case` at offset zero, even when the file starts with a matching disable comment. A native three-file probe confirms this for an ambient declaration, CommonJS entry and underscore-named tool. Keep exact-file configuration exceptions for the CommonJS Forge launcher and EVE's filename-derived public tool names; do not widen them to directories. Electron's Window declaration uses an external declaration module with explicit global augmentation, so it needs no `import/unambiguous` exception (#721). Source directives remain the default elsewhere.
 
 ## Acceptance criteria
 

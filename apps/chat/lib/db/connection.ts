@@ -12,6 +12,9 @@ const normalizeEmptyEnvironmentValue = (value: unknown): unknown => {
   return value;
 };
 
+const MIGRATION_URL_MINIMUM_LENGTH = 1;
+const MIGRATION_MAX_CONNECTIONS = 1;
+
 const databaseEnvOptions = {
   DATABASE_MAX_CONNECTIONS: z
     .preprocess(
@@ -22,8 +25,7 @@ const databaseEnvOptions = {
   DATABASE_MIGRATION_URL: z
     .preprocess(
       normalizeEmptyEnvironmentValue,
-      // oxlint-disable-next-line no-magic-numbers -- A supplied migration URL must contain at least one character; empty values are normalized to absence above.
-      z.string().min(1).optional()
+      z.string().min(MIGRATION_URL_MINIMUM_LENGTH).optional()
     )
     .describe("Optional direct Postgres connection for schema operations"),
   DATABASE_PREPARE: z
@@ -56,8 +58,10 @@ const databaseConnection = (
     );
   }
   const max =
-    // oxlint-disable-next-line no-magic-numbers, no-ternary -- Schema operations use exactly one connection rather than the configured runtime pool size.; no-ternary: Keep max as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    purpose === "migration" ? 1 : environment.DATABASE_MAX_CONNECTIONS;
+    // oxlint-disable-next-line no-ternary -- Keep max as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    purpose === "migration"
+      ? MIGRATION_MAX_CONNECTIONS
+      : environment.DATABASE_MAX_CONNECTIONS;
   return {
     options: {
       // oxlint-disable-next-line oxc/no-rest-spread-properties, no-undefined, no-ternary -- An absent max omits the pool-size key rather than passing undefined to the driver. Conditional spread (max === undefined ? {} : { max }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.

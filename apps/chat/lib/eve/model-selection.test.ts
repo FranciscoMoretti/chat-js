@@ -65,6 +65,22 @@ vi.mock("../ai/gateways/fallback-models", () => ({
       tags: ["reasoning"],
       type: "language",
     },
+    {
+      context_window: 3000,
+      id: "google-thinking",
+      owned_by: "google",
+      pricing: {},
+      tags: ["reasoning"],
+      type: "language",
+    },
+    {
+      context_window: 4000,
+      id: "xai-model",
+      owned_by: "xai",
+      pricing: {},
+      tags: [],
+      type: "language",
+    },
     { id: "disabled", pricing: {}, tags: [], type: "language" },
     { id: "image", pricing: {}, tags: [], type: "image" },
   ],
@@ -92,6 +108,31 @@ test("keeps the provider model and reasoning variant distinct", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+const providerOptionCases: readonly Readonly<{
+  expected: Readonly<Record<string, unknown>>;
+  modelId: string;
+}>[] = [
+  { expected: { openai: {} }, modelId: "plain" },
+  {
+    expected: {
+      anthropic: { thinking: { budgetTokens: 4096, type: "enabled" } },
+    },
+    modelId: "thinking-reasoning",
+  },
+  {
+    expected: { google: { thinkingConfig: { thinkingBudget: 10_000 } } },
+    modelId: "google-thinking-reasoning",
+  },
+  { expected: { xai: {} }, modelId: "xai-model" },
+];
+test.each(providerOptionCases)(
+  "validates native provider options for $modelId",
+  async ({ expected, modelId }) => {
+    const resolved = await resolveEveModel(modelId);
+    expect(resolved.modelOptions.providerOptions).toEqual(expected);
+  }
+);
+
 test("the logical reasoning identity still dispatches to the original provider model", async () => {
   const resolved = await resolveEveModel("thinking-reasoning");
   await expect(resolved.model.doGenerate({ prompt: [] })).rejects.toThrow(

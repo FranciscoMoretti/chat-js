@@ -6,22 +6,22 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
 } from "../lib/db/eve-file-purge";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   canReadEveFile,
   isEveFileUnavailable,
@@ -32,14 +32,14 @@ import {
   writeEveGeneratedFile,
   writeEveUpload,
 } from "../lib/db/eve-files";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import {
   eveConversation,
   eveFileReference,
@@ -206,9 +206,8 @@ test("fork reservation retains the source file references before dispatch", asyn
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("attachment creation commits references before dispatch with a single applicatio uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("attachment creation commits references before dispatch with a single applicatio accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("attachment creation commits references before dispatch with a single application connection", async () => {
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
@@ -224,7 +223,9 @@ test("attachment creation commits references before dispatch with a single appli
         const references = await worker<
           { key: string }[]
         >`select key from "EveFileReference" where "conversationId" = ${id}`;
-        expect(references.map((row) => row.key)).toEqual([key]);
+        expect(
+          references.map((row: Readonly<{ key: string }>) => row.key)
+        ).toEqual([key]);
         return crypto.randomUUID();
       },
       { fileKeys: [key], initialContentHash: "attachment-fixture" }
@@ -236,7 +237,7 @@ test("attachment creation commits references before dispatch with a single appli
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("generated file reservations survive storage failure and cannot write after dele uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -387,11 +388,10 @@ test("file purge preserves outside references and keeps durable progress across 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("concurrent family cleanup cannot abandon a shared file") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("concurrent family cleanup cannot abandon a shared file") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("concurrent family cleanup cannot abandon a shared file") uses 0, 24, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent family cleanup cannot abandon a shared file") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("concurrent family cleanup cannot abandon a shared file", async () => {
   const first = await createEveConversation(
@@ -430,10 +430,16 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     releaseEveFamilyFileReferences(owner, secondRow.chatId),
   ]);
   expect(
-    outcomes.filter((result) => result.status === "fulfilled")
+    outcomes.filter(
+      (result: { readonly status: "rejected" | "fulfilled" }) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
   expect(
-    outcomes.filter((result) => result.status === "rejected")
+    outcomes.filter(
+      (result: { readonly status: "rejected" | "fulfilled" }) =>
+        result.status === "rejected"
+    )
   ).toHaveLength(1);
   const references = await db
     .select()
@@ -467,7 +473,7 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("upload reservations are durable and reject existing identities even for the sam uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -494,10 +500,10 @@ test("upload reservations are durable and reject existing identities even for th
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable eslint/max-lines-per-function -- #786 adds readonly field contracts to database row readers; keep this cleanup scenario together. */
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): test("orphan cleanup retains references and young uploads and retries reappearing tom keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("orphan cleanup retains references and young uploads and retries reappearing tom uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("orphan cleanup retains references and young uploads and retries reappearing tom accepts file; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("orphan cleanup retains references and young uploads and retries reappearing tom preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("orphan cleanup retains references and young uploads and retries reappearing tombstones", async () => {
@@ -524,12 +530,23 @@ test("orphan cleanup retains references and young uploads and retries reappearin
   await referenceEveFiles(owner, conversation.id, [referenced]);
   const cutoff = new Date("2026-01-01");
   const fenced = await prepareEveOrphanedFilePurge(keys, cutoff);
-  expect(fenced.map((file) => file.key).toSorted()).toEqual(
-    [orphan, foreign].toSorted()
-  );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from fenced.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(fenced.find((file) => file.key === foreign)?.ownerId).toBe(stranger);
-  expect(fenced.some((file) => file.key === legacy)).toBe(false);
+  expect(
+    fenced
+      .map((file: Readonly<{ key: string; ownerId: string }>) => file.key)
+      .toSorted()
+  ).toEqual([orphan, foreign].toSorted());
+  /* oxlint-disable oxc/no-optional-chaining -- Preserve the existing nullish guard when reading ownerId from fenced.find(...), including its undefined result when no row matches. */
+  expect(
+    fenced.find(
+      (file: Readonly<{ key: string; ownerId: string }>) => file.key === foreign
+    )?.ownerId
+  ).toBe(stranger);
+  /* oxlint-enable oxc/no-optional-chaining */
+  expect(
+    fenced.some(
+      (file: Readonly<{ key: string; ownerId: string }>) => file.key === legacy
+    )
+  ).toBe(false);
   await expect(
     referenceEveFiles(owner, conversation.id, [orphan])
   ).rejects.toThrow("not owned");
@@ -550,9 +567,10 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     { key: orphan, ownerId: owner },
   ]);
 });
+/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): test("orphan cleanup waits for an admitted upload before committing its fence") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

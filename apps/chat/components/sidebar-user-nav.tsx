@@ -9,22 +9,25 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { useTheme } from "next-themes";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { useRouter } from "next/navigation";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { JSX as ReactJSX } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { useTheme } from "next-themes";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next-themes and sonner; keep this adjacent import pair ordered. */
+import { toast } from "sonner";
+/* oxlint-enable sort-imports */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/internal-link; keep this adjacent import pair ordered. */
 import { InternalLink } from "@/components/internal-link";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/internal-link and @/components/ui/avatar; keep this adjacent import pair ordered. */
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 /* oxlint-enable sort-imports */
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,23 +44,26 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/use-credits";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/max-dependencies -- This sidebar directly composes existing navigation, auth and failure owners.
+
+/* oxlint-disable import/max-dependencies -- @/lib/auth-client import: This sidebar directly composes existing navigation, auth and failure owners. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/hooks/use-credits and @/lib/auth-client; keep this adjacent import pair ordered. */
 import authClient from "@/lib/auth-client";
+/* oxlint-enable import/max-dependencies */
 /* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- @/lib/electron-auth import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { isElectronRenderer } from "@/lib/electron-auth";
-/* oxlint-disable import/max-dependencies -- This sidebar composes navigation, auth and sign-out feedback through their owning modules. */
-import { signOutAndNavigate } from "@/lib/sign-out";
-/* oxlint-enable import/max-dependencies */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+import { isElectronRenderer } from "@/lib/electron-auth";
+
+import { signOutAndNavigate } from "@/lib/sign-out";
+
 import { useSession } from "@/providers/session-provider";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarUserNav); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- SidebarUserNav renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return -- SidebarUserNav: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including user.image); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+const USER_INITIALS_LENGTH = 2;
+const CREDIT_UNITS_PER_DOLLAR = 100;
+const CREDIT_DISPLAY_DECIMAL_PLACES = 2;
+
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- SidebarUserNav: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: initials start at string index zero and an absent credit balance displays zero; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
 
 export const SidebarUserNav = (): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
@@ -107,9 +113,13 @@ export const SidebarUserNav = (): ReactJSX.Element => {
   }
 
   const displayName = user.name || user.email || "User";
-  const userInitials = displayName.slice(0, 2).toUpperCase();
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-  const avatarImageSrc = user.image || `https://avatar.vercel.sh/${user.email}`;
+  const userInitials = displayName.slice(0, USER_INITIALS_LENGTH).toUpperCase();
+  const { image: userImage } = user;
+  const avatarImageSrc =
+    // oxlint-disable-next-line no-ternary -- Preserve empty or missing image fallback while checking the optional URL explicitly.
+    typeof userImage === "string" && userImage !== ""
+      ? userImage
+      : `https://avatar.vercel.sh/${user.email}`;
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
@@ -155,7 +165,9 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                     // oxlint-disable-next-line react/forbid-component-props -- DollarSign accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="size-3"
                   />
-                  {((credits ?? 0) / 100).toFixed(2)}
+                  {((credits ?? 0) / CREDIT_UNITS_PER_DOLLAR).toFixed(
+                    CREDIT_DISPLAY_DECIMAL_PLACES
+                  )}
                 </span>
               </div>
               <ChevronsUpDown
@@ -240,7 +252,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface.
                     typeof window.signOut === "function"
                   ) {
-                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Preserve the preload bridge's Window receiver and narrowed binding.
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface.
                     const nativeSignOut = window.signOut.bind(window);
                     await signOutAndNavigate({
                       navigate: () => {
@@ -302,4 +314,4 @@ export const SidebarUserNav = (): ReactJSX.Element => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

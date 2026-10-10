@@ -96,20 +96,24 @@ beforeEach(() => {
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, typescript/promise-function-async, typescript/strict-boolean-expressions */
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("does not allocate a native child before the initial checkpoint is ready") uses 409, 1, -1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("does not allocate a native child before the initial checkpoint is ready") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it("does not allocate a native child before the initial checkpoint is ready") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("does not allocate a native child before the initial checkpoint is ready", async () => {
   mocks.readiness.mockRejectedValue(new Error("pending"));
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(409);
   expect(await response.json()).not.toHaveProperty("creationRejected");
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.request.mock.calls.map((call) => call[1])).toEqual([
-    `/eve/chat/v1/operation/${input.operationId}`,
-  ]);
+
+  expect(
+    mocks.request.mock.calls.map(
+      (call: Readonly<(typeof mocks.request.mock.calls)[number]>) =>
+        /* oxlint-disable typescript/no-unsafe-return -- #598: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
+        call[1]
+      /* oxlint-enable typescript/no-unsafe-return */
+    )
+  ).toEqual([`/eve/chat/v1/operation/${input.operationId}`]);
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
@@ -124,7 +128,7 @@ it("does not allocate a native child before the initial checkpoint is ready", as
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): This case asserts the HTTP status code for the public project-not-found response.
  */

@@ -1,9 +1,7 @@
-import { installedInstrumentation } from "@/features/installed-instrumentation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+import { installedInstrumentation } from "@/features/installed-instrumentation";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (register); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve register's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): register reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.

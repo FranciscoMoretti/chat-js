@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEffect } from "react";
-/* oxlint-enable sort-imports */
+
+import { useRouter } from "next/navigation";
 
 import { useSidebar } from "@/components/ui/sidebar";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- KeyboardShortcuts: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- KeyboardShortcuts: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const KeyboardShortcuts = (): null => {
   const router = useRouter();
@@ -14,7 +13,14 @@ const KeyboardShortcuts = (): null => {
 
   // Keyboard shortcut for new chat
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
+    const handleKeyDown = (
+      event: Readonly<
+        Pick<
+          KeyboardEvent,
+          "shiftKey" | "key" | "metaKey" | "ctrlKey" | "preventDefault"
+        >
+      >
+    ): void => {
       if (
         event.shiftKey &&
         event.key === "O" &&
@@ -34,12 +40,10 @@ const KeyboardShortcuts = (): null => {
   // This component only handles keyboard events
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
-
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+/* oxlint-enable unicorn/no-null */
 
 // Helper function to get platform-specific shortcut text
-const getNewChatShortcutText = () => {
+const getNewChatShortcutText = (): "Ctrl+Shift+O" | "Cmd+Shift+O" => {
   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   if (typeof window === "undefined") {
     return "Ctrl+Shift+O";
@@ -52,7 +56,7 @@ const getNewChatShortcutText = () => {
   return "Ctrl+Shift+O";
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getNewChatShortcutText, KeyboardShortcuts); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+
 /* oxlint-disable react/only-export-components -- #620: Consumers import getNewChatShortcutText, KeyboardShortcuts from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { getNewChatShortcutText, KeyboardShortcuts };
 /* oxlint-enable import/no-named-export */

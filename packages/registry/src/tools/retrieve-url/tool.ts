@@ -1,19 +1,12 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve createEnv/gateway validation before logger constructs Pino and captures process.env.NODE_ENV; native sorting would initialize the host logger first.
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable sort-imports */
-
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { retrievedInput } from "./schemas";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { z } from "zod";
 
 type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
 type RetrieveUrlContext = Readonly<{
@@ -27,6 +20,7 @@ type RetrieveUrlUsage = Readonly<{
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
+const UNBILLED_TOOL_COST_USD = 0;
 const log = createModuleLogger("tools/retrieve-url");
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -57,7 +51,6 @@ const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
@@ -70,7 +63,7 @@ Avoid:
 - General-purpose web searches`,
   execute: ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
     executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
-      usage.addCostUsd(0);
+      usage.addCostUsd(UNBILLED_TOOL_COST_USD);
       try {
         if (!app) {
           return {
@@ -163,8 +156,9 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

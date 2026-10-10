@@ -1,5 +1,4 @@
 import { ExternalLink } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
 /* oxlint-enable sort-imports */
@@ -72,7 +71,7 @@ const ModelsSettingsHeader = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-disable react/no-multi-comp -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const ModelsSettingsContent = async (): Promise<ReactJSX.Element> => {
+const ModelsSettingsContent = async (): Promise<React.JSX.Element> => {
   const queryClient = getQueryClient();
 
   // Preloading populates the settings hydration cache and intentionally swallows preload failures.

@@ -2,7 +2,7 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { MessageAction } from "./ai-elements/message";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageVoteActions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */

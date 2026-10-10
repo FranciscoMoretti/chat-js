@@ -1,7 +1,5 @@
-import type { MessageStreamEvent } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, it } from "vitest";
-/* oxlint-enable sort-imports */
+import type { MessageStreamEvent } from "eve/client";
 
 import { eveCopyBoundaries } from "./copy-boundaries";
 

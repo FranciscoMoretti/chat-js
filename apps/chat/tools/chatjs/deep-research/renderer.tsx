@@ -1,24 +1,14 @@
 "use client";
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { EveDocumentTool } from "@/components/eve/eve-document-tool";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order while placing erased type imports beside their helper. */
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ReasonSearchResearchProgress } from "./progress";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { researchInput, researchOutput } from "./schemas";
+import { EveDocumentTool } from "@/components/eve/eve-document-tool";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ReasonSearchResearchProgress } from "./progress";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DeepResearchRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- DeepResearchRenderer renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 

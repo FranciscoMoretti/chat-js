@@ -1,16 +1,10 @@
 "use client";
-import dynamic from "next/dynamic";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { parse, unparse } from "papaparse";
-/* oxlint-enable sort-imports */
-import React from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
-/* oxlint-enable sort-imports */
+import { parse, unparse } from "papaparse";
+import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import type { SpreadsheetEditor as SpreadsheetEditorExport } from "./editor";
+import dynamic from "next/dynamic";
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const SpreadsheetEditor = dynamic(

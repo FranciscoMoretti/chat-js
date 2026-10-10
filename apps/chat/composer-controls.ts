@@ -1,5 +1,3 @@
-import type { ComposerControl } from "@/components/composer/control";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   CanvasControl,
   ImageControl,
@@ -7,13 +5,11 @@ import {
   SearchControl,
   VideoControl,
 } from "@/components/composer/tool-controls";
-/* oxlint-enable sort-imports */
-// Initial menu order. Reorder or extend this array; chat-js sync preserves it.
-import { attachmentUploads } from "@/features/attachment-uploads/integration";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ComposerControl } from "@/components/composer/control";
 import { ConnectorsControl } from "@/features/mcp/composer";
+import { attachmentUploads } from "@/features/attachment-uploads/integration";
+// Initial menu order. Reorder or extend this array; chat-js sync preserves it.
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (composerControls); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable sort-imports */
 
 export const composerControls: ComposerControl[] = [
   ...attachmentUploads.controls,

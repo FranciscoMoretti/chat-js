@@ -34,15 +34,34 @@ const expectRejection = async (
   throw new Error("Expected the operation to reject.");
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
+interface BuildHarness {
+  commands: { command: string; env: NodeJS.ProcessEnv }[];
+  events: string[];
+  operations: {
+    openDatabase: (url: string) => {
+      close: () => Promise<void>;
+      execute: (query: string) => Promise<void>;
+    };
+    run: (
+      command: "db:migrate" | "build",
+      env: Readonly<NodeJS.ProcessEnv>
+    ) => Promise<void>;
+  };
+}
+type BuildConnection = ReturnType<BuildHarness["operations"]["openDatabase"]>;
+interface HarnessOptions {
+  readonly failAt?: string;
+  readonly cleanupFails?: boolean;
+  readonly code?: string;
+  readonly lockWait?: Readonly<Promise<void>>;
+}
 /* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-const harness = (
-  failAt?: string,
+const harness = ({
+  failAt,
   cleanupFails = false,
   code = "53000",
-  lockWait: Readonly<Promise<void>> = Promise.resolve()
-) => {
+  lockWait = Promise.resolve(),
+}: HarnessOptions = {}): BuildHarness => {
   const events: string[] = [];
   const commands: { command: string; env: NodeJS.ProcessEnv }[] = [];
   const step = (name: string): void => {
@@ -57,7 +76,7 @@ const harness = (
     commands,
     events,
     operations: {
-      openDatabase: (url: string) => {
+      openDatabase: (url: string): BuildConnection => {
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
@@ -88,8 +107,6 @@ const harness = (
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-params */
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
   const test = harness();
@@ -153,7 +170,7 @@ it.each([
   "reports failure at %s without leaking credentials",
   async (step, phase, closes): Promise<void> => {
     // Also fail cleanup to prove it cannot hide an earlier failure.
-    const test = harness(step, step === "db:migrate");
+    const test = harness({ cleanupFails: step === "db:migrate", failAt: step });
     const failure = await runMaintainerBuild(preview, test.operations).catch(
       (error: unknown) => error
     );
@@ -172,16 +189,16 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
   const { promise: pending, resolve: acquired } =
     Promise.withResolvers<undefined>();
-  const test = harness(undefined, false, "53000", pending);
+  const test = harness({ lockWait: pending });
   const build = runMaintainerBuild(preview, test.operations);
   await delay(0);
   expect(test.events).toContain(lockQuery);
   expect(test.commands).toEqual([]);
+  // oxlint-disable-next-line eslint/no-undefined -- Complete the native deferred promise with its declared undefined fulfillment value.
   acquired(undefined);
   await build;
   expect(
@@ -196,7 +213,6 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["ECONNREFUSED", " (ECONNREFUSED)"],   ["55P03", " (55P03)"],   ["SUBPROCESS_EXIT_1", " 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
 
 it.each([
   ["ECONNREFUSED", " (ECONNREFUSED)"],
@@ -206,7 +222,7 @@ it.each([
 ])(
   "only includes safe error codes: %s",
   async (code, suffix): Promise<void> => {
-    const test = harness("SELECT 1", false, code);
+    const test = harness({ code, failAt: "SELECT 1" });
     await expectRejection(
       runMaintainerBuild(preview, test.operations),
       `Maintainer build failed during connection${suffix}.`

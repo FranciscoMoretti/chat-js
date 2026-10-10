@@ -9,6 +9,7 @@ import { ChevronDown } from "lucide-react";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useState } from "react";
 /* oxlint-enable sort-imports */
+import type { ControllerRenderProps } from "react-hook-form";
 import { useForm } from "react-hook-form";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
@@ -82,6 +83,24 @@ const mcpConnectorFormSchema = z.object({
 /* oxlint-enable eslint/no-magic-numbers */
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
+
+type ReadonlyFormEvent = Readonly<{
+  bubbles: boolean;
+  cancelable: boolean;
+  defaultPrevented: boolean;
+  eventPhase: number;
+  isTrusted: boolean;
+  timeStamp: number;
+  type: string;
+  nativeEvent: object;
+  target: unknown;
+  currentTarget: unknown;
+  preventDefault: () => void;
+  persist: () => void;
+  stopPropagation: () => void;
+  isDefaultPrevented: () => boolean;
+  isPropagationStopped: () => boolean;
+}>;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpCreateDialog); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- McpCreateDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
@@ -92,9 +111,7 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
 // oxlint-disable-next-line max-statements -- Connector form setup and its Action failure owner share this component lifecycle.
 export const McpCreateDialog = ({
   open,
@@ -141,7 +158,7 @@ export const McpCreateDialog = ({
 
   const { mutate: createConnector, isPending } = useMutation(
     trpc.mcp.create.mutationOptions({
-      onError: (err): void => {
+      onError: (err: { readonly message: string }): void => {
         toast.error(err.message || "Failed to add connector");
       },
       onSuccess: (): void => {
@@ -150,7 +167,7 @@ export const McpCreateDialog = ({
     })
   );
 
-  const handleSubmit = (values: McpConnectorFormValues): void => {
+  const handleSubmit = (values: Readonly<McpConnectorFormValues>): void => {
     const trimmed: McpConnectorFormValues = {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing values own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...values,
@@ -220,7 +237,7 @@ export const McpCreateDialog = ({
           <form
             className="space-y-4"
 
-            onSubmit={(event) => {
+            onSubmit={(event: ReadonlyFormEvent) => {
               startEventAction(async () => {
                 try {
                   await form.handleSubmit(handleSubmit)(event);
@@ -238,7 +255,13 @@ export const McpCreateDialog = ({
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({
+                field,
+              }: {
+                readonly field: Readonly<
+                  ControllerRenderProps<McpConnectorFormValues, "name">
+                >;
+              }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
@@ -256,7 +279,13 @@ export const McpCreateDialog = ({
             <FormField
               control={form.control}
               name="url"
-              render={({ field }) => (
+              render={({
+                field,
+              }: {
+                readonly field: Readonly<
+                  ControllerRenderProps<McpConnectorFormValues, "url">
+                >;
+              }) => (
                 <FormItem>
                   <FormLabel>URL</FormLabel>
                   <FormControl>
@@ -294,7 +323,13 @@ export const McpCreateDialog = ({
                 <FormField
                   control={form.control}
                   name="type"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    readonly field: Readonly<
+                      ControllerRenderProps<McpConnectorFormValues, "type">
+                    >;
+                  }) => (
                     <FormItem>
                       <FormLabel>Transport Type</FormLabel>
                       <FormControl>
@@ -323,7 +358,16 @@ export const McpCreateDialog = ({
                 <FormField
                   control={form.control}
                   name="oauthClientId"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    readonly field: Readonly<
+                      ControllerRenderProps<
+                        McpConnectorFormValues,
+                        "oauthClientId"
+                      >
+                    >;
+                  }) => (
                     <FormItem>
                       <FormLabel>OAuth Client ID (optional)</FormLabel>
                       <FormControl>
@@ -336,7 +380,16 @@ export const McpCreateDialog = ({
                 <FormField
                   control={form.control}
                   name="oauthClientSecret"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    readonly field: Readonly<
+                      ControllerRenderProps<
+                        McpConnectorFormValues,
+                        "oauthClientSecret"
+                      >
+                    >;
+                  }) => (
                     <FormItem>
                       <FormLabel>OAuth Client Secret (optional)</FormLabel>
                       <FormControl>
@@ -381,9 +434,7 @@ export const McpCreateDialog = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-props-no-spreading */
 /* oxlint-enable react/jsx-max-depth */
 

@@ -3,7 +3,6 @@
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import postgres from "postgres";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
@@ -40,6 +39,9 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 }
 const query = postgres(env.DATABASE_URL, { max: 2 });
 const task = `eve-payload-purge-${crypto.randomUUID()}`;
+// oxlint-disable-next-line typescript/promise-function-async -- Keep the rejection lazy for the purge callback while oxc/no-async-await forbids async functions in this fixture.
+const rejectUnexpectedRetirement = (): Promise<never> =>
+  Promise.reject(new Error("must not retire twice"));
 const runIds: string[] = [];
 const tables = [
   "workflow_stream_chunks",
@@ -235,16 +237,18 @@ test("native coordinator retains retirement across failure and retries after pay
     await query`select session_id from workflow.eve_session_retirements where session_id = ${root}`
   ).toEqual([{ session_id: root }]);
   await query`update workflow.workflow_runs set status = 'completed' where id = ${child}`;
-  const shouldNotRetire = () =>
-    Promise.reject(new Error("must not retire twice"));
   const receipt = await purgeEveNativeSession(
     env.DATABASE_URL,
     scope,
-    shouldNotRetire
+    rejectUnexpectedRetirement
   );
   expect(receipt.runIds).toEqual([root, child].toSorted());
   expect(
-    await purgeEveNativeSession(env.DATABASE_URL, scope, shouldNotRetire)
+    await purgeEveNativeSession(
+      env.DATABASE_URL,
+      scope,
+      rejectUnexpectedRetirement
+    )
   ).toEqual(receipt);
   expect(retirements).toBe(2);
 });

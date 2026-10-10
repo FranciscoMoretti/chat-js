@@ -34,13 +34,12 @@ const enabled = (): boolean => {
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startLocalEveGuestCleanup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined --
  * init-declarations (#507): startLocalEveGuestCleanup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): startLocalEveGuestCleanup emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-undefined (#519): startLocalEveGuestCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-void-return (#611): startLocalEveGuestCleanup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 /**
  * Start or refresh the development-only guest cleanup scheduler.
@@ -78,44 +77,42 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   let stopped = true;
   let running = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const scheduler: CleanupScheduler = {
+  const scheduler = {
     run,
+    schedule(): void {
+      if (stopped || running || timer) {
+        return;
+      }
+      timer = setTimeout(() => {
+        void scheduler.tick();
+      }, CLEANUP_INTERVAL_MS);
+      timer.unref();
+    },
     start(): void {
       stopped = false;
-      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
-      schedule();
+      scheduler.schedule();
     },
-    stop(): void {
+    stop: (): void => {
       stopped = true;
       clearTimeout(timer);
       timer = undefined;
     },
-  };
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
-  const tick = async (): Promise<void> => {
-    timer = undefined;
-    running = true;
-    try {
-      await scheduler.run();
-    } catch {
-      console.error(
-        "Local EVE guest cleanup failed; the next sweep will retry."
-      );
-    } finally {
-      running = false;
-      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
-      schedule();
-    }
-  };
-  /* oxlint-enable oxc/no-async-await */
-  const schedule = (): void => {
-    if (stopped || running || timer) {
-      return;
-    }
-    timer = setTimeout(() => {
-      void tick();
-    }, CLEANUP_INTERVAL_MS);
-    timer.unref();
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
+    async tick(): Promise<void> {
+      timer = undefined;
+      running = true;
+      try {
+        await scheduler.run();
+      } catch {
+        console.error(
+          "Local EVE guest cleanup failed; the next sweep will retry."
+        );
+      } finally {
+        running = false;
+        scheduler.schedule();
+      }
+    },
+    /* oxlint-enable oxc/no-async-await */
   };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();
@@ -123,4 +120,4 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   return scheduler.stop;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined */

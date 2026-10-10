@@ -2,35 +2,31 @@
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
-import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveChannelInput } from "eve/channels/eve";
-/* oxlint-enable sort-imports */
-import type { MessageStreamEvent } from "eve/client";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import type { EveMessage, MessageStreamEvent } from "eve/client";
 import {
   FILES_PATH,
   createFileUrl,
   isFileStorageKey,
   keyFromFileUrl,
 } from "@/lib/file-url";
-/* oxlint-enable sort-imports */
-
-import { eveDocumentOperations } from "./document-contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
-/* oxlint-enable sort-imports */
+import type { EveChannelInput } from "eve/channels/eve";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createHash } from "node:crypto";
+import { eveDocumentOperations } from "./document-contracts";
 import { sharedEveMessages } from "./shared-messages";
+import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */
 
 type Seed = NonNullable<
   Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
 >;
 type SeedPart = Seed["messages"][number]["parts"][number];
+const MIN_FILE_URL_LENGTH = 1;
+const EMPTY_CONTENT_LENGTH = 0;
+const MAX_TRANSCRIPT_COPY_BYTES = 8_388_608;
+
 const INLINE_FILE_ID = /^[a-f0-9]{64}$/u;
 const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/gu;
 const SENTENCE_END = /[.,;:!?]+$/u;
@@ -68,9 +64,18 @@ class EveCopyNotReadyError extends Error {
   }
 }
 
-/* oxlint-disable max-statements, no-magic-numbers --
+const copySeedFile = (
+  part: Extract<ReadonlyEveMessagePart, { type: "file" }>
+): Extract<SeedPart, { type: "file" }> => ({
+  type: "file",
+  url: z.string().min(MIN_FILE_URL_LENGTH).parse(part.url),
+  mediaType: part.mediaType,
+  filename: part.filename,
+  size: part.size,
+});
+
+/* oxlint-disable max-statements --
  * max-statements (#512): completedPart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): completedPart uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
   if (part.type === "text" || part.type === "reasoning") {
@@ -80,13 +85,7 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
     return { type: part.type, text: part.text };
   }
   if (part.type === "file") {
-    return {
-      type: "file",
-      url: z.string().min(1).parse(part.url),
-      mediaType: part.mediaType,
-      filename: part.filename,
-      size: part.size,
-    };
+    return copySeedFile(part);
   }
   if (part.type === "step-start") {
     return { type: "step-start" };
@@ -126,18 +125,19 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers */
-/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types --
- * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): visitStrings accepts seen = new WeakSet<object>(); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-enable max-statements */
+/* oxlint-disable max-params, max-statements -- * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const visitStrings = (
   value: unknown,
   rewrite: (text: string, field?: string) => string,
   mutate = false,
   parentField?: string,
-  seen = new WeakSet<object>()
+
+  seen: {
+    readonly has: (value: object) => boolean;
+    readonly add: (value: object) => unknown;
+  } = new WeakSet<object>()
 ): void => {
   if (typeof value !== "object" || value === null) {
     return;
@@ -162,7 +162,7 @@ const visitStrings = (
     }
   }
 };
-/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, max-statements */
 /* oxlint-disable init-declarations, max-statements --
  * init-declarations (#507): transformFileReferences assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): transformFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -238,32 +238,36 @@ const eveCopyResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): transcriptResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/prefer-readonly-parameter-types (#565): transcriptResources accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const transcriptResources = (
-  seed: Seed
-): ReturnType<typeof eveCopyResources> => {
+/* oxlint-disable max-statements -- * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+const transcriptResources = (seed: {
+  readonly messages: readonly {
+    readonly parts: readonly (
+      | {
+          readonly type: "dynamic-tool";
+          readonly state: string;
+          readonly toolName: string;
+        }
+      | { readonly type: Exclude<SeedPart["type"], "dynamic-tool"> }
+    )[];
+  }[];
+}): ReturnType<typeof eveCopyResources> => {
   const resources = eveCopyResources(seed);
   const documents = new Set<string>();
   const revisions = new Set<string>();
   for (const message of seed.messages) {
     for (const part of message.parts) {
       if (
-        part.type !== "dynamic-tool" ||
-        part.state !== "output-available" ||
-        !DOCUMENT_TOOLS.has(part.toolName)
+        part.type === "dynamic-tool" &&
+        part.state === "output-available" &&
+        DOCUMENT_TOOLS.has(part.toolName)
       ) {
-        continue;
-      }
-      const documentResources = eveCopyResources(part, true);
-      for (const id of documentResources.documentIds) {
-        documents.add(id);
-      }
-      for (const id of documentResources.revisionIds) {
-        revisions.add(id);
+        const documentResources = eveCopyResources(part, true);
+        for (const id of documentResources.documentIds) {
+          documents.add(id);
+        }
+        for (const id of documentResources.revisionIds) {
+          revisions.add(id);
+        }
       }
     }
   }
@@ -274,25 +278,56 @@ const transcriptResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-max-lines-per-function (#510): prepareEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): prepareEveCopyTranscript uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): prepareEveCopyTranscript accepts events: readonly MessageStreamEvent[]; event; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): prepareEveCopyTranscript intentionally keeps the existing falsy-value behavior of message.metadata?.modelId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-enable max-statements */
+const copyUserSeedMessage = (message: {
+  readonly role: string;
+  readonly parts: readonly ReadonlyEveMessagePart[];
+  readonly metadata?: EveMessage["metadata"];
+}): Seed["messages"][number] => {
+  const selectedTool = eveMessageTool(message);
+  return {
+    role: "user",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
+    parts: message.parts.map((part: ReadonlyEveMessagePart) => {
+      if (part.type === "text") {
+        return { type: "text", text: part.text };
+      }
+      if (part.type === "file") {
+        return copySeedFile(part);
+      }
+      throw new Error("Unsupported shared user content.");
+    }),
+  };
+};
+
+const copyAssistantSeedMessage = (message: {
+  readonly parts: readonly ReadonlyEveMessagePart[];
+  readonly metadata?: EveMessage["metadata"];
+}): Seed["messages"][number] => ({
+  role: "assistant",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining, no-ternary, typescript/strict-boolean-expressions -- Preserve the original nullable model ID truthiness guard so TypeScript narrows the original metadata receiver without caching or changing either getter read. Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  ...(message.metadata?.modelId ? { modelId: message.metadata.modelId } : {}),
+  parts: message.parts.map(completedPart),
+});
+
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
  * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
  * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native MessageStreamEvent values to EVE message reconstruction, preserving the SDK recursive message/tool contract.
   events: readonly MessageStreamEvent[]
 ): {
   seed: Seed;
   projectionHash: string;
   resources: ReturnType<typeof transcriptResources>;
 } => {
-  const boundary = events.findLast((event) => COPY_BOUNDARIES.has(event.type));
+  const boundary = events.findLast(
+    (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+      COPY_BOUNDARIES.has(event.type)
+  );
   if (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from boundary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     boundary?.type !== "session.waiting" &&
@@ -301,45 +336,24 @@ const prepareEveCopyTranscript = (
   ) {
     throw new EveCopyNotReadyError();
   }
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Build copy seeds without mutating messages or parts from the source transcript.
   const messages: Seed["messages"] = sharedEveMessages(events).map(
-    (message) => {
+    (message: {
+      readonly role: string;
+      readonly parts: readonly ReadonlyEveMessagePart[];
+      readonly metadata?: EveMessage["metadata"];
+    }): Seed["messages"][number] => {
       if (message.role === "user") {
-        const selectedTool = eveMessageTool(message);
-        return {
-          role: "user",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
-          parts: message.parts.map((part) => {
-            if (part.type === "text") {
-              return { type: "text", text: part.text };
-            }
-            if (part.type === "file") {
-              return {
-                type: "file",
-                url: z.string().min(1).parse(part.url),
-                mediaType: part.mediaType,
-                filename: part.filename,
-                size: part.size,
-              };
-            }
-            throw new Error("Unsupported shared user content.");
-          }),
-        };
+        return copyUserSeedMessage(message);
       }
-      return {
-        role: "assistant",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining, no-ternary -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        ...(message.metadata?.modelId
-          ? { modelId: message.metadata.modelId }
-          : {}),
-        parts: message.parts.map(completedPart),
-      };
+      return copyAssistantSeedMessage(message);
     }
   );
   if (
-    messages.length === 0 ||
-    messages.some((message) => message.parts.length === 0)
+    messages.length === EMPTY_CONTENT_LENGTH ||
+    messages.some(
+      (message: { readonly parts: readonly unknown[] }) =>
+        message.parts.length === EMPTY_CONTENT_LENGTH
+    )
   ) {
     throw new EveCopyNotReadyError();
   }
@@ -353,36 +367,30 @@ const prepareEveCopyTranscript = (
     resources: transcriptResources(seed),
   };
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): CopyAllocations preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type CopyAllocations = {
-  files: ReadonlyMap<string, string>;
-  documents: ReadonlyMap<string, string>;
-  revisions: ReadonlyMap<string, string>;
-  inlineFiles?: ReadonlyMap<string, string>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-moving it below executable initialization can obscure ordering and API ownership.
+interface CopyAllocations {
+  readonly files: Readonly<ReadonlyMap<string, string>>;
+  readonly documents: Readonly<ReadonlyMap<string, string>>;
+  readonly revisions: Readonly<ReadonlyMap<string, string>>;
+  readonly inlineFiles?: Readonly<ReadonlyMap<string, string>>;
+}
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements --
 init-declarations (#507): rewriteEveCopyResources assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accepts allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Rewrites a cloned value using durable, ownership-checked destination allocations.
- * @param {T} value Transcript or document content whose source references are replaced in a clone.
+ * @param {Value} value Transcript or document content whose source references are replaced in a clone.
  * @param {CopyAllocations} allocations Reserved destination files, documents, revisions, and inline attachment keys.
  * @param {boolean} documentReferences Whether explicit document/revision fields must be rewritten.
- * @returns {T} A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
+ * @returns {Value} A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
  */
-const rewriteEveCopyResources = <T>(
-  value: T,
-  allocations: CopyAllocations,
+const rewriteEveCopyResources = <Value>(
+  value: Value,
+  allocations: ReadonlyNativeSurface<
+    Readonly<Pick<CopyAllocations, "files" | "documents" | "revisions">>
+  >,
   documentReferences = false
-): T => {
+): Value => {
   const fileDestinations = new Set<string>();
   for (const [source, destination] of allocations.files) {
     if (
@@ -414,13 +422,13 @@ const rewriteEveCopyResources = <T>(
     }
   }
   const documents = new Map(
-    [...allocations.documents].map(([from, to]) => [
+    [...allocations.documents].map(([from, to]: readonly [string, string]) => [
       from.toLowerCase(),
       to.toLowerCase(),
     ])
   );
   const revisions = new Map(
-    [...allocations.revisions].map(([from, to]) => [
+    [...allocations.revisions].map(([from, to]: readonly [string, string]) => [
       from.toLowerCase(),
       to.toLowerCase(),
     ])
@@ -487,10 +495,7 @@ const rewriteEveCopyResources = <T>(
   );
   return root.value;
 };
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): decodeInlineAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements */
 const decodeInlineAttachment = (
   part: Extract<
     SeedPart,
@@ -505,7 +510,10 @@ const decodeInlineAttachment = (
   }
   const encoded = part.url.slice(prefix.length);
   const bytes = Buffer.from(encoded, "base64");
-  if (bytes.length === 0 || bytes.toString("base64") !== encoded) {
+  if (
+    bytes.length === EMPTY_CONTENT_LENGTH ||
+    bytes.toString("base64") !== encoded
+  ) {
     throw new Error("Invalid inline attachment encoding.");
   }
   return {
@@ -518,18 +526,19 @@ const decodeInlineAttachment = (
     bytes,
   };
 };
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-continue, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-no-continue (#515): eveCopyInlineAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-typescript/prefer-readonly-parameter-types (#565): eveCopyInlineAttachments accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Decodes published inline attachments, binding identity to MIME type and exact bytes.
  * @param {Seed} seed Prepared seed whose file parts may contain base64 data URLs.
  * @returns {{ id: string; mediaType: string; bytes: Buffer }[]} Unique inline attachments with validated media types, byte buffers, and content-bound IDs.
  */
-const eveCopyInlineAttachments = (
-  seed: Seed
-): { id: string; mediaType: string; bytes: Buffer }[] => {
+const eveCopyInlineAttachments = (seed: {
+  readonly messages: readonly {
+    readonly parts: readonly (
+      | Readonly<Extract<SeedPart, { type: "file" }>>
+      | { readonly type: Exclude<SeedPart["type"], "file"> }
+    )[];
+  }[];
+}): { id: string; mediaType: string; bytes: Buffer }[] => {
   const files = new Map<
     string,
     {
@@ -540,25 +549,21 @@ const eveCopyInlineAttachments = (
   >();
   for (const message of seed.messages) {
     for (const part of message.parts) {
-      if (part.type !== "file" || !part.url.startsWith("data:")) {
-        continue;
+      if (part.type === "file" && part.url.startsWith("data:")) {
+        const file = decodeInlineAttachment(part);
+        files.set(file.id, file);
       }
-      const file = decodeInlineAttachment(part);
-      files.set(file.id, file);
     }
   }
   return [...files.values()];
 };
-/* oxlint-enable no-continue, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined -- * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): copyAttachmentResolver uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): copyAttachmentResolver uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): copyAttachmentResolver accepts allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+ * no-undefined (#519): copyAttachmentResolver uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const copyAttachmentResolver = (
-  allocations: CopyAllocations,
+  allocations: ReadonlyNativeSurface<
+    Readonly<Pick<CopyAllocations, "files" | "inlineFiles">>
+  >,
   loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
   origin: string
 ): ((part: Extract<SeedPart, { type: "file" }>) => Promise<void>) => {
@@ -605,7 +610,7 @@ const copyAttachmentResolver = (
     if (
       stored.type !== part.mediaType ||
       !Number.isSafeInteger(stored.size) ||
-      stored.size <= 0 ||
+      stored.size <= EMPTY_CONTENT_LENGTH ||
       (part.size !== undefined && part.size !== stored.size) ||
       (inline !== undefined && inline.bytes.length !== stored.size)
     ) {
@@ -616,19 +621,22 @@ const copyAttachmentResolver = (
   };
   /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): rewriteDocumentPart accepts part: SeedPart; allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined */
+
 const rewriteDocumentPart = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native seed-part writer updates the original part with Reflect.set.
   part: SeedPart,
-  allocations: CopyAllocations
+  allocations: ReadonlyNativeSurface<
+    Readonly<Pick<CopyAllocations, "documents" | "revisions">>
+  >
 ): void => {
   const identities = new Map(
-    [...allocations.documents, ...allocations.revisions].map(([from, to]) => [
-      from.toLowerCase(),
-      to.toLowerCase(),
-    ])
+    [...allocations.documents, ...allocations.revisions].map(
+      ([from, to]: readonly [string, string]) => [
+        from.toLowerCase(),
+        to.toLowerCase(),
+      ]
+    )
   );
   const requireAllocation =
     part.type === "dynamic-tool" && part.state === "output-available";
@@ -658,11 +666,9 @@ const rewriteDocumentPart = (
   );
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve materializeEveCopyTranscript's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript accepts seed: Seed; allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
+/* oxlint-disable max-params, max-statements -- max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Materializes reserved destination attachments and document references in a copied seed.
  * @param {Seed} seed Prepared transcript cloned before destination URLs and metadata are written.
@@ -672,8 +678,9 @@ typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript 
  * @returns {Promise<Seed>} A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
  */
 const materializeEveCopyTranscript = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the native Seed output and its existing structuredClone ownership; readonly input inference makes cloned attachments and message parts readonly at the native mutable output boundary.
   seed: Seed,
-  allocations: CopyAllocations,
+  allocations: ReadonlyNativeSurface<CopyAllocations>,
   loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
   origin: string
 ): Promise<Seed> => {
@@ -706,7 +713,7 @@ const materializeEveCopyTranscript = async (
       }
     }
   }
-  if (Buffer.byteLength(JSON.stringify(copied)) > 8 * 1024 * 1024) {
+  if (Buffer.byteLength(JSON.stringify(copied)) > MAX_TRANSCRIPT_COPY_BYTES) {
     throw new Error(
       "This conversation exceeds Eve's transcript copy size limit."
     );
@@ -715,7 +722,7 @@ const materializeEveCopyTranscript = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyInlineAttachments, EveCopyNotReadyError, eveCopyResources, materializeEveCopyTranscript, prepareEveCopyTranscript, rewriteEveCopyResources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, max-statements */
 
 /* oxlint-disable max-lines -- #509: This copy-transcript.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {

@@ -16,15 +16,11 @@ import {
   writeEveCopyDocuments,
   writeEveCopyFile,
 } from "@/lib/db/eve-copy-resources";
-import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { CreationConflictError } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { downloadFile, uploadFileAtKey } from "@/lib/file-storage";
-/* oxlint-enable sort-imports */
-
+import { CreationConflictError } from "@/lib/db/eve-queries";
 import type { EveCopyInput } from "./copy-input";
+
+import { assertEveConfigured } from "./server";
 import { createNativeEveCopy } from "./create-native-copy";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -34,11 +30,9 @@ import {
 } from "./model-selection";
 /* oxlint-enable sort-imports */
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
+import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
 import { readPublicEveCopySource } from "./public-copy-source";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { assertEveConfigured } from "./server";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareCopyReservation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -95,12 +89,9 @@ const prepareCopyReservation = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async -- * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): saveEveCopyOperation accepts blob; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+ * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
  * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
@@ -162,4 +153,4 @@ export const saveEveCopyOperation = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */

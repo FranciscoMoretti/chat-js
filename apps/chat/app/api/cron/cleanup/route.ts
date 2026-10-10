@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { env } from "@/lib/env";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
@@ -7,70 +8,91 @@ import { cleanupExpiredEveGuests } from "@/lib/eve/cleanup-expired-guests";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
+
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): ORPHANED_ATTACHMENTS_RETENTION_TIME uses 4, 60, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const NO_PENDING_GUESTS = 0;
+const HTTP_OK = 200;
+const HTTP_SERVICE_UNAVAILABLE = 503;
+
 // Four hours.
-const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000;
+const ORPHANED_ATTACHMENTS_RETENTION_TIME = 14_400_000;
+const cleanupResponse = (
+  attachments: ReadonlyNativeSurface<
+    PromiseSettledResult<Awaited<ReturnType<typeof cleanupEveOrphanedFiles>>>
+  >,
+  guests: ReadonlyNativeSurface<
+    PromiseSettledResult<Awaited<ReturnType<typeof cleanupExpiredEveGuests>>>
+  >
+): NextResponse<{
+  results: {
+    expiredGuests:
+      | Awaited<ReturnType<typeof cleanupExpiredEveGuests>>
+      | { error: string };
+    orphanedAttachments:
+      | Awaited<ReturnType<typeof cleanupEveOrphanedFiles>>
+      | { error: string };
+  };
+  success: boolean;
+  timestamp: string;
+}> => {
+  const success =
+    attachments.status === "fulfilled" &&
+    !attachments.value.skipped &&
+    guests.status === "fulfilled" &&
+    !guests.value.skipped &&
+    guests.value.pendingCount === NO_PENDING_GUESTS;
+  return NextResponse.json(
+    {
+      results: {
+        expiredGuests:
+          // oxlint-disable-next-line no-ternary -- Keep expiredGuests as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          guests.status === "fulfilled"
+            ? guests.value
+            : { error: "Guest cleanup failed; retry required." },
+        orphanedAttachments:
+          // oxlint-disable-next-line no-ternary -- Keep orphanedAttachments as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          attachments.status === "fulfilled"
+            ? attachments.value
+            : { error: "Attachment cleanup failed; retry required." },
+      },
+      success,
+      timestamp: new Date().toISOString(),
+    },
+    // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    { status: success ? HTTP_OK : HTTP_SERVICE_UNAVAILABLE }
+  );
+};
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-console, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * no-console (#514): GET emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): GET uses 0, 200, 503 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep GET's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep GET's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): GET accepts request: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): GET intentionally keeps the existing falsy-value behavior of env.CRON_SECRET?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-export const GET = async (request: NextRequest) => {
+/* oxlint-disable no-console -- no-console (#514): GET emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision. */
+
+export const GET = async (
+  request: ReadonlyNativeSurface<Pick<NextRequest, "headers">>
+): Promise<
+  | ReturnType<typeof cleanupResponse>
+  | NextResponse<{ error: string }>
+  | NextResponse<{ details: string; error: string }>
+> => {
   try {
     // Verify this is being called by Vercel cron
     const authHeader = request.headers.get("authorization");
-    if (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from env.CRON_SECRET; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      !env.CRON_SECRET?.trim() ||
-      authHeader !== `Bearer ${env.CRON_SECRET}`
-    ) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the optional secret trim and its single receiver evaluation.
+    const hasCronSecret = Boolean(env.CRON_SECRET?.trim());
+    if (!hasCronSecret || authHeader !== `Bearer ${env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const attachmentCutoff = new Date(
+      Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME
+    );
     const [attachments, guests] = await Promise.allSettled([
-      cleanupEveOrphanedFiles(
-        new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME)
-      ),
+      cleanupEveOrphanedFiles(attachmentCutoff),
       cleanupExpiredEveGuests(process.cwd()),
     ]);
-    const success =
-      attachments.status === "fulfilled" &&
-      !attachments.value.skipped &&
-      guests.status === "fulfilled" &&
-      !guests.value.skipped &&
-      guests.value.pendingCount === 0;
-    return NextResponse.json(
-      {
-        results: {
-          expiredGuests:
-            // oxlint-disable-next-line no-ternary -- Keep expiredGuests as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            guests.status === "fulfilled"
-              ? guests.value
-              : { error: "Guest cleanup failed; retry required." },
-          orphanedAttachments:
-            // oxlint-disable-next-line no-ternary -- Keep orphanedAttachments as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            attachments.status === "fulfilled"
-              ? attachments.value
-              : { error: "Attachment cleanup failed; retry required." },
-        },
-        success,
-        timestamp: new Date().toISOString(),
-      },
-      // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      { status: success ? 200 : 503 }
-    );
+    return cleanupResponse(attachments, guests);
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(
@@ -85,4 +107,4 @@ export const GET = async (request: NextRequest) => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable no-console */

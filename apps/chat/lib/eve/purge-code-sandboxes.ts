@@ -1,8 +1,9 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 import { tools } from "@/tools/chatjs/tools";
 
 /* oxlint-disable import/no-relative-parent-imports -- Preserve user-owned custom tool initialization before environment validation and database-client creation; alias sorting moves this database dependency before the installed registry and changes that supported extension startup order. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The custom tool registry must initialize before the database module graph; sorting the multi-binding database import ahead of it changes that startup boundary. */
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
@@ -13,13 +14,70 @@ import { eveCodeSandboxName } from "./code-sandbox-name";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEveFamilyCodeSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyCodeSandboxes's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): purgeEveFamilyCodeSandboxes uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): purgeEveFamilyCodeSandboxes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyCodeSandboxes accepts [name]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+const NO_RESOURCES = 0;
+const ENTRY_VALUE_INDEX = 1;
+
+type CodeSandboxCleanupSession = ReturnType<
+  NonNullable<ReturnType<typeof getCodeSandboxCleanup>>["createCleanupSession"]
+>;
+
+type CodeSandboxDeletionResource = Awaited<
+  ReturnType<typeof listEveCodeSandboxesForDeletion>
+>[number];
+
+const assertNoUncertainCodeSandboxes = (
+  resources: readonly CodeSandboxDeletionResource[]
+): void => {
+  if (resources.length > NO_RESOURCES) {
+    throw new Error(
+      "Resolve uncertain code sandbox creation before completing deletion."
+    );
+  }
+};
+
+const createCodeSandboxCleanupSession = (): CodeSandboxCleanupSession => {
+  const capability = getCodeSandboxCleanup(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading the codeExecution registry entry; preserve one registry evaluation and the undefined short-circuit result.
+    Object.entries(tools).find(
+      ([name]: readonly [string, ...unknown[]]) => name === "codeExecution"
+    )?.[ENTRY_VALUE_INDEX]
+  );
+  if (!capability) {
+    throw new Error(
+      "Install the code execution tool to clean up its durable sandbox resources."
+    );
+  }
+  return capability.createCleanupSession();
+};
+
+const purgeConfirmedCodeSandbox = async (
+  ownerId: string,
+  resource: Readonly<
+    Awaited<ReturnType<typeof listEveCodeSandboxesForDeletion>>[number]
+  >,
+  cleanup: ReadonlyNativeSurface<CodeSandboxCleanupSession>
+): Promise<void> => {
+  if (
+    eveCodeSandboxName({
+      callId: resource.callId,
+      ownerId,
+      provider: cleanup.provider,
+      // oxlint-disable-next-line no-undefined -- Keep the optional sandbox session ID as undefined when the allocation has no bound session.
+      sessionId: resource.sessionId ?? undefined,
+    }) !== resource.name
+  ) {
+    throw new Error(
+      "Code sandbox provider scope does not match its allocation intent."
+    );
+  }
+  await cleanup.deleteAndConfirmAbsent(resource.name);
+  await recordEveCodeSandboxDeletion(
+    ownerId,
+    resource.conversationId,
+    resource.name
+  );
+};
+
 /**
  * Delete confirmed family sandboxes and release ownership only after confirmed absence.
  * Native work must already be retired. Uncertain creation intents prevent completion.
@@ -34,47 +92,15 @@ export const purgeEveFamilyCodeSandboxes = async (
   const confirmedResources = resources.filter(
     (resource) => resource.creationConfirmed
   );
-  if (confirmedResources.length === 0) {
-    if (resources.length > 0) {
-      throw new Error(
-        "Resolve uncertain code sandbox creation before completing deletion."
-      );
-    }
+  if (confirmedResources.length === NO_RESOURCES) {
+    assertNoUncertainCodeSandboxes(resources);
     return;
   }
-  const capability = getCodeSandboxCleanup(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    Object.entries(tools).find(([name]) => name === "codeExecution")?.[1]
-  );
-  if (!capability) {
-    throw new Error(
-      "Install the code execution tool to clean up its durable sandbox resources."
-    );
-  }
-  const cleanup = capability.createCleanupSession();
+  const cleanup = createCodeSandboxCleanupSession();
   for (const resource of confirmedResources) {
-    if (
-      eveCodeSandboxName({
-        callId: resource.callId,
-        ownerId,
-        provider: cleanup.provider,
-        sessionId: resource.sessionId ?? undefined,
-      }) !== resource.name
-    ) {
-      throw new Error(
-        "Code sandbox provider scope does not match its allocation intent."
-      );
-    }
-    // Cleanup and absence confirmation form one ordered provider transaction.
-    // eslint-disable-next-line no-await-in-loop -- Confirm provider absence before releasing durable ownership for each sandbox; cleanup and deletion recording must remain ordered.
-    await cleanup.deleteAndConfirmAbsent(resource.name);
-    // Release durable ownership only after provider absence is confirmed.
-    // eslint-disable-next-line no-await-in-loop -- Confirm provider absence before releasing durable ownership for each sandbox; cleanup and deletion recording must remain ordered.
-    await recordEveCodeSandboxDeletion(
-      ownerId,
-      resource.conversationId,
-      resource.name
-    );
+    // Keep identity verification, provider absence, and durable release as one ordered unit per resource.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one provider transaction at a time so fencing and durable ownership stay ordered and bounded.
+    await purgeConfirmedCodeSandbox(ownerId, resource, cleanup);
   }
   if (resources.some((resource) => !resource.creationConfirmed)) {
     throw new Error(
@@ -84,4 +110,3 @@ export const purgeEveFamilyCodeSandboxes = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

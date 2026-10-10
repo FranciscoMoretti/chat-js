@@ -9,15 +9,18 @@ import { LogicalCommands } from "./logical-commands";
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
 
 type LogicalBranch = EveBranchReference & {
-  sessionId: string | null;
-  createdAt: Date | string;
-  initialModelId: string | null;
-  operationId: string;
-  groupCandidates?:
-    | {
-        modelId: string;
-        operationId: string;
-        rejection?: { error: string; code?: "project_not_found" };
+  readonly sessionId: string | null;
+  readonly createdAt: Date | string;
+  readonly initialModelId: string | null;
+  readonly operationId: string;
+  readonly groupCandidates?:
+    | readonly {
+        readonly modelId: string;
+        readonly operationId: string;
+        readonly rejection?: {
+          readonly error: string;
+          readonly code?: "project_not_found";
+        };
       }[]
     | null;
 };
@@ -104,6 +107,144 @@ const latestMessageTime = (
   return time;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): sourcePrefix uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-undefined (#519): sourcePrefix uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * typescript/prefer-readonly-parameter-types (#565): sourcePrefix accepts branch: LogicalBranch; aliases: ReadonlyMap<string, string>; sourceAgent?: NativeChatAgent; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+const sourcePrefix = (
+  branch: LogicalBranch,
+  source: readonly string[],
+  aliases: ReadonlyMap<string, string>,
+  sourceAgent?: NativeChatAgent
+): { prefix: string[]; replaced: string | undefined } => {
+  if (!branch.parentConversationId) {
+    return { prefix: [], replaced: undefined };
+  }
+  const sourceId = branch.parentConversationId;
+  // oxlint-disable-next-line no-ternary -- Keep boundaryId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  const boundaryId = branch.forkMessageId
+    ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
+    : aliases.get(
+        aliasKey(
+          sourceId,
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from sourceAgent.data.messages.find(...); read data from sourceAgent; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
+          sourceAgent?.data.messages.find(
+            (message) =>
+              message.role === "user" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+              message.metadata?.turnId === branch.forkTurnId
+          )?.id ?? ""
+        )
+      );
+  // oxlint-disable-next-line no-ternary -- Keep index as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  const index = boundaryId ? source.indexOf(boundaryId) : -1;
+  // Named idle checkpoints have no following user yet: the entire source is inherited.
+  if (index < 0 && branch.forkKind === "comparison") {
+    return { prefix: [...source], replaced: undefined };
+  }
+  if (index < 0) {
+    throw new Error(
+      "The saved fork boundary is not available yet. Reconnect to restore its source."
+    );
+  }
+  return { prefix: source.slice(0, index), replaced: boundaryId };
+};
+/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * max-lines-per-function (#510): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): projectBranch uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * typescript/prefer-readonly-parameter-types (#565): projectBranch accepts branch: LogicalBranch; agent: NativeChatAgent; paths: ReadonlyMap<string, string[]>; nodes: Map<string, LogicalNode>; aliases: Map<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): projectBranch preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+// oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
+const projectBranch = (
+  branch: LogicalBranch,
+  agent: NativeChatAgent,
+  paths: ReadonlyMap<string, string[]>,
+  nodes: Map<string, LogicalNode>,
+  aliases: Map<string, string>,
+  sourceAgent?: NativeChatAgent
+): { hasLocalMessage: boolean; path: string[] } => {
+  const source = paths.get(branch.parentConversationId ?? "") ?? [];
+  const { prefix, replaced } = sourcePrefix(
+    branch,
+    source,
+    aliases,
+    sourceAgent
+  );
+  const messages = agent.data.messages.filter(
+    (message) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      !(message.metadata?.optimistic && message.metadata.status === "failed")
+  );
+  if (messages.length < prefix.length) {
+    throw new Error("Restoring inherited messages…");
+  }
+  const path: string[] = [];
+  for (const [index, message] of messages.entries()) {
+    let id = prefix[index];
+    if (id) {
+      const origin = nodes.get(id);
+      if (!origin || origin.message.role !== message.role) {
+        throw new Error(
+          "Inherited message identities do not match the saved fork."
+        );
+      }
+      // Both native checkpoints and imported user-boundary forks preserve the
+      // retained prefix IDs. Never guess a new alias from position or text.
+      if (message.id !== origin.message.id) {
+        const inherited = aliases.get(
+          aliasKey(branch.parentConversationId ?? "", message.id)
+        );
+        if (inherited !== id) {
+          throw new Error("Unknown inherited message identity.");
+        }
+      }
+    } else {
+      const firstUser = index === prefix.length && message.role === "user";
+      if (firstUser && branch.forkKind === "regenerate" && replaced) {
+        id = replaced;
+      } else if (firstUser && branch.responseGroupId) {
+        id = `group:${branch.responseGroupId}:user`;
+      } else {
+        id = logicalNativeId(branch.sessionId ?? branch.id, message);
+      }
+      if (!nodes.has(id)) {
+        nodes.set(id, {
+          conversationId: branch.id,
+          id,
+          message,
+          parentId: path.at(-1) ?? null,
+        });
+      }
+    }
+    aliases.set(aliasKey(branch.id, message.id), id);
+    if (!path.includes(id)) {
+      path.push(id);
+    }
+  }
+  const needsResponse =
+    branch.forkKind === "regenerate" ||
+    (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
+  if (needsResponse) {
+    return {
+      hasLocalMessage: messages
+        .slice(prefix.length)
+        .some((message) => message.role === "assistant"),
+      path,
+    };
+  }
+  return { hasLocalMessage: messages.length > prefix.length, path };
+};
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
 moving it below executable initialization can obscure ordering and API ownership.
@@ -292,7 +433,6 @@ class LogicalChat {
         try {
           const stagedNodes = new Map(nodes);
           const stagedAliases = new Map(aliases);
-          // oxlint-disable-next-line eslint/no-use-before-define -- Projection helpers are kept below the public controller.
           const projection = projectBranch(
             branch,
             agent,
@@ -387,144 +527,6 @@ class LogicalChat {
   }
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
-
-/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): sourcePrefix uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): sourcePrefix uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): sourcePrefix accepts branch: LogicalBranch; aliases: ReadonlyMap<string, string>; sourceAgent?: NativeChatAgent; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const sourcePrefix = (
-  branch: LogicalBranch,
-  source: readonly string[],
-  aliases: ReadonlyMap<string, string>,
-  sourceAgent?: NativeChatAgent
-): { prefix: string[]; replaced: string | undefined } => {
-  if (!branch.parentConversationId) {
-    return { prefix: [], replaced: undefined };
-  }
-  const sourceId = branch.parentConversationId;
-  // oxlint-disable-next-line no-ternary -- Keep boundaryId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const boundaryId = branch.forkMessageId
-    ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
-    : aliases.get(
-        aliasKey(
-          sourceId,
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from sourceAgent.data.messages.find(...); read data from sourceAgent; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
-          sourceAgent?.data.messages.find(
-            (message) =>
-              message.role === "user" &&
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-              message.metadata?.turnId === branch.forkTurnId
-          )?.id ?? ""
-        )
-      );
-  // oxlint-disable-next-line no-ternary -- Keep index as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const index = boundaryId ? source.indexOf(boundaryId) : -1;
-  // Named idle checkpoints have no following user yet: the entire source is inherited.
-  if (index < 0 && branch.forkKind === "comparison") {
-    return { prefix: [...source], replaced: undefined };
-  }
-  if (index < 0) {
-    throw new Error(
-      "The saved fork boundary is not available yet. Reconnect to restore its source."
-    );
-  }
-  return { prefix: source.slice(0, index), replaced: boundaryId };
-};
-/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): projectBranch uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): projectBranch accepts branch: LogicalBranch; agent: NativeChatAgent; paths: ReadonlyMap<string, string[]>; nodes: Map<string, LogicalNode>; aliases: Map<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): projectBranch preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-// oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
-const projectBranch = (
-  branch: LogicalBranch,
-  agent: NativeChatAgent,
-  paths: ReadonlyMap<string, string[]>,
-  nodes: Map<string, LogicalNode>,
-  aliases: Map<string, string>,
-  sourceAgent?: NativeChatAgent
-): { hasLocalMessage: boolean; path: string[] } => {
-  const source = paths.get(branch.parentConversationId ?? "") ?? [];
-  const { prefix, replaced } = sourcePrefix(
-    branch,
-    source,
-    aliases,
-    sourceAgent
-  );
-  const messages = agent.data.messages.filter(
-    (message) =>
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      !(message.metadata?.optimistic && message.metadata.status === "failed")
-  );
-  if (messages.length < prefix.length) {
-    throw new Error("Restoring inherited messages…");
-  }
-  const path: string[] = [];
-  for (const [index, message] of messages.entries()) {
-    let id = prefix[index];
-    if (id) {
-      const origin = nodes.get(id);
-      if (!origin || origin.message.role !== message.role) {
-        throw new Error(
-          "Inherited message identities do not match the saved fork."
-        );
-      }
-      // Both native checkpoints and imported user-boundary forks preserve the
-      // retained prefix IDs. Never guess a new alias from position or text.
-      if (message.id !== origin.message.id) {
-        const inherited = aliases.get(
-          aliasKey(branch.parentConversationId ?? "", message.id)
-        );
-        if (inherited !== id) {
-          throw new Error("Unknown inherited message identity.");
-        }
-      }
-    } else {
-      const firstUser = index === prefix.length && message.role === "user";
-      if (firstUser && branch.forkKind === "regenerate" && replaced) {
-        id = replaced;
-      } else if (firstUser && branch.responseGroupId) {
-        id = `group:${branch.responseGroupId}:user`;
-      } else {
-        id = logicalNativeId(branch.sessionId ?? branch.id, message);
-      }
-      if (!nodes.has(id)) {
-        nodes.set(id, {
-          conversationId: branch.id,
-          id,
-          message,
-          parentId: path.at(-1) ?? null,
-        });
-      }
-    }
-    aliases.set(aliasKey(branch.id, message.id), id);
-    if (!path.includes(id)) {
-      path.push(id);
-    }
-  }
-  const needsResponse =
-    branch.forkKind === "regenerate" ||
-    (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
-  if (needsResponse) {
-    return {
-      hasLocalMessage: messages
-        .slice(prefix.length)
-        .some((message) => message.role === "assistant"),
-      path,
-    };
-  }
-  return { hasLocalMessage: messages.length > prefix.length, path };
-};
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): logicalChatBusy accepts snapshot: LogicalChatSnapshot; agent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>

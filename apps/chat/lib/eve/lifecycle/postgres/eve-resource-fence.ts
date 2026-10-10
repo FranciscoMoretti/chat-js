@@ -1,5 +1,20 @@
 import type { Sql, TransactionSql } from "postgres";
+import type { PostgresLifecycleQuery } from "./compatibility";
 import { z } from "zod";
+
+const MIN_RESOURCE_IDENTIFIER_LENGTH = 1;
+const MIN_FENCED_RUNS = 1;
+const MAX_FENCED_RESOURCES = 10_000;
+const NO_RESOURCES = 0;
+const resourceInventorySchema = z.object({
+  runIds: z
+    .array(z.string().min(MIN_RESOURCE_IDENTIFIER_LENGTH))
+    .min(MIN_FENCED_RUNS)
+    .max(MAX_FENCED_RESOURCES),
+  streamIds: z
+    .array(z.string().min(MIN_RESOURCE_IDENTIFIER_LENGTH))
+    .max(MAX_FENCED_RESOURCES),
+});
 
 // Provider extension for the pinned Workflow Postgres schema. Install through
 // an explicit provider migration, never from a request or an app DB migration.
@@ -94,22 +109,51 @@ end $$;
 `;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresResourceFence's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const installEvePostgresResourceFence = async (
-  connection: Sql
+  connection: Readonly<Pick<Sql, "begin">>
 ): Promise<void> => {
-  await connection.begin("isolation level read committed", async (query) => {
-    await query.unsafe(installSql);
-  });
+  await connection.begin(
+    "isolation level read committed",
+    async (
+      query: PostgresLifecycleQuery & Readonly<Pick<TransactionSql, "unsafe">>
+    ) => {
+      await query.unsafe(installSql);
+    }
+  );
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResourcesInTransaction's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
-max-statements (#512): fenceEvePostgresResourcesInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): fenceEvePostgresResourcesInTransaction uses 1, 10_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTransaction accepts query: TransactionSql; input: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+// Read ownership only after every sorted fence has been acquired in this transaction.
+const assertFencedResourceOwnership = async (
+  query: PostgresLifecycleQuery,
+  inventory: {
+    readonly runIds: readonly string[];
+    readonly streamIds: readonly string[];
+  }
+): Promise<void> => {
+  const { runIds, streamIds } = inventory;
+  const active = await query`
+    select id from workflow.workflow_runs
+    where id in ${query(runIds)} and status not in ('completed', 'failed', 'cancelled')
+    limit 1
+  `;
+  if (active.length > NO_RESOURCES) {
+    throw new Error("Retire active runs before fencing their payloads.");
+  }
+  if (streamIds.length > NO_RESOURCES) {
+    const ambiguous = await query`
+      select stream_id from workflow.workflow_stream_chunks
+      where stream_id in ${query(streamIds)}
+        and (run_id is null or run_id not in ${query(runIds)}) limit 1
+    `;
+    if (ambiguous.length > NO_RESOURCES) {
+      throw new Error("Stream ownership must be resolved before fencing.");
+    }
+  }
+};
+
 /**
  * Shares the caller's READ COMMITTED transaction with inventory coordination.
  *
@@ -118,18 +162,13 @@ typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTr
  * @returns {Promise<void>} Resolves after acquiring fences and verifying retired runs and unambiguous stream ownership; invalid inventories or active resources reject.
  */
 const fenceEvePostgresResourcesInTransaction = async (
-  query: TransactionSql,
+  query: PostgresLifecycleQuery,
   input: {
-    runIds: string[];
-    streamIds: string[];
+    readonly runIds: readonly string[];
+    readonly streamIds: readonly string[];
   }
 ): Promise<void> => {
-  const { runIds, streamIds } = z
-    .object({
-      runIds: z.array(z.string().min(1)).min(1).max(10_000),
-      streamIds: z.array(z.string().min(1)).max(10_000),
-    })
-    .parse(input);
+  const { runIds, streamIds } = resourceInventorySchema.parse(input);
   const resources = [
     ...new Set([
       ...runIds.map((id) => `run:${id}`),
@@ -146,31 +185,11 @@ const fenceEvePostgresResourcesInTransaction = async (
       on conflict (resource) do update set fenced = true
     `;
   }
-  const active = await query`
-    select id from workflow.workflow_runs
-    where id in ${query(runIds)} and status not in ('completed', 'failed', 'cancelled')
-    limit 1
-  `;
-  if (active.length > 0) {
-    throw new Error("Retire active runs before fencing their payloads.");
-  }
-  if (streamIds.length > 0) {
-    const ambiguous = await query`
-      select stream_id from workflow.workflow_stream_chunks
-      where stream_id in ${query(streamIds)}
-        and (run_id is null or run_id not in ${query(runIds)}) limit 1
-    `;
-    if (ambiguous.length > 0) {
-      throw new Error("Stream ownership must be resolved before fencing.");
-    }
-  }
+  await assertFencedResourceOwnership(query, { runIds, streamIds });
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResources's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources accepts connection: Sql; input: { runIds: string[]; streamIds: string[]; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Internal provider primitive: caller authorizes and inventories these resources. Blocks future payload writes, including run recreation and linked descendants; does not fence queues, erase data or produce a deletion receipt.
  *
@@ -179,19 +198,22 @@ typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources acc
  * @returns {Promise<void>} Resolves after the fencing transaction commits; invalid inventories, active resources and database failures reject.
  */
 const fenceEvePostgresResources = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   input: {
-    runIds: string[];
-    streamIds: string[];
+    readonly runIds: readonly string[];
+    readonly streamIds: readonly string[];
   }
 ): Promise<void> => {
-  await connection.begin("isolation level read committed", async (query) => {
-    await fenceEvePostgresResourcesInTransaction(query, input);
-  });
+  await connection.begin(
+    "isolation level read committed",
+    async (query: PostgresLifecycleQuery) => {
+      await fenceEvePostgresResourcesInTransaction(query, input);
+    }
+  );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (fenceEvePostgresResources, fenceEvePostgresResourcesInTransaction, installEvePostgresResourceFence); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export {
   fenceEvePostgresResources,
   fenceEvePostgresResourcesInTransaction,

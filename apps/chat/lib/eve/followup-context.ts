@@ -1,10 +1,50 @@
 import type { HookEvent } from "eve/hooks";
 
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type FollowupEvent = IgnoredSdkFields<HookEvent> &
+  (
+    | { readonly type: "turn.started" }
+    | {
+        readonly type: "message.received";
+        readonly data: Readonly<
+          Pick<
+            Extract<HookEvent, { type: "message.received" }>["data"],
+            "message"
+          >
+        > &
+          IgnoredSdkFields<
+            Extract<HookEvent, { type: "message.received" }>["data"]
+          >;
+      }
+    | {
+        readonly type: "message.completed";
+        readonly data: Readonly<
+          Pick<
+            Extract<HookEvent, { type: "message.completed" }>["data"],
+            "message" | "finishReason"
+          >
+        > &
+          IgnoredSdkFields<
+            Extract<HookEvent, { type: "message.completed" }>["data"]
+          >;
+      }
+    | {
+        readonly type: Exclude<
+          HookEvent["type"],
+          "turn.started" | "message.received" | "message.completed"
+        >;
+      }
+  );
+
 const MAX_CONTEXT_CHARACTERS = 12_000;
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (FollowupContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface FollowupContext {
-  user: string;
-  assistant: string;
+  readonly user: string;
+  readonly assistant: string;
 }
 /* oxlint-enable import/no-named-export */
 
@@ -16,9 +56,9 @@ export interface FollowupContext {
  * @returns {FollowupContext} Current exchange with messages bounded to the context limit, or the original object for unrelated events.
  */
 export const followupContext = (
-  current: Readonly<FollowupContext>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native HookEvent includes recursive subagent/history events and mutable collections; recursive readonly instantiation exceeds the compiler limit and does not preserve the SDK input type.
-  event: HookEvent
+  current: FollowupContext,
+
+  event: FollowupEvent
 ): FollowupContext => {
   if (event.type === "turn.started") {
     return { assistant: "", user: "" };

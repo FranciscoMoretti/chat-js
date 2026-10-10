@@ -2,8 +2,7 @@ import { headers } from "next/headers";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { notFound, redirect } from "next/navigation";
 /* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Preserve next/navigation evaluation before React; native alphabetical local-binding order requires moving these runtime imports. */
 import React, { Suspense } from "react";
 /* oxlint-enable sort-imports */
 import { z } from "zod";
@@ -19,15 +18,17 @@ import { getProjectById } from "@/lib/db/queries";
 /* oxlint-disable react/jsx-no-literals -- ProjectContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ProjectContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
-/* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ProjectContent: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including project). */
+/* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions -- ProjectContent: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/strict-boolean-expressions: preserve the missing-project guard; native explicit undefined and typeof guards conflict with no-undefined and unicorn/no-typeof-undefined respectively; */
 
 const ProjectContent = async ({
   params,
 }: {
-  params: Promise<{
-    projectId: string;
-  }>;
-}): Promise<ReactJSX.Element> => {
+  readonly params: Readonly<
+    Promise<{
+      readonly projectId: string;
+    }>
+  >;
+}): Promise<React.JSX.Element> => {
   const { projectId } = await params;
   if (!z.uuid().safeParse(projectId).success) {
     notFound();
@@ -65,9 +66,9 @@ const ProjectContent = async ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ProjectPageRoute renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ProjectPageRoute: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: Parameters<typeof ProjectContent>[0]). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp -- ProjectPageRoute: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ProjectPageRoute = (
   props: Parameters<typeof ProjectContent>[0]
@@ -81,6 +82,6 @@ const ProjectPageRoute = (
   </Suspense>
 );
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp */
 // oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ProjectPageRoute.
 export default ProjectPageRoute;

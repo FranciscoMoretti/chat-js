@@ -36,7 +36,7 @@ import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 /* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
-import type { EveMessageInput } from "@/lib/eve/message-input";
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -71,6 +71,117 @@ import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
 /* oxlint-disable react/jsx-no-literals -- EveConversation renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+
+const sameComposerDraft = (
+  draft: {
+    readonly text: string;
+    readonly attachments: readonly Readonly<DraftAttachment>[];
+  },
+  sent: {
+    readonly text: string;
+    readonly attachments: readonly Readonly<DraftAttachment>[];
+  }
+): boolean =>
+  draft.text.trim() === sent.text.trim() &&
+  draft.attachments.length === sent.attachments.length &&
+  draft.attachments.every(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from sent.attachments[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    (file, index) => file.url === sent.attachments[index]?.url
+  );
+
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+const nextTurnBoundary = (
+  event: ReturnType<typeof useEveAgent>["events"][number] | undefined
+): string => {
+  if (
+    !(
+      event &&
+      (event.type === "turn.completed" ||
+        event.type === "turn.failed" ||
+        event.type === "turn.cancelled")
+    )
+  ) {
+    throw new Error(
+      "Wait for the conversation to finish restoring before comparing responses."
+    );
+  }
+  return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
+};
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, unicorn/no-null -- useConversationInput: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const useConversationInput = (
+  ownerId: string,
+  conversationId: string,
+  draftScopeId?: string
+) => {
+  const changeModel = useModelChange();
+  const [selection, setSelection] = useState<SelectedModelValue>();
+  const selectedModel = useDefaultModel();
+  const composerDraft = useEveComposerDraft(
+    ownerId,
+    draftScopeId ?? conversationId
+  );
+  const files = useEveAttachments(composerDraft);
+  const fork = useEveFork(
+    ownerId,
+    conversationId,
+    (message, selectedTool, clearComposer) => {
+      const sent = restoreDraft(message);
+      if (
+        clearComposer &&
+        sameComposerDraft(composerDraft, sent) &&
+        composerDraft.selectedTool === (selectedTool ?? null)
+      ) {
+        composerDraft.setText("");
+        files.setAttachments([]);
+        composerDraft.setSelectedTool(null);
+      }
+    }
+  );
+  const comparison =
+    // oxlint-disable-next-line no-ternary -- Keep comparison as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
+
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
+  return {
+    comparison,
+    composerDraft,
+    files,
+    fork,
+    modelIds: expandSelectedModelValue(selection ?? selectedModel),
+    modelSelection: {
+      onChange: async (value: SelectedModelValue) => {
+        setSelection(value);
+        const primary = getPrimarySelectedModelId(value);
+        if (typeof primary === "string" && primary !== "") {
+          await changeModel(primary);
+        }
+      },
+      value: selection ?? selectedModel,
+    },
+  };
+  /* oxlint-enable oxc/no-async-await */
+};
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, unicorn/no-null */
+
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- retainedToolSelection: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including comparison: { selectedTool?: UiToolName } | undefined); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const retainedToolSelection = (
+  comparison: { selectedTool?: UiToolName } | undefined,
+  pending: { selectedTool?: UiToolName } | null,
+  draft: UiToolName | null
+) => {
+  const retained = comparison ?? pending;
+  if (retained) {
+    return retained.selectedTool ?? null;
+  }
+  return draft;
+};
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
@@ -87,19 +198,12 @@ const EveConversation = ({
   conversationId: string;
   ownerId: string;
   header: ReactNode;
-  initialMessage?: EveMessageInput;
+  readonly initialMessage?: Parameters<typeof restoreDraft>[0];
   draftScopeId?: string;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
-  const {
-    fork,
-    composerDraft,
-    files,
-    comparison,
-    modelSelection,
-    modelIds,
-    // oxlint-disable-next-line eslint/no-use-before-define -- Review debt #620: useConversationInput is hoisted; review declaration placement while preserving the composer/fork lifecycle.
-  } = useConversationInput(ownerId, conversationId, draftScopeId);
+  const { fork, composerDraft, files, comparison, modelSelection, modelIds } =
+    useConversationInput(ownerId, conversationId, draftScopeId);
   const delivery = useEveMessageDelivery(sessionId);
   const pendingMessage = delivery.pending;
   const { controller, snapshot } = useLogicalChat();
@@ -147,7 +251,7 @@ const EveConversation = ({
       ? snapshot.nodes.get(selectedNode.parentId)
       : undefined;
   }
-  const messages = agent.data.messages
+  const messages: readonly ReadonlyEveMessage[] = agent.data.messages
     .filter((message) => {
       if (
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -186,7 +290,7 @@ const EveConversation = ({
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (
-    message: (typeof messages)[number]
+    message: Readonly<Pick<(typeof messages)[number], "metadata">>
   ): string | undefined => {
     // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const reference = message.metadata?.turnId
@@ -284,7 +388,7 @@ const EveConversation = ({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitMessage's awaited sequencing and rejected-Promise behavior. */
   const submitMessage = async (
     message: string,
-    attachments: DraftAttachment[],
+    attachments: readonly Readonly<DraftAttachment>[],
     modelId: string,
     clearComposer: boolean,
     selectedTool?: UiToolName
@@ -330,7 +434,6 @@ const EveConversation = ({
   /* oxlint-enable oxc/no-async-await */
   const cancel = (): Promise<void> => cancelExecution(conversationId);
   // Retain the selected tool across a pending or comparison recovery flow.
-  // oxlint-disable-next-line eslint/no-use-before-define -- Review debt #620: retainedToolSelection is a hoisted function; review declaration placement without changing selection recovery behavior.
   const displayedTool = retainedToolSelection(
     comparison,
     pendingMessage,
@@ -537,12 +640,11 @@ const EveConversation = ({
                 onSuggestion={(suggestion) => {
                   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                   void run(async () => {
-                    // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
+                    // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
                     if (modelIds.length > 1) {
                       await fork.compare(
                         draftMessage(suggestion, []),
                         modelIds,
-                        /* oxlint-disable-next-line eslint/no-use-before-define -- Boundary derives from the latest streamed turn. */
                         nextTurnBoundary(latestTurn),
                         composerDraft.selectedTool ?? undefined,
                         false
@@ -682,12 +784,11 @@ const EveConversation = ({
               onSubmit={() => {
                 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                 void run(async () => {
-                  // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
+                  // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
                   if (modelIds.length > 1) {
                     await fork.compare(
                       draftMessage(draft, files.attachments),
                       modelIds,
-                      /* oxlint-disable-next-line eslint/no-use-before-define -- Boundary derives from the latest streamed turn. */
                       nextTurnBoundary(latestTurn),
                       composerDraft.selectedTool ?? undefined
                     );
@@ -744,114 +845,7 @@ const EveConversation = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
-
-const sameComposerDraft = (
-  draft: ReturnType<typeof restoreDraft>,
-  sent: ReturnType<typeof restoreDraft>
-): boolean =>
-  draft.text.trim() === sent.text.trim() &&
-  draft.attachments.length === sent.attachments.length &&
-  draft.attachments.every(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from sent.attachments[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    (file, index) => file.url === sent.attachments[index]?.url
-  );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const nextTurnBoundary = (
-  event: ReturnType<typeof useEveAgent>["events"][number] | undefined
-): string => {
-  if (
-    !(
-      event &&
-      (event.type === "turn.completed" ||
-        event.type === "turn.failed" ||
-        event.type === "turn.cancelled")
-    )
-  ) {
-    throw new Error(
-      "Wait for the conversation to finish restoring before comparing responses."
-    );
-  }
-  return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
-};
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useConversationInput: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
-const useConversationInput = (
-  ownerId: string,
-  conversationId: string,
-  draftScopeId?: string
-) => {
-  const changeModel = useModelChange();
-  const [selection, setSelection] = useState<SelectedModelValue>();
-  const selectedModel = useDefaultModel();
-  const composerDraft = useEveComposerDraft(
-    ownerId,
-    draftScopeId ?? conversationId
-  );
-  const files = useEveAttachments(composerDraft);
-  const fork = useEveFork(
-    ownerId,
-    conversationId,
-    (message, selectedTool, clearComposer) => {
-      const sent = restoreDraft(message);
-      if (
-        clearComposer &&
-        sameComposerDraft(composerDraft, sent) &&
-        composerDraft.selectedTool === (selectedTool ?? null)
-      ) {
-        composerDraft.setText("");
-        files.setAttachments([]);
-        composerDraft.setSelectedTool(null);
-      }
-    }
-  );
-  const comparison =
-    // oxlint-disable-next-line no-ternary -- Keep comparison as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
-
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
-  return {
-    comparison,
-    composerDraft,
-    files,
-    fork,
-    modelIds: expandSelectedModelValue(selection ?? selectedModel),
-    modelSelection: {
-      onChange: async (value: SelectedModelValue) => {
-        setSelection(value);
-        const primary = getPrimarySelectedModelId(value);
-        if (typeof primary === "string" && primary !== "") {
-          await changeModel(primary);
-        }
-      },
-      value: selection ?? selectedModel,
-    },
-  };
-  /* oxlint-enable oxc/no-async-await */
-};
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- retainedToolSelection: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including comparison: { selectedTool?: UiToolName } | undefined); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
-const retainedToolSelection = (
-  comparison: { selectedTool?: UiToolName } | undefined,
-  pending: { selectedTool?: UiToolName } | null,
-  draft: UiToolName | null
-) => {
-  const retained = comparison ?? pending;
-  if (retained) {
-    return retained.selectedTool ?? null;
-  }
-  return draft;
-};
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-
 /* oxlint-disable max-lines -- eve-conversation keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { EveConversation };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

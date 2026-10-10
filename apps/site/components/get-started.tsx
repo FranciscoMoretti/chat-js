@@ -7,7 +7,7 @@ import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetStarted); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- GetStarted renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- GetStarted renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- GetStarted: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */

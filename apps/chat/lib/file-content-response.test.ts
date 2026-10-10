@@ -1,16 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- */
-import assert from "node:assert/strict";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { describe, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
-import { createFileContentResponse } from "./file-content-response";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-nodejs-modules -- These maintained tests use Node built-in assertions. */
 import { createFileId, uploadFileAtKey } from "./file-storage";
-/* oxlint-enable sort-imports */
+import { describe, it, vi } from "vitest";
+import assert from "node:assert/strict";
+import { createFileContentResponse } from "./file-content-response";
 import { keyFromFileUrl } from "./file-url";
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -19,22 +11,17 @@ vi.mock("@/lib/config", () => ({
 }));
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./storage-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./storage-provider", async () => {
   const { memory } = await import("files-sdk/memory");
   return {
-    createStorageAdapter: () => memory(),
+    createStorageAdapter: (): ReturnType<typeof memory> => memory(),
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, no-magic-numbers --
  * max-lines-per-function (#510): describe("file content response") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("file content response") uses 200, 206, 416 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/strict-boolean-expressions (#610): describe("file content response") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("file content response", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
@@ -46,7 +33,7 @@ describe("file content response", () => {
       "text/plain"
     );
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const url = new URL(uploaded.url, "https://chat.example");
     url.searchParams.set("dpl", "dpl_test");
 
@@ -68,7 +55,7 @@ describe("file content response", () => {
     );
 
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const response = await createFileContentResponse(
       new Request(new URL(uploaded.url, "https://chat.example"), {
         headers: { Range: "bytes=1-3" },
@@ -100,7 +87,7 @@ describe("file content response", () => {
         "text/plain"
       );
       const key = keyFromFileUrl(uploaded.url);
-      assert.ok(key);
+      assert.ok(typeof key === "string" && key !== "");
       const response = await createFileContentResponse(
         new Request(new URL(uploaded.url, "https://chat.example"), {
           headers: { Range: range },
@@ -124,7 +111,7 @@ describe("file content response", () => {
     );
 
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const response = await createFileContentResponse(
       new Request(new URL(uploaded.url, "https://chat.example"), {
         headers: { Range: "bytes=5-8" },
@@ -137,19 +124,19 @@ describe("file content response", () => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./db/file-storage-keys")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./db/file-storage-keys") accepts keys: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdsForStorageKeys: (keys: string[]) =>
+  fileIdsForStorageKeys: (
+    keys: readonly string[]
+  ): Promise<Map<string, string>> =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     ),
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

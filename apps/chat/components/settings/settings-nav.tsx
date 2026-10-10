@@ -1,17 +1,16 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { InternalLink } from "@/components/internal-link";
+
 import React from "react";
-/* oxlint-enable sort-imports */
+
 import type { JSX as ReactJSX } from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { InternalLink } from "@/components/internal-link";
-/* oxlint-enable sort-imports */
 import type { SettingsItem } from "@/components/settings/settings-item";
+
 import { cn } from "@/lib/utils";
 import { settingsItems } from "@/settings-items";
+import { usePathname } from "next/navigation";
 
 type ReadonlyNavItem = Readonly<
   Pick<SettingsItem, "href" | "label" | "isVisible">

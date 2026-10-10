@@ -51,16 +51,18 @@ test("missing pricing and missing usage remain unknown rather than free", async 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([{ inputTokens: 100 }, { outputTokens: 100 }])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test.each([{ inputTokens: 100 }, { outputTokens: 100 }])("partial usage remains unres accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
   "partial usage remains unresolved: %j",
-  async (usage) => {
+  async (
+    usage: Readonly<
+      | { inputTokens: number; outputTokens?: undefined }
+      | { outputTokens: number; inputTokens?: undefined }
+    >
+  ) => {
     const cost = createEveToolCost();
     cost.addLLMCost("priced", usage, "image");
     await expect(cost.totalUsd()).resolves.toBeUndefined();
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

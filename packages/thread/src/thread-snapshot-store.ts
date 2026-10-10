@@ -1,8 +1,5 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AbstractThread } from "./abstract-thread";
-/* oxlint-enable sort-imports */
+import type { UIMessage } from "ai";
 
 const DISABLED_THROTTLE_WAIT_MS = 0;
 

@@ -43,13 +43,13 @@ const usage = z.object({
 const toolResultSchema = z.intersection(toolOutputSchema, z.object({ usage }));
 
 type ToolResult<Output extends ToolOutput> = {
-  kind: "chatjs.tool-result";
-  version: typeof TOOL_RESULT_VERSION;
-  usage: { costUsd?: number };
-  updates?: readonly ToolOutput[];
+  readonly kind: "chatjs.tool-result";
+  readonly version: typeof TOOL_RESULT_VERSION;
+  readonly usage: { readonly costUsd?: number };
+  readonly updates?: readonly ToolOutput[];
 } & (
-  | { status: "success"; output: Output }
-  | { status: "error"; output: null; error: string }
+  | { readonly status: "success"; readonly output: Output }
+  | { readonly status: "error"; readonly output: null; readonly error: string }
 );
 
 const hasEveToolReceipt = (value: unknown): boolean =>

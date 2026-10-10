@@ -138,6 +138,7 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
       )
       .toBeVisible();
     await takeSnapshot("primitives-menu-submenu");
+    await page.elementLocator(document.body).screenshot();
     await act(() =>
       page.getByRole("menuitem", { exact: true, name: "Nested choice" }).click()
     );

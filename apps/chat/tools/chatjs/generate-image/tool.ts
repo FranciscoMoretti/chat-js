@@ -1,17 +1,9 @@
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { runImageRequest } from "./image-request";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageRequestContext } from "./image-request";
-/* oxlint-enable sort-imports */
+import { defineTool } from "eve/tools";
 import { generateImageInput } from "./schemas";
+import { runImageRequest } from "./image-request";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import type { z } from "zod";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (generateImageTool); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateImageTool's awaited sequencing and rejected-Promise behavior. */

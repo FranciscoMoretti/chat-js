@@ -2,17 +2,18 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "@/lib/eve/code-sandbox-name";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep code-sandbox-name loading node:crypto before client env validation and native pool creation. */
 import { db } from "./client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveCodeSandbox, eveConversation } from "./schema";
 /* oxlint-enable sort-imports */
 
 const FIRST_ROW_INDEX = 0;
+const EMPTY_RESULT_COUNT = 0;
 
 type SandboxTransaction = Readonly<
-  Pick<typeof db, "execute" | "insert" | "select">
+  Pick<typeof db, "execute" | "select" | "insert">
 >;
 
 type CodeSandboxForDeletion = Pick<
@@ -159,13 +160,7 @@ const confirmEveCodeSandboxCreation = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveCodeSandboxesForDeletion's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
-no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-/** Internal cleanup inventory; unretired families cannot authorize provider deletion.
- * @param {string} ownerId Owner whose retired conversation family is being purged.
- * @param {string} rootId Logical chat identity whose versions must all be retired.
- * @returns {Promise<CodeSandboxForDeletion[]>} Owned allocations that still require provider deletion or reconciliation.
- */
+
 const listEveCodeSandboxesForDeletion = async (
   ownerId: string,
   rootId: string
@@ -183,7 +178,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
   if (
-    family.length === 0 ||
+    family.length === EMPTY_RESULT_COUNT ||
     family.some((row) => row.state !== "deleting" && row.state !== "deleted")
   ) {
     throw new Error(
@@ -213,7 +208,7 @@ const listEveCodeSandboxesForDeletion = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (confirmEveCodeSandboxCreation, listEveCodeSandboxesForDeletion, recordEveCodeSandboxDeletion, reserveEveCodeSandbox); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */
+
 export {
   confirmEveCodeSandboxCreation,
   listEveCodeSandboxesForDeletion,

@@ -1,4 +1,3 @@
-/* oxlint-disable unicorn/prefer-structured-clone -- Exercise persisted JSON wire data, including omitted undefined values. */
 import { expect, test, vi } from "vitest";
 
 import { toolResultSchema } from "./tool-result";
@@ -29,9 +28,26 @@ test("distinguishes explicitly free work from unreported usage", async () => {
   const unpriced = await executeWithToolUsage(context(), () => ({ words: 2 }));
   expect(free.usage.costUsd).toBe(0);
   expect(unpriced.usage.costUsd).toBeUndefined();
-  expect(toolResultSchema.parse(JSON.parse(JSON.stringify(free)))).toEqual(
-    free
+  const persisted = toolResultSchema.array().parse(
+    // oxlint-disable-next-line unicorn/prefer-structured-clone -- #806: Persisted JSON omits undefined optional receipt fields; structuredClone would retain them.
+    JSON.parse(JSON.stringify([free, unpriced]))
   );
+  expect(persisted).toStrictEqual([
+    {
+      kind: "chatjs.tool-result",
+      output: { words: 2 },
+      status: "success",
+      usage: { costUsd: 0 },
+      version: 1,
+    },
+    {
+      kind: "chatjs.tool-result",
+      output: { words: 2 },
+      status: "success",
+      usage: {},
+      version: 1,
+    },
+  ]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

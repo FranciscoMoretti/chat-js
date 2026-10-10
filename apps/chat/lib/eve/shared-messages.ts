@@ -1,20 +1,20 @@
-import { defaultMessageReducer } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   EveDynamicToolPart,
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
-
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
+import { defaultMessageReducer } from "eve/client";
+/* oxlint-disable sort-imports -- Keep eve/client installing the shared Zod postprocessor before the application tool schemas are constructed. */
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 /* oxlint-enable sort-imports */
-import { responseModelReferences } from "./response-model";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
-/* oxlint-enable sort-imports */
+import { responseModelReferences } from "./response-model";
 
 interface SharedEveMessage {
   id: string;
@@ -151,7 +151,7 @@ const sharedTool = (
 
 /* oxlint-disable max-statements -- max-statements (#512): sharedEvePart whitelists public part fields, strips authorization challenges and appends display-only request/answer text; keep these privacy decisions visible under one projection. */
 const sharedEvePart = (
-  part: ReadonlyNativeSurface<EveMessagePart>
+  part: ReadonlyNativeSurface<ReadonlyEveMessagePart>
 ): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
@@ -203,7 +203,7 @@ const sharedEvePart = (
 /* oxlint-enable max-statements */
 
 const sharedEveMessages = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native MessageStreamEvent values pass unchanged to EVE reducer.reduce and responseModelReferences; readonly event collections would change those native recursive input contracts.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward each original MessageStreamEvent to reducer.reduce; the native input-request event requires mutable data.requests[].options arrays, so a deeply readonly event is not assignable (also through history.restored).
   events: readonly MessageStreamEvent[]
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
@@ -213,8 +213,8 @@ const sharedEveMessages = (
     state = reduceEvent(state, event);
   }
   const models = responseModelReferences(events);
-  // oxlint-disable-next-line oxc/no-map-spread, typescript/prefer-readonly-parameter-types -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order. Native reduced message metadata is forwarded to eveMessageTool, whose Pick<EveMessage, "metadata"> contract contains mutable JSON collections.
-  return state.messages.map((message): SharedEveMessage => {
+  // oxlint-disable-next-line oxc/no-map-spread -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order.
+  return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
       // oxlint-disable-next-line no-ternary -- Keep selectedTool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.

@@ -1,9 +1,6 @@
-import type { Experimental_VideoModelV4 } from "@ai-sdk/provider";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel, LanguageModel } from "ai";
-/* oxlint-enable sort-imports */
-
 import type { AppModelId } from "@/lib/ai/app-model-id";
+import type { Experimental_VideoModelV4 } from "@ai-sdk/provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 

@@ -110,10 +110,7 @@ const resolveEveModel = async (
     }),
     modelContextWindowTokens: model.context_window,
     modelOptions: {
-      providerOptions: serializedOptions.parse(
-        // oxlint-disable-next-line unicorn/prefer-structured-clone -- Use JSON wire normalization, which deliberately omits non-JSON values.
-        JSON.parse(JSON.stringify(getModelProviderOptions(model)))
-      ),
+      providerOptions: serializedOptions.parse(getModelProviderOptions(model)),
     },
   };
 };

@@ -55,12 +55,12 @@ const messages: EveMessage[] = [
 ];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GuestVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- GuestVisualFixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- * react-perf/jsx-no-new-array-as-prop (#556): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react-perf/jsx-no-new-function-as-prop (#557): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-max-depth (#548): GuestVisualFixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): GuestVisualFixture accepts event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-void-return (#611): GuestVisualFixture's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- * unicorn/no-null (#570): GuestVisualFixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return, unicorn/no-null -- react-perf/jsx-no-new-array-as-prop (#556): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react-perf/jsx-no-new-function-as-prop (#557): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react/jsx-max-depth (#548): GuestVisualFixture keeps related fixture render states together; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+typescript/strict-void-return (#611): GuestVisualFixture's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
+unicorn/no-null (#570): GuestVisualFixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
+
 export const GuestVisualFixture = (): React.JSX.Element => {
   const [state, setState] = useState("welcome");
   const [draft, setDraft] = useState("");
@@ -70,7 +70,9 @@ export const GuestVisualFixture = (): React.JSX.Element => {
         <select
           aria-label="Fixture state"
           value={state}
-          onChange={(event) => setState(event.target.value)}
+          onChange={(event: { readonly target: { readonly value: string } }) =>
+            setState(event.target.value)
+          }
         >
           <option value="welcome">Welcome</option>
           <option value="response">Response</option>
@@ -107,4 +109,4 @@ export const GuestVisualFixture = (): React.JSX.Element => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return, unicorn/no-null */

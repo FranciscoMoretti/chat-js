@@ -28,17 +28,16 @@ const DeviceLoginFallback = (): React.JSX.Element => (
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DeviceLoginContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/explicit-function-return-type (#560): Keep DeviceLoginContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): DeviceLoginContent accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp -- react-perf/jsx-no-jsx-as-prop (#555): Server Suspense constructs the fallback for the request; retaining its render position preserves the streaming shell.
+react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries. */
+
 const DeviceLoginContent = async ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
+}): Promise<React.JSX.Element> => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -61,17 +60,17 @@ const DeviceLoginContent = async ({
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginRoute creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): DeviceLoginRoute keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): DeviceLoginRoute accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp -- react-perf/jsx-no-jsx-as-prop (#555): The route retains the existing outer Suspense fallback and desktop feature gate.
+react/no-multi-comp (#552): The shell and request-time content form the nested Suspense route architecture. */
+
 const DeviceLoginRoute = ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
 }): React.JSX.Element => {
   if (!config.desktopApp.enabled) {
     redirect("/login");
@@ -84,7 +83,7 @@ const DeviceLoginRoute = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };

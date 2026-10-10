@@ -3,15 +3,15 @@
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import postgres from "postgres";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { readEvePostgresQueueInventory } from "@/lib/eve/lifecycle/postgres/eve-queue-inventory";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -56,10 +56,8 @@ async function job(body: unknown): Promise<string> {
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts leftJob; rightJob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-// oxlint-disable-next-line eslint/max-statements -- Keep retry, queued-child, and unrelated-inventory checks in the same database fixture scenario.
+
+// oxlint-disable-next-line max-statements -- Keep retry setup, queued child creation, and absence assertions in their existing database order.
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
   const retry = await job({
@@ -84,7 +82,12 @@ test("finds retries and queued child creation without returning input payloads",
     [
       { id: retry, locked: false, runId: root },
       { id: childJob, locked: false, runId: child },
-    ].toSorted((leftJob, rightJob) => leftJob.id.localeCompare(rightJob.id))
+    ].toSorted(
+      (
+        leftJob: Readonly<{ id: string; locked: boolean; runId: string }>,
+        rightJob: Readonly<{ id: string; locked: boolean; runId: string }>
+      ) => leftJob.id.localeCompare(rightJob.id)
+    )
   );
   expect(result.unsupportedJobIds).toEqual([]);
   expect(JSON.stringify(result)).not.toContain("private-marker");
@@ -96,7 +99,6 @@ test("finds retries and queued child creation without returning input payloads",
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 test("reports worker locks and unsupported messages; ignores ordinary health probes", async () => {
   const runId = crypto.randomUUID();

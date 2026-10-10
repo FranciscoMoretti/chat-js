@@ -2,13 +2,12 @@ import React from "react";
 
 import { config } from "@/lib/config";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): getPlanTypesLabel accepts { hasFree, hasPro, }: { hasFree: boolean; hasPro: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getPlanTypesLabel = ({
   hasFree,
   hasPro,
 }: {
-  hasFree: boolean;
-  hasPro: boolean;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
 }): string => {
   if (hasFree && hasPro) {
     return "free and paid";
@@ -19,12 +18,11 @@ const getPlanTypesLabel = ({
   return "free";
 };
 /* oxlint-disable react/jsx-no-literals -- PricingSection renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): PricingSection uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * react/jsx-max-depth (#548): PricingSection keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): PricingSection accepts { hasAnyPlan, planTypesLabel, hasFree, hasPro, currencySymbol, paymentProcessors, }: ; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth -- max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): PricingSection uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+react/jsx-max-depth (#548): PricingSection keeps related render components together; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const PricingSection = ({
   hasAnyPlan,
   planTypesLabel,
@@ -33,12 +31,12 @@ const PricingSection = ({
   currencySymbol,
   paymentProcessors,
 }: {
-  hasAnyPlan: boolean;
-  planTypesLabel: string;
-  hasFree: boolean;
-  hasPro: boolean;
-  currencySymbol: string;
-  paymentProcessors: string[];
+  readonly hasAnyPlan: boolean;
+  readonly planTypesLabel: string;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
+  readonly currencySymbol: string;
+  readonly paymentProcessors: readonly string[];
 }): React.JSX.Element => {
   if (!hasAnyPlan) {
     return (
@@ -104,7 +102,7 @@ const PricingSection = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- TermsPage renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): TermsPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): TermsPage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

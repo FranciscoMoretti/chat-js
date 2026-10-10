@@ -1,32 +1,22 @@
-import { devToolsMiddleware } from "@ai-sdk/devtools";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ImageModel, LanguageModelMiddleware } from "ai";
 import type {
   LanguageModelV4,
   SharedV4ProviderOptions,
 } from "@ai-sdk/provider";
-/* oxlint-enable sort-imports */
-import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ImageModel, LanguageModelMiddleware } from "ai";
-/* oxlint-enable sort-imports */
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-
-import { getActiveGateway } from "./active-gateway";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "./app-models";
-/* oxlint-enable sort-imports */
-import { getAppModelDefinition } from "./app-models";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { InstalledGateway } from "./gateways/registry";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): ActiveGatewayImageModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { getActiveGateway } from "./active-gateway";
+import { getAppModelDefinition } from "./app-models";
+import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
+
 type ActiveGatewayImageModelId = Parameters<
   InstalledGateway["createImageModel"]
+  // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
 >[0];
-/* oxlint-enable no-magic-numbers */
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getLanguageModel's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers, node/no-process-env --
@@ -64,8 +54,10 @@ const getLanguageModel = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, node/no-process-env */
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed adapter preserves its SDK string-literal suggestions and open string intersection; model IDs are primitive strings with no mutable fields.
-const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
+const getImageModel = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the exact installed gateway model-ID contract, including SDK literal suggestions and open string intersections. The faithful primitive-preserving readonly projection retains this scalar alias and the pinned rule finding.
+  modelId: ActiveGatewayImageModelId
+): ImageModel => {
   const imageModel = getActiveGateway().createImageModel(modelId);
   if (imageModel === null) {
     throw new Error(

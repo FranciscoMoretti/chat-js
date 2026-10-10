@@ -2,17 +2,30 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { POST } from "./route";
 
+const HTTP_STATUS = {
+  badRequest: 400,
+  contentTooLarge: 413,
+  internalServerError: 500,
+  ok: 200,
+};
+
+const FIRST_MULTIPART_CHUNK_NUMBER = 1;
+const MAX_UPLOAD_KIB = 64;
+const BYTES_PER_KIB = 1024;
+const MULTIPART_UPLOAD_LIMIT_BYTES = MAX_UPLOAD_KIB * BYTES_PER_KIB;
+const MULTIPART_REQUEST_OVERHEAD_BYTES = 11;
+const EXPECTED_MULTIPART_CHUNK_COUNT = 2;
+
 const mocks = vi.hoisted(() => ({ register: vi.fn(), upload: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+vi.mock("next/headers", () => ({ headers: (): Headers => new Headers() }));
 
-vi.mock("next/headers", () => ({ headers: () => new Headers() }));
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/lib/auth", () => ({
-  auth: { api: { getSession: () => ({ user: { id: "owner" } }) } },
+  auth: {
+    api: {
+      getSession: (): { user: { id: string } } => ({ user: { id: "owner" } }),
+    },
+  },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/config", () => ({
   config: {
     attachments: { acceptedTypes: { "image/png": [".png"] }, maxBytes: 10 },
@@ -22,25 +35,20 @@ vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
 vi.mock("@/lib/db/eve-files", () => ({
   reserveEveUpload: mocks.register,
   writeEveUpload: async (
     _owner: string,
     _key: string,
     write: () => Promise<unknown>
-  ) => await write(),
+  ): Promise<unknown> => await write(),
 }));
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/lib/file-storage", () => ({
-  createFileId: () => "abcdefghijklmnopqrstuvwx.png",
+  createFileId: (): string => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 beforeEach(() => {
@@ -66,10 +74,10 @@ const request = (): Request => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
+
 test("records the authenticated owner of a server-created storage key before returning it", async () => {
   const response = await POST(request());
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(HTTP_STATUS.ok);
   expect(mocks.register).toHaveBeenCalledWith("owner", key);
   expect(await response.json()).toMatchObject({
     url: `/api/files/${key}`,
@@ -77,21 +85,18 @@ test("records the authenticated owner of a server-created storage key before ret
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500);  */
 test("does not return a usable upload when ownership registration fails", async () => {
   mocks.register.mockRejectedValue(new Error("database unavailable"));
   const response = await POST(request());
-  expect(response.status).toBe(500);
+  expect(response.status).toBe(HTTP_STATUS.internalServerError);
   expect(await response.json()).toEqual({ error: "Upload failed" });
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/promise-function-async -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable no-undefined, typescript/promise-function-async*/
 
 test("waits for durable ownership before starting storage I/O", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -103,7 +108,7 @@ test("waits for durable ownership before starting storage I/O", async () => {
   expect(mocks.upload).not.toHaveBeenCalled();
   gate.resolve(undefined);
   const resolvedResult1 = await response;
-  expect(resolvedResult1.status).toBe(200);
+  expect(resolvedResult1.status).toBe(HTTP_STATUS.ok);
   expect(mocks.upload).toHaveBeenCalledWith(
     key,
     "fixture.png",
@@ -113,14 +118,12 @@ test("waits for durable ownership before starting storage I/O", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/promise-function-async */
-
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500);  */
+/* oxlint-enable no-undefined, typescript/promise-function-async*/
 
 test("retains the reserved identity after an uncertain storage failure", async () => {
   mocks.upload.mockRejectedValue(new Error("storage response lost"));
   const response = await POST(request());
-  expect(response.status).toBe(500);
+  expect(response.status).toBe(HTTP_STATUS.internalServerError);
   expect(mocks.register).toHaveBeenCalledExactlyOnceWith("owner", key);
   expect(mocks.upload).toHaveBeenCalledExactlyOnceWith(
     key,
@@ -131,9 +134,6 @@ test("retains the reserved identity after an uncertain storage failure", async (
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400);  */
 
 test("enforces retained upload type and byte limits before reserving storage", async () => {
   for (const file of [
@@ -149,16 +149,15 @@ test("enforces retained upload type and byte limits before reserving storage", a
         method: "POST",
       })
     );
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(HTTP_STATUS.badRequest);
   }
   expect(mocks.register).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "not multipart"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, no-undefined -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value;  */
+/* oxlint-disable no-undefined*/
 
 test.each([undefined, "not multipart"])(
   "rejects malformed upload body %s before storage admission",
@@ -166,28 +165,29 @@ test.each([undefined, "not multipart"])(
     const response = await POST(
       new Request("http://localhost/api/files/upload", { body, method: "POST" })
     );
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(HTTP_STATUS.badRequest);
     expect(mocks.register).not.toHaveBeenCalled();
   }
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined */
-
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 64);  */
+/* oxlint-enable no-undefined*/
 
 test("rejects a declared oversized request without reading its body", async () => {
   const uploadRequest = request();
-  uploadRequest.headers.set("content-length", String(64 * 1024 + 11));
+  uploadRequest.headers.set(
+    "content-length",
+    String(MULTIPART_UPLOAD_LIMIT_BYTES + MULTIPART_REQUEST_OVERHEAD_BYTES)
+  );
   const response = await POST(uploadRequest);
-  expect(response.status).toBe(413);
+  expect(response.status).toBe(HTTP_STATUS.contentTooLarge);
   expect(uploadRequest.bodyUsed).toBe(false);
   expect(mocks.register).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "1"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- route.test route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including controller); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including contentLength). */
+
+/* oxlint-disable max-statements, no-undefined, typescript/strict-boolean-expressions*/
 
 test.each([undefined, "1"])(
   "bounds multipart consumption with content-length %s and cancels the source",
@@ -197,15 +197,20 @@ test.each([undefined, "1"])(
     const body = new ReadableStream<Uint8Array>(
       {
         cancel,
-        pull(controller): void {
-          chunksRead += 1;
+        pull(
+          controller: Readonly<ReadableStreamDefaultController<Uint8Array>>
+        ): void {
+          chunksRead += FIRST_MULTIPART_CHUNK_NUMBER;
           controller.enqueue(
             // oxlint-disable-next-line no-ternary -- Keep controller.enqueue argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            chunksRead === 1
+            chunksRead === FIRST_MULTIPART_CHUNK_NUMBER
               ? new TextEncoder().encode(
                   '--upload\r\nContent-Disposition: form-data; name="file"; filename="large.png"\r\nContent-Type: image/png\r\n\r\n'
                 )
-              : new Uint8Array(64 * 1024 + 11)
+              : new Uint8Array(
+                  MULTIPART_UPLOAD_LIMIT_BYTES +
+                    MULTIPART_REQUEST_OVERHEAD_BYTES
+                )
           );
         },
       },
@@ -226,8 +231,8 @@ test.each([undefined, "1"])(
     const response = await POST(
       new Request("http://localhost/api/files/upload", init)
     );
-    expect(response.status).toBe(413);
-    expect(chunksRead).toBe(2);
+    expect(response.status).toBe(HTTP_STATUS.contentTooLarge);
+    expect(chunksRead).toBe(EXPECTED_MULTIPART_CHUNK_COUNT);
     await vi.waitFor(() => expect(cancel).toHaveBeenCalledOnce());
     expect(mocks.register).not.toHaveBeenCalled();
     expect(mocks.upload).not.toHaveBeenCalled();
@@ -235,9 +240,7 @@ test.each([undefined, "1"])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
+/* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions*/
 
 test("accepts a file at the configured byte limit with multipart overhead", async () => {
   const form = new FormData();
@@ -251,7 +254,6 @@ test("accepts a file at the configured byte limit with multipart overhead", asyn
       method: "POST",
     })
   );
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(HTTP_STATUS.ok);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

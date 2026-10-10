@@ -100,7 +100,7 @@ const BrowserFrame = ({
   </svg>
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Platforms); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Platforms renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
+/* oxlint-disable react/jsx-no-literals -- Platforms renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */

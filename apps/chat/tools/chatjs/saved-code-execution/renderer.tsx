@@ -1,18 +1,10 @@
 "use client";
-import React from "react";
-import type { z as Zod } from "zod";
-
-/* oxlint-disable sort-imports -- Keep type-only imports separate from runtime bindings as required by consistent-type-specifier-style; preserve the established value import order. */
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
-
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
-/* oxlint-enable sort-imports */
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { z as Zod } from "zod";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SavedCodeRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- SavedCodeRenderer renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 

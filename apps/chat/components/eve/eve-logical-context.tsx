@@ -6,10 +6,11 @@ import type { ContextType } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 /* oxlint-enable sort-imports */
-import type { EveMessageInput } from "@/lib/eve/message-input";
+import type { ReadonlyEveMessageInput } from "@/lib/eve/readonly-message-types";
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveLogicalContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable import/group-exports, unicorn/no-null -- EveLogicalContext: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types.; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
+// oxlint-disable-next-line import/group-exports -- #711: Keep EveLogicalContext inline: Oxlint 1.82 classifies a grouped context specifier as a component and rejects the hooks; one-var rejects combining declarations.
 export const EveLogicalContext = createContext<{
   ownerId: string;
   controller: LogicalChat;
@@ -17,10 +18,9 @@ export const EveLogicalContext = createContext<{
 } | null>(null);
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (useLogicalChat); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable import/group-exports, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- useLogicalChat: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types. */
-
+// oxlint-disable-next-line import/group-exports -- #711: Keep useLogicalChat inline with its context: grouped hooks violate exports-last beside inline contexts; placing them first violates no-use-before-define. Grouping every value instead triggers Oxlint 1.82 Fast Refresh classification.
 export const useLogicalChat = (): NonNullable<
   ContextType<typeof EveLogicalContext>
 > => {
@@ -32,28 +32,28 @@ export const useLogicalChat = (): NonNullable<
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (OpenRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable import/group-exports */
 
 export interface OpenRequest {
-  id: string;
-  sessionId: string;
-  ownerId: string;
-  chatId?: string;
-  title?: string;
-  operation?: { message: EveMessageInput };
+  readonly id: string;
+  readonly sessionId: string;
+  readonly ownerId: string;
+  readonly chatId?: string;
+  readonly title?: string;
+  readonly operation?: { readonly message: ReadonlyEveMessageInput };
 }
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveRuntimeContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveRuntimeContext: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types.; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including runtime: OpenRequest); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
+// oxlint-disable-next-line import/group-exports -- #711: Keep EveRuntimeContext inline: Oxlint 1.82 classifies a grouped context specifier as a component and rejects the hooks; one-var rejects combining declarations.
 export const EveRuntimeContext = createContext<
   ((runtime: OpenRequest, navigate?: boolean) => Promise<void>) | null
 >(null);
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (useEveRuntime); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- useEveRuntime: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types. */
+// oxlint-disable-next-line import/group-exports -- #711: Keep useEveRuntime inline with its context: grouped hooks violate exports-last beside inline contexts; placing them first violates no-use-before-define. Grouping every value instead triggers Oxlint 1.82 Fast Refresh classification.
 export const useEveRuntime = (): NonNullable<
   ContextType<typeof EveRuntimeContext>
 > => {
@@ -64,4 +64,3 @@ export const useEveRuntime = (): NonNullable<
   return open;
 };
 /* oxlint-enable import/no-named-export */
-/* oxlint-enable import/group-exports */

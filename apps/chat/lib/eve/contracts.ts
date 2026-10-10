@@ -1,12 +1,8 @@
 /* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module order and Oxfmt's type/value grouping; sort-imports requires a different declaration order. */
-import { frontendToolsSchema } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
 import { eveMessageInput } from "./message-input";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import { z } from "zod";
 
 const MAX_FORK_TURN_ID_LENGTH = 64;
 const MIN_IDENTIFIER_LENGTH = 1;

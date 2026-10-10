@@ -1,11 +1,9 @@
-import { expect, test } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   MissingCredentialsError,
   requireCredentials,
 } from "./required-credentials";
-/* oxlint-enable sort-imports */
+
+import { expect, test } from "vitest";
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reports missing groups explicitly without exposing supplied secrets") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -36,19 +34,28 @@ test("reports missing groups explicitly without exposing supplied secrets", () =
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("supports alternative credentials, combined groups, and Vercel runtime auth") uses C; D as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("supports alternative credentials, combined groups, and Vercel runtime auth", () => {
   expect(() =>
     requireCredentials(
       "feature",
       [
         { options: [["A", "B"], ["TOKEN"]] },
-        { allOf: [{ options: [["C"]] }, { options: [["D"]] }], options: [] },
+        {
+          allOf: [
+            { options: [["CREDENTIAL_C"]] },
+            { options: [["CREDENTIAL_D"]] },
+          ],
+          options: [],
+        },
         { options: [["VERCEL_TOKEN"]], runtimeAuth: "vercel-oidc" },
       ],
-      { C: "set", D: "set", NODE_ENV: "test", TOKEN: "set", VERCEL: "1" }
+      {
+        CREDENTIAL_C: "set",
+        CREDENTIAL_D: "set",
+        NODE_ENV: "test",
+        TOKEN: "set",
+        VERCEL: "1",
+      }
     )
   ).not.toThrow();
   expect(() =>
@@ -61,7 +68,6 @@ test("supports alternative credentials, combined groups, and Vercel runtime auth
     })
   ).toThrow(MissingCredentialsError);
 });
-/* oxlint-enable id-length */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers --
  * init-declarations (#507): test("reports only unsatisfied subgroups recursively, even without descriptions") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.

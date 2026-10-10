@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
@@ -46,6 +45,7 @@ async function openSidebar(page: Page): Promise<void> {
     exact: true,
     name: "Expand sidebar",
   });
+  // oxlint-disable-next-line unicorn/prefer-ternary -- This browser flow awaits exactly one click based on the visible sidebar control; eslint/no-ternary also rejects the ternary form.
   if (await expand.isVisible()) {
     await expand.click();
   } else {

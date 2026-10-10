@@ -1,42 +1,41 @@
 import { Client, defaultMessageReducer } from "eve/client";
-
+import { assertEveConfigured } from "./server";
+import { getEveConnectionOptions } from "./connection-options";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { saveEveMessageVote } from "@/lib/db/queries";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveConnectionOptions } from "./connection-options";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { assertEveConfigured } from "./server";
+const VOTE_SNAPSHOT_TIMEOUT_MS = 15_000;
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (voteEveMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve voteEveMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-statements (#512): voteEveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): voteEveMessage uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): voteEveMessage accepts input: { conversationId: string; messageId: string; type: "up" | "down"; }; state; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): voteEveMessage intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable max-statements, unicorn/no-null --
+ * max-statements (#512): Verify the bound conversation, replay its snapshot, and check assistant-message membership before saving the vote; the guards and reducer state belong to this authorization operation.
  * unicorn/no-null (#570): voteEveMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 export const voteEveMessage = async (
   ownerId: string,
   input: {
-    conversationId: string;
-    messageId: string;
-    type: "up" | "down";
+    readonly conversationId: string;
+    readonly messageId: string;
+    readonly type: "up" | "down";
   }
 ): Promise<Awaited<ReturnType<typeof saveEveMessageVote>>> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!(conversation?.sessionId && conversation.state === "bound")) {
+
+  if (
+    !conversation ||
+    typeof conversation.sessionId !== "string" ||
+    conversation.sessionId === "" ||
+    conversation.state !== "bound"
+  ) {
     return null;
   }
   assertEveConfigured();
   const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(VOTE_SNAPSHOT_TIMEOUT_MS) });
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
   let state = reducer.initial();
@@ -46,7 +45,7 @@ export const voteEveMessage = async (
   const { messages } = state;
   if (
     !messages.some(
-      (message) =>
+      (message: { readonly id: string; readonly role: string }) =>
         message.id === input.messageId && message.role === "assistant"
     )
   ) {
@@ -61,4 +60,4 @@ export const voteEveMessage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */

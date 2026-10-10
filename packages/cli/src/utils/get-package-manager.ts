@@ -1,11 +1,7 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
+import type { PackageManager } from "#cli/types"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import fs from "node:fs";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { PackageManager } from "#cli/types";
-/* oxlint-enable sort-imports */
 
 const launcherPackageManager = (): PackageManager => {
   // oxlint-disable-next-line node/no-process-env -- Read the launching package manager per call; inferPackageManager uses this current process fallback only after exhausting project manifests and lockfiles.
@@ -97,8 +93,7 @@ const directoryPackageManager = (cwd: string): PackageManager | undefined => {
       fs.existsSync(path.join(cwd, filename))
     )
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading manager from lockfile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  return lockfile?.manager;
+  return lockfile && lockfile.manager;
 };
 
 const inferPackageManager = (cwd = process.cwd()): PackageManager => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 
-import { coreFeatureEnvRequirements } from "./config-requirements";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectEnvChecklist } from "./env-checklist";
-/* oxlint-enable sort-imports */
+import { coreFeatureEnvRequirements } from "./config-requirements";
+
+const requiredMcpEncryptionKeyCount = 1;
+const mcpRequirementGroupCount = 2;
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("collectEnvChecklist", () => {
   it("uses the LiteLLM base URL as the gateway requirement", () => {
     const entries = collectEnvChecklist({
@@ -119,7 +119,7 @@ describe("collectEnvChecklist", () => {
         (entry: { readonly vars: string }) =>
           entry.vars === "MCP_ENCRYPTION_KEY"
       )
-    ).toHaveLength(1);
+    ).toHaveLength(requiredMcpEncryptionKeyCount);
     expect(
       entries.map((entry: { readonly vars: string }) => entry.vars)
     ).toEqual([
@@ -162,11 +162,9 @@ describe("collectEnvChecklist", () => {
     ).toBe(true);
   });
 });
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
   const previous = coreFeatureEnvRequirements.mcp;
   coreFeatureEnvRequirements.mcp = [
@@ -206,7 +204,7 @@ it("includes every installed MCP requirement and preserves combined and alternat
         (entry: { readonly vars: string }) =>
           entry.vars === "MCP_ENCRYPTION_KEY"
       )
-    ).toHaveLength(1);
+    ).toHaveLength(requiredMcpEncryptionKeyCount);
     expect(
       entries.map((entry: { readonly vars: string }) => entry.vars)
     ).toEqual(
@@ -222,10 +220,9 @@ it("includes every installed MCP requirement and preserves combined and alternat
         (entry: { readonly oneOfGroup?: string }) =>
           entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN"
       )
-    ).toHaveLength(2);
+    ).toHaveLength(mcpRequirementGroupCount);
   } finally {
     coreFeatureEnvRequirements.mcp = previous;
   }
 });
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

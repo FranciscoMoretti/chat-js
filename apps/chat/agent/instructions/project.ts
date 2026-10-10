@@ -6,9 +6,8 @@ import { defineDynamic, defineInstructions } from "eve/instructions";
 import { projectInstructions } from "../../lib/eve/project-instructions";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/no-default-export, unicorn/no-null --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of content; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): default export preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 export default defineDynamic({
@@ -16,7 +15,7 @@ export default defineDynamic({
     "turn.started": () => {
       const { content } = projectInstructions.get();
 
-      if (content) {
+      if (content !== null && content !== "") {
         return defineInstructions({
           content: `Project instructions:\n${content}`,
         });
@@ -25,4 +24,4 @@ export default defineDynamic({
     },
   },
 });
-/* oxlint-enable import/no-default-export, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/no-default-export, unicorn/no-null */

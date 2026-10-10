@@ -1,5 +1,4 @@
-/* oxlint-disable import/no-named-export -- Keep the published named metadata binding; no-default-export rejects its default-export alternative. */
-// oxlint-disable-next-line sort-keys -- Preserve the CLI provider menu order: Vercel first and LiteLLM last.
+// oxlint-disable-next-line import/no-named-export, sort-keys -- Preserve the published metadata binding and CLI provider menu order (Vercel first, LiteLLM last); the pinned no-default-export rule rejects the default export.
 export const gatewayMetadata = {
   vercel: {
     dependency: "@ai-sdk/gateway",
@@ -33,8 +32,6 @@ export const gatewayMetadata = {
     version: "3.0.44",
   },
 } as const;
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative.
 export type GatewayType = keyof typeof gatewayMetadata;
-/* oxlint-enable import/no-named-export */

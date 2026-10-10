@@ -4,22 +4,22 @@
  */
 import { readFile } from "node:fs/promises";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { expect, test } from "vitest";
 
 import { db } from "../lib/db/client";
 import { reserveEveUpload } from "../lib/db/eve-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "../lib/db/file-storage-keys";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveStoredFile, user } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
@@ -69,15 +69,15 @@ test("file identity survives changing its private storage location", async () =>
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("document migration backfills owned attachments and retention from existing cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("document migration backfills owned attachments and retention from existing cont accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("document migration backfills owned attachments and retention from existing content", async () => {
   const migration = await readFile(
     new URL("../lib/db/migrations/0003_ambitious_oracle.sql", import.meta.url),
     "utf-8"
   );
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.execute() to perform the native database transaction/write operation.
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`CREATE TEMP TABLE "EveDocumentRevision" ("id" text, "conversationId" text, "ownerId" text, "content" text) ON COMMIT DROP`
@@ -117,4 +117,4 @@ test("document migration backfills owned attachments and retention from existing
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */

@@ -1,34 +1,32 @@
+import { isFileStorageKey } from "@/lib/file-url";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { isFileStorageKey } from "@/lib/file-url";
-/* oxlint-enable sort-imports */
-
 interface DocumentAssistantRequest {
-  message: string;
-  modelId: string;
+  readonly message: string;
+  readonly modelId: string;
 }
 
-/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): documentFileIds uses 256 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const maximumDocumentFileCount = 256;
+const maximumDocumentContentLength = 2_000_000;
+const minimumDocumentTitleLength = 1;
+const maximumDocumentTitleLength = 1000;
+
 const documentFileIds = z
   .array(z.string().refine(isFileStorageKey))
-  .max(256)
+  .max(maximumDocumentFileCount)
   .transform((ids: readonly string[]) => [...new Set(ids)].toSorted())
   .describe(
     "Stable file IDs used by this document, including embedded images. Provide the complete list on every save, or [] for no attachments; never include presigned URLs."
   );
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): documentContent uses 2_000_000, 1, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const documentContent = z.object({
-  content: z.string().max(2_000_000),
+  content: z.string().max(maximumDocumentContentLength),
   fileIds: documentFileIds,
-  title: z.string().min(1).max(1000),
+  title: z
+    .string()
+    .min(minimumDocumentTitleLength)
+    .max(maximumDocumentTitleLength),
 });
-/* oxlint-enable no-magic-numbers */
 
 const eveDocumentCreateInput = documentContent;
 

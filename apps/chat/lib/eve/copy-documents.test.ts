@@ -1,11 +1,8 @@
-import { expect, it } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
-/* oxlint-enable sort-imports */
+import { expect, it } from "vitest";
 
 const documentId = "00000000-0000-4000-8000-000000000001";
 const firstId = "00000000-0000-4000-8000-000000000002";
@@ -63,10 +60,9 @@ const allocations = {
   ]),
 };
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
  * max-statements (#512): it("copies every revision with fresh ancestry, rewritten content, and no source turn  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("copies every revision with fresh ancestry, rewritten content, and no source turn  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("copies every revision with fresh ancestry, rewritten content, and no source turn  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it("copies every revision with fresh ancestry, rewritten content, and no source turn  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("copies every revision with fresh ancestry, rewritten content, and no source turn identity", () => {
@@ -74,26 +70,32 @@ it("copies every revision with fresh ancestry, rewritten content, and no source 
   expect(copied[0].revisions[0].fileIds).toEqual([destinationFile]);
   expect(copied[0].documentId).toBe(destinationDoc);
   expect(copied[0].headRevisionId).toBe(destinationHead);
-  expect(copied[0].revisions.map((row) => row.id)).toEqual([
-    destinationFirst,
-    destinationHead,
-  ]);
-  expect(copied[0].revisions.map((row) => row.parentRevisionId)).toEqual([
-    null,
-    destinationFirst,
-  ]);
-  expect(copied[0].revisions.map((row) => row.turnIndex)).toEqual([null, null]);
-  expect(copied[0].revisions.map((row) => row.operationId)).toEqual([
-    `copy:${destinationFirst}`,
-    `copy:${destinationHead}`,
-  ]);
+  expect(
+    copied[0].revisions.map((row: { readonly id: string }) => row.id)
+  ).toEqual([destinationFirst, destinationHead]);
+  expect(
+    copied[0].revisions.map(
+      (row: { readonly parentRevisionId: string | null }) =>
+        row.parentRevisionId
+    )
+  ).toEqual([null, destinationFirst]);
+  expect(
+    copied[0].revisions.map(
+      (row: { readonly turnIndex: number | null }) => row.turnIndex
+    )
+  ).toEqual([null, null]);
+  expect(
+    copied[0].revisions.map(
+      (row: { readonly operationId: string }) => row.operationId
+    )
+  ).toEqual([`copy:${destinationFirst}`, `copy:${destinationHead}`]);
   expect(JSON.stringify(copied)).toContain(destinationFile);
   for (const source of [documentId, firstId, headId, sourceFile]) {
     expect(JSON.stringify(copied)).not.toContain(source);
   }
   expect(snapshot[0].revisions[0].id).toBe(firstId);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
 it("retains files from older revisions even when the current head no longer mentions them", () => {
   expect(eveCopyDocumentResources(snapshot)).toEqual({

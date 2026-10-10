@@ -6,7 +6,7 @@ import { createStorageAdapter } from "./storage-provider";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connectStorage's awaited sequencing and rejected-Promise behavior. */
 const connectStorage = async (
-  secure: "implicit" | undefined
+  secure: boolean | "implicit" | undefined
 ): Promise<Client> => {
   const { raw } = createStorageAdapter({ host: "storage.example", secure });
   if (raw instanceof Client) {
@@ -17,9 +17,13 @@ const connectStorage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable node/no-process-env -- This environment fixture clears FTP_SECURE and returns ownership of restoring its exact previous presence/value. */
-const isolateSecureEnvironment = (): (() => void) => {
+const isolateSecureEnvironment = (value?: string): (() => void) => {
   const previous = process.env.FTP_SECURE;
-  delete process.env.FTP_SECURE;
+  if (typeof value === "string") {
+    process.env.FTP_SECURE = value;
+  } else {
+    delete process.env.FTP_SECURE;
+  }
   return () => {
     if (typeof previous === "string") {
       process.env.FTP_SECURE = previous;
@@ -31,27 +35,65 @@ const isolateSecureEnvironment = (): (() => void) => {
 
 /* oxlint-enable node/no-process-env */
 
-const variants: { readonly label: string; readonly secure?: "implicit" }[] = [
-  { label: "default TLS" },
-  { label: "implicit TLS", secure: "implicit" },
+const variants: {
+  readonly environment?: string;
+  readonly expectedSecure: boolean | "implicit";
+  readonly label: string;
+  readonly secure?: boolean | "implicit";
+}[] = [
+  { expectedSecure: true, label: "default TLS" },
+  {
+    expectedSecure: "implicit",
+    label: "explicit implicit TLS",
+    secure: "implicit",
+  },
+  {
+    environment: "implicit",
+    expectedSecure: "implicit",
+    label: "environment implicit TLS",
+  },
+  {
+    environment: "implicit",
+    expectedSecure: true,
+    label: "explicit TLS over environment implicit TLS",
+    secure: true,
+  },
+  {
+    environment: "implicit",
+    expectedSecure: false,
+    label: "explicit plain FTP over environment implicit TLS",
+    secure: false,
+  },
 ];
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(variants)'s awaited sequencing and rejected-Promise behavior. */
-it.each(variants)("uses $label for FTP connections", async ({ secure }) => {
-  const access = spyOn(Client.prototype, "access").mockResolvedValue({
-    code: 220,
-    message: "ready",
-  });
-  const restoreEnvironment = isolateSecureEnvironment();
+it.each(variants)(
+  "uses $label for FTP connections",
+  async ({ environment, expectedSecure, secure }) => {
+    const access = spyOn(Client.prototype, "access").mockResolvedValue({
+      code: 220,
+      message: "ready",
+    });
+    const restoreEnvironment = isolateSecureEnvironment(environment);
+    try {
+      const client = await connectStorage(secure);
+      expect(access).toHaveBeenLastCalledWith(
+        expect.objectContaining({ secure: expectedSecure })
+      );
+      client.close();
+    } finally {
+      access.mockRestore();
+      restoreEnvironment();
+    }
+  }
+);
+/* oxlint-enable oxc/no-async-await */
+
+it("preserves the caller-owned FTP client", () => {
+  const client = new Client();
   try {
-    const client = await connectStorage(secure);
-    expect(access).toHaveBeenLastCalledWith(
-      expect.objectContaining({ secure: secure ?? true })
-    );
-    client.close();
+    expect(createStorageAdapter({ client }).raw).toBe(client);
   } finally {
-    access.mockRestore();
-    restoreEnvironment();
+    client.close();
   }
 });
-/* oxlint-enable oxc/no-async-await */

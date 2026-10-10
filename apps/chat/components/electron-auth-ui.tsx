@@ -1,8 +1,6 @@
 "use client";
 
 import { ExternalLink, LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, {
   useEffect,
   useMemo,
@@ -10,20 +8,30 @@ import React, {
   useState,
   useTransition,
 } from "react";
-/* oxlint-enable sort-imports */
+
 import type { JSX as ReactJSX } from "react";
 
-import config from "@/chat.config";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Session } from "@/lib/auth";
-/* oxlint-enable sort-imports */
-import authClient from "@/lib/auth-client";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Button } from "./ui/button";
-/* oxlint-disable react/jsx-no-literals -- ElectronBrowserSignIn renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+import type { Session } from "@/lib/auth";
+
+import config from "@/chat.config";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/chat.config and @/lib/auth-client; keep this adjacent import pair ordered. */
+import authClient from "@/lib/auth-client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable no-console, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, unicorn/no-null -- ElectronBrowserSignIn: no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 300); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/lib/auth-client and ./ui/button; keep this adjacent import pair ordered. */
+import { Button } from "./ui/button";
+/* oxlint-enable sort-imports */
+
+import { useRouter } from "next/navigation";
+
+const AUTH_FEEDBACK_DELAY_MS = 300;
+
+/* oxlint-disable react/jsx-no-literals -- ElectronBrowserSignIn renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+
+/* oxlint-disable no-console, react-perf/jsx-no-new-function-as-prop, unicorn/no-null -- ElectronBrowserSignIn: no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ElectronBrowserSignIn = ({
   buttonLabel = "Continue with browser",
@@ -58,7 +66,7 @@ const ElectronBrowserSignIn = ({
           };
           /* oxlint-enable oxc/no-async-await */
           void launchBrowserSignIn();
-          globalThis.setTimeout(() => setOpened(true), 300);
+          globalThis.setTimeout(() => setOpened(true), AUTH_FEEDBACK_DELAY_MS);
         }}
         type="button"
         variant="outline"
@@ -81,16 +89,16 @@ const ElectronBrowserSignIn = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ElectronTransferUser renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable no-console, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, unicorn/no-null */
+/* oxlint-enable no-console, react-perf/jsx-no-new-function-as-prop, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ElectronTransferUser: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp -- ElectronTransferUser: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const ElectronTransferUser = ({
   query,
   session,
 }: {
-  query: Record<string, string>;
-  session: Session;
+  readonly query: Readonly<Record<string, string>>;
+  readonly session: ReadonlyNativeSurface<Session>;
 }): ReactJSX.Element => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -173,6 +181,6 @@ const ElectronTransferUser = ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ElectronBrowserSignIn, ElectronTransferUser); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp */
 export { ElectronBrowserSignIn, ElectronTransferUser };
 /* oxlint-enable import/no-named-export */

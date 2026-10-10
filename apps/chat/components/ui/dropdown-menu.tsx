@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
 import {
   CheckboxItem as DropdownMenuPrimitiveCheckboxItem,
   Content as DropdownMenuPrimitiveContent,
@@ -17,16 +18,14 @@ import {
   SubTrigger as DropdownMenuPrimitiveSubTrigger,
   Trigger as DropdownMenuPrimitiveTrigger,
 } from "@radix-ui/react-dropdown-menu";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
-/* oxlint-enable sort-imports */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_SIDE_OFFSET = 4;
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenu uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenu = (
@@ -46,8 +45,9 @@ const DropdownMenu = (
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuPortal = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuPortal passes Element | DocumentFragment | null | undefined container identity unchanged to DropdownMenuPrimitivePortal, whose portal insertion uses the live native DOM surface.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof DropdownMenuPrimitivePortal>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <DropdownMenuPrimitivePortal
     data-slot="dropdown-menu-portal"
@@ -62,8 +62,9 @@ const DropdownMenuPortal = (
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuTrigger = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuTrigger forwards DropdownMenuPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof DropdownMenuPrimitiveTrigger>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <DropdownMenuPrimitiveTrigger
     data-slot="dropdown-menu-trigger"
@@ -74,18 +75,20 @@ const DropdownMenuTrigger = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- DropdownMenuContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- DropdownMenuContent: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuContent forwards DropdownMenuPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuContent = ({
-  className,
-  sideOffset = 4,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveContent
->): ReactJSX.Element => (
+
+const DropdownMenuContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    sideOffset = DEFAULT_SIDE_OFFSET,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveContent>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitivePortal>
     <DropdownMenuPrimitiveContent
       // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -101,14 +104,15 @@ const DropdownMenuContent = ({
   </DropdownMenuPrimitivePortal>
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- DropdownMenuGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuGroup = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuGroup forwards DropdownMenuPrimitiveGroup's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof DropdownMenuPrimitiveGroup>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <DropdownMenuPrimitiveGroup
     data-slot="dropdown-menu-group"
@@ -122,17 +126,21 @@ const DropdownMenuGroup = (
 /* oxlint-disable react/no-multi-comp -- DropdownMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuItem forwards DropdownMenuPrimitiveItem's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuItem = ({
-  className,
-  inset,
-  variant = "default",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof DropdownMenuPrimitiveItem> & {
-  inset?: boolean;
-  variant?: "default" | "destructive";
-}): ReactJSX.Element => (
+
+const DropdownMenuItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    inset,
+    variant = "default",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveItem> & {
+    readonly inset?: boolean;
+    readonly variant?: "default" | "destructive";
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveItem
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -152,16 +160,18 @@ const DropdownMenuItem = ({
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- DropdownMenuCheckboxItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuCheckboxItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuCheckboxItem forwards DropdownMenuPrimitiveCheckboxItem's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuCheckboxItem = ({
-  className,
-  children,
-  checked,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, checked from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveCheckboxItem
->): ReactJSX.Element => (
+
+const DropdownMenuCheckboxItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    checked,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, checked from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveCheckboxItem>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveCheckboxItem
     checked={checked}
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveCheckboxItem accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -191,8 +201,9 @@ const DropdownMenuCheckboxItem = ({
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuRadioGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuRadioGroup = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuRadioGroup forwards DropdownMenuPrimitiveRadioGroup's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   props: ReactComponentProps<typeof DropdownMenuPrimitiveRadioGroup>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <DropdownMenuPrimitiveRadioGroup
     data-slot="dropdown-menu-radio-group"
@@ -206,15 +217,17 @@ const DropdownMenuRadioGroup = (
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- DropdownMenuRadioItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuRadioItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuRadioItem forwards DropdownMenuPrimitiveRadioItem's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuRadioItem = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveRadioItem
->): ReactJSX.Element => (
+
+const DropdownMenuRadioItem = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveRadioItem>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveRadioItem
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveRadioItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -242,15 +255,19 @@ const DropdownMenuRadioItem = ({
 /* oxlint-disable react/no-multi-comp -- DropdownMenuLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuLabel forwards DropdownMenuPrimitiveLabel's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuLabel = ({
-  className,
-  inset,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof DropdownMenuPrimitiveLabel> & {
-  inset?: boolean;
-}): ReactJSX.Element => (
+
+const DropdownMenuLabel = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    inset,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveLabel> & {
+    readonly inset?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveLabel
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveLabel accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -269,14 +286,16 @@ const DropdownMenuLabel = ({
 /* oxlint-disable react/no-multi-comp -- DropdownMenuSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuSeparator forwards DropdownMenuPrimitiveSeparator's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuSeparator = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveSeparator
->): ReactJSX.Element => (
+
+const DropdownMenuSeparator = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveSeparator>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveSeparator
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSeparator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("bg-border -mx-1 my-1 h-px", className)}
@@ -291,12 +310,16 @@ const DropdownMenuSeparator = ({
 /* oxlint-disable react/no-multi-comp -- DropdownMenuShortcut: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuShortcut uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuShortcut forwards span's Ref<HTMLSpanElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuShortcut = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"span">): ReactJSX.Element => (
+
+const DropdownMenuShortcut = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"span">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <span
     className={cn(
       "text-muted-foreground ml-auto text-xs tracking-widest",
@@ -330,16 +353,20 @@ const DropdownMenuSub = (
 /* oxlint-disable react/no-multi-comp -- DropdownMenuSubTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSubTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuSubTrigger forwards DropdownMenuPrimitiveSubTrigger's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuSubTrigger = ({
-  className,
-  inset,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof DropdownMenuPrimitiveSubTrigger> & {
-  inset?: boolean;
-}): ReactJSX.Element => (
+
+const DropdownMenuSubTrigger = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    inset,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveSubTrigger> & {
+    readonly inset?: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveSubTrigger
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSubTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -364,14 +391,16 @@ const DropdownMenuSubTrigger = ({
 /* oxlint-disable react/no-multi-comp -- DropdownMenuSubContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSubContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuSubContent forwards DropdownMenuPrimitiveSubContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
-const DropdownMenuSubContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveSubContent
->): ReactJSX.Element => (
+
+const DropdownMenuSubContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof DropdownMenuPrimitiveSubContent>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveSubContent
     // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSubContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -405,3 +434,5 @@ export {
   DropdownMenuTrigger,
 };
 /* oxlint-enable import/no-named-export */
+
+/* oxlint-disable max-lines -- Parameter-scoped native readonly boundaries expand this existing primitive family after formatting; its runtime implementation and composition remain unchanged. */

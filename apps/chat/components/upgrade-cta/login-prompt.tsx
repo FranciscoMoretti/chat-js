@@ -1,21 +1,19 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { InternalLink } from "@/components/internal-link";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { InternalLink } from "@/components/internal-link";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface LoginPromptProps {
-  className?: string;
-  description: string;
-  title: string;
+  readonly className?: string;
+  readonly description: string;
+  readonly title: string;
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LoginPrompt); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- LoginPrompt renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- LoginPrompt: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { title, description, className, }: LoginPromptProps). */
 
 export const LoginPrompt = ({
   title,
@@ -42,4 +40,3 @@ export const LoginPrompt = ({
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

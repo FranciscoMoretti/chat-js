@@ -1,18 +1,55 @@
 import type { MessageStreamEvent } from "eve/client";
 
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type InheritedTurnData<Data> = {
+  readonly [Key in keyof Data]: Key extends "turnId" ? Data[Key] : unknown;
+};
+type DocumentHistoryEvent = IgnoredSdkFields<MessageStreamEvent> &
+  (
+    | {
+        readonly type: "turn.started";
+        readonly data: Readonly<
+          Extract<MessageStreamEvent, { type: "turn.started" }>["data"]
+        >;
+      }
+    | {
+        readonly type: "history.restored";
+        readonly data: Readonly<
+          Omit<
+            Extract<MessageStreamEvent, { type: "history.restored" }>["data"],
+            "events"
+          >
+        > & {
+          readonly events: readonly ({
+            readonly data: InheritedTurnData<
+              Extract<MessageStreamEvent, { data: unknown }>["data"]
+            >;
+          } & IgnoredSdkFields<MessageStreamEvent>)[];
+        };
+      }
+    | {
+        readonly type: Exclude<
+          MessageStreamEvent["type"],
+          "turn.started" | "history.restored"
+        >;
+      }
+  );
+
 const nativeTurnId = /^turn_\d+$/u;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentHistoryTurns); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): documentHistoryTurns accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+
 /**
  * Include inherited turns: restored history does not replay turn.started.
  * @param {readonly MessageStreamEvent[]} events Native history events, including restored prefixes and their before-turn boundary.
  * @returns {number[]} Unique native turn sequences in first-seen order; invalid inherited turn IDs fail validation.
  */
 export const documentHistoryTurns = (
-  events: readonly MessageStreamEvent[]
+  events: readonly DocumentHistoryEvent[]
 ): number[] => {
   const turns = new Set<number>();
   const addTurn = (turnId: string): void => {
@@ -40,4 +77,3 @@ export const documentHistoryTurns = (
   return [...turns];
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

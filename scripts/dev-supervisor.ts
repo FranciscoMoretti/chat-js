@@ -1,12 +1,9 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { execFileSync, spawn } from "node:child_process";
+import { checkHealth } from "./dev-health";
 // oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { setTimeout as delay } from "node:timers/promises";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { checkHealth } from "./dev-health";
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
-/* oxlint-enable sort-imports */
 
 const INITIAL_RESTART_BACKOFF_MS = 5000;
 const BACKOFF_MULTIPLIER = 2;
@@ -42,17 +39,15 @@ const sleep = (ms: number): Promise<void> => delay(ms);
 let descendants = new Map<number, string>();
 const hasChildProcessId = (pid: number | undefined): pid is number =>
   typeof pid === "number" && pid !== NO_CHILD_PID && !Number.isNaN(pid);
-/* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-const trackChildren = (): void => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const childPid = child?.pid;
-  if (!hasChildProcessId(childPid)) {
-    return;
-  }
-  const rows = execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], {
-    encoding: "utf-8",
-  })
+
+interface ProcessRow {
+  readonly parent: number;
+  readonly pid: number;
+  readonly started: string;
+}
+
+const parseProcessRows = (snapshot: string): ProcessRow[] =>
+  snapshot
     .trim()
     .split("\n")
     .map((line) => {
@@ -63,15 +58,20 @@ const trackChildren = (): void => {
         started: started.join(" "),
       };
     });
-  const alive = new Map(
-    rows.map((row: Readonly<(typeof rows)[number]>) => [row.pid, row.started])
-  );
+
+const pruneExitedDescendants = (alive: Readonly<Map<number, string>>): void => {
   for (const [pid, started] of descendants) {
     if (alive.get(pid) !== started) {
       descendants.delete(pid);
     }
   }
-  const found = new Set([childPid]);
+};
+
+const findDescendants = (
+  rootPid: number,
+  rows: readonly ProcessRow[]
+): Set<number> => {
+  const found = new Set([rootPid]);
   let changed = true;
   while (changed) {
     changed = false;
@@ -87,6 +87,13 @@ const trackChildren = (): void => {
       }
     }
   }
+  return found;
+};
+
+const rememberLiveDescendants = (
+  found: Readonly<Set<number>>,
+  alive: Readonly<Map<number, string>>
+): void => {
   for (const pid of found) {
     const started = alive.get(pid);
     if (typeof started === "string" && started.length > EMPTY_VALUE_LENGTH) {
@@ -94,8 +101,27 @@ const trackChildren = (): void => {
     }
   }
 };
+
+/* oxlint-disable node/no-sync -- trackChildren: Capture one process-table snapshot before pruning stale PID start times and terminating descendants. */
+const trackChildren = (): void => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+  const childPid = child?.pid;
+  if (!hasChildProcessId(childPid)) {
+    return;
+  }
+  const rows = parseProcessRows(
+    execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], {
+      encoding: "utf-8",
+    })
+  );
+  const alive = new Map(
+    rows.map((row: Readonly<(typeof rows)[number]>) => [row.pid, row.started])
+  );
+  pruneExitedDescendants(alive);
+  const found = findDescendants(childPid, rows);
+  rememberLiveDescendants(found, alive);
+};
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-statements */
 const terminate = (signal: NodeJS.Signals): void => {
   trackChildren();
   for (const pid of descendants.keys()) {

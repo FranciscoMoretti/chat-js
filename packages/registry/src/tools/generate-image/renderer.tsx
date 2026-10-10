@@ -1,24 +1,13 @@
 "use client";
-
-import { ImageOffIcon } from "lucide-react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import React, { useState } from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ImageActions, ImageModal } from "@/components/image-modal";
-/* oxlint-enable sort-imports */
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable sort-imports */
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; this import erases at runtime. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import React, { useState } from "react";
 import { generateImageInput, generateImageResult } from "./schemas";
-/* oxlint-enable sort-imports */
+import Image from "next/image";
+import { ImageOffIcon } from "lucide-react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 type GenerateImageTool = ToolRendererProps<
   typeof generateImageInput,
@@ -28,7 +17,6 @@ type GenerateImageTool = ToolRendererProps<
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -37,7 +25,9 @@ type GenerateImageTool = ToolRendererProps<
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GenerateImageView = ({
   tool,
-}: ReadonlyNativeSurface<{ tool: GenerateImageTool }>) => {
+}: ReadonlyNativeSurface<{
+  tool: GenerateImageTool;
+}>): React.JSX.Element | null => {
   const [dialogOpen, setDialogOpen] = useState(false);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from tool.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const imageUrl = tool.output?.imageUrl;
@@ -85,9 +75,11 @@ const GenerateImageView = ({
                   onClick={(): void => setDialogOpen(true)}
                   type="button"
                 >
-                  {/* oxlint-disable-next-line next/no-img-element -- Review debt #623: preserve provider URLs and the shared image-error fallback until Next/Image provider handling is verified. */}
-                  <img
+                  <Image
                     alt={output.prompt}
+                    loading="eager"
+                    unoptimized
+                    // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
                     className="h-auto w-full max-w-full"
                     height={512}
                     onError={handleImageError}
@@ -128,7 +120,6 @@ const GenerateImageView = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/only-export-components */
 

@@ -4,9 +4,10 @@ import { access, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+// oxlint-disable-next-line sort-imports -- Preserve node:path before ../../../registry/metadata while their runtime initialization order is still under site review.
 import { featureDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
+
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";

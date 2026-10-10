@@ -1,17 +1,13 @@
 import { expect, test } from "bun:test";
+import { installItems, listTools, readItem, registryConfig } from "./shadcn";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { installItems, listTools, readItem, registryConfig } from "./shadcn";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createConfigFixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
 const createConfigFixture = async (registry: unknown): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-metadata-"));

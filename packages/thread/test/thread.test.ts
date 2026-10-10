@@ -1,34 +1,29 @@
-import { describe, expect, test } from "bun:test";
-
-import type { UIMessage } from "ai";
-
-import { getMessageText } from "#thread-source/message-utils";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-/* oxlint-enable sort-imports */
-import { Thread } from "#thread-source/thread";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import type { DataUIPart, UIMessage, UIMessageChunk } from "ai";
 import {
   MemoryThreadState,
   createThreadStateSnapshot,
 } from "#thread-source/thread-state";
-/* oxlint-enable sort-imports */
-import type { ThreadState } from "#thread-source/types";
+import { describe, expect, test } from "bun:test";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { RecordingThreadState } from "./support/recording-thread-state";
-/* oxlint-enable sort-imports */
-import { StateBackedThread } from "./support/state-backed-thread";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledTransport } from "./support/thread-controlled-transport";
-/* oxlint-enable sort-imports */
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import { RecordingThreadState } from "./support/recording-thread-state";
 import { ResumeTransport } from "./support/thread-resume-transport";
+import { StateBackedThread } from "./support/state-backed-thread";
+import { Thread } from "#thread-source/thread";
+import type { ThreadState } from "#thread-source/types";
+import { getMessageText } from "#thread-source/message-utils";
 
-const user = (id: string): UIMessage => ({
+const textMessage = (id: string, role: UIMessage["role"]): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
-  role: "user",
+  role,
 });
+
+const user = (id: string): UIMessage => textMessage(id, "user");
+
+const assistantMessage = (id: string): UIMessage =>
+  textMessage(id, "assistant");
 
 const assistantWithTool = (id: string): UIMessage => ({
   id,
@@ -52,6 +47,53 @@ const requireMessage = <TMessage extends ReadonlyMessageValue<UIMessage>>(
     throw new Error("Expected message to exist");
   }
   return message;
+};
+
+const requireFinishedMessages = (
+  messages: readonly ReadonlyMessageValue<UIMessage>[] | undefined
+): readonly ReadonlyMessageValue<UIMessage>[] => {
+  if (messages === globalThis.undefined) {
+    throw new Error("Expected onFinish to receive messages");
+  }
+  return messages;
+};
+
+type MaybeReconnectOptions = ResumeTransport["lastReconnectOptions"];
+type ReconnectOptions = NonNullable<MaybeReconnectOptions>;
+
+const requireReconnectOptions = (
+  options: MaybeReconnectOptions
+): ReconnectOptions => {
+  if (options === globalThis.undefined) {
+    throw new Error("Expected reconnect options to be recorded");
+  }
+  return options;
+};
+
+type TestRequest = Readonly<{
+  abortSignal: Readonly<Pick<AbortSignal, "aborted">> | undefined;
+  options: ControlledTransport["requests"][number]["options"];
+}>;
+
+const requireRequest = (
+  requests: readonly TestRequest[],
+  requestIndex: number
+): TestRequest => {
+  const request = requests[requestIndex];
+  if (request === globalThis.undefined) {
+    throw new Error(`Expected transport request ${requestIndex} to exist`);
+  }
+  return request;
+};
+
+const requireAbortSignal = (
+  request: TestRequest
+): Readonly<Pick<AbortSignal, "aborted">> => {
+  const { abortSignal } = request;
+  if (abortSignal === globalThis.undefined) {
+    throw new Error("Expected transport request to include an abort signal");
+  }
+  return abortSignal;
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitFor's awaited sequencing and rejected-Promise behavior. */
@@ -78,7 +120,6 @@ const waitFor = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 describe("Thread", (): void => {
   test("creates a complete initial snapshot for custom state adapters", (): void => {
     const snapshot = createThreadStateSnapshot({
@@ -91,8 +132,7 @@ describe("Thread", (): void => {
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from snapshot.messagesById["user-1"]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(snapshot.messagesById["user-1"]?.id).toBe("user-1");
+    expect(requireMessage(snapshot.messagesById["user-1"]).id).toBe("user-1");
     expect(snapshot.parentById["user-1"]).toBeNull();
     expect(snapshot.rootIds).toEqual(["user-1"]);
     expect(snapshot.runs).toEqual([]);
@@ -188,23 +228,25 @@ describe("Thread", (): void => {
         .getSnapshot()
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["user-1"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from run.getSnapshot(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(run.getSnapshot()?.status).toBe("submitted");
+    expect(run.getSnapshot()).toMatchObject({ status: "submitted" });
     transport.emitText(0, "server-assistant", "claimed");
     await run.finished;
     expect(run.id).toBe(runId);
     expect(
       getMessageText(requireMessage(chat.getMessage("server-assistant")))
     ).toBe("claimed");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from chat.getSnapshot(...).nodes.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const snapshotMessage = chat
+    const snapshotNode = chat
       .getSnapshot()
       .nodes.find(
         ({
           message,
         }: Readonly<{ message: Readonly<Pick<UIMessage, "id">> }>): boolean =>
           message.id === "server-assistant"
-      )?.message;
+      );
+    if (snapshotNode === globalThis.undefined) {
+      throw new Error("Expected the streamed message in the snapshot");
+    }
+    const snapshotMessage = snapshotNode.message;
     expect(getMessageText(requireMessage(snapshotMessage))).toBe("claimed");
   });
   /* oxlint-enable oxc/no-async-await */
@@ -231,8 +273,9 @@ describe("Thread", (): void => {
     await run.finished;
 
     expect(run.id).toBe("run-1");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("client-response")?.id).toBe("client-response");
+    expect(requireMessage(chat.getMessage("client-response")).id).toBe(
+      "client-response"
+    );
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -250,11 +293,8 @@ describe("Thread", (): void => {
 
     transport.emitText(0, "response-1", "complete");
     await run.finished;
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("context-1")?.role).toBe("system");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getParent(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getParent("response-1")?.id).toBe("context-1");
+    expect(requireMessage(chat.getMessage("context-1")).role).toBe("system");
+    expect(requireMessage(chat.getParent("response-1")).id).toBe("context-1");
   });
   /* oxlint-enable oxc/no-async-await */
   test("rejects a bare run from an assistant before transport", (): void => {
@@ -285,19 +325,18 @@ describe("Thread", (): void => {
       role: "assistant",
     });
     await waitFor((): boolean => transport.requests.length === 1);
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.trigger).toBe("submit-message");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.messageId).toBeUndefined();
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "submit-message"
+    );
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      transport.requests[0]?.options.messages.map(
+      requireRequest(transport.requests, 0).options.messageId
+    ).toBeUndefined();
+    expect(
+      requireRequest(transport.requests, 0).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1", "assistant-input"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getParent(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getParent("assistant-input")?.id).toBe("user-1");
+    expect(requireMessage(chat.getParent("assistant-input")).id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("assistant-input");
 
     transport.emitText(0, "assistant-input", "continued");
@@ -316,11 +355,7 @@ describe("Thread", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues the selected assistant without creating a sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistant = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-1"),
-      role: "assistant" as const,
-    };
+    const assistant = assistantMessage("assistant-1");
     const chat = new Thread({
       messages: [user("user-1"), assistant],
       transport,
@@ -328,11 +363,12 @@ describe("Thread", (): void => {
 
     const sending = chat.sendMessage();
     await waitFor((): boolean => transport.requests.length === 1);
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.trigger).toBe("submit-message");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "submit-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      "assistant-1"
+    );
     transport.emitText(0, "assistant-1", " continued");
     await sending;
 
@@ -348,22 +384,19 @@ describe("Thread", (): void => {
   /* oxlint-enable oxc/no-async-await */
   test("keeps hidden branches when reconciling the selected path", (): void => {
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
     });
     chat.addMessage(user("user-2"), "assistant-1");
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-2") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    chat.addMessage({ ...user("assistant-2"), role: "assistant" }, "user-2");
+    chat.addMessage(assistantMessage("assistant-2"), "user-2");
 
     chat.setMessages([
       user("user-1"),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      { ...user("assistant-1"), role: "assistant" },
+      assistantMessage("assistant-1"),
       user("user-3"),
     ]);
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-2")?.id).toBe("assistant-2");
+    expect(requireMessage(chat.getMessage("assistant-2")).id).toBe(
+      "assistant-2"
+    );
     expect(
       chat
         .getSnapshot()
@@ -381,9 +414,9 @@ describe("Thread", (): void => {
     chat.setMessages([user("user-1")]);
     transport.emitText(0, "assistant-1", "primary");
     await primary.finished;
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-1")?.id).toBe("assistant-1");
+    expect(requireMessage(chat.getMessage("assistant-1")).id).toBe(
+      "assistant-1"
+    );
     expect(chat.getSnapshot().cursorId).toBe("user-1");
   });
   /* oxlint-enable oxc/no-async-await */
@@ -412,8 +445,7 @@ describe("Thread", (): void => {
     await run.finished;
 
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from finishedMessages; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      finishedMessages?.map(
+      requireFinishedMessages(finishedMessages).map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1", "assistant-1"]);
@@ -448,8 +480,7 @@ describe("Thread", (): void => {
         nodes: [
           { message: user("user-active"), parentId: null },
           {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-ready") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            message: { ...user("assistant-ready"), role: "assistant" },
+            message: assistantMessage("assistant-ready"),
             parentId: null,
           },
         ],
@@ -462,7 +493,7 @@ describe("Thread", (): void => {
     const runCount = chat.getSnapshot().runs.length;
 
     expect(
-      chat.sendMessage(undefined, {
+      chat.sendMessage(globalThis.undefined, {
         tree: { follow: false, from: "assistant-ready" },
       })
     ).rejects.toThrow("max active runs");
@@ -486,10 +517,12 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 2);
 
     await first.stop();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[0].abortSignal; read abortSignal from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[1].abortSignal; read abortSignal from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeFalse();
     expect(chat.getChildren("user-1")).toEqual([]);
     transport.emitText(1, "assistant-2", "complete");
     await second.finished;
@@ -522,10 +555,12 @@ describe("Thread", (): void => {
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["user-1", "assistant-2"]);
     await chat.stop();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[1].abortSignal; read abortSignal from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeTrue();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[0].abortSignal; read abortSignal from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeFalse();
 
     transport.finish(0);
     await Promise.all([first.finished, second.finished]);
@@ -551,11 +586,12 @@ describe("Thread", (): void => {
 
     expect((): void => chat.setActiveRun(second.id)).toThrow();
     await chat.stop();
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[0].abortSignal; read abortSignal from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from transport.requests[1].abortSignal; read abortSignal from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeFalse();
     transport.finish(1);
     await Promise.all([first.finished, second.finished]);
   });
@@ -591,15 +627,18 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 1);
     transport.fail(0, new Error("failed"));
     await run.finished;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from run.getSnapshot(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const error = run.getSnapshot()?.error;
+    const snapshot = run.getSnapshot();
+    if (snapshot === globalThis.undefined) {
+      throw new Error("Expected run snapshot to exist");
+    }
+    const { error } = snapshot;
 
     await chat.resumeRun(run.id);
 
     expect(run.getSnapshot()).toMatchObject({ error, status: "error" });
     chat.clearError();
     expect(run.getSnapshot()).toMatchObject({
-      error: undefined,
+      error: globalThis.undefined,
       status: "ready",
     });
   });
@@ -729,6 +768,52 @@ describe("Thread", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  test("forwards resume data identity and nested provider metadata", async (): Promise<void> => {
+    const transport = new ControlledTransport();
+    const received: unknown[] = [];
+    const providerMetadata = { provider: { tokens: ["one", { value: 2 }] } };
+    const metadata = { model: "incoming", nested: ["retained"] };
+    const dataChunk: UIMessageChunk = {
+      data: providerMetadata,
+      transient: true,
+      type: "data-reference",
+    };
+    const chat = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          metadata: { model: "saved" },
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
+        },
+      ],
+      onData: (part: Readonly<DataUIPart<Record<string, unknown>>>): void => {
+        received.push(part);
+      },
+      transport,
+    });
+    const reconnect = transport.prepareReconnect();
+    const resumed = chat.resumeStream();
+    reconnect.enqueue({ messageMetadata: metadata, type: "start" });
+    reconnect.enqueue(dataChunk);
+    reconnect.enqueue({ id: "text", providerMetadata, type: "text-start" });
+    reconnect.enqueue({ delta: "replayed", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
+    reconnect.close();
+    await resumed;
+
+    const message = requireMessage(chat.getMessage("assistant-1"));
+    expect(received).toHaveLength(1);
+    expect(received[0]).toBe(dataChunk);
+    expect(message.metadata).toEqual(metadata);
+    expect(message.parts).toEqual([
+      { providerMetadata, state: "done", text: "replayed", type: "text" },
+    ]);
+    expect(chat.getChildren("user-1")).toHaveLength(1);
+  });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("updates restored tools after a continuation without duplicating the prefix", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -765,18 +850,17 @@ describe("Thread", (): void => {
     });
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
-    expect(
-      message.parts.filter(
-        (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
-          part.type === "dynamic-tool"
-      )
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-    ).toEqual([
-      expect.objectContaining({
+    const toolParts = message.parts.filter(
+      (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
+        part.type === "dynamic-tool"
+    );
+    expect(toolParts).toHaveLength(1);
+    expect(toolParts).toMatchObject([
+      {
         output: "found",
         state: "output-available",
         toolCallId: "restored-tool",
-      }),
+      },
     ]);
   });
   /* oxlint-enable oxc/no-async-await */
@@ -789,8 +873,7 @@ describe("Thread", (): void => {
     transport.fail(0, new Error("failed"));
     await failed.finished;
     expect(chat.getSnapshot().treeStatus).toBe("ready");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from failed.getSnapshot(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(failed.getSnapshot()?.status).toBe("error");
+    expect(failed.getSnapshot()).toMatchObject({ status: "error" });
 
     const successful = await chat.startRun({ from: "user-1" });
     await waitFor((): boolean => transport.requests.length === 2);
@@ -800,8 +883,7 @@ describe("Thread", (): void => {
 
     expect(chat.getSnapshot().status).toBe("ready");
     expect(chat.getSnapshot().treeStatus).toBe("ready");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from failed.getSnapshot(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(failed.getSnapshot()?.status).toBe("error");
+    expect(failed.getSnapshot()).toMatchObject({ status: "error" });
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -839,13 +921,14 @@ describe("Thread", (): void => {
 
     const regeneration = chat.regenerate({ messageId: "assistant-1" });
     await waitFor((): boolean => transport.requests.length === 2);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.options.trigger).toBe("regenerate-message");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    expect(requireRequest(transport.requests, 1).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 1).options.messageId).toBe(
+      "assistant-1"
+    );
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      transport.requests[1]?.options.messages.map(
+      requireRequest(transport.requests, 1).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1"]);
@@ -864,19 +947,19 @@ describe("Thread", (): void => {
   test("regenerates a root assistant as a root sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [{ ...user("assistant-1"), role: "assistant" }],
+      messages: [assistantMessage("assistant-1")],
       transport,
     });
 
     const regeneration = chat.regenerate({ messageId: "assistant-1" });
     await waitFor((): boolean => transport.requests.length === 1);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.messages).toEqual([]);
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      "assistant-1"
+    );
+    expect(requireRequest(transport.requests, 0).options.messages).toEqual([]);
 
     transport.emitText(0, "assistant-2", "second");
     await regeneration;
@@ -893,8 +976,7 @@ describe("Thread", (): void => {
   test("does not follow regeneration after navigating to another branch", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
     chat.addMessage(user("other-root"), null);
@@ -904,9 +986,7 @@ describe("Thread", (): void => {
     chat.setCursor("other-root");
     transport.emitText(0, "assistant-2", "second");
     await regeneration;
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getParent(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getParent("assistant-2")?.id).toBe("user-1");
+    expect(requireMessage(chat.getParent("assistant-2")).id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("other-root");
     expect(
       chat
@@ -918,8 +998,7 @@ describe("Thread", (): void => {
   test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
 
@@ -933,16 +1012,8 @@ describe("Thread", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("regenerates an assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistantParent = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       messages: [assistantParent, assistantChild],
       transport,
@@ -950,13 +1021,14 @@ describe("Thread", (): void => {
 
     const regeneration = chat.regenerate({ messageId: assistantChild.id });
     await waitFor((): boolean => transport.requests.length === 1);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[0]?.options.messageId).toBe(assistantChild.id);
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      assistantChild.id
+    );
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      transport.requests[0]?.options.messages.map(
+      requireRequest(transport.requests, 0).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual([assistantParent.id]);
@@ -975,16 +1047,8 @@ describe("Thread", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
   test("restores assistant-to-assistant edges as tree data", (): void => {
-    const assistantParent = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       initialTree: {
         cursorId: assistantChild.id,
@@ -995,9 +1059,9 @@ describe("Thread", (): void => {
         version: 1,
       },
     });
-
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chat.getParent(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getParent(assistantChild.id)?.id).toBe(assistantParent.id);
+    expect(requireMessage(chat.getParent(assistantChild.id)).id).toBe(
+      assistantParent.id
+    );
     expect(
       chat
         .getSnapshot()
@@ -1039,13 +1103,20 @@ describe("Thread", (): void => {
         type: "tool-approval-request",
       });
     }
-    await waitFor(
-      (): boolean =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        chat.getMessage("assistant-a")?.parts.length === 1 &&
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        chat.getMessage("assistant-b")?.parts.length === 1
-    );
+    await waitFor((): boolean => {
+      const firstMessage = chat.getMessage("assistant-a");
+      if (
+        firstMessage === globalThis.undefined ||
+        firstMessage.parts.length !== 1
+      ) {
+        return false;
+      }
+      const secondMessage = chat.getMessage("assistant-b");
+      return (
+        secondMessage !== globalThis.undefined &&
+        secondMessage.parts.length === 1
+      );
+    });
     transport.finish(0);
     transport.finish(1);
     await Promise.all([runA.finished, runB.finished]);
@@ -1060,28 +1131,28 @@ describe("Thread", (): void => {
       id: "approval-b",
     });
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-a")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({ output: "A only", toolCallId: "tool-a" })
+    const firstParts = requireMessage(chat.getMessage("assistant-a")).parts;
+    const secondParts = requireMessage(chat.getMessage("assistant-b")).parts;
+    const firstTool = firstParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-a"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-b")?.parts).not.toContainEqual(
-      expect.objectContaining({ output: "A only" })
+    expect(firstTool).toMatchObject({ output: "A only", toolCallId: "tool-a" });
+    expect(
+      secondParts.some(
+        (part: Readonly<{ type: string; output?: unknown }>): boolean =>
+          part.output === "A only"
+      )
+    ).toBe(false);
+    const secondTool = secondParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-b"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-b")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-b",
-        }),
-        state: "approval-responded",
-        toolCallId: "tool-b",
-      })
-    );
+    expect(secondTool).toMatchObject({
+      approval: { approved: true, id: "approval-b" },
+      state: "approval-responded",
+      toolCallId: "tool-b",
+    });
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -1119,19 +1190,17 @@ describe("Thread", (): void => {
       toolCallId: "tool-1",
     });
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from restored.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(restored.getMessage("assistant-1")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-1",
-        }),
-        output: "restored output",
-        toolCallId: "tool-1",
-      })
+    const restoredTool = requireMessage(
+      restored.getMessage("assistant-1")
+    ).parts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-1"
     );
+    expect(restoredTool).toMatchObject({
+      approval: { approved: true, id: "approval-1" },
+      output: "restored output",
+      toolCallId: "tool-1",
+    });
   });
   /* oxlint-enable oxc/no-async-await */
   test("rejects missing restored tool and approval ownership", (): void => {
@@ -1248,8 +1317,9 @@ describe("Thread", (): void => {
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
       "resumed"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from transport.lastReconnectOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.lastReconnectOptions?.body).toBeUndefined();
+    expect(
+      requireReconnectOptions(transport.lastReconnectOptions).body
+    ).toBeUndefined();
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -1320,7 +1390,6 @@ describe("Thread", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable unicorn/no-null */

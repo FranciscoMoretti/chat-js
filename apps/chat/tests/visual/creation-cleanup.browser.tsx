@@ -47,13 +47,17 @@ vi.mock("@/components/eve/eve-initial-message", () => ({
   EveInitialMessage: (): React.JSX.Element => <p>Creating conversation…</p>,
 }));
 vi.mock("@/components/eve/eve-composer", () => ({
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native composer props contain React dispatchers and mutable upload collections; this fixture invokes their callbacks without mutation.
   EveComposer: ({
     disabled,
     draft,
     onDraftChange,
     onSubmit,
-  }: Readonly<ComponentProps<typeof EveComposer>>): React.JSX.Element => (
+  }: Readonly<
+    Pick<
+      ComponentProps<typeof EveComposer>,
+      "disabled" | "draft" | "onDraftChange" | "onSubmit"
+    >
+  >): React.JSX.Element => (
     <section>
       <input
         aria-label="Message"

@@ -3,21 +3,16 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { withMcpOAuthRefreshLock } from "./mcp-oauth-lock";
 
 const mocks = vi.hoisted(() => ({ begin: vi.fn(), released: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("postgres")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("postgres", () => ({
-  default: () => ({ begin: mocks.begin }),
+  default: (): { begin: typeof mocks.begin } => ({ begin: mocks.begin }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: {} }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/connection")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/db/connection", () => ({
-  databaseConnection: () => ({ options: {}, url: "postgres://test" }),
+  databaseConnection: (): {
+    options: Record<string, never>;
+    url: string;
+  } => ({ options: {}, url: "postgres://test" }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -69,7 +64,7 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("cancellation while acquiring the lock cancels the query and never starts refresh  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("cancellation while acquiring the lock cancels the query and never starts refresh  uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("cancellation while acquiring the lock cancels the query and never starts refresh work") expects both lock-acquisition queries to run before cancellation and refresh to remain unstarted.
  */
 it("cancellation while acquiring the lock cancels the query and never starts refresh work", async () => {
   const lock = Promise.withResolvers<unknown[]>();

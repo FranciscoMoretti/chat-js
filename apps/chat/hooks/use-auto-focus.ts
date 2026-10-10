@@ -4,9 +4,8 @@ import type { LexicalEditor } from "lexical";
 import { useEffect } from "react";
 
 const FALLBACK_FOCUS_TIMEOUT_MS = 120;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- isTypingSurface: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including element: Element | null). */
 
-const isTypingSurface = (element: Element | null): boolean =>
+const isTypingSurface = (element: unknown): boolean =>
   (element instanceof HTMLInputElement &&
     !element.readOnly &&
     !element.disabled &&
@@ -16,15 +15,15 @@ const isTypingSurface = (element: Element | null): boolean =>
     !element.disabled) ||
   (element instanceof HTMLElement && element.isContentEditable);
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useAutoFocus); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- useAutoFocus: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useAutoFocus = ({
   autoFocus,
   editor,
 }: {
-  autoFocus: boolean;
-  editor: LexicalEditor | null;
+  readonly autoFocus: boolean;
+  readonly editor: Readonly<Pick<LexicalEditor, "focus">> | null;
 }): void => {
   useEffect(() => {
     if (!(autoFocus && editor)) {
@@ -62,4 +61,4 @@ export const useAutoFocus = ({
   }, [autoFocus, editor]);
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

@@ -21,6 +21,7 @@
     "src/**/*.ts",
     "scripts/**/*.ts",
     "scripts/**/*.js",
+    "scripts/**/*.cjs",
     "../chat/next-env.d.ts",
     "../chat/electron.d.ts"
   ],

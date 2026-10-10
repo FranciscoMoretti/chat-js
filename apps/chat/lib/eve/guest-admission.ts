@@ -2,42 +2,26 @@
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { isIP } from "node:net";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-import { isIP } from "node:net";
-
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { assertEveFilesOwned } from "@/lib/db/eve-files";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   commitEveGuestMessage,
   readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
 } from "@/lib/db/eve-guests";
-/* oxlint-enable sort-imports */
-import { getEveConversation } from "@/lib/db/eve-queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-/* oxlint-enable sort-imports */
-
-import type { createConversationInput } from "./contracts";
-import { eveMessageFileKeys } from "./file-references";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { eveGuestIpHash } from "./guest-credential";
-/* oxlint-enable sort-imports */
-import { loadEveModelDefinition } from "./model-selection";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "./principal";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
+import type { createConversationInput } from "./contracts";
+import { createHash } from "node:crypto";
+import { env } from "@/lib/env";
+import { eveGuestIpHash } from "./guest-credential";
+import { eveMessageFileKeys } from "./file-references";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { isIP } from "node:net";
+import { loadEveModelDefinition } from "./model-selection";
+import { z } from "zod";
+
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
@@ -56,7 +40,6 @@ const HTTP_TOO_MANY_REQUESTS = 429;
 
 const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 
-/* oxlint-disable no-undefined -- no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Hashes a trusted canonical client address; development uses the local address.
  * @param {ReadonlyNativeSurface<Request>} request Request whose configured proxy header supplies the client address outside development.
@@ -75,11 +58,11 @@ const guestRequestIpHash = (
       ? "x-vercel-forwarded-for"
       : env.TRUSTED_CLIENT_IP_HEADER;
   const address =
-    // oxlint-disable-next-line no-ternary -- Preserve the absent-header result without changing the undefined return contract.
+    // oxlint-disable-next-line no-ternary -- Select the configured header lazily; the empty fallback reaches the same unavailable-address error below.
     typeof header === "string" && header !== ""
-      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the missing-header result while retaining the existing trimmed value.
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- A missing trusted header skips trim and is rejected by the address guard below.
         request.headers.get(header)?.trim()
-      : undefined;
+      : "";
   if (
     typeof address !== "string" ||
     address === "" ||
@@ -117,12 +100,10 @@ const guestRequestIpHash = (
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateGuestCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): validateGuestCreation intentionally keeps the existing falsy-value behavior of input.projectId; source.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+max-statements (#512): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Checks guest policy, source ownership, and model/file availability before quota reservation.
  * @param {ReadonlyNativeSurface<Request>} request Request used to resolve the trusted client-address hash.
@@ -143,7 +124,7 @@ const validateGuestCreation = async (
   input: ReadonlyGuestCreationInput
 ): Promise<string | Response> => {
   if (
-    input.projectId ||
+    (typeof input.projectId === "string" && input.projectId !== "") ||
     !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
       (model) => model === input.modelId
     ) ||
@@ -165,8 +146,12 @@ const validateGuestCreation = async (
       principal.ownerId,
       input.fork.conversationId
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (source?.state !== "bound" || !source.sessionId) {
+    if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      source?.state !== "bound" ||
+      typeof source.sessionId !== "string" ||
+      source.sessionId === ""
+    ) {
       return Response.json(
         { creationRejected: true, error: "Source conversation not found." },
         { status: 404 }
@@ -201,11 +186,10 @@ const validateGuestCreation = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): admitGuestCreation intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable max-lines-per-function, max-statements --max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Admits a creation under its native operation identity, preserving quota on matching replays.
  * @param {ReadonlyNativeSurface<Request>} request Request used to resolve trusted admission evidence for a new reservation.
@@ -238,7 +222,7 @@ const admitGuestCreation = async (
     principal.ownerId,
     input.operationId
   );
-  if (existing && existing.state !== "released") {
+  if (typeof existing === "object" && existing.state !== "released") {
     if (existing.requestHash !== requestHash) {
       return Response.json(
         { error: "This operation has different content." },
@@ -289,7 +273,7 @@ const admitGuestCreation = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements */
 
 /* oxlint-disable max-params -- max-params (#511): settleGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 // oxlint-disable-next-line typescript/consistent-return -- #580: settleGuestCreation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.

@@ -1,12 +1,9 @@
-import type chatConfig from "@/chat.config";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
 } from "./gateways/registry";
-/* oxlint-enable sort-imports */
+import type chatConfig from "@/chat.config";
 
 /** The gateway type actively selected in chat.config.ts */
 type ActiveGatewayType = typeof chatConfig extends {

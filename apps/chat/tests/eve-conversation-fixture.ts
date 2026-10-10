@@ -12,22 +12,20 @@ import { eveChat, eveConversation } from "../lib/db/schema";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
-type ConversationFixture = Omit<
-  typeof eveConversation.$inferInsert,
-  "chatId" | "updatedAt"
+type ConversationFixture = Readonly<
+  Omit<typeof eveConversation.$inferInsert, "chatId" | "updatedAt">
 > & {
-  chatId?: string;
-  isPinned?: boolean;
-  title?: string;
-  updatedAt?: Date | SQL;
+  readonly chatId?: string;
+  readonly isPinned?: boolean;
+  readonly title?: string;
+  readonly updatedAt?: Date | SQL;
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (insertEveConversationFixtures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve insertEveConversationFixtures's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/explicit-function-return-type (#560): Keep insertEveConversationFixtures's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep insertEveConversationFixtures's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): insertEveConversationFixtures accepts input: ConversationFixture | ConversationFixture[]; tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): insertEveConversationFixtures preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): insertEveConversationFixtures intentionally keeps the existing falsy-value behavior of conversation.parentConversationId; title; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -38,8 +36,10 @@ type ConversationFixture = Omit<
  * @returns {Promise<(typeof eveConversation.$inferSelect)[]>} The inserted conversation rows in input order.
  */
 export const insertEveConversationFixtures = (
-  input: ConversationFixture | ConversationFixture[]
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward original native SQL/Date values to Drizzle insert and preserve the mutable array discriminator of Array.isArray; recursive SQL projection loses private receiver members (TS2769).
+  input: Readonly<ConversationFixture> | Readonly<ConversationFixture>[]
 ) =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This transaction callback writes rows through the original Drizzle transaction with insert/values; preserve its native writer contract.
   db.transaction(async (tx) => {
     const inserted: (typeof eveConversation.$inferSelect)[] = [];
     // oxlint-disable-next-line no-ternary -- Keep loop iterable as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -87,4 +87,4 @@ export const insertEveConversationFixtures = (
   });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

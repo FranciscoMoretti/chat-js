@@ -14,8 +14,8 @@ import { ThreadRunState } from "./thread-run-state";
 const FIRST_PARAMETER_INDEX = 0;
 const LAST_MESSAGE_INDEX = -1;
 
-// oxlint-disable-next-line eslint/no-undefined -- Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
-const NO_VALUE = undefined;
+// Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
+const NO_VALUE = globalThis.undefined;
 // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream returns null when the server has no stream; the ready transition preserves an existing run error for that result.
 const NO_RECONNECT_STREAM = null;
 
@@ -23,6 +23,9 @@ type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
   readonly headers?: Readonly<Record<string, string>> | Readonly<Headers>;
   readonly body?: Readonly<object>;
 };
+
+// Protect every chunk field while forwarding the original SDK chunk identity.
+type ReadonlyResumeChunk = ReadonlyMessageValue<UIMessageChunk>;
 
 type FinishEventReader<TMessage extends UIMessage> = Readonly<
   Omit<
@@ -133,15 +136,15 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     let first = true;
     return new TransformStream<UIMessageChunk, UIMessageChunk>({
       transform(
-        chunk: ReadonlyMessageValue<UIMessageChunk>,
+        chunk: ReadonlyResumeChunk,
         controller: Readonly<TransformStreamDefaultController<UIMessageChunk>>
       ): void {
         let chunkToEnqueue = chunk;
         if (
           first &&
           chunk.type === "start" &&
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           chunkToEnqueue = {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chunk own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -155,8 +158,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type !== "start" &&
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           savePrefix(structuredClone(lastMessage));
           controller.enqueue({

@@ -18,13 +18,11 @@ const localEveSandboxOwnerSchema = z.strictObject({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalEveSandboxInventory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined --
-init-declarations (#507): readLocalEveSandboxInventory assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers --
 max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
@@ -114,12 +112,13 @@ const readLocalEveSandboxInventory = async (
       }
       throw error;
     });
-    let parsed: unknown;
+    let parsed: unknown = raw;
     try {
-      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      parsed = raw === undefined ? undefined : JSON.parse(raw);
+      if (typeof raw === "string") {
+        parsed = JSON.parse(raw);
+      }
     } catch {
-      parsed = undefined;
+      // Malformed JSON remains a string and fails the owner object schema below.
     }
     const owner = localEveSandboxOwnerSchema.safeParse(parsed);
     if (!owner.success || owner.data.sessionKey !== entry.name) {
@@ -134,6 +133,6 @@ const readLocalEveSandboxInventory = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (localEveSandboxOwnerSchema, readLocalEveSandboxInventory); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers */
 export { localEveSandboxOwnerSchema, readLocalEveSandboxInventory };
 /* oxlint-enable import/no-named-export */

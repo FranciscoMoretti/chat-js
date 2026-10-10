@@ -1,23 +1,17 @@
-import React from "react";
-import type { ReactNode } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./presentation.css";
-/* oxlint-enable sort-imports */
+import React from "react";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Caption: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Caption = ({
   children,
   opacity,
 }: {
-  children: ReactNode;
-  opacity: number;
+  readonly children: string;
+  readonly opacity: number;
 }): React.JSX.Element => (
   <div className="captionPause" style={{ opacity }}>
     <span>{children}</span>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp -- Pointer: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Pointer: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */

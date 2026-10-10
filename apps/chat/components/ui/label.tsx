@@ -1,23 +1,21 @@
 "use client";
 
-import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Label uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Label = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<typeof LabelPrimitiveRoot>
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => (
   <LabelPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- LabelPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.

@@ -1,35 +1,15 @@
 import type { ChatStatus, UIMessage } from "ai";
-
-import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ThreadConcurrency, ThreadRun } from "./types";
-/* oxlint-enable sort-imports */
+import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
+import { readRunSnapshots, toRunSnapshot } from "./run-snapshots";
+import type { ReadonlyMessageValue } from "./message-utils";
+import { RunMessageOwnership } from "./run-message-ownership";
+import type { RunSnapshotReader } from "./run-snapshots";
 
 const SIBLING_ORDER_STEP = 1;
 
-type ReadonlyOwnershipValue<TValue> = TValue extends readonly unknown[]
-  ? readonly ReadonlyOwnershipValue<TValue[number]>[]
-  : TValue extends object
-    ? { readonly [TKey in keyof TValue]: ReadonlyOwnershipValue<TValue[TKey]> }
-    : TValue;
-
-type OwnershipPart = ReadonlyOwnershipValue<UIMessage["parts"][number]>;
-type OwnershipToolPart = Extract<
-  OwnershipPart,
-  { readonly type: `tool-${string}` | "dynamic-tool" }
->;
-
-const isOwnershipToolPart = (part: OwnershipPart): part is OwnershipToolPart =>
-  part.type.startsWith("tool-") || part.type === "dynamic-tool";
-
 interface RunIdentityReader {
   readonly spec: Readonly<ThreadRunSpec>;
-  readonly status: ChatStatus;
-}
-
-interface RunSnapshotReader {
-  readonly error: Readonly<Error> | undefined;
-  readonly spec: Readonly<Pick<ThreadRunSpec, "id">>;
   readonly status: ChatStatus;
 }
 
@@ -41,12 +21,11 @@ interface RunRecord<TMessage extends UIMessage> {
   status: ChatStatus;
 }
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class RunRegistry<TMessage extends UIMessage> {
   readonly #concurrency: Required<ThreadConcurrency>;
-  readonly #runIdByApprovalId = new Map<string, string>();
-  readonly #runIdByToolCallId = new Map<string, string>();
+  readonly #ownership = new RunMessageOwnership();
   readonly #runsById = new Map<string, RunRecord<TMessage>>();
+  // oxlint-disable-next-line unicorn/no-null -- Preserve the serialized and selection contract: null means no selected run.
   #selectedRunId: string | null = null;
 
   public constructor(concurrency: Readonly<ThreadConcurrency> = {}) {
@@ -80,9 +59,9 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public clear(): void {
+    // oxlint-disable-next-line unicorn/no-null -- Clear selection to the existing explicit null sentinel.
     this.#selectedRunId = null;
-    this.#runIdByApprovalId.clear();
-    this.#runIdByToolCallId.clear();
+    this.#ownership.clear();
     this.#runsById.clear();
   }
 
@@ -98,7 +77,7 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public findForApproval(approvalId: string): RunRecord<TMessage> | undefined {
-    const runId = this.#runIdByApprovalId.get(approvalId);
+    const runId = this.#ownership.getForApproval(approvalId);
 
     if (typeof runId === "string" && runId !== "") {
       return this.#runsById.get(runId);
@@ -126,7 +105,7 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public findForToolCall(toolCallId: string): RunRecord<TMessage> | undefined {
-    const runId = this.#runIdByToolCallId.get(toolCallId);
+    const runId = this.#ownership.getForToolCall(toolCallId);
 
     if (typeof runId === "string" && runId !== "") {
       return this.#runsById.get(runId);
@@ -178,28 +157,7 @@ class RunRegistry<TMessage extends UIMessage> {
     runs: ThreadRun[];
     status: "submitted" | "streaming" | "ready";
   } {
-    const runs = this.snapshots();
-    const activeRuns = runs.filter(
-      (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
-        run.status === "submitted" || run.status === "streaming"
-    );
-    let status: ChatStatus = "ready";
-    if (
-      activeRuns.some(
-        (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
-          run.status === "streaming"
-      )
-    ) {
-      status = "streaming";
-    } else if (
-      activeRuns.some(
-        (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
-          run.status === "submitted"
-      )
-    ) {
-      status = "submitted";
-    }
-    return { activeRuns, runs, status };
+    return readRunSnapshots(this);
   }
 
   public resolveSelected({
@@ -243,33 +201,13 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public indexMessageOwnership(
     runId: string,
-    message: { readonly parts: readonly OwnershipPart[] }
+    message: {
+      readonly parts: readonly ReadonlyMessageValue<
+        UIMessage["parts"][number]
+      >[];
+    }
   ): void {
-    const { approvalIds, toolCallIds } =
-      RunRegistry.collectMessageOwnership(message);
-
-    for (const toolCallId of toolCallIds) {
-      RunRegistry.assertOwnershipAvailable({
-        id: toolCallId,
-        label: "tool call",
-        owners: this.#runIdByToolCallId,
-        runId,
-      });
-    }
-    for (const approvalId of approvalIds) {
-      RunRegistry.assertOwnershipAvailable({
-        id: approvalId,
-        label: "tool approval",
-        owners: this.#runIdByApprovalId,
-        runId,
-      });
-    }
-    for (const toolCallId of toolCallIds) {
-      this.#runIdByToolCallId.set(toolCallId, runId);
-    }
-    for (const approvalId of approvalIds) {
-      this.#runIdByApprovalId.set(approvalId, runId);
-    }
+    this.#ownership.indexMessage(runId, message);
   }
 
   public isExplicitlySelected(runId: string): boolean {
@@ -277,13 +215,7 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public registerToolCall(runId: string, toolCallId: string): void {
-    RunRegistry.assertOwnershipAvailable({
-      id: toolCallId,
-      label: "tool call",
-      owners: this.#runIdByToolCallId,
-      runId,
-    });
-    this.#runIdByToolCallId.set(toolCallId, runId);
+    this.#ownership.registerToolCall(runId, toolCallId);
   }
 
   public require(runId: string): RunRecord<TMessage> {
@@ -336,67 +268,14 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public snapshots(): ThreadRun[] {
-    return this.values().map((run: RunSnapshotReader) =>
-      RunRegistry.toSnapshot(run)
-    );
-  }
-
-  public static toSnapshot(run: RunSnapshotReader): ThreadRun {
-    return {
-      error: run.error,
-      id: run.spec.id,
-      status: run.status,
-    };
+    return this.values().map((run: RunSnapshotReader) => toRunSnapshot(run));
   }
 
   public values(): RunRecord<TMessage>[] {
     return [...this.#runsById.values()];
   }
-
-  private static collectMessageOwnership(message: {
-    readonly parts: readonly OwnershipPart[];
-  }): { approvalIds: string[]; toolCallIds: string[] } {
-    const toolCallIds: string[] = [];
-    const approvalIds: string[] = [];
-    for (const part of message.parts) {
-      if (isOwnershipToolPart(part)) {
-        toolCallIds.push(part.toolCallId);
-        if (part.approval) {
-          approvalIds.push(part.approval.id);
-        }
-      }
-    }
-
-    return { approvalIds, toolCallIds };
-  }
-
-  private static assertOwnershipAvailable({
-    owners,
-    id,
-    runId,
-    label,
-  }: {
-    readonly owners: Readonly<Pick<ReadonlyMap<string, string>, "get">>;
-    readonly id: string;
-    readonly runId: string;
-    readonly label: string;
-  }): void {
-    const existingRunId = owners.get(id);
-    if (
-      typeof existingRunId === "string" &&
-      existingRunId !== "" &&
-      existingRunId !== runId
-    ) {
-      throw new Error(
-        `${label} ${id} is already owned by run ${existingRunId}`
-      );
-    }
-  }
 }
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (RunRegistry); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 
 export { RunRegistry };
 /* oxlint-enable import/no-named-export */

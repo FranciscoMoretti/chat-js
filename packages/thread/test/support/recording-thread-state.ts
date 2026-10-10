@@ -1,9 +1,7 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { MemoryThreadState } from "#thread-source/thread-state";
-/* oxlint-enable sort-imports */
+
 import type { ThreadState } from "#thread-source/types";
+import type { UIMessage } from "ai";
 
 const ZERO_COUNT = 0;
 const COUNT_INCREMENT = 1;

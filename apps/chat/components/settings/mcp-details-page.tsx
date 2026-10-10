@@ -1,3 +1,4 @@
+/* oxlint-disable import/max-dependencies -- This component composes its existing settings/query/UI modules plus a type-only readonly reader contract; splitting imports would introduce runtime indirection. */
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,11 +28,12 @@ import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Label } from "@/components/ui/label";
 /* oxlint-enable import/max-dependencies */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -71,19 +73,16 @@ const formatMcpError = (message: string): string => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DetailsSection = ({
   title,
   icon,
   items,
 }: {
-  title: string;
-  icon: React.ReactNode;
-  items: { name: string; key: string }[];
-}) => {
+  readonly title: string;
+  readonly icon: ReadonlyNativeSurface<React.ReactNode>;
+  readonly items: readonly { readonly name: string; readonly key: string }[];
+}): React.JSX.Element => {
   const count = items.length;
 
   return (
@@ -120,22 +119,17 @@ const DetailsSection = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- DiscoveryContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react-perf/jsx-no-new-array-as-prop -- This prop derives its entries from the current render; memoization would add an unproven identity contract. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DiscoveryContent = ({
   isLoading,
   showConnectButton,
@@ -147,20 +141,23 @@ const DiscoveryContent = ({
   showDiscovery,
   discovery,
 }: {
-  isLoading: boolean;
-  showConnectButton: boolean;
-  onConnect: () => void;
-  isIncompatible: boolean;
-  connectionError?: string;
-  discoveryError: { message: string } | null;
-  needsOAuth: boolean;
-  showDiscovery: boolean;
-  discovery: {
-    tools: { name: string }[];
-    resources: { name: string; uri: string }[];
-    prompts: { name: string }[];
+  readonly isLoading: boolean;
+  readonly showConnectButton: boolean;
+  readonly onConnect: () => void;
+  readonly isIncompatible: boolean;
+  readonly connectionError?: string;
+  readonly discoveryError: { readonly message: string } | null;
+  readonly needsOAuth: boolean;
+  readonly showDiscovery: boolean;
+  readonly discovery: {
+    readonly tools: readonly { readonly name: string }[];
+    readonly resources: readonly {
+      readonly name: string;
+      readonly uri: string;
+    }[];
+    readonly prompts: readonly { readonly name: string }[];
   } | null;
-}) => {
+}): React.JSX.Element | null => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -273,14 +270,12 @@ const DiscoveryContent = ({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpDetailsPage); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- McpDetailsPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
@@ -295,7 +290,6 @@ const DiscoveryContent = ({
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const McpDetailsPage = ({
   connectorId,
 }: {
@@ -321,7 +315,8 @@ export const McpDetailsPage = ({
     () =>
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from connectors; preserve one receiver evaluation, skipped accesses and the existing null fallback.
       connectors?.find(
-        (candidateConnector): boolean => candidateConnector.id === connectorId
+        (candidateConnector: { readonly id: string }): boolean =>
+          candidateConnector.id === connectorId
       ) ?? null,
     [connectors, connectorId]
   );
@@ -333,9 +328,10 @@ export const McpDetailsPage = ({
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _newData,
-        context: { prev: typeof connectors } | undefined
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Return the original typed cache snapshot to queryClient.setQueryData; its deep readonly array is rejected by the cache receiver (TS2345).
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
@@ -344,18 +340,27 @@ export const McpDetailsPage = ({
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
-          }
-          return old.map((candidateConnector) => {
-            if (candidateConnector.id === newData.id) {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-              return { ...candidateConnector, enabled: newData.enabled };
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
             }
-            return candidateConnector;
-          });
-        });
+            return old.map(
+              (
+                candidateConnector: ReadonlyNativeSurface<
+                  NonNullable<typeof connectors>[number]
+                >
+              ) => {
+                if (candidateConnector.id === newData.id) {
+                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                  return { ...candidateConnector, enabled: newData.enabled };
+                }
+                return candidateConnector;
+              }
+            );
+          }
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -380,9 +385,10 @@ export const McpDetailsPage = ({
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _data,
-        context: { prev: typeof connectors } | undefined
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Return the original typed cache snapshot to queryClient.setQueryData; its deep readonly array is rejected by the cache receiver (TS2345).
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
@@ -391,14 +397,18 @@ export const McpDetailsPage = ({
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
+            }
+            return old.filter(
+              (candidateConnector: { readonly id: string }): boolean =>
+                candidateConnector.id !== data.id
+            );
           }
-          return old.filter(
-            (candidateConnector): boolean => candidateConnector.id !== data.id
-          );
-        });
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -701,7 +711,6 @@ export const McpDetailsPage = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 

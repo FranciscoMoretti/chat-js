@@ -1,26 +1,19 @@
-import { tavily } from "@tavily/core";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { defineTool } from "eve/tools";
-/* oxlint-enable sort-imports */
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
-/* oxlint-enable sort-imports */
+import { tavily } from "@tavily/core";
+// oxlint-disable-next-line sort-imports -- Preserve Tavily → https-proxy-agent → debug initialization, which sets/deletes process.env.DEBUG and probes tty.isatty, before eve/tools installs its global definition-source-registry Map.
+import { defineTool } from "eve/tools";
 import { env } from "@/lib/env";
-import { executeWithResearchProgress } from "@/lib/eve/research-progress";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Keep createEnv/gatewayEnv validation before logger.ts constructs its Pino singleton and captures process.env.NODE_ENV.
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { executeWithResearchProgress } from "@/lib/eve/research-progress";
+// oxlint-disable-next-line sort-imports -- Keep EVE definition-source registry and env validation before search-presentation, which imports logger.ts and eagerly creates the Pino host logger; native Multiple-before-Single grouping would move it ahead of those initializers.
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
-/* oxlint-enable sort-imports */
-
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { webSearchInput } from "./schemas";
+import type { z } from "zod";
 
 const TAVILY_COST_CENTS = 5;
 const CENTS_PER_USD = 100;

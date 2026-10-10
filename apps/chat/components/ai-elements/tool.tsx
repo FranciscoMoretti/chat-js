@@ -1,7 +1,5 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -10,31 +8,35 @@ import {
   WrenchIcon,
   XCircleIcon,
 } from "lucide-react";
-/* oxlint-enable sort-imports */
-import type { ComponentProps, JSX as ReactJSX, ReactNode } from "react";
-import React, { isValidElement } from "react";
-
 import { Badge } from "@/components/ui/badge";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Badge initializes utils/UUID crypto.randomUUID capture before Collapsible initializes ReactDOM DevTools/checkDCE; preserve the original cold loader schedule. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 /* oxlint-enable sort-imports */
+import type { ComponentProps, JSX as ReactJSX, ReactNode } from "react";
+import React, { isValidElement } from "react";
+import { CodeBlock } from "./code-block";
+import type { ToolUIPart } from "ai";
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { CodeBlock } from "./code-block";
-/* oxlint-enable sort-imports */
+const TOOL_TITLE_SEGMENT_START_INDEX = 1;
+const JSON_INDENT_SPACES = 2;
 
 type ToolProps = ComponentProps<typeof Collapsible>;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Tool: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
-
 /* oxlint-disable react/forbid-component-props -- Collapsible accept the supplied styling props; preserve this composition's layout and appearance. */
-// oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
+const Tool = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ToolProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <Collapsible
     className={cn("not-prose mb-4 w-full rounded-md border", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Tool's Collapsible prop contract, preserving caller options, children and callbacks.
@@ -42,7 +44,6 @@ const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   />
 );
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface ToolHeaderProps {
   title?: string;
@@ -82,7 +83,7 @@ const getStatusBadge = (status: ToolUIPart["state"]): ReactJSX.Element => {
 };
 /* oxlint-enable react/forbid-component-props */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- ToolHeader is part of this compound component module. */
 
 /* oxlint-disable react/forbid-component-props -- CollapsibleTrigger, WrenchIcon, ChevronDownIcon accept the supplied styling props; preserve this composition's layout and appearance. */
 const ToolHeader = ({
@@ -92,7 +93,7 @@ const ToolHeader = ({
   state,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, title, type, state from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
-}: ToolHeaderProps): React.JSX.Element => (
+}: Readonly<ToolHeaderProps>): React.JSX.Element => (
   <CollapsibleTrigger
     className={cn(
       "flex w-full items-center justify-between gap-4 p-3",
@@ -104,7 +105,8 @@ const ToolHeader = ({
     <div className="flex items-center gap-2">
       <WrenchIcon className="text-muted-foreground size-4" />
       <span className="text-sm font-medium">
-        {title ?? type.split("-").slice(1).join("-")}
+        {title ??
+          type.split("-").slice(TOOL_TITLE_SEGMENT_START_INDEX).join("-")}
       </span>
       {getStatusBadge(state)}
     </div>
@@ -112,18 +114,20 @@ const ToolHeader = ({
   </CollapsibleTrigger>
 );
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
+/* oxlint-disable react/no-multi-comp -- ToolContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/forbid-component-props -- CollapsibleContent accept the supplied styling props; preserve this composition's layout and appearance. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
 const ToolContent = ({
   className,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolContentProps): React.JSX.Element => (
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   <CollapsibleContent
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
@@ -134,21 +138,23 @@ const ToolContent = ({
   />
 );
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type ToolInputProps = ComponentProps<"div"> & {
   input: ToolUIPart["input"];
 };
 /* oxlint-disable react/jsx-no-literals -- ToolInput renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ToolInput: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, input, ...props }: ToolInputProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, unicorn/no-null -- ToolInput belongs with its related tool components, and null remains a valid empty React render sentinel. */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
 const ToolInput = ({
   className,
   input,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, input from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolInputProps): React.JSX.Element => (
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   <div
     className={cn("space-y-2 overflow-hidden p-4", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ToolInput's native div attributes, preserving caller events and accessibility props.
@@ -158,20 +164,59 @@ const ToolInput = ({
       Parameters
     </h4>
     <div className="bg-muted/50 rounded-md">
-      <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
+      <CodeBlock
+        code={JSON.stringify(input, null, JSON_INDENT_SPACES)}
+        language="json"
+      />
     </div>
   </div>
 );
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 type ToolOutputProps = ComponentProps<"div"> & {
   output: ToolUIPart["output"];
   errorText: ToolUIPart["errorText"];
 };
 
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolOutput: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including errorText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, react/no-multi-comp, unicorn/no-null -- ToolOutput and its helpers preserve undefined as an absent optional output/error, null as a React empty-render value, and empty output or errorText as the existing fallback; they stay beside the related tool components. */
+const getToolOutputContent = (output: ToolOutputProps["output"]): ReactNode => {
+  const initialOutput =
+    // oxlint-disable-next-line no-ternary -- Preserve the native React element/bigint rendering branch and null empty-render sentinel.
+    isValidElement(output) || typeof output === "bigint" ? output : null;
 
+  if (
+    (typeof output === "object" && !isValidElement(output)) ||
+    typeof output === "boolean" ||
+    typeof output === "number"
+  ) {
+    return (
+      <CodeBlock
+        code={JSON.stringify(output, null, JSON_INDENT_SPACES)}
+        language="json"
+      />
+    );
+  }
+
+  if (typeof output === "string") {
+    // oxlint-disable-next-line no-ternary -- Keep code JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    return <CodeBlock code={output === "" ? '""' : output} language="json" />;
+  }
+
+  return <div>{initialOutput}</div>;
+};
+
+const getToolErrorText = (
+  errorText: ToolOutputProps["errorText"]
+): ReactNode => {
+  if (typeof errorText !== "string" || errorText === "") {
+    return errorText;
+  }
+
+  return <div>{errorText}</div>;
+};
+
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep this exported component on its existing public prop type; a deep-readonly mapping changes its inferred ComponentProps surface and would alter the public type contract. */
 const ToolOutput = ({
   className,
   output,
@@ -179,27 +224,15 @@ const ToolOutput = ({
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, output, errorText from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolOutputProps): React.JSX.Element | null => {
-  if (output === undefined && !errorText) {
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  if (
+    output === undefined &&
+    (typeof errorText !== "string" || errorText === "")
+  ) {
     return null;
   }
 
-  const initialOutput =
-    // oxlint-disable-next-line no-ternary -- Preserve the native React element/bigint rendering branch and null empty-render sentinel.
-    isValidElement(output) || typeof output === "bigint" ? output : null;
-  let Output = <div>{initialOutput}</div>;
-
-  if (
-    (typeof output === "object" && !isValidElement(output)) ||
-    typeof output === "boolean" ||
-    typeof output === "number"
-  ) {
-    Output = (
-      <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
-    );
-  } else if (typeof output === "string") {
-    // oxlint-disable-next-line no-ternary -- Keep code JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    Output = <CodeBlock code={output === "" ? '""' : output} language="json" />;
-  }
+  const outputContent = getToolOutputContent(output);
 
   return (
     <div
@@ -222,14 +255,14 @@ const ToolOutput = ({
             : "bg-muted/50 text-foreground"
         )}
       >
-        {errorText && <div>{errorText}</div>}
-        {Output}
+        {getToolErrorText(errorText)}
+        {outputContent}
       </div>
     </div>
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-undefined, react/no-multi-comp, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: Consumers import getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput };
 /* oxlint-enable import/no-named-export */

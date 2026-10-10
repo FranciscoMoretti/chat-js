@@ -1,13 +1,8 @@
+import type { generatedForGateway, models } from "@/lib/ai/models.generated";
+import type { Gateway } from "@/lib/ai/gateway";
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Gateway } from "@/lib/ai/gateway";
-/* oxlint-enable sort-imports */
 import type { gatewayType } from "@/lib/ai/gateway-model-defaults";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { generatedForGateway, models } from "@/lib/ai/models.generated";
-/* oxlint-enable sort-imports */
 
 type InstalledGateway = InstanceType<typeof Gateway>;
 

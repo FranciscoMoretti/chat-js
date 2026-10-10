@@ -1,12 +1,14 @@
 import { expect, test } from "@playwright/test";
+import type { ConsoleMessage } from "@playwright/test";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("connector settings hydrate consistently across page boundaries") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("connector settings hydrate consistently across page boundaries") accepts { page, }; testInfo; error; message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), page.goto(), page.keyboard() on the original Page/locator receiver to change the live browser or route state.
 test("connector settings hydrate consistently across page boundaries", async ({
   page,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.attach() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   const hydrationErrors: string[] = [];
   const recordHydrationError = (message: string): void => {
@@ -14,12 +16,17 @@ test("connector settings hydrate consistently across page boundaries", async ({
       hydrationErrors.push(message);
     }
   };
-  page.on("pageerror", (error) => recordHydrationError(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      recordHydrationError(message.text());
+  page.on("pageerror", (error: Readonly<Error>) =>
+    recordHydrationError(error.message)
+  );
+  page.on(
+    "console",
+    (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
+      if (message.type() === "error") {
+        recordHydrationError(message.text());
+      }
     }
-  });
+  );
 
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.goto("/settings/connectors");
@@ -46,4 +53,4 @@ test("connector settings hydrate consistently across page boundaries", async ({
   expect(hydrationErrors).toEqual([]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */

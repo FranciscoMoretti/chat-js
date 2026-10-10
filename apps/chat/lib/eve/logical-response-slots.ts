@@ -115,23 +115,28 @@ const selectedSlotAttempt = (
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (logicalResponseSlots); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): logicalResponseSlots accepts snapshot: LogicalChatSnapshot; branch; candidate; attempt; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
  * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
  * @param {string} userId Logical group user-message identity used to locate its admitted response group.
  * @returns {{ groupId: string; slots: LogicalResponseSlot[] } | undefined} Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
  */
+// oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
 export const logicalResponseSlots = (
-  snapshot: LogicalChatSnapshot,
+  snapshot: ReadonlyNativeSurface<
+    Readonly<
+      Pick<
+        LogicalChatSnapshot,
+        "branches" | "paths" | "conversationId" | "nodes"
+      >
+    >
+  >,
   userId: string
 ): { groupId: string; slots: LogicalResponseSlot[] } | undefined => {
   const groupBranch = snapshot.branches.find(
-    (branch) =>
+    (branch: Readonly<Pick<LogicalBranch, "responseGroupId">>) =>
       branch.responseGroupId &&
       userId === `group:${branch.responseGroupId}:user`
   );
@@ -143,12 +148,21 @@ export const logicalResponseSlots = (
   const candidates =
     groupBranch.groupCandidates ??
     snapshot.branches
-      .filter((branch) => branch.responseGroupId === groupId)
-      .map((branch) => ({
-        modelId: branch.initialModelId ?? "Response",
-        operationId: branch.operationId,
-        rejection: undefined,
-      }));
+      .filter(
+        (branch: Readonly<Pick<LogicalBranch, "responseGroupId">>) =>
+          branch.responseGroupId === groupId
+      )
+      .map(
+        (
+          branch: Readonly<
+            Pick<LogicalBranch, "initialModelId" | "operationId">
+          >
+        ) => ({
+          modelId: branch.initialModelId ?? "Response",
+          operationId: branch.operationId,
+          rejection: undefined,
+        })
+      );
   const selectedPath = snapshot.paths.get(snapshot.conversationId) ?? [];
   const read = slotReadAccess(
     () => snapshot.branches,
@@ -158,7 +172,8 @@ export const logicalResponseSlots = (
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Derive UI slot metadata without mutating candidates retained by the lineage snapshot.
   const slots = candidates.map((candidate) => {
     const original = snapshot.branches.find(
-      (branch) => branch.operationId === candidate.operationId
+      (branch: Readonly<Pick<LogicalBranch, "operationId">>) =>
+        branch.operationId === candidate.operationId
     );
     const attempts = slotAttempts(read, original, userId);
     const { attempt, selected } = selectedSlotAttempt(
@@ -177,4 +192,4 @@ export const logicalResponseSlots = (
   return { groupId, slots };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */

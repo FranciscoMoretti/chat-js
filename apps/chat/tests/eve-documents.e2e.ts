@@ -7,7 +7,6 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import assert from "node:assert/strict";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -72,6 +71,9 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
+// oxlint-disable-next-line typescript/promise-function-async -- Keep the rejection lazy for the native create callback while oxc/no-async-await forbids async functions in this fixture.
+const rejectLostNativeReply = (): Promise<never> =>
+  Promise.reject(new Error("Lost native reply"));
 // oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the owner and stranger before registering document-access scenarios.
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
@@ -1459,11 +1461,14 @@ test("imported fork reservations retain their boundary across uncertain creation
   );
   const operationId = crypto.randomUUID();
   const fork = { beforeMessageId: "seed_message_2", conversationId: root.id };
-  const failedDispatch = () => Promise.reject(new Error("Lost native reply"));
   await expect(
-    createEveConversation(owner, operationId, "Replacement", failedDispatch, {
-      fork,
-    })
+    createEveConversation(
+      owner,
+      operationId,
+      "Replacement",
+      rejectLostNativeReply,
+      { fork }
+    )
   ).rejects.toThrow();
   const [reserved] = await db
     .select()
@@ -1502,7 +1507,7 @@ test("imported fork reservations retain their boundary across uncertain creation
       owner,
       operationId,
       "Replacement",
-      failedDispatch,
+      rejectLostNativeReply,
       { fork }
     )
   ).toEqual(bound);

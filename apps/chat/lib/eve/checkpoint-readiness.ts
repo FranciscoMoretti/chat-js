@@ -1,19 +1,73 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveRequest } from "./server";
+import { z } from "zod";
+
+const CHECKPOINT_TIMEOUT_MS = 15_000;
+const CHECKPOINT_POLL_INTERVAL_MS = 250;
+const MINIMUM_REQUEST_TIMEOUT_MS = 1;
+const HTTP_CONFLICT = 409;
+const HTTP_NOT_FOUND = 404;
+
+const validateReadyCheckpoint = (
+  body: unknown,
+  expected: Readonly<{
+    beforeTurnId: string;
+    checkpointId?: string;
+    sessionId: string;
+  }>
+): void => {
+  const ready = z
+    .object({
+      beforeTurnId: z.literal(expected.beforeTurnId),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- The conditional shape omits unnamed checkpoints; pinned prefer-object-spread and prefer-ternary require this expression form.
+      ...(typeof expected.checkpointId === "string" &&
+      expected.checkpointId !== ""
+        ? { checkpointId: z.literal(expected.checkpointId) }
+        : {}),
+      ready: z.literal(true),
+      sessionId: z.literal(expected.sessionId),
+    })
+    .safeParse(body);
+  if (!ready.success) {
+    throw new Error("Invalid source checkpoint receipt.");
+  }
+};
+
+const classifyCheckpointFailure = (
+  result: Readonly<Pick<Response, "status">>,
+  body: unknown,
+  checkpointId?: string
+): false => {
+  const rejection = z
+    .object({
+      checkpointRejected: z.literal(true),
+      error: checkpointRejectionReason,
+    })
+    .safeParse(body);
+  if (
+    typeof checkpointId === "string" &&
+    checkpointId !== "" &&
+    result.status === HTTP_CONFLICT &&
+    rejection.success
+  ) {
+    throw new CheckpointRejectedError(rejection.data.error);
+  }
+  if (
+    result.status === HTTP_NOT_FOUND &&
+    z.object({ code: z.literal("checkpoint_not_ready") }).safeParse(body)
+      .success
+  ) {
+    return false;
+  }
+  throw new Error("Source checkpoint lookup is unavailable.");
+};
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): readEveCheckpoint uses 15_000, 409, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): readEveCheckpoint accepts signal: AbortSignal = AbortSignal.timeout(15_000); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-*/
+/* oxlint-disable max-params -- The exported positional checkpoint API has existing callers outside this module; changing it requires an API migration. */
 /**
  * A missing checkpoint is pending; every other lookup failure stays unresolved.
  * @param {string} ownerId Authenticated owner sent to the native checkpoint endpoint.
@@ -28,59 +82,25 @@ const readEveCheckpoint = async (
   sessionId: string,
   beforeTurnId: string,
   checkpointId?: string,
-  signal: AbortSignal = AbortSignal.timeout(15_000)
+  signal: ReadonlyNativeSurface<AbortSignal> = AbortSignal.timeout(
+    CHECKPOINT_TIMEOUT_MS
+  )
 ): Promise<boolean> => {
   // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const path = `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint${typeof checkpointId === "string" && checkpointId.length > 0 ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
+  const path = `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint${typeof checkpointId === "string" && checkpointId !== "" ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
   const result = await eveRequest(ownerId, path, { signal });
   const body: unknown = await result.json();
   if (result.ok) {
-    const ready = z
-      .object({
-        beforeTurnId: z.literal(beforeTurnId),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (checkpointId ? { checkpointId: z.literal(checkpointId) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        ...(typeof checkpointId === "string" && checkpointId.length > 0
-          ? { checkpointId: z.literal(checkpointId) }
-          : {}),
-        ready: z.literal(true),
-        sessionId: z.literal(sessionId),
-      })
-      .safeParse(body);
-    if (!ready.success) {
-      throw new Error("Invalid source checkpoint receipt.");
-    }
+    validateReadyCheckpoint(body, { beforeTurnId, checkpointId, sessionId });
     return true;
   }
-  const rejection = z
-    .object({
-      checkpointRejected: z.literal(true),
-      error: checkpointRejectionReason,
-    })
-    .safeParse(body);
-  if (
-    typeof checkpointId === "string" &&
-    checkpointId.length > 0 &&
-    result.status === 409 &&
-    rejection.success
-  ) {
-    throw new CheckpointRejectedError(rejection.data.error);
-  }
-  if (
-    result.status === 404 &&
-    z.object({ code: z.literal("checkpoint_not_ready") }).safeParse(body)
-      .success
-  ) {
-    return false;
-  }
-  throw new Error("Source checkpoint lookup is unavailable.");
+  return classifyCheckpointFailure(result, body, checkpointId);
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params */
 
-/* oxlint-disable max-params, no-magic-numbers, unicorn/max-nested-calls -- max-params (#511): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): waitForEveCheckpoint uses 15_000, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/max-nested-calls (#568): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/* oxlint-disable max-params -- The exported positional checkpoint-wait API has existing callers outside this module; changing it requires an API migration. */
 /**
  * Check before allocating a native child: a bound source may not have checkpointed yet.
  * @param {string} ownerId Authenticated owner of the source session.
@@ -95,8 +115,11 @@ const waitForEveCheckpoint = async (
   beforeTurnId: string,
   checkpointId?: string
 ): Promise<void> => {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + CHECKPOINT_TIMEOUT_MS;
   do {
+    const signal = AbortSignal.timeout(
+      Math.max(MINIMUM_REQUEST_TIMEOUT_MS, deadline - Date.now())
+    );
     if (
       // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
       await readEveCheckpoint(
@@ -104,7 +127,7 @@ const waitForEveCheckpoint = async (
         sessionId,
         beforeTurnId,
         checkpointId,
-        AbortSignal.timeout(Math.max(1, deadline - Date.now()))
+        signal
       )
     ) {
       return;
@@ -114,7 +137,7 @@ const waitForEveCheckpoint = async (
     }
     // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Retry only after the preceding attempt and delay have completed.
     await new Promise<void>((resolve) => {
-      setTimeout(resolve, 250);
+      setTimeout(resolve, CHECKPOINT_POLL_INTERVAL_MS);
     });
   } while (Date.now() < deadline);
   throw new Error(
@@ -123,6 +146,6 @@ const waitForEveCheckpoint = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEveCheckpoint, waitForEveCheckpoint); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, no-magic-numbers, unicorn/max-nested-calls */
+/* oxlint-enable max-params */
 export { readEveCheckpoint, waitForEveCheckpoint };
 /* oxlint-enable import/no-named-export */

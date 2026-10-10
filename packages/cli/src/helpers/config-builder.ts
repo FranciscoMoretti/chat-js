@@ -1,19 +1,13 @@
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { builtInGateways } from "#cli/registry/gateways";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
-/* oxlint-enable sort-imports */
-
 import {
   applyDefaults,
   configDescriptionSchema,
   // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../../apps/chat/lib/config-schema";
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import type { ReadonlyInput } from "./readonly-input";
+import { builtInGateways } from "#cli/registry/gateways";
+import { z } from "zod";
 
 const defaultsFor = (
   input: ReadonlyInput<{
@@ -72,6 +66,10 @@ const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
 
 const descriptions = extractDescriptions(configDescriptionSchema);
 
+const INTEGER_SEPARATOR_THRESHOLD = 10_000;
+const INDENTATION_STEP = 1;
+const EMPTY_COLLECTION_LENGTH = 0;
+
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
 const formatKey = (key: string): string => {
@@ -94,10 +92,11 @@ const formatSymbol = (value: symbol): string => {
   return `Symbol(${description})`;
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatNumber = (value: number): string => {
-  if (Number.isSafeInteger(value) && Math.abs(value) >= 10_000) {
+  if (
+    Number.isSafeInteger(value) &&
+    Math.abs(value) >= INTEGER_SEPARATOR_THRESHOLD
+  ) {
     return String(value).replaceAll(/\d(?=(?:\d{3})+$)/gu, "$&_");
   }
   return String(value);
@@ -113,14 +112,7 @@ const formatOtherPrimitive = (value: unknown): string => {
   return "undefined";
 };
 
-const formatValue = (value: unknown, indent: number): string => {
-  const spaces = "  ".repeat(indent);
-  const inner = "  ".repeat(indent + 1);
-
-  // oxlint-disable-next-line eslint/no-undefined -- Missing config values serialize as the TypeScript undefined token; unicorn/no-typeof-undefined requires the direct comparison.
-  if (value === null || value === undefined) {
-    return "undefined";
-  }
+const formatPrimitive = (value: unknown): string => {
   if (typeof value === "string") {
     return JSON.stringify(value);
   }
@@ -130,37 +122,62 @@ const formatValue = (value: unknown, indent: number): string => {
   if (typeof value === "boolean") {
     return String(value);
   }
-
-  if (Array.isArray(value)) {
-    const values: readonly unknown[] = value;
-    if (values.length === 0) {
-      return "[]";
-    }
-    if (values.every((entry) => typeof entry === "string")) {
-      return `[${values.map((entry): string => JSON.stringify(entry)).join(", ")}]`;
-    }
-    return `[\n${values
-      .map((entry): string => `${inner}${formatValue(entry, indent + 1)}`)
-      .join(",\n")}\n${spaces}]`;
-  }
-
-  if (typeof value === "object") {
-    const entries = Object.entries(value).toSorted(compareEntryKeys);
-    if (entries.length === 0) {
-      return "{}";
-    }
-    return `{\n${entries
-      .map(
-        ([key, entry]: readonly [string, unknown]): string =>
-          `${inner}${formatKey(key)}: ${formatValue(entry, indent + 1)}`
-      )
-      .join(",\n")},\n${spaces}}`;
-  }
-
   return formatOtherPrimitive(value);
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
+
+interface FormatIndentation {
+  readonly indent: number;
+  readonly spaces: string;
+  readonly inner: string;
+}
+
+const formatArray = (
+  values: readonly unknown[],
+  indentation: FormatIndentation,
+  serialize: (value: unknown, indent: number) => string
+): string => {
+  if (values.length === EMPTY_COLLECTION_LENGTH) {
+    return "[]";
+  }
+  if (values.every((entry) => typeof entry === "string")) {
+    return `[${values.map((entry): string => JSON.stringify(entry)).join(", ")}]`;
+  }
+  return `[\n${values
+    .map(
+      (entry): string =>
+        `${indentation.inner}${serialize(entry, indentation.indent + INDENTATION_STEP)}`
+    )
+    .join(",\n")}\n${indentation.spaces}]`;
+};
+
+const formatObject = (
+  value: object,
+  indentation: FormatIndentation,
+  serialize: (value: unknown, indent: number) => string
+): string => {
+  const entries = Object.entries(value).toSorted(compareEntryKeys);
+  if (entries.length === EMPTY_COLLECTION_LENGTH) {
+    return "{}";
+  }
+  return `{\n${entries
+    .map(
+      ([key, entry]: readonly [string, unknown]): string =>
+        `${indentation.inner}${formatKey(key)}: ${serialize(entry, indentation.indent + INDENTATION_STEP)}`
+    )
+    .join(",\n")},\n${indentation.spaces}}`;
+};
+
+const formatValue = (value: unknown, indent: number): string => {
+  const spaces = "  ".repeat(indent);
+  const inner = "  ".repeat(indent + INDENTATION_STEP);
+  if (value === null || typeof value !== "object") {
+    return formatPrimitive(value);
+  }
+  if (Array.isArray(value)) {
+    return formatArray(value, { indent, inner, spaces }, formatValue);
+  }
+  return formatObject(value, { indent, inner, spaces }, formatValue);
+};
 
 const generateConfig = (
   obj: object,
@@ -184,8 +201,7 @@ const generateConfig = (
         value !== null &&
         !Array.isArray(value)
       ) {
-        // oxlint-disable-next-line eslint/no-magic-numbers -- Each nested configuration object advances indentation by exactly one level.
-        const nested = generateConfig(value, indent + 1, path);
+        const nested = generateConfig(value, indent + INDENTATION_STEP, path);
         return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
 
@@ -238,7 +254,6 @@ const toConfigInput = (
 });
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (buildConfigTs); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const buildConfigTs = (
   input: ReadonlyInput<{
     appName: string;
@@ -281,7 +296,7 @@ export const buildConfigTs = (
  * @see https://chatjs.dev/docs/reference/config
  */
 const config = defineConfig({
-${generateConfig(fullConfig, 1, "")}
+${generateConfig(fullConfig, INDENTATION_STEP, "")}
 });
 
 // oxlint-disable-next-line import/no-default-export -- The app configuration loader imports this single configuration object as the module default.
@@ -289,4 +304,3 @@ export default config;
 `;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable eslint/no-magic-numbers */

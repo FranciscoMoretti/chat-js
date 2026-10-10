@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { resolveWorkflowWorld } from "./world-config";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): describe("workflow deployment contract") accepts environment; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 describe("workflow deployment contract", () => {
   it.each(["preview", "production"])(
     "selects managed Workflow for Vercel %s",
@@ -29,11 +26,18 @@ describe("workflow deployment contract", () => {
     { NODE_ENV: "development", VERCEL: "1", VERCEL_ENV: "preview" },
   ])(
     "keeps local/dev/self-hosted execution on PostgreSQL: %j",
-    (environment) => {
+    (
+      environment: Readonly<
+        | { NODE_ENV?: undefined; VERCEL?: undefined; VERCEL_ENV?: undefined }
+        | { NODE_ENV: string; VERCEL?: undefined; VERCEL_ENV?: undefined }
+        | { VERCEL: string; VERCEL_ENV: string; NODE_ENV?: undefined }
+        | { VERCEL_ENV: string; NODE_ENV?: undefined; VERCEL?: undefined }
+        | { NODE_ENV: string; VERCEL: string; VERCEL_ENV: string }
+      >
+    ) => {
       expect(resolveWorkflowWorld(environment)).toBe(
         "@workflow/world-postgres"
       );
     }
   );
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

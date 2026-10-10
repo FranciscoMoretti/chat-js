@@ -1,19 +1,17 @@
 import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable sort-imports */
 
-type TransactionCallback = Extract<
-  Parameters<typeof db.transaction>[number],
-  (...parameters: readonly never[]) => unknown
->;
-type FilePurgeTransaction = Parameters<TransactionCallback>[number];
+const EMPTY_RESULT_COUNT = 0;
+const EXISTENCE_QUERY_LIMIT = 1;
+const FIRST_ROW_INDEX = 0;
 
-type FilePurgeReadTransaction = Readonly<Pick<FilePurgeTransaction, "select">>;
+type FilePurgeReadTransaction = Readonly<Pick<typeof db, "select">>;
 type FilePurgeWriteTransaction = Readonly<
-  Pick<FilePurgeTransaction, "execute" | "select" | "update" | "delete">
+  Pick<typeof db, "select" | "execute" | "update" | "delete">
 >;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
@@ -35,8 +33,7 @@ const deletingFamilyIds = async (
       )
     );
   if (
-    // oxlint-disable-next-line no-magic-numbers -- An absent family cannot authorize file deletion.
-    family.length === 0 ||
+    family.length === EMPTY_RESULT_COUNT ||
     family.some((row: Readonly<{ state: string }>) => row.state !== "deleting")
   ) {
     throw new Error("The entire conversation family must be pending deletion.");
@@ -100,8 +97,7 @@ const completeEveFilePurge = async (
   ownerId: string,
   keys: readonly string[]
 ): Promise<void> => {
-  // oxlint-disable-next-line no-magic-numbers -- An empty confirmed-removal list needs no database transaction.
-  if (keys.length === 0) {
+  if (keys.length === EMPTY_RESULT_COUNT) {
     return;
   }
   await db.transaction(async (tx: FilePurgeWriteTransaction) => {
@@ -165,11 +161,9 @@ const releaseEveFamilyFileReferences = async (
           notExists(outsideReference)
         )
       )
-      // oxlint-disable-next-line no-magic-numbers -- One matching row is sufficient to block reference release.
-      .limit(1);
+      .limit(EXISTENCE_QUERY_LIMIT);
     /* oxlint-enable unicorn/max-nested-calls */
-    // oxlint-disable-next-line no-magic-numbers -- Inspect the first row of the existence query.
-    const unremoved = unremovedRows.at(0);
+    const unremoved = unremovedRows.at(FIRST_ROW_INDEX);
     if (unremoved) {
       throw new Error(
         "File cleanup is incomplete. Retry before releasing references."

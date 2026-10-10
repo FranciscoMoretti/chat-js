@@ -1,19 +1,16 @@
 "use client";
 
-import {
-  Root as SwitchPrimitivesRoot,
-  Thumb as SwitchPrimitivesThumb,
-} from "@radix-ui/react-switch";
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
   ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import {
+  Root as SwitchPrimitivesRoot,
+  Thumb as SwitchPrimitivesThumb,
+} from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 /* oxlint-disable react/react-in-jsx-scope -- Switch uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Switch = reactForwardRef<
@@ -21,10 +18,12 @@ const Switch = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SwitchPrimitivesRoot>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <SwitchPrimitivesRoot
       // oxlint-disable-next-line react/forbid-component-props -- SwitchPrimitivesRoot accepts className in its styling contract; preserve this caller's layout and appearance.

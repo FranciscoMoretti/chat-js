@@ -48,7 +48,7 @@ const EveLogicalVersions = ({
 };
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveLogicalResponses: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including slot); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, unicorn/no-null -- EveLogicalResponses: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const EveLogicalResponses = ({
   conversationId,
@@ -70,8 +70,9 @@ const EveLogicalResponses = ({
       ? logicalResponseSlots(snapshot, userId)
       : undefined;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from group.slots.find(...).original; read original from group.slots.find(...); read slots from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const recoveredId = group?.slots.find((slot) => slot.operationId === pending)
-    ?.original?.id;
+  const recoveredId = group?.slots.find(
+    (slot: { readonly operationId: string }) => slot.operationId === pending
+  )?.original?.id;
   useEffect(() => {
     if (typeof recoveredId === "string" && recoveredId !== "") {
       controller.selectBranch(recoveredId);
@@ -82,33 +83,46 @@ const EveLogicalResponses = ({
   if (!group) {
     return null;
   }
-  const selectedSlot = group.slots.find((slot) => slot.selected);
+  const selectedSlot = group.slots.find(
+    (slot: { readonly selected: boolean }) => slot.selected
+  );
   const unconfirmed = group.slots.find(
-    (slot) => slot.operationId === pending && !slot.original
+    (slot: {
+      readonly operationId: string;
+      readonly original?: Readonly<{ id: string }>;
+    }) => slot.operationId === pending && !slot.original
   );
   return (
     <>
       <EveResponseGroupCards
-        candidates={group.slots.map((slot) => ({
-          disabled,
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing slot.modelId fallback. The app guidance prefers optional chaining.
-          modelName: getModelById(slot.modelId)?.name ?? slot.modelId,
-          operationId: slot.operationId,
-          // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          state: slot.original ? "bound" : "unresolved",
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-          status: snapshot.agents.get(
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branch from slot.attempt; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from slot.original; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining.
-            slot.attempt?.branch.id ?? slot.original?.id ?? ""
-          )?.status,
-        }))}
+        candidates={group.slots.map(
+          (slot: {
+            readonly modelId: string;
+            readonly operationId: string;
+            readonly original?: Readonly<{ id: string }>;
+            readonly attempt?: Readonly<{ branch: Readonly<{ id: string }> }>;
+          }) => ({
+            disabled,
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing slot.modelId fallback. The app guidance prefers optional chaining.
+            modelName: getModelById(slot.modelId)?.name ?? slot.modelId,
+            operationId: slot.operationId,
+            // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            state: slot.original ? "bound" : "unresolved",
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+            status: snapshot.agents.get(
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branch from slot.attempt; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from slot.original; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining.
+              slot.attempt?.branch.id ?? slot.original?.id ?? ""
+            )?.status,
+          })
+        )}
         selectedOperationId={
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from unconfirmed; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading operationId from selectedSlot; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining.
           unconfirmed?.operationId ?? selectedSlot?.operationId ?? null
         }
         onSelect={(operationId) => {
           const slot = group.slots.find(
-            (candidate) => candidate.operationId === operationId
+            (candidate: { readonly operationId: string }) =>
+              candidate.operationId === operationId
           );
           if (!slot) {
             return;
@@ -133,6 +147,6 @@ const EveLogicalResponses = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveLogicalResponses, EveLogicalVersions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, unicorn/no-null */
 export { EveLogicalResponses, EveLogicalVersions };
 /* oxlint-enable import/no-named-export */

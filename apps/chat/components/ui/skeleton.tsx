@@ -3,12 +3,13 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 const Skeleton = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Skeleton forwards the native div ref (including writable current), CSSProperties, children and TrustedHTML; React autoCapitalize/role also contain open string & {} aliases flagged even after top-level Readonly.
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: React.ComponentProps<"div">
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): React.JSX.Element => (
   <div
     className={cn("bg-muted animate-pulse rounded-md", className)}

@@ -1,35 +1,29 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
-/* oxlint-enable sort-imports */
 import {
   CreationRejectedError,
   requestConversation,
 } from "./create-conversation";
+import { finishCreation, readCreationRequest } from "./pending-create";
 import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { finishCreation, readCreationRequest } from "./pending-create";
-/* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { z } from "zod";
+
+const CHECKPOINT_READ_TIMEOUT_MS = 35_000;
+const HTTP_CONFLICT = 409;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveCreationRequest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined -- * max-lines-per-function (#510): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): resolveCreationRequest uses 35_000, 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): resolveCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): resolveCreationRequest accepts operation: NonNullable<ReturnType<typeof readCreationRequest>>; scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): resolveCreationRequest intentionally keeps the existing falsy-value behavior of operation.fork?.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+ * no-undefined (#519): resolveCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Resolve one saved operation; ambiguous outcomes never release its draft.
  *
@@ -42,8 +36,10 @@ import type { CreationScope } from "./pending-create";
 export const resolveCreationRequest = async (
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   ownerId: string,
-  operation: NonNullable<ReturnType<typeof readCreationRequest>>,
-  scope?: CreationScope
+  operation: ReadonlyNativeSurface<
+    NonNullable<ReturnType<typeof readCreationRequest>>
+  >,
+  scope?: ReadonlyNativeSurface<CreationScope>
 ): Promise<
   | {
       group: Awaited<ReturnType<typeof requestResponseGroup>>;
@@ -53,7 +49,7 @@ export const resolveCreationRequest = async (
   | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
 > => {
   if ("modelIds" in operation) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading checkpointId from operation.fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, typescript/strict-boolean-expressions -- Public operation/fork getters must be read once for the truthiness guard and again by the original destructuring; preserve nullish short-circuiting, access order, changed values and throws.
     if (operation.fork?.checkpointId) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
@@ -62,7 +58,7 @@ export const resolveCreationRequest = async (
           body: JSON.stringify({ beforeTurnId, checkpointId }),
           headers: { "content-type": "application/json" },
           method: "POST",
-          signal: AbortSignal.timeout(35_000),
+          signal: AbortSignal.timeout(CHECKPOINT_READ_TIMEOUT_MS),
         }
       );
       if (!response.ok) {
@@ -79,7 +75,7 @@ export const resolveCreationRequest = async (
               // The checkpoint-rejection schema rejects an absent JSON body.
             })
           );
-        if (response.status === 409 && rejection.success) {
+        if (response.status === HTTP_CONFLICT && rejection.success) {
           throw new CreationRejectedError(
             new CheckpointRejectedError(rejection.data.reason).message
           );
@@ -124,4 +120,4 @@ export const resolveCreationRequest = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined */

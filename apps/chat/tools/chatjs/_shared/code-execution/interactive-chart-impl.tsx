@@ -1,17 +1,15 @@
 "use client";
+import type {
+  BarSeriesOption,
+  EChartsOption,
+  LineSeriesOption,
+  ScatterSeriesOption,
+} from "echarts";
+import { Card } from "@/components/ui/card";
+import React from "react";
 import ReactECharts from "echarts-for-react/lib/index";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EChartsOption } from "echarts-for-react/lib/types";
-/* oxlint-enable sort-imports */
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Card } from "@/components/ui/card";
-/* oxlint-enable sort-imports */
 
 const CHART_COLORS = [
   "#22c55e",
@@ -25,55 +23,55 @@ const CHART_COLORS = [
 ];
 
 interface LineScatterElement {
-  label: string;
-  points: [number | string, number][];
+  readonly label: string;
+  readonly points: readonly (readonly [number | string, number])[];
 }
 
 interface BarElement {
-  group: string;
-  label: string;
-  value: number;
+  readonly group: string;
+  readonly label: string;
+  readonly value: number;
 }
 
 interface BaseChartCommon {
-  title: string;
-  x_label?: string;
-  y_label?: string;
+  readonly title: string;
+  readonly x_label?: string;
+  readonly y_label?: string;
 }
 
 type LineChart = BaseChartCommon & {
-  type: "line";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+  readonly type: "line";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
 type ScatterChart = BaseChartCommon & {
-  type: "scatter";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+  readonly type: "scatter";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
 type BarChart = BaseChartCommon & {
-  type: "bar";
-  x_scale?: undefined;
-  elements: BarElement[];
+  readonly type: "bar";
+  readonly x_scale?: undefined;
+  readonly elements: readonly BarElement[];
 };
 
 type BaseChart = LineChart | ScatterChart | BarChart;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable eslint/id-length -- ECharts gradient and Motion animation keys x/y are fixed native option names; preserve their external contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
+const InteractiveChart = ({
+  chart,
+}: {
+  readonly chart: BaseChart;
+}): React.JSX.Element => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   // oxlint-disable-next-line no-ternary -- Keep textColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -133,49 +131,55 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
         lineStyle: { color: gridColor, type: "dashed" },
         show: true,
       },
-    };
+    } satisfies NonNullable<EChartsOption["xAxis"]>;
 
     if (chart.type === "line" || chart.type === "scatter") {
-      const series = chart.elements.map((e, index) => ({
-        areaStyle:
-          // oxlint-disable-next-line no-ternary -- Keep areaStyle as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          chart.type === "line"
-            ? {
-                color: {
-                  colorStops: [
-                    {
-                      color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
-                      offset: 0,
-                    },
-                    { color: "rgba(23, 23, 23, 0)", offset: 1 },
-                  ],
-                  type: "linear",
-                  x: 0,
-                  x2: 0,
-                  y: 0,
-                  y2: 1,
-                },
-              }
-            : undefined,
-        data: e.points.map((p: [number | string, number]) => {
-          const x =
-            // oxlint-disable-next-line no-ternary -- Keep x as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
-          return [x, p[1]];
-        }),
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
-        lineStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-          width: 2,
-        },
-        name: e.label,
-        smooth: true,
-        // oxlint-disable-next-line no-ternary -- Keep symbolSize as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        symbolSize: chart.type === "scatter" ? 10 : 0,
-        type: chart.type,
-      }));
+      const series = chart.elements.map(
+        (element, index): LineSeriesOption | ScatterSeriesOption => ({
+          areaStyle:
+            // oxlint-disable-next-line no-ternary -- Keep areaStyle as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            chart.type === "line"
+              ? {
+                  color: {
+                    colorStops: [
+                      {
+                        color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
+                        offset: 0,
+                      },
+                      { color: "rgba(23, 23, 23, 0)", offset: 1 },
+                    ],
+                    type: "linear",
+                    x: 0,
+                    x2: 0,
+                    y: 0,
+                    y2: 1,
+                  },
+                }
+              : undefined,
+          data: element.points.map(
+            (point: readonly [number | string, number]) => {
+              const horizontalValue =
+                // oxlint-disable-next-line no-ternary -- Keep horizontalValue as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                chart.x_scale === "datetime"
+                  ? new Date(point[0]).getTime()
+                  : point[0];
+              return [horizontalValue, point[1]];
+            }
+          ),
+          itemStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          },
+          lineStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+            width: 2,
+          },
+          name: element.label,
+          smooth: true,
+          // oxlint-disable-next-line no-ternary -- Keep symbolSize as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          symbolSize: chart.type === "scatter" ? 10 : 0,
+          type: chart.type,
+        })
+      );
 
       return {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -222,27 +226,36 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
     if (chart.type === "bar") {
       const data: Record<string, BarElement[]> = {};
       for (const item of chart.elements) {
+        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Dynamic record keys can be absent at runtime; preserve the existing falsy guard and repeated group getter evaluations before creating and pushing to the native mutable bucket.
         if (!data[item.group]) {
           data[item.group] = [];
         }
         data[item.group].push(item);
       }
 
-      const series = Object.entries(data).map(([group, elements], index) => ({
-        data: elements.map((e) => [e.label, e.value]),
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: "rgba(0,0,0,0.3)",
+      const series = Object.entries(data).map(
+        (
+          [group, elements]: readonly [string, readonly BarElement[]],
+          index
+        ): BarSeriesOption => ({
+          data: elements.map((element: Readonly<BarElement>) => [
+            element.label,
+            element.value,
+          ]),
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: "rgba(0,0,0,0.3)",
+            },
           },
-        },
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
-        name: group,
-        stack: "total",
-        type: "bar",
-      }));
+          itemStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          },
+          name: group,
+          stack: "total",
+          type: "bar",
+        })
+      );
 
       return {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -289,7 +302,6 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           )}
           <ReactECharts
             notMerge
-            // oxlint-disable-next-line typescript/no-unsafe-assignment -- ECharts options are assembled across supported chart variants; replacing its open option type requires a separate chart-schema design.
             option={getChartOptions()}
             // oxlint-disable-next-line react/forbid-component-props -- ReactECharts accepts style in its styling contract; preserve this caller's layout and appearance.
             style={{ height: "400px", width: "100%" }}
@@ -302,16 +314,12 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (BarChart, BaseChart, LineChart, ScatterChart); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

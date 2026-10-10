@@ -1,23 +1,14 @@
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { getEveConnectionOptions } from "@/lib/eve/connection-options";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
-/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
-import { sharedEveMessages } from "@/lib/eve/shared-messages";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { researchAvailable } from "./availability";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve connection createEnv validation and availability defineState/provider registration before configuration parsing; alphabetical order would move config ahead of those failure and shared-registry boundaries.
 import { getDeepResearchConfig } from "./configuration";
-/* oxlint-enable sort-imports */
 import { researchReport } from "./schemas";
+import { sharedEveMessages } from "@/lib/eve/shared-messages";
+import type { z } from "zod";
 
 type Context = Readonly<
   Omit<WorkflowToolContext, "abortSignal"> & {
@@ -90,7 +81,7 @@ async function saveResearchReport(
     await executeEveDocumentTool(
       "createTextDocument",
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing content own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Zod preserves content/title insertion order; append fileIds after the parsed keys. Object.assign is rejected by eslint/prefer-object-spread.
         ...content,
         fileIds: [],
       },
@@ -100,7 +91,7 @@ async function saveResearchReport(
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve researchCompletionTime's required Promise and rejection contract. researchCompletionTime is a named durable use-step function returning Promise<number>; the directive compiler requires async even though the clock read is synchronous. */
-// oxlint-disable-next-line eslint/func-style, eslint/require-await -- EVE requires this clock read to remain a named async durable step; a synchronous or arrow function is rejected by its directive compiler.
+// oxlint-disable-next-line eslint/func-style, eslint/require-await, typescript/require-await -- EVE requires this clock read to remain a named async durable step; a synchronous or arrow function is not discovered as a durable step by its directive compiler.
 async function researchCompletionTime(): Promise<number> {
   "use step";
   return Date.now();

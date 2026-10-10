@@ -1,16 +1,9 @@
-import dynamic from "next/dynamic";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Card } from "@/components/ui/card";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+import React from "react";
+import dynamic from "next/dynamic";
 
 /* oxlint-disable react/only-export-components -- #623: ChartSkeleton is the existing local loading fallback for this dynamic default chart entrypoint; the loader module is not a standalone Fast Refresh component boundary. */
-const ChartSkeleton = () => (
+const ChartSkeleton = (): React.JSX.Element => (
   <Card
     // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
     className="border-border bg-card overflow-hidden"
@@ -22,8 +15,6 @@ const ChartSkeleton = () => (
 );
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (BaseChart); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/only-export-components */
-
-/* oxlint-enable typescript/explicit-function-return-type */
 
 export type { BaseChart } from "./interactive-chart-impl";
 /* oxlint-enable import/no-named-export */

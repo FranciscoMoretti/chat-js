@@ -1,25 +1,26 @@
 "use client";
 
 import { AlertCircle, LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useState } from "react";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { JSX as ReactJSX } from "react";
+
+import { toast } from "sonner";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
+
 import authClient from "@/lib/auth-client";
+
 import { config } from "@/lib/config";
+import { useRouter } from "next/navigation";
 /* oxlint-disable react/jsx-no-literals -- ElectronAuthOverlay renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- ElectronAuthOverlay: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { state, }: { state: ElectronRendererAuthState; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including state.detail); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null -- ElectronAuthOverlay: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ElectronAuthOverlay = ({
   state,
 }: {
-  state: ElectronRendererAuthState;
+  readonly state: Readonly<ElectronRendererAuthState>;
 }): ReactJSX.Element | null => {
   const [, startEventAction] = React.useTransition();
   const [isDismissed, setIsDismissed] = useState(false);
@@ -31,6 +32,7 @@ const ElectronAuthOverlay = ({
   const isLoading =
     state.status === "awaiting-browser" || state.status === "finishing";
   const canCancel = state.status === "awaiting-browser";
+  // oxlint-disable-next-line init-declarations -- Each status branch assigns the detail before its first render read; retain definite assignment without an unused default value.
   let detailMessage: string;
 
   if (state.status === "awaiting-browser") {
@@ -39,9 +41,13 @@ const ElectronAuthOverlay = ({
     detailMessage =
       "Your browser has returned to ChatJS. We're finalizing the session now.";
   } else {
+    const { detail } = state;
+    /* oxlint-disable no-ternary -- Select the original nonempty detail or fallback lazily; pinned unicorn/prefer-ternary rejects the equivalent branch assignment. */
     detailMessage =
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-      state.detail || "If nothing changes, try the browser flow again.";
+      typeof detail === "string" && detail !== ""
+        ? detail
+        : "If nothing changes, try the browser flow again.";
+    /* oxlint-enable no-ternary */
   }
 
   if (!isLoading && isDismissed) {
@@ -82,7 +88,7 @@ const ElectronAuthOverlay = ({
                   onClick={() => {
                     startEventAction(async () => {
                       try {
-                        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+                        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
                         await window.electronAPI?.cancelAuthFlow?.();
                       } catch (error) {
                         console.error(
@@ -124,8 +130,8 @@ const ElectronAuthOverlay = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ElectronAuthHandler); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
-/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ElectronAuthHandler: ; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ctx: ElectronAuthErrorContext); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ctx.message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null */
+/* oxlint-disable max-lines-per-function, max-statements, no-console, react/no-multi-comp, unicorn/no-null -- ElectronAuthHandler: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
  * Handles the electron auth redirect after OAuth completes in the browser.
@@ -134,6 +140,8 @@ const ElectronAuthOverlay = ({
  * via deep link.
  *
  * Mount this in the root layout so it runs on every page.
+ *
+ * @returns {ReactJSX.Element | null} The current overlay, or null outside the enabled desktop flow.
  */
 export const ElectronAuthHandler = (): ReactJSX.Element | null => {
   const isDesktopAppEnabled = config.desktopApp.enabled;
@@ -158,19 +166,19 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       return;
     }
 
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+    // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
     if (typeof window.requestAuth !== "function") {
       return;
     }
 
     if (
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+      // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
       typeof window.onAuthenticated !== "function" ||
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+      // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
       typeof window.onUserUpdated !== "function" ||
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+      // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
       typeof window.onAuthError !== "function" ||
-      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when reading onAuthStateChanged from window.electronAPI; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
       typeof window.electronAPI?.onAuthStateChanged !== "function"
     ) {
       return;
@@ -179,7 +187,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadAuthState's awaited sequencing and rejected-Promise behavior. */
     const loadAuthState = async (): Promise<void> => {
       try {
-        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.getAuthState; read getAuthState from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
         const state = await window.electronAPI?.getAuthState?.();
         if (state) {
           setAuthState(state);
@@ -193,12 +201,12 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
 
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAndRefresh's awaited sequencing and rejected-Promise behavior. */
     const syncAndRefresh = async (): Promise<void> => {
-      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.syncAuthSession; read syncAuthSession from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
     };
     /* oxlint-enable oxc/no-async-await */
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+    // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
       /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAuthenticatedSession's awaited sequencing and rejected-Promise behavior. */
       const syncAuthenticatedSession = async (): Promise<void> => {
@@ -214,7 +222,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       /* oxlint-enable oxc/no-async-await */
       void syncAuthenticatedSession();
     });
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+    // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
       /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncUpdatedUser's awaited sequencing and rejected-Promise behavior. */
       const syncUpdatedUser = async (): Promise<void> => {
@@ -227,16 +235,16 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       /* oxlint-enable oxc/no-async-await */
       void syncUpdatedUser();
     });
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+    // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
     const unsubscribeAuthError = window.onAuthError(
-      (ctx: ElectronAuthErrorContext) => {
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+      (ctx: Readonly<ElectronAuthErrorContext>) => {
+        // oxlint-disable-next-line typescript/strict-boolean-expressions, typescript/prefer-nullish-coalescing -- Preserve one optional message read after resolving the toast method, and the empty-string fallback. Capturing ahead changes method/getter order; nullish coalescing preserves empty text.
         toast.error(ctx.message || "Authentication failed");
       }
     );
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+    // oxlint-disable-next-line unicorn/prefer-global-this -- The Electron preload extends Window with these callable bridge members. Keep that native Window receiver and the existing nullish short circuit; globalThis has no matching bridge declaration.
     const unsubscribeAuthState = window.electronAPI.onAuthStateChanged(
-      (state) => {
+      (state: Readonly<ElectronRendererAuthState>) => {
         setAuthState(state);
       }
     );
@@ -262,4 +270,4 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
   return <ElectronAuthOverlay key={overlayKey} state={authState} />;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, react/no-multi-comp, unicorn/no-null */

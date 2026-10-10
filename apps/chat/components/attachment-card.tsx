@@ -7,21 +7,20 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
-import Image from "next/image";
-import React from "react";
-import type { JSX as ReactJSX } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentViewData } from "@/components/attachment-list";
-/* oxlint-enable sort-imports */
+import Image from "next/image";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next/image and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getFileImageProps } from "@/lib/file-url";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+import React from "react";
+
+import type { JSX as ReactJSX } from "react";
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+
+import { getFileImageProps } from "@/lib/file-url";
+
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 const LoadingPreview = (): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
@@ -124,7 +123,7 @@ const AttachmentPreview = ({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AttachmentCard); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- AttachmentCard renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AttachmentCard: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- AttachmentCard: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 export const AttachmentCard = ({
   attachment,
@@ -132,10 +131,10 @@ export const AttachmentCard = ({
   onRemove,
   className,
 }: {
-  attachment: AttachmentViewData;
-  isUploading: boolean;
-  onRemove?: () => void;
-  className?: string;
+  readonly attachment: AttachmentViewData;
+  readonly isUploading: boolean;
+  readonly onRemove?: () => void;
+  readonly className?: string;
 }): ReactJSX.Element => {
   const { name, url, contentType } = attachment;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -164,7 +163,7 @@ export const AttachmentCard = ({
           aria-label="Remove attachment"
           // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className="border-border bg-background/90 supports-[backdrop-filter]:bg-background/70 absolute top-1 right-1 size-6 rounded-full border p-0 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-          onClick={(event) => {
+          onClick={(event: { readonly stopPropagation: () => void }) => {
             event.stopPropagation();
             onRemove();
           }}
@@ -181,4 +180,4 @@ export const AttachmentCard = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */

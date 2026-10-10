@@ -1,12 +1,16 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
+
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Response } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -18,25 +22,28 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const sourceModelId = "openai/gpt-5-nano";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("edit recovery and regeneration create navigable versions inside ChatJS") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("edit recovery and regeneration create navigable versions inside ChatJS") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("edit recovery and regeneration create navigable versions inside ChatJS") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("edit recovery and regeneration create navigable versions inside ChatJS") uses 180_000, 1, 150_000, 200, 1000, 2000, 5000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("edit recovery and regeneration create navigable versions inside ChatJS") accepts { page, }; testInfo; route; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("edit recovery and regeneration create navigable versions inside ChatJS") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("edit recovery and regeneration create navigable versions inside ChatJS") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("edit recovery and regeneration create navigable versions inside ChatJS", async ({
   page,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout()/testInfo.annotations() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(180_000);
   let cleanup: { id: string; origin: string } | undefined;
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await page.route(
+      "https://unpkg.com/react-scan/**",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+      (route) => route.abort()
     );
     await page.goto("/api/dev-login");
     const { origin } = new URL(page.url());
@@ -89,6 +96,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     let accepted: ReturnType<typeof conversationBinding.parse> | undefined;
     await page.route(
       "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.abort() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         const response = await route.fetch();
         accepted = conversationBinding.parse(await response.json());
@@ -146,7 +154,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       timeout: 60_000,
     });
     const regenerated = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.url().endsWith("/api/agent-conversations") &&
         response.request().method() === "POST"
     );
@@ -202,6 +210,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       .fill("Keep this edited violet draft.");
     await page.route(
       "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       (route) =>
         route.fulfill({
           json: { error: "Temporary test outage" },
@@ -226,6 +235,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     });
     await page.route(
       "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       (route) =>
         route.fulfill({
           json: { creationRejected: true, error: "Test model rejection" },
@@ -241,6 +251,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     let replacement: unknown;
     await page.route(
       "**/api/agent-conversations",
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         replacement = route.request().postDataJSON();
         await route.fulfill({
@@ -297,4 +308,4 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */

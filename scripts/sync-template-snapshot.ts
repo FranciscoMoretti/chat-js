@@ -1,9 +1,7 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
-import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import { readFile, readdir } from "node:fs/promises";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
+import { createHash } from "node:crypto";
 // oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import path from "node:path";
 
@@ -14,16 +12,14 @@ const NO_OPERATIONS = 0;
 const MINIMUM_SNAPSHOT_CONCURRENCY = 1;
 const ONE_OPERATION = 1;
 
-/* oxlint-disable typescript/consistent-type-definitions -- SnapshotOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
+/* oxlint-disable typescript/consistent-type-definitions -- The exported SnapshotOptions alias retains implicit Record index assignability; converting it to an interface changes that structural contract. */
 type SnapshotOptions = {
   concurrency?: number;
   onActiveOperationsChange?: (activeOperations: number) => void;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable eslint/max-statements -- SnapshotIoLimiter: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/id-length -- SnapshotIoLimiter: The local index/OS/library binding retains its conventional API notation. */
-/* oxlint-disable unicorn/no-null -- SnapshotIoLimiter: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable unicorn/no-null -- The private deferred queue fulfills its declared Promise<null> when releasing a reserved slot; keep the existing fulfillment value. */
 class SnapshotIoLimiter {
   private activeOperations = NO_OPERATIONS;
   private readonly concurrency: number;
@@ -48,7 +44,7 @@ class SnapshotIoLimiter {
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
-  public async run<T>(operation: () => Promise<T>): Promise<T> {
+  public async run<Result>(operation: () => Promise<Result>): Promise<Result> {
     if (
       this.activeOperations >= this.concurrency ||
       this.reservedOperations > NO_OPERATIONS
@@ -65,26 +61,28 @@ class SnapshotIoLimiter {
     try {
       return await operation();
     } finally {
-      const next = this.queue.shift();
-      if (next) {
-        this.reservedOperations += ONE_OPERATION;
-        this.activeOperations -= ONE_OPERATION;
-        next.resolve(null);
-      } else {
-        this.activeOperations -= ONE_OPERATION;
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.onActiveOperationsChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-        this.onActiveOperationsChange?.(this.activeOperations);
-      }
+      this.release();
     }
   }
   /* oxlint-enable oxc/no-async-await */
+
+  private release(): void {
+    const next = this.queue.shift();
+    if (next) {
+      this.reservedOperations += ONE_OPERATION;
+      this.activeOperations -= ONE_OPERATION;
+      next.resolve(null);
+    } else {
+      this.activeOperations -= ONE_OPERATION;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.onActiveOperationsChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
+      this.onActiveOperationsChange?.(this.activeOperations);
+    }
+  }
 }
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectSnapshotWithLimiter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/promise-function-async -- collectSnapshotWithLimiter: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable typescript/promise-function-async -- The readdir/readFile callbacks hand their native promises directly to the limiter; async changes promise identity and synchronous throw timing. */
 const collectSnapshotWithLimiter = async (
   dir: string,
   prefix: string,

@@ -1,11 +1,19 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  */
+
 import { execFileSync } from "node:child_process";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
+import type {
+  ConsoleMessage,
+  Request,
+  Route,
+  TestInfo,
+} from "@playwright/test";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { serialize } from "superjson";
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */
@@ -19,13 +27,15 @@ const searchBatchSchema = z.object({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, node/no-sync, typescript/promise-function-async --
  * no-magic-numbers (#517): test("search states") uses 20, 1024 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("search states") uses execFileSync( "bun", [ "-e", 'const result=await Bun.build({entrypoints:["tests/; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("search states") accepts { page }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("search states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-test("search states", async ({ page }, testInfo) => {
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.setViewportSize(), page.goto() on the original Page/locator receiver to change the live browser or route state.
+test("search states", async ({ page }, testInfo: Readonly<
+  Pick<TestInfo, "outputPath">
+>) => {
   const script = execFileSync(
     "bun",
     [
@@ -42,11 +52,14 @@ test("search states", async ({ page }, testInfo) => {
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("**/search-fixture", (route) =>
-    route.fulfill({
-      body: `<!doctype html><html><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
-      contentType: "text/html",
-    })
+  await page.route(
+    "**/search-fixture",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    (route) =>
+      route.fulfill({
+        body: `<!doctype html><html><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+        contentType: "text/html",
+      })
   );
   await page.setViewportSize({ height: 1100, width: 1100 });
   await page.goto("/search-fixture");
@@ -66,54 +79,58 @@ test("search states", async ({ page }, testInfo) => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, node/no-sync, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): test("debounces requests, hides obsolete results, and navigates to the matching branc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("debounces requests, hides obsolete results, and navigates to the matching branc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("debounces requests, hides obsolete results, and navigates to the matching branc uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("debounces requests, hides obsolete results, and navigates to the matching branc accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): test("debounces requests, hides obsolete results, and navigates to the matching branc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("debounces requests, hides obsolete results, and navigates to the matching branc preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("debounces requests, hides obsolete results, and navigates to the matching branch", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const searches: string[] = [];
   const delayed = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = searchBatchSchema.parse(
-      JSON.parse(
-        new URL(route.request().url()).searchParams.get("input") ?? "{}"
-      )
-    );
-    const { search } = input["0"].json;
-    searches.push(search);
-    if (search === "saffron rice") {
-      await delayed.promise;
-    }
-    await route.fulfill({
-      json: [
-        {
-          result: {
-            data: serialize({
-              items: [
-                {
-                  conversationId: "00000000-0000-4000-8000-000000000002",
-                  excerpt: "Toast the ⟦saffron⟧ gently before adding broth.",
-                  id: "00000000-0000-4000-8000-000000000001",
-                  rank: 1,
-                  title: "Weekend dinner ideas",
-                  updatedAt: "2026-09-25T10:00:00Z",
-                },
-              ],
-              nextCursor: null,
-            }),
+  await page.route(
+    "**/api/trpc/eve.search*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    async (route: Route) => {
+      const input = searchBatchSchema.parse(
+        JSON.parse(
+          new URL(route.request().url()).searchParams.get("input") ?? "{}"
+        )
+      );
+      const { search } = input["0"].json;
+      searches.push(search);
+      if (search === "saffron rice") {
+        await delayed.promise;
+      }
+      await route.fulfill({
+        json: [
+          {
+            result: {
+              data: serialize({
+                items: [
+                  {
+                    conversationId: "00000000-0000-4000-8000-000000000002",
+                    excerpt: "Toast the ⟦saffron⟧ gently before adding broth.",
+                    id: "00000000-0000-4000-8000-000000000001",
+                    rank: 1,
+                    title: "Weekend dinner ideas",
+                    updatedAt: "2026-09-25T10:00:00Z",
+                  },
+                ],
+                nextCursor: null,
+              }),
+            },
           },
-        },
-      ],
-    });
-  });
+        ],
+      });
+    }
+  );
   await page.goto("/api/dev-login");
   await page.getByRole("button", { name: /Search chats/u }).click();
   const input = page.getByRole("combobox", { name: "Search conversations" });
@@ -146,27 +163,30 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): test("does not publish a response for text superseded during the debounce window") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("does not publish a response for text superseded during the debounce window") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("does not publish a response for text superseded during the debounce window") accepts { page, }; message; request; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): test("does not publish a response for text superseded during the debounce window") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("does not publish a response for text superseded during the debounce window") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("does not publish a response for text superseded during the debounce window", async ({
   page,
 }) => {
   const requests: string[] = [];
   const aborted: string[] = [];
   const searchErrors: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error" && message.text().includes("eve.search")) {
-      searchErrors.push(message.text());
+  page.on(
+    "console",
+    (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
+      if (message.type() === "error" && message.text().includes("eve.search")) {
+        searchErrors.push(message.text());
+      }
     }
-  });
-  page.on("requestfailed", (request) => {
+  );
+  page.on("requestfailed", (request: Readonly<Pick<Request, "url">>) => {
     if (request.url().includes("/api/trpc/eve.search")) {
       const input = searchBatchSchema.parse(
         JSON.parse(new URL(request.url()).searchParams.get("input") ?? "{}")
@@ -175,39 +195,43 @@ test("does not publish a response for text superseded during the debounce window
     }
   });
   const intermediate = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = searchBatchSchema.parse(
-      JSON.parse(
-        new URL(route.request().url()).searchParams.get("input") ?? "{}"
-      )
-    );
-    const { search } = input["0"].json;
-    requests.push(search);
-    if (search === "intermediate") {
-      await intermediate.promise;
-    }
-    await route.fulfill({
-      json: [
-        {
-          result: {
-            data: serialize({
-              items: [
-                {
-                  conversationId: "00000000-0000-4000-8000-000000000002",
-                  excerpt: "",
-                  id: "00000000-0000-4000-8000-000000000001",
-                  rank: 1,
-                  title: `Result for ${search}`,
-                  updatedAt: "2026-09-25T10:00:00Z",
-                },
-              ],
-              nextCursor: null,
-            }),
+  await page.route(
+    "**/api/trpc/eve.search*",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    async (route: Route) => {
+      const input = searchBatchSchema.parse(
+        JSON.parse(
+          new URL(route.request().url()).searchParams.get("input") ?? "{}"
+        )
+      );
+      const { search } = input["0"].json;
+      requests.push(search);
+      if (search === "intermediate") {
+        await intermediate.promise;
+      }
+      await route.fulfill({
+        json: [
+          {
+            result: {
+              data: serialize({
+                items: [
+                  {
+                    conversationId: "00000000-0000-4000-8000-000000000002",
+                    excerpt: "",
+                    id: "00000000-0000-4000-8000-000000000001",
+                    rank: 1,
+                    title: `Result for ${search}`,
+                    updatedAt: "2026-09-25T10:00:00Z",
+                  },
+                ],
+                nextCursor: null,
+              }),
+            },
           },
-        },
-      ],
-    });
-  });
+        ],
+      });
+    }
+  );
   await page.goto("/api/dev-login");
   await page.getByRole("button", { name: /Search chats/u }).click();
   const input = page.getByRole("combobox", { name: "Search conversations" });
@@ -250,26 +274,27 @@ test("does not publish a response for text superseded during the debounce window
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
  * id-length (#506): test("recent-chat skeletons reserve the loaded dialog height") uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-lines-per-function (#510): test("recent-chat skeletons reserve the loaded dialog height") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("recent-chat skeletons reserve the loaded dialog height") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("recent-chat skeletons reserve the loaded dialog height") uses 1, 13, 8, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("recent-chat skeletons reserve the loaded dialog height") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("recent-chat skeletons reserve the loaded dialog height") accepts { page, }; testInfo; url; route; element; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("recent-chat skeletons reserve the loaded dialog height") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("recent-chat skeletons reserve the loaded dialog height", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const recent = Promise.withResolvers<boolean>();
   await page.route(
-    (url) =>
+    (url: Readonly<Pick<URL, "pathname">>) =>
       url.pathname.startsWith("/api/trpc/") &&
       url.pathname.slice("/api/trpc/".length).split(",").includes("eve.list"),
-    async (route) => {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
+    async (route: Route) => {
       const procedures = new URL(route.request().url()).pathname
         .slice("/api/trpc/".length)
         .split(",");
@@ -314,9 +339,10 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     dialog.getByRole("status", { name: "Loading chats" })
   ).toBeVisible();
   await expect(dialog.locator('[data-slot="skeleton"]')).toHaveCount(13);
-  const background = await dialog
-    .locator("[cmdk-root]")
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  const background = await dialog.locator("[cmdk-root]").evaluate(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This callback passes the live DOM Element to the native getComputedStyle(Element) reader. The faithful recursive ReadonlyNativeSurface<Element> counterfactual fails assignability at that exact native receiver because the DOM declarations recursively contain mutable cycles.
+    (element: Element) => getComputedStyle(element).backgroundColor
+  );
   await expect(dialog.locator('[data-slot="skeleton"]').first()).not.toHaveCSS(
     "background-color",
     background
@@ -366,6 +392,6 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   ]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-search.visual.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

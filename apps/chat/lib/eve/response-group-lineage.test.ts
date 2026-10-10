@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+/* oxlint-disable-next-line sort-imports -- Keep Oxfmt type-import groups; their declaration order conflicts with sort-imports. */
 import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
 import { resolveEveResponseGroupLineage } from "./response-group-lineage";
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): row uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): row accepts overrides: Partial<EveResponseGroupLineageConversation> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): row preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const row = (
   id: string,
   operationId: string,
-  overrides: Partial<EveResponseGroupLineageConversation> = {}
+  overrides: ReadonlyNativeSurface<
+    Partial<EveResponseGroupLineageConversation>
+  > = {}
 ): EveResponseGroupLineageConversation => ({
   createdAt: new Date(id.length * 1000),
   forkKind: null,
@@ -24,7 +28,7 @@ const row = (
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function --
  * max-lines-per-function (#510): describe("response group lineage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

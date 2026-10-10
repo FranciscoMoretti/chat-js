@@ -1,24 +1,15 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
-import { spawnSync } from "node:child_process";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { existsSync, readFileSync } from "node:fs";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
-import path from "node:path";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { MakerDeb } from "@electron-forge/maker-deb";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerDMG } from "@electron-forge/maker-dmg";
-/* oxlint-enable sort-imports */
+import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ForgeConfig } from "@electron-forge/shared-types";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
+import path from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
+import { spawnSync } from "node:child_process";
 
 interface Branding {
   appName: string;
@@ -28,31 +19,29 @@ interface Branding {
   orgEmail?: string;
 }
 
+const SUCCESS_EXIT_CODE = 0;
+
 const appRoot = import.meta.dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
 /* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const runBunScript = (
   script: string,
   env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, node/no-process-env -- Preserve process.env own keys before positional script overrides; eslint/prefer-object-spread rejects Object.assign and Forge must inherit the host environment.
     env: { ...process.env, ...env },
     stdio: "inherit",
   });
 
-  if (result.status !== 0) {
+  if (result.status !== SUCCESS_EXIT_CODE) {
     throw new Error(
       `bun run ${script} failed with exit code ${result.status ?? "unknown"}`
     );
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
 
 const ensurePrebuild = (): void => {

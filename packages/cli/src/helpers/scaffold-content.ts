@@ -39,6 +39,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "playwright.visual.config.ts",
   "playwright.guest.config.ts",
   "lib/ai/eval-agent.ts",
+  "lib/db/eve-document-capabilities.test.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
@@ -277,7 +278,7 @@ const normalizeStandaloneLintConfig = async (
   await writeFile(
     lintPath,
     standaloneLint.replace(
-      '        "tests/eve-fixture/agent/tools/confirm_note.ts",\n',
+      '        "tests/eve-fixture/agent/tools/confirm-note.ts",\n',
       ""
     )
   );

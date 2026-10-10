@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./preflight before ./provider-config while their runtime initialization order is still under site review.
 import { readProviderId, readProviderLiteral } from "./provider-config";
-/* oxlint-enable sort-imports */
 
 type MediaKind = "image" | "video";
 interface MediaGateway {

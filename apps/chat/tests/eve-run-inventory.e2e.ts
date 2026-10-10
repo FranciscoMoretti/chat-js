@@ -4,14 +4,18 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 
 import postgres from "postgres";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the native SQL callback type separate from the runtime postgres import; it has no evaluation order.
+import type { TransactionSql } from "postgres";
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
 import {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 } from "@/lib/eve/lifecycle/postgres/eve-run-inventory";
+/* oxlint-enable eslint/sort-imports */
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -39,11 +43,8 @@ afterAll(async () => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): run accepts attributes: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 async function run(
-  attributes: Record<string, string> = {},
+  attributes: Readonly<Record<string, string>> = {},
   status = "completed"
 ): Promise<string> {
   const id = crypto.randomUUID();
@@ -57,7 +58,6 @@ async function run(
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stream's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 async function stream(
   runId: string | null,
@@ -170,15 +170,14 @@ test("cyclic parent metadata terminates without duplicating records", async () =
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("retains missing queue-discovered seeds as incomplete ownership") accepts transaction; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 test("retains missing queue-discovered seeds as incomplete ownership", async () => {
   const root = await run();
   const missing = crypto.randomUUID();
   const inventory = await query.begin(
     "isolation level repeatable read read only",
-    async (transaction) =>
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ReadonlyNativeSurface preserves the native TransactionSql callable contract; this receiver belongs to an actual read-only transaction used only by the inventory SELECT helper.
+    async (transaction: ReadonlyNativeSurface<TransactionSql>) =>
       await readEvePostgresRunInventoryInTransaction(transaction, root, [
         missing,
       ])
@@ -187,4 +186,3 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

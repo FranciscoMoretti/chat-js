@@ -123,6 +123,7 @@
     "diff": "^8.0.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "echarts": "6.0.0",
     "echarts-for-react": "^3.0.2",
     "eve": "npm:@chat-js/eve@0.61.0-chatjs.0",
     "fast-deep-equal": "^3.1.3",

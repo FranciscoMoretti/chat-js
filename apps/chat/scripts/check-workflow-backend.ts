@@ -1,9 +1,6 @@
-import postgres from "postgres";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt keeps the external postgres import before this local helper, while sort-imports requires alphabetic ordering by the different local binding names. */
 import { databaseConnection } from "@/lib/db/connection";
-/* oxlint-enable sort-imports */
 import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
+import postgres from "postgres";
 import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
 

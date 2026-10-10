@@ -1,20 +1,16 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/environment"; "../lib/eve/model-selection"; "../lib/eve/tool-availability"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
-import { wrapLanguageModel } from "ai";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { defineAgent, defineDynamic } from "eve";
-/* oxlint-enable sort-imports */
+import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { configureWorkflowEnvironment } from "../lib/eve/environment";
-/* oxlint-enable sort-imports */
 import { resolveEveModel } from "../lib/eve/model-selection";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Sorting tool-availability before model-selection changes the first supported startup failure: an existing native chatjs.turn-tool codec collision precedes invalid environment validation; preserve the configuration-first contract. */
 import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 /* oxlint-enable sort-imports */
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
+import { wrapLanguageModel } from "ai";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -29,10 +25,8 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable import/no-default-export -- import/no-default-export (#526): Preserve the existing default export import contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
@@ -40,7 +34,13 @@ export default defineAgent({
   experimental: { workflow: { world: resolveWorkflowWorld() } },
   model: defineDynamic({
     events: {
-      "step.started": async (_event, context) => {
+      "step.started": async (
+        _event: unknown,
+        context: Readonly<{
+          // oxlint-disable-next-line no-magic-numbers -- The numeric index selects the original callback parameter in this type-only lookup; it does not add a runtime constant.
+          session: Parameters<typeof installedToolAvailabilityMiddleware>[0];
+        }>
+      ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
@@ -60,4 +60,4 @@ export default defineAgent({
   }),
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-default-export */

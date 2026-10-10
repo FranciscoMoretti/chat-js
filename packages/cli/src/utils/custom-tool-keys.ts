@@ -1,16 +1,13 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { stat } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+
+import type { ToolDefinition } from "../../../registry/metadata";
+
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
+import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { stat } from "node:fs/promises";
 
 import ts from "typescript";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolDefinition } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const EMPTY_COLLECTION_SIZE = 0;
@@ -71,8 +68,7 @@ export const validateCustomToolKeys = async (
       (item: ReadonlyNative<ts.VariableDeclaration>) =>
         ts.isIdentifier(item.name) && item.name.text === "customTools"
     );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const initializer = declaration?.initializer;
+  const initializer = declaration && declaration.initializer;
   const usesCoreHelper = source.statements.some(
     (statement: ReadonlyNative<ts.Statement>) =>
       ts.isImportDeclaration(statement) &&

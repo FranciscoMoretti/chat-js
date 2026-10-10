@@ -5,6 +5,9 @@ import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+// oxlint-disable-next-line sort-imports -- Keep the separate readonly type import in Oxfmt module grouping; sort-imports instead orders runtime and type bindings together.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
 /* oxlint-enable sort-imports */
@@ -57,19 +60,20 @@ const parts: EveMessagePart[] = [
     type: "dynamic-tool",
   },
 ];
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * typescript/prefer-readonly-parameter-types (#565): process.stdout.write accepts part; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): process.stdout.write keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
-      messages: parts.map((part, index): EveMessage => ({
-        id: `public-${index}`,
-        parts: sharedEvePart(part),
-        role: "assistant",
-      })),
+      messages: parts.map(
+        (part: ReadonlyNativeSurface<EveMessagePart>, index): EveMessage => ({
+          id: `public-${index}`,
+          parts: sharedEvePart(part),
+          role: "assistant",
+        })
+      ),
     })
   )
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable unicorn/max-nested-calls */

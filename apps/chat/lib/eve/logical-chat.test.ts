@@ -1,12 +1,15 @@
 import type { EveMessage } from "eve/client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it } from "vitest";
-/* oxlint-enable sort-imports */
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
 /* oxlint-enable sort-imports */
+/* oxlint-enable sort-imports */
 import { LogicalChat, logicalChatBusy } from "./logical-chat";
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 /* oxlint-disable max-params --
  * max-params (#511): message keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -23,13 +26,13 @@ const message = (
   role,
 });
 /* oxlint-enable max-params */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): branch accepts extra: Partial<LogicalBranch> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): branch preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const branch = (
   id: string,
-  extra: Partial<LogicalBranch> = {}
+
+  extra: ReadonlyNativeSurface<Partial<LogicalBranch>> = {}
 ): LogicalBranch => ({
   createdAt: "2026-09-20T10:00:00Z",
   forkTurnId: null,
@@ -41,16 +44,20 @@ const branch = (
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing extra own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...extra,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable no-undefined, typescript/promise-function-async --
  * no-undefined (#519): agent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): agent accepts messages: EveMessage[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): agent preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const agent = (
-  messages: EveMessage[],
+  messages: readonly Readonly<
+    Omit<EveMessage, "parts"> & {
+      readonly parts: readonly ReadonlyEveMessagePart[];
+    }
+  >[],
   status: NativeChatAgent["status"] = "ready"
-): NativeChatAgent => ({
+  // oxlint-disable-next-line no-magic-numbers -- Observe's second argument is the exact public agent contract used by this fixture.
+): Parameters<LogicalChat["observe"]>[1] => ({
   cancel: () => Promise.reject(new Error("unused")),
   data: { messages },
   error: undefined,
@@ -65,7 +72,7 @@ const agent = (
   session: undefined,
   status,
 });
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-undefined, typescript/promise-function-async */
 const prefix = [
   message("u1", "user", "turn_0"),
   message("turn_0:assistant", "assistant", "turn_0"),

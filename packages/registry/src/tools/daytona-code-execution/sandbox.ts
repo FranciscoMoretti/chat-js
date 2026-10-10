@@ -1,15 +1,10 @@
+import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
+import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
+import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
+import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable-next-line import/no-nodejs-modules -- Server-side credential scope hashing must use Node crypto and never expose the API key. */
 import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
-/* oxlint-enable sort-imports */
-import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
-
-import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable-next-line sort-imports -- Oxfmt orders canonical imports by module path while sort-imports orders these type imports by local binding. */
-import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
 
 const API_URL = "https://app.daytona.io/api";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -26,8 +21,18 @@ interface DaytonaResource {
 }
 interface DaytonaClient {
   readonly create: (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the exact native Daytona create request; ReadonlyNativeSurface makes nested volumes readonly and rejects the real Daytona client’s VolumeMount[] parameter (app TypeScript TS2345).
-    params: CreateSandboxFromSnapshotParams,
+    params: ReadonlyNativeSurface<
+      Pick<
+        CreateSandboxFromSnapshotParams,
+        | "autoStopInterval"
+        | "ephemeral"
+        | "labels"
+        | "language"
+        | "name"
+        | "public"
+        | "ttlMinutes"
+      >
+    >,
     options?: Readonly<{ timeout?: number }>
   ) => Promise<DaytonaResource>;
   readonly get: (name: string) => Promise<DaytonaResource>;

@@ -4,13 +4,26 @@ import fs, { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNativeSurface<Value[Key]> }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 
 interface SyncFixture {
   baseline: string;
@@ -132,15 +145,13 @@ const observeGeneratorFailure = (): {
   };
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (observeGeneratorFailure, prepareReplacement, replacementFailure, verifyRollback); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (observeGeneratorFailure, prepareReplacement, replacementFailure, verifyRollback); the enabled import/no-default-export convention rejects the default-export alternative.
 export {
   observeGeneratorFailure,
   prepareReplacement,
   replacementFailure,
   verifyRollback,
 };
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReadonlyNativeSurface); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/no-named-export -- Keep the named type bindings (ReadonlyNativeSurface); the enabled import/no-default-export convention rejects the default-export alternative.
 export type { ReadonlyNativeSurface };
-/* oxlint-enable import/no-named-export */

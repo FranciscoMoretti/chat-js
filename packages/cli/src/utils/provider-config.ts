@@ -1,15 +1,10 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { GatewaySelection } from "#cli/registry/gateways";
+
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
+import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { readFile } from "node:fs/promises";
 
 import ts from "typescript";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { GatewaySelection } from "#cli/registry/gateways";
-/* oxlint-enable sort-imports */
 
 const INITIAL_REFERENCE_COUNT = 0;
 const REFERENCE_INCREMENT = 1;
@@ -104,8 +99,7 @@ const readProviderLiteral = async (
       (item: { readonly name: Readonly<Pick<ts.Node, "getText">> }) =>
         item.name.getText(parsed) === name
     );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  if (!declaration?.initializer) {
+  if (!declaration || !declaration.initializer) {
     throw new Error(
       `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
     );
@@ -186,8 +180,8 @@ const readProviderId = async (
   if (!source.trim()) {
     return;
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const value = declaration?.initializer && unwrap(declaration.initializer);
+  const value =
+    declaration && declaration.initializer && unwrap(declaration.initializer);
   if (!value || !ts.isStringLiteralLike(value)) {
     throw new Error(
       `Cannot determine the installed ${kind} in ${file}. Use a literal ${name} before automatic replacement, or integrate the provider manually.`
@@ -258,11 +252,11 @@ const gatewayConfigEdit = async (
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
       return undefined;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declarations.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const initializer = declarations.find(
-      (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
-        declaration.name.getText(parsed) === value.text
-    )?.initializer;
+    const declaration = declarations.find(
+      (candidate: ReadonlyNative<ts.VariableDeclaration>): boolean =>
+        candidate.name.getText(parsed) === value.text
+    );
+    const initializer = declaration && declaration.initializer;
     if (initializer === undefined) {
       return undefined;
     }

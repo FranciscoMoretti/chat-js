@@ -1,6 +1,5 @@
 "use client";
 
-import type { MessageStreamEvent } from "eve/client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { useCallback, useEffect, useRef, useState } from "react";
 /* oxlint-enable sort-imports */
@@ -13,7 +12,7 @@ import {
 /* oxlint-enable sort-imports */
 import type { PendingEveMessage } from "@/lib/eve/message-delivery";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useEveMessageDelivery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useEveMessageDelivery: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including current); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null -- useEveMessageDelivery: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useEveMessageDelivery = (sessionId: string) => {
   const [pending, setPending] = useState<PendingEveMessage | null>(null);
@@ -36,7 +35,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
   }, [sessionId]);
 
   const accept = useCallback(
-    (event: MessageStreamEvent) => {
+    (event: Parameters<typeof eveMessageOperationId>[0]) => {
       const operationId = eveMessageOperationId(event);
       if (!(typeof operationId === "string" && operationId !== "")) {
         return;
@@ -108,7 +107,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
       [sessionId]
     ),
     release: useCallback(
-      (delivery: PendingEveMessage) => {
+      (delivery: Readonly<Pick<PendingEveMessage, "operationId">>) => {
         eveMessageDelivery.clear(
           sessionStorage,
           sessionId,
@@ -146,4 +145,4 @@ export const useEveMessageDelivery = (sessionId: string) => {
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */

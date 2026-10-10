@@ -1,22 +1,21 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useMemo } from "react";
-/* oxlint-enable sort-imports */
-import type { ReactNode } from "react";
-
-import { getDefaultEnabledModels } from "@/lib/ai/app-models";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { useQuery } from "@tanstack/react-query";
+// oxlint-disable-next-line sort-imports -- Query initializes its host-dependent managers before app-models validates config at module load; sorting these singles reverses initialization and error order. React already evaluates first through QueryClientProvider.
+import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 interface ChatModelsContextType {
-  allModels: AppModelDefinition[];
-  getModelById: (modelId: string) => AppModelDefinition | undefined;
-  models: AppModelDefinition[];
+  readonly allModels: readonly ReadonlyNativeSurface<AppModelDefinition>[];
+  readonly getModelById: (
+    modelId: string
+  ) => ReadonlyNativeSurface<AppModelDefinition> | undefined;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }
 
 /* oxlint-disable no-undefined --
@@ -27,14 +26,14 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
 );
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): ChatModelsProvider keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): ChatModelsProvider accepts { children, models, }: { children: ReactNode; models: AppModelDefinition[]; }; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): ChatModelsProvider keeps its ordered workflow and input contract together; models: AppModelDefinition[]; }; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
 const ChatModelsProvider = ({
   children,
   models,
 }: {
-  children: ReactNode;
-  models: AppModelDefinition[];
+  readonly children: ReadonlyReactNode;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }): React.JSX.Element => {
   const trpc = useTRPC();
   const { data: session } = useSession();
@@ -48,7 +47,7 @@ const ChatModelsProvider = ({
   });
 
   const allModelsMap = useMemo(() => {
-    const map = new Map<string, AppModelDefinition>();
+    const map = new Map<string, ReadonlyNativeSurface<AppModelDefinition>>();
     for (const model of models) {
       map.set(model.id, model);
     }
@@ -68,7 +67,10 @@ const ChatModelsProvider = ({
   }, [models, preferences]);
 
   const filteredModels = useMemo(
-    () => models.filter((model) => enabledModelsSet.has(model.id)),
+    () =>
+      models.filter((model: Readonly<Pick<AppModelDefinition, "id">>) =>
+        enabledModelsSet.has(model.id)
+      ),
     [models, enabledModelsSet]
   );
 
@@ -87,13 +89,12 @@ const ChatModelsProvider = ({
     </ChatModelsContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-undefined (#519): useChatModels uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- splitting exports requires an API and Fast Refresh boundary decision.
-typescript/explicit-function-return-type (#560): Keep useChatModels's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep useChatModels's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const useChatModels = () => {
+/* oxlint-disable no-undefined -- no-undefined (#519): useChatModels uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
+
+const useChatModels = (): ChatModelsContextType => {
   const context = useContext(ChatModelsContext);
   if (context === undefined) {
     throw new Error("useChatModels must be used within a ChatModelsProvider");
@@ -101,7 +102,7 @@ const useChatModels = () => {
   return context;
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatModelsProvider, useChatModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-undefined */
 /* oxlint-disable react/only-export-components -- #620: Consumers import ChatModelsProvider, useChatModels from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ChatModelsProvider, useChatModels };
 /* oxlint-enable import/no-named-export */

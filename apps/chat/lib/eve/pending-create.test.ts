@@ -1,16 +1,15 @@
 import { describe, expect, it } from "vitest";
-
 import {
   moveRejectedProjectCreation,
   prepareCreation,
   readCreation,
 } from "./pending-create";
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep storageFixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): storageFixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-const storageFixture = () => {
+/* oxlint-disable unicorn/no-null -- Storage.getItem returns null for a missing key. */
+const storageFixture = (): Pick<
+  Storage,
+  "getItem" | "removeItem" | "setItem"
+> => {
   const entries = new Map<string, string>();
   return {
     getItem: (key: string) => entries.get(key) ?? null,
@@ -22,7 +21,7 @@ const storageFixture = () => {
     },
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, no-undefined --
  * max-lines-per-function (#510): describe("rejected project draft recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

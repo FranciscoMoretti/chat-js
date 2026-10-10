@@ -1,22 +1,23 @@
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping react and @/components/ui/badge; keep this adjacent import pair ordered. */
 import { Badge } from "@/components/ui/badge";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/badge and @/components/ui/tooltip; keep this adjacent import pair ordered. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 /* oxlint-enable sort-imports */
-import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
-import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
 import { Favicon } from "./favicon";
+
+import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WebSourceBadge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable sort-imports */
+
 /* oxlint-disable react/jsx-max-depth -- WebSourceBadge: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const WebSourceBadge = ({

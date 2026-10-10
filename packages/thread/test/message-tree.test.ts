@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { MessageTree } from "#thread-source/message-tree";
-/* oxlint-enable sort-imports */
+
+import type { UIMessage } from "ai";
 
 const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   id,
@@ -34,8 +32,7 @@ describe("MessageTree", () => {
         .getSiblings("a2")
         .map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["a2", "a3"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(tree.getMessage("a3")?.id).toBe("a3");
+    expect(tree.getMessage("a3")).toMatchObject({ id: "a3" });
   });
 
   test("sets the selected path without deleting hidden descendants", () => {
@@ -50,8 +47,7 @@ describe("MessageTree", () => {
     expect(
       tree.getPath().map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["u1", "a1", "u3"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(tree.getMessage("a2")?.id).toBe("a2");
+    expect(tree.getMessage("a2")).toMatchObject({ id: "a2" });
   });
 
   test("clears the selected path without deleting tree nodes", () => {
@@ -63,8 +59,7 @@ describe("MessageTree", () => {
 
     expect(tree.cursorId).toBeNull();
     expect(tree.getPath()).toEqual([]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(tree.getMessage("a1")?.id).toBe("a1");
+    expect(tree.getMessage("a1")).toMatchObject({ id: "a1" });
   });
 
   test("updates a path without changing the selected path", () => {
@@ -85,8 +80,7 @@ describe("MessageTree", () => {
     expect(
       tree.getPath().map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["u1", "a1", "u2"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(tree.getMessage("a3")?.id).toBe("a3");
+    expect(tree.getMessage("a3")).toMatchObject({ id: "a3" });
   });
 
   test("validates a path before changing existing nodes", () => {

@@ -1,16 +1,12 @@
-import { Analytics } from "@vercel/analytics/next";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Metadata, Viewport } from "next";
-/* oxlint-enable sort-imports */
-import { ThemeProvider } from "next-themes";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-/* oxlint-enable sort-imports */
+import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import React from "react";
+import { ThemeProvider } from "next-themes";
 
 import { siteConfig } from "@/lib/site-config";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep the root global stylesheet last so its CSS remains after imported module styles in Next.js CSS chunk order. */
 import "./globals.css";
 /* oxlint-enable sort-imports */
 
@@ -96,11 +92,36 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- RootLayout: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+type ReadonlyReactIteratorResult =
+  | { readonly done?: false; readonly value: ReadonlyReactNode }
+  | { readonly done: true; readonly value: unknown };
+interface ReadonlyReactIterator {
+  readonly next: () => ReadonlyReactIteratorResult;
+  readonly [Symbol.iterator]?: () => ReadonlyReactIterator;
+}
+interface ReadonlyReactIterable {
+  readonly [Symbol.iterator]: () => ReadonlyReactIterator;
+}
+type ReadonlyAwaitedNode =
+  | Readonly<React.ReactElement>
+  | string
+  | number
+  | bigint
+  | ReadonlyReactIterable
+  | (Omit<Readonly<React.ReactPortal>, "children"> & {
+      readonly children: ReadonlyReactNode;
+    })
+  | boolean
+  | null
+  | undefined;
+type ReadonlyReactNode =
+  | ReadonlyAwaitedNode
+  | Readonly<Promise<ReadonlyAwaitedNode>>;
+
 const RootLayout = ({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReadonlyReactNode;
 }>): React.JSX.Element => (
   <html
     className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
@@ -121,7 +142,6 @@ const RootLayout = ({
   </html>
 );
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };

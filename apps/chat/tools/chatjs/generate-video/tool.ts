@@ -1,26 +1,19 @@
-import { experimental_generateVideo as generateVideo } from "ai";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { defineTool } from "eve/tools";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolContext } from "eve/tools";
-/* oxlint-enable sort-imports */
+import { defineTool } from "eve/tools";
+import { experimental_generateVideo as generateVideo } from "ai";
 
+// oxlint-disable-next-line sort-imports -- Keep eve/tools installation of the global definition-source-registry Map before config.applyDefaults and gateway/provider initialization; native ordering would move config ahead of that SDK global.
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep generated-file db/client initialization (databaseConnection(env), postgres client) before tool-cost imports active-gateway and evaluates app/gateway environment. */
 import { createEveToolCost } from "@/lib/eve/tool-cost";
 /* oxlint-enable sort-imports */
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { eveToolModelProvider } from "@/lib/eve/tool-models";
-/* oxlint-enable sort-imports */
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable sort-imports */
+import { eveToolModelProvider } from "@/lib/eve/tool-models";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 
 import { generateVideoInput } from "./schemas";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
 // Fixed estimate — not yet available from provider API
 const COST_CENTS = 50;

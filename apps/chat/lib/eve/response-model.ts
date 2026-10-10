@@ -1,12 +1,43 @@
 import type { MessageStreamEvent } from "eve/client";
 
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type ModelReferenceEvent = IgnoredSdkFields<MessageStreamEvent> &
+  (
+    | {
+        readonly type: "step.started";
+        readonly data: {
+          readonly turnId: string;
+          readonly modelId: string;
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "step.started" }>["data"]
+        >;
+      }
+    | {
+        readonly type: "history.restored";
+        readonly data: {
+          readonly events: readonly ModelReferenceEvent[];
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
+        >;
+      }
+    | {
+        readonly type: Exclude<
+          MessageStreamEvent["type"],
+          "step.started" | "history.restored"
+        >;
+      }
+  );
+
 /** First native model reference per turn, including inherited history.
  * @param {readonly MessageStreamEvent[]} events Native stream events whose live and inherited steps carry model provenance.
  * @returns {Map<string, string>} The first recorded model reference for each native turn.
  */
 const responseModelReferences = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native MessageStreamEvent includes recursive history/subagent collections; recursive readonly instantiation exceeds TypeScript limits and does not preserve native event assignability.
-  events: readonly MessageStreamEvent[]
+  events: readonly ModelReferenceEvent[]
 ): Map<string, string> => {
   const models = new Map<string, string>();
   for (const event of events) {
@@ -32,8 +63,7 @@ const responseModelReferences = (
  * @returns {string} The provider model ID after removing its gateway prefix.
  */
 const responseModel = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native MessageStreamEvent includes recursive history/subagent collections; recursive readonly instantiation exceeds TypeScript limits and does not preserve native event assignability.
-  events: readonly MessageStreamEvent[],
+  events: readonly ModelReferenceEvent[],
   turnId: string,
   importedModelId?: string
 ): string => {

@@ -1,35 +1,24 @@
-/* oxlint-disable import/max-dependencies -- The registry explicitly composes source-owned provider and feature catalogs at its public assembly boundary. */
-import type { RegistryItem } from "shadcn/schema";
-import { registrySchema } from "shadcn/schema";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   codeExecutionItem,
   codeExecutionRuntimeItem,
   daytonaCodeExecutionItem,
 } from "./code-execution";
-/* oxlint-enable sort-imports */
-import { toolDefinitionSchema } from "./metadata";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import registryPackage from "./package.json";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { attachmentUploadsItem } from "./src/features/attachment-uploads";
-/* oxlint-enable sort-imports */
-import { mcpItem } from "./src/features/mcp";
-import { observabilityItems } from "./src/features/observability";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { builtInGateways } from "./src/gateways/catalog";
-/* oxlint-enable sort-imports */
-import { builtInStorage } from "./src/storage/catalog";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   codeExecutionUiItem,
   documentItems,
   savedCodeExecutionItem,
 } from "./src/tools/documents";
-/* oxlint-enable sort-imports */
+import type { RegistryItem } from "shadcn/schema";
+import { attachmentUploadsItem } from "./src/features/attachment-uploads";
+import { builtInGateways } from "./src/gateways/catalog";
+import { builtInStorage } from "./src/storage/catalog";
+import { mcpItem } from "./src/features/mcp";
+import { observabilityItems } from "./src/features/observability";
+import registryPackage from "./package.json";
+import { registrySchema } from "shadcn/schema";
 import { researchItem } from "./src/tools/research";
+// oxlint-disable-next-line import/max-dependencies -- This is the 11th required registry assembly dependency; the configured maximum is 10.
+import { toolDefinitionSchema } from "./metadata";
 
 const toolItems = (
   [

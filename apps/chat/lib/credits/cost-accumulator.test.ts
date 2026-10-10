@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateway-model-defaults" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { gatewayModelDefaults } from "../ai/gateway-model-defaults";
-/* oxlint-enable import/no-relative-parent-imports */
+import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 
 const { fetchModels, getAppModelDefinition } = vi.hoisted(() => ({
   fetchModels:

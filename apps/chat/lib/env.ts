@@ -1,9 +1,7 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-
-import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
-/* oxlint-enable sort-imports */
+
+import { createEnv } from "@t3-oss/env-nextjs";
+import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
 import { resolveEveEnvironment } from "./eve/environment";
 
 /* oxlint-disable node/no-process-env -- node/no-process-env (#537): env reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */

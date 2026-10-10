@@ -1,27 +1,24 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+import { createHash } from "node:crypto";
 import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
-/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep copy-transcript module initialization after zod; it creates resource regexes and a boundary Set and imports document contracts. */
 import { eveCopyResources } from "@/lib/eve/copy-transcript";
+/* oxlint-enable sort-imports */
 import { isFileStorageKey } from "@/lib/file-url";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep client env validation and Postgres pool creation after copy-transcript and file-url module evaluation. */
 import { db } from "./client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep eve-queries traversal after direct client initialization; eve-queries imports client, schema and eve-documents. */
 import { CreationConflictError } from "./eve-queries";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep schema pgTable construction in the existing traversal after client and eve-queries, which also imports schema. */
 import {
   eveChat,
   eveConversation,
@@ -173,46 +170,42 @@ const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
 ): Promise<void> => {
-  await db.transaction(
-    async (
-      tx: Readonly<Pick<CopyTransaction, "execute" | "insert" | "select">>
-    ) => {
-      await lockEveCopyOwners(tx, [ownerId]);
-      const existingRows = await tx
-        .select({ id: eveConversation.id })
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.ownerId, ownerId),
-            eq(eveConversation.operationId, operationId)
-          )
-        );
-      const existing = existingRows.at(FIRST_ROW_INDEX);
-      if (existing) {
-        return;
-      }
-      if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
-        return;
-      }
-      const conversationId = crypto.randomUUID();
-      const chatId = crypto.randomUUID();
-      await tx.insert(eveChat).values({
-        id: chatId,
-        ownerId,
-        title: "",
-        titleStatus: "fallback",
-      });
-      await tx.insert(eveConversation).values({
-        chatId,
-        creationKind: "copy",
-        firstMessage: "",
-        id: conversationId,
-        operationId,
-        ownerId,
-        state: "deleted",
-      });
+  await db.transaction(async (tx: CopyWriteTransaction) => {
+    await lockEveCopyOwners(tx, [ownerId]);
+    const existingRows = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.operationId, operationId)
+        )
+      );
+    const existing = existingRows.at(FIRST_ROW_INDEX);
+    if (existing) {
+      return;
     }
-  );
+    if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
+      return;
+    }
+    const conversationId = crypto.randomUUID();
+    const chatId = crypto.randomUUID();
+    await tx.insert(eveChat).values({
+      id: chatId,
+      ownerId,
+      title: "",
+      titleStatus: "fallback",
+    });
+    await tx.insert(eveConversation).values({
+      chatId,
+      creationKind: "copy",
+      firstMessage: "",
+      id: conversationId,
+      operationId,
+      ownerId,
+      state: "deleted",
+    });
+  });
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
@@ -273,7 +266,7 @@ const assertEveCopySourceAvailable = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCopy's awaited sequencing and rejected-Promise behavior. */
 const readEveCopy = async (
-  tx: Pick<CopyTransaction, "select">,
+  tx: Readonly<Pick<CopyTransaction, "select">>,
   ownerId: string,
   conversationId: string
 ): Promise<EveCopyOperation> => {
@@ -536,8 +529,21 @@ no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing proto
  */
 const reserveEveCopyOperation = async (
   ownerId: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The Drizzle JSONB insert requires the existing EveCopyPlan type; a readonly plan fails its native insert overload. Keep the original object and schema contract until the database JSON type can accept a readonly plan.
-  input: ReserveEveCopyInput
+
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original SDK seed enters Drizzle JSONB values unchanged; readonly seed.messages fails its native EveCopySeed array contract at the insert overload (TS2769/TS2589).
+  input: Readonly<
+    Pick<
+      ReserveEveCopyInput,
+      | "plan"
+      | "projectionHash"
+      | "sourceOwnerId"
+      | "operationId"
+      | "sourceConversationId"
+      | "sourceSessionId"
+      | "modelId"
+      | "title"
+    >
+  >
 ): Promise<EveCopyOperation> => {
   validateCopyPlan(input.plan);
   if (!hashPattern.test(input.projectionHash)) {

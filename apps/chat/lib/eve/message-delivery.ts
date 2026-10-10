@@ -6,10 +6,18 @@ import { frontendToolsSchema } from "@/lib/ai/types";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
+
+type DeliveryEvent =
+  | {
+      readonly type: "message.received";
+      readonly data: { readonly metadata?: unknown };
+    }
+  | { readonly type: Exclude<MessageStreamEvent["type"], "message.received"> };
 
 const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
@@ -27,7 +35,7 @@ const deliveryMetadata = z.object({
   chatjs: z.object({ operationId: z.uuid() }),
 });
 
-type PendingEveMessage = z.infer<typeof pendingMessage>;
+type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;
 
 type ActivePendingEveMessage = PendingEveMessage & {
   operationId: string;
@@ -80,17 +88,16 @@ const read = (
 };
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-undefined, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
 const eveMessageDelivery = {
   acknowledge: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
-    event: MessageStreamEvent
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
+    event: DeliveryEvent
   ): boolean => {
     if (
       event.type !== "message.received" ||
@@ -111,7 +118,7 @@ const eveMessageDelivery = {
   begin: (
     storage: DeliveryStorage,
     sessionId: string,
-    input: NewPendingEveMessage
+    input: ReadonlyNativeSurface<NewPendingEveMessage>
   ): ActivePendingEveMessage =>
     write(storage, sessionId, {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -132,7 +139,7 @@ const eveMessageDelivery = {
   reject: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
     rejection: string,
     retryable = false
   ): PendingEveMessage & { rejection: string; retryable: boolean } =>
@@ -141,7 +148,7 @@ const eveMessageDelivery = {
   retry: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage
+    pending: ReadonlyNativeSurface<PendingEveMessage>
   ): ActivePendingEveMessage | undefined => {
     const current = read(storage, sessionId);
     if (
@@ -162,7 +169,7 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-undefined, typescript/strict-boolean-expressions */
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.
@@ -185,11 +192,8 @@ const eveMessageDeliveryMetadata = (
   },
 });
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const eveMessageOperationId = (
-  event: MessageStreamEvent
-): string | undefined => {
+/* oxlint-disable no-undefined -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+const eveMessageOperationId = (event: DeliveryEvent): string | undefined => {
   if (event.type === "message.received") {
     return (
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -199,7 +203,7 @@ const eveMessageOperationId = (
   return undefined;
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery, eveMessageDeliveryMetadata, eveMessageOperationId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,

@@ -2,25 +2,19 @@
 
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  */
+import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
+import { EveCreationRecoveryError } from "./creation-recovery-error";
+import { createConversationInput } from "./contracts";
 import { setTimeout as delay } from "node:timers/promises";
-
+import { executeEveConversationCreation } from "./execute-conversation-creation";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
-
-import { createConversationInput } from "./contracts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { EveCreationRecoveryError } from "./creation-recovery-error";
-/* oxlint-enable sort-imports */
-import { executeEveConversationCreation } from "./execute-conversation-creation";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForConcurrentBinding's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): waitForConcurrentBinding uses 8, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MAX_CONCURRENT_BINDING_POLLS = 8;
+const CONCURRENT_BINDING_POLL_DELAY_MS = 250;
+const POLL_INCREMENT = 1;
 /**
  * Wait for an identified lock contender without dispatching the command again.
  * @param {string} ownerId Owner whose durable creation state is polled.
@@ -31,9 +25,13 @@ const waitForConcurrentBinding = async (
   ownerId: string,
   operationId: string
 ): Promise<boolean> => {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (
+    let attempt = 0;
+    attempt < MAX_CONCURRENT_BINDING_POLLS;
+    attempt += POLL_INCREMENT
+  ) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Bound the wait for the request that already owns this creation.
-    await delay(250);
+    await delay(CONCURRENT_BINDING_POLL_DELAY_MS);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read durable state after each bounded wait.
     const current = await getEveCreation(ownerId, operationId);
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -53,12 +51,11 @@ const waitForConcurrentBinding = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (recoverEveCreations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recoverEveCreations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-continue, no-magic-numbers --
+const HTTP_CONFLICT = 409;
+
+/* oxlint-disable max-statements --
  * max-statements (#512): recoverEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): recoverEveCreations skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): recoverEveCreations uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 /**
  * Finish admitted commands before accounting for native usage or admitting more work.
@@ -87,18 +84,17 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
       const conflict = z
         .object({ code: z.literal("creation_in_progress") })
         .safeParse(body);
-      if (
-        response.status === 409 &&
+      const boundByConcurrentRequest =
+        response.status === HTTP_CONFLICT &&
         conflict.success &&
         // oxlint-disable-next-line eslint/no-await-in-loop -- Accounting may continue only after the concurrent operation binds.
-        (await waitForConcurrentBinding(ownerId, row.operationId))
-      ) {
-        continue;
+        (await waitForConcurrentBinding(ownerId, row.operationId));
+      if (!boundByConcurrentRequest) {
+        throw new EveCreationRecoveryError();
       }
-      throw new EveCreationRecoveryError();
     }
   }
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-continue, no-magic-numbers */
+/* oxlint-enable max-statements */

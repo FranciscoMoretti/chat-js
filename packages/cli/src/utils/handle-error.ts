@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./highlighter while their runtime initialization order is still under site review.
 import { highlighter } from "./highlighter";
-/* oxlint-enable sort-imports */
+
 import { logger } from "./logger";
 
 const failureExitCode = 1;

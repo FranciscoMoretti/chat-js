@@ -1,32 +1,27 @@
-import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createEveToolCost } from "@/lib/eve/tool-cost";
-/* oxlint-enable sort-imports */
-import { eveToolImageContext } from "@/lib/eve/tool-image-context";
-import { eveToolModelProvider } from "@/lib/eve/tool-models";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable sort-imports */
-import { createModuleLogger } from "@/lib/logger";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   ABSENT_DIAGNOSTIC_VALUE,
   getErrorDebugInfo,
   resolveError,
   serializeError,
 } from "./image-errors";
-/* oxlint-enable sort-imports */
 import type {
   GeneratedImageResult,
   ImageGenerationOptions,
   ImageStoreFile,
 } from "./image-generation";
+import type { ToolUsage } from "@/lib/eve/tool-usage";
+import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
+// oxlint-disable-next-line sort-imports -- Keep generated-files database/environment initialization before tool-cost loads active-gateway/Pino; sorting createEveToolCost first reverses their validation and logger setup.
+import { createEveToolCost } from "@/lib/eve/tool-cost";
+import { createModuleLogger } from "@/lib/logger";
+import { eveToolImageContext } from "@/lib/eve/tool-image-context";
+import { eveToolModelProvider } from "@/lib/eve/tool-models";
+// oxlint-disable-next-line sort-imports -- Keep generated-files/tool-cost initialization before image-generation loads AI/file dependencies and creates its logger; moving this multiple-binding import first changes host initialization order.
 import {
   runGenerateImageMultimodal,
   runGenerateImageTraditional,
 } from "./image-generation";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { resolveImageModel } from "./image-model";
 
 const log = createModuleLogger("ai.tools.generate-image");

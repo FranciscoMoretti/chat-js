@@ -1,44 +1,43 @@
 "use client";
 
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Button initializes the UUID crypto binding through utils before ButtonGroup reaches ReactDOM through Separator and calls external DevTools hooks; preserve that observable initialization order. */
 import {
   ButtonGroup,
   ButtonGroupSeparator,
   ButtonGroupText,
 } from "@/components/ui/button-group";
 /* oxlint-enable sort-imports */
-import { Input } from "@/components/ui/input";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-/* oxlint-enable sort-imports */
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+import { ControlDefaultsVisualFixture } from "@/components/ui/control-defaults-visual-fixture";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import React from "react";
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UiPrimitivesVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- UiPrimitivesVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
+
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const UiPrimitivesVisualFixture = ({
   includeProgress = false,
+  includeControlDefaults = false,
   progressValue,
 }: {
   readonly includeProgress?: boolean;
+  readonly includeControlDefaults?: boolean;
   readonly progressValue?: number;
 } = {}): React.JSX.Element => (
   <main
@@ -82,6 +81,8 @@ export const UiPrimitivesVisualFixture = ({
         <Button>Bottom</Button>
       </ButtonGroup>
     </section>
+
+    {includeControlDefaults && <ControlDefaultsVisualFixture />}
 
     {includeProgress && (
       <section className="max-w-3xl space-y-3" data-testid="progress-states">

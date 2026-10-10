@@ -1,6 +1,5 @@
 "use client";
 
-import type { EveMessagePart } from "eve/client";
 import type { JSX as ReactJSX } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef } from "react";
@@ -17,13 +16,16 @@ import {
   eveDocumentOperations,
   eveDocumentResult,
 } from "@/lib/eve/document-contracts";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 /* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 
 import {
   useDocumentConversation,
   useDocumentReplaying,
 } from "./eve-document-context";
 import { EveDocumentPreview } from "./eve-document-preview";
+/* oxlint-enable sort-imports */
 
 const partialDocument = z.object({
   content: z.string().optional(),
@@ -32,7 +34,7 @@ const partialDocument = z.object({
 });
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- EveDocumentTool renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- EveDocumentTool: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [name]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions -- EveDocumentTool: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
 
 export const EveDocumentTool = ({
   part,
@@ -40,10 +42,13 @@ export const EveDocumentTool = ({
   isReadonly,
   preview = false,
 }: {
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-  messageId: string;
-  isReadonly: boolean;
-  preview?: boolean;
+  readonly part: Extract<
+    ReadonlyEveMessagePart,
+    { readonly type: "dynamic-tool" }
+  >;
+  readonly messageId: string;
+  readonly isReadonly: boolean;
+  readonly preview?: boolean;
 }): ReactJSX.Element => {
   const isClient = useIsClient();
   const replaying = useDocumentReplaying();
@@ -57,7 +62,7 @@ export const EveDocumentTool = ({
     }
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const operation = Object.entries(eveDocumentOperations).find(
-      ([name]) => name === part.toolName
+      ([name]: readonly [string, unknown]) => name === part.toolName
     )?.[1];
     if (part.state === "input-streaming" || part.state === "input-available") {
       pendingCall.current = part.toolCallId;
@@ -205,4 +210,4 @@ export const EveDocumentTool = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions */

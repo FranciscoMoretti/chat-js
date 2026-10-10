@@ -1,20 +1,15 @@
 import { Maximize2, Minimize2 } from "lucide-react";
-import React from "react";
-
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { cn } from "@/lib/utils";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 // Type-only imports
 import type {
   ResearchUpdate,
   WebSearchUpdate,
 } from "@/tools/platform/research-updates-schema";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ResearchTask } from "./task";
-/* oxlint-enable sort-imports */
 import { ResearchTasks } from "./tasks";
 import { UpdateTitle } from "./update-title";
+import { cn } from "@/lib/utils";
 
 // Add the updateName mapping (consider moving to a shared util later)
 const updateName = {
@@ -26,9 +21,7 @@ const updateName = {
 } as const;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchProgress); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
@@ -41,7 +34,7 @@ export const ResearchProgress = ({
 }: ReadonlyNativeSurface<{
   updates: ResearchUpdate[];
   isComplete: boolean;
-}>) => {
+}>): React.JSX.Element => {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   // oxlint-disable-next-line no-ternary -- Keep lastUpdate as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -175,6 +168,4 @@ export const ResearchProgress = ({
 
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */

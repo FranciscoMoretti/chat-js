@@ -1,5 +1,4 @@
 import { expect, test, vi } from "vitest";
-
 import { eveMessageInput } from "./message-input";
 import { prepareEveMessage } from "./prepare-message";
 

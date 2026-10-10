@@ -1,16 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-import { auth } from "@ai-sdk/mcp";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
 
-import type { McpOAuthSession } from "../../db/schema";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
+import type { McpOAuthSession } from "@/lib/db/schema";
+import { auth } from "@ai-sdk/mcp";
 
 const sdkIssuer = "http://127.0.0.1:3799";
 const sdkMetadata = {
@@ -43,36 +35,30 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/mcp-oauth-lock")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
-  withMcpOAuthRefreshLock: async (_id: string, run: () => Promise<unknown>) =>
-    await run(),
+  withMcpOAuthRefreshLock: async (
+    _id: string,
+    run: () => Promise<unknown>
+  ): Promise<unknown> => await run(),
 }));
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable init-declarations --
  * init-declarations (#507): stored assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  */
 let stored: McpOAuthSession;
 /* oxlint-enable init-declarations */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep provider's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): provider preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-const provider = () =>
+const provider = (): McpOAuthClientProvider =>
   new McpOAuthClientProvider({
     clientMetadata: { redirect_uris: ["http://localhost:3790/callback"] },
     mcpConnectorId: "connector",
     onRedirectToAuthorization: (): Promise<void> => Promise.resolve(),
     serverUrl: "http://127.0.0.1:3799/mcp",
   });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep refreshRequest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const refreshRequest = (refreshToken: string) =>
+/* oxlint-enable typescript/promise-function-async */
+const refreshRequest = (refreshToken: string): Request =>
   new Request("http://127.0.0.1:3799/token", {
     body: new URLSearchParams({
       grant_type: "refresh_token",
@@ -80,10 +66,8 @@ const refreshRequest = (refreshToken: string) =>
     }),
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
  * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts { tokens }: { tokens: Record<string, unknown> }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -107,21 +91,25 @@ beforeEach(() => {
   };
   mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.setClientInfo.mockImplementation(
-    ({ clientInfo }: { clientInfo: Record<string, unknown> }) => {
+    ({
+      clientInfo,
+    }: {
+      readonly clientInfo: Readonly<Record<string, unknown>>;
+    }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, clientInfo };
       return stored;
     }
   );
   mocks.setCodeVerifier.mockImplementation(
-    ({ codeVerifier }: { codeVerifier: string }) => {
+    ({ codeVerifier }: { readonly codeVerifier: string }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, codeVerifier };
       return stored;
     }
   );
   mocks.save.mockImplementation(
-    ({ tokens }: { tokens: Record<string, unknown> }) => {
+    ({ tokens }: { readonly tokens: Readonly<Record<string, unknown>> }) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, tokens };
       return stored;
@@ -183,7 +171,7 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

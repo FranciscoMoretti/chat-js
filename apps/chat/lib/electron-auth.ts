@@ -1,7 +1,5 @@
-import { config } from "@/lib/config";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SocialAuthSignInOptions } from "@/lib/social-auth";
-/* oxlint-enable sort-imports */
+import { config } from "@/lib/config";
 
 const ELECTRON_AUTH_CLIENT_ID = "electron";
 

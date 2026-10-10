@@ -1,17 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { Chat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
-/* oxlint-enable sort-imports */
-import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
-/* oxlint-enable sort-imports */
 import { TestRunHost } from "./support/test-run-host";
+import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
+import type { UIMessage } from "ai";
 
 const userMessage = (): UIMessage => ({
   id: "user-1",
@@ -121,8 +116,9 @@ describe("ThreadRunChat", (): void => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
+    expect(host.tree.getMessage("server-id")).toMatchObject({
+      id: "server-id",
+    });
     expect(spec.messageId).toBe("server-id");
   });
   /* oxlint-enable oxc/no-async-await */
@@ -179,8 +175,9 @@ describe("ThreadRunChat", (): void => {
     transport.finish();
 
     await waitFor((): boolean => transport.requests.length === 2);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    expect(transport.requests.at(1)).toMatchObject({
+      options: { messageId: "assistant-1" },
+    });
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       { id: "second", type: "text-start" },
@@ -197,19 +194,20 @@ describe("ThreadRunChat", (): void => {
         .getChildren(spec.parentMessageId)
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
-      expect.objectContaining({
-        output: { temperature: 22 },
-        state: "output-available",
-        toolCallId: "tool-1",
-        type: "dynamic-tool",
-      }),
-      expect.objectContaining({
-        text: "It is 22 degrees.",
-        type: "text",
-      }),
-    ]);
+    expect(host.tree.getMessage("assistant-1")).toMatchObject({
+      parts: [
+        expect.objectContaining({
+          output: { temperature: 22 },
+          state: "output-available",
+          toolCallId: "tool-1",
+          type: "dynamic-tool",
+        }),
+        expect.objectContaining({
+          text: "It is 22 degrees.",
+          type: "text",
+        }),
+      ],
+    });
     expect(host.status).toBe("ready");
   });
   /* oxlint-enable oxc/no-async-await */

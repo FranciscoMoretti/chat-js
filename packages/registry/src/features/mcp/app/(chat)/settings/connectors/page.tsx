@@ -16,9 +16,7 @@ import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 /* oxlint-disable react/jsx-no-literals -- ConnectorsSettingsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-const ConnectorsSettingsHeader = () => (
+const ConnectorsSettingsHeader = (): React.JSX.Element => (
   <SettingsPageHeader>
     <h2 className="text-lg font-semibold">Connectors & MCP</h2>
     <p className="text-muted-foreground text-sm">
@@ -30,11 +28,9 @@ const ConnectorsSettingsHeader = () => (
 /* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorsSettingsContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const ConnectorsSettingsContent = async () => {
+const ConnectorsSettingsContent = async (): Promise<React.JSX.Element> => {
   await connection();
   // Keep this result out of the layout's earlier hydration boundary.
   const queryClient = makeQueryClient();
@@ -51,16 +47,13 @@ const ConnectorsSettingsContent = async () => {
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-const ConnectorsSettingsPage = () => (
+const ConnectorsSettingsPage = (): React.JSX.Element => (
   <Suspense
     fallback={
       <SettingsPage>
@@ -85,11 +78,8 @@ const ConnectorsSettingsPage = () => (
     <ConnectorsSettingsContent />
   </Suspense>
 );
-/* oxlint-enable typescript/explicit-module-boundary-types */
-
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */

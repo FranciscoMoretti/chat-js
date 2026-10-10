@@ -11,7 +11,6 @@ import type { ToolOutput, ToolResult } from "./tool-result";
  * @returns {ToolModelOutput} JSON output or the tool's error, excluding billing and progress metadata.
  */
 export const toolResultToModelOutput = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ToolResult<ToolOutput> is a recursive JSON union; mapped readonly native-input assignability hits TS2589. Preserve the actual public receipt input and forward the exact output reference to toolOutput.json without cloning or casting.
   result: ToolResult<ToolOutput>
 ): ToolModelOutput =>
   toolOutput.json(

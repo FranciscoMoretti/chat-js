@@ -1,19 +1,8 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
-import type * as AI from "ai";
-import { MockVideoModelV4 } from "ai/test";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { MockVideoModelV4 } from "ai/test";
 import { generateVideoResult } from "./schemas";
-/* oxlint-enable sort-imports */
 import { generateVideoTool } from "./tool";
-/* oxlint-enable import/no-namespace */
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   definition: vi.fn(),
@@ -22,32 +11,27 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-vi.mock("ai", async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof AI>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  ...(await original<typeof AI>()),
+vi.mock(import("ai"), async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+  ...(await original()),
   experimental_generateVideo: mocks.generate,
 }));
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
-    createVideoModel: (id: string) => {
+    createVideoModel: (id: string): MockVideoModelV4 => {
       mocks.model(id);
       return new MockVideoModelV4();
     },
     getModelDefinition: mocks.definition,
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/generated-files")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/eve/generated-files", () => ({
-  eveGeneratedFileUploader: () => mocks.upload,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/eve/generated-files",
+  (): { eveGeneratedFileUploader: () => typeof mocks.upload } => ({
+    eveGeneratedFileUploader: () => mocks.upload,
+  })
+);
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { video: { default: "default-video" } } },
@@ -147,10 +131,11 @@ it("accepts saved results without file IDs", () => {
   expect(generateVideoResult.parse(saved)).toEqual(saved);
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/ai/active-gateway", () => ({
-  getActiveGateway: () => ({ fetchModels: () => [] }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/ai/active-gateway",
+  (): { getActiveGateway: () => { fetchModels: () => never[] } } => ({
+    getActiveGateway: (): { fetchModels: () => never[] } => ({
+      fetchModels: (): never[] => [],
+    }),
+  })
+);

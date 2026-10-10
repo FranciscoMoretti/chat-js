@@ -1,51 +1,33 @@
+import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
+import { getStorageEnvironmentRequirements } from "./environment";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFileSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import path from "node:path";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { fileURLToPath } from "node:url";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
-/* oxlint-enable sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { storageDefinitionSchema } from "../../metadata";
+/* oxlint-enable import/no-relative-parent-imports */
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { storageDefinitionSchema } from "../../metadata";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getStorageEnvironmentRequirements } from "./environment";
-/* oxlint-enable sort-imports */
+const sdkPackageSchema = z.object({
+  peerDependencies: z.record(z.string(), z.string()),
+  version: z.string(),
+});
+const sdkPackagePath = new URL(
+  "../package.json",
+  import.meta.resolve("files-sdk")
+);
+// oxlint-disable-next-line node/no-sync -- The catalog initializes its synchronous named export from the installed SDK manifest before registry construction.
+const sdkPackageContents = readFileSync(sdkPackagePath, "utf-8");
+const sdkPackage = sdkPackageSchema.parse(JSON.parse(sdkPackageContents));
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-const sdkPackage = z
-  .object({
-    peerDependencies: z.record(z.string(), z.string()),
-    version: z.string(),
-  })
-  .parse(
-    JSON.parse(
-      readFileSync(
-        path.join(
-          path.dirname(fileURLToPath(import.meta.resolve("files-sdk"))),
-          "../package.json"
-        ),
-        "utf-8"
-      )
-    )
-  );
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable node/no-sync */
+const getOptionalEnvironmentKeys = (
+  variables: readonly Readonly<{ key: string }>[] | undefined
+): string[] => {
+  if (!variables) {
+    return [];
+  }
+  return variables.map(({ key }: Readonly<{ key: string }>) => key) ?? [];
+};
 
 const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
 type StorageEnvironmentRequirementReader = Readonly<{
@@ -93,11 +75,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
-        optionalEnv:
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.env.optional; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
-          provider.env.optional?.map(
-            ({ key }: Readonly<{ key: string }>) => key
-          ) ?? [],
+        optionalEnv: getOptionalEnvironmentKeys(provider.env.optional),
       }),
     },
     name: `${id}-storage`,

@@ -1,5 +1,4 @@
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -15,6 +14,8 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 test.use({ actionTimeout: 20_000 });
 const screenshotStyle =
   'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }';
+const projectsRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
+  url.pathname.includes("project.list");
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
@@ -58,16 +59,9 @@ test("moves native conversations from sidebar and project rows with recoverable 
       "move-fixture-ok",
       { timeout: 90_000 }
     );
-    const projectsRoute = (url: URL): boolean =>
-      url.pathname.includes("project.list");
-    let releaseProjects: () => void = (): void => {
-      /* The gate is not ready to release before the route is intercepted. */
-    };
-    const projectsGate = new Promise<void>((resolve) => {
-      releaseProjects = resolve;
-    });
+    const projectsGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(projectsRoute, async (route) => {
-      await projectsGate;
+      await projectsGate.promise;
       await route.fulfill({
         body: "{}",
         contentType: "application/json",
@@ -97,7 +91,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-loading.png"),
       style: screenshotStyle,
     });
-    releaseProjects();
+    projectsGate.resolve();
     await expect(dialog.getByRole("alert")).toContainText(
       "Could not load projects."
     );
@@ -132,16 +126,11 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-save-error.png"),
       style: screenshotStyle,
     });
-    let releaseMove: () => void = (): void => {
-      /* The gate is not ready to release before the route is intercepted. */
-    };
-    const moveGate = new Promise<void>((resolve) => {
-      releaseMove = resolve;
-    });
+    const moveGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
       async (route) => {
-        await moveGate;
+        await moveGate.promise;
         await route.continue();
       },
       { times: 1 }
@@ -155,7 +144,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-pending.png"),
       style: screenshotStyle,
     });
-    releaseMove();
+    moveGate.resolve();
     await expect(dialog).not.toBeVisible();
     await expect(
       page.locator(`a[href="/project/${projectId}/chat/${id}"]`)

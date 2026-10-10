@@ -1,30 +1,27 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { readFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-/* oxlint-enable sort-imports */
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { itemAddress, readItem } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
-
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import type { InstallationSelection } from "../../../registry/installation";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { installationSelectionSchema } from "../../../registry/installation";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   FeatureDefinition,
   ToolDefinition,
   // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
+
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
+
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { readFile } from "node:fs/promises";
+
+// oxlint-disable-next-line sort-imports -- Preserve node:fs/promises before @chat-js/gateways/definition while their runtime initialization order is still under site review.
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
+// oxlint-disable-next-line sort-imports -- Preserve @chat-js/gateways/definition before #cli/registry/shadcn while their runtime initialization order is still under site review.
+import { itemAddress, readItem } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import type { InstallationSelection } from "../../../registry/installation";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { installationSelectionSchema } from "../../../registry/installation";
+
+// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/installation before ../../../registry/metadata while their runtime initialization order is still under site review.
 import {
   featureDefinitionSchema,
   featureIdSchema,
@@ -40,9 +37,9 @@ import {
 } from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./provider-config before ./sync-tools while their runtime initialization order is still under site review.
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
-/* oxlint-enable sort-imports */
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]
@@ -203,8 +200,7 @@ export const planInstallation = async (
     })
   );
   const replacements = installed.flatMap(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public plan returns this original mutable installed descriptor in replacements.
-    (previous: ToolDefinition) => {
+    (previous: ReadonlyNative<ToolDefinition>) => {
       const next = [...expected.values()].find(
         (item: ReadonlyNative<ToolDefinition>) =>
           item.id !== previous.id &&
@@ -231,13 +227,13 @@ export const planInstallation = async (
             !replacements.some(
               ({
                 previous,
-              }: ReadonlyNative<{ previous: ToolDefinition }>): boolean =>
-                previous.id === item.id
+              }: ReadonlyNative<{
+                previous: ReadonlyNative<ToolDefinition>;
+              }>): boolean => previous.id === item.id
             )
         )
         .map(
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The target preserves mutable descriptors whose environment options are returned by the public plan.
-          (item: ToolDefinition) => [item.id, item] as const
+          (item: ReadonlyNative<ToolDefinition>) => [item.id, item] as const
         ),
       ...expected.entries(),
     ]).values(),
@@ -308,10 +304,12 @@ export const planInstallation = async (
           })
         );
   const targetFeatures = new Map([
-    ...installedFeatures.flat().map(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the mutable descriptor environment options returned by the public plan.
-      (feature: FeatureDefinition) => [feature.id, feature] as const
-    ),
+    ...installedFeatures
+      .flat()
+      .map(
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          [feature.id, feature] as const
+      ),
     ...features.entries(),
   ]);
   const featureIds = new Set(targetFeatures.keys());
@@ -335,17 +333,16 @@ export const planInstallation = async (
   return {
     environmentVariables: [
       ...target().flatMap(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These existing mutable environment options are returned as the public plan output.
-        (tool: ToolDefinition) => tool.envRequirements
+        (tool: ReadonlyNative<ToolDefinition>) => tool.envRequirements
       ),
       ...[...targetFeatures.values()].flatMap(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These existing mutable environment options are returned as the public plan output.
-        (feature: FeatureDefinition) => feature.envRequirements ?? []
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          feature.envRequirements ?? []
       ),
     ].flatMap(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Return original mutable environment option objects without narrowing the public result.
-      (requirement: ToolDefinition["envRequirements"][number]) =>
-        requirement.options.flat()
+      (
+        requirement: ReadonlyNative<ToolDefinition["envRequirements"][number]>
+      ) => requirement.options.flat()
     ),
     expected: [...expected.values()],
     features: [...features.values()],

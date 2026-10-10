@@ -1,10 +1,7 @@
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { attachmentDigest, draftAttachment } from "@/lib/eve/draft";
+import type { z } from "zod";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (uploadAttachment); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve uploadAttachment's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 export const uploadAttachment = async (

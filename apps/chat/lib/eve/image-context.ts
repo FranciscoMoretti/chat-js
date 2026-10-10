@@ -1,9 +1,71 @@
-import type { FileUIPart, ModelMessage, UserModelMessage } from "ai";
+import type { FileUIPart, ModelMessage } from "ai";
 import { z } from "zod";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type UserContentPart = Exclude<
+  Extract<ModelMessage, { role: "user" }>["content"],
+  string
+>[number];
+type ToolContentPart = Extract<
+  ModelMessage,
+  { role: "tool" }
+>["content"][number];
+
+interface ImageContextUserMessage extends IgnoredSdkFields<
+  Extract<ModelMessage, { role: "user" }>
+> {
+  readonly role: "user";
+  readonly content:
+    | string
+    | readonly (IgnoredSdkFields<UserContentPart> &
+        (
+          | {
+              readonly type: "file";
+              readonly mediaType: string;
+              readonly data: unknown;
+              readonly filename?: string;
+            }
+          | { readonly type: "text" | "image" }
+        ))[];
+}
+type ImageContextMessage = IgnoredSdkFields<ModelMessage> &
+  (
+    | ImageContextUserMessage
+    | {
+        readonly role: "tool";
+        readonly content: readonly (IgnoredSdkFields<ToolContentPart> &
+          (
+            | {
+                readonly type: "tool-result";
+                readonly toolName: string;
+                readonly toolCallId: string;
+                readonly output: {
+                  readonly type: string;
+                  readonly value?: unknown;
+                } & IgnoredSdkFields<
+                  Extract<ToolContentPart, { type: "tool-result" }>["output"]
+                >;
+              }
+            | { readonly type: "tool-approval-response" }
+          ))[];
+      }
+    | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> }
+  );
+
 /* oxlint-enable sort-imports */
+
+/** Preserve the native array check while retaining the readonly content element contract. */
+const isImageContentArray: (
+  content: ImageContextUserMessage["content"]
+) => content is Exclude<ImageContextUserMessage["content"], string> =
+  Array.isArray;
 
 const imageResult = z.object({
   imageUrl: z.string(),
@@ -11,16 +73,15 @@ const imageResult = z.object({
 });
 
 const latestImageAttachments = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit during native user-message narrowing; the outer list is already readonly.
-  messages: readonly ModelMessage[]
+  messages: readonly ImageContextMessage[]
 ): FileUIPart[] => {
   const user = messages.findLast(
     (message: {
       readonly role: ModelMessage["role"];
-    }): message is UserModelMessage => message.role === "user"
+    }): message is ImageContextUserMessage => message.role === "user"
   );
   const attachments: FileUIPart[] = [];
-  if (user && Array.isArray(user.content)) {
+  if (user && isImageContentArray(user.content)) {
     for (const part of user.content) {
       if (
         part.type === "file" &&
@@ -37,6 +98,7 @@ const latestImageAttachments = (
       }
     }
   }
+
   return attachments;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
@@ -50,8 +112,7 @@ const latestImageAttachments = (
  * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
  */
 export const eveImageContext = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit when parsing tool output; the outer list is already readonly.
-  messages: readonly ModelMessage[]
+  messages: readonly ImageContextMessage[]
 ): {
   attachments: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;

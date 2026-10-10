@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next/image and react; keep this adjacent import pair ordered. */
 import React, { useMemo } from "react";
 /* oxlint-enable sort-imports */
+
+import type { JSX as ReactJSX } from "react";
 
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";

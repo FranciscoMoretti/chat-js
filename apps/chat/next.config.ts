@@ -1,7 +1,5 @@
-import { withEve } from "eve/next";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { NextConfig } from "next";
-/* oxlint-enable sort-imports */
+import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,

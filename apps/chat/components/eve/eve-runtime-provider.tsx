@@ -1,6 +1,10 @@
 "use client";
 
+/* oxlint-disable max-lines -- Keep the logical runtime owner and route registration in this module; the finite readonly event signature adds declaration lines without changing runtime responsibilities. */
+
+/* oxlint-disable import/max-dependencies -- Keep the explicit EVE runtime, state and readonly reader dependencies together; extracting ownership boundaries is a separate change, and generated gateway variants use the same imports. */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { MessageStreamEvent } from "eve/client";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -12,7 +16,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 /* oxlint-enable sort-imports */
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
@@ -21,12 +25,12 @@ import { LogicalChat } from "@/lib/eve/logical-chat";
 /* oxlint-enable sort-imports */
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 /* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- @/trpc/react import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useTRPC } from "@/trpc/react";
-/* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveChatHeader } from "./eve-chat-header";
@@ -41,25 +45,53 @@ import {
 } from "./eve-logical-context";
 /* oxlint-enable sort-imports */
 import type { OpenRequest } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null -- NativeObserver: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null -- NativeObserver: max-lines-per-function: keep the observer subscription and query invalidation together; the finite readonly event signature contributes declaration lines without adding runtime operations; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const NativeObserver = ({
-  controller,
-  conversationId,
-  sessionId,
-}: {
-  controller: LogicalChat;
-  conversationId: string;
-  sessionId: string;
-}): null => {
+/* oxlint-enable import/max-dependencies */
+
+const NativeObserver = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- controller: observe writes the caller-owned LogicalChat agent map and publishes its snapshot; retain the native controller identity and imperative mutation rights. */
+  {
+    controller,
+    conversationId,
+    sessionId,
+  }: {
+    readonly controller: LogicalChat;
+    readonly conversationId: string;
+    readonly sessionId: string;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): null => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const agent = useEveAgent({
     host: "/api",
     initialSession: { sessionId, streamIndex: 0 },
-    onEvent: (event) => {
+    onEvent: (
+      event:
+        | {
+            readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+          }
+        | {
+            readonly type: "action.result";
+            readonly data: {
+              readonly result:
+                | { readonly kind: "tool-result"; readonly toolName: string }
+                | {
+                    readonly kind: Exclude<
+                      Extract<
+                        MessageStreamEvent,
+                        { type: "action.result" }
+                      >["data"]["result"]["kind"],
+                      "tool-result"
+                    >;
+                  };
+            };
+          }
+    ) => {
       if (
         event.type === "turn.completed" &&
         pendingEveMetadataMutations(queryClient) === 0
@@ -90,16 +122,20 @@ const NativeObserver = ({
   }, [agent, controller, conversationId]);
   return null;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- RuntimeSlot: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including branch); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including branch.sessionId). */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, unicorn/no-null */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- RuntimeSlot: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including branch.sessionId). */
 
-const RuntimeSlot = ({
-  runtime,
-  active,
-}: {
-  runtime: Runtime;
-  active: boolean;
-}): ReactJSX.Element => {
+const RuntimeSlot = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- runtime: its controller is forwarded into EveLogicalContext and NativeObserver. The faithful readonly projection loses LogicalChat private fields and fails the native context/controller assignment (TS2740/TS2322). */
+  {
+    runtime,
+    active,
+  }: {
+    readonly runtime: Runtime;
+    readonly active: boolean;
+  }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const trpc = useTRPC();
   const identity = useQuery(trpc.eve.get.queryOptions({ id: runtime.chatId }));
   const family = useQuery(
@@ -127,7 +163,7 @@ const RuntimeSlot = ({
     [runtime.controller, runtime.ownerId, snapshot]
   );
   const selected = snapshot.branches.find(
-    (branch) => branch.id === snapshot.conversationId
+    (branch: { readonly id: string }) => branch.id === snapshot.conversationId
   );
   const agent = snapshot.agents.get(snapshot.conversationId);
   const header = (
@@ -149,7 +185,7 @@ const RuntimeSlot = ({
   return (
     <>
       {snapshot.branches.map(
-        (branch) =>
+        (branch: { readonly sessionId: string | null; readonly id: string }) =>
           branch.sessionId && (
             <NativeObserver
               key={branch.sessionId}
@@ -201,23 +237,24 @@ const RuntimeSlot = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveRuntimeProvider: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including request: OpenRequest); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, react/no-multi-comp, unicorn/no-null -- EveRuntimeProvider: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** Mounted in the layout: routes select a view; sessions belong to logical chats. */
 const EveRuntimeProvider = ({
   children,
   ownerId,
 }: {
-  children: ReactNode;
-  ownerId?: string;
+  readonly children: ReadonlyReactNode;
+  readonly ownerId?: string;
 }): ReactJSX.Element => {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [runtimes, setRuntimes] = useState<Runtime[]>([]);
-  // The registry is a stable runtime owner, not render state.
-  // oxlint-disable-next-line react/hook-use-state -- Controllers must retain identity for the owner lifetime.
+  // React state retains the lazily allocated registry for this mounted owner.
+  // A ref initializer would need render-time `.current` access and violates the effective react/refs rule; useMemo is only a cache, not an identity guarantee.
+  // oxlint-disable-next-line react/hook-use-state -- Preserve lazy registry identity for this provider lifetime under the active render-time ref restriction.
   const [registry] = useState(() => new Map<string, Runtime>());
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve open's awaited sequencing and rejected-Promise behavior. */
   const open = useCallback(
@@ -266,7 +303,7 @@ const EveRuntimeProvider = ({
   );
   /* oxlint-enable oxc/no-async-await */
   const active = runtimes.find(
-    (runtime) =>
+    (runtime: Readonly<Pick<Runtime, "ownerId" | "chatId">>) =>
       runtime.ownerId === ownerId && pathname === `/chat/${runtime.chatId}`
   );
   useEffect(() => {
@@ -280,21 +317,30 @@ const EveRuntimeProvider = ({
   return (
     <EveRuntimeContext.Provider value={open}>
       {runtimes
-        .filter((runtime) => runtime.ownerId === ownerId)
-        .map((runtime): React.JSX.Element => (
-          <RuntimeSlot
-            key={`${runtime.ownerId}:${runtime.chatId}`}
-            runtime={runtime}
-            active={runtime === active}
-          />
-        ))}
+        .filter(
+          (runtime: Readonly<Pick<Runtime, "ownerId">>) =>
+            runtime.ownerId === ownerId
+        )
+        .map(
+          (
+            /* oxlint-disable typescript/prefer-readonly-parameter-types -- runtime: forwarded unchanged into RuntimeSlot, whose controller must remain the native LogicalChat instance. The faithful readonly projection loses private class fields and fails this receiving prop (TS2322). */
+            runtime
+            /* oxlint-enable typescript/prefer-readonly-parameter-types */
+          ): React.JSX.Element => (
+            <RuntimeSlot
+              key={`${runtime.ownerId}:${runtime.chatId}`}
+              runtime={runtime}
+              active={runtime === active}
+            />
+          )
+        )}
       {!active && children}
     </EveRuntimeContext.Provider>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, react/no-multi-comp, unicorn/no-null */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EveRuntimeRoute: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- EveRuntimeRoute: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 const EveRuntimeRoute = ({
   id,
@@ -326,6 +372,6 @@ const EveRuntimeRoute = ({
   );
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveRuntimeProvider, EveRuntimeRoute); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 export { EveRuntimeProvider, EveRuntimeRoute };
 /* oxlint-enable import/no-named-export */

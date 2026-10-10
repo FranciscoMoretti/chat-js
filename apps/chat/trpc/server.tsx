@@ -1,14 +1,15 @@
 // Ensure this file cannot be imported from the client.
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import "server-only";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @trpc/tanstack-react-query and react still needs a supported server equivalence check; preserve the existing order meanwhile.
 import React, { cache } from "react";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { createTRPCContext } from "./init";
 import { makeQueryClient } from "./query-client";
+// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between ./query-client and ./routers/_app still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { appRouter } from "./routers/_app";
-/* oxlint-enable sort-imports */
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -20,9 +21,8 @@ const trpc = createTRPCOptionsProxy({
   router: appRouter,
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): HydrateClient accepts props: { children: React.ReactNode }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const HydrateClient = (props: {
-  children: React.ReactNode;
+  readonly children: ReadonlyReactNode;
 }): React.JSX.Element => {
   const queryClient = getQueryClient();
   return (
@@ -31,7 +31,6 @@ const HydrateClient = (props: {
     </HydrationBoundary>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- #619: Consumers import getQueryClient, HydrateClient, trpc from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 // oxlint-disable-next-line import/no-named-export -- Keep the established named server API; no-default-export rejects its default-export alternative.

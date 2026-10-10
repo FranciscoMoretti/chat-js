@@ -1,48 +1,57 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
+/* oxlint-disable import/no-nodejs-modules -- Vite loads this Node config, which inspects the built docs directory on disk. */
 import { existsSync, statSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
+import type { Plugin } from "vitest/config";
+import { defineConfig } from "vitest/config";
+
+/* oxlint-disable import/no-nodejs-modules -- Vite loads this Node config, which joins filesystem paths for the built docs middleware. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-import { uiverifyPlugin } from "@uiverify/vitest/plugin";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { playwright } from "@vitest/browser-playwright";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Plugin } from "vitest/config";
-/* oxlint-enable sort-imports */
-import { defineConfig } from "vitest/config";
+import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
-/* oxlint-disable node/no-sync -- serveBuiltDocs: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- serveBuiltDocs: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable node/no-sync -- serveBuiltDocs: Keep this request-path check synchronous so request.url is rewritten before Connect next reaches Vite's downstream public-file middleware. */
 const serveBuiltDocs = (): Plugin => ({
-  configureServer(server) {
-    server.middlewares.use((request, _response, next) => {
-      const [pathname = "/", query] = (request.url ?? "/").split("?");
+  configureServer(
+    server: Readonly<{
+      middlewares: Readonly<{
+        use: Parameters<
+          Extract<
+            NonNullable<Plugin["configureServer"]>,
+            (...args: readonly never[]) => unknown
+          >
+        >["0"]["middlewares"]["use"];
+      }>;
+    }>
+  ) {
+    server.middlewares.use(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback rewrites request.url to serve built documentation paths; Connect requires a writable incoming request.
+      (request, _response: unknown, next) => {
+        const [pathname = "/", query] = (request.url ?? "/").split("?");
 
-      if (pathname === "/docs" || pathname.startsWith("/docs/")) {
-        let publicPath = pathname.slice("/docs".length) || "/";
-        const candidate = path.join(dist, publicPath);
+        if (pathname === "/docs" || pathname.startsWith("/docs/")) {
+          let publicPath = pathname.slice("/docs".length) || "/";
+          const candidate = path.join(dist, publicPath);
 
-        if (existsSync(candidate) && statSync(candidate).isDirectory()) {
-          publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
+          if (existsSync(candidate) && statSync(candidate).isDirectory()) {
+            publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
+          }
+
+          const querySuffix = query && `?${query}`;
+          request.url = `${publicPath}${querySuffix ?? ""}`;
         }
 
-        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        request.url = `${publicPath}${query ? `?${query}` : ""}`;
+        next();
       }
-
-      next();
-    });
+    );
   },
   enforce: "pre",
   name: "serve-built-docs",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable import/no-default-export -- vitest.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */

@@ -12,23 +12,6 @@ import {
   convertFileListToFileUIParts,
   generateId,
 } from "ai";
-
-import { ThreadRunChat } from "./ai-sdk-run-chat";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  RequestReader,
-  ThreadRunHost,
-  ThreadRunSpec,
-} from "./ai-sdk-run-chat";
-/* oxlint-enable sort-imports */
-import { MessageTree } from "./message-tree";
-import type { SnapshotInput } from "./message-tree-readers";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { RunRecord } from "./run-registry";
-/* oxlint-enable sort-imports */
-import { RunRegistry } from "./run-registry";
-import { ThreadRunHostAdapter } from "./thread-run-host";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   MessageTreeSnapshot,
   ThreadConcurrency,
@@ -39,7 +22,18 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
-/* oxlint-enable sort-imports */
+import type {
+  RequestReader,
+  ThreadRunHost,
+  ThreadRunSpec,
+} from "./ai-sdk-run-chat";
+import { MessageTree } from "./message-tree";
+import type { RunRecord } from "./run-registry";
+import { RunRegistry } from "./run-registry";
+import type { SnapshotInput } from "./message-tree-readers";
+import { ThreadRunChat } from "./ai-sdk-run-chat";
+import { ThreadRunHostAdapter } from "./thread-run-host";
+import { toRunSnapshot } from "./run-snapshots";
 
 const FIRST_PARAMETER_INDEX = 0;
 const SECOND_PARAMETER_INDEX = 1;
@@ -108,40 +102,42 @@ const ROOT_MESSAGE_ID = null;
 // oxlint-disable-next-line unicorn/no-null -- RunRegistry.select uses null to clear an explicit run selection before cursor/path replacement; undefined is not its selection contract.
 const NO_SELECTED_RUN = null;
 
-// oxlint-disable-next-line eslint/no-undefined -- Files-only SDK input omits text; skip creating a text part for that exact absent value while retaining empty strings.
-const ABSENT_INPUT_TEXT = undefined;
+// Files-only SDK input omits text; skip creating a text part for that exact absent value while retaining empty strings.
+const ABSENT_INPUT_TEXT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- A tool lookup begins without an owning assistant and returns this absent result when no matching part exists.
-const NO_PART_OWNER = undefined;
+// A tool lookup begins without an owning assistant and returns this absent result when no matching part exists.
+const NO_PART_OWNER = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- A cursor without an assistant, or a non-assistant lookup, has no resumable assistant run; both helpers return this optional result.
-const NO_ASSISTANT_RUN = undefined;
+// A cursor without an assistant, or a non-assistant lookup, has no resumable assistant run; both helpers return this optional result.
+const NO_ASSISTANT_RUN = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- An omitted regeneration messageId selects the cursor; a missing or root cursor has no message to regenerate, continue, or use as run origin. Both optional targets use undefined.
-const ABSENT_MESSAGE_TARGET = undefined;
+// An omitted regeneration messageId selects the cursor; a missing or root cursor has no message to regenerate, continue, or use as run origin. Both optional targets use undefined.
+const ABSENT_MESSAGE_TARGET = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- sendMessage forwards an absent tree.from option as an explicitly omitted run origin; startRun then selects the current cursor.
-const OMITTED_RUN_ORIGIN = undefined;
+// The sendMessage method forwards an absent tree.from option as an explicitly omitted run origin; startRun then selects the current cursor.
+const OMITTED_RUN_ORIGIN = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- Run lookup helpers expose ThreadRun | undefined when the registry has no matching run, preserving the public optional result.
-const NO_RUN_SNAPSHOT = undefined;
+// Run lookup helpers expose ThreadRun | undefined when the registry has no matching run, preserving the public optional result.
+const NO_RUN_SNAPSHOT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
-const NO_RUN_ERROR = undefined;
+// RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
+const NO_RUN_ERROR = globalThis.undefined;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMessageFromInput's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The SDK input supplies mutable parts and metadata to the constructed message without cloning their identity; recursively readonly parts cannot satisfy the SDK message result. */
 const createMessageFromInput = async <
   Metadata,
   Data extends UIDataTypes,
   Tools extends UITools,
->({
-  fallbackId,
-  input,
-}: Readonly<{
-  fallbackId: string;
-  input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
-}>): Promise<UIMessage<Metadata, Data, Tools>> => {
+>(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK input supplies canonical parts and metadata to the constructed message without cloning their identity; recursively readonly values cannot satisfy its native SDK result.
+  {
+    fallbackId,
+    input,
+  }: Readonly<{
+    fallbackId: string;
+    input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
+  }>
+): Promise<UIMessage<Metadata, Data, Tools>> => {
   const messageId = getInputMessageId(input) ?? fallbackId;
   const { metadata } = input;
   if ("text" in input || "files" in input) {
@@ -173,7 +169,6 @@ const createMessageFromInput = async <
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 abstract class ThreadCore<
   Metadata,
@@ -480,25 +475,28 @@ abstract class ThreadCore<
     target: UIMessage<Metadata, Data, Tools>;
   }> {
     const { parentMessageId, target } = this.readTree((tree) => {
-      const cursorTarget =
-        // oxlint-disable-next-line no-ternary -- Keep cursorTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        typeof tree.cursorId === "string" && tree.cursorId !== ""
-          ? tree.getMessage(tree.cursorId)
-          : ABSENT_MESSAGE_TARGET;
-      const selectedTarget =
-        // oxlint-disable-next-line no-ternary -- Keep selectedTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        messageId === ABSENT_MESSAGE_TARGET || messageId === ROOT_MESSAGE_ID
-          ? cursorTarget
-          : tree.getMessage(messageId);
-      let targetParentMessageId: string | null = ROOT_MESSAGE_ID;
-      if (selectedTarget) {
-        targetParentMessageId =
-          // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          selectedTarget.role === "assistant"
-            ? (tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID)
-            : selectedTarget.id;
+      let selectedTarget: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof tree.cursorId === "string" && tree.cursorId !== "") {
+        selectedTarget = tree.getMessage(tree.cursorId);
       }
-      return { parentMessageId: targetParentMessageId, target: selectedTarget };
+      if (
+        messageId !== ABSENT_MESSAGE_TARGET &&
+        messageId !== ROOT_MESSAGE_ID
+      ) {
+        selectedTarget = tree.getMessage(messageId);
+      }
+      if (!selectedTarget) {
+        return { parentMessageId: ROOT_MESSAGE_ID, target: selectedTarget };
+      }
+      if (selectedTarget.role === "assistant") {
+        return {
+          parentMessageId:
+            tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID,
+          target: selectedTarget,
+        };
+      }
+      return { parentMessageId: selectedTarget.id, target: selectedTarget };
     });
     if (!target) {
       throw new Error(`message ${messageId} not found`);
@@ -563,11 +561,10 @@ abstract class ThreadCore<
           messages: UIMessage<Metadata, Data, Tools>[]
         ) => UIMessage<Metadata, Data, Tools>[])
   ): void {
-    const nextMessages =
-      // oxlint-disable-next-line no-ternary -- Keep nextMessages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      typeof messages === "function"
-        ? messages(this.getSnapshot().messages)
-        : messages;
+    let nextMessages = messages;
+    if (typeof nextMessages === "function") {
+      nextMessages = nextMessages(this.getSnapshot().messages);
+    }
     this.#runs.select(NO_SELECTED_RUN);
     this.updateTree((tree): void => tree.setPath(nextMessages));
   }
@@ -591,8 +588,7 @@ abstract class ThreadCore<
         typeof cursorId === "string" && cursorId !== ""
           ? this.getMessage(cursorId)
           : ABSENT_MESSAGE_TARGET;
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from cursorMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      if (cursorMessage?.role === "assistant") {
+      if (cursorMessage && cursorMessage.role === "assistant") {
         const run = this.continueAssistant({
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the existing cursorId === this.getSnapshot().cursorId fallback.
           follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
@@ -670,16 +666,16 @@ abstract class ThreadCore<
     originMessage: UIMessage<Metadata, Data, Tools> | undefined;
   }> {
     const { cursorId, originMessage } = this.readTree((tree) => {
-      // oxlint-disable-next-line no-ternary -- Keep originCursorId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      const originCursorId = from === OMITTED_RUN_ORIGIN ? tree.cursorId : from;
-      return {
-        cursorId: originCursorId,
-        originMessage:
-          // oxlint-disable-next-line no-ternary -- Keep originMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof originCursorId === "string" && originCursorId !== ""
-            ? tree.getMessage(originCursorId)
-            : ABSENT_MESSAGE_TARGET,
-      };
+      let originCursorId = from;
+      if (originCursorId === OMITTED_RUN_ORIGIN) {
+        originCursorId = tree.cursorId;
+      }
+      let resolvedOriginMessage: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof originCursorId === "string" && originCursorId !== "") {
+        resolvedOriginMessage = tree.getMessage(originCursorId);
+      }
+      return { cursorId: originCursorId, originMessage: resolvedOriginMessage };
     });
     if (typeof cursorId === "string" && cursorId !== "" && !originMessage) {
       throw new Error(`Unknown message ${cursorId}`);
@@ -712,10 +708,10 @@ abstract class ThreadCore<
   ): void {
     this.updateTree((tree): void => {
       const existingMessage = tree.getMessage(message.id);
-      // oxlint-disable-next-line no-ternary -- Keep attachmentId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      const attachmentId = existingMessage
-        ? (tree.getParentId(message.id) ?? ROOT_MESSAGE_ID)
-        : cursorId;
+      let attachmentId = cursorId;
+      if (existingMessage) {
+        attachmentId = tree.getParentId(message.id) ?? ROOT_MESSAGE_ID;
+      }
       tree.upsertMessage(message, attachmentId);
       if (follow) {
         tree.setCursor(message.id);
@@ -752,8 +748,12 @@ abstract class ThreadCore<
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopRun's awaited sequencing and rejected-Promise behavior. */
   public async stopRun(runId: string): Promise<void> {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chat from this.#runs.get(...); preserve one receiver evaluation, skipped accesses and the existing Promise.resolve() fallback.
-    await (this.#runs.get(runId)?.chat.stop() ?? Promise.resolve());
+    const run = this.#runs.get(runId);
+    if (run) {
+      await (run.chat.stop() ?? Promise.resolve());
+      return;
+    }
+    await Promise.resolve();
   }
   /* oxlint-enable oxc/no-async-await */
   // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
@@ -770,7 +770,7 @@ abstract class ThreadCore<
     const run = this.#runs.get(runId);
 
     if (run) {
-      return RunRegistry.toSnapshot(run);
+      return toRunSnapshot(run);
     }
     return NO_RUN_SNAPSHOT;
   }
@@ -779,7 +779,7 @@ abstract class ThreadCore<
     const run = this.#runs.getForMessage(messageId);
 
     if (run) {
-      return RunRegistry.toSnapshot(run);
+      return toRunSnapshot(run);
     }
     return NO_RUN_SNAPSHOT;
   }
@@ -820,12 +820,10 @@ abstract class ThreadCore<
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing indexes own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from selectedRun; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      error: selectedRun?.error,
+      error: selectedRun && selectedRun.error,
       messages: tree.getPath(),
       runs: runSnapshot.runs,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from selectedRun; preserve one receiver evaluation, skipped accesses and the existing "ready" fallback.
-      status: selectedRun?.status ?? "ready",
+      status: (selectedRun && selectedRun.status) ?? "ready",
       treeStatus: runSnapshot.status,
     };
   }
@@ -969,9 +967,16 @@ abstract class ThreadCore<
     const owner = this.findAssistantOwningPart({
       id: approvalId,
       label: "Tool approval",
-      matches: (part): boolean =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from part.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        isToolLookupPart(part) && part.approval?.id === approvalId,
+      matches: (part): boolean => {
+        if (!isToolLookupPart(part)) {
+          return false;
+        }
+        const approval = part.approval ?? globalThis.undefined;
+        if (approval === globalThis.undefined) {
+          return approval === approvalId;
+        }
+        return approval.id === approvalId;
+      },
     });
     if (!owner) {
       throw new Error(`No run owns tool approval ${approvalId}`);
@@ -1202,8 +1207,10 @@ abstract class ThreadCore<
 
   private assertCanContinueAssistant(messageId: string): void {
     const existing = this.#runs.getForResponseMessage(messageId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    if (existing?.status === "submitted" || existing?.status === "streaming") {
+    if (
+      existing &&
+      (existing.status === "submitted" || existing.status === "streaming")
+    ) {
       throw new Error(
         `Assistant message ${messageId} already has an active run`
       );

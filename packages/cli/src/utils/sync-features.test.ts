@@ -1,32 +1,30 @@
 import { afterEach, expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
 
 import ts from "typescript";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve typescript before #cli/helpers/scaffold while their runtime initialization order is still under site review.
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { installItems } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+// oxlint-disable-next-line sort-imports -- Preserve #cli/helpers/scaffold before #cli/registry/shadcn while their runtime initialization order is still under site review.
+import { installItems } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line import/no-relative-parent-imports, sort-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable. Preserve #cli/registry/shadcn before ../../../registry/src/features/mcp while their runtime initialization order is still under site review.
 import { mcpFiles, mcpItem } from "../../../registry/src/features/mcp";
-/* oxlint-enable sort-imports */
+
 import { installPlan } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 /* oxlint-disable import/max-dependencies -- The feature installation contract exercises the real planner, installer, registry and scaffold together. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./installation-plan before ./sync-features while their runtime initialization order is still under site review.
 import { initializeFeatureUi, syncFeatures } from "./sync-features";
-/* oxlint-enable sort-imports */
+
 /* oxlint-enable import/max-dependencies */
 
 const roots: string[] = [];
@@ -238,6 +236,21 @@ test("MCP installation requires the approval schema before changing an older sca
       await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
     ).toBe(false);
     expect(await readFile(schemaFile, "utf-8")).toBe(oldSchema);
+    const missingColumnsSchema = schema.replace(
+      /const mcpConnector = pgTable\([\s\S]*?\n\);/u,
+      'const mcpConnector = pgTable("McpConnector");'
+    );
+    expect(missingColumnsSchema).not.toBe(schema);
+    await writeFile(schemaFile, missingColumnsSchema);
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking the missing-call-argument path.
+    await expect(
+      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
+        Promise.reject(
+          new Error("registration must not run before the schema upgrade")
+        )
+      )
+    ).rejects.toThrow("db:generate script");
+    expect(await readFile(schemaFile, "utf-8")).toBe(missingColumnsSchema);
     await writeFile(schemaFile, schema);
     await installPlan(root, plan, {}, async (): Promise<void> => {
       await syncFeatures(root, { addUi: true, expectedMcp: true });

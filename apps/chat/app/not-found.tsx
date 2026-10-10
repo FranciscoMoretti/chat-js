@@ -1,14 +1,14 @@
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Alphabetical sorting places Button before InternalLink; keep the existing component module evaluation order. */
 import { InternalLink } from "@/components/internal-link";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Alphabetical sorting places Button before InternalLink; keep the existing component module evaluation order. */
 import { Button } from "@/components/ui/button";
 /* oxlint-disable react/jsx-no-literals -- NotFound renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable react/jsx-max-depth -- * react/jsx-max-depth (#548): NotFound keeps related render components together; extraction changes component, state, and layout boundaries. */
+/* oxlint-disable react/jsx-max-depth -- * react/jsx-max-depth (#548): native control found four sites nested to depth 4 or 5 (limit 2); the nested containers provide the centered error-page layout. */
 const NotFound = (): React.JSX.Element => (
   <div className="bg-background min-h-screen">
     <div className="container mx-auto p-6">

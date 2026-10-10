@@ -1,13 +1,10 @@
+import type { ApprovalResponseContext } from "eve/tools/approval";
 import type { ToolContext } from "eve/tools";
 import { defineTool } from "eve/tools";
-// oxlint-disable-next-line sort-imports -- Keep Oxfmt's module grouping: it places this approval type subpath after `eve/tools`, while sort-imports orders the imported binding name.
-import type { ApprovalResponseContext } from "eve/tools/approval";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line sort-imports -- Preserve EVE definition-source Map initialization before the deletion executor initializes database/createEnv; native Multiple-before-Single sorting reverses the shared registry and validation-failure order.
 import { executeDocumentDeletion, requestDocumentDeletion } from "./execute";
-/* oxlint-enable sort-imports */
 import { deleteDocumentInput } from "./schemas";
+import type { z } from "zod";
 
 type DeleteDocumentInput = z.infer<typeof deleteDocumentInput>;
 type DeleteDocumentRequestContext = Readonly<

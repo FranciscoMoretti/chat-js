@@ -8,11 +8,23 @@ const coveredWorkflows = new Set([
   "workflow//eve@0.61.0//executeSleepTool",
 ]);
 
+const NO_PARENT_EDGES = 0;
+const PARENT_EDGE = 1;
+
+const recordEveSandboxParentEdge = (
+  parent: string,
+  runId: string,
+  children: Readonly<Pick<Map<string, string[]>, "get" | "set">>
+): void => {
+  const dependents = children.get(parent) ?? [];
+  dependents.push(runId);
+  children.set(parent, dependents);
+};
+
 /** Index declared parent edges for the reviewed native workflows.
  * @param {readonly { readonly id: string; readonly workflowName: string; readonly parentId: string | null; readonly eveParentId: string | null }[]} runs Read-only native workflow identities and ancestry declarations; unknown workflows contribute no edges.
  * @returns {{ remaining: Map<string, number>; children: Map<string, string[]> }} Distinct declared parent counts and ordered child lists for reachability traversal. Repeated run identities retain the existing count overwrite and edge-list behavior.
  */
-// oxlint-disable-next-line max-statements -- Indexing preserves run order, deduplicates each run's declared parent edges, and retains duplicate-run count overwrite plus child-list insertion behavior in this 12-statement phase.
 const indexEveSandboxAncestry = (
   runs: readonly {
     readonly id: string;
@@ -28,13 +40,11 @@ const indexEveSandboxAncestry = (
       const parents = [...new Set([run.parentId, run.eveParentId])].filter(
         (parent): parent is string => parent !== null
       );
-      // oxlint-disable-next-line no-magic-numbers -- A workflow with no declared parent edges cannot be reached from a session candidate.
-      if (parents.length > 0) {
+
+      if (parents.length > NO_PARENT_EDGES) {
         remaining.set(run.id, parents.length);
         for (const parent of parents) {
-          const dependents = children.get(parent) ?? [];
-          dependents.push(run.id);
-          children.set(parent, dependents);
+          recordEveSandboxParentEdge(parent, run.id, children);
         }
       }
     }
@@ -48,7 +58,6 @@ const indexEveSandboxAncestry = (
  * @param {readonly { readonly id: string; readonly workflowName: string; readonly parentId: string | null; readonly eveParentId: string | null }[]} runs Workflow identities and declared ancestry to classify; entries are not mutated.
  * @returns {{ sessionIds: string[]; unresolvedRunIds: string[] }} Sorted session candidates and runs not proven covered. Coverage requires a known workflow and every declared ancestry path reaching a session; cycles and unknown workflows remain unresolved.
  */
-// oxlint-disable-next-line max-statements -- This 12-statement classification seeds sorted session candidates, traverses all indexed ancestry edges iteratively, and returns sorted unresolved runs without recursive stack growth.
 export const classifyEveSandboxRuns = (
   runs: readonly {
     readonly id: string;
@@ -66,16 +75,17 @@ export const classifyEveSandboxRuns = (
   // Every declared ancestry path must reach a session candidate. Processing
   // edges once handles deep graphs and converging paths; cycles remain unresolved.
   const pending = [...sessionIds];
+  const visitChild = (child: string): void => {
+    const count = (remaining.get(child) ?? NO_PARENT_EDGES) - PARENT_EDGE;
+    remaining.set(child, count);
+    if (count === NO_PARENT_EDGES) {
+      covered.add(child);
+      pending.push(child);
+    }
+  };
   for (const parent of pending) {
     for (const child of children.get(parent) ?? []) {
-      // oxlint-disable-next-line no-magic-numbers -- Each traversed parent edge decrements the unresolved count by one; preserve the zero fallback for a missing count.
-      const count = (remaining.get(child) ?? 0) - 1;
-      remaining.set(child, count);
-      // oxlint-disable-next-line no-magic-numbers -- A child is covered only after every declared parent edge has been traversed.
-      if (count === 0) {
-        covered.add(child);
-        pending.push(child);
-      }
+      visitChild(child);
     }
   }
   return {

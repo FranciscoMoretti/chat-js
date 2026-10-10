@@ -1,17 +1,13 @@
-import type { ToolContext } from "eve/tools";
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentWriteResult,
 } from "@/lib/eve/document-contracts";
-/* oxlint-enable sort-imports */
+import type { ToolContext } from "eve/tools";
+import { defineTool } from "eve/tools";
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
-
 import { textGuidelines } from "./guidelines";
+import type { z } from "zod";
 
 type CreateTextDocumentInput = Readonly<
   Omit<z.infer<typeof eveDocumentCreateInput>, "fileIds"> & {

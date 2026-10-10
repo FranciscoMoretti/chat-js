@@ -7,7 +7,8 @@ import React, {
   useMemo,
   useState,
 } from "react";
-
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
@@ -28,22 +29,21 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 );
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): SessionSeedContext accepts session: Session | null; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): SessionSeedContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const SessionSeedContext = createContext<
-  ((session: Session | null) => void) | null
->(null);
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable unicorn/no-null -- deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): SessionSeedContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-undefined (#519): SessionProvider uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): SessionProvider accepts { children, }: { children: React.ReactNode; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+const SessionSeedContext = createContext<
+  ((session: ReadonlyNativeSurface<Session | null>) => void) | null
+>(null);
+/* oxlint-enable unicorn/no-null */
+
+/* oxlint-disable no-undefined, unicorn/no-null -- no-undefined (#519): SessionProvider uses undefined for absent or optional values; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): SessionProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+
 const SessionProvider = ({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: ReadonlyReactNode;
 }): React.JSX.Element => {
   const {
     data: clientSession,
@@ -92,14 +92,14 @@ const SessionProvider = ({
     </SessionSeedContext.Provider>
   );
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */
 
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
-typescript/explicit-function-return-type (#560): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): SessionSeed accepts { session }: { session: Session | null }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable react/no-multi-comp, unicorn/no-null -- react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
 unicorn/no-null (#570): SessionSeed preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-const SessionSeed = ({ session }: { session: Session | null }) => {
+
+const SessionSeed = ({
+  session,
+}: ReadonlyNativeSurface<{ readonly session: Session | null }>): null => {
   const setServerSession = useContext(SessionSeedContext);
 
   if (!setServerSession) {
@@ -112,7 +112,7 @@ const SessionSeed = ({ session }: { session: Session | null }) => {
 
   return null;
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);

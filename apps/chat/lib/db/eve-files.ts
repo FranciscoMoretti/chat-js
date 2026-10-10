@@ -1,20 +1,26 @@
-/* oxlint-disable max-lines -- The native readonly transaction capability takes this storage-ownership module above the configured 300-line limit. A cohesive responsibility split remains unresolved; keep the five verified readonly fixes without compressing declarations or moving code solely for this limit. */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { isFileStorageKey } from "@/lib/file-url";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep pure file-key module evaluation before client import, which validates env and opens the Postgres pool at module load. */
 import { db } from "./client";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep schema pgTable construction after client initialization; syntax sorting would load the schema ahead of the pool. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable sort-imports */
 
 const FIRST_ROW_INDEX = 0;
+const SINGLE_ROW_LIMIT = 1;
+const MAXIMUM_ATTACHMENT_REFERENCES = 16;
 
 // Native capabilities used by locked storage writes and reservations.
-type FileTransaction = Readonly<
-  Pick<typeof db, "execute" | "select" | "insert">
+// oxlint-disable-next-line no-magic-numbers -- Indexed callback type preserves the actual native transaction contract.
+type FileTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type FileLockTransaction = Readonly<
+  Pick<FileTransaction, "execute" | "select">
+>;
+type FileWriteTransaction = Readonly<
+  Pick<FileTransaction, "execute" | "insert" | "select">
 >;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isEveFileUnavailable's awaited sequencing and rejected-Promise behavior. */
@@ -35,9 +41,9 @@ const isEveFileUnavailable = async (key: string): Promise<boolean> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve canReadEveFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null, typescript/strict-boolean-expressions -- no-magic-numbers (#517): canReadEveFile uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable unicorn/no-null -- no-magic-numbers (#517): canReadEveFile uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 unicorn/no-null (#570): canReadEveFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
-typescript/strict-boolean-expressions (#610): canReadEveFile intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+*/
 /**
  * Recheck durable access on every download, including URLs disclosed by old shares.
  * @param {string} key - Storage key requested by the download.
@@ -48,10 +54,11 @@ const canReadEveFile = async (
   key: string,
   ownerId?: string
 ): Promise<{ allowed: boolean; managed: boolean }> => {
-  const [file] = await db
+  const fileRows = await db
     .select()
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
+  const file = fileRows.at(FIRST_ROW_INDEX);
   if (!file) {
     return { allowed: true, managed: false };
   }
@@ -75,12 +82,12 @@ const canReadEveFile = async (
         sql`(${eveConversation.ownerId} = ${ownerId ?? null} or ${eveConversation.visibility} = 'public')`
       )
     )
-    .limit(1);
+    .limit(SINGLE_ROW_LIMIT);
   return { allowed: Boolean(reference), managed: true };
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveUpload's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/no-null, typescript/strict-boolean-expressions */
+/* oxlint-enable unicorn/no-null */
 
 /**
  * Reserve a fresh upload before storage I/O; never overwrite an existing key.
@@ -98,20 +105,20 @@ const reserveEveUpload = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveUpload's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length -- id-length (#506): writeEveUpload uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
+
 /**
  * Serialize admitted storage writes with orphan cleanup and reference creation.
  * @param {string} ownerId - Owner whose family lock protects the write.
  * @param {string} key - Active upload reservation to recheck under the lock.
- * @param {() => Promise<T>} write - Storage operation admitted after ownership validation.
- * @returns {Promise<T>} The storage operation result after the transaction completes.
+ * @param {() => Promise<Result>} write - Storage operation admitted after ownership validation.
+ * @returns {Promise<Result>} The storage operation result after the transaction completes.
  */
-const writeEveUpload = async <T>(
+const writeEveUpload = async <Result>(
   ownerId: string,
   key: string,
-  write: () => Promise<T>
-): Promise<T> =>
-  await db.transaction(async (tx: FileTransaction) => {
+  write: () => Promise<Result>
+): Promise<Result> =>
+  await db.transaction(async (tx: FileLockTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -133,7 +140,6 @@ const writeEveUpload = async <T>(
   });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveStoredFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length */
 
 /**
  * Register server-created keys only; a caller-supplied URL is not ownership proof.
@@ -148,10 +154,11 @@ const registerEveStoredFile = async (
     throw new Error("Invalid file ownership registration.");
   }
   await db.insert(eveStoredFile).values({ key, ownerId }).onConflictDoNothing();
-  const [saved] = await db
+  const savedRows = await db
     .select({ ownerId: eveStoredFile.ownerId, state: eveStoredFile.state })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
+  const saved = savedRows.at(FIRST_ROW_INDEX);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from saved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (saved?.ownerId !== ownerId || saved.state !== "active") {
     throw new Error("File ownership cannot be reassigned.");
@@ -177,12 +184,12 @@ const referenceEveFiles = async (
     return;
   }
   if (
-    uniqueKeys.length > 16 ||
+    uniqueKeys.length > MAXIMUM_ATTACHMENT_REFERENCES ||
     uniqueKeys.some((key) => !isFileStorageKey(key))
   ) {
     throw new Error("Invalid attachment references.");
   }
-  await db.transaction(async (tx: FileTransaction) => {
+  await db.transaction(async (tx: FileWriteTransaction) => {
     // Serializes with deletion and fork reservation, before observing state.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -244,7 +251,7 @@ const assertEveFilesOwned = async (
     return;
   }
   if (
-    uniqueKeys.length > 16 ||
+    uniqueKeys.length > MAXIMUM_ATTACHMENT_REFERENCES ||
     uniqueKeys.some((key) => !isFileStorageKey(key))
   ) {
     throw new Error("Invalid attachment references.");
@@ -281,7 +288,7 @@ const reserveEveGeneratedFile = async (
   if (!isFileStorageKey(key)) {
     throw new Error("Invalid storage key.");
   }
-  await db.transaction(async (tx: FileTransaction) => {
+  await db.transaction(async (tx: FileWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -306,23 +313,23 @@ const reserveEveGeneratedFile = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveGeneratedFile's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable id-length, max-params -- id-length (#506): writeEveGeneratedFile uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-params -- id-length (#506): writeEveGeneratedFile uses Result as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 max-params (#511): writeEveGeneratedFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Deletion cannot pass an admitted write; the committed reservation survives failures.
  * @param {string} ownerId - Owner whose family lock protects the generated write.
  * @param {string} conversationId - Bound conversation whose file reference is rechecked.
  * @param {string} key - Active generated-file reservation to validate.
- * @param {() => Promise<T>} write - Storage operation admitted while the deletion fence is locked.
- * @returns {Promise<T>} The storage operation result after the transaction completes.
+ * @param {() => Promise<Result>} write - Storage operation admitted while the deletion fence is locked.
+ * @returns {Promise<Result>} The storage operation result after the transaction completes.
  */
-const writeEveGeneratedFile = async <T>(
+const writeEveGeneratedFile = async <Result>(
   ownerId: string,
   conversationId: string,
   key: string,
-  write: () => Promise<T>
-): Promise<T> =>
-  await db.transaction(async (tx: FileTransaction) => {
+  write: () => Promise<Result>
+): Promise<Result> =>
+  await db.transaction(async (tx: FileLockTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -350,52 +357,9 @@ const writeEveGeneratedFile = async <T>(
     return await write();
   });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retainEveDocumentFiles's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, max-params */
+/* oxlint-enable max-params */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveFilesOwned, canReadEveFile, isEveFileUnavailable, referenceEveFiles, registerEveStoredFile, reserveEveGeneratedFile, reserveEveUpload, writeEveGeneratedFile, writeEveUpload); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
-/* oxlint-disable max-params, no-magic-numbers -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-/**
- * Caller holds the owner family lock and has authorized the document revision.
- * @param {Readonly<Pick<typeof db, "select" | "insert">>} tx - Caller transaction holding the owner family lock.
- * @param {string} ownerId - Owner required for every active document file.
- * @param {string} conversationId - Conversation that retains the document references.
- * @param {readonly string[]} fileIds - Storage keys referenced by the authorized revision.
- */
-const retainEveDocumentFiles = async (
-  tx: Readonly<Pick<typeof db, "select" | "insert">>,
-  ownerId: string,
-  conversationId: string,
-  fileIds: readonly string[]
-): Promise<void> => {
-  const candidates = [...new Set(fileIds)];
-  if (candidates.some((id) => !isFileStorageKey(id))) {
-    throw new Error("Invalid document file reference.");
-  }
-  if (candidates.length === 0) {
-    return;
-  }
-  const files = await tx
-    .select({ key: eveStoredFile.key })
-    .from(eveStoredFile)
-    .where(
-      and(
-        eq(eveStoredFile.ownerId, ownerId),
-        eq(eveStoredFile.state, "active"),
-        inArray(eveStoredFile.key, candidates)
-      )
-    );
-  if (files.length !== candidates.length) {
-    throw new Error("Document references an unavailable or unowned file.");
-  }
-  await tx
-    .insert(eveFileReference)
-    .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
-    .onConflictDoNothing();
-};
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveFilesOwned, canReadEveFile, isEveFileUnavailable, referenceEveFiles, registerEveStoredFile, reserveEveGeneratedFile, reserveEveUpload, retainEveDocumentFiles, writeEveGeneratedFile, writeEveUpload); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, no-magic-numbers */
 export {
   assertEveFilesOwned,
   canReadEveFile,
@@ -404,7 +368,6 @@ export {
   registerEveStoredFile,
   reserveEveGeneratedFile,
   reserveEveUpload,
-  retainEveDocumentFiles,
   writeEveGeneratedFile,
   writeEveUpload,
 };

@@ -1,10 +1,78 @@
 import type { MessageStreamEvent } from "eve/client";
 
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type SeedMessage = Extract<
+  MessageStreamEvent,
+  { type: "history.seeded" }
+>["data"]["messages"][number];
+type IncomingMessage = Extract<
+  MessageStreamEvent,
+  { type: "message.received" }
+>;
+
+type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
+  (
+    | {
+        readonly type: "history.seeded";
+        readonly data: {
+          // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
+          readonly messages: Parameters<typeof eveSeedSearchText>[0];
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "history.seeded" }>["data"]
+        >;
+      }
+    | {
+        readonly type: "history.restored";
+        readonly data: {
+          readonly events: readonly SearchTextEvent[];
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
+        >;
+      }
+    | {
+        readonly type: "message.received";
+        readonly data: Parameters<
+          typeof incomingMessageSearchText
+          // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
+        >[0]["data"] & {
+          readonly kind?: Extract<
+            MessageStreamEvent,
+            { type: "message.received" }
+          >["data"]["kind"];
+        };
+        readonly meta: { readonly id: string } & IgnoredSdkFields<
+          MessageStreamEvent["meta"]
+        >;
+      }
+    | {
+        readonly type: "message.completed";
+        readonly data: { readonly message: string | null } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "message.completed" }>["data"]
+        >;
+        readonly meta: { readonly id: string } & IgnoredSdkFields<
+          MessageStreamEvent["meta"]
+        >;
+      }
+    | {
+        readonly type: Exclude<
+          MessageStreamEvent["type"],
+          | "history.seeded"
+          | "history.restored"
+          | "message.received"
+          | "message.completed"
+        >;
+      }
+  );
+
 const MAX_SEARCH_QUERY_LENGTH = 255;
 
 interface EveSearchText {
-  key: string;
-  text: string;
+  readonly key: string;
+  readonly text: string;
 }
 
 /**
@@ -13,13 +81,13 @@ interface EveSearchText {
  * @returns {EveSearchText[]} Nonempty user/assistant text indexed by its original seed position.
  */
 const eveSeedSearchText = (
-  messages: readonly {
+  messages: readonly ({
     readonly role: string;
-    readonly parts: readonly {
+    readonly parts: readonly ({
       readonly type: string;
       readonly text?: string;
-    }[];
-  }[]
+    } & IgnoredSdkFields<SeedMessage["parts"][number]>)[];
+  } & IgnoredSdkFields<SeedMessage>)[]
 ): EveSearchText[] =>
   messages.flatMap((message, index) => {
     const text = message.parts
@@ -40,12 +108,16 @@ const eveSeedSearchText = (
 const incomingMessageSearchText = (event: {
   readonly data: {
     readonly message: string;
-    readonly parts?: readonly {
+    readonly parts?: readonly ({
       readonly type: string;
       readonly text?: string;
-    }[];
-  };
-  readonly meta: { readonly id: string };
+    } & IgnoredSdkFields<
+      NonNullable<IncomingMessage["data"]["parts"]>[number]
+    >)[];
+  } & IgnoredSdkFields<IncomingMessage["data"]>;
+  readonly meta: { readonly id: string } & IgnoredSdkFields<
+    MessageStreamEvent["meta"]
+  >;
 }): EveSearchText[] => {
   // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const text = event.data.parts
@@ -60,15 +132,12 @@ const incomingMessageSearchText = (event: {
   return [];
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
  * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
  * @returns {EveSearchText[]} Display text with stable event/seed keys, including restored history and excluding empty content.
  */
-const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
+const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {
     return eveSeedSearchText(event.data.messages);
   }
@@ -88,7 +157,7 @@ const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
   return [];
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (EveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

@@ -4,6 +4,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSearchResultsView } from "../components/eve/eve-search-results-view";
 /* oxlint-enable sort-imports */
@@ -66,18 +69,16 @@ const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- * react/jsx-props-no-spreading (#550): createRoot(root).render forwards its typed component props; enumerating them would narrow the wrapper's supported interface.
- * typescript/prefer-readonly-parameter-types (#565): createRoot(root).render accepts { label, ...state }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading -- react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+react/jsx-props-no-spreading (#550): createRoot(root).render forwards its typed component props; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
+
 createRoot(root).render(
   <main className="grid grid-cols-2 gap-6 p-6">
     {states.map(
       (
         /* oxlint-disable oxc/no-rest-spread-properties -- Rest binding state excludes label from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. */
-        { label, ...state }
+        { label, ...state }: ReadonlyNativeSurface<(typeof states)[number]>
         /* oxlint-enable oxc/no-rest-spread-properties */
       ) => (
         <section key={label}>
@@ -114,4 +115,4 @@ createRoot(root).render(
     )}
   </main>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading */

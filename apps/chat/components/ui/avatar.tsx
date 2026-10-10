@@ -5,16 +5,13 @@ import {
   Image as AvatarPrimitiveImage,
   Root as AvatarPrimitiveRoot,
 } from "@radix-ui/react-avatar";
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
   ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 /* oxlint-disable react/react-in-jsx-scope -- Avatar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Avatar = reactForwardRef<
@@ -22,10 +19,12 @@ const Avatar = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveRoot>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveRoot
       // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -49,10 +48,12 @@ const AvatarImage = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveImage>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveImage
       // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveImage accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -73,10 +74,12 @@ const AvatarFallback = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveFallback>
 >(
   (
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases.
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve forwardRef's native writable current object and callback ref contract.
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
     ref
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveFallback
       // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveFallback accepts className in its styling contract; preserve this caller's layout and appearance.

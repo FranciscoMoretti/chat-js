@@ -1,11 +1,8 @@
 import { defineAgent, defineDynamic } from "eve";
 import type { DefinedAgent } from "eve";
 
-import { resolveEveModel } from "@/lib/eve/model-selection";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getDeepResearchConfig } from "./configuration";
-/* oxlint-enable sort-imports */
+import { resolveEveModel } from "@/lib/eve/model-selection";
 
 type Phase = "research" | "compression" | "final_report";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (defineResearchAgent); the enabled import/no-default-export convention rejects the default-export alternative. */

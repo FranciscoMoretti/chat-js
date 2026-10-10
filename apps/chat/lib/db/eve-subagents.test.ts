@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 /* oxlint-enable sort-imports */
 import { drizzle } from "drizzle-orm/pglite";
-/* oxlint-disable sort-imports -- Pinned Oxfmt places the native SDK type before the grouped test-runtime declaration; sort-imports requires a different local-binding and binding-syntax order. */
+/* oxlint-disable sort-imports -- The EVE event type and Vitest runtime import occupy conflicting native binding-syntax and local-binding sort groups; retain the test runner import with this suite's hoisted mocks. */
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 /* oxlint-enable sort-imports */
@@ -32,10 +32,8 @@ const { ingestEveUsage } = await import("../eve/usage");
 /* oxlint-enable import/no-relative-parent-imports */
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
+const MIGRATION_FIXTURE_SETUP_TIMEOUT_MS = 30_000;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): beforeAll uses 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 beforeAll(async () => {
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const journal = JSON.parse(
@@ -71,9 +69,8 @@ beforeAll(async () => {
       [id, owner, session]
     );
   }
-}, 30_000);
+}, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -109,7 +106,7 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("advances child cursors monotonically and revokes stream access when the root is d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("advances child cursors monotonically and revokes stream access when the root is d uses 20, 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("advances child cursors monotonically and revokes stream access when the root is deleted") advances the cursor to 20 then submits stale cursor 10 and asserts the persisted cursor remains 20; these values exercise the monotonicity contract.
  */
 it("advances child cursors monotonically and revokes stream access when the root is deleted", async () => {
   await registerEveSubagent("owner", "root", "cursor-child", "turn_1");
@@ -137,7 +134,7 @@ it("advances child cursors monotonically and revokes stream access when the root
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("charges native child receipts once and rounds their combined cost on the root tur uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("charges native child receipts once and rounds their combined cost on the root turn") asserts two receipts contribute $0.002 and round to one cent; event sequence and step indices begin at 0 per the native receipt schema.
  */
 it("charges native child receipts once and rounds their combined cost on the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_3" };

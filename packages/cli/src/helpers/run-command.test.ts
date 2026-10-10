@@ -4,8 +4,9 @@ import { expect, it } from "bun:test";
 import { run } from "../../test/run-command";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-it("reports command timeouts even when descendants keep the pipes open", () => {
+const descendantsHoldPipesTimeoutMs = 250;
+
+it("reports command timeouts even when descendants keep the pipes open", () =>
   expect(
     run(
       process.cwd(),
@@ -18,8 +19,6 @@ spawn(process.execPath, ["-e", "setTimeout(() => {}, 30000)"], { stdio: ["ignore
 setTimeout(() => {}, 30000);
 `,
       ],
-      250
+      descendantsHoldPipesTimeoutMs
     )
-  ).rejects.toThrow("timed out after 250ms");
-});
-/* oxlint-enable eslint/no-magic-numbers */
+  ).rejects.toThrow(`timed out after ${descendantsHoldPipesTimeoutMs}ms`));

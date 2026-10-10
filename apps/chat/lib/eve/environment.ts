@@ -12,8 +12,7 @@ const resolveWorkflowDatabaseUrl = (
   }
   const configuredUrl = source.WORKFLOW_POSTGRES_URL;
 
-  // oxlint-disable-next-line no-undefined -- Both missing and empty PostgreSQL overrides select DATABASE_URL.
-  if (configuredUrl === undefined || configuredUrl === "") {
+  if (typeof configuredUrl !== "string" || configuredUrl === "") {
     return source.DATABASE_URL;
   }
   return configuredUrl;
@@ -40,6 +39,36 @@ const applicationOrigin = (value: string | undefined): string | undefined => {
   return url.origin;
 };
 
+// App/test URLs are normalized before the local port default is considered.
+const resolveLocalEveOrigin = (source: ReadonlyEnvironment): string => {
+  let applicationUrl = source.APP_URL;
+  if (typeof applicationUrl !== "string" || applicationUrl === "") {
+    applicationUrl = source.PLAYWRIGHT_TEST_BASE_URL;
+  }
+  const origin = applicationOrigin(applicationUrl);
+  if (typeof origin === "string" && origin !== "") {
+    return origin;
+  }
+  const port = source.PORT;
+  if (typeof port === "string" && port !== "") {
+    return `http://localhost:${port}`;
+  }
+  return "http://localhost:3000";
+};
+
+// Explicit and deployment endpoints bypass app/test/local settings entirely.
+const resolveEveInternalOrigin = (source: ReadonlyEnvironment): string => {
+  const configuredOrigin = source.EVE_INTERNAL_ORIGIN;
+  if (typeof configuredOrigin === "string" && configuredOrigin !== "") {
+    return configuredOrigin;
+  }
+  const deploymentHost = source.VERCEL_URL;
+  if (typeof deploymentHost === "string" && deploymentHost !== "") {
+    return `https://${source.VERCEL_URL}`;
+  }
+  return resolveLocalEveOrigin(source);
+};
+
 /**
  * Only the server evaluates these defaults; no secret is a NEXT_PUBLIC value.
  * @param {ReadonlyEnvironment} source Server environment values used for explicit, deployed, app/test, and local defaults.
@@ -53,16 +82,7 @@ const resolveEveEnvironment = (
   WORKFLOW_POSTGRES_URL: string | undefined;
 } => ({
   EVE_GATEWAY_SECRET: source.EVE_GATEWAY_SECRET,
-  EVE_INTERNAL_ORIGIN:
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty environment string is unset here; preserve the ordered fallback and evaluate each selected source only at its original access.
-    source.EVE_INTERNAL_ORIGIN ||
-    // oxlint-disable-next-line typescript/strict-boolean-expressions, no-ternary -- A missing or empty deployment hostname falls back to the app/test/local origin.; no-ternary: Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    (source.VERCEL_URL
-      ? `https://${source.VERCEL_URL}`
-      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty environment string is unset here; preserve the ordered fallback and evaluate each selected source only at its original access.
-        applicationOrigin(source.APP_URL || source.PLAYWRIGHT_TEST_BASE_URL) ||
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty environment string is unset here; preserve the ordered fallback and evaluate each selected source only at its original access.
-        `http://localhost:${source.PORT || "3000"}`),
+  EVE_INTERNAL_ORIGIN: resolveEveInternalOrigin(source),
   WORKFLOW_POSTGRES_URL: resolveWorkflowDatabaseUrl(source),
 });
 
@@ -71,8 +91,11 @@ const resolveEveEnvironment = (
  * Run during agent module initialization, before EVE constructs its World.
  * @param {Environment} source Mutable server environment whose workflow URL is set to the selected nonempty PostgreSQL default.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This initializer writes WORKFLOW_POSTGRES_URL into the caller-owned environment before EVE constructs its World.
-const configureWorkflowEnvironment = (source: Environment): void => {
+
+const configureWorkflowEnvironment = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This shared environment writer assigns WORKFLOW_POSTGRES_URL on the original server environment.
+  source: Environment
+): void => {
   const url = resolveWorkflowDatabaseUrl(source);
   if (typeof url === "string" && url !== "") {
     source.WORKFLOW_POSTGRES_URL = url;

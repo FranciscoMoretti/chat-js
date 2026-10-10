@@ -1,9 +1,10 @@
+/* oxlint-disable import/max-dependencies -- The additional readonly message-part dependency is erased and describes the historical validation seam; it adds no runtime module evaluation. */
 import { Client, defaultMessageReducer } from "eve/client";
-import type { z } from "zod";
+import { attachmentDigest, draftAttachment } from "./draft";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
+import type { SessionSnapshot } from "eve/client";
 import { config } from "@/lib/config";
-/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   canReadEveFile,
@@ -11,24 +12,18 @@ import {
   writeEveUpload,
 } from "@/lib/db/eve-files";
 /* oxlint-enable sort-imports */
-import { getEveConversation } from "@/lib/db/eve-queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createFileId,
   downloadFile,
   getFileMetadata,
   uploadFileAtKey,
 } from "@/lib/file-storage";
-/* oxlint-enable sort-imports */
+import { assertEveConfigured } from "./server";
+import { getEveConnectionOptions } from "./connection-options";
+import { getEveConversation } from "@/lib/db/eve-queries";
 import { keyFromFileUrl } from "@/lib/file-url";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveConnectionOptions } from "./connection-options";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { attachmentDigest, draftAttachment } from "./draft";
-/* oxlint-enable sort-imports */
-import { assertEveConfigured } from "./server";
+import type { z } from "zod";
 
 const EMPTY_ATTACHMENT_BYTES = 0;
 const DATA_URL_SEPARATOR_LENGTH = 1;
@@ -77,35 +72,43 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
   return blob;
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (restoreMessageAttachments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restoreMessageAttachments's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): restoreMessageAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/promise-function-async (#606): restoreMessageAttachments preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): restoreMessageAttachments intentionally keeps the existing falsy-value behavior of conversation?.sessionId; url; key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-/**
- * Copy trusted native history for editing after validating every historical attachment.
- * @param {string} ownerId Owner whose conversation and file access authorize each copy.
- * @param {Readonly<{ conversationId: string; messageId: string }>} input Conversation and user message identifying the native history to restore.
- * @returns {Promise<z.output<typeof draftAttachment>[]>} Owned attachment references copied sequentially from the validated history.
- */
-export const restoreMessageAttachments = async (
-  ownerId: string,
-  input: Readonly<{ conversationId: string; messageId: string }>
-): Promise<z.output<typeof draftAttachment>[]> => {
-  const conversation = await getEveConversation(ownerId, input.conversationId);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!(conversation?.sessionId && conversation.state === "bound")) {
-    throw new Error("Conversation is unavailable for editing.");
+interface HistoricalAttachment {
+  readonly contentType: ReturnType<typeof parseContentType>;
+  readonly name: string;
+  readonly read: () => Promise<Blob> | ReturnType<typeof downloadFile>;
+}
+
+const storedHistoricalAttachmentKey = (url: string): string => {
+  const key = keyFromFileUrl(url);
+  if (typeof key !== "string" || key === "") {
+    throw new Error("Invalid attachment reference.");
   }
-  assertEveConfigured();
-  const client = new Client(getEveConnectionOptions(ownerId));
-  const snapshot = await client.sessions
-    .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(HISTORY_READ_TIMEOUT_MS) });
+  return key;
+};
+
+const describeHistoricalAttachment = (
+  part: Extract<ReadonlyEveMessagePart, { type: "file" }>
+): {
+  readonly contentType: HistoricalAttachment["contentType"];
+  readonly name: string;
+  readonly url: string;
+} => {
+  const contentType = parseContentType(part.mediaType);
+  const { url } = part;
+  if (typeof url !== "string" || url === "") {
+    throw new Error("This attachment is unavailable for editing.");
+  }
+  const name = part.filename ?? "attachment";
+  return { contentType, name, url };
+};
+
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Replay accepts the original shallow readonly SDK snapshot and forwards its original mutable events to reducer.reduce; deep readonly projections are rejected by the SDK receiver (pinned TS2345 proof). */
+const replayHistoricalUserMessage = (
+  snapshot: Readonly<SessionSnapshot>,
+  input: Readonly<{ messageId: string }>
+): ReturnType<
+  ReturnType<typeof defaultMessageReducer>["initial"]
+>["messages"][number] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
   let state = reducer.initial();
@@ -120,39 +123,82 @@ export const restoreMessageAttachments = async (
   if (!message) {
     throw new Error("Message is unavailable for editing.");
   }
-  const files = [];
+  return message;
+};
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
+type HistoricalConversation = Readonly<
+  Pick<
+    NonNullable<Awaited<ReturnType<typeof getEveConversation>>>,
+    "sessionId" | "state"
+  >
+>;
+
+const isBoundHistoricalConversation = (
+  conversation: HistoricalConversation | null | undefined
+): conversation is HistoricalConversation & {
+  readonly sessionId: string;
+  readonly state: "bound";
+} => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the original single guard read; attach separately reads the original session ID again.
+  const sessionId = conversation?.sessionId;
+  if (!conversation) {
+    return false;
+  }
+  return (
+    typeof sessionId === "string" &&
+    sessionId !== "" &&
+    conversation.state === "bound"
+  );
+};
+
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (restoreMessageAttachments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restoreMessageAttachments's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-lines-per-function, max-statements -- Preflight and copying keep their original await continuations; extracting async admission or copy phases inserts observable reaction turns between metadata, original part reads, copying and public settlement. */
+/* oxlint-disable typescript/promise-function-async -- Stored read callbacks forward original download promises and inline read callbacks retain their Blob promises. */
+/**
+ * Copy trusted native history for editing after validating every historical attachment.
+ * @param {string} ownerId Owner whose conversation and file access authorize each copy.
+ * @param {Readonly<{ conversationId: string; messageId: string }>} input Conversation and user message identifying the native history to restore.
+ * @returns {Promise<z.output<typeof draftAttachment>[]>} Owned attachment references copied sequentially from the validated history.
+ */
+export const restoreMessageAttachments = async (
+  ownerId: string,
+  input: Readonly<{ conversationId: string; messageId: string }>
+): Promise<z.output<typeof draftAttachment>[]> => {
+  const conversation = await getEveConversation(ownerId, input.conversationId);
+  if (!isBoundHistoricalConversation(conversation)) {
+    throw new Error("Conversation is unavailable for editing.");
+  }
+  assertEveConfigured();
+  const client = new Client(getEveConnectionOptions(ownerId));
+  const snapshot = await client.sessions
+    .attach(conversation.sessionId)
+    .snapshot({ signal: AbortSignal.timeout(HISTORY_READ_TIMEOUT_MS) });
+  const message = replayHistoricalUserMessage(snapshot, input);
+  const files: HistoricalAttachment[] = [];
   for (const part of message.parts) {
-    if (part.type !== "file") {
-      continue;
-    }
-    const contentType = parseContentType(part.mediaType);
-    const { url } = part;
-    if (!url) {
-      throw new Error("This attachment is unavailable for editing.");
-    }
-    const name = part.filename ?? "attachment";
-    if (url.startsWith(`data:${contentType};base64,`)) {
-      // Validate now, decode again when copying to avoid retaining every file's bytes.
-      inlineAttachment(url, contentType);
-      files.push({
-        contentType,
-        name,
-        read: () => Promise.resolve(inlineAttachment(url, contentType)),
-      });
-    } else {
-      const key = keyFromFileUrl(url);
-      if (!key) {
-        throw new Error("Invalid attachment reference.");
+    if (part.type === "file") {
+      const { contentType, name, url } = describeHistoricalAttachment(part);
+      if (url.startsWith(`data:${contentType};base64,`)) {
+        inlineAttachment(url, contentType);
+        files.push({
+          contentType,
+          name,
+          read: () => Promise.resolve(inlineAttachment(url, contentType)),
+        });
+      } else {
+        const key = storedHistoricalAttachmentKey(url);
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original file ownership before metadata and the next part.
+        const access = await canReadEveFile(key, ownerId);
+        if (!access.allowed) {
+          throw new Error("This attachment is unavailable for editing.");
+        }
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Metadata validation, descriptor admission and the next original part read share this continuation.
+        const metadata = await getFileMetadata(key);
+        validateAttachment(metadata, contentType);
+        files.push({ contentType, name, read: () => downloadFile(key) });
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate all historical access before copying any file.
-      const access = await canReadEveFile(key, ownerId);
-      if (!access.allowed) {
-        throw new Error("This attachment is unavailable for editing.");
-      }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate every stored file before any copy is admitted.
-      const metadata = await getFileMetadata(key);
-      validateAttachment(metadata, contentType);
-      files.push({ contentType, name, read: () => downloadFile(key) });
     }
   }
 
@@ -183,6 +229,7 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
+/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable import/max-dependencies */

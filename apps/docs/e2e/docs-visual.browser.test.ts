@@ -1,7 +1,5 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+import { takeSnapshot } from "@uiverify/vitest";
 
 const pages = [
   { name: "threads", path: "/docs/threads" },
@@ -25,10 +23,7 @@ const pages = [
   { name: "features", path: "/docs/features/overview" },
 ] as const;
 
-/* oxlint-disable eslint/max-statements -- docs-visual.browser.test.ts: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable eslint/no-undefined -- docs-visual.browser.test.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- docs-visual.browser.test.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
-/* oxlint-disable typescript/promise-function-async -- docs-visual.browser.test.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable eslint/max-statements -- Keep each visual case's iframe setup, DOM copy, asset readiness, and capture in one ordered test. */
 for (const page of pages) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`docs ${page.name}`, async () => {
@@ -38,10 +33,8 @@ for (const page of pages) {
 
     const frame = document.createElement("iframe");
     frame.title = `ChatJS docs: ${page.name}`;
-    const loaded = Promise.withResolvers<undefined>();
-    frame.addEventListener("load", () => loaded.resolve(undefined), {
-      once: true,
-    });
+    const loaded = Promise.withResolvers<boolean>();
+    frame.addEventListener("load", () => loaded.resolve(true), { once: true });
     frame.src = page.path;
     frame.style.cssText = "border:0;display:block;height:100vh;width:100vw";
     document.body.append(frame);
@@ -49,12 +42,11 @@ for (const page of pages) {
     await loaded.promise;
 
     const source = frame.contentDocument;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading querySelector from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(source?.querySelector("main")).not.toBeNull();
-
     if (!source) {
       throw new Error(`Unable to read ${page.path}`);
     }
+
+    expect(source.querySelector("main")).not.toBeNull();
 
     for (const attribute of source.documentElement.attributes) {
       document.documentElement.setAttribute(attribute.name, attribute.value);
@@ -63,7 +55,8 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      [...document.images].map((image) =>
+      // oxlint-disable-next-line typescript/promise-function-async -- Preserve the original catch-promise identity and synchronous decode() throw behavior; async would turn synchronous throws into rejected promises.
+      [...document.images].map((image: Pick<HTMLImageElement, "decode">) =>
         image.decode().catch(() => {
           // Keep capturing the page when an image fails to decode.
         })
@@ -74,7 +67,4 @@ for (const page of pages) {
   });
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */

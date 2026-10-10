@@ -1,12 +1,9 @@
-import type { ToolContext } from "eve/tools";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveToolAllowed, eveTurnTool } from "@/lib/eve/turn-tools";
-/* oxlint-enable sort-imports */
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
+import type { ToolContext } from "eve/tools";
 import { providers } from "@/tools/chatjs/providers";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (researchAvailable); the enabled import/no-default-export convention rejects the default-export alternative. */

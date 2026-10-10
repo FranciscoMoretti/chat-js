@@ -3,10 +3,9 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "./client";
 import { eveStoredFile } from "./schema";
 
+const NO_STORAGE_KEYS = 0;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storageKeyForFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): The Drizzle query's first selected row is absent when no file matches; keep its ordinary missing-file Error and first-row check. A direct undefined check conflicts with no-undefined, while the native typeof guard triggers prefer-type-error and a length/index check adds numeric exceptions.
- */
 /**
  * File references use the stable record key; only storage sees storageKey.
  * @param {string} fileId Registered application file identity to resolve.
@@ -17,6 +16,7 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
     .select({ storageKey: eveStoredFile.storageKey })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, fileId));
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- The query has no first row when the file is missing; preserve its exact guard and ordinary Error path.
   if (!file) {
     throw new Error("File is not registered.");
   }
@@ -24,15 +24,11 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fileIdsForStorageKeys's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): fileIdsForStorageKeys uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const fileIdsForStorageKeys = async (
   storageKeys: readonly string[]
 ): Promise<Map<string, string>> => {
-  if (storageKeys.length === 0) {
+  if (storageKeys.length === NO_STORAGE_KEYS) {
     return new Map<string, string>();
   }
   const files = await db
@@ -43,7 +39,6 @@ const fileIdsForStorageKeys = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (storageKeyForFile, fileIdsForStorageKeys); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */
 
 export { storageKeyForFile, fileIdsForStorageKeys };
 /* oxlint-enable import/no-named-export */

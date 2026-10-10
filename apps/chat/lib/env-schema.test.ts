@@ -1,9 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveRuntimeEnvOptions } from "./env-schema";
-/* oxlint-enable sort-imports */
+
+import { z } from "zod";
 
 const schema = z.object(getEveRuntimeEnvOptions({}));
 /* oxlint-disable no-magic-numbers --
@@ -16,9 +14,8 @@ const valid = {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function --
  * max-lines-per-function (#510): describe("EVE runtime environment") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): describe("EVE runtime environment") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 describe("EVE runtime environment", () => {
   test("requires the complete runtime contract", () => {
@@ -75,11 +72,20 @@ describe("EVE runtime environment", () => {
     { ...valid, EVE_INTERNAL_ORIGIN: "postgresql://localhost/eve" },
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, WORKFLOW_POSTGRES_URL: "https://localhost/eve" },
-  ])("rejects malformed runtime configuration", (value) => {
-    expect(schema.safeParse(value).success).toBe(false);
-  });
+  ])(
+    "rejects malformed runtime configuration",
+    (
+      value: Readonly<{
+        EVE_GATEWAY_SECRET: string;
+        EVE_INTERNAL_ORIGIN: string;
+        WORKFLOW_POSTGRES_URL: string;
+      }>
+    ) => {
+      expect(schema.safeParse(value).success).toBe(false);
+    }
+  );
 });
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function */
 
 test.each(["preview", "production"])(
   "Vercel %s needs no workflow database",

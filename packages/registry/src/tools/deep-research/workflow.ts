@@ -1,18 +1,5 @@
 /* oxlint-disable eslint/func-style -- EVE compiles top-level async workflow and step declarations. */
 /* oxlint-disable eslint/no-await-in-loop -- Adaptive rounds and research topics intentionally run in order. */
-import type { WorkflowToolContext } from "eve/tools";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations and Oxfmt module ordering; their type/value grouping conflicts with sort-imports. */
-import type { ToolResult } from "@/lib/eve/tool-result";
-import { createToolResult } from "@/lib/eve/tool-result";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -22,7 +9,11 @@ import {
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
 } from "./prompts";
-/* oxlint-enable sort-imports */
+import {
+  prepareResearch,
+  researchCompletionTime,
+  saveResearchReport,
+} from "./steps";
 import {
   researchBrief,
   researchClarification,
@@ -30,42 +21,39 @@ import {
   researchFindings,
   researchReport,
 } from "./schemas";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+import type { ToolResult } from "@/lib/eve/tool-result";
+import type { WorkflowToolContext } from "eve/tools";
+import { createToolResult } from "@/lib/eve/tool-result";
 import type { researchOutput } from "./schemas";
 import { researchSearchUpdates } from "./search-updates";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  prepareResearch,
-  researchCompletionTime,
-  saveResearchReport,
-} from "./steps";
-/* oxlint-enable sort-imports */
+import { z } from "zod";
 
 type ResearchOutput = z.infer<typeof researchOutput>;
 
 type ResearchWorkflowContext = Readonly<
   Omit<WorkflowToolContext, "abortSignal"> & {
-    abortSignal: ReadonlyNativeSurface<WorkflowToolContext["abortSignal"]>;
+    abortSignal: Readonly<AbortSignal>;
   }
 >;
 
 const structuredMessage = (message: string): string =>
   `${message}\n\nDeliver the requested fields through the final_output tool. Put any Markdown inside its string fields; do not return prose or JSON text instead of calling the tool.`;
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- z.toJSONSchema requires the original mutable Zod internals; a recursively readonly schema is not assignable to the native Zod API. */
-const outputSchema = (schema: z.ZodType) =>
+const outputSchema = (schema: z.ZodType): Record<string, z.JSONType> =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveResearch); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveResearch's asynchronous iteration and rejection behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
+/* oxlint-disable eslint/max-statements -- This durable workflow owns ordered clarification, adaptive topic rounds, evidence recovery, and final-save progress. Splitting generator phases changes delegated iterator return/throw and replay boundaries. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the durable generator's progress yields and catch/rethrow recovery together; helper iterators would add observable return/throw delegation at cancellation boundaries. */
+const ORCHESTRATION_COST_USD = 0;
+const INITIAL_RESEARCH_ROUND = 0;
+const RESEARCH_ROUND_INCREMENT = 1;
+const BRIEF_UPDATE_INDEX = 1;
+const EMPTY_TOPIC_COUNT = 0;
+/* oxlint-disable unicorn/max-nested-calls -- Each native agent call resolves its receiver before evaluating prompt/schema arguments, then awaits and parses the result. Hoisting argument expressions changes that evaluation order. */
 export async function* executeEveResearch(
   _input: Readonly<Record<string, never>>,
   context: ResearchWorkflowContext
@@ -75,8 +63,8 @@ export async function* executeEveResearch(
   const updates: ResearchUpdate[] = [];
   let searchUpdates: ResearchUpdate[] = [];
   // Native child events own model/search costs. This orchestration receipt adds no charge.
-  const progress = () =>
-    createToolResult<ResearchOutput>({ searches: [] }, 0, [
+  const progress = (): ToolResult<ResearchOutput> =>
+    createToolResult<ResearchOutput>({ searches: [] }, ORCHESTRATION_COST_USD, [
       ...updates,
       ...searchUpdates,
     ]);
@@ -92,7 +80,7 @@ export async function* executeEveResearch(
     if (clarification.need_clarification) {
       yield createToolResult(
         { answer: clarification.question, format: "clarifying_questions" },
-        0
+        ORCHESTRATION_COST_USD
       );
       return;
     }
@@ -120,7 +108,7 @@ export async function* executeEveResearch(
       outputSchema: outputSchema(researchBrief),
     })
   );
-  updates[1] = {
+  updates[BRIEF_UPDATE_INDEX] = {
     message: brief.research_brief,
     status: "completed",
     title: "Writing research brief",
@@ -137,12 +125,16 @@ export async function* executeEveResearch(
   });
   // Preserve the SDK's max_researcher_iterations + 1 decision steps, including
   // its allowance for research on the final step if the supervisor has not finished.
-  for (let round = 0; round <= config.max_researcher_iterations; round += 1) {
+  for (
+    let round = INITIAL_RESEARCH_ROUND;
+    round <= config.max_researcher_iterations;
+    round += RESEARCH_ROUND_INCREMENT
+  ) {
     context.abortSignal.throwIfAborted();
     const decision = decisionSchema.parse(
       await context.agent("researchPlanner", {
         message: structuredMessage(
-          `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + 1} of ${config.max_researcher_iterations + 1}. Return your next decision.`
+          `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
         ),
         outputSchema: outputSchema(decisionSchema),
       })
@@ -150,7 +142,7 @@ export async function* executeEveResearch(
     if (decision.complete) {
       break;
     }
-    if (decision.topics.length === 0) {
+    if (decision.topics.length === EMPTY_TOPIC_COUNT) {
       throw new Error("The research supervisor must select topics or finish.");
     }
     for (const topic of decision.topics) {
@@ -164,6 +156,7 @@ export async function* executeEveResearch(
         type: "thoughts",
       });
       yield progress();
+      // oxlint-disable-next-line eslint/init-declarations -- Successful parsing assigns raw; the catch emits preserved search evidence and rethrows before compression. No placeholder findings may cross that boundary.
       let raw: z.infer<typeof researchFindings>;
       try {
         raw = researchFindings.parse(
@@ -217,7 +210,7 @@ export async function* executeEveResearch(
   const report = researchReport.parse(
     await context.agent("researchWriter", {
       message: structuredMessage(
-        `${finalReportGenerationPrompt({ date, findings: notes.map((note: ReadonlyNativeSurface<(typeof notes)[number]>): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
+        `${finalReportGenerationPrompt({ date, findings: notes.map((note: Readonly<(typeof notes)[number]>): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
       ),
       outputSchema: outputSchema(researchReport),
     })
@@ -236,17 +229,15 @@ export async function* executeEveResearch(
     toolCallId: context.callId,
     type: "completed",
   });
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing saved own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  yield createToolResult({ ...saved, format: "report" }, 0, [
-    ...updates,
-    ...searchUpdates,
-  ]);
+  yield createToolResult(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep saved own-key composition and override order; eslint/prefer-object-spread rejects Object.assign.
+    { ...saved, format: "report" },
+    ORCHESTRATION_COST_USD,
+    [...updates, ...searchUpdates]
+  );
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

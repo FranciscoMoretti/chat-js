@@ -15,6 +15,10 @@ import { EveSearchResultsView } from "@/components/eve/eve-search-results-view";
 import "./sandbox.css";
 /* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+/* oxlint-enable sort-imports */
+
 Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
   configurable: true,
   value: true,
@@ -22,8 +26,7 @@ Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
 
 /* oxlint-disable typescript/explicit-function-return-type -- Response mock: Keep this capture focused on EVE list rendering without loading Streamdown's unrelated browser plugin runtime. */
 vi.mock("@/components/ai-elements/response", () => ({
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React child elements retain the framework's ReactNode type in this mock signature.
-  Response: ({ children }: Readonly<{ children: React.ReactNode }>) => (
+  Response: ({ children }: { readonly children: ReadonlyReactNode }) => (
     <div data-testid="response">{children}</div>
   ),
 }));

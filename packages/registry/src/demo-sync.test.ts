@@ -9,32 +9,28 @@ import fs, {
   writeFile,
 } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import path from "node:path";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
-
 /* oxlint-disable import/no-relative-parent-imports -- Exercise the canonical package demo installer; @/ resolves application source and package exports expose only registry JSON artifacts. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateDemo, syncDemo } from "../scripts/demo-sync";
-/* oxlint-enable sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
+import { jsonObject, parseJsonObject } from "./test-json";
 import {
   observeGeneratorFailure,
   prepareReplacement,
   replacementFailure,
   verifyRollback,
 } from "./demo-sync-test-support";
+
 import type { ReadonlyNativeSurface } from "./demo-sync-test-support";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { jsonObject, parseJsonObject } from "./test-json";
-/* oxlint-enable sort-imports */
+
+/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
+import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
+import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_DIRECTORY_INDEX = 0;
+const GENERATION_TIMEOUT_MS = 60_000;
 const directories: string[] = [];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async () => {
@@ -279,3 +275,36 @@ test("generator setup failure removes its temporary installation directory", () 
   expect(path.basename(temporary).startsWith("chatjs-demo-")).toBe(true);
   expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
 });
+
+/* oxlint-disable oxc/no-async-await -- Exercise the real installer and await canonical source reads before comparing generated output. */
+test(
+  "demo generation preserves canonical import order and directive attachment",
+  async () => {
+    const generated = await generateDemo();
+    await Promise.all(
+      [
+        {
+          source: "./features/mcp/lib/eve/mcp-tools.ts",
+          target: "lib/eve/mcp-tools.ts",
+        },
+        {
+          source: "./features/vercel-speed-insights/component.tsx",
+          target: "features/vercel-speed-insights/component.tsx",
+        },
+      ].map(
+        async ({
+          source,
+          target,
+        }: Readonly<{ source: string; target: string }>) => {
+          const canonical = await readFile(
+            new URL(source, import.meta.url),
+            "utf-8"
+          );
+          expect(generated.get(target)).toBe(canonical);
+        }
+      )
+    );
+  },
+  GENERATION_TIMEOUT_MS
+);
+/* oxlint-enable oxc/no-async-await */

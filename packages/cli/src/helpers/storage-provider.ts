@@ -1,28 +1,15 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { writeFile } from "node:fs/promises";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-/* oxlint-enable sort-imports */
-
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyInput } from "./readonly-input";
 import type { StorageSelection } from "#cli/registry/storage";
-/* oxlint-enable sort-imports */
-import { updateEnvironmentExample } from "#cli/utils/environment-example";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
-/* oxlint-enable sort-imports */
-import { preflight } from "#cli/utils/preflight";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { builtInStorage } from "../../../registry/src/storage/catalog";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyInput } from "./readonly-input";
-/* oxlint-enable sort-imports */
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import path from "node:path";
+import { preflight } from "#cli/utils/preflight";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { writeFile } from "node:fs/promises";
+import { z } from "zod";
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;
 

@@ -19,24 +19,30 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("./client", () => {
-  const database = drizzle(postgres);
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
-  return {
+vi.mock(
+  "./client",
+  (): {
     db: {
-      execute: async (query: ReadonlyNativeSurface<SQL>) => {
-        const result = await database.execute(query);
-        return result.rows;
+      execute: (
+        query: ReadonlyNativeSurface<SQL>
+      ) => Promise<readonly unknown[]>;
+      transaction: ReturnType<typeof drizzle>["transaction"];
+    };
+  } => {
+    const database = drizzle(postgres);
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
+    return {
+      db: {
+        execute: async (query: ReadonlyNativeSurface<SQL>) => {
+          const result = await database.execute(query);
+          return result.rows;
+        },
+        transaction: database.transaction.bind(database),
       },
-      transaction: database.transaction.bind(database),
-    },
-  };
-  /* oxlint-enable oxc/no-async-await */
-});
-/* oxlint-enable typescript/explicit-function-return-type */
+    };
+    /* oxlint-enable oxc/no-async-await */
+  }
+);
 vi.mock("@/lib/env", () => ({ env: {} }));
 
 /* oxlint-disable import/no-relative-parent-imports --
@@ -106,7 +112,7 @@ afterAll(() => postgres.close());
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats") checks the second ranked result, the first database row, and exactly two deduplicated indexed chunks from repeated events.
  */
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
@@ -145,7 +151,7 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["saff", [titleChat, chat]],   ["SAFF", [titleChat, chat]],   ["saffron coo", [titleChat's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): this prefix-search matrix inspects the first ranked result only for the "saffron ri" excerpt case; zero is its array index.
  */
 it.each([
   ["saff", [titleChat, chat]],
@@ -177,7 +183,7 @@ it.each([
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") inspects the first ranked result and asserts its title boost exceeds rank 2.
  */
 it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
   const matchingBranch = "00000000-0000-4000-8000-000000000007";
@@ -219,7 +225,7 @@ it.each([
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") expects exactly one match and inspects its first result's excerpt.
  */
 it("shows an assistant-only Hello match even when the title also matches", async () => {
   await postgres.query(
@@ -277,7 +283,7 @@ it.each([
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result  uses 20, 0, 5, 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result disappears") checks a 20-item first page, deletes its first item, then expects 5 remaining items and 25 unique fixture chats overall.
  */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
@@ -311,7 +317,7 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("finds a maximum-length quoted phrase crossing a chunk boundary") uses 48, 2, 255, 1999, 0, 8200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): this boundary fixture builds 48 repeated words into a 255-character quoted phrase, pads with 1,999 chunks, then reads characters 0–8,200 to split the phrase across initial chunks.
  */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
   const phrase = `start ${"word ".repeat(48)}endingz`;
@@ -336,7 +342,7 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill") asserts permanently erased search text leaves exactly zero indexed rows.
  */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
@@ -360,7 +366,7 @@ it("hides deleting chats and permanently erases text without allowing a late bac
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("repairs only the known unpublished preview history and preserves conversation dat uses 1_789_411_557_764, 1_789_979_176_755, 1_790_327_870_855, 3, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): the preview-repair fixture uses the exact three known migration timestamps, rejects the history while it contains three rows, then expects the repaired two-row history.
  * unicorn/no-null (#570): it("repairs only the known unpublished preview history and preserves conversation dat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const repairPreviewSearchHistory = async (

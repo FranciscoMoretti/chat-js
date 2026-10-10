@@ -1,58 +1,54 @@
-import type { EveMessage } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType } from "react";
-/* oxlint-enable sort-imports */
 
 import type { DocumentAssistantRequest } from "./document-contracts";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): DocumentBodyProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type DocumentBodyProps = {
-  inline?: boolean;
-  title: string;
-  editorProps: {
-    content: string;
-    currentVersionIndex: number;
-    isCurrentVersion: boolean;
-    isReadonly?: boolean;
-    onSaveContent: (content: string, debounce: boolean) => void;
-    status: "streaming" | "idle";
+interface DocumentBodyProps {
+  readonly inline?: boolean;
+  readonly title: string;
+  readonly editorProps: {
+    readonly content: string;
+    readonly currentVersionIndex: number;
+    readonly isCurrentVersion: boolean;
+    readonly isReadonly?: boolean;
+    readonly onSaveContent: (content: string, debounce: boolean) => void;
+    readonly status: "streaming" | "idle";
   };
-  comparison?: {
-    conversationId: string;
-    documentId: string;
-    previousRevisionId: string;
-    content: string;
-    version: number;
+  readonly comparison?: {
+    readonly conversationId: string;
+    readonly documentId: string;
+    readonly previousRevisionId: string;
+    readonly content: string;
+    readonly version: number;
   };
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): DocumentUi preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type DocumentUi = {
-  Body: ComponentType<DocumentBodyProps>;
-  copyContent?: (content: string) => string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+interface DocumentUi {
+  readonly Body: ComponentType<DocumentBodyProps>;
+  readonly copyContent?: (content: string) => string;
+}
 
 type DocumentUiRegistry = Partial<
   Record<"text" | "code" | "sheet", DocumentUi>
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types -- typescript/consistent-type-definitions (#559): DocumentRunProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
-typescript/prefer-readonly-parameter-types (#565): DocumentRunProps accepts request: DocumentAssistantRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-type DocumentRunProps = {
-  buttonOnly?: boolean;
-  resultOnly?: boolean;
-  documentId: string;
-  revisionId: string;
-  title: string;
-  kind: "text" | "code" | "sheet";
-  messages: readonly EveMessage[];
-  disabled: boolean;
-  onAction?: (request: DocumentAssistantRequest) => Promise<void>;
-};
+interface DocumentRunProps {
+  readonly buttonOnly?: boolean;
+  readonly resultOnly?: boolean;
+  readonly documentId: string;
+  readonly revisionId: string;
+  readonly title: string;
+  readonly kind: "text" | "code" | "sheet";
+  readonly messages: readonly {
+    readonly id: string;
+    readonly role: "assistant" | "user";
+    readonly metadata?: unknown;
+    readonly parts: readonly ReadonlyEveMessagePart[];
+  }[];
+  readonly disabled: boolean;
+  readonly onAction?: (request: DocumentAssistantRequest) => Promise<void>;
+}
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (DocumentBodyProps, DocumentRunProps, DocumentUi, DocumentUiRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types */
 export type {
   DocumentBodyProps,
   DocumentRunProps,

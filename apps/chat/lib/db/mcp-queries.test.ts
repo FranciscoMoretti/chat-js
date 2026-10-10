@@ -8,24 +8,22 @@ const mocks = vi.hoisted(() => ({
   warn: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({ env: {} }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/db/client", () => ({
   db: {
-    delete: () => ({ where: mocks.prune }),
-    insert: () => ({ values: () => ({ returning: mocks.returning }) }),
+    delete: (): { where: typeof mocks.prune } => ({ where: mocks.prune }),
+    insert: (): { values: () => { returning: typeof mocks.returning } } => ({
+      values: (): { returning: typeof mocks.returning } => ({
+        returning: mocks.returning,
+      }),
+    }),
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ warn: mocks.warn }),
+  createModuleLogger: (): { warn: typeof mocks.warn } => ({
+    warn: mocks.warn,
+  }),
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 it("creates a new OAuth attempt even if expired-attempt cleanup fails", async () => {
   const error = new Error("cleanup failed");

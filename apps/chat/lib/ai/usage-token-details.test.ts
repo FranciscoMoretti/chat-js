@@ -1,18 +1,12 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { describe, expect, it } from "vitest";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Context,
   ContextCacheUsage,
   ContextReasoningUsage,
 } from "@/components/ai-elements/context";
-/* oxlint-enable sort-imports */
-
+import { describe, expect, it } from "vitest";
+import { createElement } from "react";
 import { getUsageTokenDetails } from "./usage-token-details";
+import { renderToStaticMarkup } from "react-dom/server";
 
 /* oxlint-disable max-lines-per-function --
  * max-lines-per-function (#510): describe("persisted token usage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

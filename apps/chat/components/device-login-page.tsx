@@ -1,17 +1,17 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
-import Link from "next/link";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { usePathname, useSearchParams } from "next/navigation";
-/* oxlint-enable sort-imports */
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+
+import { usePathname, useSearchParams } from "next/navigation";
+
+import Link from "next/link";
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next/link and @/components/ui/button; keep this adjacent import pair ordered. */
+import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
 
-import { Button } from "@/components/ui/button";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/card; keep this adjacent import pair ordered. */
 import {
   Card,
   CardContent,
@@ -20,6 +20,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 /* oxlint-enable sort-imports */
+
+import type { JSX as ReactJSX } from "react";
+
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
 import { isElectronTransferQuery } from "@/lib/electron-auth";

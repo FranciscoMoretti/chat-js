@@ -2,11 +2,9 @@ import { expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import path from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
+import { tmpdir } from "node:os";
 
 const root = path.resolve(import.meta.dir, "..");
 const runtimePaths = [
@@ -44,20 +42,57 @@ const standaloneProtected = [
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
-  // oxlint-disable-next-line no-ternary -- Keep annotation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const annotation = file.endsWith("annotated-probe.ts")
-    ? "// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n"
-    : "";
-  await writeFile(
-    destination,
-    `${annotation}import fs from "node:fs";\nexport const exists = fs.existsSync;\n`
-  );
+  const source =
+    'import fs from "node:fs";\nexport const exists = fs.existsSync;\n';
+  if (file.endsWith("annotated-probe.ts")) {
+    await writeFile(
+      destination,
+      `// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n${source}`
+    );
+    return;
+  }
+  await writeFile(destination, source);
 };
 /* oxlint-enable oxc/no-async-await */
+
 const childDeadlineMs = 10_000;
 const testDeadlineMs = 30_000;
 const diagnosticFailureExit = 1;
 const diagnosticLocation = /^(?<filename>.+?):\d+:\d+:/u;
+
+/* oxlint-disable oxc/no-async-await -- Drain native tool pipes and exit before checking the isolated fixture. */
+const runNative = async (
+  cwd: string,
+  args: readonly string[]
+): Promise<{ output: string; exitCode: number }> => {
+  const child = Bun.spawn(
+    [
+      process.execPath,
+      "--bun",
+      path.join(root, "node_modules/oxlint/bin/oxlint"),
+      ...args,
+    ],
+    { cwd, stderr: "pipe", stdout: "pipe" }
+  );
+  const deadline = setTimeout(
+    (): void => child.kill("SIGKILL"),
+    childDeadlineMs
+  );
+  try {
+    const [output, errors, exitCode] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ]);
+    expect(errors).toBe("");
+    return { exitCode, output };
+  } finally {
+    clearTimeout(deadline);
+    child.kill("SIGKILL");
+    await child.exited;
+  }
+};
+/* oxlint-enable oxc/no-async-await */
 
 const assertDiagnostics = (
   output: string,
@@ -66,12 +101,17 @@ const assertDiagnostics = (
 ): void => {
   for (const file of files) {
     const diagnostics = output.split("\n").filter((line): boolean => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filename from diagnosticLocation.exec(...).groups; read groups from diagnosticLocation.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      const filename = diagnosticLocation.exec(line)?.groups?.filename;
+      const match = diagnosticLocation.exec(line);
+      if (match === null) {
+        return false;
+      }
+      const { groups } = match;
+      if (!groups) {
+        return false;
+      }
+      const { filename } = groups;
       return (
-        filename === path.relative(cwd, file) ||
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading endsWith from filename; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        filename?.endsWith(`/${file}`) === true
+        filename === path.relative(cwd, file) || filename.endsWith(`/${file}`)
       );
     });
     expect(
@@ -95,36 +135,15 @@ const checkBoundary = async (
   cwd: string,
   files: readonly string[]
 ): Promise<void> => {
-  const result = Bun.spawn(
-    [
-      process.execPath,
-      "--bun",
-      path.join(root, "node_modules/oxlint/bin/oxlint"),
-      "-c",
-      path.join(temporary, "oxlint.config.ts"),
-      ...files.map((file): string => path.join(temporary, file)),
-      "--format",
-      "unix",
-    ],
-    { cwd: path.join(temporary, cwd), stderr: "pipe", stdout: "pipe" }
-  );
-  const deadline = setTimeout((): void => {
-    result.kill("SIGKILL");
-  }, childDeadlineMs);
-  try {
-    const [output, errors, exitCode] = await Promise.all([
-      new Response(result.stdout).text(),
-      new Response(result.stderr).text(),
-      result.exited,
-    ]);
-    expect(errors, cwd).toBe("");
-    expect(exitCode, cwd).toBe(diagnosticFailureExit);
-    assertDiagnostics(output, cwd, files);
-  } finally {
-    clearTimeout(deadline);
-    result.kill("SIGKILL");
-    await result.exited;
-  }
+  const { output, exitCode } = await runNative(path.join(temporary, cwd), [
+    "-c",
+    path.join(temporary, "oxlint.config.ts"),
+    ...files.map((file): string => path.join(temporary, file)),
+    "--format",
+    "unix",
+  ]);
+  expect(exitCode, cwd).toBe(diagnosticFailureExit);
+  assertDiagnostics(output, cwd, files);
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleChecks's awaited sequencing and rejected-Promise behavior. */
@@ -243,39 +262,17 @@ const checkTernaryPolicy = async (
   temporary: string,
   source: string
 ): Promise<void> => {
-  const result = Bun.spawn(
-    [
-      process.execPath,
-      "--bun",
-      path.join(root, "node_modules/oxlint/bin/oxlint"),
-      "-c",
-      path.join(temporary, "oxlint.config.ts"),
-      ...Object.keys(ternaryPolicyFixtures).map((file): string =>
-        path.join(temporary, file)
-      ),
-      "--format",
-      "unix",
-    ],
-    { cwd: temporary, stderr: "pipe", stdout: "pipe" }
-  );
-  const deadline = setTimeout(
-    (): void => result.kill("SIGKILL"),
-    childDeadlineMs
-  );
-  try {
-    const [output, errors, exitCode] = await Promise.all([
-      new Response(result.stdout).text(),
-      new Response(result.stderr).text(),
-      result.exited,
-    ]);
-    expect(errors, source).toBe("");
-    expect(exitCode, source).toBe(diagnosticFailureExit);
-    assertTernaryDiagnostics(output, source);
-  } finally {
-    clearTimeout(deadline);
-    result.kill("SIGKILL");
-    await result.exited;
-  }
+  const { output, exitCode } = await runNative(temporary, [
+    "-c",
+    path.join(temporary, "oxlint.config.ts"),
+    ...Object.keys(ternaryPolicyFixtures).map((file): string =>
+      path.join(temporary, file)
+    ),
+    "--format",
+    "unix",
+  ]);
+  expect(exitCode, source).toBe(diagnosticFailureExit);
+  assertTernaryDiagnostics(output, source);
 };
 /* oxlint-enable oxc/no-async-await */
 

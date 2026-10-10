@@ -3,10 +3,8 @@
  */
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
-/* oxlint-enable sort-imports */
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
@@ -120,9 +118,8 @@ it("executes only the owned saved revision and preserves its billing receipt", a
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   { ...revision, kind: "text" },   { ...revision, title: "unsupported.ts" }, 's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   undefined,
@@ -132,7 +129,18 @@ it.each([
   { ...revision, title: "unsupported.ts" },
 ])(
   "rejects unavailable or unsupported revisions before sandbox execution",
-  async (value) => {
+  async (
+    value: Readonly<
+      | {
+          kind: string;
+          content: string;
+          documentId: string;
+          id: string;
+          title: string;
+        }
+      | undefined
+    >
+  ) => {
     mocks.read.mockResolvedValue(value);
     await expect(
       executeEveCodeDocument(input, context).next()
@@ -142,7 +150,7 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
 it("does not execute when cancelled during revision lookup", async () => {
   const cancellation = new AbortController();

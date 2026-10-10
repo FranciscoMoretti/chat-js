@@ -1,15 +1,12 @@
-import { expect, test } from "bun:test";
-
 /* oxlint-disable import/no-relative-parent-imports -- Compare against the package-private canonical demo installer; existing aliases and ./r-only exports do not resolve this source entry. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   baselinePath,
   demoRoot,
   generateDemo,
   syncDemo,
 } from "../scripts/demo-sync";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+import { expect, test } from "bun:test";
 
 const GENERATION_TIMEOUT_MS = 60_000;
 

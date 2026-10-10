@@ -1,16 +1,29 @@
 "use client";
 
 import React from "react";
-import type { ReactNode } from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Message, MessageContent } from "@/components/ai-elements/message";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UserMessageView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- UserMessageView: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editor). */
 
-/** Inline editing and message chrome for EVE messages. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UserMessageView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions -- UserMessageView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: editor is rendered ReactNode content; its established truthiness controls editing chrome and preserves the original false, null, undefined, empty string or zero child. A non-null presence predicate changes those branches. */
+
+/**
+ * Inline editing and message chrome for EVE messages.
+ *
+ * @param {string} text Visible user message text.
+ * @param {ReadonlyReactNode | undefined} attachments Attached files for this message.
+ * @param {ReadonlyReactNode} actions Message action controls.
+ * @param {ReadonlyReactNode | undefined} responses Additional response content below the message.
+ * @param {ReadonlyReactNode | undefined} editor Inline editor content.
+ * @param {(() => void) | undefined} onEdit Opens the inline editor on double click.
+ * @param {boolean | undefined} editDisabled Disables inline editing.
+ * @param {string | undefined} messageId Stable message identity.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const UserMessageView = ({
   text,
   attachments,
@@ -21,14 +34,14 @@ export const UserMessageView = ({
   editDisabled = false,
   messageId,
 }: {
-  text: string;
-  attachments?: ReactNode;
-  actions: ReactNode;
-  responses?: ReactNode;
-  editor?: ReactNode;
-  onEdit?: () => void;
-  editDisabled?: boolean;
-  messageId?: string;
+  readonly text: string;
+  readonly attachments?: ReadonlyReactNode;
+  readonly actions: ReadonlyReactNode;
+  readonly responses?: ReadonlyReactNode;
+  readonly editor?: ReadonlyReactNode;
+  readonly onEdit?: () => void;
+  readonly editDisabled?: boolean;
+  readonly messageId?: string;
 }): React.JSX.Element => (
   <Message
     // oxlint-disable-next-line react/forbid-component-props, no-ternary -- Message accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -44,14 +57,18 @@ export const UserMessageView = ({
             aria-disabled={editDisabled}
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
             data-testid="message-content"
-            onClick={(event) => {
+            onClick={(
+              event: Readonly<{
+                currentTarget: Readonly<Pick<HTMLButtonElement, "contains">>;
+              }>
+            ) => {
               if (editDisabled) {
                 return;
               }
               const selection = globalThis.getSelection();
               if (
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-                selection?.toString() &&
+                selection !== null &&
+                selection.toString() !== "" &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {
                 return;
@@ -87,4 +104,4 @@ export const UserMessageView = ({
   </Message>
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions */

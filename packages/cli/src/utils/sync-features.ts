@@ -1,38 +1,41 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+
+import type { FeatureDefinition } from "../../../registry/metadata";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import ts from "typescript";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { FeatureDefinition } from "../../../registry/metadata";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line sort-imports -- Preserve typescript before ../../../registry/metadata while their runtime initialization order is still under site review.
 import { featureDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/metadata before ../../../registry/src/features/attachment-uploads while their runtime initialization order is still under site review.
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
-/* oxlint-enable sort-imports */
+
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { mcpFiles } from "../../../registry/src/features/mcp";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/src/features/observability before ./generated-registration-source while their runtime initialization order is still under site review.
 import { generatedRegistrationSource } from "./generated-registration-source";
-/* oxlint-enable sort-imports */
+
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./generated-registration-source before ./sync-observability while their runtime initialization order is still under site review.
 import {
   initializeObservability,
   planObservability,
 } from "./sync-observability";
-/* oxlint-enable sort-imports */
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]
@@ -96,8 +99,8 @@ const contributionBinding = (
       node.moduleSpecifier.text === marker &&
       (!node.importClause || !ts.isTypeOnlyImportDeclaration(node.importClause))
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading namedBindings from imported.importClause; read importClause from imported; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const bindings = imported?.importClause?.namedBindings;
+  const importClause = imported && imported.importClause;
+  const bindings = importClause && importClause.namedBindings;
   const namedBindings =
     // oxlint-disable-next-line no-ternary -- Keep namedBindings as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
@@ -108,8 +111,11 @@ const contributionBinding = (
   if (bindings && ts.isNamespaceImport(bindings)) {
     return { binding: `${bindings.name.text}.${symbol}`, bindings, specifier };
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from specifier; preserve one receiver evaluation, skipped accesses and the existing symbol fallback.
-  return { binding: specifier?.name.text ?? symbol, bindings, specifier };
+  return {
+    binding: (specifier && specifier.name.text) ?? symbol,
+    bindings,
+    specifier,
+  };
 };
 interface PlannedContribution {
   content: string;
@@ -155,8 +161,8 @@ const planContribution = async (
         item.name.getText(parsed) === name
     );
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    !declaration?.initializer ||
+    !declaration ||
+    !declaration.initializer ||
     !ts.isArrayLiteralExpression(declaration.initializer)
   ) {
     throw new Error(
@@ -221,14 +227,13 @@ const planContribution = async (
         text: ` ${symbol} `,
       });
     } else {
-      const importEnd =
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading end from parsed.statements.findLast(...); preserve one receiver evaluation, skipped accesses and the existing SOURCE_START fallback.
-        parsed.statements.findLast(
-          (node: ReadonlyNative<ts.Statement>): boolean =>
-            ts.isImportDeclaration(node) ||
-            (ts.isExpressionStatement(node) &&
-              ts.isStringLiteral(node.expression))
-        )?.end ?? SOURCE_START;
+      const lastImport = parsed.statements.findLast(
+        (node: ReadonlyNative<ts.Statement>): boolean =>
+          ts.isImportDeclaration(node) ||
+          (ts.isExpressionStatement(node) &&
+            ts.isStringLiteral(node.expression))
+      );
+      const importEnd = (lastImport && lastImport.end) ?? SOURCE_START;
       edits.push({
         start: importEnd,
         text: `\nimport { ${symbol} } from "${marker}";\n`,
@@ -262,7 +267,6 @@ const planContribution = async (
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateAttachmentUploads = async (
@@ -294,7 +298,7 @@ const validateAttachmentUploads = async (
       );
     }
     const missing = attachmentUploadFiles.filter(
-      (_, index): boolean => !uploadPresence[index]
+      (_file, index): boolean => !uploadPresence[index]
     );
     if (missing.length > 0) {
       throw new Error(
@@ -308,11 +312,9 @@ const validateAttachmentUploads = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcp's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateMcp = async (
@@ -336,7 +338,9 @@ const validateMcp = async (
     if (definition.id !== "mcp") {
       throw new Error("Feature descriptor id must match its directory: mcp");
     }
-    const missing = mcpFiles.filter((_, index): boolean => !presence[index]);
+    const missing = mcpFiles.filter(
+      (_file, index): boolean => !presence[index]
+    );
     if (missing.length > 0) {
       throw new Error(
         `MCP installation is incomplete. Missing: ${missing.join(", ")}. Run chat-js add mcp to restore the missing files.`
@@ -349,7 +353,6 @@ const validateMcp = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncFeatures's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -410,8 +413,7 @@ const syncFeatures = async (
       "@/features/attachment-uploads/integration",
       ["attach-files", "take-photo"],
       (binding): string => `...${binding}.controls`,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      previous?.content
+      previous && previous.content
     );
     if (previous) {
       previous.content = edit.content;

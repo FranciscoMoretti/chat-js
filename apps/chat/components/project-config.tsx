@@ -1,20 +1,19 @@
 "use client";
 
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { Pencil } from "lucide-react";
-import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ProjectIcon } from "@/components/project-icon";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/project-icon and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+
+import React from "react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectConfig); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectConfig renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectName). */
+
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
 
 export const ProjectConfig = ({
   projectName,
@@ -36,7 +35,8 @@ export const ProjectConfig = ({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      {projectName && (
+      {/* oxlint-disable no-ternary -- Keep the empty or missing project name as the exact false-branch React child. */}
+      {typeof projectName === "string" && projectName !== "" ? (
         <div className="flex items-center gap-2">
           {projectIcon && projectColor && (
             <ProjectIcon color={projectColor} icon={projectIcon} size={24} />
@@ -54,6 +54,8 @@ export const ProjectConfig = ({
             <span className="sr-only">Rename project</span>
           </Button>
         </div>
+      ) : (
+        projectName
       )}
 
       <Button
@@ -83,4 +85,4 @@ export const ProjectConfig = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

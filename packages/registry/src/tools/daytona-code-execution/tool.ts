@@ -1,33 +1,21 @@
-/* oxlint-disable import/max-dependencies -- The installed tool explicitly composes native execution, usage, authorization and provider cleanup contracts. */
-import { defineTool } from "eve/tools";
-
-import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CodeExecutionContext,
   CodeExecutor,
 } from "@/lib/eve/code-executor";
-/* oxlint-enable sort-imports */
-import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createModuleLogger } from "@/lib/logger";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-import { executeInDaytona } from "./execution";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createDaytonaProvider } from "./sandbox";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { defineTool } from "eve/tools";
+import { env } from "@/lib/env";
+import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
+// oxlint-disable-next-line sort-imports -- Preserve ownership's database/environment initialization before logger constructs Pino; sorting createModuleLogger first changes the validation and host setup order.
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Preserve database validation and Pino initialization before Daytona → axios → https-proxy-agent/debug mutates process.env.DEBUG and probes tty.isatty; native sorting moves that host work earlier.
+import { createDaytonaProvider } from "./sandbox";
+import { executeInDaytona } from "./execution";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+// oxlint-disable-next-line import/max-dependencies -- This native tool integrates schemas, provider execution, durable ownership and cleanup; the retained dependency-count boundary remains under review.
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 
 const EXECUTION_TIMEOUT_MS = 300_000;
 const EXECUTION_COST_USD = 0.05;

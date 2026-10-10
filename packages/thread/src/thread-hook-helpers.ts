@@ -1,11 +1,3 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ChatStatus, UIMessage } from "ai";
-/* oxlint-enable sort-imports */
-
-import type { AbstractThread } from "./abstract-thread";
-import type { RequestReader } from "./ai-sdk-run-chat";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CanonicalMessage,
   MessageTreeSnapshot,
@@ -15,7 +7,10 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
-/* oxlint-enable sort-imports */
+import type { ChatStatus, UIMessage } from "ai";
+import type { AbstractThread } from "./abstract-thread";
+import type { RequestReader } from "./ai-sdk-run-chat";
+import type { UseChatHelpers } from "@ai-sdk/react";
 
 const FIRST_PARAMETER_INDEX = 0;
 

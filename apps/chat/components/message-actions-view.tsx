@@ -1,20 +1,34 @@
 "use client";
 
 import { Copy, Pencil, PencilOff } from "lucide-react";
-import React from "react";
-import type { ReactNode } from "react";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   MessageAction,
   MessageActions,
 } from "@/components/ai-elements/message";
-/* oxlint-enable sort-imports */
-import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageActionsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-/** Shared message toolbar; each runtime supplies its actions and version state. */
+import React from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageActionsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable max-lines-per-function -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision */
+
+/**
+ * Shared message toolbar; each runtime supplies its actions and version state.
+ *
+ * @param {string} role Author role used to reveal the toolbar.
+ * @param {boolean | undefined} isLoading Whether generation is active.
+ * @param {boolean | undefined} isEditing Whether the inline editor is active.
+ * @param {boolean | undefined} editDisabled Disables the edit action.
+ * @param {(() => void) | undefined} onStartEdit Opens the inline editor.
+ * @param {(() => void) | undefined} onCancelEdit Closes the inline editor.
+ * @param {() => void} onCopy Copies the message using the runtime callback.
+ * @param {ReadonlyReactNode | undefined} siblings Version navigation controls.
+ * @param {ReadonlyReactNode | undefined} feedback Response feedback controls.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const MessageActionsView = ({
   role,
   isLoading = false,
@@ -26,15 +40,15 @@ export const MessageActionsView = ({
   siblings,
   feedback,
 }: {
-  role: string;
-  isLoading?: boolean;
-  isEditing?: boolean;
-  editDisabled?: boolean;
-  onStartEdit?: () => void;
-  onCancelEdit?: () => void;
-  onCopy: () => void;
-  siblings?: ReactNode;
-  feedback?: ReactNode;
+  readonly role: string;
+  readonly isLoading?: boolean;
+  readonly isEditing?: boolean;
+  readonly editDisabled?: boolean;
+  readonly onStartEdit?: () => void;
+  readonly onCancelEdit?: () => void;
+  readonly onCopy: () => void;
+  readonly siblings?: ReadonlyReactNode;
+  readonly feedback?: ReadonlyReactNode;
 }): React.JSX.Element => {
   const isMobile = useIsMobile();
   if (isLoading) {
@@ -91,4 +105,4 @@ export const MessageActionsView = ({
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function */

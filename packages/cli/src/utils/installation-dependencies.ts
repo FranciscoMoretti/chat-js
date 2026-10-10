@@ -1,15 +1,14 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, readdir, stat, writeFile } from "node:fs/promises";
+
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyInput } from "#cli/helpers/readonly-input";
-/* oxlint-enable sort-imports */
-
 import type { planInstallation } from "./installation-plan";
+
+import { z } from "zod";
+// oxlint-disable-next-line sort-imports -- Preserve zod before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
 
 const dependencyReceipt = ".chatjs/installed-dependencies.json";
@@ -187,14 +186,14 @@ export const prepareDependencyUpdate = async (
     }
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
-        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- The dependency-key read is lazy; an empty string selects dependencies while a missing value falls back to devDependencies. The equivalent if/else conflicts with pinned unicorn/prefer-ternary.
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;
       if (
         !required.has(name) &&
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        group?.[name] === installedVersion &&
+        group &&
+        group[name] === installedVersion &&
         // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
         !(await sourceUses(cwd, name))
       ) {

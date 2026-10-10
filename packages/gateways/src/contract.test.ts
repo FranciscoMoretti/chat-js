@@ -1,48 +1,37 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports the unexported Registry adapter source directly; the test file is excluded from published gateway artifacts. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { gatewayMetadata } from "../../registry/src/gateways/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { GatewayType } from "../../registry/src/gateways/metadata";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports unexported Registry source; the test file is excluded from published gateway artifacts. */
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports unexported Registry adapter source; the test file is excluded from the published gateway package. */
 import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports unexported Registry adapter source; the test file is excluded from the published gateway package. */
 import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports unexported Registry adapter source; the test file is excluded from the published gateway package. */
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test inspects unexported Registry metadata source; the test file is excluded from published gateway artifacts. */
+import { gatewayMetadata } from "../../registry/src/gateways/metadata";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- Read this package’s own manifest to verify its published exports; the source contract test is excluded from published gateway artifacts. */
 import gatewayPackage from "../package.json";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { GatewayProvider } from "./gateway-provider";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies */
 
 const OPTIONS_PARAMETER_INDEX = 0;
 type AdapterOptions = NonNullable<
   ConstructorParameters<typeof VercelGateway>[typeof OPTIONS_PARAMETER_INDEX]
 >;
+type GatewayInstance =
+  | InstanceType<typeof LiteLLMGateway>
+  | InstanceType<typeof OpenAICompatibleGateway>
+  | InstanceType<typeof OpenAIGateway>
+  | InstanceType<typeof OpenRouterGateway>
+  | InstanceType<typeof VercelGateway>;
 
 const callUnsupportedModel = (
   method: (modelId: never) => unknown,
@@ -58,16 +47,18 @@ const callUnsupportedModel = (
   return result;
 };
 const adapters: readonly Readonly<{
-  name: GatewayType;
-  create: (
-    options: AdapterOptions
-  ) => GatewayProvider<string, never, never, never>;
+  name: keyof typeof gatewayMetadata;
+  create: (options: AdapterOptions) => GatewayInstance;
   env: Readonly<Record<string, string>>;
-  createImageModel: (options: AdapterOptions) => ImageModel | null;
-  createLanguageModel: (options: AdapterOptions) => LanguageModelV4;
+  createImageModel: (
+    options: AdapterOptions
+  ) => ReturnType<GatewayInstance["createImageModel"]>;
+  createLanguageModel: (
+    options: AdapterOptions
+  ) => ReturnType<GatewayInstance["createLanguageModel"]>;
   createVideoModel: (
     options: AdapterOptions
-  ) => Experimental_VideoModelV4 | null;
+  ) => ReturnType<GatewayInstance["createVideoModel"]>;
   image: boolean;
   video: boolean;
 }>[] = [
@@ -192,7 +183,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
       fetch: vi
         .fn<typeof fetch>()
         .mockResolvedValue(new Response(null, { status: 503 })),
-      getFallbackModels: (name) => {
+      getFallbackModels: (name: string) => {
         requested.push(name);
         return [];
       },

@@ -43,25 +43,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
+import type { McpConnector } from "@/lib/db/schema";
+import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Separator } from "@/components/ui/separator";
 import { installedFeatures } from "@/features/installed";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { McpConnector } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
-import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-no-literals -- CustomConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const CustomConnectorRow = ({
   connector,
@@ -70,12 +67,14 @@ const CustomConnectorRow = ({
   onDisconnect,
   isDisconnecting,
 }: {
-  connector: McpConnector;
-  onConnect: () => void;
-  onUninstall: () => void;
-  onDisconnect: () => void;
-  isDisconnecting: boolean;
-}) => {
+  readonly connector: Readonly<
+    Pick<McpConnector, "id" | "name" | "type" | "url">
+  >;
+  readonly onConnect: () => void;
+  readonly onUninstall: () => void;
+  readonly onDisconnect: () => void;
+  readonly isDisconnecting: boolean;
+}): React.JSX.Element => {
   const trpc = useTRPC();
 
   const { data: authStatus } = useQuery({
@@ -115,7 +114,7 @@ const CustomConnectorRow = ({
     return connectionStatus?.error ?? "Unable to reach server";
   })();
 
-  const actionLabel = (() => {
+  const actionLabel = ((): string => {
     if (isTestingConnection) {
       return "Loading";
     }
@@ -258,7 +257,9 @@ const CustomConnectorRow = ({
               needsOAuth ? (
                 <>
                   <DropdownMenuItem
-                    onClick={(event): void => {
+                    onClick={(
+                      event: Readonly<Pick<Event, "preventDefault">>
+                    ): void => {
                       event.preventDefault();
                       onConnect();
                     }}
@@ -289,21 +290,26 @@ const CustomConnectorRow = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- BuiltInConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
+const BuiltInConnectorRow = ({
+  connector,
+}: {
+  readonly connector: {
+    readonly id: string;
+    readonly name: string;
+    readonly type: "http" | "sse";
+    readonly url: string;
+  };
+}): React.JSX.Element => {
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
     <div className="flex w-full items-center gap-3 py-3 text-left">
@@ -322,9 +328,7 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorsSettings); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ConnectorsSettings renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -335,7 +339,6 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const ConnectorsSettings = (): React.JSX.Element => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -381,7 +384,8 @@ export const ConnectorsSettings = (): React.JSX.Element => {
     }
     return (
       connectors.find(
-        (connector): boolean => connector.id === qs.connectorId
+        (connector: { readonly id: string }): boolean =>
+          connector.id === qs.connectorId
       ) ?? null
     );
   }, [connectOpen, qs.connectorId, connectors]);
@@ -392,9 +396,10 @@ export const ConnectorsSettings = (): React.JSX.Element => {
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _data,
-        context: { prev: typeof connectors } | undefined
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Return the original typed cache snapshot to queryClient.setQueryData; its deep readonly array is rejected by the cache receiver (TS2345).
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
@@ -403,12 +408,18 @@ export const ConnectorsSettings = (): React.JSX.Element => {
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
+            }
+            return old.filter(
+              (connector: { readonly id: string }): boolean =>
+                connector.id !== data.id
+            );
           }
-          return old.filter((connector): boolean => connector.id !== data.id);
-        });
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -426,10 +437,10 @@ export const ConnectorsSettings = (): React.JSX.Element => {
   const { mutate: disconnectConnector, isPending: isDisconnecting } =
     useMutation(
       trpc.mcp.disconnect.mutationOptions({
-        onError: (err): void => {
+        onError: (err: { readonly message: string }): void => {
           toast.error(err.message || "Failed to disconnect");
         },
-        onSettled: (_data, _err, vars): void => {
+        onSettled: (_data: unknown, _err: unknown, vars): void => {
           void queryClient.invalidateQueries({ queryKey });
           void queryClient.invalidateQueries({
             queryKey: trpc.mcp.listConnected.queryKey(),
@@ -441,7 +452,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
             queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
           });
         },
-        onSuccess: (_data, vars): void => {
+        onSuccess: (_data: Readonly<{ success: boolean }>, vars): void => {
           void queryClient.invalidateQueries({
             queryKey: trpc.mcp.testConnection.queryKey({ id: vars.id }),
           });
@@ -455,8 +466,8 @@ export const ConnectorsSettings = (): React.JSX.Element => {
       dialog,
       connectorId,
     }: {
-      dialog: McpConnectorsDialog | null;
-      connectorId?: string | null;
+      readonly dialog: McpConnectorsDialog | null;
+      readonly connectorId?: string | null;
     }): void => {
       void setQs({
         connectorId: connectorId ?? null,
@@ -545,10 +556,12 @@ export const ConnectorsSettings = (): React.JSX.Element => {
   }
 
   const customConnectors = (connectors ?? []).filter(
-    (connector): boolean => connector.userId !== null
+    (connector: { readonly userId: string | null }): boolean =>
+      connector.userId !== null
   );
   const globalConnectors = (connectors ?? []).filter(
-    (connector): boolean => connector.userId === null
+    (connector: { readonly userId: string | null }): boolean =>
+      connector.userId === null
   );
 
   return (
@@ -576,25 +589,34 @@ export const ConnectorsSettings = (): React.JSX.Element => {
         {
           // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           customConnectors.length > 0 ? (
-            customConnectors.map((connector, index) => (
-              <Fragment key={connector.id}>
-                <CustomConnectorRow
-                  connector={connector}
-                  isDisconnecting={isDisconnecting}
-                  onConnect={(): void => handleOpenConnectDialog(connector.id)}
-                  onDisconnect={(): void =>
-                    disconnectConnector({ id: connector.id })
+            customConnectors.map(
+              (
+                connector: Readonly<
+                  Pick<McpConnector, "id" | "name" | "type" | "url">
+                >,
+                index
+              ) => (
+                <Fragment key={connector.id}>
+                  <CustomConnectorRow
+                    connector={connector}
+                    isDisconnecting={isDisconnecting}
+                    onConnect={(): void =>
+                      handleOpenConnectDialog(connector.id)
+                    }
+                    onDisconnect={(): void =>
+                      disconnectConnector({ id: connector.id })
+                    }
+                    onUninstall={(): void =>
+                      deleteConnector({ id: connector.id })
+                    }
+                  />
+                  {
+                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    index < customConnectors.length - 1 ? <Separator /> : null
                   }
-                  onUninstall={(): void =>
-                    deleteConnector({ id: connector.id })
-                  }
-                />
-                {
-                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                  index < customConnectors.length - 1 ? <Separator /> : null
-                }
-              </Fragment>
-            ))
+                </Fragment>
+              )
+            )
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="bg-muted mb-4 rounded-full p-3">
@@ -618,9 +640,18 @@ export const ConnectorsSettings = (): React.JSX.Element => {
           <div>
             <p className="text-sm font-medium">Built-in connectors</p>
             <div className="divide-y">
-              {globalConnectors.map((connector) => (
-                <BuiltInConnectorRow connector={connector} key={connector.id} />
-              ))}
+              {globalConnectors.map(
+                (
+                  connector: Readonly<
+                    Pick<McpConnector, "id" | "name" | "type" | "url">
+                  >
+                ) => (
+                  <BuiltInConnectorRow
+                    connector={connector}
+                    key={connector.id}
+                  />
+                )
+              )}
             </div>
           </div>
         ) : null
@@ -638,7 +669,6 @@ export const ConnectorsSettings = (): React.JSX.Element => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */

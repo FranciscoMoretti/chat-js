@@ -1,10 +1,14 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+
 import { expect, test } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
+import type { Request } from "@playwright/test";
+// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 test.use({ actionTimeout: 20_000 });
 
@@ -19,21 +23,26 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): test("project UI edits instructions, creates a native conversation and lists it after assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("project UI edits instructions, creates a native conversation and lists it after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("project UI edits instructions, creates a native conversation and lists it after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("project UI edits instructions, creates a native conversation and lists it after uses 180_000, -1, 1100, 390, 150_000, 200, 1000, 2000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("project UI edits instructions, creates a native conversation and lists it after accepts { page, }; testInfo; route; url; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("project UI edits instructions, creates a native conversation and lists it after preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("project UI edits instructions, creates a native conversation and lists it after intentionally keeps the existing falsy-value behavior of conversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): test("project UI edits instructions, creates a native conversation and lists it after preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.on() on the original Page/locator receiver to change the live browser or route state.
 test("project UI edits instructions, creates a native conversation and lists it after reload", async ({
   page,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout()/testInfo.annotations() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "https://unpkg.com/react-scan/**",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
+    (route) => route.abort()
+  );
   await page.goto("/api/dev-login");
   if (
     await page
@@ -55,7 +64,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
     .getByPlaceholder("Project name")
     .fill("Project UI fixture");
   await page.route(
-    (url) => url.pathname.includes("project.create"),
+    (url: Readonly<Pick<URL, "pathname">>) =>
+      url.pathname.includes("project.create"),
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     (route) =>
       route.fulfill({
         body: "{}",
@@ -91,7 +102,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
   let cleanupFailure: { error: unknown } | undefined;
   try {
     const invalidIdentityRequests: string[] = [];
-    page.on("request", (request) => {
+    page.on("request", (request: Readonly<Pick<Request, "url">>) => {
       if (
         request.url().includes("eve.get") &&
         decodeURIComponent(request.url()).includes(projectId)
@@ -157,7 +168,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("textbox", { name: "Project instructions" })
       .fill("Reply with exactly PROJECT_UI_7238 and nothing else.");
     await page.route(
-      (url) => url.pathname.includes("project.setInstructions"),
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.setInstructions"),
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       (route) =>
         route.fulfill({
           body: "{}",
@@ -191,7 +204,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
     const { promise: renameGate, resolve: rejectRename } =
       Promise.withResolvers<boolean>();
     await page.route(
-      (url) => url.pathname.includes("project.update"),
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.update"),
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         await renameGate;
         await route.fulfill({
@@ -306,7 +321,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
     const deleteDialog = page.getByRole("alertdialog");
     await page.route(
-      (url) => url.pathname.includes("project.remove"),
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.remove"),
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       (route) =>
         route.fulfill({
           body: "{}",
@@ -386,6 +403,6 @@ test("project UI edits instructions, creates a native conversation and lists it 
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-project-ui.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

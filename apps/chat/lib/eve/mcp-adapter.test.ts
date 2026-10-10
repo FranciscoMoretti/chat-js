@@ -1,4 +1,3 @@
-import type { ToolExecutionOptions } from "ai";
 import { tool } from "ai";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, expect, it } from "vitest";
@@ -9,8 +8,7 @@ import { z } from "zod";
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * typescript/prefer-readonly-parameter-types (#565): describe("Eve tool contract") accepts _input; options: ToolExecutionOptions<typeof services>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 describe("Eve tool contract", () => {
@@ -32,12 +30,11 @@ describe("Eve tool contract", () => {
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("executes a discovered MCP tool with its native invocation identity", async () => {
-    const services = { selectedModel: "selected/model" };
     const definition = tool({
       description: "Inspect context",
       execute: (
-        _input,
-        options: ToolExecutionOptions<typeof services>
+        _input: Readonly<Record<string, never>>,
+        options: { readonly toolCallId: string }
       ): string => options.toolCallId,
       inputSchema: z.object({}),
     });
@@ -58,4 +55,4 @@ describe("Eve tool contract", () => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable unicorn/max-nested-calls */

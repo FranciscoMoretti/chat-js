@@ -1,21 +1,27 @@
-import { getMessageText } from "@chat-js/thread";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { MessageTreeSnapshot } from "@chat-js/thread";
-/* oxlint-enable sort-imports */
-import type { UseThreadHelpers } from "@chat-js/thread/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
-/* oxlint-enable sort-imports */
+import type { MessageTreeSnapshot } from "@chat-js/thread";
+import type { UseThreadHelpers } from "@chat-js/thread/react";
+import { getMessageText } from "@chat-js/thread";
 
 interface PlaygroundMetadata {
-  activeStreamId: string | null;
-  createdAt: string;
-  title?: string;
+  readonly activeStreamId: string | null;
+  readonly createdAt: string;
+  readonly title?: string;
 }
 
 type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
 
 type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
+
+// oxlint-disable-next-line eslint/no-magic-numbers -- Select getMessageText's sole receiver from its native Parameters tuple.
+type PlaygroundTransportMessage = Parameters<typeof getMessageText>[0] &
+  Readonly<Pick<PlaygroundMessage, "metadata">>;
+
+type PlaygroundTransportInput = Readonly<{
+  abortSignal: Readonly<AbortSignal> | undefined;
+  body?: Readonly<StreamBody>;
+  messages: readonly PlaygroundTransportMessage[];
+}>;
 
 interface StreamBody {
   responseLabel?: string;
@@ -23,12 +29,19 @@ interface StreamBody {
 
 /* oxlint-disable eslint/id-length -- LayoutNode: The local index/OS/library binding retains its conventional API notation. */
 interface LayoutNode {
-  depth: number;
-  id: string;
-  x: number;
-  y: number;
+  readonly depth: number;
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
 }
 /* oxlint-enable eslint/id-length */
+
+type TreeLayout = Readonly<{
+  height: number;
+  nodes: readonly LayoutNode[];
+  positions: ReadonlyMap<string, LayoutNode>;
+  width: number;
+}>;
 
 /* oxlint-disable unicorn/no-null -- createMessage: The SDK/wire/OS contract uses null as an explicit absence value. */
 const createMessage = ({
@@ -129,8 +142,10 @@ const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve delay's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
+const delay = async (
+  ms: number,
+  signal?: Readonly<AbortSignal>
+): Promise<void> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   signal?.throwIfAborted();
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
@@ -151,7 +166,6 @@ const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
   await promise;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
@@ -161,15 +175,10 @@ const RESPONSE_NUMBER_PATTERN = /\d+/u;
 /* oxlint-disable unicorn/no-null -- createPlaygroundTransport: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-magic-numbers -- createPlaygroundTransport: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable typescript/promise-function-async -- createPlaygroundTransport: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- createPlaygroundTransport: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- createPlaygroundTransport: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
   reconnectToStream: () => Promise.resolve(null),
-  sendMessages: ({
-    abortSignal,
-    body,
-    messages,
-  }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) => {
+  sendMessages: ({ abortSignal, body, messages }: PlaygroundTransportInput) => {
     const requestBody: StreamBody | undefined = body;
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseLabel from requestBody; preserve one receiver evaluation, skipped accesses and the existing "Assistant" fallback.
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
@@ -189,7 +198,11 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     return Promise.resolve(
       new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
         /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve start's awaited sequencing and rejected-Promise behavior. */
-        async start(controller): Promise<void> {
+        async start(
+          controller: Readonly<
+            ReadableStreamDefaultController<UIMessageChunk<PlaygroundMetadata>>
+          >
+        ): Promise<void> {
           try {
             controller.enqueue({
               messageMetadata: {
@@ -247,26 +260,22 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
   },
 });
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- buildTreeLayout: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
-/* oxlint-disable typescript/explicit-function-return-type -- buildTreeLayout: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/init-declarations -- buildTreeLayout: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
 /* oxlint-disable eslint/no-magic-numbers -- buildTreeLayout: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/id-length -- buildTreeLayout: The local index/OS/library binding retains its conventional API notation. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- buildTreeLayout: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const buildTreeLayout = ({
   childrenByParentId,
   rootIds,
 }: {
-  childrenByParentId: Record<string, string[]>;
-  rootIds: string[];
-}) => {
+  readonly childrenByParentId: Readonly<Record<string, readonly string[]>>;
+  readonly rootIds: readonly string[];
+}): TreeLayout => {
   const positions = new Map<string, LayoutNode>();
   let nextLeaf = 0;
   let maxDepth = 0;
@@ -307,12 +316,9 @@ const buildTreeLayout = ({
   };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (buildTreeLayout, createPlaygroundTransport, initialTree); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 export { buildTreeLayout, createPlaygroundTransport, initialTree };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (LayoutNode, PlaygroundChat, PlaygroundMessage, PlaygroundMetadata); the enabled import/no-default-export convention rejects the default-export alternative. */

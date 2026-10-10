@@ -4,14 +4,16 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./client";
 import { userCredit } from "./schema";
 
+const NO_CREDITS = 0;
+const FIRST_CREDIT_ROW_INDEX = 0;
+const SINGLE_CREDIT_ROW_LIMIT = 1;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureUserCreditRow's awaited sequencing and rejected-Promise behavior. */
 const ensureUserCreditRow = async (userId: string): Promise<void> => {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getCredits's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
-no-magic-numbers (#517): getCredits uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Get user's current credit balance (in cents).
  * @param {string} userId - User whose balance is read; a missing credit row is created with the database defaults.
@@ -22,26 +24,23 @@ const getCredits = async (userId: string): Promise<number> => {
     .select({ credits: userCredit.credits })
     .from(userCredit)
     .where(eq(userCredit.userId, userId))
-    .limit(1);
+    .limit(SINGLE_CREDIT_ROW_LIMIT);
 
-  if (rows.length === 0) {
+  if (rows.length === NO_CREDITS) {
     await ensureUserCreditRow(userId);
     rows = await db
       .select({ credits: userCredit.credits })
       .from(userCredit)
       .where(eq(userCredit.userId, userId))
-      .limit(1);
+      .limit(SINGLE_CREDIT_ROW_LIMIT);
   }
 
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from rows[0]; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
-  return rows[0]?.credits ?? 0;
+  return rows[FIRST_CREDIT_ROW_INDEX]?.credits ?? NO_CREDITS;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve canSpend's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
-no-magic-numbers (#517): canSpend uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Check if user has positive credits (can spend).
  * @param {string} userId - User whose current balance is read, creating a missing credit row as needed.
@@ -49,11 +48,10 @@ no-magic-numbers (#517): canSpend uses 0 in its existing protocol/math/layout co
  */
 const canSpend = async (userId: string): Promise<boolean> => {
   const credits = await getCredits(userId);
-  return credits > 0;
+  return credits > NO_CREDITS;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deductCredits's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 /**
  * Subtract credits without enforcing a minimum balance, allowing in-progress operations to finish.

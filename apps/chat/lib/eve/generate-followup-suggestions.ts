@@ -1,15 +1,33 @@
-import { Output, generateText } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { HookModelCall, TurnCompletedHookResult } from "eve/hooks";
-/* oxlint-enable sort-imports */
-
-import { config } from "@/lib/config";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
-/* oxlint-enable sort-imports */
+import { config } from "@/lib/config";
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
+
+const FOLLOWUP_TIMEOUT_MS = 15_000;
+
+type NativeFollowupUsage = NonNullable<HookModelCall["usage"]>;
+type ReadonlyFollowupUsage = Readonly<
+  Omit<NativeFollowupUsage, "inputTokenDetails" | "outputTokenDetails" | "raw">
+> & {
+  readonly inputTokenDetails: Readonly<
+    NativeFollowupUsage["inputTokenDetails"]
+  >;
+  readonly outputTokenDetails: Readonly<
+    NativeFollowupUsage["outputTokenDetails"]
+  >;
+  readonly raw?: Readonly<NonNullable<NativeFollowupUsage["raw"]>>;
+};
+type ReadonlyFollowupProviderMetadata = {
+  readonly [
+    Provider in keyof NonNullable<HookModelCall["providerMetadata"]>
+  ]: Readonly<NonNullable<HookModelCall["providerMetadata"]>[Provider]>;
+};
+interface FollowupStep {
+  readonly providerMetadata?: ReadonlyFollowupProviderMetadata;
+  readonly usage?: ReadonlyFollowupUsage;
+}
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (generateEveFollowupSuggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateEveFollowupSuggestions's awaited sequencing and rejected-Promise behavior. */
@@ -20,13 +38,15 @@ import { resolveEveModel } from "./model-selection";
  * @param {Readonly<FollowupContext>} context User and completed assistant text supplying auxiliary suggestion generation.
  * @returns {Promise<TurnCompletedHookResult | undefined>} No result when disabled/empty; otherwise native model usage and validated suggestion metadata, retaining billed attempts even when output parsing fails.
  */
+
 export const generateEveFollowupSuggestions = async (
-  context: Readonly<FollowupContext>
+  context: FollowupContext
 ): Promise<TurnCompletedHookResult | undefined> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
   ) {
-    return;
+    // oxlint-disable-next-line no-undefined -- Disabled suggestions intentionally have no hook result; an explicit value keeps all async return paths consistent.
+    return undefined;
   }
   const modelId = config.ai.tools.followupSuggestions.default;
   const modelCalls: HookModelCall[] = [];
@@ -38,8 +58,7 @@ export const generateEveFollowupSuggestions = async (
       model: resolved.model,
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolved.modelOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...resolved.modelOptions,
-      // oxlint-disable-next-line no-magic-numbers -- Bound optional follow-up generation to fifteen seconds without failing the completed answer.
-      abortSignal: AbortSignal.timeout(15_000),
+      abortSignal: AbortSignal.timeout(FOLLOWUP_TIMEOUT_MS),
       maxOutputTokens: 512,
       // Hidden provider retries would lose per-attempt usage evidence.
       maxRetries: 0,
@@ -52,8 +71,7 @@ export const generateEveFollowupSuggestions = async (
           role: "user",
         },
       ],
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native SDK step usage/providerMetadata are forwarded unchanged into HookModelCall receipts; readonly JSON collections change the native receipt input contract.
-      onStepEnd(step): void {
+      onStepEnd(step: FollowupStep): void {
         modelCalls.push({
           modelId,
           providerMetadata: step.providerMetadata,
@@ -63,7 +81,6 @@ export const generateEveFollowupSuggestions = async (
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
     // Usage is captured before reading output: malformed JSON can still cost money.
-    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       modelCalls,
       responseMetadata: eveFollowupSuggestions.parse(result.output),
@@ -73,7 +90,6 @@ export const generateEveFollowupSuggestions = async (
     if (attempted && modelCalls.length === 0) {
       modelCalls.push({ failed: true, modelId });
     }
-    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return { modelCalls };
   }
 };

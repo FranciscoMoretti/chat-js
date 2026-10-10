@@ -1,35 +1,39 @@
 import { generateImage, generateText } from "ai";
 import type { FileUIPart } from "ai";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolModelProvider } from "@/lib/ai/tool-context";
-/* oxlint-enable sort-imports */
-import type { createEveToolCost } from "@/lib/eve/tool-cost";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { FileUploader } from "@/lib/file-storage";
-/* oxlint-enable sort-imports */
-import { createModuleLogger } from "@/lib/logger";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { collectEditImages } from "./image-input";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModelSelection } from "./image-model";
-/* oxlint-enable sort-imports */
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
+import type { createEveToolCost } from "@/lib/eve/tool-cost";
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Keep Pino/config initialization before image-input loads file-storage/database/environment validation; sorting collectEditImages first reverses the logger/validation failure order.
+import { collectEditImages } from "./image-input";
 import type { generateImageResult } from "./schemas";
+import type { z } from "zod";
 
 const log = createModuleLogger("ai.tools.generate-image");
 const EMPTY_IMAGE_BYTES = 0;
 const GENERATED_IMAGE_COUNT = 1;
 const NO_GENERATED_IMAGES = 0;
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNativeSurface<Value[Key]> }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 type ImageStoreFile = (
   filename: string,
   body: ReadonlyNativeSurface<Buffer>,

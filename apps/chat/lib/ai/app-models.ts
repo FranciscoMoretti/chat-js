@@ -1,20 +1,17 @@
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
-import { unstable_cache as cache } from "next/cache";
-
-import { config } from "@/lib/config";
-
-import type { AppModelId } from "./app-model-id";
-import type { ModelData } from "./model-data";
-import { fetchModels } from "./models";
 import {
   generatedForGateway,
   models as generatedModels,
 } from "./models.generated";
-/* oxlint-enable sort-imports */
+import type { AppModelId } from "./app-model-id";
+import type { ModelData } from "./model-data";
+
+import { unstable_cache as cache } from "next/cache";
+import { config } from "@/lib/config";
+import { fetchModels } from "./models";
 
 type AppModelDefinition = Omit<ModelData, "id"> & {
-  id: AppModelId;
-  apiModelId: string;
+  readonly id: AppModelId;
+  readonly apiModelId: string;
 };
 
 const DISABLED_MODELS = new Set<string>(config.ai.disabledModels);
@@ -68,7 +65,6 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
     );
 
 const buildChatModels = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Sorting/filtering retains original model records with mutable nested fields in the public return array.
   appModels: readonly AppModelDefinition[]
 ): AppModelDefinition[] =>
   appModels

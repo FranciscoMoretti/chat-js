@@ -1,17 +1,11 @@
 "use client";
-import dynamic from "next/dynamic";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-import { ScrollArea } from "@/components/ui/scroll-area";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { getLanguageFromFileName } from "@/lib/utils";
-
 import type { CodeEditor as CodeEditorExport } from "./editor";
-/* oxlint-enable sort-imports */
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import dynamic from "next/dynamic";
+import { getLanguageFromFileName } from "@/lib/utils";
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const CodeEditor = dynamic(

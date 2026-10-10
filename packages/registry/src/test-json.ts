@@ -57,7 +57,7 @@ const parseAffectedTaskNames = (source: string): readonly string[] => {
   );
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (jsonObject, jsonArray, jsonString, parseJsonObject, taskList, findTask, parseAffectedTaskNames); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (jsonObject, jsonArray, jsonString, parseJsonObject, taskList, findTask, parseAffectedTaskNames); the enabled import/no-default-export convention rejects the default-export alternative.
 export {
   jsonObject,
   jsonArray,
@@ -67,7 +67,5 @@ export {
   findTask,
   parseAffectedTaskNames,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (TaskPlan); the enabled import/no-default-export convention rejects the default-export alternative. */
+// oxlint-disable-next-line import/no-named-export -- Keep the named type bindings (TaskPlan); the enabled import/no-default-export convention rejects the default-export alternative.
 export type { TaskPlan };
-/* oxlint-enable import/no-named-export */

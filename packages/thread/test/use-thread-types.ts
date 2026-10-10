@@ -1,18 +1,12 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { UIMessage } from "ai";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { AbstractThread, Thread } from "#thread-source/index";
-/* oxlint-enable sort-imports */
 import type { ThreadInit, ThreadState } from "#thread-source/index";
+
+import { MemoryThreadState } from "#thread-source/thread-state";
 import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UseThreadHelpers } from "#thread-source/react";
 import { useThread } from "#thread-source/react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { MemoryThreadState } from "#thread-source/thread-state";
-/* oxlint-enable sort-imports */
 
 declare const messageId: string;
 

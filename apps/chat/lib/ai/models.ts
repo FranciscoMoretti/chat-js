@@ -1,16 +1,12 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-import { unstable_cache } from "next/cache";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { config } from "@/lib/config";
-/* oxlint-enable sort-imports */
-import { createModuleLogger } from "@/lib/logger";
-
-import { getActiveGateway } from "./active-gateway";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelData } from "./model-data";
-/* oxlint-enable sort-imports */
+import type { ReadonlyAiGatewayModel } from "./to-model-data";
+
+import { config } from "@/lib/config";
+import { createModuleLogger } from "@/lib/logger";
+import { getActiveGateway } from "./active-gateway";
 import { toModelData } from "./to-model-data";
+import { unstable_cache } from "next/cache";
 
 const log = createModuleLogger("ai/models");
 
@@ -38,13 +34,11 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fetchModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): fetchModels accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+
 export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {
     const models = await fetchModelsRaw();
-    return models.map((model) => toModelData(model));
+    return models.map((model: ReadonlyAiGatewayModel) => toModelData(model));
   },
   [`ai-gateway-models-${config.ai.gateway}`],
   {
@@ -54,4 +48,3 @@ export const fetchModels = unstable_cache(
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

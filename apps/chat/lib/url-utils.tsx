@@ -1,16 +1,15 @@
 const getDomainFromUrl = (url: string): string =>
   new URL(url).hostname.replace("www.", "");
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): getFaviconUrl accepts result: { title: string; source: "web" | "academic" | "x"; url: string; content: stri; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getFaviconUrl = (result: {
-  title: string;
-  source: "web" | "academic" | "x";
-  url: string;
-  content: string;
-  tweetId?: string | undefined;
+  readonly title: string;
+  readonly source: "web" | "academic" | "x";
+  readonly url: string;
+  readonly content: string;
+  readonly tweetId?: string | undefined;
 }): string =>
   `https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`;
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getDomainFromUrl, getFaviconUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { getDomainFromUrl, getFaviconUrl };
 /* oxlint-enable import/no-named-export */

@@ -1,17 +1,17 @@
 "use client";
 
-import React from "react";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ModelSelector } from "@/components/model-selector";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-/* oxlint-enable sort-imports */
-import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+import { ModelSelector } from "@/components/model-selector";
+/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/model-selector and @/providers/chat-models-provider; keep this adjacent import pair ordered. */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 /* oxlint-enable sort-imports */
+
+import React from "react";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {
@@ -74,20 +74,27 @@ const alternativeFixtureModels = [
     { reasoning: false, toolCall: true }
   ),
 ];
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- fixtureModels: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model). */
 
 const fixtureModels = [
   primaryFixtureModel,
   ...alternativeFixtureModels.filter(
-    (model, index, models) =>
+    (
+      model: Readonly<Pick<AppModelDefinition, "id">>,
+      index,
+      models: readonly ReadonlyNativeSurface<AppModelDefinition>[]
+    ) =>
       model.id !== primaryFixtureModel.id &&
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelToolbarVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ModelToolbarVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ModelToolbarVisualFixture: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
+
+/* oxlint-disable react/jsx-max-depth -- ModelToolbarVisualFixture: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
+
+const ignoreModelSelectionChange = (): void => {
+  // This fixture has no selection-change subscription to clean up.
+};
 
 export const ModelToolbarVisualFixture = (): React.JSX.Element => (
   <ChatModelsProvider models={fixtureModels}>
@@ -102,9 +109,7 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
           data.
         </p>
         <ModelSelector
-          onModelSelectionChangeAction={() => {
-            // This capability has no subscription to clean up.
-          }}
+          onModelSelectionChangeAction={ignoreModelSelectionChange}
           selectedModelId={primaryFixtureModel.id}
           selectedModelSelection={primaryFixtureModel.id}
         />
@@ -114,4 +119,4 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
 );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */
+/* oxlint-enable react/jsx-max-depth */

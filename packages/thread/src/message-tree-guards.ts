@@ -1,7 +1,6 @@
 // oxlint-disable-next-line unicorn/no-null -- Serialized tree nodes and cursor use null for the root; undefined separately means a missing map entry.
 const ROOT_PARENT_ID = null;
-// oxlint-disable-next-line eslint/no-undefined -- Map.get returns undefined for an absent node; preserve that value separately from the serialized null root and IDs including empty strings.
-const ABSENT_MESSAGE = undefined;
+const ABSENT_MESSAGE = globalThis.undefined;
 
 const EMPTY_CHILD_COUNT = 0;
 

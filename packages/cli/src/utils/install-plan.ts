@@ -7,19 +7,20 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Preserve zod before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { installItems } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
 
 import { updateEnvironmentExample } from "./environment-example";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
+// oxlint-disable-next-line sort-imports -- Preserve ./environment-example before ./installation-dependencies while their runtime initialization order is still under site review.
 import { prepareDependencyUpdate } from "./installation-dependencies";
+// oxlint-disable-next-line sort-imports -- Preserve ./installation-dependencies before ./installation-files while their runtime initialization order is still under site review.
 import { directoryFiles, optionalFile } from "./installation-files";
-/* oxlint-enable sort-imports */
-import type { planInstallation } from "./installation-plan";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+
 import { assertMcpApprovalSchema } from "./mcp-schema";
-/* oxlint-enable sort-imports */
+
+import type { planInstallation } from "./installation-plan";
+
 // oxlint-disable-next-line import/max-dependencies -- Installation composes provider validation, dependency ownership and rollback within one transaction.
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";

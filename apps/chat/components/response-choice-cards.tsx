@@ -1,11 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
+
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ResponseChoiceSlot); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

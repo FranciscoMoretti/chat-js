@@ -1,41 +1,26 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { confirm, isCancel, log } from "@clack/prompts";
-/* oxlint-enable sort-imports */
-import { Command } from "commander";
-
-import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  configureStorageProvider,
-  parseStorageOptions,
-} from "#cli/helpers/storage-provider";
-/* oxlint-enable sort-imports */
-import { resolveGateway } from "#cli/registry/gateways";
-import { resolveStorage } from "#cli/registry/storage";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { inferPackageManager } from "#cli/utils/get-package-manager";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { handleError } from "#cli/utils/handle-error";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/max-dependencies -- Adding an installation composes provider resolution, source rollback, registration, dependency installation, configuration edits, and prompts directly.
-import { installPlan } from "#cli/utils/install-plan";
-import { planInstallation } from "#cli/utils/installation-plan";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { gatewayConfigEdit } from "#cli/utils/provider-config";
-/* oxlint-enable sort-imports */
-import { runCommand } from "#cli/utils/run-command";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
 } from "#cli/utils/sync-features";
-/* oxlint-enable sort-imports */
+import {
+  configureStorageProvider,
+  parseStorageOptions,
+} from "#cli/helpers/storage-provider";
+import { confirm, isCancel, log } from "@clack/prompts";
+import { Command } from "commander";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { gatewayConfigEdit } from "#cli/utils/provider-config";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
+import { installPlan } from "#cli/utils/install-plan";
+// oxlint-disable-next-line import/no-nodejs-modules, import/max-dependencies -- The CLI uses native paths and directly composes provider resolution, source rollback, registration, dependency installation, configuration edits, and prompts.
+import path from "node:path";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { runCommand } from "#cli/utils/run-command";
 import { syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (

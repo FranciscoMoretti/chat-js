@@ -17,5 +17,8 @@ export default defineConfig({
     "lib/ai/models.generated.ts",
     "**/tools/chatjs/{tools,ui,providers,code-executor,workflow-types,tool-availability,document-ui,document-run,installed-features,composer-tools,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
   ],
+  // Let Oxlint's case-sensitive sort-imports rule own import ordering.
+  // Automatic organization uses a different comparator and can undo valid imports.
+  sortImports: false,
 });
 /* oxlint-enable import/no-default-export */

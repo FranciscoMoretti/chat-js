@@ -16,9 +16,7 @@ import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 /* oxlint-disable react/jsx-no-literals -- ConnectorDetailsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-const ConnectorDetailsHeader = () => (
+const ConnectorDetailsHeader = (): React.JSX.Element => (
   <SettingsPageHeader>
     <h2 className="text-lg font-semibold">Connector details</h2>
     <p className="text-muted-foreground text-sm">
@@ -28,12 +26,9 @@ const ConnectorDetailsHeader = () => (
 );
 /* oxlint-enable react/jsx-no-literals */
 
-/* oxlint-enable typescript/explicit-function-return-type */
-
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
-const ConnectorDetailsBodyFallback = () => (
+const ConnectorDetailsBodyFallback = (): React.JSX.Element => (
   <div className="flex flex-col gap-3">
     <Skeleton
       // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -55,19 +50,16 @@ const ConnectorDetailsBodyFallback = () => (
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorDetailsContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const ConnectorDetailsContent = async ({
   params,
 }: {
-  params: Promise<{ connectorId: string }>;
-}) => {
+  readonly params: Readonly<Promise<{ readonly connectorId: string }>>;
+}): Promise<React.JSX.Element> => {
   const { connectorId } = await params;
   await connection();
   // Keep this result out of the layout's earlier hydration boundary.
@@ -86,22 +78,17 @@ const ConnectorDetailsContent = async ({
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const ConnectorDetailsPage = ({
   params,
 }: {
-  params: Promise<{ connectorId: string }>;
-}) => (
+  readonly params: Readonly<Promise<{ readonly connectorId: string }>>;
+}): React.JSX.Element => (
   <Suspense
     fallback={
       <SettingsPage>
@@ -113,10 +100,7 @@ const ConnectorDetailsPage = ({
     <ConnectorDetailsContent params={params} />
   </Suspense>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */

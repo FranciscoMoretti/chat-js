@@ -4,11 +4,10 @@ import { rename, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-const [archive, addressFile] = process.argv.slice(2);
-/* oxlint-enable eslint/no-magic-numbers */
+const SCRIPT_ARGUMENTS_START_INDEX = 2;
+const URL_PATH_SLASH_LENGTH = 1;
+const [archive, addressFile] = process.argv.slice(SCRIPT_ARGUMENTS_START_INDEX);
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const server = Bun.serve({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
@@ -21,7 +20,11 @@ const server = Bun.serve({
       return new Response("Not found", { status: 404 });
     }
     const file = Bun.file(
-      pathModule.join(import.meta.dir, "../../registry/dist/r", path.slice(1))
+      pathModule.join(
+        import.meta.dir,
+        "../../registry/dist/r",
+        path.slice(URL_PATH_SLASH_LENGTH)
+      )
     );
     if (!(await file.exists())) {
       return new Response("Not found", { status: 404 });
@@ -45,7 +48,6 @@ const server = Bun.serve({
   port: 0,
 });
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 const temporaryAddressFile = `${addressFile}.tmp`;
 // oxlint-disable-next-line node/no-top-level-await -- This Bun fixture server writes its bound address before advertising readiness to the integration process.

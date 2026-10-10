@@ -1,8 +1,7 @@
-import { loadFont } from "@remotion/fonts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { loadFont } from "@remotion/fonts";
+
+/* oxlint-disable sort-imports -- Keep the fonts CommonJS entry before the explicit Remotion import; fonts requires Remotion through a different conditional entry, so moving the import needs a cross-loader effects control. */
 import { Img, staticFile } from "remotion";
 /* oxlint-enable sort-imports */
 
