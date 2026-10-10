@@ -26,6 +26,42 @@ const getMcpErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Match Bun fetch.preconnect and the native fetch call signature. Readonly URL and RequestInit projections are not assignable to those receivers. */
+type McpPreconnect = (
+  url: string | URL,
+  options?: {
+    readonly dns?: boolean;
+    readonly http?: boolean;
+    readonly https?: boolean;
+    readonly tcp?: boolean;
+  }
+) => void;
+
+const isMcpPreconnect = (value: unknown): value is McpPreconnect =>
+  typeof value === "function";
+
+// Bun's fetch type requires preconnect. Node's does not. Delegate when the
+// runtime provides it so one fetch value satisfies both FetchFunction types.
+const mcpPreconnect: McpPreconnect = (url, options): void => {
+  const candidate: object = globalThis.fetch;
+  if (!("preconnect" in candidate)) {
+    return;
+  }
+  const method: unknown = candidate.preconnect;
+  if (!isMcpPreconnect(method)) {
+    return;
+  }
+  method(url, options);
+};
+
+const toMcpSdkFetch = (
+  fetchImpl: (
+    ...args: Parameters<typeof globalThis.fetch>
+  ) => ReturnType<typeof globalThis.fetch>
+): typeof globalThis.fetch =>
+  Object.assign(fetchImpl, { preconnect: mcpPreconnect });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 type McpClientInstance = Awaited<ReturnType<typeof createMCPClient>>;
 
 type McpClientStatus =
@@ -208,8 +244,7 @@ export class MCPClient {
         initializationOptions: { signal },
         transport: {
           authProvider: oauthProvider,
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
-          fetch: oauthProvider.fetch as typeof globalThis.fetch,
+          fetch: toMcpSdkFetch(oauthProvider.fetch),
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
           url: this.serverConfig.url,
@@ -341,8 +376,7 @@ export class MCPClient {
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(oauthProvider, {
       authorizationCode: code,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
-      fetchFn: oauthProvider.fetch as typeof globalThis.fetch,
+      fetchFn: toMcpSdkFetch(oauthProvider.fetch),
       serverUrl: this.serverConfig.url,
     });
 
