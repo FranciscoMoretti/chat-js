@@ -45,7 +45,7 @@
     "lib/ai/gateway.ts": "e52de73ea0b33c67f0686726dce4c0a60f285fe38872d9c12d26c2ca2648ea71",
     "lib/ai/mcp/cache.ts": "00f8d4ec0a94c761e7339d416bf40edcf6e0ab63ef9c238642d59304d425c8b4",
     "lib/ai/mcp/mcp-client-manager.ts": "6cab4c5e54b08a2c01ebc4e5de80311804b606904f612cadf18347676732b39e",
-    "lib/ai/mcp/mcp-client.ts": "a3dd75f0389139afb72f1cb27ebd665692ab9943a18a2ce8ce6f7c3083dfd714",
+    "lib/ai/mcp/mcp-client.ts": "e6327ee6d5b62616b672857cea58c1b12bfd625946909d69cb605600124426ca",
     "lib/ai/mcp/mcp-fetch.ts": "9440f15c79d714554eca6f165d00453d3e5ec650b1547a5d7a11ce1f86d5f0a8",
     "lib/ai/mcp/mcp-oauth-provider.ts": "f97dc86b6db7299c20c78d6c6ab4a01fb31a8233ec5df8344b475c837fd680b2",
     "lib/ai/mcp/oauth-authorization-required-error.ts": "9f04f35b3751e8b7580fe0b7f5b4e2d11421ce4c9c4429b450649ea7b1b00e2a",
