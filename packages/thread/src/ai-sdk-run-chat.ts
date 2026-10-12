@@ -8,7 +8,6 @@ import type {
 } from "ai";
 import { AbstractChat } from "ai";
 
-import type { ReadonlyMessageValue } from "./message-utils";
 import { ThreadRunState } from "./thread-run-state";
 
 const FIRST_PARAMETER_INDEX = 0;
@@ -22,9 +21,6 @@ type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
   readonly headers?: Readonly<Record<string, string>> | Readonly<Headers>;
   readonly body?: Readonly<object>;
 };
-
-// Protect every chunk field while forwarding the original SDK chunk identity.
-type ReadonlyResumeChunk = ReadonlyMessageValue<UIMessageChunk>;
 
 type FinishEventReader<TMessage extends UIMessage> = Readonly<
   Omit<
@@ -123,7 +119,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     let first = true;
     return new TransformStream<UIMessageChunk, UIMessageChunk>({
       transform(
-        chunk: ReadonlyResumeChunk,
+        chunk: Readonly<UIMessageChunk>,
         controller: Readonly<TransformStreamDefaultController<UIMessageChunk>>
       ): void {
         let chunkToEnqueue = chunk;
