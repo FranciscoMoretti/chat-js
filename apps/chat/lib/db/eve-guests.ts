@@ -121,10 +121,11 @@ const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string
 ): Promise<
-  Pick<
-    typeof eveGuestMessage.$inferSelect,
-    "requestHash" | "reservationId" | "state"
-  >
+  | Pick<
+      typeof eveGuestMessage.$inferSelect,
+      "requestHash" | "reservationId" | "state"
+    >
+  | undefined
 > => {
   const [message] = await db
     .select({
@@ -552,11 +553,11 @@ const releaseEveGuestCreation = async (
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
  * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
- * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt">>} The stored expiry, including expired identities, from the existing row lookup.
+ * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | undefined>} The stored expiry, including expired identities, or undefined when no guest identity exists.
  */
 const readEveGuestOwner = async (
   ownerId: string
-): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt">> => {
+): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | undefined> => {
   const [guest] = await db
     .select({ expiresAt: eveGuest.expiresAt })
     .from(eveGuest)

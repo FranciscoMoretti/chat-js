@@ -94,7 +94,7 @@ const visibleConversation = inArray(eveConversation.state, [
 const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | undefined> => {
   const rows = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -112,15 +112,16 @@ const getBoundEveConversationForSession = async (
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
  * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
- * @returns {Promise< Pick< ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state" > >} The durable identity and state, including tombstones, from the existing row lookup.
+ * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state"> | undefined>} The durable identity and state, including tombstones, or undefined when no mapping exists.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
 ): Promise<
-  Pick<
-    ConversationRow,
-    "creationKind" | "id" | "ownerId" | "sessionId" | "state"
-  >
+  | Pick<
+      ConversationRow,
+      "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+    >
+  | undefined
 > => {
   const [row] = await db
     .select({
@@ -408,7 +409,7 @@ const boundConversation = (
 const getEveCreation = async (
   ownerId: string,
   operationId: string
-): Promise<ConversationRow> => {
+): Promise<ConversationRow | undefined> => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -1061,7 +1062,7 @@ const updateEveConversationMetadata = async (
     isPinned?: boolean;
     visibility?: "private" | "public";
   }>
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | undefined> => {
   if (updates.visibility !== undefined) {
     const [conversation] = await db
       .update(eveConversation)
@@ -1278,12 +1279,12 @@ const listEveConversationBranches = async (
  * Internal cleanup only; does not grant browser or conversation access.
  * @param {string} ownerId Owner whose deleting session mapping is inspected.
  * @param {string} sessionId Native session being removed by internal cleanup.
- * @returns {Promise<Pick<ConversationRow, "id">>} The deleting conversation identity from the existing row lookup.
+ * @returns {Promise<Pick<ConversationRow, "id"> | undefined>} The deleting conversation identity, or undefined when no owned deleting mapping exists.
  */
 const getDeletingEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | undefined> => {
   const [row] = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -1301,9 +1302,10 @@ const getDeletingEveConversationForSession = async (
 const getEveConversationProject = async (
   ownerId: string,
   routeId: string
-): Promise<
-  Pick<typeof project.$inferSelect, "id" | "instructions" | "name">
-> => {
+): Promise<Pick<
+  typeof project.$inferSelect,
+  "id" | "instructions" | "name"
+> | null> => {
   const [assigned] = await db
     .select({
       id: project.id,

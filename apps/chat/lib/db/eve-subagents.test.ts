@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import type { MessageStreamEvent } from "eve/client";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 import { z } from "zod";
 
 const postgres = new PGlite();
@@ -58,6 +58,9 @@ afterAll(async () => {
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
   const child = await registerEveSubagent("owner", "root", "child", "turn_1");
+  const missing = await getEveSubagent("owner", "unknown");
+  expectTypeOf(missing).toEqualTypeOf<typeof child | undefined>();
+  expect(missing).toBeUndefined();
   expect(child).toMatchObject({
     conversationId,
     rootSessionId: "root",
