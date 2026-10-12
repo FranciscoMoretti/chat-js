@@ -79,7 +79,7 @@ const createDocumentDraftStore = (storageKey: string) => {
       }
       publish({ draft, ready: true, storageError });
     },
-    update: (draft: Draft | undefined): void => {
+    update: (draft?: Draft): void => {
       latest.current = draft;
       let storageError = false;
       // Publish only after durable persistence, while retaining edits if storage fails.
@@ -255,8 +255,7 @@ export const useDocumentDraft = ({
   return {
     discard: () => {
       if (!busy.current) {
-        // oxlint-disable-next-line unicorn/no-useless-undefined -- The draft callback requires an argument; undefined clears the current draft.
-        update(undefined);
+        update();
         setFailure(undefined);
       }
     },

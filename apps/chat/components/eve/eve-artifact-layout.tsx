@@ -243,7 +243,7 @@ const useDocumentPanel = ({
     documentError: document.isError,
     documentActionsDisabled,
   });
-  const selectRevision = (id: string | undefined): void => {
+  const selectRevision = (id?: string): void => {
     setSelectedRevisionId(id);
     setArtifact((current) => ({ ...current, followLive: id === undefined }));
   };
@@ -423,8 +423,7 @@ const DocumentAssistantControls = ({
             onAction={
               onDocumentAction
                 ? async (request: DocumentAssistantRequest) => {
-                    // oxlint-disable-next-line unicorn/no-useless-undefined -- The selection callback requires an argument; undefined selects the live revision.
-                    selectRevision(undefined);
+                    selectRevision();
                     await onDocumentAction(request);
                   }
                 : undefined
@@ -549,8 +548,7 @@ const DocumentPanelFooter = ({
               disabled={Boolean(editing.draft)}
               variant="outline"
               onClick={() => {
-                // oxlint-disable-next-line unicorn/no-useless-undefined -- The selection callback requires an argument; undefined selects the live revision.
-                selectRevision(undefined);
+                selectRevision();
               }}
             >
               Back to latest version

@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import type { Session } from "@/lib/auth";
 
 const fixtureSession: Session = {
@@ -18,37 +20,41 @@ const fixtureSession: Session = {
     updatedAt: new Date("2026-09-25T10:00:00Z"),
   },
 };
-let registration: "registered" | "missing" = "registered";
-const calls: string[] = [];
-const setServerRegistration = (value: "registered" | "missing"): void => {
-  registration = value;
-  calls.length = 0;
-};
-const getServerCalls = (): readonly string[] => calls;
-
-const fixtureHeaders =
-  /* oxlint-disable eslint/require-await -- The native headers/auth API returns a Promise; this fixture must read and record current registration/header state separately on each invocation. */
-  async (): Promise<Headers> => {
-    calls.push("headers");
-    return new Headers({ "x-fixture-session": registration });
-  };
-/* oxlint-enable eslint/require-await */
+const fixtureHeaders = vi
+  .fn<() => Promise<Headers>>()
+  .mockResolvedValue(new Headers({ "x-fixture-session": "registered" }));
 const fixtureAuth = {
   api: {
-    getSession:
-      /* oxlint-disable eslint/require-await -- The native headers/auth API returns a Promise; this fixture must read and record current registration/header state separately on each invocation. */
-      async ({
-        headers,
-      }: {
-        readonly headers: Readonly<Pick<Headers, "get">>;
-      }): Promise<Session | null> => {
-        calls.push(`auth:${headers.get("x-fixture-session")}`);
-        if (registration === "registered") {
-          return fixtureSession;
-        }
-        return null;
-      },
-    /* oxlint-enable eslint/require-await */
+    getSession: vi
+      .fn<
+        (input: {
+          readonly headers: Readonly<Pick<Headers, "get">>;
+        }) => Promise<Session | null>
+      >()
+      .mockResolvedValue(fixtureSession),
   },
 };
+const setServerRegistration = (value: "registered" | "missing"): void => {
+  fixtureHeaders
+    .mockClear()
+    .mockResolvedValue(new Headers({ "x-fixture-session": value }));
+  fixtureAuth.api.getSession
+    .mockClear()
+    .mockResolvedValue(value === "registered" ? fixtureSession : null);
+};
+const getServerCalls = (): readonly string[] =>
+  [
+    ...fixtureHeaders.mock.invocationCallOrder.map((order) => ({
+      order,
+      call: "headers",
+    })),
+    ...fixtureAuth.api.getSession.mock.invocationCallOrder.map(
+      (order, index) => ({
+        order,
+        call: `auth:${fixtureAuth.api.getSession.mock.calls[index][0].headers.get("x-fixture-session")}`,
+      })
+    ),
+  ]
+    .toSorted((left, right) => left.order - right.order)
+    .map(({ call }) => call);
 export { fixtureAuth, fixtureHeaders, getServerCalls, setServerRegistration };
