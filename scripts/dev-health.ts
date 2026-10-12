@@ -1,8 +1,14 @@
 const HEALTH_CHECK_TIMEOUT_MS = 6000;
 const EMPTY_URL_LENGTH = 0;
 
-const checkHealth = async (origin: string): Promise<void> => {
-  const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+const checkHealth = async (
+  origin: string,
+  cancellation?: AbortSignal
+): Promise<void> => {
+  const timeout = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+  const signal = cancellation
+    ? AbortSignal.any([cancellation, timeout])
+    : timeout;
   await Promise.all([
     (async (): Promise<void> => {
       const response = await fetch(new URL("/api/health", origin), {

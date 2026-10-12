@@ -94,3 +94,32 @@ test("still rejects unavailable infrastructure even when authentication routing 
     }
   );
 });
+
+test("external cancellation aborts both pending HTTP probes", async (): Promise<void> => {
+  const cancellation = new AbortController();
+  const requested = Promise.withResolvers<undefined>();
+  const response = Promise.withResolvers<Response>();
+  const BOTH_ENDPOINTS = 2;
+  let requests = 0;
+  const server = Bun.serve({
+    async fetch() {
+      requests += 1;
+      if (requests === BOTH_ENDPOINTS) {
+        requested.resolve();
+      }
+      return await response.promise;
+    },
+    hostname: "127.0.0.1",
+    port: OS_ASSIGNED_PORT,
+  });
+  servers.push(server);
+  try {
+    const completion = checkHealth(server.url.origin, cancellation.signal);
+    await requested.promise;
+    cancellation.abort();
+    await rejects(completion, { name: "AbortError" });
+    expect(requests).toBe(BOTH_ENDPOINTS);
+  } finally {
+    response.resolve(Response.json(null));
+  }
+});
