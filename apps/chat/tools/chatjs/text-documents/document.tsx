@@ -1,30 +1,20 @@
 "use client";
 import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
-import type { Editor as EditorExport } from "./editor";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EveDocumentComparison } from "./comparison";
 import dynamic from "next/dynamic";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const Editor = dynamic(
-  () =>
-    // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic requires a loader promise selecting the named editor export.
-    import("./editor").then(
-      (
-        editorModule: Readonly<{
-          Editor: React.ExoticComponent<
-            React.ComponentProps<typeof EditorExport>
-          >;
-        }>
-      ) => editorModule.Editor
-    ),
+  async () => {
+    const { Editor: TextEditor } = await import("./editor");
+    return TextEditor;
+  },
   {
     ssr: false,
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 export const documentUi: DocumentUi = {
   Body: ({

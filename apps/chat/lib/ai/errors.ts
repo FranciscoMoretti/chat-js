@@ -112,10 +112,10 @@ class ChatSDKError extends Error {
 
     const [type, surface] = errorCode.split(":");
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ErrorCode constrains both colon-delimited components; split loses their literal unions without changing the caller contract.
     this.type = type as ErrorType;
     this.cause = cause;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ErrorCode constrains both colon-delimited components; split loses their literal unions without changing the caller contract.
     this.surface = surface as Surface;
     this.statusCode = getStatusCodeByType(this.type);
   }

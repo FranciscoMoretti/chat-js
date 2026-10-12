@@ -6,17 +6,16 @@ import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const DiffView = dynamic(
-  // Named exports need a promise projection for next/dynamic.
-  // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic expects a loader promise selecting the named DiffView export; this then maps the module to that component.
-  () => import("./diffview").then((module) => module.DiffView),
+  async () => {
+    const { DiffView: Comparison } = await import("./diffview");
+    return Comparison;
+  },
   {
     loading: () => <DocumentSkeleton artifactKind="text" />,
     ssr: false,
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 export const EveDocumentComparison = ({
   conversationId,

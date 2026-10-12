@@ -1,4 +1,4 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -127,41 +127,47 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       },
       { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
-    expect(JSON.parse(await readFile(manifest, "utf-8")).snapshotName).toBe(
-      snapshotName
-    );
+
+    expect(
+      z
+        .looseObject({ snapshotName: z.string() })
+        .parse(JSON.parse(await readFile(manifest, "utf-8"))).snapshotName
+    ).toBe(snapshotName);
   } finally {
-    for (const vm of [sandbox, childSandbox]) {
-      await vm?.destroy().catch((error: unknown) => {
-        if (
-          !(
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "sandboxNotFound"
-          )
-        ) {
-          throw error;
-        }
-      });
-    }
-    for (const snapshot of [
-      childStateSnapshotName,
-      snapshotName,
-      stateSnapshotName,
-      survivorName,
-    ]) {
-      await Snapshot.remove(snapshot).catch((error: unknown) => {
-        if (
-          !(
-            error instanceof Error &&
-            error.message.startsWith("[SnapshotNotFound] snapshot not found:")
-          )
-        ) {
-          throw error;
-        }
-      });
-    }
+    await Promise.all(
+      [sandbox, childSandbox].map(async (vm) => {
+        await vm?.destroy().catch((error: unknown) => {
+          if (
+            !(
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "sandboxNotFound"
+            )
+          ) {
+            throw error;
+          }
+        });
+      })
+    );
+    await Promise.all(
+      [
+        childStateSnapshotName,
+        snapshotName,
+        stateSnapshotName,
+        survivorName,
+      ].map(async (snapshot) => {
+        await Snapshot.remove(snapshot).catch((error: unknown) => {
+          if (
+            !(
+              error instanceof Error &&
+              error.message.startsWith("[SnapshotNotFound] snapshot not found:")
+            )
+          ) {
+            throw error;
+          }
+        });
+      })
+    );
     await rm(root, { force: true, recursive: true });
   }
 }, 120_000);
@@ -209,8 +215,8 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     if (typeof checkpoint?.snapshotName !== "string") {
       throw new TypeError("EVE did not return a fork snapshot identity.");
     }
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
-    const manifest = JSON.parse(
+
+    const manifest: unknown = JSON.parse(
       await readFile(
         path.join(
           sessionDirectory,
@@ -298,18 +304,24 @@ test("EVE checkpoint capture records real provider resources for retryable clean
       "snapshot not found"
     );
     expect(resources).toHaveLength(2);
-    for (const resource of resources) {
-      for (const name of resource.sandboxNames) {
-        await expect(Sandbox.get(name)).rejects.toMatchObject({
-          code: "sandboxNotFound",
-        });
-      }
-      for (const snapshot of resource.snapshotNames) {
-        await expect(Snapshot.get(snapshot)).rejects.toThrow(
-          "snapshot not found"
+    await Promise.all(
+      resources.map(async (resource) => {
+        await Promise.all(
+          resource.sandboxNames.map(async (name) => {
+            await expect(Sandbox.get(name)).rejects.toMatchObject({
+              code: "sandboxNotFound",
+            });
+          })
         );
-      }
-    }
+        await Promise.all(
+          resource.snapshotNames.map(async (snapshot) => {
+            await expect(Snapshot.get(snapshot)).rejects.toThrow(
+              "snapshot not found"
+            );
+          })
+        );
+      })
+    );
     expect(await purgeLocalEveSandboxes(inputs)).toEqual(resources);
   } finally {
     await child?.shutdown();

@@ -142,7 +142,7 @@ const delay = async (
   const abort = new AbortController();
   const timeout = setTimeout((): void => {
     abort.abort();
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Native withResolvers<undefined> requires a completion argument; site visual tests exercise completed and aborted response streams.
     resolve(undefined);
   }, ms);
   const onAbort = (): void => {
@@ -158,10 +158,10 @@ const delay = async (
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
-/* oxlint-disable typescript/promise-function-async -- createPlaygroundTransport: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/strict-boolean-expressions -- createPlaygroundTransport: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
+  // oxlint-disable-next-line typescript/promise-function-async -- The demo has no reconnectable backend stream; this no-work transport result has no asynchronous operation to await.
   reconnectToStream: () => Promise.resolve(null),
+  // oxlint-disable-next-line typescript/promise-function-async -- Stream construction and its initial enqueues happen synchronously; awaiting token production here would postpone returning the streaming body.
   sendMessages: ({ abortSignal, body, messages }: PlaygroundTransportInput) => {
     const requestBody: StreamBody | undefined = body;
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
@@ -195,7 +195,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             controller.enqueue({ id: "text", type: "text-start" });
 
             for (const [index, word] of words.entries()) {
-              // oxlint-disable-next-line no-await-in-loop -- Stream words in order with a separate cancellable delay for each token.
+              // oxlint-disable-next-line eslint/no-await-in-loop -- Each visible word is emitted only after its cancellable delay; concurrency would collapse streaming cadence and enqueue words after abort.
               await delay(tokenDelay, abortSignal);
               controller.enqueue({
                 delta: index === 0 ? word : ` ${word}`,
@@ -216,7 +216,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             });
             controller.close();
           } catch (error) {
-            if (abortSignal?.aborted) {
+            if (abortSignal?.aborted === true) {
               controller.enqueue({
                 finishReason: "stop",
                 messageMetadata: {
@@ -236,8 +236,6 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     );
   },
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
 
 const buildTreeLayout = ({
   childrenByParentId,

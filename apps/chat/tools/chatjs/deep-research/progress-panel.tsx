@@ -20,7 +20,6 @@ const updateName = {
   writing: "Writing",
 } as const;
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchProgress = ({
   updates,
   isComplete,
@@ -79,7 +78,11 @@ export const ResearchProgress = ({
           update.type === "completed"
       );
 
-      if (completedUpdate?.timestamp) {
+      if (
+        completedUpdate !== undefined &&
+        completedUpdate.timestamp !== 0 &&
+        !Number.isNaN(completedUpdate.timestamp)
+      ) {
         return Math.floor(
           (completedUpdate.timestamp - progressUpdates[0].timestamp) / 1000
         );
@@ -141,4 +144,3 @@ export const ResearchProgress = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

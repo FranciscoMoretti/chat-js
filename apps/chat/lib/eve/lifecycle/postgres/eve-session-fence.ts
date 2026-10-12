@@ -84,7 +84,7 @@ export const fenceEvePostgresSession = async (
         pass < MAX_INVENTORY_PASSES;
         pass += NEXT_INVENTORY_PASS
       ) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read only after the previous pass acquired its fences; concurrent snapshots could miss an admitted descendant.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Fence all newly inventoried runs/streams before taking another snapshot; concurrent snapshots could miss writes admitted before the new fence.
         const inventory = await readFenceableSessionInventory(
           query,
           sessionId,
@@ -96,7 +96,7 @@ export const fenceEvePostgresSession = async (
         ) {
           return inventory;
         }
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish every resource fence before recording membership and taking the next inventory snapshot.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Fence all newly inventoried runs/streams before taking another snapshot; concurrent snapshots could miss writes admitted before the new fence.
         await fenceEvePostgresResourcesInTransaction(query, inventory);
         recordFencedResources(inventory, {
           runs: fencedRuns,

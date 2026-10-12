@@ -224,7 +224,7 @@ const AttachmentItem = ({
               onClick={(event: { readonly stopPropagation: () => void }) => {
                 startEventAction(async () => {
                   event.stopPropagation();
-                  /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
+
                   try {
                     const response = await fetch(url);
                     if (response.status === HTTP_NOT_FOUND) {
@@ -232,10 +232,8 @@ const AttachmentItem = ({
                       return;
                     }
                     if (!response.ok) {
-                      // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
-                      throw new Error(
-                        `File download failed (${response.status})`
-                      );
+                      window.open(url, "_blank");
+                      return;
                     }
                     const blob = await response.blob();
                     const blobUrl = URL.createObjectURL(blob);
@@ -248,7 +246,6 @@ const AttachmentItem = ({
                     // Fallback: open in new tab if fetch fails
                     window.open(url, "_blank");
                   }
-                  /* oxlint-enable react/todo */
                 });
               }}
               size="icon"

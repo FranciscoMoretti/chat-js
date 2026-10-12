@@ -1,6 +1,5 @@
 import { getInstanceByDom } from "echarts";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const chartsFinished = (
   container: Readonly<Pick<HTMLElement, "querySelectorAll">>
 ): boolean => {
@@ -9,9 +8,9 @@ export const chartsFinished = (
   );
   return (
     charts.length > 0 &&
-    [...charts].every((element) =>
-      getInstanceByDom(element)?.getZr().animation.isFinished()
+    [...charts].every(
+      (element) =>
+        getInstanceByDom(element)?.getZr().animation.isFinished() === true
     )
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

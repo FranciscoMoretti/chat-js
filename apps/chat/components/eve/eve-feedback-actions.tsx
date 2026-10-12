@@ -6,7 +6,6 @@ import type { JSX as ReactJSX } from "react";
 import { MessageAction } from "@/components/ai-elements/message";
 import { MessageVoteActions } from "@/components/message-vote-actions";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return -- EveFeedbackActions: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 export const EveFeedbackActions = ({
   conversationId,
@@ -60,11 +59,10 @@ export const EveFeedbackActions = ({
   return (
     <MessageVoteActions
       disabled={disabled || votes.isPending || mutation.isPending}
-      onVote={(type) =>
-        mutation.mutateAsync({ conversationId, messageId, type })
+      onVote={async (type) =>
+        await mutation.mutateAsync({ conversationId, messageId, type })
       }
       vote={votes.data?.find((vote) => vote.messageId === messageId)}
     />
   );
 };
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */

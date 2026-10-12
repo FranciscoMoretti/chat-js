@@ -1,21 +1,17 @@
 import type { EnvGroup, EnvVar, ProviderSlug } from "files-sdk/providers";
 import { getProvider } from "files-sdk/providers";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Preserve this exported closed-record type's existing implicit assignability to Record<string, unknown>; an augmentable interface changes that public type contract. */
-type StorageEnvironmentVariable = {
+interface StorageEnvironmentVariable {
   aliases: readonly string[];
   description: string;
   key: string;
   secret: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Preserve this exported closed-record type's existing implicit assignability to Record<string, unknown>; an augmentable interface changes that public type contract. */
-type StorageEnvironmentRequirement = {
+interface StorageEnvironmentRequirement {
   description: string;
   options: StorageEnvironmentVariable[][];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const EMPTY_VARIABLE_COUNT = 0;
 const ABSENT_ADAPTER_OPTION = undefined;

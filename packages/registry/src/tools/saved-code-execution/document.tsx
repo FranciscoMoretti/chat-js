@@ -17,7 +17,6 @@ import { config } from "@/lib/config";
 import { documentExecutionLanguage } from "./schemas";
 import { latestDocumentRun } from "./document-runs";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const EveDocumentRun = ({
   documentId,
   revisionId,
@@ -32,10 +31,10 @@ export const EveDocumentRun = ({
   const [, startEventAction] = React.useTransition();
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
-    onAction &&
+    onAction !== undefined &&
     installedDocumentKinds.has("code") &&
     installedToolNames.has("runCodeDocument") &&
-    documentExecutionLanguage(title);
+    documentExecutionLanguage(title) !== undefined;
   if (
     kind !== "code" ||
     !(canRun || run) ||
@@ -86,4 +85,3 @@ export const EveDocumentRun = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

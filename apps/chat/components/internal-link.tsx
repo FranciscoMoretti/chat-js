@@ -40,7 +40,7 @@ export const InternalLink = ({
     onNavigate?.();
     const targetHref = event.currentTarget.getAttribute("href");
     if (typeof targetHref === "string" && targetHref !== "") {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: Next 16.3 typedRoutes requires Route assertions for nonliteral hrefs (next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md). This resolved anchor also supports Electron navigation; validating against generated route literals would reject supported dynamic/UrlObject links.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Electron modified/auxiliary clicks route the actual rendered anchor href; the public string/URL contract includes runtime paths absent from generated Route literals.
       router.push(targetHref as Route);
     }
   };
@@ -84,7 +84,7 @@ export const InternalLink = ({
     <Link
       {...props}
 
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: Next 16.3 typedRoutes requires Route assertions for nonliteral hrefs (next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md). This resolved anchor also supports Electron navigation; validating against generated route literals would reject supported dynamic/UrlObject links.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing dynamic string/URL public Link contract; generated Route literals cannot enumerate caller-provided runtime URLs.
       href={href as Route}
       onAuxClick={handleAuxClick}
       onClick={handleClick}

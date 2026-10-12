@@ -10,7 +10,7 @@ export const Favicon = ({
   readonly url: string;
   readonly className?: string;
 } & React.ImgHTMLAttributes<HTMLImageElement>): React.JSX.Element => (
-  // oxlint-disable-next-line next/no-img-element -- Favicon forwards React.ImgHTMLAttributes, including caller srcSet and string dimensions; installed Next Image drops srcSet and rejects percentage widths even when unoptimized. Preserve this native attribute contract.
+  // oxlint-disable-next-line next/no-img-element -- Public ImgHTMLAttributes include string dimensions and arbitrary srcSet; native-boundaries browser test checks forwarding and the adjacent fallback error contract.
   <img
     className={cn("h-4 w-4", className)}
     height={16}

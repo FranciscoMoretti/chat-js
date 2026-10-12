@@ -24,6 +24,45 @@ const PIP_COMMAND_ORDINAL = 2;
 const CHART_COMMAND_COUNT = 2;
 const FALLBACK_COMMAND_COUNT = 3;
 
+it.each([
+  {
+    trailer: '{"success":true,"extra":"compatible"}',
+    expectedMessage: "printed output",
+  },
+  { trailer: "{}", expectedMessage: "printed output" },
+  {
+    trailer:
+      '{"success":false,"error":{"name":"ValueError","value":"bad input","traceback":"trace","extra":true}}',
+    expectedMessage: "printed output\nError: ValueError: bad input",
+  },
+  { trailer: "null", expectedMessage: "printed output\nnull" },
+  {
+    trailer: '{"error":{"name":17}}',
+    expectedMessage: 'printed output\n{"error":{"name":17}}',
+  },
+])(
+  "parses the execution status trailer $trailer",
+  async ({ trailer, expectedMessage }) => {
+    mocks.runCommand.mockReset();
+    mocks.runCommand
+      .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
+      .mockResolvedValueOnce({
+        exitCode: SUCCESS_EXIT_CODE,
+        stderr: (): string => "",
+        stdout: (): string => `printed output\n${trailer}`,
+      })
+      .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
+    const result = await executePythonInSandbox({
+      code: "print('output')",
+      log: pino({ level: "silent" }),
+      requestId: "execution-envelope",
+      sandbox: await Sandbox.create(),
+    });
+    expect(result.message).toBe(expectedMessage);
+    expect(result.chart).toBe("");
+  }
+);
+
 const createPipRedactionFixture = (
   packageUrl: string,
   exitCode: number

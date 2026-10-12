@@ -495,10 +495,9 @@ const PureModelSelector = ({
       try {
         // Run the producer before the transition so Send sees its local selection immediately.
         const completion = onModelSelectionChangeAction?.(selection);
-        // oxlint-disable-next-line typescript/promise-function-async -- React receives the original Action promise without changing its identity or synchronous producer contract.
-        startTransition(() => {
+        startTransition(async () => {
           setOptimisticSelection(selection);
-          return completion;
+          await completion;
         });
       } catch (error) {
         startTransition(() => {
@@ -612,18 +611,14 @@ const PureModelSelector = ({
             )}
             <p className="inline-flex items-center gap-1.5 truncate">
               {triggerLabel}
-              {
-                /* oxlint-disable typescript/strict-boolean-expressions -- This React child reads the nullable reasoning flag once at its render position and preserves its false or undefined result. An eager capture moves the getter read; a boolean conversion changes the child value. Optional chaining preserves the nullish guard and skipped property reads. */
-                selectedItem?.model.reasoning &&
-                  /* oxlint-enable typescript/strict-boolean-expressions */ reasoningConfig && (
-                    <span
-                      className="inline-flex shrink-0 items-center gap-1"
-                      title={reasoningConfig.description}
-                    >
-                      <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
-                    </span>
-                  )
-              }
+              {selectedItem?.model.reasoning === true && reasoningConfig && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1"
+                  title={reasoningConfig.description}
+                >
+                  <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
+                </span>
+              )}
             </p>
           </div>
           <ChevronUpIcon

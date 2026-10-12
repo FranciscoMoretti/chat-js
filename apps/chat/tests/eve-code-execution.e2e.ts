@@ -26,13 +26,12 @@ type CodeExecutionEventReader =
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("native code execution renders real output and reconciles its fixed charge once" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("native code execution renders real output and reconciles its fixed charge once", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.evaluate(
     async (
@@ -108,16 +107,14 @@ test("native code execution renders real output and reconciles its fixed charge 
     path: "tests/eve-results/screenshots/eve-code-output.png",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("Python results render an interactive chart and survive reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("Python results render an interactive chart and survive reload", async ({
   page,
 }) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const code =
     'chart = {"type": "bar", "title": "Counts", "elements": [{"label": "A", "group": "Series", "value": 2}, {"label": "B", "group": "Series", "value": 3}]}\nprint("chart-ready")';
@@ -170,4 +167,3 @@ test("Python results render an interactive chart and survive reload", async ({
     path: "tests/eve-results/screenshots/eve-python-chart-mobile.png",
   });
 });
-/* oxlint-enable typescript/promise-function-async */

@@ -113,7 +113,7 @@ const waitForEveCheckpoint = async (
       Math.max(MINIMUM_REQUEST_TIMEOUT_MS, deadline - Date.now())
     );
     if (
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- A named checkpoint request and its validation must finish before the retry delay; timeout stops polling without allocating or switching checkpoint identity.
       await readEveCheckpoint(
         ownerId,
         sessionId,
@@ -127,7 +127,7 @@ const waitForEveCheckpoint = async (
     if (Date.now() >= deadline) {
       break;
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Retry only after the preceding attempt and delay have completed.
+    // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Retry only after the preceding attempt and delay have completed. A named checkpoint request and its validation must finish before the retry delay; timeout stops polling without allocating or switching checkpoint identity.
     await new Promise<void>((resolve) => {
       setTimeout(resolve, CHECKPOINT_POLL_INTERVAL_MS);
     });

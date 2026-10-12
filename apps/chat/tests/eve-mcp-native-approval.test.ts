@@ -11,10 +11,8 @@ import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-aut
 import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
 import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
 import type { ToolContext } from "eve/tools";
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-import { expect, test } from "vitest";
+
+import { expect, test, vi } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
@@ -48,7 +46,7 @@ const batch: ResolvedInputBatch = {
     },
   ],
 };
-function fixture() {
+const fixture = () => {
   const ctx = new ContextContainer();
   ctx.set(SessionKey, session);
   const { state } = settleDirectApprovalResponse({
@@ -59,7 +57,7 @@ function fixture() {
     settledAt: 1,
   });
   return { ctx, state };
-}
+};
 
 test("native executor receives only its exact authorized session/call/tool/input receipt", async () => {
   const { ctx, state } = fixture();
@@ -127,9 +125,6 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
   });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.each(["owner", "stranger"])("native harness binds approval to its authorized res preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["owner", "stranger"])(
   "native harness binds approval to its authorized responder: %s",
   async (principalId) => {
@@ -220,19 +215,24 @@ test.each(["owner", "stranger"])(
     const step = createToolLoopHarness({
       capabilities: { requestInput: true },
       mode: "conversation",
-      resolveModel: async () => model,
+      resolveModel: vi
+        .fn<() => Promise<typeof model>>()
+        .mockResolvedValue(model),
       tools: new Map([[tool.name, tool]]),
     });
-    let result = await contextStorage.run(ctx, () =>
-      step(pending, {
-        attributedInputResponses: [
-          {
-            auth: { ...actor, attributes: {}, principalId },
-            response: { optionId: "approve", requestId: "request" },
-          },
-        ],
-      })
+    let result = await contextStorage.run(
+      ctx,
+      async () =>
+        await step(pending, {
+          attributedInputResponses: [
+            {
+              auth: { ...actor, attributes: {}, principalId },
+              response: { optionId: "approve", requestId: "request" },
+            },
+          ],
+        })
     );
+    /* oxlint-disable eslint/no-await-in-loop -- Each harness continuation returns the next session and continuation consumed by the next iteration. */
     for (
       let iteration = 0;
       iteration < 4 && typeof result.next === "function";
@@ -240,8 +240,12 @@ test.each(["owner", "stranger"])(
     ) {
       const { next } = result;
       const { session: nextSession } = result;
-      result = await contextStorage.run(ctx, () => next(nextSession));
+      result = await contextStorage.run(
+        ctx,
+        async () => await next(nextSession)
+      );
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     expect(receipts, JSON.stringify(result)).toEqual(
       principalId === "owner"
         ? [{ requestId: "request", responder: actor }]
@@ -252,4 +256,3 @@ test.each(["owner", "stranger"])(
     }
   }
 );
-/* oxlint-enable typescript/promise-function-async */

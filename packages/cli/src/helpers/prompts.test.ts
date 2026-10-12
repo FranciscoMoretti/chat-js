@@ -38,10 +38,12 @@ it("uses external defaults and every environment group with --yes", async () => 
     ...input,
     gatewayRequirements: definition.envRequirements,
   });
-  expect(entries.map((entry: { readonly vars: string }) => entry.vars)).toEqual(
-    // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-    expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"])
+  const variables = entries.map(
+    (entry: { readonly vars: string }) => entry.vars
   );
+  for (const required of ["FIRST", "SECOND", "ALTERNATE"]) {
+    expect(variables).toContain(required);
+  }
   expect(() => collectEnvChecklist(input)).not.toThrow();
   expect(() =>
     collectEnvChecklist({ ...input, gatewayRequirements: [] })

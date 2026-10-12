@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveForkInput, EveForkKind } from "./contracts";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 import type { UiToolName } from "@/lib/ai/types";
@@ -21,11 +23,10 @@ type CreationScope =
 
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public scopes may expose string getters; keep one truthiness read before the original second interpolation read, including its value or throw.
-  if (scope && scope.conversationId) {
+
+  if (scope && isNonEmptyString(scope.conversationId)) {
     suffix = `:fork:${scope.conversationId}`;
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Read projectId only after the conversation guard fails, then preserve the original second interpolation read.
-  } else if (scope && scope.projectId) {
+  } else if (scope && isNonEmptyString(scope.projectId)) {
     suffix = `:project:${scope.projectId}`;
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;

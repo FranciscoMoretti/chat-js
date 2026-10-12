@@ -202,16 +202,16 @@ it("includes every installed MCP requirement and preserves combined and alternat
           entry.vars === "MCP_ENCRYPTION_KEY"
       )
     ).toHaveLength(requiredMcpEncryptionKeyCount);
-    expect(
-      entries.map((entry: { readonly vars: string }) => entry.vars)
-    ).toEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.arrayContaining([
-        "MCP_ENCRYPTION_KEY",
-        "TEAM + TOKEN",
-        "OIDC_TOKEN",
-      ])
+    const variables = entries.map(
+      (entry: { readonly vars: string }) => entry.vars
     );
+    for (const required of [
+      "MCP_ENCRYPTION_KEY",
+      "TEAM + TOKEN",
+      "OIDC_TOKEN",
+    ]) {
+      expect(variables).toContain(required);
+    }
     expect(
       entries.filter(
         (entry: { readonly oneOfGroup?: string }) =>

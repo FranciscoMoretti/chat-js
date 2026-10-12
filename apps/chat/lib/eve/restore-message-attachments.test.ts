@@ -32,19 +32,15 @@ vi.mock("../config", () => ({ config: { attachments: { maxBytes: 10 } } }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.conversation,
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../db/eve-files") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("../db/eve-files", () => ({
   canReadEveFile: mocks.access,
   reserveEveUpload: mocks.reserve,
-  writeEveUpload: (
+  writeEveUpload: async (
     _owner: string,
     _key: string,
     write: () => Promise<unknown>
-  ): Promise<unknown> => write(),
+  ): Promise<unknown> => await write(),
 }));
-/* oxlint-enable typescript/promise-function-async */
 vi.mock("../file-storage", () => ({
   createFileId: (): string => "abcdefghijklmnopqrstuvwx.png",
   downloadFile: mocks.download,
@@ -363,9 +359,10 @@ it.each(["next-part", "first-copy"])(
       url: "data:image/png;base64,AQID",
     };
     const body = new Blob(["abc"], { type: "image/png" });
-    /* oxlint-disable typescript/promise-function-async -- Full native metadata fixture callbacks return their original Blob promises; async wrappers would add reaction turns. */
     const metadata: Awaited<ReturnType<typeof getFileMetadata>> = {
+      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
       arrayBuffer: () => body.arrayBuffer(),
+      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
       blob: () => Promise.resolve(body),
       key: "abcdefghijklmnopqrstuvwx.png",
       name: "first.png",
@@ -380,10 +377,10 @@ it.each(["next-part", "first-copy"])(
         return body.size;
       },
       stream: () => body.stream(),
+      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
       text: () => body.text(),
       type: body.type,
     };
-    /* oxlint-enable typescript/promise-function-async */
     mocks.metadata.mockResolvedValue(metadata);
     mocks.messages = [
       {

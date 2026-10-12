@@ -13,7 +13,6 @@ import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("eve.mcp-registration");
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export default defineDynamic({
   events: {
     "step.started": async (
@@ -54,14 +53,14 @@ export default defineDynamic({
         definitions[name] = defineTool({
           ...description,
           approval: {
-            request: (
+            request: async (
               approvalContext: Readonly<
                 Pick<McpToolContext, "session" | "abortSignal"> & {
                   toolInput?: unknown;
                 }
               >
             ) =>
-              requestEveMcpApproval(
+              await requestEveMcpApproval(
                 connectorId,
                 remoteName,
                 approvalContext.toolInput,
@@ -85,11 +84,11 @@ export default defineDynamic({
               };
             },
           },
-          execute: (
+          execute: async (
             input: Readonly<Record<string, unknown>>,
             toolContext: McpToolContext
           ) =>
-            executeEveMcpTool(
+            await executeEveMcpTool(
               connectorId,
               remoteName,
               input,
@@ -104,4 +103,3 @@ export default defineDynamic({
     },
   },
 });
-/* oxlint-enable typescript/promise-function-async */

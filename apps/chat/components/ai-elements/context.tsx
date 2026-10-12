@@ -1,5 +1,7 @@
 "use client";
 
+import { hasCustomContent } from "@/components/custom-content";
+
 import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
@@ -262,7 +264,6 @@ const TokensWithCost = ({
     ) : null}
   </span>
 );
-/* oxlint-disable typescript/strict-boolean-expressions -- ContextInputUsage: zero supplies missing input-token counts and absent costs; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
 const ContextInputUsage = ({
   className,
@@ -272,7 +273,7 @@ const ContextInputUsage = ({
   const { usage, modelId } = useContextValue();
   const inputTokens = usage?.inputTokens ?? NO_KNOWN_TOKENS;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -302,11 +303,8 @@ const ContextInputUsage = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type ContextOutputUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable typescript/strict-boolean-expressions -- ContextOutputUsage: zero supplies no input-token count and a missing cost; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
 const ContextOutputUsage = ({
   className,
@@ -316,7 +314,7 @@ const ContextOutputUsage = ({
   const { usage, modelId } = useContextValue();
   const outputTokens = usage?.outputTokens ?? NO_KNOWN_TOKENS;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -346,11 +344,8 @@ const ContextOutputUsage = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type ContextReasoningUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable typescript/strict-boolean-expressions -- ContextReasoningUsage: zero supplies absent cost data; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
 const ContextReasoningUsage = ({
   className,
@@ -360,7 +355,7 @@ const ContextReasoningUsage = ({
   const { usage, modelId } = useContextValue();
   const { reasoningTokens } = getUsageTokenDetails(usage);
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -390,11 +385,8 @@ const ContextReasoningUsage = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type ContextCacheUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable typescript/strict-boolean-expressions -- ContextCacheUsage: zero supplies absent cache-token counts and cost data; undefined means no model or price was available; keep this usage component with its related exported context family; the React child guard retains TypeScript truthiness narrowing required by ContextUsageResult; explicit Boolean coercion loses that narrowing, while !! coercion conflicts with no-implicit-coercion; null preserves the empty render. */
 
 const ContextCacheUsage = ({
   className,
@@ -404,7 +396,7 @@ const ContextCacheUsage = ({
   const { usage, modelId } = useContextValue();
   const cacheTokens = getUsageTokenDetails(usage).cachedInputTokens;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -438,7 +430,6 @@ const ContextCacheUsage = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export {
   Context,

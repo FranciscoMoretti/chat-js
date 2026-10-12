@@ -14,9 +14,6 @@ const searchBatchSchema = z.object({
   "0": z.object({ json: z.object({ search: z.string() }) }),
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("search states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("search states", async ({ page }, testInfo: Readonly<
   Pick<TestInfo, "outputPath">
 >) => {
@@ -36,12 +33,12 @@ test("search states", async ({ page }, testInfo: Readonly<
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("**/search-fixture", (route) =>
-    route.fulfill({
+  await page.route("**/search-fixture", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.setViewportSize({ height: 1100, width: 1100 });
   await page.goto("/search-fixture");
   await page.addScriptTag({ content: script, type: "module" });
@@ -58,7 +55,6 @@ test("search states", async ({ page }, testInfo: Readonly<
     path: testInfo.outputPath("search-states.png"),
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("debounces requests, hides obsolete results, and navigates to the matching branch", async ({
   page,

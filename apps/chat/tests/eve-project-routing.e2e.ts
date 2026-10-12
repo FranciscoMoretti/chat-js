@@ -10,15 +10,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("assigned Eve conversations resolve through project URLs and remain accessible a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("assigned Eve conversations resolve through project URLs and remain accessible a intentionally keeps the existing falsy-value behavior of root; chat; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("assigned Eve conversations resolve through project URLs and remain accessible after project deletion", async ({
   page,
   browser,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Eve routing fixture" } },
@@ -72,7 +70,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, binding.id));
-    if (!root) {
+    if (root === undefined) {
       throw new Error("Missing project conversation");
     }
     await insertEveConversationFixtures({
@@ -110,7 +108,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       .select({ title: eveChat.title })
       .from(eveChat)
       .where(eq(eveChat.id, root.chatId));
-    if (!chat) {
+    if (chat === undefined) {
       throw new Error("Missing project chat title");
     }
     const query = await page.request.get(
@@ -124,4 +122,3 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     await db.delete(project).where(eq(project.id, projectId));
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

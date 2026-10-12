@@ -5,6 +5,8 @@ import { existsSync } from "node:fs";
 import nodePath from "node:path";
 
 import { scaffoldFromTemplate } from "./scaffold";
+import { parsePackageJson } from "./package-manifest";
+import { requireJsonObject } from "./json-object";
 import { tmpdir } from "node:os";
 
 import ts from "typescript";
@@ -19,9 +21,12 @@ test(
     );
     try {
       await scaffoldFromTemplate(destination);
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const manifest = JSON.parse(
+      const manifest = parsePackageJson(
         await readFile(nodePath.join(destination, "package.json"), "utf-8")
+      );
+      const dependencies = requireJsonObject(
+        manifest.dependencies,
+        "dependencies"
       );
       for (const dependency of [
         "@lexical/markdown",
@@ -29,13 +34,10 @@ test(
         "papaparse",
         "react-data-grid",
       ]) {
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-        expect(manifest.dependencies[dependency]).toBeUndefined();
+        expect(dependencies[dependency]).toBeUndefined();
       }
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies.lexical).toBeDefined();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies["@lexical/react"]).toBeDefined();
+      expect(dependencies.lexical).toBeDefined();
+      expect(dependencies["@lexical/react"]).toBeDefined();
       const chatApp = nodePath.resolve(
         import.meta.dir,
         "../../../../apps/chat"
@@ -54,8 +56,9 @@ test(
         "dir"
       );
       const configPath = nodePath.join(destination, "tsconfig.json");
-      // oxlint-disable-next-line typescript/unbound-method -- TypeScript 6.0.2's native sys.readFile closes over its filesystem implementation and never reads this; readConfigFile accepts and invokes it as a standalone reader.
-      const config = ts.readConfigFile(configPath, ts.sys.readFile);
+      const config = ts.readConfigFile(configPath, (file) =>
+        ts.sys.readFile(file)
+      );
       const parsed = ts.parseJsonConfigFileContent(
         config.config,
         ts.sys,

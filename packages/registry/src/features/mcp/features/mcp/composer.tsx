@@ -23,7 +23,6 @@ import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const ConnectorsControl = ({
   disabled,
 }: ComposerControlProps): React.JSX.Element | null => {
@@ -119,8 +118,7 @@ const ConnectorsControl = ({
                   <DropdownMenuCheckboxItem
                     key={connector.id}
                     checked={connector.enabled}
-                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-                    disabled={disabled || connector.userId === null}
+                    disabled={disabled === true || connector.userId === null}
                     onSelect={(
                       event: Readonly<Pick<Event, "preventDefault">>
                     ): void => {
@@ -150,7 +148,6 @@ const ConnectorsControl = ({
     </DropdownMenuSub>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 ConnectorsControl.isAvailable = (): boolean => installedFeatures.has("mcp");
 export { ConnectorsControl };

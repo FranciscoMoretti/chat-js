@@ -3,14 +3,13 @@ import type { Response, TestInfo } from "@playwright/test";
 
 const chatRoute = /\/chat\/[a-f\d-]+$/u;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("logical chat keeps its URL and native observers across first send, retry, edit  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("logical chat keeps its URL and native observers across first send, retry, edit and reload", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
@@ -126,4 +125,3 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     path: testInfo.outputPath("reloaded-tree.png"),
   });
 });
-/* oxlint-enable typescript/promise-function-async */

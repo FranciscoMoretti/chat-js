@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -35,42 +33,39 @@ afterAll(async () => {
   await query.end();
 });
 
-function runId(): string {
+const runId = (): string => {
   const id = crypto.randomUUID();
   runIds.push(id);
   return id;
-}
+};
 
-function envelope(body: unknown) {
-  return {
-    attempt: 1,
-    data: Buffer.from(JSON.stringify(body)).toString("base64"),
-    id: "fixture",
-    messageId: `msg_${crypto.randomUUID()}`,
-  };
-}
-async function job(body: unknown): Promise<string> {
+const envelope = (body: unknown) => ({
+  attempt: 1,
+  data: Buffer.from(JSON.stringify(body)).toString("base64"),
+  id: "fixture",
+  messageId: `msg_${crypto.randomUUID()}`,
+});
+const job = async (body: unknown): Promise<string> => {
   const [row] = await query<
     { id: string }[]
   >`select id::text from graphile_worker.add_job(
     ${task}, ${query.json(envelope(body))}::json, run_at := now() + interval '1 day')`;
   ids.push(row.id);
   return row.id;
-}
+};
 test("queue fencing rejects retries and resilient child creation for fenced roots", async () => {
   const root = runId();
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   await expect(job({ runId: root })).rejects.toMatchObject({ code: "55000" });
-  for (const key of [
-    "$parentRunId",
-    "$rootRunId",
-    "$eve.parent",
-    "$eve.root",
-  ]) {
-    await expect(
-      job({ runId: runId(), runInput: { attributes: { [key]: root } } })
-    ).rejects.toMatchObject({ code: "55000" });
-  }
+  await Promise.all(
+    ["$parentRunId", "$rootRunId", "$eve.parent", "$eve.root"].map(
+      async (key) => {
+        await expect(
+          job({ runId: runId(), runInput: { attributes: { [key]: root } } })
+        ).rejects.toMatchObject({ code: "55000" });
+      }
+    )
+  );
   await job({ runId: runId() });
   await job({ __healthCheck: true, correlationId: "fixture" });
 });

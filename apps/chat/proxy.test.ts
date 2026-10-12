@@ -29,9 +29,9 @@ it.each([
   expect(response).toBeUndefined();
   expect(mocks.session).not.toHaveBeenCalled();
 });
-it("keeps registered-only pages behind login", async () => {
-  for (const path of ["/project/private", "/chat/private/settings"]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+it.each(["/project/private", "/chat/private/settings"])(
+  "keeps registered-only page %s behind login",
+  async (path) => {
     const resolvedResult1 = await proxy(
       new NextRequest(`http://localhost${path}`)
     );
@@ -42,7 +42,7 @@ it("keeps registered-only pages behind login", async () => {
       "http://localhost/login"
     );
   }
-});
+);
 
 it("keeps native headers and searchParams receiver through an authenticated redirect", async () => {
   mocks.session.mockResolvedValue({ user: { id: "registered-user" } });

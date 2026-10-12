@@ -1,9 +1,8 @@
+import { z } from "zod";
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import type { Request, TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -21,14 +20,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("compiled idle capture preserves native history and exact document revisions in  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("compiled idle capture preserves native history and exact document revisions in follow-up comparisons", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -69,9 +67,8 @@ test("compiled idle capture preserves native history and exact document revision
   };
   const original = await saveEveDocumentRevision(document);
   const workerRoot = await realpath(process.cwd());
-  async function birthIdentity(sessionId: string) {
-    // oxlint-disable-next-line typescript/no-unsafe-return -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-    return JSON.parse(
+  const birthIdentity = async (sessionId: string): Promise<unknown> =>
+    JSON.parse(
       await readFile(
         path.join(
           workerRoot,
@@ -82,9 +79,10 @@ test("compiled idle capture preserves native history and exact document revision
         "utf-8"
       )
     );
-  }
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-  const sourceIdentity = await birthIdentity(source.sessionId);
+
+  const sourceIdentity = z
+    .record(z.string(), z.json())
+    .parse(await birthIdentity(source.sessionId));
   expect(sourceIdentity).toMatchObject({
     appRoot: workerRoot,
     sessionId: source.sessionId,
@@ -103,8 +101,11 @@ test("compiled idle capture preserves native history and exact document revision
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
     async (route) => {
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-      captureRequests.push(route.request().postDataJSON());
+      captureRequests.push(
+        z
+          .looseObject({ checkpointId: z.string(), beforeTurnId: z.string() })
+          .parse(route.request().postDataJSON())
+      );
       const response = await route.fetch();
       expect(response.status()).toBe(200);
       if (captureRequests.length === 1) {
@@ -177,6 +178,7 @@ test("compiled idle capture preserves native history and exact document revision
     "bound",
     "bound",
   ]);
+  /* oxlint-disable eslint/no-await-in-loop -- Candidates share one browser page; finish navigation and assertions before visiting the next chat. */
   for (const candidate of group.candidates) {
     if (candidate.state !== "bound") {
       throw new Error("Follow-up did not bind");
@@ -200,6 +202,7 @@ test("compiled idle capture preserves native history and exact document revision
       page.getByRole("log").getByText(message, { exact: true })
     ).toHaveCount(1);
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await page.reload();
   await expect(
     page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
@@ -221,12 +224,12 @@ test("compiled idle capture preserves native history and exact document revision
   ).toBe(true);
   await page.setViewportSize({ height: 720, width: 1280 });
   await page.unroute("**/api/agent-response-groups");
-  await page.route("**/api/agent-response-groups", (route) => {
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-    const input = route.request().postDataJSON();
-    return route.fulfill({
+  await page.route("**/api/agent-response-groups", async (route) => {
+    const input = z
+      .looseObject({ modelIds: z.array(z.string()) })
+      .parse(route.request().postDataJSON());
+    await route.fulfill({
       json: {
-        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
         candidates: input.modelIds.map((modelId: string) => ({
           modelId,
           operationId: crypto.randomUUID(),
@@ -260,16 +263,14 @@ test("compiled idle capture preserves native history and exact document revision
     page.getByRole("button", { exact: true, name: "Send" })
   ).toBeEnabled();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("an advanced source rejects the exact comparison checkpoint and keeps the editab preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("an advanced source rejects the exact comparison checkpoint and keeps the editable draft", async ({
   page,
   context,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -296,9 +297,9 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     .from(eveConversation)
     .where(eq(eveConversation.id, source.id));
   const other = await context.newPage();
-  await other.route("https://unpkg.com/react-scan/**", (route) =>
-    route.abort()
-  );
+  await other.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await other.goto(`/chat/${source.id}`);
   await expect(other.getByText("Ready", { exact: true })).toBeVisible();
   let groups = 0;
@@ -314,8 +315,9 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
     async (route) => {
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
-      checkpoint = route.request().postDataJSON();
+      checkpoint = z
+        .looseObject({ checkpointId: z.string(), beforeTurnId: z.string() })
+        .parse(route.request().postDataJSON());
       // Another tab wins the next turn before the saved checkpoint reaches the worker.
       await other
         .getByRole("textbox", { exact: true, name: "Message" })
@@ -401,4 +403,3 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     await other.close();
   }
 });
-/* oxlint-enable typescript/promise-function-async */

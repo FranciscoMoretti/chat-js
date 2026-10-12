@@ -93,7 +93,8 @@ export const ModelsTable = ({
   }, [allModels, preferences]);
 
   // Capture the initial enabled-first ordering for this table's lifetime.
-  // oxlint-disable-next-line react/hook-use-state -- This lazy initial value preserves ordering across preference updates; it is never replaced.
+
+  // oxlint-disable-next-line react/hook-use-state -- models-table.browser proves initial ordering survives preference updates and resets only on remount; this intentionally immutable mounted snapshot needs no setter.
   const [initialSort] = useState<readonly AppModelId[]>(() => {
     const enabledSet = new Set(
       enabledModels.map((model: { readonly id: AppModelId }) => model.id)

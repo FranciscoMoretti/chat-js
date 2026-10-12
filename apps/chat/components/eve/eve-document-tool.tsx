@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef } from "react";
 import { useIsClient } from "usehooks-ts";
@@ -24,7 +26,6 @@ const partialDocument = z.object({
   documentId: z.string().optional(),
   title: z.string().optional(),
 });
-/* oxlint-disable typescript/strict-boolean-expressions -- EveDocumentTool: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
 
 export const EveDocumentTool = ({
   part,
@@ -107,7 +108,7 @@ export const EveDocumentTool = ({
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
-      if (!completed?.success) {
+      if (!(completed?.success === true)) {
         if (current.previewCallId === part.toolCallId) {
           return {
             ...current,
@@ -161,7 +162,7 @@ export const EveDocumentTool = ({
     return <p role="alert">This document result could not be displayed.</p>;
   }
   const writeAction = part.toolName.startsWith("create") ? "create" : "update";
-  if (preview && conversationId) {
+  if (preview && hasText(conversationId)) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}
@@ -182,4 +183,3 @@ export const EveDocumentTool = ({
     />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

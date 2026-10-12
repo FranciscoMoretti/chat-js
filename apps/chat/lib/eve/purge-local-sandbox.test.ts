@@ -6,25 +6,19 @@ import { tmpdir } from "node:os";
 
 const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));
 const { remove } = mocks;
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("microsandbox") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("microsandbox", () => ({
   Sandbox: {
-    get: () =>
-      Promise.resolve({
-        destroy: mocks.destroySandbox,
-        remove: () =>
-          Promise.reject(
-            Object.assign(new Error("sandbox still running"), {
-              code: "sandboxStillRunning",
-            })
-          ),
-      }),
+    get: vi.fn().mockResolvedValue({
+      destroy: mocks.destroySandbox,
+      remove: vi.fn<() => Promise<never>>().mockRejectedValue(
+        Object.assign(new Error("sandbox still running"), {
+          code: "sandboxStillRunning",
+        })
+      ),
+    }),
   },
   Snapshot: { remove: mocks.remove },
 }));
-/* oxlint-enable typescript/promise-function-async */
 
 const directories: string[] = [];
 beforeEach(() => {
@@ -32,10 +26,11 @@ beforeEach(() => {
   mocks.destroySandbox.mockReset();
 });
 afterEach(async () => {
-  for (const directory of directories.splice(0)) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await rm(directory, { force: true, recursive: true });
-  }
+  await Promise.all(
+    directories.splice(0).map(async (directory) => {
+      await rm(directory, { force: true, recursive: true });
+    })
+  );
 });
 const fixture = async (letter = "a") => {
   const root = await mkdtemp(nodePath.join(tmpdir(), "eve-snapshot-purge-"));
@@ -104,9 +99,9 @@ test("validates all records before deletion and rejects another session or share
     { ...input.record, optionsHash: 42 },
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
     await writeFile(input.path, JSON.stringify(record));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
     await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
     expect(remove).not.toHaveBeenCalled();
     expect(mocks.destroySandbox).not.toHaveBeenCalled();
@@ -121,9 +116,6 @@ test("validates all records before deletion and rejects another session or share
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
   const parent = await fixture("a");
   const child = await fixture("b");
@@ -138,6 +130,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   expect(remove).not.toHaveBeenCalled();
   await writeFile(child.path, JSON.stringify(child.record));
   let childRemoved = false;
+  // oxlint-disable-next-line typescript/promise-function-async -- Fixture validation throws synchronously before returning its promise; retain that ordering and direct settlement.
   remove.mockImplementation((name: string) => {
     if (mocks.destroySandbox.mock.calls.length !== 2) {
       throw new Error("All family VMs must be removed first");
@@ -156,7 +149,6 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     parent.snapshotName,
   ]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
@@ -168,18 +160,19 @@ test("retains resources created before metadata and across replacements", async 
     `eve-sbx-ses-${"c".repeat(32)}`,
   ];
   const snapshot = `eve-sbx-state-${"d".repeat(32)}`;
-  for (const name of [...names, snapshot]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await writeFile(
-      nodePath.join(directory, `${name}.json`),
-      JSON.stringify({
-        kind: name === snapshot ? "snapshot" : "sandbox",
-        name,
-        sessionKey: input.sessionKey,
-        version: 1,
-      })
-    );
-  }
+  await Promise.all(
+    [...names, snapshot].map(async (name) => {
+      await writeFile(
+        nodePath.join(directory, `${name}.json`),
+        JSON.stringify({
+          kind: name === snapshot ? "snapshot" : "sandbox",
+          name,
+          sessionKey: input.sessionKey,
+          version: 1,
+        })
+      );
+    })
+  );
   expect(await purgeLocalEveSandboxes([input])).toEqual([
     {
       sandboxNames: names,
@@ -222,7 +215,7 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
   await writeFile(ownerPath, JSON.stringify(owner));
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
     expect(await purgeLocalEveSandboxes([input])).toEqual([
       { sandboxNames: [], snapshotNames: [] },
     ]);

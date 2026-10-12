@@ -346,10 +346,9 @@ const replaceDemoFiles = async (
   } finally {
     if (!retainBackups) {
       await Promise.all(
-        // oxlint-disable-next-line typescript/promise-function-async -- Pass the Node rm promise directly to Promise.all without an extra async wrapper.
-        staged.map((update: Readonly<(typeof staged)[number]>) =>
-          rm(update.directory, { force: true, recursive: true })
-        )
+        staged.map(async (update: Readonly<(typeof staged)[number]>) => {
+          await rm(update.directory, { force: true, recursive: true });
+        })
       );
     }
   }

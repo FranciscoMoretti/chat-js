@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
@@ -43,8 +45,7 @@ export const resolveCreationRequest = async (
   | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
 > => {
   if ("modelIds" in operation) {
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public operation/fork getters must be read once for the truthiness guard and again by the original destructuring; preserve nullish short-circuiting, access order, changed values and throws.
-    if (operation.fork?.checkpointId) {
+    if (isNonEmptyString(operation.fork?.checkpointId)) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
         `/api/agent-conversations/${conversationId}/checkpoint`,

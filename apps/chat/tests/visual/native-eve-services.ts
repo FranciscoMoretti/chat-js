@@ -25,25 +25,29 @@ const setServerRegistration = (value: "registered" | "missing"): void => {
   calls.length = 0;
 };
 const getServerCalls = (): readonly string[] => calls;
-// oxlint-disable-next-line eslint/require-await -- Next's native headers() API returns a Promise, so this fixture preserves the route's receiving contract.
-const fixtureHeaders = async (): Promise<Headers> => {
-  calls.push("headers");
-  return new Headers({ "x-fixture-session": registration });
-};
+
+const fixtureHeaders =
+  /* oxlint-disable eslint/require-await -- The native headers/auth API returns a Promise; this fixture must read and record current registration/header state separately on each invocation. */
+  async (): Promise<Headers> => {
+    calls.push("headers");
+    return new Headers({ "x-fixture-session": registration });
+  };
+/* oxlint-enable eslint/require-await */
 const fixtureAuth = {
   api: {
-    /* oxlint-disable eslint/require-await -- Better Auth getSession returns a Promise; the generated RegisteredEveProjects fixture consumes this exact API contract. */
-    getSession: async ({
-      headers,
-    }: {
-      readonly headers: Readonly<Pick<Headers, "get">>;
-    }): Promise<Session | null> => {
-      calls.push(`auth:${headers.get("x-fixture-session")}`);
-      if (registration === "registered") {
-        return fixtureSession;
-      }
-      return null;
-    },
+    getSession:
+      /* oxlint-disable eslint/require-await -- The native headers/auth API returns a Promise; this fixture must read and record current registration/header state separately on each invocation. */
+      async ({
+        headers,
+      }: {
+        readonly headers: Readonly<Pick<Headers, "get">>;
+      }): Promise<Session | null> => {
+        calls.push(`auth:${headers.get("x-fixture-session")}`);
+        if (registration === "registered") {
+          return fixtureSession;
+        }
+        return null;
+      },
     /* oxlint-enable eslint/require-await */
   },
 };

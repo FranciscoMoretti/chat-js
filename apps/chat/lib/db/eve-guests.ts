@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
 import { randomUUID } from "node:crypto";
@@ -175,27 +175,34 @@ const rateAvailable = async (
   }>,
   periods: GuestRatePeriods
 ): Promise<boolean> => {
-  for (const period of periods) {
+  const buckets = await tx
+    .select()
+    .from(eveGuestRate)
+    .where(
+      and(
+        eq(eveGuestRate.ipHash, input.ipHash),
+        or(
+          ...periods.map((period) =>
+            and(
+              eq(eveGuestRate.windowSeconds, period.seconds),
+              eq(eveGuestRate.startsAt, period.startsAt)
+            )
+          )
+        )
+      )
+    );
+  return periods.every((period) => {
     const limit =
       period.seconds === MINUTE_WINDOW_SECONDS
         ? input.requestsPerMinute
         : input.requestsPerMonth;
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-    const [bucket] = await tx
-      .select()
-      .from(eveGuestRate)
-      .where(
-        and(
-          eq(eveGuestRate.ipHash, input.ipHash),
-          eq(eveGuestRate.windowSeconds, period.seconds),
-          eq(eveGuestRate.startsAt, period.startsAt)
-        )
-      );
-    if ((bucket?.requests ?? EMPTY_QUOTA) >= limit) {
-      return false;
-    }
-  }
-  return true;
+    const bucket = buckets.find(
+      (row) =>
+        row.windowSeconds === period.seconds &&
+        row.startsAt.getTime() === period.startsAt.getTime()
+    );
+    return (bucket?.requests ?? EMPTY_QUOTA) < limit;
+  });
 };
 
 const admissionGuest = async (
@@ -284,25 +291,24 @@ const reserveMessage = async (
   if (!(await rateAvailable(tx, input, periods))) {
     return { status: "rate-limited" } as const;
   }
-  for (const period of periods) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-    await tx
-      .insert(eveGuestRate)
-      .values({
+  await tx
+    .insert(eveGuestRate)
+    .values(
+      periods.map((period) => ({
         ipHash: input.ipHash,
         requests: SINGLE_REQUEST,
         startsAt: period.startsAt,
         windowSeconds: period.seconds,
-      })
-      .onConflictDoUpdate({
-        set: { requests: sql`${eveGuestRate.requests} + 1` },
-        target: [
-          eveGuestRate.ipHash,
-          eveGuestRate.windowSeconds,
-          eveGuestRate.startsAt,
-        ],
-      });
-  }
+      }))
+    )
+    .onConflictDoUpdate({
+      set: { requests: sql`${eveGuestRate.requests} + 1` },
+      target: [
+        eveGuestRate.ipHash,
+        eveGuestRate.windowSeconds,
+        eveGuestRate.startsAt,
+      ],
+    });
   await tx
     .update(eveGuest)
     .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
@@ -331,7 +337,6 @@ const reserveMessage = async (
   return { reservationId, status: "reserved" } as const;
 };
 
-/* oxlint-disable typescript/promise-function-async -- Preserve the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Reserve before native admission. Ambiguous admission keeps its reservation.
  * @param {GuestReservationInput} input Validated owner, operation, request digest and address quota policy to reserve.
@@ -343,11 +348,11 @@ const reserveEveGuestMessage = async (
   bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
 ): Promise<GuestReservationResult> => {
   validateReservation(input, bootstrap);
-  return await db.transaction((tx: GuestWriteTransaction) =>
-    reserveMessage(tx, input, bootstrap)
+  return await db.transaction(
+    async (tx: GuestWriteTransaction) =>
+      await reserveMessage(tx, input, bootstrap)
   );
 };
-/* oxlint-enable typescript/promise-function-async */
 
 type GuestReservationFailure = Exclude<
   GuestReservationResult,
@@ -402,7 +407,7 @@ const reserveEveGuestMessages = async <Admission = undefined>(
         status: "reserved" | "replay";
       }[] = [];
       for (const input of inputs) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Each candidate consumes the shared guest balance and IP windows in this transaction; stop at the first rejection before reserving another candidate.
         const result = await reserveMessage(tx, input, bootstrap);
         if (result.status !== "reserved" && result.status !== "replay") {
           throw new GuestBatchRejectedError(result);
@@ -499,19 +504,22 @@ const releaseMessage = async (
       .update(eveGuest)
       .set({ remainingMessages: sql`${eveGuest.remainingMessages} + 1` })
       .where(eq(eveGuest.ownerId, ownerId));
-    for (const period of windows(released.reservedAt)) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-      await tx
-        .update(eveGuestRate)
-        .set({ requests: sql`${eveGuestRate.requests} - 1` })
-        .where(
-          and(
-            eq(eveGuestRate.ipHash, released.ipHash),
-            eq(eveGuestRate.windowSeconds, period.seconds),
-            eq(eveGuestRate.startsAt, period.startsAt)
+    await tx
+      .update(eveGuestRate)
+      .set({ requests: sql`${eveGuestRate.requests} - 1` })
+      .where(
+        and(
+          eq(eveGuestRate.ipHash, released.ipHash),
+          or(
+            ...windows(released.reservedAt).map((period) =>
+              and(
+                eq(eveGuestRate.windowSeconds, period.seconds),
+                eq(eveGuestRate.startsAt, period.startsAt)
+              )
+            )
           )
-        );
-    }
+        )
+      );
     return true;
   });
 

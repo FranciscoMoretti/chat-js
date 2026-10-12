@@ -1,13 +1,13 @@
+import { z } from "zod";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("restoring a saved chat shows a loader without runtime wording") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("restoring a saved chat shows a loader without runtime wording", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/agent-conversations", {
     data: {
@@ -18,8 +18,10 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     headers: { origin: new URL(page.url()).origin },
   });
   expect(response.ok()).toBe(true);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
-  const binding = await response.json();
+
+  const binding = z
+    .looseObject({ id: z.string() })
+    .parse(await response.json());
   const gate = Promise.withResolvers<undefined>();
   await page.route("**/api/trpc/*", async (route) => {
     if (route.request().url().includes("eve.branches")) {
@@ -28,7 +30,6 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     await route.continue();
   });
   try {
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
     await page.goto(`/chat/${binding.id}`);
     await expect(
       page.getByRole("status", { name: "Loading conversation" })
@@ -53,4 +54,3 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     page.getByRole("status", { name: "Loading conversation" })
   ).toHaveCount(0);
 });
-/* oxlint-enable typescript/promise-function-async */

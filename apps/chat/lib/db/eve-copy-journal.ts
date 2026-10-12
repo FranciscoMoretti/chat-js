@@ -133,7 +133,7 @@ const lockEveCopyOwners = async (
   owners: readonly string[]
 ): Promise<void> => {
   for (const owner of [...new Set(owners)].toSorted()) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire sorted distinct eve-family owner locks one by one to avoid opposite-order deadlocks between source and destination copies.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owner}`}, 0))`
     );
@@ -278,14 +278,13 @@ const getEveCopyOperation = async (
     );
   const conversation = conversationRows.at(FIRST_ROW_INDEX);
   if (!conversation) {
-    return;
+    return undefined;
   }
   if (conversation.creationKind !== "copy") {
     throw new CreationConflictError(
       "This operation belongs to ordinary message creation."
     );
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveCopyOperation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readEveCopy(db, ownerId, conversation.id);
 };
 const validateCopyDocumentCheckpoints = (
@@ -333,7 +332,47 @@ const validateCopyDocumentCheckpoints = (
   }
 };
 
-// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+const validateCopiedDocuments = (plan: CopyPlanReader): void => {
+  const documentIds = new Set<string>();
+  const revisionIds = new Set<string>();
+  const sourceDocumentIds = new Set(
+    plan.sourceHeads.map(
+      (head: Readonly<{ documentId: string; revisionId: string }>) =>
+        z.uuid().parse(head.documentId)
+    )
+  );
+  for (const document of plan.documents) {
+    z.uuid().parse(document.documentId);
+    if (
+      documentIds.has(document.documentId) ||
+      sourceDocumentIds.has(document.documentId)
+    ) {
+      throw new Error("Copied documents need distinct fresh identities.");
+    }
+    documentIds.add(document.documentId);
+    let parent: string | null = null;
+    for (const revision of document.revisions) {
+      z.uuid().parse(revision.id);
+      z.iso.datetime().parse(revision.createdAt);
+      if (
+        revisionIds.has(revision.id) ||
+        revision.parentRevisionId !== parent
+      ) {
+        throw new Error("Invalid copied document ancestry.");
+      }
+      revisionIds.add(revision.id);
+      parent = revision.id;
+    }
+    if (
+      parent === null ||
+      parent === "" ||
+      parent !== document.headRevisionId
+    ) {
+      throw new Error("Invalid copied document head.");
+    }
+  }
+};
+
 const validateCopyPlan = (plan: CopyPlanReader): void => {
   parseSessionTranscriptSeed(plan.seed);
   const keys = new Set<string>();
@@ -382,44 +421,7 @@ const validateCopyPlan = (plan: CopyPlanReader): void => {
   if (plan.seed.attachments !== "channel") {
     throw new Error("Copies require compact channel attachments.");
   }
-  const documentIds = new Set<string>();
-  const revisionIds = new Set<string>();
-  const sourceDocumentIds = new Set(
-    plan.sourceHeads.map(
-      (head: Readonly<{ documentId: string; revisionId: string }>) =>
-        z.uuid().parse(head.documentId)
-    )
-  );
-  for (const document of plan.documents) {
-    z.uuid().parse(document.documentId);
-    if (
-      documentIds.has(document.documentId) ||
-      sourceDocumentIds.has(document.documentId)
-    ) {
-      throw new Error("Copied documents need distinct fresh identities.");
-    }
-    documentIds.add(document.documentId);
-    let parent: string | null = null;
-    for (const revision of document.revisions) {
-      z.uuid().parse(revision.id);
-      z.iso.datetime().parse(revision.createdAt);
-      if (
-        revisionIds.has(revision.id) ||
-        revision.parentRevisionId !== parent
-      ) {
-        throw new Error("Invalid copied document ancestry.");
-      }
-      revisionIds.add(revision.id);
-      parent = revision.id;
-    }
-    if (
-      parent === null ||
-      parent === "" ||
-      parent !== document.headRevisionId
-    ) {
-      throw new Error("Invalid copied document head.");
-    }
-  }
+  validateCopiedDocuments(plan);
   validateCopyDocumentCheckpoints(plan);
 };
 

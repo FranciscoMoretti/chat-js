@@ -1,5 +1,6 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import React, { act } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -13,14 +14,11 @@ import { chartsFinished } from "../../../../packages/registry/visual/charts-fini
 
 import "./sandbox.css";
 
-/* oxlint-disable typescript/promise-function-async -- eve-tool-results.browser route: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
-
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
-  () =>
-    import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
+  async () =>
+    await import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
 );
-/* oxlint-enable typescript/promise-function-async */
 
 // Report documents are outside this error-receipt fixture.
 vi.mock("@/components/eve/eve-document-tool", () => ({
@@ -79,32 +77,30 @@ test("saved-code results display interactive and PNG charts with text fallback",
     },
   ];
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
-      root.render(
-        <div className="grid grid-cols-2 gap-6">
-          {charts.map(
-            (
-              { chart, id }: ReadonlyNativeSurface<(typeof charts)[number]>,
-              index
-            ): React.JSX.Element => (
-              <section key={id}>
-                <EveDocumentRunResult
-                  part={{
-                    ...common,
-                    output: createToolResult(
-                      { chart, message: `Result ${index + 1}` },
-                      0
-                    ),
-                    toolName: "runCodeDocument",
-                  }}
-                />
-              </section>
-            )
-          )}
-        </div>
-      );
-    });
+    await renderRoot(
+      root,
+      <div className="grid grid-cols-2 gap-6">
+        {charts.map(
+          (
+            { chart, id }: ReadonlyNativeSurface<(typeof charts)[number]>,
+            index
+          ): React.JSX.Element => (
+            <section key={id}>
+              <EveDocumentRunResult
+                part={{
+                  ...common,
+                  output: createToolResult(
+                    { chart, message: `Result ${index + 1}` },
+                    0
+                  ),
+                  toolName: "runCodeDocument",
+                }}
+              />
+            </section>
+          )
+        )}
+      </div>
+    );
     await expect.poll(() => container.querySelector("canvas")).not.toBeNull();
     expect(container.querySelector('img[alt="Chart output"]')).not.toBeNull();
     expect(container.textContent).toContain("Result 3");
@@ -124,8 +120,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
     await takeSnapshot("saved-code-charts");
     await page.elementLocator(document.body).screenshot();
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });
@@ -137,29 +132,27 @@ test("failed research keeps validated progress alongside its error", async () =>
   document.body.append(container);
   const root = createRoot(container);
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
-      root.render(
-        <EveToolResult
-          isReadonly
-          messageId="research"
-          part={{
-            ...common,
-            output: createToolError(0.05, [
-              {
-                queries: ["test evidence"],
-                status: "completed",
-                title: "Search completed before failure",
-                toolCallId: "fixture",
-                type: "web",
-              },
-              { title: "Untrusted update", type: "invalid" },
-            ]),
-            toolName: "deepResearch",
-          }}
-        />
-      );
-    });
+    await renderRoot(
+      root,
+      <EveToolResult
+        isReadonly
+        messageId="research"
+        part={{
+          ...common,
+          output: createToolError(0.05, [
+            {
+              queries: ["test evidence"],
+              status: "completed",
+              title: "Search completed before failure",
+              toolCallId: "fixture",
+              type: "web",
+            },
+            { title: "Untrusted update", type: "invalid" },
+          ]),
+          toolName: "deepResearch",
+        }}
+      />
+    );
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       "The tool did not complete."
     );
@@ -167,8 +160,7 @@ test("failed research keeps validated progress alongside its error", async () =>
     expect(container.textContent).not.toContain("Untrusted update");
     await takeSnapshot("failed-research-progress");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });
@@ -184,46 +176,44 @@ test("installed saved-code transcript covers loading, completion and failure", a
     revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
   };
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
-      root.render(
-        <div className="grid gap-6">
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              state: "input-available",
-              toolName: "runCodeDocument",
-            }}
-          />
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              output: createToolResult(
-                { ...input, chart: "", message: "Saved revision completed" },
-                0
-              ),
-              toolName: "runCodeDocument",
-            }}
-          />
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              output: createToolError(0),
-              toolName: "runCodeDocument",
-            }}
-          />
-        </div>
-      );
-    });
+    await renderRoot(
+      root,
+      <div className="grid gap-6">
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            state: "input-available",
+            toolName: "runCodeDocument",
+          }}
+        />
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            output: createToolResult(
+              { ...input, chart: "", message: "Saved revision completed" },
+              0
+            ),
+            toolName: "runCodeDocument",
+          }}
+        />
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            output: createToolError(0),
+            toolName: "runCodeDocument",
+          }}
+        />
+      </div>
+    );
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(
@@ -231,8 +221,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     );
     await takeSnapshot("installed-saved-code-transcript");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });

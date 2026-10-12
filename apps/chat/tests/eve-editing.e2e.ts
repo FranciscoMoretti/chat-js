@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
 
@@ -8,9 +9,6 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const sourceModelId = "openai/gpt-5-nano";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("edit recovery and regeneration create navigable versions inside ChatJS") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("edit recovery and regeneration create navigable versions inside ChatJS", async ({
   page,
 }, testInfo) => {
@@ -19,9 +17,9 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const { origin } = new URL(page.url());
     await page.request.post("/api/chat-model", {
@@ -136,8 +134,12 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     await page.getByRole("button", { exact: true, name: "Retry" }).click();
     const regeneration = await regenerated;
     expect(regeneration.ok()).toBe(true);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration request payload; this assertion verifies the selected model survives editing.
-    expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
+
+    expect(
+      z
+        .looseObject({ modelId: z.string() })
+        .parse(regeneration.request().postDataJSON()).modelId
+    ).toBe(sourceModelId);
     await expect(page).not.toHaveURL(
       new RegExp(`/chat/${accepted?.id}$`, "u"),
       {
@@ -184,11 +186,12 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       .fill("Keep this edited violet draft.");
     await page.route(
       "**/api/agent-conversations",
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           json: { error: "Temporary test outage" },
           status: 503,
-        }),
+        });
+      },
       { times: 1 }
     );
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
@@ -208,11 +211,12 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     });
     await page.route(
       "**/api/agent-conversations",
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           json: { creationRejected: true, error: "Test model rejection" },
           status: 400,
-        }),
+        });
+      },
       { times: 1 }
     );
     await page.getByRole("button", { name: "Recover version" }).click();
@@ -277,4 +281,3 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     throw cleanupFailure.error;
   }
 });
-/* oxlint-enable typescript/promise-function-async */

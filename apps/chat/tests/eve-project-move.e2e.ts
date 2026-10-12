@@ -1,4 +1,3 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -11,14 +10,13 @@ const screenshotStyle =
 const projectsRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
   url.pathname.includes("project.list");
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("moves native conversations from sidebar and project rows with recoverable failu preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("moves native conversations from sidebar and project rows with recoverable failures", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Move target fixture" } },
@@ -96,12 +94,13 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await dialog.getByRole("combobox").selectOption(projectId);
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await dialog.getByRole("button", { exact: true, name: "Move" }).click();
@@ -167,4 +166,3 @@ test("moves native conversations from sidebar and project rows with recoverable 
     expect(removed.ok(), await removed.text()).toBe(true);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

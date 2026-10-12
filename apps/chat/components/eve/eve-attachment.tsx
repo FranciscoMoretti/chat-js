@@ -6,8 +6,6 @@ import React, { useEffect, useState } from "react";
 import { AttachmentList } from "@/components/attachment-list";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- EveAttachment: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including source?.startsWith("data:")). */
-
 export const EveAttachment = ({
   part,
 }: {
@@ -15,9 +13,9 @@ export const EveAttachment = ({
 }): ReactJSX.Element => {
   const [resolved, setResolved] = useState<{ source: string; url: string }>();
   const source = part.url;
-  useEffect(() => {
-    if (!source?.startsWith("data:")) {
-      return;
+  useEffect((): (() => void) | undefined => {
+    if (!(source?.startsWith("data:") === true)) {
+      return undefined;
     }
     let disposed = false;
     let objectUrl: string | undefined;
@@ -35,7 +33,7 @@ export const EveAttachment = ({
       }
     };
     void resolveAttachment();
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       disposed = true;
       if (typeof objectUrl === "string" && objectUrl !== "") {
@@ -44,7 +42,7 @@ export const EveAttachment = ({
     };
   }, [source]);
   let url = source;
-  if (source?.startsWith("data:")) {
+  if (source?.startsWith("data:") === true) {
     url = resolved?.source === source ? resolved.url : undefined;
   }
   if (typeof url === "string" && url !== "") {
@@ -62,4 +60,3 @@ export const EveAttachment = ({
   }
   return <p>{part.filename ?? "Attachment"}</p>;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

@@ -1,9 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type { indexEveSearchText } from "../db/eve-search";
 
 import { backfillEveSearchConversation } from "./search-backfill";
 
 const mocks = vi.hoisted(() => ({
-  index: vi.fn(),
+  index: vi.fn<typeof indexEveSearchText>(),
   snapshot: vi.fn(),
 }));
 vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
@@ -40,8 +41,7 @@ beforeEach(() => {
 
 it("recovers every restored entry and the latest message, and can retry after a partial failure", async () => {
   mocks.index
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce()
     .mockRejectedValueOnce(new Error("offline"));
   await expect(
     backfillEveSearchConversation("owner", "branch", "session")
@@ -50,20 +50,17 @@ it("recovers every restored entry and the latest message, and can retry after a 
   await backfillEveSearchConversation("owner", "branch", "session");
   expect(mocks.index).toHaveBeenCalledTimes(4);
   expect(
-    mocks.index.mock.calls.slice(0, 3).map(
-      (call: Readonly<(typeof mocks.index.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        call[2].length
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
-    )
+    mocks.index.mock.calls
+      .slice(0, 3)
+      .map(
+        (call: Readonly<(typeof mocks.index.mock.calls)[number]>) =>
+          call[2].length
+      )
   ).toEqual([100, 100, 100]);
 
   expect(
     mocks.index.mock.calls.flatMap(
-      (call: Readonly<(typeof mocks.index.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return -- #598: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        call[2]
-      /* oxlint-enable typescript/no-unsafe-return */
+      (call: Readonly<(typeof mocks.index.mock.calls)[number]>) => call[2]
     )
   ).toEqual([
     ...Array.from({ length: 300 }, (_, index) => ({

@@ -59,11 +59,12 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      // oxlint-disable-next-line typescript/promise-function-async -- Preserve the original catch-promise identity and synchronous decode() throw behavior; async would turn synchronous throws into rejected promises.
-      [...document.images].map((image: Pick<HTMLImageElement, "decode">) =>
-        image.decode().catch(() => {
-          // Keep capturing the page when an image fails to decode.
-        })
+      [...document.images].map(
+        async (image: Pick<HTMLImageElement, "decode">) => {
+          await image.decode().catch(() => {
+            // Keep capturing the page when an image fails to decode.
+          });
+        }
       )
     );
     await document.fonts.ready;

@@ -1,16 +1,16 @@
-import React, { act } from "react";
-import { expect, test, vi } from "vitest";
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
+import React from "react";
+import { expect, test } from "vitest";
+import {
+  PathnameContext,
+  PathParamsContext,
+  SearchParamsContext,
+} from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 import { Component as Analytics } from "../src/features/vercel-analytics/component";
 import { Component as SpeedInsights } from "../src/features/vercel-speed-insights/component";
 import { createRoot } from "react-dom/client";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-
-vi.mock("next/navigation", () => ({
-  useParams: (): Record<string, never> => ({}),
-  usePathname: (): string => "/chat",
-  useSearchParams: (): URLSearchParams => new URLSearchParams(),
-}));
 
 test("layout telemetry leaves every installed/omitted combination visually unchanged", async (): Promise<void> => {
   const container = document.createElement("main");
@@ -24,20 +24,22 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     document.head.querySelectorAll(telemetrySelector)
   );
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act((): void => {
-      root.render(
-        <>
-          {[0, 1, 2, 3].map((mask) => (
-            <section key={mask} data-testid={`combination-${mask}`}>
-              <p>Chat content</p>
-              {mask % 2 ? <Analytics /> : null}
-              {Math.floor(mask / 2) ? <SpeedInsights /> : null}
-            </section>
-          ))}
-        </>
-      );
-    });
+    await renderRoot(
+      root,
+      <PathnameContext value="/chat">
+        <PathParamsContext value={{}}>
+          <SearchParamsContext value={new URLSearchParams()}>
+            {[0, 1, 2, 3].map((mask) => (
+              <section key={mask} data-testid={`combination-${mask}`}>
+                <p>Chat content</p>
+                {mask % 2 ? <Analytics /> : null}
+                {Math.floor(mask / 2) ? <SpeedInsights /> : null}
+              </section>
+            ))}
+          </SearchParamsContext>
+        </PathParamsContext>
+      </PathnameContext>
+    );
     for (const section of container.querySelectorAll("section")) {
       expect(section.innerHTML).toBe("<p>Chat content</p>");
     }
@@ -47,8 +49,7 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
       path: "../uiverify-archive/observability-layout.png",
     });
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act((): void => root.unmount());
+    await unmountRoot(root);
     for (const script of document.head.querySelectorAll(telemetrySelector)) {
       if (!existingScripts.has(script)) {
         script.remove();

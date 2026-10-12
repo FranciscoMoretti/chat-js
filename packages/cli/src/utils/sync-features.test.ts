@@ -1,4 +1,5 @@
-import { afterEach, expect, test } from "bun:test";
+import { rejects } from "node:assert/strict";
+import { afterEach, expect, mock, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
 import path from "node:path";
@@ -19,27 +20,25 @@ import { initializeFeatureUi, syncFeatures } from "./sync-features";
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-feature-"));
   roots.push(root);
   await Promise.all(
-    ["composer-controls.ts", "settings-items.ts"].map((file): Promise<void> =>
-      cp(path.join(demo, file), path.join(root, file))
+    ["composer-controls.ts", "settings-items.ts"].map(
+      async (file): Promise<void> => {
+        await cp(path.join(demo, file), path.join(root, file));
+      }
     )
   );
   return root;
 };
-/* oxlint-enable typescript/promise-function-async */
 const install = async (root: string): Promise<void> => {
   await Promise.all(
     [...mcpFiles, "features/mcp/chatjs.json"].map(
@@ -65,16 +64,17 @@ const install = async (root: string): Promise<void> => {
 test("new core UI has no MCP imports; installing MCP registers its router and preserves editable order on sync", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
-  for (const file of [
-    "composer-controls.ts",
-    "settings-items.ts",
-    "features/installed-routers.ts",
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Small fixed set of fixture assertions.
-    expect(await readFile(path.join(root, file), "utf-8")).not.toContain(
-      "@/features/mcp"
-    );
-  }
+  await Promise.all(
+    [
+      "composer-controls.ts",
+      "settings-items.ts",
+      "features/installed-routers.ts",
+    ].map(async (file) => {
+      expect(await readFile(path.join(root, file), "utf-8")).not.toContain(
+        "@/features/mcp"
+      );
+    })
+  );
   expect(
     await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
   ).not.toContain("mcpRouter");
@@ -126,22 +126,28 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "app/api/mcp/oauth/callback/route.ts"));
-  expect(syncFeatures(root, { expectedMcp: true })).rejects.toThrow(
-    "app/api/mcp/oauth/callback/route.ts"
+  await rejects(
+    syncFeatures(root, { expectedMcp: true }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("app/api/mcp/oauth/callback/route.ts");
+      return true;
+    }
   );
   expect(
     await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
   ).not.toContain("mcpRouter");
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("MCP installation requires the approval schema before changing an older scaffold", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
   const presence = await Promise.all(
-    mcpFiles.map((file): Promise<boolean> =>
-      Bun.file(path.join(root, file)).exists()
+    mcpFiles.map(
+      async (file): Promise<boolean> =>
+        await Bun.file(path.join(root, file)).exists()
     )
   );
   expect(presence.some(Boolean)).toBe(false);
@@ -186,14 +192,23 @@ test("MCP installation requires the approval schema before changing an older sca
       features: [],
       tools: [`http://127.0.0.1:${server.port}/mcp.json`],
     });
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking for writes.
-    await expect(
-      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
-        Promise.reject(
+
+    await rejects(
+      installPlan(
+        root,
+        plan,
+        { overwrite: true },
+        mock<() => Promise<void>>().mockRejectedValue(
           new Error("registration must not run before the schema upgrade")
         )
-      )
-    ).rejects.toThrow("db:generate script");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("db:generate script");
+        return true;
+      }
+    );
     expect(
       await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
     ).toBe(false);
@@ -204,22 +219,32 @@ test("MCP installation requires the approval schema before changing an older sca
     );
     expect(missingColumnsSchema).not.toBe(schema);
     await writeFile(schemaFile, missingColumnsSchema);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking the missing-call-argument path.
-    await expect(
-      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
-        Promise.reject(
+
+    await rejects(
+      installPlan(
+        root,
+        plan,
+        { overwrite: true },
+        mock<() => Promise<void>>().mockRejectedValue(
           new Error("registration must not run before the schema upgrade")
         )
-      )
-    ).rejects.toThrow("db:generate script");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("db:generate script");
+        return true;
+      }
+    );
     expect(await readFile(schemaFile, "utf-8")).toBe(missingColumnsSchema);
     await writeFile(schemaFile, schema);
     await installPlan(root, plan, {}, async (): Promise<void> => {
       await syncFeatures(root, { addUi: true, expectedMcp: true });
     });
     const installed = await Promise.all(
-      mcpFiles.map((file): Promise<boolean> =>
-        Bun.file(path.join(root, file)).exists()
+      mcpFiles.map(
+        async (file): Promise<boolean> =>
+          await Bun.file(path.join(root, file)).exists()
       )
     );
     expect(installed.every(Boolean)).toBe(true);
@@ -230,7 +255,6 @@ test("MCP installation requires the approval schema before changing an older sca
     await server.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/promise-function-async */
 
 for (const [importText, entry] of [
   [
@@ -280,7 +304,6 @@ test("preserves an existing contribution with a custom import", async (): Promis
     content
   );
 });
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const file of ["composer-controls.ts", "settings-items.ts"]) {
   test(`an unsupported ${file} leaves both UI files and registrations unchanged`, async (): Promise<void> => {
     const root = await fixture();
@@ -299,30 +322,39 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
       "features/installed-routers.ts",
     ];
     const before = await Promise.all(
-      paths.map((entry): Promise<string> =>
-        readFile(path.join(root, entry), "utf-8")
+      paths.map(
+        async (entry): Promise<string> =>
+          await readFile(path.join(root, entry), "utf-8")
       )
     );
-    expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
-      "retry chat-js add"
-    );
+    await rejects(syncFeatures(root, { addUi: true }), (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("retry chat-js add");
+      return true;
+    });
     expect(
       await Promise.all(
-        paths.map((entry): Promise<string> =>
-          readFile(path.join(root, entry), "utf-8")
+        paths.map(
+          async (entry): Promise<string> =>
+            await readFile(path.join(root, entry), "utf-8")
         )
       )
     ).toEqual(before);
   });
 }
-/* oxlint-enable typescript/promise-function-async */
 
 test("missing descriptors report partial MCP source and how to recover", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "features/mcp/chatjs.json"));
-  expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
+  await rejects(syncFeatures(root), (reason: unknown) => {
+    expect(() => {
+      throw reason;
+    }).toThrow("chat-js add mcp");
+    return true;
+  });
 });
 test("empty feature registration uses a zero-argument Set constructor", async (): Promise<void> => {
   const root = await fixture();
@@ -355,7 +387,6 @@ test("adds the requested binding when the module already has another named impor
   ).toContain("  connectors,");
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async (): Promise<void> => {
   const { attachmentUploadsItem, attachmentUploadFiles } =
     await import("../../../registry/src/features/attachment-uploads");
@@ -367,23 +398,25 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     JSON.stringify({ dependencies: {}, name: "upload-fixture" })
   );
   const uploadPresence = await Promise.all(
-    attachmentUploadFiles.map((file): Promise<boolean> =>
-      Bun.file(path.join(root, file)).exists()
+    attachmentUploadFiles.map(
+      async (file): Promise<boolean> =>
+        await Bun.file(path.join(root, file)).exists()
     )
   );
   expect(uploadPresence.some(Boolean)).toBe(false);
   expect(
     await readFile(path.join(root, "features/installed-uploads.ts"), "utf-8")
   ).not.toContain("@/features/attachment-uploads");
-  for (const file of [
-    "components/context-bar.tsx",
-    "lib/file-storage.ts",
-    "lib/db/eve-files.ts",
-    "lib/eve/restore-message-attachments.ts",
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Assert a small fixed set of historical-file core seams.
-    expect(await Bun.file(path.join(root, file)).exists()).toBe(true);
-  }
+  await Promise.all(
+    [
+      "components/context-bar.tsx",
+      "lib/file-storage.ts",
+      "lib/db/eve-files.ts",
+      "lib/eve/restore-message-attachments.ts",
+    ].map(async (file) => {
+      expect(await Bun.file(path.join(root, file)).exists()).toBe(true);
+    })
+  );
   const files = await Promise.all(
     (attachmentUploadsItem.files ?? []).map(
       async (
@@ -449,24 +482,29 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
         "...attachmentUploads.controls",
         controls
       );
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Verify each app-owned placement independently.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case replaces composer-controls.ts in the same fixture; finish the prior sync/read before writing the next subset.
       await writeFile(path.join(root, "composer-controls.ts"), customControls);
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Sync must preserve the selected control subset.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Sync the subset just written before checking its source or replacing it with the next case.
       await syncFeatures(root, { addUi: true, expectedMcp: true });
       expect(
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Compare the exact app-owned source after sync.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Read this subset's synced source before the next iteration overwrites the shared composer file.
         await readFile(path.join(root, "composer-controls.ts"), "utf-8")
       ).toBe(customControls);
     }
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
-    expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
-      "app/(chat)/api/files/upload/route.ts"
+    await rejects(
+      syncFeatures(root, { expectedUploads: true }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("app/(chat)/api/files/upload/route.ts");
+        return true;
+      }
     );
   } finally {
     await server.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/promise-function-async */
 
 test("unrelated additions preserve computed feature UI; requesting MCP still requires manual composition", async (): Promise<void> => {
   const root = await fixture();
@@ -483,5 +521,10 @@ test("unrelated additions preserve computed feature UI; requesting MCP still req
   expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
     settings
   );
-  expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow("manually");
+  await rejects(syncFeatures(root, { addUi: ["mcp"] }), (reason: unknown) => {
+    expect(() => {
+      throw reason;
+    }).toThrow("manually");
+    return true;
+  });
 });

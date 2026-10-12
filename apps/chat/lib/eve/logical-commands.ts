@@ -1,15 +1,11 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): CommandState preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type CommandState = {
+interface CommandState {
   pending: boolean;
   cancelling: boolean;
   cancellation: number;
   failure?: Error;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 const idle: CommandState = {
   cancellation: 0,
   cancelling: false,

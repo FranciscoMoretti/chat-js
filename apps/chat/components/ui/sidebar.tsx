@@ -117,7 +117,7 @@ const SidebarProvider = ({
           value: String(openState),
         });
       } else {
-        // oxlint-disable-next-line unicorn/no-document-cookie -- Keep the synchronous fallback for browsers without Cookie Store support; the server reads this cookie to restore sidebar state.
+        // oxlint-disable-next-line unicorn/no-document-cookie -- Native-boundaries browser test removes Cookie Store and verifies this compatibility path persists the sidebar preference.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       }
     },

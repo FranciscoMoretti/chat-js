@@ -1,6 +1,5 @@
 import { execFileSync } from "node:child_process";
 
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import type { Request, TestInfo } from "@playwright/test";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -20,13 +19,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("document tool states remain readable on desktop and mobile") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("document tool states remain readable on desktop and mobile", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
@@ -47,6 +45,7 @@ test("document tool states remain readable on desktop and mobile", async ({
   );
   await expect(page.getByRole("status")).toHaveCount(2);
   await expect(page.getByRole("alert")).toHaveCount(2);
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -58,12 +57,9 @@ test("document tool states remain readable on desktop and mobile", async ({
       path: testInfo.outputPath(`states-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("native documents open in ChatJS, retain versions after reload, and honor shared preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("native documents open in ChatJS, retain versions after reload, and honor shared access", async ({
   page,
   browser,
@@ -79,7 +75,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.context().addCookies([
     {
@@ -114,12 +112,15 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   expect(created.ok(), await created.text()).toBe(true);
   const binding = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
-  for (const title of ["Artifact notes", "orchard.py", "Harvest"]) {
-    await expect(
-      page.getByRole("button", { exact: true, name: `Created "${title}"` })
-    ).toBeVisible({ timeout: 90_000 });
-  }
+  await Promise.all(
+    ["Artifact notes", "orchard.py", "Harvest"].map(async (title) => {
+      await expect(
+        page.getByRole("button", { exact: true, name: `Created "${title}"` })
+      ).toBeVisible({ timeout: 90_000 });
+    })
+  );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  /* oxlint-disable eslint/no-await-in-loop -- Each document interaction reuses the artifact panel and clipboard; finish copying and closing before opening the next document. */
   for (const [title, content, copyLabel] of [
     ["Artifact notes", "Amber apples.", "Copy to clipboard"],
     ["orchard.py", "print(42)", "Copy code to clipboard"],
@@ -136,9 +137,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
         name: copyLabel,
       })
       .click();
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
-      content
-    );
+    expect(
+      await page.evaluate(async () => await navigator.clipboard.readText())
+    ).toContain(content);
     if (title === "Artifact notes") {
       await expect(
         panel.getByRole("button", { exact: true, name: "View changes" })
@@ -160,13 +161,16 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     });
     await panel.getByRole("button", { exact: true, name: "Close" }).click();
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await page
     .getByRole("button", { exact: true, name: 'Created "Artifact notes"' })
     .click();
   await expect(page.getByTestId("artifact")).toContainText("Version 1 of 1");
   await page.evaluate(() => {
-    navigator.clipboard.writeText = () =>
-      Promise.reject(new Error("Clipboard denied for test"));
+    navigator.clipboard.writeText =
+      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+      () => Promise.reject(new Error("Clipboard denied for test"));
+    /* oxlint-enable typescript/promise-function-async */
   });
   await page
     .getByTestId("artifact")
@@ -216,7 +220,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Cobalt pears.");
   // Rich previews may have read the previous revision. Make its cache stale before testing a failed refetch.
   await page.clock.setFixedTime(new Date(Date.now() + 120_000));
-  await page.route("**/api/trpc/eve.document*", (route) => route.abort());
+  await page.route("**/api/trpc/eve.document*", async (route) => {
+    await route.abort();
+  });
   await panel
     .getByRole("button", { exact: true, name: "View changes" })
     .click();
@@ -287,12 +293,14 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     operationId: crypto.randomUUID(),
     title: latest.title,
   };
+  /* oxlint-disable eslint/no-await-in-loop -- Replay the exact save twice in order to verify the completed write is idempotent. */
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const saved = await page.request.post("/api/trpc/eve.saveDocument", {
       data: { json: manualInput },
     });
     expect(saved.ok(), await saved.text()).toBe(true);
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const conflict = await page.request.post("/api/trpc/eve.saveDocument", {
     data: {
       json: {
@@ -314,7 +322,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Version 3 of 3");
   const editor = panel.locator(".lexical-editor");
   await expect(editor).toHaveAttribute("contenteditable", "true");
-  await page.route("**/api/trpc/eve.saveDocument*", (route) => route.abort());
+  await page.route("**/api/trpc/eve.saveDocument*", async (route) => {
+    await route.abort();
+  });
   await editor.fill("Retained manual draft");
   await expect(panel.getByRole("button", { name: "Retry save" })).toBeVisible();
   await panel.screenshot({
@@ -507,4 +517,3 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       .where(eq(eveConversation.id, binding.id));
   }
 });
-/* oxlint-enable typescript/promise-function-async */

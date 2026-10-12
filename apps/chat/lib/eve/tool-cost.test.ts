@@ -2,19 +2,14 @@ import { expect, test, vi } from "vitest";
 
 import { createEveToolCost } from "./tool-cost";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../ai/active-gateway") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
-    fetchModels: () =>
-      Promise.resolve([
-        { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
-        { id: "priced-image", pricing: { image: "0.04" } },
-      ]),
+    fetchModels: vi.fn().mockResolvedValue([
+      { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
+      { id: "priced-image", pricing: { image: "0.04" } },
+    ]),
   }),
 }));
-/* oxlint-enable typescript/promise-function-async */
 test("combines API and nested model usage without rounding each call", async () => {
   const cost = createEveToolCost();
   cost.addAPICost("api", 5);

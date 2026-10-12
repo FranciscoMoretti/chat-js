@@ -7,6 +7,7 @@ import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import postgres from "postgres";
 import { z } from "zod";
+import { vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { saveEveDocumentRevision } from "../lib/db/eve-documents";
@@ -30,15 +31,12 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
 }
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("internal retirement settles usage after access revocation and is retryable") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("internal retirement settles usage after access revocation and is retryable") intentionally keeps the existing falsy-value behavior of identity; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * typescript/strict-void-return (#611): test("internal retirement settles usage after access revocation and is retryable")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("internal retirement settles usage after access revocation and is retryable", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
@@ -67,7 +65,7 @@ test("internal retirement settles usage after access revocation and is retryable
     .select({ chatId: eveConversation.chatId })
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
-  if (!identity) {
+  if (identity === undefined) {
     throw new Error("Missing logical chat identity");
   }
   expect(identity.chatId).not.toBe(binding.id);
@@ -120,9 +118,10 @@ test("internal retirement settles usage after access revocation and is retryable
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
-  const purgeResources = async () => {
+  const purgeResources = async (): Promise<unknown> => {
     // Playwright loads this suite as CommonJS; run the ESM-only storage adapter
     // under the app's Bun runtime with the same local environment and app root.
+    // oxlint-disable-next-line typescript/strict-void-return -- Node execFile returns its ChildProcess while completing through the callback consumed by promisify.
     const { stdout } = await promisify(execFile)(
       "bun",
       [
@@ -133,7 +132,7 @@ test("internal retirement settles usage after access revocation and is retryable
       ],
       { cwd: process.cwd(), timeout: 30_000 }
     );
-    // oxlint-disable-next-line typescript/no-unsafe-return -- The controlled Bun child prints the deletion fixture as JSON; callers assert its raw persisted state.
+
     return JSON.parse(stdout);
   };
   expect(await purgeResources()).toEqual(prepared);
@@ -170,8 +169,12 @@ test("internal retirement settles usage after access revocation and is retryable
       await native`select id from workflow.workflow_runs where id in ${native(receipt.runIds)}`
     ).toEqual([]);
     expect(
-      await purgeEveNativeSession(env.DATABASE_URL, scope, () =>
-        Promise.reject(new Error("Retired session must not reset again"))
+      await purgeEveNativeSession(
+        env.DATABASE_URL,
+        scope,
+        vi
+          .fn<() => Promise<void>>()
+          .mockRejectedValue(new Error("Retired session must not reset again"))
       )
     ).toEqual(receipt);
     expect(await purgeResources()).toEqual(prepared);
@@ -213,16 +216,13 @@ test("internal retirement settles usage after access revocation and is retryable
     await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
   });
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("sidebar deletion retires a fresh conversation and reports its durable tombstone preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("sidebar deletion retires a fresh conversation and reports its durable tombstone intentionally keeps the existing falsy-value behavior of identity; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("sidebar deletion retires a fresh conversation and reports its durable tombstone", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
@@ -252,7 +252,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     .select({ chatId: eveConversation.chatId })
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
-  if (!identity) {
+  if (identity === undefined) {
     throw new Error("Missing logical chat identity");
   }
   expect(identity.chatId).not.toBe(binding.id);
@@ -318,4 +318,3 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     await native.end();
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

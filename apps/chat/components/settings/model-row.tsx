@@ -29,8 +29,8 @@ const ModelRowComponent = ({
         <div className="flex items-center gap-2.5">
           <ModelSelectorLogo modelId={model.id} />
           <span className="text-sm font-medium">{model.name}</span>
-          {/* oxlint-disable typescript/strict-boolean-expressions -- Preserve model.reasoning's exact false, null, or undefined child without moving its property read. */}
-          {model.reasoning && (
+          {}
+          {model.reasoning === true && (
             <ReasoningIcon
               aria-label={AVAILABLE_FEATURES.reasoning.description}
               className={cn(
@@ -39,7 +39,7 @@ const ModelRowComponent = ({
               )}
             />
           )}
-          {/* oxlint-enable typescript/strict-boolean-expressions */}
+          {}
         </div>
       </TableCell>
       <TableCell className="py-2.5 pr-0">

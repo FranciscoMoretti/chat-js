@@ -20,9 +20,6 @@ vi.mock("./storage-provider", async () => {
   };
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): describe("file storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 describe("file storage", () => {
   it("uploads, lists, and deletes through Files SDK", async () => {
     const uploaded = await uploadFileAtKey(
@@ -75,8 +72,15 @@ describe("file storage", () => {
 
   it("lists across page boundaries with one mapping query per page", async () => {
     const uploads = await Promise.all(
-      Array.from({ length: 101 }, () =>
-        uploadFileAtKey(createFileId(), "file.txt", "content", "text/plain")
+      Array.from(
+        { length: 101 },
+        async () =>
+          await uploadFileAtKey(
+            createFileId(),
+            "file.txt",
+            "content",
+            "text/plain"
+          )
       )
     );
     vi.mocked(fileIdsForStorageKeys).mockClear();
@@ -101,18 +105,15 @@ describe("file storage", () => {
     }
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("./db/file-storage-keys", () => ({
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   fileIdsForStorageKeys: vi.fn((keys: readonly string[]) =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     )
   ),
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/promise-function-async */

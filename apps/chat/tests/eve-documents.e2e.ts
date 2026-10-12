@@ -1,10 +1,9 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import assert from "node:assert/strict";
 
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
@@ -48,9 +47,9 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
-const rejectLostNativeReply = async (): Promise<never> => {
-  throw new Error("Lost native reply");
-};
+const rejectLostNativeReply = vi
+  .fn<() => Promise<never>>()
+  .mockRejectedValue(new Error("Lost native reply"));
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -90,29 +89,26 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, stranger));
 });
 
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Artifact fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
-function draft(conversationId: string) {
-  return {
-    content: "Original",
-    conversationId,
-    documentId: crypto.randomUUID(),
-    expectedRevisionId: null,
-    fileIds: [],
-    kind: "text" as const,
-    operationId: crypto.randomUUID(),
-    ownerId: owner,
-    title: "Notes",
-    turnIndex: 0,
-  };
-}
+const draft = (conversationId: string) => ({
+  content: "Original",
+  conversationId,
+  documentId: crypto.randomUUID(),
+  expectedRevisionId: null,
+  fileIds: [],
+  kind: "text" as const,
+  operationId: crypto.randomUUID(),
+  ownerId: owner,
+  title: "Notes",
+  turnIndex: 0,
+});
 
 test("document purge requires the owned family fence, erases inherited revisions, and is retryable", async () => {
   const root = await conversation();
@@ -123,7 +119,7 @@ test("document purge requires the owned family fence, erases inherited revisions
     owner,
     crypto.randomUUID(),
     "Purge fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: root.id } }
   );
   await saveEveDocumentRevision({
@@ -149,19 +145,21 @@ test("document purge requires the owned family fence, erases inherited revisions
   ).rejects.toThrow("content cleanup is incomplete");
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await purgeEveFamilyDocuments(owner, deletion.rootId);
-  for (const table of [
-    eveDocumentCheckpointEntry,
-    eveDocumentCheckpoint,
-    eveDocumentHead,
-    eveDocumentRevision,
-  ]) {
-    expect(
-      await db
-        .select({ conversationId: table.conversationId })
-        .from(table)
-        .where(inArray(table.conversationId, [root.id, child.id]))
-    ).toEqual([]);
-  }
+  await Promise.all(
+    [
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+      eveDocumentRevision,
+    ].map(async (table) => {
+      expect(
+        await db
+          .select({ conversationId: table.conversationId })
+          .from(table)
+          .where(inArray(table.conversationId, [root.id, child.id]))
+      ).toEqual([]);
+    })
+  );
   expect(
     await getEveDocumentRevision(owner, unrelated.id, surviving.documentId)
   ).toEqual(surviving);
@@ -196,19 +194,21 @@ test("an external document reference rolls back every purge step", async () => {
   });
   await beginEveConversationDeletion(owner, root.id);
   await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow();
-  for (const table of [
-    eveDocumentCheckpointEntry,
-    eveDocumentCheckpoint,
-    eveDocumentHead,
-    eveDocumentRevision,
-  ]) {
-    expect(
-      await db
-        .select({ conversationId: table.conversationId })
-        .from(table)
-        .where(eq(table.conversationId, root.id))
-    ).toHaveLength(1);
-  }
+  await Promise.all(
+    [
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+      eveDocumentRevision,
+    ].map(async (table) => {
+      expect(
+        await db
+          .select({ conversationId: table.conversationId })
+          .from(table)
+          .where(eq(table.conversationId, root.id))
+      ).toHaveLength(1);
+    })
+  );
   expect(
     await db
       .select()
@@ -225,7 +225,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     owner,
     crypto.randomUUID(),
     "Old fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: source.id } }
   );
   const turns = documentHistoryTurns([
@@ -264,7 +264,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     owner,
     crypto.randomUUID(),
     "Inherited boundary",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const earlierBranchRevision = await getEveDocumentRevision(
@@ -312,7 +312,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     owner,
     crypto.randomUUID(),
     "Manual branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
   );
   const childRevisionAfterManualEdit = await getEveDocumentRevision(
@@ -325,7 +325,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     owner,
     crypto.randomUUID(),
     "Before manual",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const earlierNestedBranchRevision = await getEveDocumentRevision(
@@ -360,18 +360,15 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   ).rejects.toThrow("native history");
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("turn checkpoints restore exact heads, including empty state, and never change o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
   const chat = await conversation();
   await captureEveDocumentCheckpoint(owner, chat.id, 0);
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   await Promise.all(
-    Array.from({ length: 5 }, () =>
-      captureEveDocumentCheckpoint(owner, chat.id, 1)
-    )
+    Array.from({ length: 5 }, async () => {
+      await captureEveDocumentCheckpoint(owner, chat.id, 1);
+    })
   );
   await saveEveDocumentRevision({
     ...input,
@@ -386,7 +383,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     owner,
     crypto.randomUUID(),
     "Later branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
   );
   // Replaying fork initialization must leave inherited boundaries unchanged.
@@ -395,7 +392,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     owner,
     crypto.randomUUID(),
     "Earlier nested branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: laterBranch.id } }
   );
   const laterBranchRevision = await getEveDocumentRevision(
@@ -410,31 +407,32 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     input.documentId
   );
   expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
-  for (const beforeTurnId of ["turn_0", "turn_1"]) {
-    const child = await createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "Checkpoint fork",
-      async () => crypto.randomUUID(),
-      { fork: { beforeTurnId, conversationId: chat.id } }
-    );
-    const document = await getEveDocumentRevision(
-      owner,
-      child.id,
-      input.documentId
-    );
-    if (beforeTurnId === "turn_0") {
-      expect(document).toBeUndefined();
-    } else {
-      expect(document?.id).toBe(first.id);
-      expect(document?.content).toBe("Original");
-    }
-  }
+  await Promise.all(
+    ["turn_0", "turn_1"].map(async (beforeTurnId) => {
+      const child = await createEveConversation(
+        owner,
+        crypto.randomUUID(),
+        "Checkpoint fork",
+        createEveTestSession,
+        { fork: { beforeTurnId, conversationId: chat.id } }
+      );
+      const document = await getEveDocumentRevision(
+        owner,
+        child.id,
+        input.documentId
+      );
+      if (beforeTurnId === "turn_0") {
+        expect(document).toBeUndefined();
+      } else {
+        expect(document?.id).toBe(first.id);
+        expect(document?.content).toBe("Original");
+      }
+    })
+  );
   await expect(
     captureEveDocumentCheckpoint(stranger, chat.id, 2)
   ).rejects.toThrow("not found");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("a document save cancelled while waiting for its lock never writes", async () => {
   const chat = await conversation();
@@ -506,7 +504,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     owner,
     crypto.randomUUID(),
     "Public branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   await db
@@ -626,14 +624,11 @@ test("native document calls replay safely and reject stale edits and cross-conve
   ).toHaveLength(2);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("concurrent replays create one revision and old replays never rewind the head") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent replays create one revision and old replays never rewind the head", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const revisions = await Promise.all(
-    Array.from({ length: 8 }, () => saveEveDocumentRevision(input))
+    Array.from({ length: 8 }, async () => await saveEveDocumentRevision(input))
   );
   expect(new Set(revisions.map((revision) => revision.id)).size).toBe(1);
   const second = await saveEveDocumentRevision({
@@ -655,23 +650,20 @@ test("concurrent replays create one revision and old replays never rewind the he
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("two distinct saves from the same revision cannot overwrite each other") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("two distinct saves from the same revision cannot overwrite each other", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const outcomes = await Promise.allSettled(
-    ["A", "B"].map((content) =>
-      saveEveDocumentRevision({
-        ...input,
-        content,
-        expectedRevisionId: first.id,
-        operationId: crypto.randomUUID(),
-      })
+    ["A", "B"].map(
+      async (content) =>
+        await saveEveDocumentRevision({
+          ...input,
+          content,
+          expectedRevisionId: first.id,
+          operationId: crypto.randomUUID(),
+        })
     )
   );
   expect(
@@ -684,7 +676,6 @@ test("two distinct saves from the same revision cannot overwrite each other", as
     await getEveDocumentHistory(owner, chat.id, input.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("artifact reads and updates are scoped to owner and conversation", async () => {
   const chat = await conversation();
@@ -737,7 +728,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     owner,
     crypto.randomUUID(),
     "Fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   const childHistoryAtFork = await getEveDocumentHistory(
@@ -778,7 +769,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     owner,
     crypto.randomUUID(),
     "Nested",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const nestedBranchHistory = await getEveDocumentHistory(
@@ -802,9 +793,6 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
   ).toHaveLength(4);
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("history beyond 1000 revisions remains readable and forkable without loading all intentionally keeps the existing falsy-value behavior of tail; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("history beyond 1000 revisions remains readable and forkable without loading all contents", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -825,7 +813,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     }))
   );
   const tail = ids.at(-1);
-  if (!tail) {
+  if (tail === undefined || tail === null || tail === "") {
     throw new Error("Missing fixture tail");
   }
   await db
@@ -852,7 +840,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     owner,
     crypto.randomUUID(),
     "Long fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_500", conversationId: chat.id } }
   );
   const longChildHistory = await getEveDocumentHistory(
@@ -865,7 +853,6 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 test("document references protect owned files across families and revision history", async () => {
   const prefix = "/api/files/";
@@ -956,7 +943,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     operationId,
     "Named fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork }
   );
   const namedChildRevision = await getEveDocumentRevision(
@@ -969,7 +956,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     crypto.randomUUID(),
     "Turn fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   const ordinaryChildRevision = await getEveDocumentRevision(
@@ -983,7 +970,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     crypto.randomUUID(),
     "Nested fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const grandchildRevision = await getEveDocumentRevision(
@@ -997,7 +984,7 @@ test("named idle snapshots preserve manual edits across retries without changing
       owner,
       operationId,
       "Named fork",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       { fork: { ...fork, checkpointId: crypto.randomUUID() } }
     )
   ).rejects.toThrow("different");
@@ -1020,7 +1007,7 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     owner,
     crypto.randomUUID(),
     "Empty fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", checkpointId, conversationId: chat.id } }
   );
   expect(
@@ -1040,27 +1027,28 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
   ).rejects.toThrow("not found");
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await purgeEveFamilyDocuments(owner, deletion.rootId);
-  for (const table of [
-    eveNamedDocumentCheckpointEntry,
-    eveNamedDocumentCheckpoint,
-  ]) {
-    expect(
-      await db.select().from(table).where(eq(table.conversationId, chat.id))
-    ).toEqual([]);
-  }
+  await Promise.all(
+    [eveNamedDocumentCheckpointEntry, eveNamedDocumentCheckpoint].map(
+      async (table) => {
+        expect(
+          await db.select().from(table).where(eq(table.conversationId, chat.id))
+        ).toEqual([]);
+      }
+    )
+  );
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("missing or mismatched named document boundaries stop native allocation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("missing or mismatched named document boundaries stop native allocation", async () => {
   const chat = await conversation();
   const checkpointId = crypto.randomUUID();
   let allocations = 0;
-  const allocate = (): Promise<string> => {
-    allocations += 1;
-    return Promise.resolve(crypto.randomUUID());
-  };
+  const allocate =
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (): Promise<string> => {
+      allocations += 1;
+      return crypto.randomUUID();
+    };
+  /* oxlint-enable eslint/require-await */
   const missing = {
     beforeTurnId: "turn_1",
     checkpointId,
@@ -1087,11 +1075,7 @@ test("missing or mismatched named document boundaries stop native allocation", a
   ).rejects.toThrow("Named document checkpoint");
   expect(allocations).toBe(0);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test.each([false, true])("native descendants retain imported document boundaries, inc intentionally keeps the existing falsy-value behavior of checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test.each([false, true])(
   "native descendants retain imported document boundaries, including empty ones (named=%s)",
   async (named) => {
@@ -1111,14 +1095,18 @@ test.each([false, true])(
     });
     await captureEveDocumentCheckpoint(owner, root.id, 1);
     const checkpointId = named ? crypto.randomUUID() : undefined;
-    if (checkpointId) {
+    if (
+      checkpointId !== undefined &&
+      checkpointId !== null &&
+      checkpointId !== ""
+    ) {
       await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
     }
     const child = await createEveConversation(
       owner,
       crypto.randomUUID(),
       "Imported prefix descendant",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       {
         fork: { beforeTurnId: "turn_1", checkpointId, conversationId: root.id },
       }
@@ -1145,7 +1133,6 @@ test.each([false, true])(
     ]);
   }
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
   const root = await conversation();
@@ -1181,42 +1168,41 @@ test("imported forks restore the selected document boundary and exclude the late
       revisionId: later.id,
     },
   ]);
-  for (const index of [0, 2, 6]) {
-    const [child] = await insertEveConversationFixtures({
-      firstMessage: "Imported edit",
-      forkMessageId: `seed_message_${index}`,
-      operationId: crypto.randomUUID(),
-      ownerId: owner,
-      parentConversationId: root.id,
-      rootConversationId: root.id,
-    });
-    await expect(
-      initializeEveForkDocuments(stranger, child.id)
-    ).rejects.toThrow("Fork conversation not found");
-    if (index === 6) {
-      await expect(initializeEveForkDocuments(owner, child.id)).rejects.toThrow(
-        "Imported document boundary is unavailable"
-      );
-    } else {
-      await initializeEveForkDocuments(owner, child.id);
-      await initializeEveForkDocuments(owner, child.id);
-    }
-    const heads = await db
-      .select({ revisionId: eveDocumentHead.revisionId })
-      .from(eveDocumentHead)
-      .where(eq(eveDocumentHead.conversationId, child.id));
-    expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
-    const headers = await db
-      .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
-      .from(eveImportedDocumentCheckpoint)
-      .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
-    expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
-  }
+  await Promise.all(
+    [0, 2, 6].map(async (index) => {
+      const [child] = await insertEveConversationFixtures({
+        firstMessage: "Imported edit",
+        forkMessageId: `seed_message_${index}`,
+        operationId: crypto.randomUUID(),
+        ownerId: owner,
+        parentConversationId: root.id,
+        rootConversationId: root.id,
+      });
+      await expect(
+        initializeEveForkDocuments(stranger, child.id)
+      ).rejects.toThrow("Fork conversation not found");
+      if (index === 6) {
+        await expect(
+          initializeEveForkDocuments(owner, child.id)
+        ).rejects.toThrow("Imported document boundary is unavailable");
+      } else {
+        await initializeEveForkDocuments(owner, child.id);
+        await initializeEveForkDocuments(owner, child.id);
+      }
+      const heads = await db
+        .select({ revisionId: eveDocumentHead.revisionId })
+        .from(eveDocumentHead)
+        .where(eq(eveDocumentHead.conversationId, child.id));
+      expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
+      const headers = await db
+        .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
+        .from(eveImportedDocumentCheckpoint)
+        .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
+      expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
+    })
+  );
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("imported fork reservations retain their boundary across uncertain creation and  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("imported fork reservations retain their boundary across uncertain creation and reject changed retries", async () => {
   const root = await conversation();
   await db.insert(eveImportedDocumentCheckpoint).values(
@@ -1247,6 +1233,7 @@ test("imported fork reservations retain their boundary across uncertain creation
     state: "uncertain",
   });
   const sessionId = crypto.randomUUID();
+  /* oxlint-disable eslint/no-await-in-loop -- Both changed intents replay the same operation ID; preserve sequential rejection checks. */
   for (const changed of [
     { beforeMessageId: "seed_message_0", conversationId: root.id },
     { beforeTurnId: "turn_0", conversationId: root.id },
@@ -1256,16 +1243,17 @@ test("imported fork reservations retain their boundary across uncertain creation
         owner,
         operationId,
         "Replacement",
-        async () => sessionId,
+        vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
         { fork: changed }
       )
     ).rejects.toThrow("different");
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const bound = await createEveConversation(
     owner,
     operationId,
     "Replacement",
-    async () => sessionId,
+    vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
     { fork }
   );
   expect(bound).toEqual({ id: reserved.id, sessionId });
@@ -1279,7 +1267,6 @@ test("imported fork reservations retain their boundary across uncertain creation
     )
   ).toEqual(bound);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
   const root = await conversation();
@@ -1290,7 +1277,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     owner,
     crypto.randomUUID(),
     "Retained fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     {
       fork: { beforeTurnId: "turn_1", conversationId: root.id },
     }
@@ -1343,7 +1330,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     owner,
     crypto.randomUUID(),
     "After deletion",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     {
       fork: { beforeTurnId: "turn_2", conversationId: root.id },
     }

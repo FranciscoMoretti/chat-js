@@ -24,7 +24,31 @@ import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 import { auth } from "@/lib/auth";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
-/* oxlint-disable typescript/strict-boolean-expressions -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the native session ID truthiness check intentionally rejects absent and empty IDs with one getter traversal; an explicit two-part guard raises native complexity above the pinned limit. unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const resolveDefaultModel = (
+  cookieModel: string | undefined,
+  chatModels: readonly { readonly id: string }[],
+  isAnonymous: boolean
+): AppModelId => {
+  const configuredModel = config.ai.workflows.chat;
+  const anonymousModels: readonly AppModelId[] =
+    ANONYMOUS_LIMITS.AVAILABLE_MODELS;
+  let defaultModel: AppModelId = cookieModel ?? configuredModel;
+
+  if (typeof cookieModel === "string" && cookieModel !== "") {
+    const modelExists = chatModels.some((model) => model.id === cookieModel);
+    if (
+      !modelExists ||
+      (isAnonymous && !anonymousModels.includes(cookieModel))
+    ) {
+      defaultModel = configuredModel;
+    }
+  }
+  if (isAnonymous && !anonymousModels.includes(defaultModel)) {
+    return anonymousModels[0] ?? configuredModel;
+  }
+  return defaultModel;
+};
 
 const ChatLayoutDynamic = async ({
   children,
@@ -46,34 +70,13 @@ const ChatLayoutDynamic = async ({
   const cookieModel = cookieStore.get("chat-model")?.value;
   const isAnonymous = !session?.user;
 
-  const default_chat_model = config.ai.workflows.chat;
-  let defaultModel: AppModelId = cookieModel ?? default_chat_model;
+  const defaultModel = resolveDefaultModel(
+    cookieModel,
+    chatModels,
+    isAnonymous
+  );
 
-  if (typeof cookieModel === "string" && cookieModel !== "") {
-    const modelExists = chatModels.some(
-      (model: { readonly id: string }) => model.id === cookieModel
-    );
-    if (!modelExists) {
-      defaultModel = default_chat_model;
-    } else if (isAnonymous) {
-      const anonymousModels: readonly AppModelId[] =
-        ANONYMOUS_LIMITS.AVAILABLE_MODELS;
-      const isModelAvailable = anonymousModels.includes(cookieModel);
-      if (!isModelAvailable) {
-        defaultModel = default_chat_model;
-      }
-    }
-  }
-
-  if (isAnonymous) {
-    const anonymousModels: readonly AppModelId[] =
-      ANONYMOUS_LIMITS.AVAILABLE_MODELS;
-    if (!anonymousModels.includes(defaultModel)) {
-      defaultModel = anonymousModels[0] ?? default_chat_model;
-    }
-  }
-
-  if (session?.user?.id) {
+  if ((session?.user?.id ?? "") !== "") {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
 
@@ -104,7 +107,6 @@ const ChatLayoutDynamic = async ({
     </HydrateClient>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const ChatLayout = async ({
   children,

@@ -5,17 +5,13 @@ import { textPdf } from "./eve-attachment-fixtures";
 
 const projectPath = /\/project\/[a-f\d-]+$/u;
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): for (const project of [false, true]) { test(`first mess preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const project of [false, true]) { test(`first mess intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 for (const project of [false, true]) {
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
     page,
   }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
     const composer = page.getByRole("group", {
       exact: true,
@@ -53,14 +49,14 @@ for (const project of [false, true]) {
         await expect(page).toHaveURL(projectPath);
         projectId = new URL(page.url()).pathname.split("/").at(-1);
         await page.setViewportSize({ height: 844, width: 390 });
-        await page.route("**/api/files/upload", (route) =>
-          route.fulfill({
+        await page.route("**/api/files/upload", async (route) => {
+          await route.fulfill({
             json: {
               url: "/api/files/012345678901234567890123.pdf",
             },
             status: 200,
-          })
-        );
+          });
+        });
         await page
           .getByRole("group", { exact: true, name: "Message composer" })
           .getByLabel("Attach files", { exact: true })
@@ -137,7 +133,7 @@ for (const project of [false, true]) {
     } finally {
       // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       release.resolve(undefined);
-      if (projectId) {
+      if (projectId !== undefined && projectId !== null && projectId !== "") {
         const removed = await page.request.post("/api/trpc/project.remove", {
           data: { json: { id: projectId } },
           timeout: 15_000,
@@ -147,23 +143,18 @@ for (const project of [false, true]) {
     }
   });
 }
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 const chatPath = /\/chat\/[a-f\d-]+$/u;
 const visualStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root, .tsqd-parent-container { visibility: hidden !important; }";
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): for (const identity of ["registered", "guest"]) { test( preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const identity of ["registered", "guest"]) { test( intentionally keeps the existing falsy-value behavior of document.querySelector('[role="log"]')?.textContent?.includes(text); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 for (const identity of ["registered", "guest"]) {
   test(`first send keeps its document and optimistic message through stream attachment (${identity})`, async ({
     page,
   }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
       waitUntil: "domcontentloaded",
     });
@@ -200,7 +191,9 @@ for (const identity of ["registered", "guest"]) {
         document.documentElement.dataset.missingFirstMessage = "false";
         const observer = new MutationObserver(() => {
           if (
-            !document.querySelector('[role="log"]')?.textContent?.includes(text)
+            document
+              .querySelector('[role="log"]')
+              ?.textContent?.includes(text) !== true
           ) {
             document.documentElement.dataset.missingFirstMessage = "true";
           }
@@ -275,4 +268,3 @@ for (const identity of ["registered", "guest"]) {
     }
   });
 }
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

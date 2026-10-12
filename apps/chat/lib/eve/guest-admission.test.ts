@@ -62,13 +62,13 @@ beforeEach(() => {
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
   mocks.env.TRUSTED_CLIENT_IP_HEADER = undefined;
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.source.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.existing.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.files.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.model.mockResolvedValue(undefined);
   mocks.reserve.mockResolvedValue({
     reservationId: "attempt",
@@ -153,12 +153,12 @@ it("binds quota to the complete creation intent and retains native operation rep
     reservationId: "attempt",
     status: "reserved",
   });
+  const requestHashMatcher: unknown = expect.stringMatching(HASH);
   expect(mocks.reserve).toHaveBeenCalledWith(
     expect.objectContaining({
       operationId: input.operationId,
       ownerId: "guest",
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Vitest's expect.stringMatching returns any in its ExpectStatic matcher contract; this property is an asymmetric matcher consumed by toHaveBeenCalledWith, not an application requestHash.
-      requestHash: expect.stringMatching(HASH),
+      requestHash: requestHashMatcher,
       requestsPerMinute: 5,
     }),
     expect.objectContaining({
@@ -226,13 +226,19 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.reserve).toHaveBeenCalled();
 });
 it("refunds only explicit rejection, keeps ambiguous reservations, and commits success", async () => {
-  for (const response of [
-    new Response(null, { status: 502 }),
-    Response.json({ error: "unresolved" }, { status: 409 }),
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await settleGuestCreation(response, "guest", input.operationId, "attempt");
-  }
+  await Promise.all(
+    [
+      new Response(null, { status: 502 }),
+      Response.json({ error: "unresolved" }, { status: 409 }),
+    ].map(async (response) => {
+      await settleGuestCreation(
+        response,
+        "guest",
+        input.operationId,
+        "attempt"
+      );
+    })
+  );
   expect(mocks.release).not.toHaveBeenCalled();
   await settleGuestCreation(
     Response.json({ creationRejected: true }, { status: 400 }),

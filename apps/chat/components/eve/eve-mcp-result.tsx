@@ -6,8 +6,6 @@ import { McpToolResult } from "@/components/part/mcp-tool-result";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failed). */
-
 export const EveMcpResult = ({
   part,
   defaultOpen,
@@ -27,15 +25,15 @@ export const EveMcpResult = ({
     <McpToolResult
       defaultOpen={defaultOpen}
       part={{
-        errorText: failed
-          ? "MCP tool failed. Check the connector in settings and try again."
-          : undefined,
+        errorText:
+          failed === true
+            ? "MCP tool failed. Check the connector in settings and try again."
+            : undefined,
         input: part.input,
-        output: result?.success ? result.data.output : undefined,
-        state: failed ? "output-error" : part.state,
+        output: result?.success === true ? result.data.output : undefined,
+        state: failed === true ? "output-error" : part.state,
         toolName: part.toolName,
       }}
     />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

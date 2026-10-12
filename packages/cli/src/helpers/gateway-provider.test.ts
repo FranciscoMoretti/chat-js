@@ -23,11 +23,16 @@ it("wires selected defaults and snapshot identity without managing dependencies"
         definition: item.meta.chatjs,
         source: item.name,
       });
-      // oxlint-disable-next-line no-await-in-loop -- Verify each gateway before the next switch overwrites the same files.
-      const generatedDefaults = await readFile(
-        pathModule.join(cwd, "lib/ai/gateway-model-defaults.ts"),
-        "utf-8"
-      );
+      const [generatedDefaults, generatedSnapshot, currentManifest] =
+        // oxlint-disable-next-line no-await-in-loop -- Finish reading this gateway's three outputs before the next configureGatewayProvider call overwrites them.
+        await Promise.all([
+          readFile(
+            pathModule.join(cwd, "lib/ai/gateway-model-defaults.ts"),
+            "utf-8"
+          ),
+          readFile(pathModule.join(cwd, "lib/ai/models.generated.ts"), "utf-8"),
+          readFile(pathModule.join(cwd, "package.json"), "utf-8"),
+        ]);
       expect(generatedDefaults).toContain(
         `gatewayType = "${item.meta.chatjs.id}"`
       );
@@ -41,17 +46,10 @@ it("wires selected defaults and snapshot identity without managing dependencies"
       expect(deepResearchIndex).toBeGreaterThan(codeIndex);
       expect(allowClarificationIndex).toBeGreaterThanOrEqual(firstIndex);
       expect(defaultModelIndex).toBeGreaterThan(allowClarificationIndex);
-      expect(
-        // oxlint-disable-next-line no-await-in-loop -- Read the snapshot for this switch before the next mutation.
-        await readFile(
-          pathModule.join(cwd, "lib/ai/models.generated.ts"),
-          "utf-8"
-        )
-      ).toContain(`generatedForGateway = "${item.meta.chatjs.id}"`);
-      expect(
-        // oxlint-disable-next-line no-await-in-loop -- Assert the manifest after each sequential switch.
-        await readFile(pathModule.join(cwd, "package.json"), "utf-8")
-      ).toBe(manifest);
+      expect(generatedSnapshot).toContain(
+        `generatedForGateway = "${item.meta.chatjs.id}"`
+      );
+      expect(currentManifest).toBe(manifest);
     }
     const target = pathModule.join(cwd, "lib/ai/gateway-model-defaults.ts");
     const snapshot = await readFile(

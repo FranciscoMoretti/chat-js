@@ -21,9 +21,6 @@ vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): This mock directly forwards the upload callback promise; making it async introduces the conflicting oxc/no-async-await rule.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.resolve.mockResolvedValue({
@@ -31,11 +28,11 @@ beforeEach(() => {
     ownerId: "owner",
   });
   mocks.write.mockImplementation(
-    (_owner, _conversation, _key, write: () => Promise<unknown>) => write()
+    async (_owner, _conversation, _key, write: () => Promise<unknown>) =>
+      await write()
   );
   mocks.upload.mockResolvedValue({ url: "fixture-url" });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 const context = (
   signal: Readonly<AbortSignal> = new AbortController().signal

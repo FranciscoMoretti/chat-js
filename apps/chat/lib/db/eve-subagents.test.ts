@@ -1,10 +1,10 @@
-/* oxlint-disable eslint/no-await-in-loop -- Apply real migrations and verify ordered durable billing operations. */
 import { readFile } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
@@ -20,18 +20,21 @@ const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
 const MIGRATION_FIXTURE_SETUP_TIMEOUT_MS = 30_000;
 beforeAll(async () => {
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  const journal = JSON.parse(
-    await readFile(
-      new URL("migrations/meta/_journal.json", import.meta.url),
-      "utf-8"
-    )
-  );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  const journal = z
+    .object({ entries: z.array(z.object({ tag: z.string() })) })
+    .parse(
+      JSON.parse(
+        await readFile(
+          new URL("migrations/meta/_journal.json", import.meta.url),
+          "utf-8"
+        )
+      )
+    );
   for (const entry of journal.entries) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await postgres.exec(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
       await readFile(
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
         new URL(`migrations/${entry.tag}.sql`, import.meta.url),
         "utf-8"
       )
@@ -41,25 +44,26 @@ beforeAll(async () => {
     [conversationId, "owner", "root"],
     [otherId, "other", "foreign-root"],
   ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await postgres.query(
       'insert into "user" (id,name,email) values ($1,$1,$1)',
       [owner]
     );
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await postgres.query(
       'insert into "EveChat" (id,"ownerId",title) values ($1,$2,\'Research\')',
       [id, owner]
     );
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await postgres.query(
       'insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$2,$1,\'Research\',$3,\'bound\')',
       [id, owner, session]
     );
   }
 }, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-afterAll(() => postgres.close());
-/* oxlint-enable typescript/promise-function-async */
+afterAll(async () => {
+  await postgres.close();
+});
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
   const child = await registerEveSubagent("owner", "root", "child", "turn_1");
@@ -132,6 +136,7 @@ it("charges native child receipts once and rounds their combined cost on the roo
       meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
       type: "action.result",
     } satisfies MessageStreamEvent;
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await ingestEveUsage("owner", sessionId, event, attribution);
   }
   const rows = await postgres.query<{

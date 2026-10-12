@@ -25,9 +25,6 @@ if (
 
 let stopping = false;
 let child: ReturnType<typeof spawn> | undefined;
-/* oxlint-disable typescript/promise-function-async -- sleep: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-const sleep = (ms: number): Promise<void> => delay(ms);
-/* oxlint-enable typescript/promise-function-async */
 // Eve's development runtime detaches its child process. Track descendants
 // while the launcher is alive so shutdown also cleans up detached workers.
 let descendants = new Map<number, string>();
@@ -159,7 +156,7 @@ while (!stopping) {
   while (!stopping && !exited) {
     trackChildren();
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor awaits each readiness probe before deciding whether startup succeeded. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- This probe updates consecutive failures and lastReadyAt before shouldRestartAfterReadinessFailures decides whether to restart the same child.
       await checkHealth(origin);
       if (!wasReady) {
         console.info("ChatJS, Eve and database are ready");
@@ -186,23 +183,23 @@ while (!stopping) {
         break;
       }
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor spaces readiness probes within the current startup attempt. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-    await sleep(READINESS_POLL_INTERVAL_MS);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Space probes for this child by READINESS_POLL_INTERVAL_MS; concurrent probes would change the failure counter and recovery grace period.
+    await delay(READINESS_POLL_INTERVAL_MS);
   }
   if (!wasReady) {
     failedStartups += FAILED_STARTUP_INCREMENT;
   }
   terminate("SIGTERM");
-  // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor allows graceful shutdown before escalating to SIGKILL. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-  await sleep(GRACEFUL_SHUTDOWN_DELAY_MS);
+  // oxlint-disable-next-line eslint/no-await-in-loop -- Wait after SIGTERM before SIGKILL so the current child gets its shutdown grace period before any restart.
+  await delay(GRACEFUL_SHUTDOWN_DELAY_MS);
   terminate("SIGKILL");
   // Clearing the process handle releases the exited ChildProcess between restarts.
   child = undefined;
   descendants = new Map();
   if (!stopping) {
     console.info(`Restarting in ${backoff / MILLISECONDS_PER_SECOND}s`);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor waits for its bounded restart backoff before launching another child. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-    await sleep(backoff);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Delay this restart before doubling the next attempt's backoff and spawning another child.
+    await delay(backoff);
     backoff = Math.min(backoff * BACKOFF_MULTIPLIER, MAX_RESTART_BACKOFF_MS);
   }
 }

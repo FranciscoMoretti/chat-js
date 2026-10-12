@@ -42,7 +42,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
       },
       saveTokens: (nextTokens): void => {
         tokens = nextTokens;
-        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
         firstRefreshSaved.resolve(undefined);
       },
       tokens: () => tokens,
@@ -110,7 +110,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         if (authorization !== `Bearer ${validAccessToken}`) {
           oldTokenRequests += 1;
           if (oldTokenRequests >= 2) {
-            // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+            // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
             bothOldTokenRequestsStarted.resolve(undefined);
           }
           if (timing === "after-save" && oldTokenRequests === 2) {

@@ -91,7 +91,7 @@ export const purgeEveFamilyCodeSandboxes = async (
   const cleanup = createCodeSandboxCleanupSession();
   for (const resource of confirmedResources) {
     // Keep identity verification, provider absence, and durable release as one ordered unit per resource.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one provider transaction at a time so fencing and durable ownership stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The shared provider cleanup session verifies identity, proves absence, and durably releases one resource before the next; a failed resource must retain later ownership.
     await purgeConfirmedCodeSandbox(ownerId, resource, cleanup);
   }
   if (resources.some((resource) => !resource.creationConfirmed)) {

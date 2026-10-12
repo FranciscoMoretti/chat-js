@@ -1,6 +1,5 @@
 import { execFileSync } from "node:child_process";
 
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -34,13 +33,12 @@ type RunCodeActionResultReader =
       data?: unknown;
     }>;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("saved-code controls cover pending, disabled, denied and error states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("saved-code controls cover pending, disabled, denied and error states", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
@@ -62,6 +60,7 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
   await expect(
     page.getByRole("button", { name: "Run" }).and(page.locator(":disabled"))
   ).toHaveCount(2);
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -73,12 +72,9 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
       path: testInfo.outputPath(`run-states-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("artifact Run executes saved source, retains output across reload and sharing, a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("artifact Run executes saved source, retains output across reload and sharing, and bills once", async ({
   page,
   browser,
@@ -93,7 +89,9 @@ test("artifact Run executes saved source, retains output across reload and shari
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.evaluate(
     async (
@@ -210,8 +208,11 @@ test("artifact Run executes saved source, retains output across reload and shari
     .where(eq(eveConversation.id, binding.id));
   const publicContext = await browser.newContext();
   try {
-    await publicContext.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await publicContext.route(
+      "https://unpkg.com/react-scan/**",
+      async (route) => {
+        await route.abort();
+      }
     );
     await publicContext.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
@@ -248,4 +249,3 @@ test("artifact Run executes saved source, retains output across reload and shari
     await publicContext.close();
   }
 });
-/* oxlint-enable typescript/promise-function-async */

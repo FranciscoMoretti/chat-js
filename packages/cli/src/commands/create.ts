@@ -318,7 +318,38 @@ const loadInstallableTools = async (
     return [];
   }
 };
-// oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
+const addDocumentToolSources = (
+  toolSources: string[],
+  coreFeatures: ReadonlyInput<CreateSetup["coreFeatures"]>,
+  documentTypes: ReadonlyInput<CreateSetup["documentTypes"]>,
+  assistantTools: ReadonlyInput<AssistantTools>,
+  selectedTools: readonly ReadonlyInput<z.output<typeof toolDefinitionSchema>>[]
+): void => {
+  for (const kind of ["text", "code", "sheet"] as const) {
+    if (coreFeatures.documents && documentTypes[kind]) {
+      const source = itemAddress(`${kind}-documents`, "tool");
+      if (!toolSources.includes(source)) {
+        toolSources.push(source);
+      }
+    }
+  }
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
+  }
+  if (
+    coreFeatures.documents &&
+    documentTypes.code &&
+    selectedTools.some(
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.slot === "codeExecution" &&
+        typeof tool.codeExecutorExport === "string" &&
+        tool.codeExecutorExport !== ""
+    )
+  ) {
+    toolSources.push(itemAddress("saved-code-execution", "tool"));
+  }
+};
+
 const promptCreateSetup = async (
   options: Readonly<CreateOptions>,
   targetDir: string
@@ -366,29 +397,13 @@ const promptCreateSetup = async (
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
-  for (const kind of ["text", "code", "sheet"] as const) {
-    if (coreFeatures.documents && documentTypes[kind]) {
-      const source = itemAddress(`${kind}-documents`, "tool");
-      if (!toolSources.includes(source)) {
-        toolSources.push(source);
-      }
-    }
-  }
-  if (assistantTools.builtInTools.deepResearch) {
-    toolSources.push(itemAddress("deep-research", "tool"));
-  }
-  if (
-    coreFeatures.documents &&
-    documentTypes.code &&
-    selectedTools.some(
-      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
-        tool.slot === "codeExecution" &&
-        typeof tool.codeExecutorExport === "string" &&
-        tool.codeExecutorExport !== ""
-    )
-  ) {
-    toolSources.push(itemAddress("saved-code-execution", "tool"));
-  }
+  addDocumentToolSources(
+    toolSources,
+    coreFeatures,
+    documentTypes,
+    assistantTools,
+    selectedTools
+  );
   const usesStorage =
     coreFeatures.attachments ||
     selectedTools.some(

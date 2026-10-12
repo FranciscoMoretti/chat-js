@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
@@ -9,15 +10,13 @@ import { toolDefinitionSchema } from "../../../registry/metadata";
 import { planInstallation } from "./installation-plan";
 
 const roots: string[] = [];
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
 const definition = (
   id: string
@@ -67,13 +66,18 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     port: 0,
   });
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    await rejects(
       planInstallation(root, {
         features: [],
         tools: [`http://127.0.0.1:${server.port}/second.json`],
-      })
-    ).rejects.toThrow("Only one codeExecution");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Only one codeExecution");
+        return true;
+      }
+    );
     const fresh = await planInstallation(
       root,
       {
@@ -101,7 +105,6 @@ test("rejects conflicting provider selections and permits reinstalling the selec
   }
 });
 
-/* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun rejection matchers are awaited despite their void declarations. */
 test("replaces an older executor descriptor but rejects newly requested providers without capabilities", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-executor-upgrade-"));
   roots.push(root);
@@ -150,9 +153,15 @@ test("replaces an older executor descriptor but rejects newly requested provider
       )
     ).toEqual([old.id]);
     declared = false;
-    await expect(
-      planInstallation(root, selection, { replace: true })
-    ).rejects.toThrow("declared execution, cleanup and usage capabilities");
+    await rejects(
+      planInstallation(root, selection, { replace: true }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("declared execution, cleanup and usage capabilities");
+        return true;
+      }
+    );
     expect(await readFile(path.join(directory, "chatjs.json"), "utf-8")).toBe(
       installed
     );
@@ -160,4 +169,3 @@ test("replaces an older executor descriptor but rejects newly requested provider
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/await-thenable, typescript/no-confusing-void-expression */

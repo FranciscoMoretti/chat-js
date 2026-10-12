@@ -5,10 +5,10 @@ import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 
 const mocks = vi.hoisted(() => ({
   capabilityInstalled: true,
-  cleanup: vi.fn(),
+  cleanup: vi.fn<(name: string) => Promise<void>>(),
   createCleanupSession: vi.fn(),
   list: vi.fn(),
-  record: vi.fn(),
+  record: vi.fn<() => Promise<void>>(),
 }));
 vi.mock("../../tools/chatjs/tools", () => ({
   tools: { codeExecution: {} },
@@ -52,11 +52,9 @@ beforeEach(() => {
   });
   mocks.list.mockResolvedValue([resource]);
 
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.record.mockResolvedValue(undefined);
+  mocks.record.mockResolvedValue();
 
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.cleanup.mockResolvedValue(undefined);
+  mocks.cleanup.mockResolvedValue();
 });
 
 test("cleans confirmed ownership and releases its durable record", async () => {

@@ -2,9 +2,6 @@ import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("submitted and streaming have distinct visuals and both permit stopping") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("submitted and streaming have distinct visuals and both permit stopping", async ({
   page,
 }) => {
@@ -24,12 +21,12 @@ test("submitted and streaming have distinct visuals and both permit stopping", a
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://composer.test/", (route) =>
-    route.fulfill({
+  await page.route("http://composer.test/", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("http://composer.test/");
   await page.addScriptTag({ content: script, type: "module" });
   const submitted = page.getByRole("region", {
@@ -91,4 +88,3 @@ test("submitted and streaming have distinct visuals and both permit stopping", a
     fullPage: true,
   });
 });
-/* oxlint-enable typescript/promise-function-async */

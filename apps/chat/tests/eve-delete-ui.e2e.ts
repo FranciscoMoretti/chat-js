@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -13,7 +12,7 @@ import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-async function openSidebar(page: Page): Promise<void> {
+const openSidebar = async (page: Page): Promise<void> => {
   if (
     await page
       .getByRole("textbox", { name: "Search conversations" })
@@ -25,7 +24,8 @@ async function openSidebar(page: Page): Promise<void> {
     exact: true,
     name: "Expand sidebar",
   });
-  // oxlint-disable-next-line unicorn/prefer-ternary -- This browser flow awaits exactly one click based on the visible sidebar control; eslint/no-ternary also rejects the ternary form.
+
+  // oxlint-disable-next-line unicorn/prefer-ternary -- Each branch awaits a click on the appropriate sidebar control; configured no-ternary forbids the suggested alternate syntax.
   if (await expand.isVisible()) {
     await expand.click();
   } else {
@@ -33,26 +33,22 @@ async function openSidebar(page: Page): Promise<void> {
       .getByRole("button", { exact: true, name: "Toggle Sidebar" })
       .click();
   }
-}
+};
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): for (const width of [1280, 390]) { test(`sidebar deleti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const width of [1280, 390]) { test(`sidebar deleti intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 for (const width of [1280, 390]) {
   test(`sidebar deletion at ${width}px survives reload and checks uncertain results`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ height: 844, width });
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const [owner] = await db
       .select()
       .from(user)
       .where(eq(user.email, "dev@localhost"));
-    if (!owner) {
+    if (owner === undefined) {
       throw new Error("Missing development user");
     }
     const id = crypto.randomUUID();
@@ -175,4 +171,3 @@ for (const width of [1280, 390]) {
     }
   });
 }
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

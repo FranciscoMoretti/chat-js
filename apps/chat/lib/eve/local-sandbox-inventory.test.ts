@@ -27,24 +27,24 @@ test("local inventory selects exact native owners across versions and reports un
       owned: [],
       unattributedDirectories: [],
     });
-    for (const [sessionKey, sessionId] of [
-      ["old-version", "session"],
-      ["new-version", "session"],
-      ["foreign", "session-extra"],
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await mkdir(nodePath.join(directory, sessionKey), { recursive: true });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await writeFile(
-        nodePath.join(directory, sessionKey, "owner.json"),
-        JSON.stringify({
-          backendName: "microsandbox",
-          sessionId,
-          sessionKey,
-          version: 1,
-        })
-      );
-    }
+    await Promise.all(
+      [
+        ["old-version", "session"],
+        ["new-version", "session"],
+        ["foreign", "session-extra"],
+      ].map(async ([sessionKey, sessionId]) => {
+        await mkdir(nodePath.join(directory, sessionKey), { recursive: true });
+        await writeFile(
+          nodePath.join(directory, sessionKey, "owner.json"),
+          JSON.stringify({
+            backendName: "microsandbox",
+            sessionId,
+            sessionKey,
+            version: 1,
+          })
+        );
+      })
+    );
     await mkdir(nodePath.join(directory, "legacy"));
     await mkdir(nodePath.join(directory, "malformed"));
     await writeFile(nodePath.join(directory, "malformed", "owner.json"), "{");
@@ -112,10 +112,11 @@ test("unowned directories remain unattributed regardless of their names", async 
   const truncated = `${prefix}${target.slice(0, -1)}-__root__`;
   const wrongScope = foreign.replace(scope, "f".repeat(16));
   try {
-    for (const key of [ownedCandidate, foreign, truncated, wrongScope]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await mkdir(nodePath.join(directory, key), { recursive: true });
-    }
+    await Promise.all(
+      [ownedCandidate, foreign, truncated, wrongScope].map(async (key) => {
+        await mkdir(nodePath.join(directory, key), { recursive: true });
+      })
+    );
     const result = await readLocalEveSandboxInventory(appRoot, [target]);
     expect(result.owned).toEqual([]);
     expect(result.unattributedDirectories.toSorted()).toEqual(

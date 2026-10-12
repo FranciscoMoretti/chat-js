@@ -88,10 +88,9 @@ const reserveGroupRow = async (
       .where(condition);
   }
   if (hasQueryRow(source) && source.state !== "bound") {
-    return;
+    return undefined;
   }
   if (hasQueryRow(existing)) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return existing;
   }
   const candidates = eveResponseGroupCandidates(
@@ -113,7 +112,6 @@ const reserveGroupRow = async (
       sourceIdentityKnown: true,
     })
     .returning();
-  // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return group;
 };
 
@@ -133,9 +131,6 @@ const requireGroup = (
   };
 };
 
-/* oxlint-disable typescript/promise-function-async --
-typescript/promise-function-async (#606): reserveEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Reserve every candidate under the same owner lock used by family deletion.
  * @param {string} ownerId Owner whose family lock fences the comparison reservation.
@@ -146,12 +141,12 @@ const reserveEveResponseGroup = async (
   ownerId: string,
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ReservedResponseGroup> => {
-  const result = await db.transaction((tx: ResponseGroupWriteTransaction) =>
-    reserveGroupRow(tx, ownerId, value)
+  const result = await db.transaction(
+    async (tx: ResponseGroupWriteTransaction) =>
+      await reserveGroupRow(tx, ownerId, value)
   );
   return requireGroup(result);
 };
-/* oxlint-enable typescript/promise-function-async */
 
 /**
  * Must commit with guest quota when admitting an anonymous comparison.
@@ -294,7 +289,7 @@ const getEveResponseGroup = async (
       )
     );
   if (!group?.candidates) {
-    return;
+    return undefined;
   }
   const conversations = await db
     .select()
@@ -311,9 +306,8 @@ const getEveResponseGroup = async (
         row.state === "deleting" || row.state === "deleted"
     )
   ) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     candidates: group.candidates.map(
       (
@@ -369,7 +363,7 @@ const getEveResponseGroupForConversation = async (
       )
     );
   if (!hasQueryRow(conversation)) {
-    return;
+    return undefined;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const family = await db
@@ -403,7 +397,7 @@ const getEveResponseGroupForConversation = async (
     }
   );
   if (boundFamily.length === EMPTY_FAMILY_SIZE) {
-    return;
+    return undefined;
   }
   const operationIds = sql`ARRAY[${sql.join(
     boundFamily.map(
@@ -441,14 +435,14 @@ const getEveResponseGroupForConversation = async (
     groups
   );
   if (!lineage) {
-    return;
+    return undefined;
   }
   const lineageGroup = groups.find(
     (group: ReadonlyNativeSurface<(typeof groups)[number]>) =>
       group.id === lineage.groupId
   );
   if (!lineageGroup) {
-    return;
+    return undefined;
   }
   const candidateConversations = await db
     .select({
@@ -472,7 +466,7 @@ const getEveResponseGroupForConversation = async (
     ),
   ];
   if (candidateRootIds.length === EMPTY_FAMILY_SIZE) {
-    return;
+    return undefined;
   }
   const groupFamilies = await db
     .select({
@@ -510,13 +504,12 @@ const getEveResponseGroupForConversation = async (
     [lineageGroup]
   );
   if (!groupLineage) {
-    return;
+    return undefined;
   }
   const group = await getEveResponseGroup(ownerId, lineage.groupId);
   if (!group) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroupForConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     ...group,
     candidates: group.candidates.map(

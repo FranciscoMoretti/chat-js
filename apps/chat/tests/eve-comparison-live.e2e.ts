@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
+import { z } from "zod";
 
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
@@ -8,14 +9,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("two cheap native responses bind, render, and preserve an unsent draft while swi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("two cheap native responses bind, render, and preserve an unsent draft while switching", async ({
   page,
 }, testInfo) => {
   test.setTimeout(150_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const marker = `comparison-${crypto.randomUUID().slice(0, 8)}`;
   const message = `Reply with exactly ${marker}. Do not call tools.`;
@@ -129,8 +129,12 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       .click();
     const regeneration = await regenerationResponse;
     expect(regeneration.ok()).toBe(true);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration wire payload directly; this assertion verifies the fork-kind contract.
-    expect(regeneration.request().postDataJSON().forkKind).toBe("regenerate");
+
+    expect(
+      z
+        .looseObject({ forkKind: z.string() })
+        .parse(regeneration.request().postDataJSON()).forkKind
+    ).toBe("regenerate");
     const retry = conversationBinding.parse(await regeneration.json());
     await expect(page).toHaveURL(new URL(`/chat/${retry.id}`, page.url()).href);
     await expect(
@@ -190,4 +194,3 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       .toBe(200);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

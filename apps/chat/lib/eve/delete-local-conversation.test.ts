@@ -4,7 +4,7 @@ import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 
 const mocks = vi.hoisted(() => ({
   check: vi.fn(),
-  complete: vi.fn(),
+  complete: vi.fn<() => Promise<void>>(),
   native:
     vi.fn<(sessionId: string, retire: () => Promise<void>) => Promise<void>>(),
   provider: vi.fn(),
@@ -42,8 +42,7 @@ beforeEach(() => {
   });
   mocks.resources.mockResolvedValue(family);
   mocks.native.mockResolvedValue();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.complete.mockResolvedValue(undefined);
+  mocks.complete.mockResolvedValue();
 });
 
 test("all resources and native family payloads finish before the application tombstone", async () => {
@@ -76,7 +75,7 @@ test("all resources and native family payloads finish before the application tom
     )
   ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
@@ -117,7 +116,7 @@ test("partial native purge retains pending state and retry runs the full orderin
 });
 
 test("foreign or missing families cannot erase native or application data", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.resources.mockResolvedValue(undefined);
   expect(
     await deleteLocalEveConversationFamily("foreign", "root", "/app")

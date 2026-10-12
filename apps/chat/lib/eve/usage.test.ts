@@ -1,10 +1,11 @@
 import type { MessageStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
+import type { recordEveUsage } from "../db/eve-billing";
 
 import { ingestEveUsage } from "./usage";
 
-const record = vi.hoisted(() => vi.fn());
+const record = vi.hoisted(() => vi.fn<typeof recordEveUsage>());
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => record.mockReset());
@@ -25,10 +26,10 @@ it("records each auxiliary model attempt with replay-stable independent identiti
   expect(await ingestEveUsage("owner", "session", event)).toBe(true);
   expect(
     record.mock.calls.map(
-      ([call]: Readonly<(typeof record.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        [call.eventId, call.costUsd]
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
+      ([call]: Readonly<(typeof record.mock.calls)[number]>) => [
+        call.eventId,
+        call.costUsd,
+      ]
     )
   ).toEqual([
     ["hook-event:model-call:0", 0.001],
@@ -57,7 +58,6 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
     })
   ).toBe(true);
   expect(record).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(record.mock.calls[1][0].costUsd).toBe(0);
 });
 
@@ -170,17 +170,14 @@ it("retains unpriced and malformed external receipts for reconciliation", async 
       version: 1,
     };
     // A malformed receipt must not bypass accounting because its name is new.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Assert each reconciliation result before processing the next receipt.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each malformed receipt is ingested and asserted before the shared billing mock is reused; unresolved external receipts must stay visible to reconciliation.
     const priced = await ingestEveUsage("owner", "session", toolEvent(output));
     expect(priced).toBe(false);
   }
 
   expect(
     record.mock.calls.map(
-      ([value]: Readonly<(typeof record.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        value.costUsd
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
+      ([value]: Readonly<(typeof record.mock.calls)[number]>) => value.costUsd
     )
   ).toEqual([undefined, undefined]);
 });

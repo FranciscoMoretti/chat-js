@@ -146,7 +146,6 @@ const isBoundHistoricalConversation = (
   );
 };
 
-/* oxlint-disable typescript/promise-function-async -- Stored read callbacks forward original download promises and inline read callbacks retain their Blob promises. */
 /**
  * Copy trusted native history for editing after validating every historical attachment.
  * @param {string} ownerId Owner whose conversation and file access authorize each copy.
@@ -176,42 +175,49 @@ export const restoreMessageAttachments = async (
         files.push({
           contentType,
           name,
+          // oxlint-disable-next-line typescript/promise-function-async -- Inline decoding runs synchronously and resolves a Blob; an async wrapper changes the throw boundary without asynchronous work to await.
           read: () => Promise.resolve(inlineAttachment(url, contentType)),
         });
       } else {
         const key = storedHistoricalAttachmentKey(url);
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original file ownership before metadata and the next part.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
         const access = await canReadEveFile(key, ownerId);
         if (!access.allowed) {
           throw new Error("This attachment is unavailable for editing.");
         }
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Metadata validation, descriptor admission and the next original part read share this continuation.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
         const metadata = await getFileMetadata(key);
         validateAttachment(metadata, contentType);
-        files.push({ contentType, name, read: () => downloadFile(key) });
+        files.push({
+          contentType,
+          name,
+          read: async () => await downloadFile(key),
+        });
       }
     }
   }
 
   const attachments = [];
   for (const { contentType, name, read } of files) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep file bytes bounded to one copy at a time.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
     const blob = await read();
     validateAttachment(blob, contentType);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each owned copy before proceeding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
     const bytes = await blob.arrayBuffer();
     const key = createFileId();
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Reserve before storage I/O.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
     await reserveEveUpload(ownerId, key);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize with orphan cleanup.
-    const copied = await writeEveUpload(ownerId, key, () =>
-      uploadFileAtKey(key, name, bytes, contentType)
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
+    const copied = await writeEveUpload(
+      ownerId,
+      key,
+      async () => await uploadFileAtKey(key, name, bytes, contentType)
     );
     attachments.push(
       draftAttachment.parse({
         ...copied,
         contentType,
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Digest exact historical bytes.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
         digest: await attachmentDigest(bytes),
         name,
       })
@@ -219,4 +225,3 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
-/* oxlint-enable typescript/promise-function-async */

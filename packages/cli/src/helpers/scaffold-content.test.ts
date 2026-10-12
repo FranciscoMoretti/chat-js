@@ -7,7 +7,6 @@ import {
 import path from "node:path";
 import { tmpdir } from "node:os";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test.each([
   {
     excluded: [
@@ -15,6 +14,7 @@ test.each([
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
       "lib/db/eve-subagents.test.ts",
+      "lib/db/eve-guest-rate.test.ts",
       "lib/db/mcp-oauth-lock.test.ts",
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
@@ -71,14 +71,14 @@ test.each([
         recursive: true,
       });
       const privateCopies = await Promise.all(
-        privateFiles.map((file) =>
-          Bun.file(path.join(destination, file)).exists()
+        privateFiles.map(
+          async (file) => await Bun.file(path.join(destination, file)).exists()
         )
       );
       expect(privateCopies).toEqual(privateFiles.map(() => false));
       const retainedCopies = await Promise.all(
-        retainedFiles.map((file) =>
-          readFile(path.join(destination, file), "utf-8")
+        retainedFiles.map(
+          async (file) => await readFile(path.join(destination, file), "utf-8")
         )
       );
       expect(retainedCopies).toEqual(
@@ -89,4 +89,3 @@ test.each([
     }
   }
 );
-/* oxlint-enable typescript/promise-function-async */

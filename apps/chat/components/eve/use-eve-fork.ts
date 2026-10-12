@@ -1,14 +1,26 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  useSyncExternalStore,
+} from "react";
+import type { SetStateAction } from "react";
+import { createClientSnapshot } from "@/components/client-snapshot";
 
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import { draftMessage } from "@/lib/eve/draft";
+import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
@@ -64,13 +76,11 @@ const responseModelSelection = (
   return undefined;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
-
 const operationModelSelection = (
   operation: Operation
 ): SelectedModelValue | undefined => {
   if (!("modelIds" in operation)) {
-    if (operation.modelId && isSelectedModelValue(operation.modelId)) {
+    if (hasText(operation.modelId) && isSelectedModelValue(operation.modelId)) {
       return operation.modelId;
     }
     return undefined;
@@ -84,9 +94,6 @@ const operationModelSelection = (
   }
   return undefined;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions -- useEveFork: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editingMessageId)
- */
 
 export const useEveFork = (
   ownerId: string,
@@ -110,91 +117,135 @@ export const useEveFork = (
   const selectedModel = useDefaultModel();
   const files = useEveAttachments();
   const { setAttachments } = files;
-  const [draft, setDraft] = useState("");
-  const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
-  const [modelSelectionValue, setModelSelectionValue] =
-    useState<SelectedModelValue>();
-  const [source, setSource] = useState<EveForkInput>();
-  const [pending, setPending] = useState<Operation>();
-  const [editingBoundary, setEditingBoundary] = useState<string>();
   const [editingMessageId, setEditingMessageId] = useState<string>();
   const [editRestoreFailed, setEditRestoreFailed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [restoreFailed, setRestoreFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [rejected, setRejected] = useState(false);
-  const [failure, setFailure] = useState("");
   const lock = useRef(false);
 
-  useEffect(() => {
-    try {
-      const operation: Operation | undefined = readCreationRequest(
-        sessionStorage,
-        ownerId,
+  const store = useMemo(
+    () =>
+      createClientSnapshot<{
+        draft: string;
+        selectedTool: UiToolName | null;
+        modelSelectionValue: SelectedModelValue | undefined;
+        source: EveForkInput | undefined;
+        pending: Operation | undefined;
+        editingBoundary: string | undefined;
+        restoreFailed: boolean;
+        loaded: boolean;
+        failure: string;
+      }>(
         {
-          conversationId,
+          draft: "",
+          selectedTool: null,
+          modelSelectionValue: undefined,
+          source: undefined,
+          pending: undefined,
+          editingBoundary: undefined,
+          restoreFailed: false,
+          loaded: false,
+          failure: "",
+        },
+        (current) => {
+          const failed = {
+            ...current,
+            loaded: true,
+            restoreFailed: true,
+            failure:
+              "The saved version request could not be restored. Keep this tab for recovery.",
+          };
+          try {
+            const operation: Operation | undefined = readCreationRequest(
+              sessionStorage,
+              ownerId,
+              { conversationId }
+            );
+            if (!operation) {
+              return { ...current, loaded: true };
+            }
+            if (!operation.fork) {
+              return failed;
+            }
+            const restored = restoreDraft(operation.message);
+            setAttachments(restored.attachments);
+            return {
+              ...current,
+              loaded: true,
+              pending: operation,
+              modelSelectionValue: operationModelSelection(operation),
+              selectedTool: operation.selectedTool ?? null,
+              source: operation.fork,
+              editingBoundary:
+                operation.forkKind === "edit"
+                  ? (operation.fork.beforeTurnId ??
+                    operation.fork.beforeMessageId)
+                  : undefined,
+              draft: restored.text,
+            };
+          } catch {
+            return failed;
+          }
         }
-      );
-      if (operation) {
-        if (!operation.fork) {
-          // oxlint-disable-next-line react/todo -- Preserve the explicit missing-fork recovery error.
-          throw new Error("Missing saved fork source.");
-        }
-        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the controlled fork editor from its durable request.
-        setPending(operation);
-        setModelSelectionValue(operationModelSelection(operation));
-        setSelectedTool(operation.selectedTool ?? null);
-        setSource(operation.fork);
-        if (operation.forkKind === "edit") {
-          setEditingBoundary(
-            operation.fork.beforeTurnId ?? operation.fork.beforeMessageId
-          );
-        }
-        setDraft(
-          typeof operation.message === "string"
-            ? operation.message
-            : operation.message
-                .filter(
-                  (
-                    part
-                  ): part is Extract<
-                    Exclude<ReadonlyEveMessageInput, string>[number],
-                    { readonly type: "text" }
-                  > => part.type === "text"
-                )
-                .map((part) => part.text)
-                .join("\n")
-        );
-        setAttachments(
-          typeof operation.message === "string"
-            ? []
-            : operation.message
-                .filter(
-                  (
-                    part
-                  ): part is Extract<
-                    Exclude<ReadonlyEveMessageInput, string>[number],
-                    { readonly type: "file" }
-                  > => part.type === "file"
-                )
-                .map((part) => ({
-                  contentType: part.mediaType,
-                  digest: "",
-                  name: part.filename,
-                  url: part.data,
-                }))
-        );
-      }
-    } catch {
-      setRestoreFailed(true);
-      setFailure(
-        "The saved version request could not be restored. Keep this tab for recovery."
-      );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required restore cleanup in finally.
-    } finally {
-      setLoaded(true);
-    }
-  }, [conversationId, ownerId, setAttachments]);
+      ),
+    [conversationId, ownerId, setAttachments]
+  );
+  const {
+    draft,
+    selectedTool,
+    modelSelectionValue,
+    source,
+    pending,
+    editingBoundary,
+    restoreFailed,
+    loaded,
+    failure,
+  } = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
+  const {
+    setDraft,
+    setSelectedTool,
+    setModelSelectionValue,
+    setSource,
+    setPending,
+    setEditingBoundary,
+    setFailure,
+  } = useMemo(
+    () => ({
+      setDraft: (value: SetStateAction<string>): void => {
+        store.update((current) => ({
+          ...current,
+          draft: typeof value === "function" ? value(current.draft) : value,
+        }));
+      },
+      setSelectedTool: (value: SetStateAction<UiToolName | null>): void => {
+        store.update((current) => ({
+          ...current,
+          selectedTool:
+            typeof value === "function" ? value(current.selectedTool) : value,
+        }));
+      },
+      setModelSelectionValue: (value: SelectedModelValue | undefined): void => {
+        store.set("modelSelectionValue", value);
+      },
+      setSource: (value: EveForkInput | undefined): void => {
+        store.set("source", value);
+      },
+      setPending: (value: Operation | undefined): void => {
+        store.set("pending", value);
+      },
+      setEditingBoundary: (value: string | undefined): void => {
+        store.set("editingBoundary", value);
+      },
+      setFailure: (value: string): void => {
+        store.set("failure", value);
+      },
+    }),
+    [store]
+  );
 
   const execute = async (operation: Operation): Promise<void> => {
     const binding = await resolveCreationRequest(
@@ -235,42 +286,53 @@ export const useEveFork = (
     lock.current = true;
     setBusy(true);
     setFailure("");
-    try {
-      await action();
-    } catch (error) {
-      if (error instanceof CreationRejectedError) {
-        setRejected(true);
+    await withTaskCleanup(
+      async () => {
         try {
-          finishCreation(sessionStorage, ownerId, { conversationId });
-          setPending(undefined);
-          setRejected(false);
-        } catch {
+          await action();
+        } catch (error) {
+          if (error instanceof CreationRejectedError) {
+            setRejected(true);
+            try {
+              finishCreation(sessionStorage, ownerId, { conversationId });
+              setPending(undefined);
+              setRejected(false);
+            } catch {
+              setFailure(
+                "The rejected version request could not be cleared. Keep this tab for recovery."
+              );
+              return;
+            }
+          }
           setFailure(
-            "The rejected version request could not be cleared. Keep this tab for recovery."
+            error instanceof Error
+              ? error.message
+              : "Unable to create a version."
           );
-          return;
         }
+      },
+      () => {
+        lock.current = false;
+        setBusy(false);
       }
-      setFailure(
-        error instanceof Error ? error.message : "Unable to create a version."
-      );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required fork lock cleanup in finally.
-    } finally {
-      lock.current = false;
-      setBusy(false);
-    }
+    );
   };
-  const begin = (
+  const begin = async (
     message: ReadonlyEveMessage,
     regeneration?: {
       readonly response: ReadonlyEveMessage;
       readonly events: Parameters<typeof responseModel>[0];
     },
     editContext?: EditContext
-  ): Promise<void> =>
-    run(async () => {
+  ): Promise<void> => {
+    await run(async () => {
       const boundary = eveUserForkBoundary(message);
-      if (pending || editingMessageId || !family.data || !boundary) {
+      if (
+        pending ||
+        hasText(editingMessageId) ||
+        !family.data ||
+        !hasText(boundary)
+      ) {
         return;
       }
       const responseSelection = editContext?.response
@@ -320,7 +382,7 @@ export const useEveFork = (
       }
       files.setAttachments(attachments);
       if (regeneration) {
-        if (!modelId || typeof modelId !== "string") {
+        if (!hasText(modelId) || typeof modelId !== "string") {
           throw new Error(
             "The response model is unavailable. Reload before regenerating."
           );
@@ -339,6 +401,7 @@ export const useEveFork = (
         setEditingMessageId(message.id);
       }
     });
+  };
   return {
     begin,
     busy,
@@ -352,15 +415,15 @@ export const useEveFork = (
       setSource(undefined);
       setFailure("");
     },
-    compare: (
+    compare: async (
       message: ReadonlyEveMessageInput,
       modelIds: readonly string[],
       beforeTurnId: string,
       requestedTool?: UiToolName,
       clearComposer = true
-    ) =>
-      run(async () => {
-        if (!loaded || restoreFailed || pending || editingMessageId) {
+    ) => {
+      await run(async () => {
+        if (!loaded || restoreFailed || pending || hasText(editingMessageId)) {
           return;
         }
         const operation = prepareResponseGroupCreation(
@@ -385,7 +448,8 @@ export const useEveFork = (
         );
         setPending(operation);
         await execute(operation);
-      }),
+      });
+    },
     draft,
     editingBoundary,
     editingMessageId,
@@ -400,6 +464,7 @@ export const useEveFork = (
       isNavigating ||
       Boolean(pending),
     modelSelection: {
+      // oxlint-disable-next-line typescript/promise-function-async -- This action only commits local selection synchronously and resolves; there is no asynchronous operation to await.
       onChange: (value: SelectedModelValue) => {
         if (busy || pending || isNavigating) {
           return Promise.resolve();
@@ -411,8 +476,8 @@ export const useEveFork = (
     },
     pending,
     rejected,
-    retry: () =>
-      run(async () => {
+    retry: async () => {
+      await run(async () => {
         if (pending && rejected) {
           try {
             finishCreation(sessionStorage, ownerId, { conversationId });
@@ -426,12 +491,13 @@ export const useEveFork = (
         } else if (pending) {
           await execute(pending);
         }
-      }),
+      });
+    },
     selectedTool,
     setDraft,
     setSelectedTool,
-    submit: () =>
-      run(async () => {
+    submit: async () => {
+      await run(async () => {
         if (
           !loaded ||
           restoreFailed ||
@@ -466,7 +532,7 @@ export const useEveFork = (
               );
         setPending(operation);
         await execute(operation);
-      }),
+      });
+    },
   };
 };
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -80,10 +80,6 @@ for (const language of ["javascript", "python"] as const) {
   });
 }
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("native sandbox ownership is durably released after real provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("native sandbox ownership is durably released after real provider cleanup") intentionally keeps the existing falsy-value behavior of tool.execute; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("native sandbox ownership is durably released after real provider cleanup", async () => {
   test.setTimeout(120_000);
   assertEveTestDatabase(env.DATABASE_URL);
@@ -97,14 +93,16 @@ test("native sandbox ownership is durably released after real provider cleanup",
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
     () => Promise.resolve(crypto.randomUUID())
+    /* oxlint-enable typescript/promise-function-async */
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");
   }
   try {
     const tool = codeExecution;
-    if (!tool.execute) {
+    if (tool.execute === undefined) {
       throw new Error("Missing code executor");
     }
     const result = await tool.execute(
@@ -198,4 +196,3 @@ test("native sandbox ownership is durably released after real provider cleanup",
     }
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

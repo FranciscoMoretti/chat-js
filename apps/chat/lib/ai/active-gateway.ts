@@ -11,13 +11,12 @@ let activeGateway: GatewayProvider | null = null;
 export const getActiveGateway = (): GatewayProvider => {
   activeGateway ??= new Gateway({
     env: gatewayEnv,
-    // oxlint-disable-next-line typescript/promise-function-async -- Forward the original native Request and RequestInit objects; readonly header tuples are not assignable to HeadersInit without conversion. Return the original fetch promise without async adoption.
-    fetch: (
+    fetch: async (
       input: string | ReadonlyNativeSurface<URL | Request>,
 
       init
     ): Promise<Response> =>
-      fetch(input, { ...init, next: { revalidate: 3600 } }),
+      await fetch(input, { ...init, next: { revalidate: 3600 } }),
     getFallbackModels,
     logger: createModuleLogger(`ai/gateways/${config.ai.gateway}`),
   });

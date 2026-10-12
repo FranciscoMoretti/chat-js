@@ -3,32 +3,26 @@ import { expect, it, vi } from "vitest";
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): model preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const model = new MockLanguageModelV3({
-  doGenerate: () =>
-    Promise.resolve({
-      content: [{ text: "This is not valid JSON", type: "text" }],
-      finishReason: { raw: "stop", unified: "stop" },
-      providerMetadata: {
-        gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
-      },
-      usage: {
-        inputTokens: { cacheRead: 0, cacheWrite: 0, noCache: 20, total: 20 },
-        outputTokens: { reasoning: 0, text: 10, total: 10 },
-      },
-      warnings: [],
-    }),
+  doGenerate: vi.fn().mockResolvedValue({
+    content: [{ text: "This is not valid JSON", type: "text" }],
+    finishReason: { raw: "stop", unified: "stop" },
+    providerMetadata: {
+      gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
+    },
+    usage: {
+      inputTokens: { cacheRead: 0, cacheWrite: 0, noCache: 20, total: 20 },
+      outputTokens: { reasoning: 0, text: 10, total: 10 },
+    },
+    warnings: [],
+  }),
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("./model-selection") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+const mocks = vi.hoisted(() => ({ resolveEveModel: vi.fn() }));
 vi.mock("./model-selection", () => ({
-  resolveEveModel: () => Promise.resolve({ model, modelOptions: {} }),
+  resolveEveModel: mocks.resolveEveModel,
 }));
-/* oxlint-enable typescript/promise-function-async */
+// vi.mock factories are hoisted, but the resolved model is configured after this module initializes it.
+mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
 vi.mock("../config", () => ({
   config: {
     ai: {

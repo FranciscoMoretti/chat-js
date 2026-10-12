@@ -132,7 +132,6 @@ const timingMiddleware = trpc.middleware(
  */
 const publicProcedure = trpc.procedure.use(timingMiddleware);
 
-/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): protectedProcedure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Protected (authenticated) procedure
  *
@@ -142,7 +141,7 @@ const publicProcedure = trpc.procedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 const protectedProcedure = trpc.procedure.use(
-  ({
+  async ({
     ctx,
     next,
   }: ReadonlyNativeSurface<
@@ -156,7 +155,7 @@ const protectedProcedure = trpc.procedure.use(
       console.error("User ID missing in session callback");
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    return next({
+    return await next({
       ctx: {
         // This narrows `session` to a non-nullable type.
         user: { id, ...rest },
@@ -164,7 +163,6 @@ const protectedProcedure = trpc.procedure.use(
     });
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 export {
   createCallerFactory,
   createTRPCContext,

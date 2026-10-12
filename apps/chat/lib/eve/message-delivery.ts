@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
@@ -55,15 +57,12 @@ const write = <T extends PendingEveMessage>(
   return value;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): read intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const read = (
   storage: DeliveryStorage,
   sessionId: string
 ): PendingEveMessage | null => {
   const stored = storage.getItem(storageKey(sessionId));
-  if (!stored) {
+  if (!isNonEmptyString(stored)) {
     return null;
   }
   try {
@@ -77,9 +76,7 @@ const read = (
   storage.removeItem(storageKey(sessionId));
   return null;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
 const eveMessageDelivery = {
   acknowledge: (
@@ -90,7 +87,7 @@ const eveMessageDelivery = {
   ): boolean => {
     if (
       event.type !== "message.received" ||
-      !pending.operationId ||
+      !isNonEmptyString(pending.operationId) ||
       deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
         .operationId !== pending.operationId
     ) {
@@ -137,13 +134,12 @@ const eveMessageDelivery = {
   ): ActivePendingEveMessage | undefined => {
     const current = read(storage, sessionId);
     if (
-      !pending.operationId ||
-      !current?.retryable ||
+      !isNonEmptyString(pending.operationId) ||
+      !(current?.retryable === true) ||
       current.operationId !== pending.operationId
     ) {
-      return;
+      return undefined;
     }
-    // oxlint-disable-next-line typescript/consistent-return -- #580: eveMessageDelivery has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return write(storage, sessionId, {
       ...current,
       operationId: pending.operationId,
@@ -152,7 +148,6 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.

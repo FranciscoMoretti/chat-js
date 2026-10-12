@@ -26,9 +26,6 @@ import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
 import { readPublicEveCopySource } from "./public-copy-source";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): prepareCopyReservation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const prepareCopyReservation = async (
   ownerId: string,
   input: EveCopyInput,
@@ -52,7 +49,7 @@ const prepareCopyReservation = async (
   const plan = await prepareEveCopyPlan(
     source.projection,
     documents,
-    (key) => readPublicEveCopyFile(source, key, downloadFile),
+    async (key) => await readPublicEveCopyFile(source, key, downloadFile),
     origin
   );
   try {
@@ -73,9 +70,7 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
  * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
@@ -114,7 +109,7 @@ export const saveEveCopyOperation = async (
     }
     try {
       for (const file of saved.copy.plan.files) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Accept each reserved destination file through writeEveCopyFile before reading/uploading another; a failed copy must stop before dispatch and bounds live byte buffers.
         await writeEveCopyFile(ownerId, id, file.key, {
           readSourceFile: downloadFile,
           writeDestinationFile: async (key, blob): Promise<void> => {
@@ -131,8 +126,10 @@ export const saveEveCopyOperation = async (
       throw error;
     }
   }
-  return await dispatchEveCopy(ownerId, id, (operationId) =>
-    createNativeEveCopy(ownerId, operationId, input.modelId)
+  return await dispatchEveCopy(
+    ownerId,
+    id,
+    async (operationId) =>
+      await createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
-/* oxlint-enable typescript/promise-function-async */

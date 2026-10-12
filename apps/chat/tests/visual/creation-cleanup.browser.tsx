@@ -82,10 +82,14 @@ test("creation shows progress before a deferred request completes", async () => 
   runtime.resolve.mockReturnValue(pending.promise);
   const fixture = await mount(<NewEveConversation ownerId="test-owner" />);
   try {
-    await page
-      .getByRole("textbox", { name: "Message" })
-      .fill("Keep this draft");
-    await page.getByRole("button", { name: "Send" }).click();
+    await act(async () => {
+      await page
+        .getByRole("textbox", { name: "Message" })
+        .fill("Keep this draft");
+    });
+    await act(async () => {
+      await page.getByRole("button", { name: "Send" }).click();
+    });
     await expect
       .element(page.getByText("Creating conversation…"))
       .toBeVisible();
@@ -96,8 +100,10 @@ test("creation shows progress before a deferred request completes", async () => 
     await takeSnapshot("creation-pending-request");
     await page.getByRole("main").screenshot();
     await act(async () => {
-      await Promise.resolve();
       pending.reject(new CreationRejectedError("Creation rejected"));
+      await expect(pending.promise).rejects.toBeInstanceOf(
+        CreationRejectedError
+      );
     });
     await expect
       .element(page.getByRole("textbox", { name: "Message" }))
@@ -106,7 +112,12 @@ test("creation shows progress before a deferred request completes", async () => 
       .element(page.getByRole("button", { name: "Send" }))
       .toBeEnabled();
   } finally {
-    pending.reject(new CreationRejectedError("Test cleanup"));
+    await act(async () => {
+      pending.reject(new CreationRejectedError("Test cleanup"));
+      await expect(pending.promise).rejects.toBeInstanceOf(
+        CreationRejectedError
+      );
+    });
     sessionStorage.clear();
     await unmount(fixture);
   }
@@ -129,10 +140,14 @@ test("creation cleanup warning survives the recovery handoff without resending a
     />
   );
   try {
-    await page
-      .getByRole("textbox", { name: "Message" })
-      .fill("Keep this draft");
-    await page.getByRole("button", { name: "Send" }).click();
+    await act(async () => {
+      await page
+        .getByRole("textbox", { name: "Message" })
+        .fill("Keep this draft");
+    });
+    await act(async () => {
+      await page.getByRole("button", { name: "Send" }).click();
+    });
     await expect
       .element(page.getByRole("alert"))
       .toHaveTextContent(
@@ -152,7 +167,11 @@ test("creation cleanup warning survives the recovery handoff without resending a
       .getByRole("region", { name: "Conversation recovery" })
       .screenshot();
     removal.mockRestore();
-    await page.getByRole("button", { name: "Clear rejected request" }).click();
+    await act(async () => {
+      await page
+        .getByRole("button", { name: "Clear rejected request" })
+        .click();
+    });
     await expect
       .element(page.getByRole("textbox", { name: "Message" }))
       .toHaveValue("Keep this draft");

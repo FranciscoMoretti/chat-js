@@ -2,8 +2,7 @@ import { Schema } from "@world-postgres-test/dist/drizzle/index.js";
 import { createStreamer } from "@world-postgres-test/dist/streamer.js";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+
 import { Pool } from "pg";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
@@ -35,19 +34,21 @@ afterAll(async () => {
 });
 const encoder = new TextEncoder();
 
-async function fixture(
+const fixture = async (
   values: readonly string[],
   closed = true,
   name: string = crypto.randomUUID()
-): Promise<string> {
+): Promise<string> => {
+  /* oxlint-disable eslint/no-await-in-loop -- Stream chunks must be appended in fixture order to assert exact replay content. */
   for (const value of values) {
     await streamer.streams.write(runId, name, encoder.encode(value));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   if (closed) {
     await streamer.streams.close(runId, name);
   }
   return name;
-}
+};
 
 test("batched default-stream positions match the provider without counting EOF or other namespaces", async () => {
   const sessionId = `wrun_${crypto.randomUUID()}`;
@@ -79,11 +80,12 @@ test("batched default-stream positions match the provider without counting EOF o
     new Map()
   );
 });
-async function read(name: string, index: number) {
+const read = async (name: string, index: number) => {
   const stream = await streamer.streams.get(runId, name, index);
   const reader = stream.getReader();
   const result: string[] = [];
   try {
+    /* oxlint-disable eslint/no-await-in-loop -- Each read advances the same stream reader and appends its next chunk before checking completion. */
     for (;;) {
       const next = await reader.read();
       if (next.done) {
@@ -91,10 +93,11 @@ async function read(name: string, index: number) {
       }
       result.push(new TextDecoder().decode(next.value));
     }
+    /* oxlint-enable eslint/no-await-in-loop */
   } finally {
     await reader.cancel();
   }
-}
+};
 
 test("resume excludes consumed payloads in SQL, including an at-tail read", async () => {
   const name = await fixture([

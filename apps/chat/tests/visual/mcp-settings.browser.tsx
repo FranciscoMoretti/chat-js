@@ -1,3 +1,4 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -16,35 +17,49 @@ import {
 
 import "./sandbox.css";
 
-// oxlint-disable-next-line eslint/func-style -- vi.hoisted runs before module statements; a function declaration is initialized before its factory executes.
-function query(name: string) {
-  return {
-    queryKey: () => [name],
-    queryOptions: () => ({ queryKey: [name] }),
-  };
-}
-
 const mocks = vi.hoisted(() => {
+  const queries = Object.fromEntries(
+    ["checkAuth", "discover", "list", "listConnected", "testConnection"].map(
+      (
+        name
+      ): [
+        string,
+        {
+          queryKey: () => string[];
+          queryOptions: () => { queryKey: string[] };
+        },
+      ] => [
+        name,
+        {
+          queryKey: () => [name],
+          queryOptions: () => ({ queryKey: [name] }),
+        },
+      ]
+    )
+  );
   const mutation = { mutationOptions: () => ({}) };
   return {
     approvalRequired: false,
     cachedData: false,
-    handleClose: vi.fn(),
+    handleClose: vi.fn<() => void>(),
     listError: false,
     mcp: {
+      ...queries,
       authorize: mutation,
-      checkAuth: query("checkAuth"),
       create: mutation,
       delete: mutation,
       disconnect: mutation,
-      discover: query("discover"),
-      list: query("list"),
-      listConnected: query("listConnected"),
-      testConnection: query("testConnection"),
       toggleEnabled: mutation,
       update: mutation,
     },
-    mutate: vi.fn(),
+    mutate: vi.fn<
+      (
+        _input: unknown,
+        callbacks?: {
+          onSuccess: (result: { authorizationUrl: string }) => void;
+        }
+      ) => void
+    >(),
     needsOAuth: false,
     pendingAuthorization: false,
     queryClient: { invalidateQueries: vi.fn() },
@@ -148,7 +163,6 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useQueryClient: () => mocks.queryClient,
 }));
-/* oxlint-disable typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const renderPage = async (
   details: boolean,
@@ -177,32 +191,29 @@ const renderPage = async (
     );
   }
   // Render each route's client subtree with the same header/layout, without the server prefetch wrapper.
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-  await act(() => {
-    root.render(
-      <SettingsPage>
-        <SettingsPageHeader>
-          <h2 className="text-lg font-semibold">
-            {details ? "Connector details" : "Connectors & MCP"}
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            {details
-              ? "Tools, resources, and authorization status."
-              : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
-          </p>
-        </SettingsPageHeader>
-        <Toaster position="top-center" theme="dark" />
-        {content}
-      </SettingsPage>
-    );
-  });
+
+  await renderRoot(
+    root,
+    <SettingsPage>
+      <SettingsPageHeader>
+        <h2 className="text-lg font-semibold">
+          {details ? "Connector details" : "Connectors & MCP"}
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          {details
+            ? "Tools, resources, and authorization status."
+            : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
+        </p>
+      </SettingsPageHeader>
+      <Toaster position="top-center" theme="dark" />
+      {content}
+    </SettingsPage>
+  );
   return async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   };
 };
-/* oxlint-enable typescript/strict-void-return */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
   const cleanup = await renderPage(false);
@@ -245,15 +256,15 @@ test("connector details show discovery, owner controls and the back link", async
     await expect
       .element(page.getByRole("button", { name: "Uninstall" }))
       .toBeEnabled();
-    for (const name of [
-      "search_docs",
-      "read_page",
-      "Documentation",
-      "summarize",
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each discovery section to settle before capture.
-      await expect.element(page.getByText(name, { exact: true })).toBeVisible();
-    }
+    await Promise.all(
+      ["search_docs", "read_page", "Documentation", "summarize"].map(
+        async (name) => {
+          await expect
+            .element(page.getByText(name, { exact: true }))
+            .toBeVisible();
+        }
+      )
+    );
     await takeSnapshot("mcp-connector-details");
   } finally {
     await cleanup();
@@ -313,29 +324,30 @@ test("expired OAuth discovery offers reconnect instead of a permanent spinner", 
     await cleanup();
   }
 });
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
   const cleanup = await renderPage(false, true);
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Advanced settings" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Advanced settings" }).click();
+    });
     await expect
       .element(page.getByText("Transport Type", { exact: true }))
       .toBeVisible();
     await expect
       .element(page.getByLabelText("OAuth Client Secret (optional)"))
       .toBeVisible();
-    await act(() => page.getByPlaceholder("Name", { exact: true }).fill("   "));
-    await act(() =>
-      page
+    await act(async () => {
+      await page.getByPlaceholder("Name", { exact: true }).fill("   ");
+    });
+    await act(async () => {
+      await page
         .getByPlaceholder("Remote MCP server URL")
-        .fill("https://docs.example.test/mcp")
-    );
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Add" }).click()
-    );
+        .fill("https://docs.example.test/mcp");
+    });
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Add" }).click();
+    });
     await expect
       .element(page.getByText("Name is required", { exact: true }))
       .toBeVisible();
@@ -344,9 +356,6 @@ test("custom connector advanced settings expose transport and credentials and re
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("pending OAuth can be dismissed", async () => {
   mocks.pendingAuthorization = true;
@@ -359,44 +368,41 @@ test("pending OAuth can be dismissed", async () => {
       .element(page.getByRole("dialog"))
       .toHaveStyle({ opacity: "1" });
     await takeSnapshot("mcp-connect-pending-cancellable");
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Cancel" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Cancel" }).click();
+    });
     expect(mocks.handleClose).toHaveBeenCalledOnce();
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("dismissed OAuth ignores a late authorization result", async () => {
   const cleanup = await renderPage(false, false, true);
   try {
-    await act(() =>
-      page
+    await act(async () => {
+      await page
         .getByRole("button", { name: "Continue to Documentation server" })
-        .click()
-    );
+        .click();
+    });
     const [[, callbacks]] = mocks.mutate.mock.calls;
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Cancel" }).click()
-    );
-    await act(() =>
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
+    if (callbacks === undefined) {
+      throw new Error("Missing authorization callbacks");
+    }
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Cancel" }).click();
+    });
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- The real authorization callback is synchronous; React act still returns a runtime completion thenable.
+    await act(() => {
       callbacks.onSuccess({
         authorizationUrl: "https://authorization.example.test",
-      })
-    );
+      });
+    });
     expect(globalThis.location.hostname).not.toBe("authorization.example.test");
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test.each([
   { clientId: "   ", expectedClientId: undefined },
@@ -406,28 +412,28 @@ test.each([
   async ({ clientId, expectedClientId }) => {
     const cleanup = await renderPage(false, true);
     try {
-      await act(() =>
-        page.getByRole("button", { name: "Advanced settings" }).click()
-      );
-      await act(() =>
-        page.getByLabelText("Name", { exact: true }).fill("Server")
-      );
-      await act(() =>
-        page
+      await act(async () => {
+        await page.getByRole("button", { name: "Advanced settings" }).click();
+      });
+      await act(async () => {
+        await page.getByLabelText("Name", { exact: true }).fill("Server");
+      });
+      await act(async () => {
+        await page
           .getByLabelText("URL", { exact: true })
-          .fill("https://mcp.example.test")
-      );
-      await act(() =>
-        page.getByLabelText("OAuth Client ID (optional)").fill(clientId)
-      );
-      await act(() =>
-        page
+          .fill("https://mcp.example.test");
+      });
+      await act(async () => {
+        await page.getByLabelText("OAuth Client ID (optional)").fill(clientId);
+      });
+      await act(async () => {
+        await page
           .getByLabelText("OAuth Client Secret (optional)")
-          .fill(" secret bytes ")
-      );
-      await act(() =>
-        page.getByRole("button", { exact: true, name: "Add" }).click()
-      );
+          .fill(" secret bytes ");
+      });
+      await act(async () => {
+        await page.getByRole("button", { exact: true, name: "Add" }).click();
+      });
       expect(mocks.mutate).toHaveBeenCalledWith(
         expect.objectContaining({
           oauthClientId: expectedClientId,
@@ -440,7 +446,6 @@ test.each([
     }
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 test("OAuth callback errors display the safe actionable message", async () => {
   const message =
@@ -464,18 +469,24 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await cleanup();
   }
 });
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+
 test("invalid authorization links keep the dialog open and display an error", async () => {
   const cleanup = await renderPage(false, false, true);
   try {
-    await act(() =>
-      page
+    await act(async () => {
+      await page
         .getByRole("button", { name: "Continue to Documentation server" })
-        .click()
-    );
+        .click();
+    });
     const [[, callbacks]] = mocks.mutate.mock.calls;
-    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
-    await act(() => callbacks.onSuccess({ authorizationUrl: "not a URL" }));
+    if (callbacks === undefined) {
+      throw new Error("Missing authorization callbacks");
+    }
+
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- The real authorization callback is synchronous; React act still returns a runtime completion thenable.
+    await act(() => {
+      callbacks.onSuccess({ authorizationUrl: "not a URL" });
+    });
     await expect
       .element(page.getByText("Invalid authorization URL", { exact: true }))
       .toBeVisible();
@@ -494,7 +505,6 @@ test("invalid authorization links keep the dialog open and display an error", as
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
 for (const state of ["off", "enabled", "saving", "shared"] as const) {
   test(`connection approval setting is ${state}`, async () => {

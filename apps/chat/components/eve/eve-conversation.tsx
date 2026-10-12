@@ -1,5 +1,9 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import type { useEveAgent } from "eve/react";
 import React, { useEffect, useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
@@ -22,6 +26,7 @@ import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
+import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
@@ -150,11 +155,324 @@ const retainedToolSelection = (
   return draft;
 };
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle
- */
+const conversationStatus = (
+  status: string,
+  busy: boolean,
+  hasApproval: boolean,
+  cancelPending: boolean
+): string => {
+  let label = "Ready";
+  if (busy) {
+    label = "Responding…";
+  }
+  if (status === "resuming") {
+    label = "Loading conversation";
+  }
+  if (hasApproval) {
+    label = "Waiting for your input";
+  }
+  if (cancelPending) {
+    label = "Stopping…";
+  }
+  return label;
+};
+
+const isExecutionBusy = (status: string | undefined): boolean =>
+  status === "streaming" || status === "submitted" || status === "resuming";
+
+const selectedConversationMessages = (
+  messages: readonly ReadonlyEveMessage[],
+  controller: Readonly<Pick<LogicalChat, "logicalId">>,
+  snapshot: Readonly<Pick<LogicalChatSnapshot, "cursorId" | "nodes">>,
+  conversationId: string
+): readonly ReadonlyEveMessage[] => {
+  const selectedPath = new Set<string>();
+  let selectedNode = hasText(snapshot.cursorId)
+    ? snapshot.nodes.get(snapshot.cursorId)
+    : undefined;
+  while (selectedNode) {
+    selectedPath.add(selectedNode.id);
+    selectedNode = hasText(selectedNode.parentId)
+      ? snapshot.nodes.get(selectedNode.parentId)
+      : undefined;
+  }
+  return messages
+    .filter((message) => {
+      if (
+        message.metadata?.optimistic &&
+        message.metadata.status === "failed"
+      ) {
+        return false;
+      }
+      const logicalId = controller.logicalId(conversationId, message.id);
+      return (
+        !hasText(snapshot.cursorId) ||
+        (hasText(logicalId) && selectedPath.has(logicalId))
+      );
+    })
+    .map((message) => {
+      const id = controller.logicalId(conversationId, message.id);
+      const canonical =
+        typeof id === "string" && id !== ""
+          ? snapshot.nodes.get(id)?.message
+          : undefined;
+      if (canonical) {
+        return { ...message, parts: canonical.parts };
+      }
+      return message;
+    });
+};
+
+const EveConversationEditor = ({
+  fork,
+  busy,
+  commandPending,
+  hasApproval,
+  pendingMessage,
+  onSubmit,
+}: {
+  readonly fork: ReturnType<typeof useConversationInput>["fork"];
+  readonly busy: boolean;
+  readonly commandPending: boolean;
+  readonly hasApproval: boolean;
+  readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
+  readonly onSubmit: () => void;
+}): ReactJSX.Element => {
+  const handleEditDraft = fork.setDraft;
+  const handleEditToolChange = fork.setSelectedTool;
+  return (
+    <div className="w-full">
+      <EveComposer
+        autoFocus
+        status={fork.busy ? "submitted" : "ready"}
+        disabled={
+          busy ||
+          commandPending ||
+          hasApproval ||
+          Boolean(pendingMessage) ||
+          fork.locked
+        }
+        readOnly={Boolean(fork.pending)}
+        draft={fork.draft}
+        files={fork.files}
+        modelSelection={fork.modelSelection}
+        onDraftChange={handleEditDraft}
+        onSubmit={onSubmit}
+        onToolChange={handleEditToolChange}
+        selectedTool={fork.selectedTool}
+      />
+      {fork.error && (
+        <p className="text-destructive text-sm" role="alert">
+          {fork.error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+const EveDeliveryRecovery = ({
+  pendingMessage,
+  delivery,
+  composerDraft,
+  files,
+  run,
+  sendPendingMessage,
+  setCommandFailure,
+}: {
+  readonly pendingMessage: NonNullable<
+    ReturnType<typeof useEveMessageDelivery>["pending"]
+  >;
+  readonly delivery: ReturnType<typeof useEveMessageDelivery>;
+  readonly composerDraft: ReturnType<
+    typeof useConversationInput
+  >["composerDraft"];
+  readonly files: ReturnType<typeof useConversationInput>["files"];
+  readonly run: (action: () => Promise<unknown>) => Promise<void>;
+  readonly sendPendingMessage: (
+    pending: ActivePendingEveMessage
+  ) => Promise<void>;
+  readonly setCommandFailure: (failure?: Error) => void;
+}): ReactJSX.Element => (
+  <output className="space-y-2 text-sm">
+    <p>
+      {hasText(pendingMessage.rejection)
+        ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
+        : "Message delivery is unconfirmed. Your draft is saved in this tab."}
+    </p>
+    <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
+    <AttachmentList attachments={pendingMessage.attachments} />
+    <div className="flex flex-wrap gap-2">
+      {pendingMessage.retryable === true &&
+        hasText(pendingMessage.operationId) && (
+          <Button
+            onClick={() => {
+              void run(async () => {
+                const retried = delivery.retry(pendingMessage);
+                if (retried) {
+                  await sendPendingMessage(retried);
+                }
+              });
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Retry message
+          </Button>
+        )}
+      <Button
+        onClick={() => {
+          composerDraft.setText((current) => {
+            if (current) {
+              return `${current}\n\n${pendingMessage.message}`;
+            }
+            return pendingMessage.message;
+          });
+          files.setAttachments((current) => [
+            ...current,
+            ...pendingMessage.attachments.filter(
+              (file) => !current.some((existing) => existing.url === file.url)
+            ),
+          ]);
+          composerDraft.setSelectedTool(pendingMessage.selectedTool ?? null);
+          delivery.release(pendingMessage);
+          setCommandFailure(
+            hasText(pendingMessage.rejection)
+              ? undefined
+              : new Error(
+                  "Delivery is unconfirmed. Check the conversation before sending this message again."
+                )
+          );
+        }}
+        size="sm"
+        type="button"
+        variant="ghost"
+      >
+        Restore draft
+      </Button>
+    </div>
+  </output>
+);
+
+const conversationActionLocks = ({
+  busy,
+  commandPending,
+  cancelPending,
+  hasApproval,
+  pendingMessage,
+  fork,
+  snapshotError,
+  editingMessageId,
+}: {
+  readonly busy: boolean;
+  readonly commandPending: boolean;
+  readonly cancelPending: boolean;
+  readonly hasApproval: boolean;
+  readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
+  readonly fork: ReturnType<typeof useConversationInput>["fork"];
+  readonly snapshotError: string | undefined;
+  readonly editingMessageId: string | undefined;
+}) => ({
+  document:
+    busy ||
+    commandPending ||
+    cancelPending ||
+    hasApproval ||
+    Boolean(pendingMessage) ||
+    fork.locked,
+  transcript:
+    busy ||
+    commandPending ||
+    fork.locked ||
+    !fork.family.data ||
+    Boolean(snapshotError) ||
+    hasApproval ||
+    Boolean(pendingMessage),
+  navigation:
+    fork.locked || Boolean(editingMessageId) || Boolean(pendingMessage),
+});
+
+const EveConversationComposer = ({
+  input,
+  pendingMessage,
+  status,
+  busy,
+  commandPending,
+  cancelPending,
+  hasApproval,
+  displayedError,
+  commandFailure,
+  agentError,
+  onStop,
+  onSubmit,
+  onReconnect,
+}: {
+  readonly input: ReturnType<typeof useConversationInput>;
+  readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
+  readonly status: ReturnType<typeof useEveAgent>["status"];
+  readonly busy: boolean;
+  readonly commandPending: boolean;
+  readonly cancelPending: boolean;
+  readonly hasApproval: boolean;
+  readonly displayedError: string | undefined;
+  readonly commandFailure: Error | undefined;
+  readonly agentError: Error | undefined;
+  readonly onStop: () => void;
+  readonly onSubmit: () => void;
+  readonly onReconnect: () => void;
+}): ReactJSX.Element => {
+  const { composerDraft, files, modelSelection, comparison, fork } = input;
+  const handleSelectedToolChange = composerDraft.setSelectedTool;
+  const handleDraftChange = composerDraft.setText;
+  return (
+    <>
+      <EveComposer
+        status={status === "resuming" ? "submitted" : status}
+        disabled={
+          !composerDraft.loaded ||
+          busy ||
+          commandPending ||
+          cancelPending ||
+          hasApproval ||
+          Boolean(pendingMessage) ||
+          fork.locked
+        }
+        draft={composerDraft.text}
+        files={files}
+        modelSelection={modelSelection}
+        onDraftChange={handleDraftChange}
+        onStop={onStop}
+        onSubmit={onSubmit}
+        onToolChange={handleSelectedToolChange}
+        readOnly={Boolean(comparison)}
+        retainedModelId={pendingMessage?.modelId}
+        retainedModelIds={comparison?.modelIds}
+        selectedTool={retainedToolSelection(
+          comparison,
+          pendingMessage,
+          composerDraft.selectedTool
+        )}
+        stopDisabled={cancelPending || status === "resuming"}
+      />
+      {hasText(displayedError) &&
+        !hasText(pendingMessage?.rejection) &&
+        !isEveCommandRejection(commandFailure ?? agentError) && (
+          <Button
+            disabled={busy || commandPending || cancelPending}
+            onClick={onReconnect}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            Reconnect
+          </Button>
+        )}
+    </>
+  );
+};
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
-// oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
+
 const EveConversation = ({
   sessionId,
   conversationId,
@@ -171,8 +489,8 @@ const EveConversation = ({
   draftScopeId?: string;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
-  const { fork, composerDraft, files, comparison, modelSelection, modelIds } =
-    useConversationInput(ownerId, conversationId, draftScopeId);
+  const input = useConversationInput(ownerId, conversationId, draftScopeId);
+  const { fork, composerDraft, files, comparison, modelIds } = input;
   const delivery = useEveMessageDelivery(sessionId);
   const pendingMessage = delivery.pending;
   const { controller, snapshot } = useLogicalChat();
@@ -207,40 +525,12 @@ const EveConversation = ({
     commandFailure?.message ?? agent.error?.message ?? durableError;
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
-  const selectedPath = new Set<string>();
-  let selectedNode = snapshot.cursorId
-    ? snapshot.nodes.get(snapshot.cursorId)
-    : undefined;
-  while (selectedNode) {
-    selectedPath.add(selectedNode.id);
-    selectedNode = selectedNode.parentId
-      ? snapshot.nodes.get(selectedNode.parentId)
-      : undefined;
-  }
-  const messages: readonly ReadonlyEveMessage[] = agent.data.messages
-    .filter((message) => {
-      if (
-        message.metadata?.optimistic &&
-        message.metadata.status === "failed"
-      ) {
-        return false;
-      }
-      const logicalId = controller.logicalId(conversationId, message.id);
-      return (
-        !snapshot.cursorId || Boolean(logicalId && selectedPath.has(logicalId))
-      );
-    })
-    .map((message) => {
-      const id = controller.logicalId(conversationId, message.id);
-      const canonical =
-        typeof id === "string" && id !== ""
-          ? snapshot.nodes.get(id)?.message
-          : undefined;
-      if (canonical) {
-        return { ...message, parts: canonical.parts };
-      }
-      return message;
-    });
+  const messages = selectedConversationMessages(
+    agent.data.messages,
+    controller,
+    snapshot,
+    conversationId
+  );
   const editingMessageId =
     fork.editingMessageId ??
     messages.find(
@@ -252,19 +542,20 @@ const EveConversation = ({
   const modelForMessage = (
     message: Readonly<Pick<(typeof messages)[number], "metadata">>
   ): string | undefined => {
-    const reference = message.metadata?.turnId
+    const reference = hasText(message.metadata?.turnId)
       ? responseModels.get(message.metadata.turnId)
       : message.metadata?.modelId;
     const separator = reference?.indexOf("/") ?? -1;
-    if (reference && separator > 0 && separator < reference.length - 1) {
+    if (
+      hasText(reference) &&
+      separator > 0 &&
+      separator < reference.length - 1
+    ) {
       return reference.slice(separator + 1);
     }
     return undefined;
   };
-  const busy =
-    agent.status === "streaming" ||
-    agent.status === "submitted" ||
-    agent.status === "resuming";
+  const busy = isExecutionBusy(agent.status);
   const hasApproval = agent.data.messages.some((message) =>
     message.parts.some(
       (part) =>
@@ -277,18 +568,22 @@ const EveConversation = ({
     }
     setCommandFailure(undefined);
 
-    try {
-      await action();
-    } catch (error) {
-      setCommandFailure(
-        error instanceof Error
-          ? error
-          : new Error("Request failed. Reconnect before retrying.")
-      );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required command lock cleanup in finally.
-    } finally {
-      controller.commands.update(conversationId, { pending: false });
-    }
+    await withTaskCleanup(
+      async () => {
+        try {
+          await action();
+        } catch (error) {
+          setCommandFailure(
+            error instanceof Error
+              ? error
+              : new Error("Request failed. Reconnect before retrying.")
+          );
+        }
+      },
+      () => {
+        controller.commands.update(conversationId, { pending: false });
+      }
+    );
   };
   const send = async (
     action: () => Promise<void>,
@@ -300,7 +595,7 @@ const EveConversation = ({
       agent.resume,
       cancellation > 0,
       () => controller.getSnapshot().agents.get(conversationId)?.error,
-      () => !operationId || delivery.hasAcknowledged(operationId)
+      () => !hasText(operationId) || delivery.hasAcknowledged(operationId)
     );
     if (controller.commands.get(conversationId).cancellation === cancellation) {
       controller.commands.update(conversationId, { cancellation: 0 });
@@ -310,21 +605,19 @@ const EveConversation = ({
     pending: ActivePendingEveMessage
   ): Promise<void> => {
     try {
-      await send(
-        () =>
-          agent.send(draftMessage(pending.message, pending.attachments), {
-            headers: {
-              [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
-              ...(pending.modelId
-                ? { "x-chatjs-selected-model": pending.modelId }
-                : {}),
-              ...(pending.selectedTool
-                ? { "x-chatjs-selected-tool": pending.selectedTool }
-                : {}),
-            },
-          }),
-        pending.operationId
-      );
+      await send(async () => {
+        await agent.send(draftMessage(pending.message, pending.attachments), {
+          headers: {
+            [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
+            ...(hasText(pending.modelId)
+              ? { "x-chatjs-selected-model": pending.modelId }
+              : {}),
+            ...(pending.selectedTool
+              ? { "x-chatjs-selected-tool": pending.selectedTool }
+              : {}),
+          },
+        });
+      }, pending.operationId);
     } catch (error) {
       if (isEveCommandRejection(error)) {
         delivery.reject(pending, error.message, isEveAdmissionBusy(error));
@@ -362,43 +655,43 @@ const EveConversation = ({
       cancellation: controller.commands.get(executionId).cancellation + 1,
       cancelling: true,
     });
-    try {
-      await execution.cancel();
-    } catch {
-      controller.commands.update(executionId, {
-        failure: new Error(
-          "Cancellation failed. Reconnect to check the response."
-        ),
-      });
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required cancellation cleanup in finally.
-    } finally {
-      controller.commands.update(executionId, { cancelling: false });
-    }
+    await withTaskCleanup(
+      async () => {
+        try {
+          await execution.cancel();
+        } catch {
+          controller.commands.update(executionId, {
+            failure: new Error(
+              "Cancellation failed. Reconnect to check the response."
+            ),
+          });
+        }
+      },
+      () => {
+        controller.commands.update(executionId, { cancelling: false });
+      }
+    );
   };
-  const cancel = (): Promise<void> => cancelExecution(conversationId);
-  // Retain the selected tool across a pending or comparison recovery flow.
-  const displayedTool = retainedToolSelection(
-    comparison,
-    pendingMessage,
-    composerDraft.selectedTool
-  );
-  const handleSelectedToolChange = composerDraft.setSelectedTool;
-  const handleEditDraft = fork.setDraft;
+  const cancel = async (): Promise<void> => {
+    await cancelExecution(conversationId);
+  };
   const handleEditSubmit = fork.submit;
-  const handleEditToolChange = fork.setSelectedTool;
-  let statusLabel = "Ready";
-  if (busy) {
-    statusLabel = "Responding…";
-  }
-  if (agent.status === "resuming") {
-    statusLabel = "Loading conversation";
-  }
-  if (hasApproval) {
-    statusLabel = "Waiting for your input";
-  }
-  if (cancelPending) {
-    statusLabel = "Stopping…";
-  }
+  const statusLabel = conversationStatus(
+    agent.status,
+    busy,
+    hasApproval,
+    cancelPending
+  );
+  const actionLocks = conversationActionLocks({
+    busy,
+    commandPending,
+    cancelPending,
+    hasApproval,
+    pendingMessage,
+    fork,
+    snapshotError: snapshot.error,
+    editingMessageId,
+  });
   return (
     <EveArtifactLayout
       replaying={agent.status === "resuming"}
@@ -409,88 +702,51 @@ const EveConversation = ({
       }
       isExecutionBusy={(id) => {
         const status = snapshot.agents.get(id)?.status;
-        return (
-          status === "submitted" ||
-          status === "streaming" ||
-          status === "resuming"
-        );
+        return isExecutionBusy(status);
       }}
       conversationId={conversationId}
-      documentActionsDisabled={
-        busy ||
-        commandPending ||
-        cancelPending ||
-        hasApproval ||
-        Boolean(pendingMessage) ||
-        fork.locked
-      }
+      documentActionsDisabled={actionLocks.document}
       messages={agent.data.messages}
-      onDocumentAction={({ message, modelId }) =>
-        run(() => submitMessage(message, [], modelId, false))
-      }
+      onDocumentAction={async ({ message, modelId }) => {
+        await run(async () => {
+          await submitMessage(message, [], modelId, false);
+        });
+      }}
     >
       <section className="flex h-full min-h-0 flex-col">
         {header}
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation>
             <ConversationContent className="mx-auto w-full max-w-3xl">
-              {initialMessage && messages.length === 0 && (
-                <EveInitialMessage message={initialMessage} />
-              )}
+              {initialMessage !== undefined &&
+                initialMessage !== "" &&
+                messages.length === 0 && (
+                  <EveInitialMessage message={initialMessage} />
+                )}
               <EveMessages
-                actionsDisabled={
-                  busy ||
-                  commandPending ||
-                  fork.locked ||
-                  !fork.family.data ||
-                  Boolean(snapshot.error) ||
-                  hasApproval ||
-                  Boolean(pendingMessage)
-                }
+                actionsDisabled={actionLocks.transcript}
                 conversationId={conversationId}
                 disabled={busy || commandPending}
                 isReadonly={false}
                 messages={messages}
 
                 editor={
-                  editingMessageId
+                  hasText(editingMessageId)
                     ? {
                         content: (
-                          <div className="w-full">
-                            <EveComposer
-                              autoFocus
-                              status={fork.busy ? "submitted" : "ready"}
-                              disabled={
-                                busy ||
-                                commandPending ||
-                                hasApproval ||
-                                Boolean(pendingMessage) ||
-                                fork.locked
-                              }
-                              readOnly={Boolean(fork.pending)}
-                              draft={fork.draft}
-                              files={fork.files}
-                              modelSelection={fork.modelSelection}
-                              onDraftChange={handleEditDraft}
-
-                              onSubmit={() => {
-                                const completion = handleEditSubmit();
-                                startEventAction(async () => {
-                                  await completion;
-                                });
-                              }}
-                              onToolChange={handleEditToolChange}
-                              selectedTool={fork.selectedTool}
-                            />
-                            {fork.error && (
-                              <p
-                                className="text-destructive text-sm"
-                                role="alert"
-                              >
-                                {fork.error}
-                              </p>
-                            )}
-                          </div>
+                          <EveConversationEditor
+                            fork={fork}
+                            busy={busy}
+                            commandPending={commandPending}
+                            hasApproval={hasApproval}
+                            pendingMessage={pendingMessage}
+                            onSubmit={() => {
+                              const completion = handleEditSubmit();
+                              startEventAction(async () => {
+                                await completion;
+                              });
+                            }}
+                          />
                         ),
                         disabled: fork.busy || Boolean(fork.pending),
                         messageId: editingMessageId,
@@ -503,22 +759,14 @@ const EveConversation = ({
                   <EveLogicalVersions
                     conversationId={conversationId}
                     messageId={message.id}
-                    disabled={
-                      fork.locked ||
-                      Boolean(editingMessageId) ||
-                      Boolean(pendingMessage)
-                    }
+                    disabled={actionLocks.navigation}
                   />
                 )}
                 renderResponses={(message): React.JSX.Element => (
                   <EveLogicalResponses
                     conversationId={conversationId}
                     messageId={message.id}
-                    disabled={
-                      fork.locked ||
-                      Boolean(editingMessageId) ||
-                      Boolean(pendingMessage)
-                    }
+                    disabled={actionLocks.navigation}
                   />
                 )}
                 messageKey={(message) =>
@@ -540,7 +788,7 @@ const EveConversation = ({
                     conversationId,
                     message.id
                   );
-                  const group = logicalId
+                  const group = hasText(logicalId)
                     ? logicalResponseSlots(snapshot, logicalId)
                     : undefined;
                   const groupModels: Record<string, number> = {};
@@ -552,7 +800,7 @@ const EveConversation = ({
                     events: agent.events,
                     modelSelection: group ? groupModels : undefined,
                     response:
-                      response && modelForMessage(response)
+                      response && hasText(modelForMessage(response))
                         ? response
                         : undefined,
                   });
@@ -567,30 +815,31 @@ const EveConversation = ({
 
                 onSuggestion={(suggestion) => {
                   void run(async () => {
-                    // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
-                    if (modelIds.length > 1) {
-                      await fork.compare(
-                        draftMessage(suggestion, []),
-                        modelIds,
-                        nextTurnBoundary(latestTurn),
-                        composerDraft.selectedTool ?? undefined,
-                        false
-                      );
-                    } else {
-                      await submitMessage(
-                        suggestion,
-                        [],
-                        modelIds[0],
-                        false,
-                        composerDraft.selectedTool ?? undefined
-                      );
-                    }
+                    await (modelIds.length > 1
+                      ? fork.compare(
+                          draftMessage(suggestion, []),
+                          modelIds,
+                          nextTurnBoundary(latestTurn),
+                          composerDraft.selectedTool ?? undefined,
+                          false
+                        )
+                      : submitMessage(
+                          suggestion,
+                          [],
+                          modelIds[0],
+                          false,
+                          composerDraft.selectedTool ?? undefined
+                        ));
                   });
                 }}
 
                 respond={(response) => {
                   startEventAction(async () => {
-                    await run(() => send(() => agent.respond([response])));
+                    await run(async () => {
+                      await send(async () => {
+                        await agent.respond([response]);
+                      });
+                    });
                   });
                 }}
               />
@@ -603,7 +852,10 @@ const EveConversation = ({
             <ConversationScrollButton />
           </Conversation>
           <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
-            <EveForkRecovery fork={fork} showError={!editingMessageId} />
+            <EveForkRecovery
+              fork={fork}
+              showError={!hasText(editingMessageId)}
+            />
             <p aria-live="polite" className="sr-only">
               {statusLabel}
             </p>
@@ -615,140 +867,58 @@ const EveConversation = ({
                 </p>
               ))}
             {pendingMessage && !commandPending && (
-              <output className="space-y-2 text-sm">
-                <p>
-                  {pendingMessage.rejection
-                    ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-                    : "Message delivery is unconfirmed. Your draft is saved in this tab."}
-                </p>
-                <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
-                <AttachmentList attachments={pendingMessage.attachments} />
-                <div className="flex flex-wrap gap-2">
-                  {pendingMessage.retryable && pendingMessage.operationId && (
-                    <Button
-                      onClick={() => {
-                        void run(async () => {
-                          const retried = delivery.retry(pendingMessage);
-                          if (retried) {
-                            await sendPendingMessage(retried);
-                          }
-                        });
-                      }}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      Retry message
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => {
-                      setDraft((current) => {
-                        if (current) {
-                          return `${current}\n\n${pendingMessage.message}`;
-                        }
-                        return pendingMessage.message;
-                      });
-                      files.setAttachments((current) => [
-                        ...current,
-                        ...pendingMessage.attachments.filter(
-                          (file) =>
-                            !current.some(
-                              (existing) => existing.url === file.url
-                            )
-                        ),
-                      ]);
-                      composerDraft.setSelectedTool(
-                        pendingMessage.selectedTool ?? null
-                      );
-                      delivery.release(pendingMessage);
-                      setCommandFailure(
-                        pendingMessage.rejection
-                          ? undefined
-                          : new Error(
-                              "Delivery is unconfirmed. Check the conversation before sending this message again."
-                            )
-                      );
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    Restore draft
-                  </Button>
-                </div>
-              </output>
+              <EveDeliveryRecovery
+                pendingMessage={pendingMessage}
+                delivery={delivery}
+                composerDraft={composerDraft}
+                files={files}
+                run={run}
+                sendPendingMessage={sendPendingMessage}
+                setCommandFailure={setCommandFailure}
+              />
             )}
-            <EveComposer
-              status={agent.status === "resuming" ? "submitted" : agent.status}
-              disabled={
-                !composerDraft.loaded ||
-                busy ||
-                commandPending ||
-                cancelPending ||
-                hasApproval ||
-                Boolean(pendingMessage) ||
-                fork.locked
-              }
-              draft={draft}
-              files={files}
-              modelSelection={modelSelection}
-              onDraftChange={setDraft}
-
+            <EveConversationComposer
+              input={input}
+              pendingMessage={pendingMessage}
+              status={agent.status}
+              busy={busy}
+              commandPending={commandPending}
+              cancelPending={cancelPending}
+              hasApproval={hasApproval}
+              displayedError={displayedError}
+              commandFailure={commandFailure}
+              agentError={agent.error}
               onStop={() => {
                 startEventAction(cancel);
               }}
 
               onSubmit={() => {
                 void run(async () => {
-                  // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
-                  if (modelIds.length > 1) {
-                    await fork.compare(
-                      draftMessage(draft, files.attachments),
-                      modelIds,
-                      nextTurnBoundary(latestTurn),
-                      composerDraft.selectedTool ?? undefined
-                    );
-                  } else {
-                    await submitMessage(
-                      draft,
-                      files.attachments,
-                      modelIds[0],
-                      true,
-                      composerDraft.selectedTool ?? undefined
-                    );
-                  }
+                  await (modelIds.length > 1
+                    ? fork.compare(
+                        draftMessage(draft, files.attachments),
+                        modelIds,
+                        nextTurnBoundary(latestTurn),
+                        composerDraft.selectedTool ?? undefined
+                      )
+                    : submitMessage(
+                        draft,
+                        files.attachments,
+                        modelIds[0],
+                        true,
+                        composerDraft.selectedTool ?? undefined
+                      ));
                 });
               }}
-              onToolChange={handleSelectedToolChange}
-              readOnly={Boolean(comparison)}
-              retainedModelId={pendingMessage?.modelId}
-              retainedModelIds={comparison?.modelIds}
-              selectedTool={displayedTool}
-              stopDisabled={cancelPending || agent.status === "resuming"}
+              onReconnect={() => {
+                void run(agent.resume);
+              }}
             />
-            {displayedError &&
-              !pendingMessage?.rejection &&
-              !isEveCommandRejection(commandFailure ?? agent.error) && (
-                <Button
-                  disabled={busy || commandPending || cancelPending}
-
-                  onClick={() => {
-                    void run(agent.resume);
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  Reconnect
-                </Button>
-              )}
           </div>
         </div>
       </section>
     </EveArtifactLayout>
   );
 };
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 export { EveConversation };

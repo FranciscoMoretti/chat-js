@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
 import {
@@ -100,9 +100,6 @@ describe("Eve request policy", () => {
   });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): describe("Eve command recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 describe("Eve command recovery", () => {
   it("validates before retaining intent and isolates pending intents by account", () => {
     const data = new Map<string, string>();
@@ -132,7 +129,8 @@ describe("Eve command recovery", () => {
     let replayed = 0;
     await expect(
       sendCommand(
-        () => Promise.resolve(),
+        vi.fn<() => Promise<void>>().mockResolvedValue(),
+        // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
         () => {
           replayed += 1;
           return Promise.resolve();
@@ -143,7 +141,8 @@ describe("Eve command recovery", () => {
     ).rejects.toThrow("failed");
     expect(replayed).toBe(0);
     await sendCommand(
-      () => Promise.resolve(),
+      vi.fn<() => Promise<void>>().mockResolvedValue(),
+      // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
       () => {
         replayed += 1;
         return Promise.resolve();
@@ -156,19 +155,17 @@ describe("Eve command recovery", () => {
     expect(replayed).toBe(1);
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("waits for authoritative acceptance after cancellation without submitting twice") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
   let submissions = 0;
   let snapshots = 0;
   await sendCommand(
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     () => {
       submissions += 1;
       return Promise.resolve();
     },
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     () => {
       snapshots += 1;
       return Promise.resolve();
@@ -182,7 +179,6 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   expect(submissions).toBe(1);
   expect(snapshots).toBe(2);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };

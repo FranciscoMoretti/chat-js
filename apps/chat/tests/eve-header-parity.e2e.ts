@@ -5,14 +5,13 @@ import { z } from "zod";
 const captureStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("logical header metadata is optimistic, rolls back, and preserves project and mo preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("logical header metadata is optimistic, rolls back, and preserves project and mobile context", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
@@ -169,4 +168,3 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
     style: captureStyle,
   });
 });
-/* oxlint-enable typescript/promise-function-async */

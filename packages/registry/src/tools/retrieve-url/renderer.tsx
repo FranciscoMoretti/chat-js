@@ -50,19 +50,17 @@ const ErrorState = ({
   </div>
 );
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getItemProperty = (
   item: unknown,
   property: string,
   defaultValue: string
 ): string => {
-  if (item && typeof item === "object" && property in item) {
+  if (item !== null && typeof item === "object" && property in item) {
     const value: unknown = Reflect.get(item, property);
     return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const RetrievedContentHeader = ({
   firstItem,
@@ -135,34 +133,31 @@ const RetrievedContentDetails = ({
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const getFirstItem = (result: unknown): unknown => {
   if (
-    result &&
+    result !== null &&
     typeof result === "object" &&
     "results" in result &&
     Array.isArray(result.results)
   ) {
     return result.results[0];
   }
+  return undefined;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getErrorMessage = (
   result: unknown,
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    result &&
+    result !== null &&
     typeof result === "object" &&
     "error" in result &&
     typeof result.error === "string"
       ? result.error
       : undefined;
   const firstItemError =
-    firstItem &&
+    firstItem !== null &&
     typeof firstItem === "object" &&
     "error" in firstItem &&
     typeof firstItem.error === "string"
@@ -171,9 +166,7 @@ const getErrorMessage = (
 
   return topLevelError ?? firstItemError ?? null;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const RetrieveUrlView = ({
   tool,
 }: ReadonlyNativeSurface<{
@@ -189,7 +182,7 @@ const RetrieveUrlView = ({
     return null;
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return null;
   }
 
@@ -208,7 +201,6 @@ const RetrieveUrlView = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export const RetrieveUrlRenderer = defineToolRenderer({
   inputSchema: retrievedInput,

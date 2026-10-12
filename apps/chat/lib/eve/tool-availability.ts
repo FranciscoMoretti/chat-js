@@ -22,7 +22,7 @@ export const installedToolAvailabilityMiddleware = (
   );
   return {
     specificationVersion: "v4",
-    // oxlint-disable-next-line typescript/promise-function-async -- Filtering runs synchronously before Promise.resolve; async would turn filter/getter failures into rejections.
+    // oxlint-disable-next-line typescript/promise-function-async -- Filtering is synchronous before Promise.resolve; async would turn filter/getter throws into rejections and has no real work to await.
     transformParams: ({ params }) =>
       Promise.resolve({
         ...params,

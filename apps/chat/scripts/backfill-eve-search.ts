@@ -77,13 +77,13 @@ const selectNextBatch = async (
     .limit(BACKFILL_BATCH_SIZE);
 };
 
-/* oxlint-disable eslint/no-await-in-loop -- Fetch each snapshot and index each conversation in order to bound database load and make retries predictable. */
 const main = async (): Promise<number> => {
   assertEveConfigured();
   let cursor = INITIAL_BACKFILL_CURSOR;
   let indexed = INITIAL_PROGRESS_COUNT;
   let failed = INITIAL_PROGRESS_COUNT;
   while (true) {
+    // oxlint-disable-next-line no-await-in-loop -- The next query uses the cursor advanced only after the previous batch has finished indexing.
     const batch = await selectNextBatch(cursor);
     if (batch.length === INITIAL_PROGRESS_COUNT) {
       break;
@@ -91,6 +91,7 @@ const main = async (): Promise<number> => {
     for (const conversation of batch) {
       if (conversation.sessionId !== null && conversation.sessionId !== "") {
         try {
+          // oxlint-disable-next-line no-await-in-loop -- Load and index one conversation snapshot at a time to bound memory and database work.
           await backfillEveSearchConversation(
             conversation.ownerId,
             conversation.id,
@@ -114,7 +115,6 @@ const main = async (): Promise<number> => {
   }
   return SUCCESS_EXIT_STATUS;
 };
-/* oxlint-enable eslint/no-await-in-loop */
 
 const flushOutputBeforeForcedExit = async (): Promise<void> => {
   const stdoutFlushed = Promise.withResolvers<boolean>();

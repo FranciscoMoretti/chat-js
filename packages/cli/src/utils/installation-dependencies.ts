@@ -91,7 +91,7 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
     }
     const file = path.join(cwd, entry.name);
     if (entry.isDirectory()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Stop scanning once a subtree proves usage or contains unknown source; later unreadable files must not invalidate that conservative result.
       if (await sourceUses(file, name)) {
         return true;
       }
@@ -102,7 +102,7 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
         // Unknown oversized source cannot prove that a dependency is unused.
         return true;
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read only after the size check and release each buffer before the next file; arbitrary user trees must not load every source file at once.
       const content = await readFile(file);
       if (content.includes(name)) {
         return true;
@@ -175,7 +175,7 @@ export const prepareDependencyUpdate = async (
         !required.has(name) &&
         group &&
         group[name] === installedVersion &&
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Each unused-dependency proof scans the user source tree; serial scans retain the per-file memory bound rather than multiplying it by the dependency count.
         !(await sourceUses(cwd, name))
       ) {
         Reflect.deleteProperty(group, name);

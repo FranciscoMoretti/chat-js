@@ -26,6 +26,11 @@ type Selector<Selected> = (state: UIArtifact) => Selected;
 
 type MetadataUpdater = (current: ArtifactMetadata) => ArtifactMetadata;
 
+// Function-valued updates are callbacks; stored metadata is the callback result.
+const isMetadataUpdater = (
+  value: ArtifactMetadata | MetadataUpdater
+): value is MetadataUpdater => typeof value === "function";
+
 type MetadataStore = Record<string, ArtifactMetadata>;
 
 interface ArtifactContextType {
@@ -69,11 +74,9 @@ const ArtifactProvider = ({
     (documentId: string, metadata: ArtifactMetadata | MetadataUpdater) => {
       setMetadataStore((current: Readonly<MetadataStore>) => ({
         ...current,
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Artifact metadata intentionally varies with document kind; narrowing it requires a discriminated metadata/store API migration.
-        [documentId]:
-          typeof metadata === "function"
-            ? metadata(current[documentId] ?? null)
-            : metadata,
+        [documentId]: isMetadataUpdater(metadata)
+          ? metadata(current[documentId] ?? null)
+          : metadata,
       }));
     },
     []

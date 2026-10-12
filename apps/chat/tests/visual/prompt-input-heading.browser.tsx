@@ -8,7 +8,6 @@ import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "./sandbox.css";
 
-/* oxlint-disable typescript/promise-function-async -- max-statements: Keep the heading's render, accessibility assertions, interaction and capture together as one UI contract; oxc/no-async-await: This browser scenario awaits the React commit, accessible state, capture and cleanup in order; typescript/promise-function-async: The test returns its existing browser interaction promise. */
 test("prompt input heading renders accessible children and forwards native props", async () => {
   let wasClicked = false;
   const onHeadingClick = (): void => {
@@ -50,10 +49,11 @@ test("prompt input heading renders accessible children and forwards native props
     expect(headingElement.dataset.testid).toBe("prompt-context-heading");
     await takeSnapshot("prompt-input-heading-with-description");
 
-    await act(() => heading.click());
+    await act(async () => {
+      await heading.click();
+    });
     expect(wasClicked).toBe(true);
   } finally {
     await unmount(fixture);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

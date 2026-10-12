@@ -12,8 +12,7 @@ export const relayResponse = (
     "x-eve-stream-tail-index",
   ]) {
     const value = result.headers.get(key);
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original single-read truthiness guard, including custom native Headers methods; Boolean(value) in the condition conflicts with no-extra-boolean-cast and a stored flag loses string narrowing.
-    if (value) {
+    if (value !== null && value !== "") {
       headers.set(key, value);
     }
   }

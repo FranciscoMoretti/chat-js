@@ -5,14 +5,13 @@ import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
 const nano = /GPT-5 Nano/iu;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("nested comparisons retain both groups, duplicate-model slots and retry attempts preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("nested comparisons retain both groups, duplicate-model slots and retry attempts under one chat URL", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-response-groups", {
@@ -131,21 +130,19 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(cards).toHaveCount(4);
   expect(page.url()).toBe(url);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("new-chat recovery survives an ambiguous reply and reload without a new operatio preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const submissions: unknown[] = [];
-  await page.route("**/api/agent-conversations", (route) => {
+  await page.route("**/api/agent-conversations", async (route) => {
     submissions.push(route.request().postDataJSON());
-    return route.fulfill({
+    await route.fulfill({
       json: { error: "Temporary transport failure" },
       status: 503,
     });
@@ -173,4 +170,3 @@ test("new-chat recovery survives an ambiguous reply and reload without a new ope
     page.getByRole("button", { name: "Retry creation" })
   ).toBeEnabled();
 });
-/* oxlint-enable typescript/promise-function-async */

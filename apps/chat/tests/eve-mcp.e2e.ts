@@ -1,8 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { expect, test } from "@playwright/test";
 import type { Request, Response, TestInfo } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
@@ -26,14 +24,9 @@ const requestSchema = z.object({
   params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return --
- * typescript/strict-boolean-expressions (#610): localMcpServer intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * typescript/strict-void-return (#611): localMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
-
-async function localMcpServer(
+const localMcpServer = async (
   invoke: (response: ReadonlyNativeSurface<ServerResponse>) => unknown
-) {
+) => {
   const server = createServer(
     (
       request: ReadonlyNativeSurface<IncomingMessage>,
@@ -126,21 +119,17 @@ async function localMcpServer(
       })();
     }
   );
+  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", resolve);
   });
   const address = server.address();
-  if (!address || typeof address === "string") {
+  if (address === null || typeof address === "string") {
     throw new Error("Missing local MCP address");
   }
   return { address, server };
-}
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */
+};
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("composer connector controls persist and fence native tool execution") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("composer connector controls persist and fence native tool execution")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("composer connector controls persist and fence native tool execution", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
@@ -152,9 +141,9 @@ test("composer connector controls persist and fence native tool execution", asyn
   const id = crypto.randomUUID();
   const nameId = `test_${id.slice(0, 8)}`;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
     const { user: owner } = z
@@ -177,8 +166,8 @@ test("composer connector controls persist and fence native tool execution", asyn
     const toggle = page.getByRole("menuitemcheckbox", {
       name: "Local connector fixture",
     });
-    const discover = () =>
-      discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
+    const discover = async () =>
+      await discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
     const enabledConnectorTools = await discover();
     expect(
       enabledConnectorTools.map((tool: { readonly name: string }) => tool.name)
@@ -271,6 +260,7 @@ test("composer connector controls persist and fence native tool execution", asyn
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
     server.closeAllConnections();
+    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
     await new Promise<void>((resolve, reject) => {
       server.close((error: Readonly<Error> | undefined) => {
         if (error) {
@@ -282,12 +272,7 @@ test("composer connector controls persist and fence native tool execution", asyn
     });
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("native MCP executes and its saved result survives connector removal and reload" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("native MCP executes and its saved result survives connector removal and reload"'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("native MCP executes and its saved result survives connector removal and reload", async ({
   page,
   browser,
@@ -301,9 +286,9 @@ test("native MCP executes and its saved result survives connector removal and re
   const connectorId = crypto.randomUUID();
   const nameId = `test_${connectorId.slice(0, 8)}`;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
@@ -383,8 +368,11 @@ test("native MCP executes and its saved result survives connector removal and re
           connectorRequests += 1;
         }
       });
-      await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-        route.abort()
+      await publicPage.route(
+        "https://unpkg.com/react-scan/**",
+        async (route) => {
+          await route.abort();
+        }
       );
       await publicPage.goto(
         `${new URL(page.url()).origin}/share/${binding.id}`
@@ -410,6 +398,7 @@ test("native MCP executes and its saved result survives connector removal and re
     }
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
+    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
     await new Promise<void>((resolve, reject) => {
       server.close((error: Readonly<Error> | undefined) => {
         if (error) {
@@ -421,12 +410,7 @@ test("native MCP executes and its saved result survives connector removal and re
     });
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("stopping a pending MCP call closes its transport and permits another message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("stopping a pending MCP call closes its transport and permits another message")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("stopping a pending MCP call closes its transport and permits another message", async ({
   page,
 }) => {
@@ -434,7 +418,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
   let disconnected = false;
   const completion = Promise.withResolvers<unknown>();
   const { server, address } = await localMcpServer(
-    (response: ReadonlyNativeSurface<ServerResponse>) => {
+    async (response: ReadonlyNativeSurface<ServerResponse>) => {
       calls += 1;
       response.on("close", () => {
         disconnected = !response.writableEnded;
@@ -442,15 +426,15 @@ test("stopping a pending MCP call closes its transport and permits another messa
           content: [{ text: "cancelled-fixture", type: "text" }],
         });
       });
-      return completion.promise;
+      return await completion.promise;
     }
   );
   const connectorId = crypto.randomUUID();
   const nameId = `test_${connectorId.slice(0, 8)}`;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
@@ -518,6 +502,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
     });
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
+    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
     await new Promise<void>((resolve, reject) => {
       server.close((error: Readonly<Error> | undefined) => {
         if (error) {
@@ -529,25 +514,20 @@ test("stopping a pending MCP call closes its transport and permits another messa
     });
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("the real MCP client aborts an in-flight HTTP tool request") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("the real MCP client aborts an in-flight HTTP tool request")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("the real MCP client aborts an in-flight HTTP tool request", async () => {
   const started = Promise.withResolvers<undefined>();
   const finished = Promise.withResolvers<unknown>();
   let disconnected = false;
   const { server, address } = await localMcpServer(
-    (response: ReadonlyNativeSurface<ServerResponse>) => {
+    async (response: ReadonlyNativeSurface<ServerResponse>) => {
       response.on("close", () => {
         disconnected = !response.writableEnded;
         finished.resolve({ content: [] });
       });
       // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       started.resolve(undefined);
-      return finished.promise;
+      return await finished.promise;
     }
   );
   const connectorId = crypto.randomUUID();
@@ -591,6 +571,7 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     await client.close();
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
+    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
     await new Promise<void>((resolve, reject) => {
       server.close((error: Readonly<Error> | undefined) => {
         if (error) {
@@ -602,4 +583,3 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     });
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */

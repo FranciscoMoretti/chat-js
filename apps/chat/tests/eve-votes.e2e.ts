@@ -1,6 +1,5 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import type { Client, MessageStreamEvent } from "eve/client";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
@@ -59,14 +58,13 @@ beforeEach(() => {
   native.attach.mockReset().mockReturnValue({ snapshot: native.snapshot });
   native.snapshot.mockReset().mockResolvedValue({ events });
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Question",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
@@ -93,15 +91,17 @@ test("native assistant feedback persists, replaces a vote and stays private when
 
 test("unknown messages and native user messages cannot receive feedback", async () => {
   const row = await conversation();
-  for (const messageId of ["turn_0:user", "turn_99:assistant"]) {
-    expect(
-      await voteEveMessage(owner, {
-        conversationId: row.id,
-        messageId,
-        type: "up",
-      })
-    ).toBeNull();
-  }
+  await Promise.all(
+    ["turn_0:user", "turn_99:assistant"].map(async (messageId) => {
+      expect(
+        await voteEveMessage(owner, {
+          conversationId: row.id,
+          messageId,
+          type: "up",
+        })
+      ).toBeNull();
+    })
+  );
   expect(await getEveMessageVotes(owner, row.id)).toEqual([]);
 });
 test("deletion erases existing feedback and rejects a vote whose snapshot finishes after deletion", async () => {

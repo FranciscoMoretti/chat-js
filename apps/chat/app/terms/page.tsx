@@ -94,8 +94,6 @@ const PricingSection = ({
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): TermsPage intentionally keeps the existing falsy-value behavior of currencyCode; config.policies.terms.lastUpdated; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const TermsPage = (): React.JSX.Element => {
   const currencySymbolMap: Record<string, string> = {
     EUR: "€",
@@ -104,9 +102,10 @@ const TermsPage = (): React.JSX.Element => {
   };
 
   const currencyCode = config.pricing?.currency;
-  const currencySymbol = currencyCode
-    ? (currencySymbolMap[currencyCode] ?? currencyCode)
-    : "";
+  const currencySymbol =
+    typeof currencyCode === "string" && currencyCode !== ""
+      ? (currencySymbolMap[currencyCode] ?? currencyCode)
+      : "";
   const hasFree = Boolean(config.pricing?.free);
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
@@ -118,7 +117,7 @@ const TermsPage = (): React.JSX.Element => {
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
       <h1>{config.policies.terms.title}</h1>
-      {config.policies.terms.lastUpdated ? (
+      {(config.policies.terms.lastUpdated ?? "").length > 0 ? (
         <p>
           <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
         </p>
@@ -267,6 +266,5 @@ const TermsPage = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export default TermsPage;

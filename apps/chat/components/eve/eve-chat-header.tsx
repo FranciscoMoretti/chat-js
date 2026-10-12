@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Share } from "lucide-react";
 import React, { useState } from "react";
@@ -64,8 +66,6 @@ const projectAppearance = (
     "gray",
   icon: PROJECT_ICONS.find((value) => value === project?.icon) ?? "folder",
 });
-/* oxlint-disable typescript/strict-boolean-expressions -- EveChatHeader: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId)
- */
 
 const EveChatHeader = ({
   chatId,
@@ -85,7 +85,7 @@ const EveChatHeader = ({
   const project = useQuery(
     trpc.project.getById.queryOptions(
       { id: projectId ?? "" },
-      { enabled: Boolean(projectId && session?.user) }
+      { enabled: Boolean(hasText(projectId) && session?.user) }
     )
   );
   const { rename, pin } = useEveMetadataMutations();
@@ -125,7 +125,7 @@ const EveChatHeader = ({
         breadcrumb={
           <Breadcrumb className="ml-2 min-w-0">
             <BreadcrumbList className="flex-nowrap">
-              {projectId && session?.user && (
+              {hasText(projectId) && session?.user && (
                 <>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
@@ -166,7 +166,7 @@ const EveChatHeader = ({
                         onTogglePin={() => {
                           pin.mutate({
                             id: chatId,
-                            isPinned: !identity.data?.isPinned,
+                            isPinned: !(identity.data?.isPinned === true),
                           });
                         }}
                         onDelete={() => {
@@ -227,5 +227,5 @@ const EveChatHeader = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 export { EveChatHeader, EveSharedBadge };

@@ -10,7 +10,7 @@ export const DevLoginTool = (): React.JSX.Element | null => {
   }
 
   return (
-    // oxlint-disable-next-line next/no-html-link-for-pages -- This session-creating GET is an API route, not a Next page; native document navigation consumes its 302 and Set-Cookie before loading /. Next Link is for page navigation and can prefetch pages in production. route.test.ts verifies the signed cookie and redirect.
+    // oxlint-disable-next-line next/no-html-link-for-pages -- /api/dev-login sets the auth cookie and redirects via a full document GET; this is an API endpoint, not a client page transition.
     <a
       className={cn(
         buttonVariants({ size: "sm" }),

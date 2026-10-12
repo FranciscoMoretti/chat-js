@@ -23,16 +23,14 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "output-available"; input: TInput; output: TOutput }
 );
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type ToolRendererProps<
+interface ToolRendererProps<
   InputSchema extends z.ZodType,
   OutputSchema extends z.ZodType,
-> = {
+> {
   tool: RenderableTool<z.output<InputSchema>, z.output<OutputSchema>>;
   messageId: string;
   isReadonly: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const envelope = z.object({
   errorText: z.string().optional(),
@@ -55,7 +53,6 @@ const InvalidResult = (): React.JSX.Element => (
   <p role="alert">This tool result could not be displayed.</p>
 );
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): defineToolRenderer intentionally keeps the existing falsy-value behavior of input?.success; value?.success; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Validate persisted tool data before passing it to the installed UI renderer.
  * @param {object} options Schemas and components for this tool's persisted states.
@@ -125,7 +122,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           {...common}
           tool={{
             ...identity,
-            input: input?.success ? input.data : undefined,
+            input: input?.success === true ? input.data : undefined,
             state: value.state,
           }}
         />
@@ -168,7 +165,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
       (update) => {
         const value = updateSchema?.safeParse(update);
-        if (value?.success) {
+        if (value?.success === true) {
           return [value.data];
         }
         return [];
@@ -185,7 +182,6 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     validatedToolRenderer: true as const,
   });
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export { isValidatedToolRenderer };
 export type { ValidatedToolRenderer, ToolRendererProps };

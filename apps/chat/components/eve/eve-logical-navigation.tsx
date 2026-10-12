@@ -1,16 +1,66 @@
 "use client";
 
 import type { JSX as ReactJSX } from "react";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useSyncExternalStore } from "react";
 
 import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
+import type { LogicalChat } from "@/lib/eve/logical-chat";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 
 import { useLogicalChat } from "./eve-logical-context";
 import { EveLogicalGroupRecovery } from "./eve-logical-group-recovery";
 import { EveResponseGroupCards } from "./eve-response-group-cards";
+
+const createResponseSelection = (
+  controller: Readonly<
+    Pick<LogicalChat, "subscribe" | "getSnapshot" | "selectBranch">
+  >,
+  userId: string | undefined
+) => {
+  let pending: string | undefined;
+  const listeners = new Set<() => void>();
+  const publish = (): void => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  const recover = (): void => {
+    if (userId === undefined || pending === undefined) {
+      return;
+    }
+    const group = logicalResponseSlots(controller.getSnapshot(), userId);
+    const recoveredId = group?.slots.find(
+      (slot) => slot.operationId === pending
+    )?.original?.id;
+    if (typeof recoveredId !== "string" || recoveredId === "") {
+      return;
+    }
+    // Clear before selection emits a new controller snapshot, preventing re-entry.
+    pending = undefined;
+    controller.selectBranch(recoveredId);
+    publish();
+  };
+  return {
+    getSnapshot: () => pending,
+    getServerSnapshot: (): undefined => undefined,
+    select: (operationId: string | undefined): void => {
+      pending = operationId;
+      publish();
+      recover();
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      const unsubscribe = controller.subscribe(recover);
+      recover();
+      return () => {
+        unsubscribe();
+        listeners.delete(listener);
+      };
+    },
+  };
+};
 
 const EveLogicalVersions = ({
   conversationId,
@@ -56,22 +106,20 @@ const EveLogicalResponses = ({
   const { controller, snapshot, ownerId } = useLogicalChat();
   const { getModelById } = useChatModels();
   const changeModel = useModelChange();
-  const [pending, setPending] = useState<string>();
   const userId = controller.logicalId(conversationId, messageId);
+  const selection = useMemo(
+    () => createResponseSelection(controller, userId),
+    [controller, userId]
+  );
+  const pending = useSyncExternalStore(
+    selection.subscribe,
+    selection.getSnapshot,
+    selection.getServerSnapshot
+  );
   const group =
     typeof userId === "string" && userId !== ""
       ? logicalResponseSlots(snapshot, userId)
       : undefined;
-  const recoveredId = group?.slots.find(
-    (slot: { readonly operationId: string }) => slot.operationId === pending
-  )?.original?.id;
-  useEffect(() => {
-    if (typeof recoveredId === "string" && recoveredId !== "") {
-      controller.selectBranch(recoveredId);
-      // oxlint-disable-next-line react/set-state-in-effect -- Reconcile a user-selected unresolved slot with its accepted native session.
-      setPending(undefined);
-    }
-  }, [controller, recoveredId]);
   if (!group) {
     return null;
   }
@@ -118,7 +166,7 @@ const EveLogicalResponses = ({
           if (model) {
             void changeModel(model.id);
           }
-          setPending(slot.original ? undefined : operationId);
+          selection.select(slot.original ? undefined : operationId);
           if (slot.attempt) {
             controller.selectNode(slot.attempt.answer);
           } else if (slot.original) {

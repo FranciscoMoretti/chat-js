@@ -37,7 +37,7 @@ export const prepareEveMessage = async (
       if (key === null || key === "") {
         throw new Error("Invalid attachment reference.");
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Download, validate, and encode one attachment before reading the next; Promise.all would retain multiple max-size byte buffers at once.
       const file = await downloadFile(key);
       if (
         file.size > config.attachments.maxBytes ||
@@ -48,7 +48,7 @@ export const prepareEveMessage = async (
         );
       }
       content.push({
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Download, validate, and encode one attachment before reading the next; Promise.all would retain multiple max-size byte buffers at once.
         data: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`,
         filename: part.filename,
         mediaType: file.type,

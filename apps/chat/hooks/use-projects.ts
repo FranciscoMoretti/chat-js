@@ -15,8 +15,6 @@ interface ProjectRenameSnapshot {
   detail?: Project | null;
 }
 
-/* oxlint-disable typescript/promise-function-async -- useRenameProject: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
-
 export const useRenameProject = (): UseMutationResult<
   inferRouterOutputs<AppRouter>["project"]["update"],
   TRPCClientErrorLike<AppRouter>,
@@ -78,10 +76,12 @@ export const useRenameProject = (): UseMutationResult<
         }
         return { detail, previous };
       },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: trpc.project.pathKey() }),
+      onSettled: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: trpc.project.pathKey(),
+        });
+      },
       onSuccess: () => toast.success("Project renamed"),
     })
   );
 };
-/* oxlint-enable typescript/promise-function-async */

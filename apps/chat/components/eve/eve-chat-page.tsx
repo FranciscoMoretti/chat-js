@@ -1,3 +1,4 @@
+import { hasText } from "@/components/text-value";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import React from "react";
@@ -16,11 +17,19 @@ import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
-/* oxlint-disable typescript/strict-boolean-expressions -- EveChatPage: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including conversationId)
- */
 
-// This server boundary selects the authenticated, recovery, comparison, and chat states.
-// oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
+const creationRecoveryScope = (
+  selected: Awaited<ReturnType<typeof getEveChatPageConversation>>
+): CreationScope | undefined => {
+  if (hasText(selected?.parentConversationId)) {
+    return { conversationId: selected.parentConversationId };
+  }
+  if (hasText(selected?.initialProjectId)) {
+    return { projectId: selected.initialProjectId };
+  }
+  return undefined;
+};
+
 export const EveChatPage = async ({
   conversationId,
 }: {
@@ -28,27 +37,21 @@ export const EveChatPage = async ({
 }): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
-    if (typeof conversationId === "string" && conversationId !== "") {
+    if (hasText(conversationId)) {
       redirect("/");
     }
     return <DisposableGuestChat />;
   }
-  if (conversationId && !z.uuid().safeParse(conversationId).success) {
+  if (hasText(conversationId) && !z.uuid().safeParse(conversationId).success) {
     notFound();
   }
-  const selected =
-    typeof conversationId === "string" && conversationId !== ""
-      ? await getEveChatPageConversation(principal.ownerId, conversationId)
-      : undefined;
-  if (conversationId && !selected) {
+  const selected = hasText(conversationId)
+    ? await getEveChatPageConversation(principal.ownerId, conversationId)
+    : undefined;
+  if (hasText(conversationId) && !selected) {
     notFound();
   }
-  let recoveryScope: CreationScope | undefined;
-  if (selected?.parentConversationId) {
-    recoveryScope = { conversationId: selected.parentConversationId };
-  } else if (selected?.initialProjectId) {
-    recoveryScope = { projectId: selected.initialProjectId };
-  }
+  const recoveryScope = creationRecoveryScope(selected);
   const header = (
     <ChatHeaderView
       breadcrumb={
@@ -60,7 +63,7 @@ export const EveChatPage = async ({
       }
     />
   );
-  if (selected?.sessionId && selected.state === "bound") {
+  if (hasText(selected?.sessionId) && selected.state === "bound") {
     return (
       <EveRuntimeRoute
         id={selected.id}
@@ -90,7 +93,7 @@ export const EveChatPage = async ({
       />
     );
   }
-  if (copy && selected?.initialModelId) {
+  if (copy && hasText(selected?.initialModelId)) {
     content = (
       <EveCopyButton
         recovery={{
@@ -111,4 +114,3 @@ export const EveChatPage = async ({
     </EveArtifactLayout>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

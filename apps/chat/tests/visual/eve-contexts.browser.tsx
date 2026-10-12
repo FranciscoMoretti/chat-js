@@ -62,10 +62,14 @@ test("native route loading and identity failure", async () => {
       .toBeVisible();
     await expect.poll(() => state.requests.includes("eve.get")).toBe(true);
     await takeSnapshot("route-loading");
-    // oxlint-disable-next-line eslint/require-await -- React act and native asynchronous auth/header APIs expose completion promises even when the fixture operation is synchronous.
-    await act(async () => {
-      state.rejectIdentity();
-    });
+
+    await act(
+      /* oxlint-disable eslint/require-await -- React act uses its asynchronous overload for rendering completion even though this fixture update itself is synchronous; no unrelated await is inserted. */
+      async () => {
+        state.rejectIdentity();
+      }
+      /* oxlint-enable eslint/require-await */
+    );
     await expect
       .element(page.getByRole("alert"))
       .toHaveTextContent("Fixture unavailable");

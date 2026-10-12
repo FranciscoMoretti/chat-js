@@ -48,7 +48,7 @@ it("isolates direct Next starts using the actual listener port without APP_URL",
   vi.stubEnv("PORT", "3200");
   expect(getBaseUrl()).toBe("http://localhost:3200");
   expect(localPrefix()).not.toBe(first);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest requires an explicit undefined value to remove this environment variable.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest stubEnv requires its value argument; undefined deletes the environment variable rather than setting an empty string.
   vi.stubEnv("PORT", undefined);
   expect(getBaseUrl()).toBe("http://localhost:3000");
 });

@@ -4,9 +4,6 @@ import { z } from "zod";
 
 import { filterEveTools } from "../../../../lib/eve/turn-tools";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): confirmNote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const confirmNote = defineTool({
   approval: {
     request: always(),
@@ -19,10 +16,13 @@ const confirmNote = defineTool({
   },
   description:
     "Confirm a short note after explicit human approval. No external side effects.",
+  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
   execute: ({ note }) => Promise.resolve({ confirmed: true, note }),
-  inputSchema: z.object({ note: z.string().trim().min(1).max(500) }),
+  /* oxlint-enable typescript/promise-function-async */
+  inputSchema: z.object({
+    note: z.string().trim().min(1).max(500),
+  }),
 });
-/* oxlint-enable typescript/promise-function-async */
 
 export default defineDynamic({
   events: {

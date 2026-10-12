@@ -52,9 +52,6 @@ const checkpointFailureResponse = (
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions: Preserve one sessionId getter read and native property narrowing; captured-value comparisons leave later property reads nullable in the pinned compiler, while using that captured value changes subsequent getter reads.
- */
-
 /**
  * Requests checkpoint capture for a bound source conversation.
  * On an ambiguous response, the caller must retain this request for a same-request retry.
@@ -88,7 +85,12 @@ export const POST = async (
     );
   }
   const source = await getEveConversation(principal.ownerId, id);
-  if (!source?.sessionId || source.state !== "bound") {
+  const sessionId = source?.sessionId;
+  if (
+    typeof sessionId !== "string" ||
+    sessionId === "" ||
+    source?.state !== "bound"
+  ) {
     return Response.json(
       { error: "Source conversation not found." },
       { status: 404 }
@@ -98,14 +100,14 @@ export const POST = async (
     if (
       !(await readEveCheckpoint(
         principal.ownerId,
-        source.sessionId,
+        sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId
       ))
     ) {
       const accepted = await eveRequest(
         principal.ownerId,
-        `/eve/chat/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
+        `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint`,
         {
           body: JSON.stringify(input.data),
           method: "POST",
@@ -117,7 +119,7 @@ export const POST = async (
       }
       await waitForEveCheckpoint(
         principal.ownerId,
-        source.sessionId,
+        sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId
       );
@@ -130,4 +132,3 @@ export const POST = async (
     return checkpointFailureResponse(error, id, input);
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

@@ -23,12 +23,11 @@ const queryClient = new QueryClient({
 const olderId = "00000000-0000-4000-8000-000000000005";
 const restoredId = "00000000-0000-4000-8000-000000000006";
 let restoredContent: string | undefined;
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --typescript/promise-function-async (#606): trpcClient preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
-typescript/strict-boolean-expressions (#610): trpcClient intentionally keeps the existing falsy-value behavior of request.revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
+      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
       fetch(
         input: string | URL | Request,
         init: { readonly body?: unknown } | undefined
@@ -91,7 +90,9 @@ const trpcClient = createTRPCClient<AppRouter>({
                   ? restoredId
                   : latestId);
               if (
-                request.revisionId &&
+                request.revisionId !== undefined &&
+                request.revisionId !== null &&
+                request.revisionId !== "" &&
                 ![latestId, olderId, restoredId].includes(request.revisionId)
               ) {
                 throw new Error("Wrong revision selected");
@@ -157,10 +158,11 @@ const trpcClient = createTRPCClient<AppRouter>({
           )
         );
       },
+      /* oxlint-enable typescript/promise-function-async */
       transformer: SuperJSON,
       url: "http://fixture.invalid/api/trpc",
     }),
   ],
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
+
 export { conversationId, existingId, queryClient, trpcClient };

@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { CreationRejectedError } from "./create-conversation";
 import {
@@ -54,7 +55,9 @@ const fixture = () => {
 
 test("lost creation replies retain the exact ordered operation across changed composer choices", async () => {
   const { storage, operation } = fixture();
-  const fetcher = vi.fn().mockRejectedValue(new Error("Lost reply"));
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(new Error("Lost reply"));
   vi.stubGlobal("fetch", fetcher);
   await expect(
     resolveCreationRequest(storage, "owner", operation)
@@ -65,8 +68,7 @@ test("lost creation replies retain the exact ordered operation across changed co
     ])
   ).toEqual(operation);
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls[0][1].body).toBe(JSON.stringify(operation));
+  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
   expect(() => prepareCreation(storage, "owner", "Another request")).toThrow(
     "saved comparison"
   );
@@ -199,7 +201,7 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     { ...scope, fork }
   );
   const fetcher = vi
-    .fn()
+    .fn<typeof fetch>()
     .mockResolvedValueOnce(new Response("Lost capture reply", { status: 409 }));
   vi.stubGlobal("fetch", fetcher);
   await expect(
@@ -230,10 +232,12 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     .mockResolvedValueOnce(Response.json(result));
   await resolveCreationRequest(storage, "owner", recovered, scope);
   expect(fetcher.mock.calls[1][0]).toEqual(fetcher.mock.calls[0][0]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls[1][1].body).toEqual(fetcher.mock.calls[0][1].body);
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual(operation);
+  expect(fetcher.mock.calls[1][1]?.body).toEqual(
+    fetcher.mock.calls[0][1]?.body
+  );
+  expect(JSON.parse(z.string().parse(fetcher.mock.calls[2][1]?.body))).toEqual(
+    operation
+  );
   expect(readCreationRequest(storage, "owner", scope)).toBeUndefined();
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
     operation
@@ -270,9 +274,6 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
   );
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("only an exact durable checkpoint rejection releases a comparison for editing") intentionally keeps the existing falsy-value behavior of fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint")); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
   const { storage } = fixture();
   const conversationId = crypto.randomUUID();
@@ -294,7 +295,7 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
     reason: "source_advanced",
     ...fork,
   };
-  const fetcher = vi.fn();
+  const fetcher = vi.fn<typeof fetch>();
   vi.stubGlobal("fetch", fetcher);
   for (const body of [
     { ...rejection, checkpointId: crypto.randomUUID() },
@@ -303,7 +304,7 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
     { ...rejection, reason: "unknown" },
   ]) {
     fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case installs a one-shot rejection body against the same storage operation; finish resolving and assert recovery persistence before configuring the next.
     await expect(
       resolveCreationRequest(storage, "owner", operation, scope)
     ).rejects.not.toBeInstanceOf(CreationRejectedError);
@@ -317,12 +318,9 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   expect(
     fetcher.mock.calls.every(
       ([url]: Readonly<(typeof fetcher.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        url.endsWith("/checkpoint")
-      /* oxlint-enable typescript/no-unsafe-call, typescript/no-unsafe-member-access */
+        typeof url === "string" && url.endsWith("/checkpoint")
     )
   ).toBe(true);
   // The UI owns releasing the matching pending request; the original draft is never erased here.
   expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
 });
-/* oxlint-enable typescript/strict-boolean-expressions */

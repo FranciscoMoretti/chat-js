@@ -47,7 +47,6 @@ import { mount, unmount } from "./primitive-mount";
 
 import "./sandbox.css";
 
-/* oxlint-disable typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; eslint/max-lines-per-function: Keep the composed Radix hierarchy and its interaction assertions together; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; react/jsx-no-literals: Fixed accessible fixture labels make overlay captures and interaction targets deterministic; react-perf/jsx-no-new-function-as-prop: Fixture callbacks record caller events and do not drive a production rendering loop; eslint/no-magic-numbers: Assertions check exactly one forwarded click and zero fallback geometry for a missing DOM node; react/jsx-max-depth: Radix portal, group and asChild nesting is the actual forwarding contract under test; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
 test("menu portal groups and submenu preserve callbacks and refs", async () => {
   const portal = document.createElement("aside");
   document.body.append(portal);
@@ -113,15 +112,19 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
   try {
     expect(navRef.current?.dataset.contract).toBe("nav");
     expect(menuRef.current?.textContent).toBe("Wrapper menu");
-    await act(() =>
-      page.getByRole("navigation", { name: "Forwarded breadcrumb" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("navigation", { name: "Forwarded breadcrumb" })
+        .click();
+    });
     expect(navClicks).toBe(1);
-    await act(() => page.getByRole("button", { name: "Wrapper menu" }).click());
+    await act(async () => {
+      await page.getByRole("button", { name: "Wrapper menu" }).click();
+    });
     expect(portal.querySelector('[role="menu"]')).not.toBeNull();
-    await act(() =>
-      page.getByRole("menuitem", { name: "Nested choices" }).hover()
-    );
+    await act(async () => {
+      await page.getByRole("menuitem", { name: "Nested choices" }).hover();
+    });
     await expect
       .element(
         page.getByRole("menuitem", { exact: true, name: "Nested choice" })
@@ -129,13 +132,17 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
       .toBeVisible();
     await takeSnapshot("primitives-menu-submenu");
     await page.elementLocator(document.body).screenshot();
-    await act(() =>
-      page.getByRole("menuitem", { exact: true, name: "Nested choice" }).click()
-    );
-    await act(() => page.getByRole("button", { name: "Wrapper menu" }).click());
-    await act(() =>
-      page.getByRole("menuitemradio", { name: "Second choice" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { exact: true, name: "Nested choice" })
+        .click();
+    });
+    await act(async () => {
+      await page.getByRole("button", { name: "Wrapper menu" }).click();
+    });
+    await act(async () => {
+      await page.getByRole("menuitemradio", { name: "Second choice" }).click();
+    });
     expect(selected).toEqual(["nested", "second"]);
     expect(opened).toEqual([true, false, true, false]);
   } finally {
@@ -143,8 +150,7 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
     portal.remove();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; eslint/max-lines-per-function: Keep the composed Radix hierarchy and its interaction assertions together; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; react/jsx-no-literals: Fixed accessible fixture labels make overlay captures and interaction targets deterministic; react-perf/jsx-no-new-function-as-prop: Fixture callbacks record caller events and do not drive a production rendering loop; react/jsx-max-depth: Radix portal, group and asChild nesting is the actual forwarding contract under test; eslint/no-undefined: Radix explicitly accepts undefined aria-describedby to omit optional descriptions in this heading-only fixture; eslint/no-magic-numbers: Assertions check exactly one forwarded click and zero fallback geometry for a missing DOM node; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
+
 test("close callbacks hover content and separate popover anchor are forwarded", async () => {
   const dialogEvents: boolean[] = [];
   const sheetEvents: boolean[] = [];
@@ -201,21 +207,25 @@ test("close callbacks hover content and separate popover anchor are forwarded", 
   );
   let fixture = await mount(children);
   try {
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Callback dialog" }).click()
-    );
-    await act(() =>
-      page.getByRole("button", { name: "Wrapper dialog close" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("button", { exact: true, name: "Callback dialog" })
+        .click();
+    });
+    await act(async () => {
+      await page.getByRole("button", { name: "Wrapper dialog close" }).click();
+    });
     expect(dialogEvents).toEqual([true, false]);
     await unmount(fixture);
     fixture = await mount(children);
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Callback sheet" }).click()
-    );
-    await act(() =>
-      page.getByRole("button", { name: "Wrapper sheet close" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("button", { exact: true, name: "Callback sheet" })
+        .click();
+    });
+    await act(async () => {
+      await page.getByRole("button", { name: "Wrapper sheet close" }).click();
+    });
     expect(sheetEvents).toEqual([true, false]);
     await unmount(fixture);
     fixture = await mount(children);
@@ -235,9 +245,10 @@ test("close callbacks hover content and separate popover anchor are forwarded", 
       .poll(() => content?.getBoundingClientRect().top)
       .toBeGreaterThanOrEqual(anchor?.getBoundingClientRect().bottom ?? 0);
     await takeSnapshot("primitives-hover-separate-anchor");
-    await act(() => userEvent.keyboard("{Escape}"));
+    await act(async () => {
+      await userEvent.keyboard("{Escape}");
+    });
   } finally {
     await unmount(fixture);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

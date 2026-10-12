@@ -1,6 +1,6 @@
 import type { EveMessage } from "eve/client";
-import React from "react";
-import { act, create } from "react-test-renderer";
+import React, { act } from "react";
+import { createDomHarness } from "@/components/test-dom-harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
@@ -8,7 +8,7 @@ import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { useEveFork } from "./use-eve-fork";
+import { useEveFork } from "@/components/eve/use-eve-fork";
 
 const mocks = vi.hoisted(() => ({
   openRuntime: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
-vi.mock("./eve-logical-context", () => ({
+vi.mock("@/components/eve/eve-logical-context", () => ({
   useEveRuntime: () => mocks.openRuntime,
 }));
 
@@ -130,7 +130,6 @@ const deferred = <T,>() => {
 };
 
 const flushEffects = async (): Promise<void> => {
-  // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
   await act(async () => {
     await Promise.resolve();
   });
@@ -146,13 +145,10 @@ describe("useEveFork", () => {
   it("opens an inline edit with the original response model and tool", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -165,7 +161,6 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage(), undefined, {
           events: [],
@@ -181,7 +176,6 @@ describe("useEveFork", () => {
       );
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -204,13 +198,10 @@ describe("useEveFork", () => {
     );
     vi.stubGlobal("sessionStorage", pendingStorage);
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -229,7 +220,6 @@ describe("useEveFork", () => {
       });
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -255,13 +245,10 @@ describe("useEveFork", () => {
       new CreationRejectedError("Source is no longer available.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -274,7 +261,6 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).retry();
       });
@@ -284,7 +270,6 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -298,13 +283,10 @@ describe("useEveFork", () => {
       new CreationRejectedError("Source is no longer available.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -317,11 +299,9 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -330,7 +310,6 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -350,13 +329,10 @@ describe("useEveFork", () => {
       new CreationRejectedError("Source is no longer available.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -369,11 +345,9 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -387,7 +361,6 @@ describe("useEveFork", () => {
       expect(required(fork).busy).toBe(false);
       expect(required(fork).rejected).toBe(true);
       removeItem.mockRestore();
-      // oxlint-disable-next-line typescript/no-deprecated -- Exercise the existing hook fixture's recovery commit with its native renderer.
       await act(async () => {
         await required(fork).retry();
       });
@@ -395,7 +368,6 @@ describe("useEveFork", () => {
       expect(required(fork).rejected).toBe(false);
       expect(mocks.resolveCreationRequest).toHaveBeenCalledOnce();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -407,13 +379,10 @@ describe("useEveFork", () => {
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -426,15 +395,12 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         required(fork).setDraft("Keep this edit draft.");
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin({
           ...userMessage(),
@@ -446,7 +412,6 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).draft).toBe("Keep this edit draft.");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -470,13 +435,10 @@ describe("useEveFork", () => {
         };
       }
     );
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -489,11 +451,9 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -516,7 +476,6 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -530,13 +489,10 @@ describe("useEveFork", () => {
       new Error("Creation is unconfirmed.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -549,15 +505,12 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -565,7 +518,6 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeDefined();
       expect(mocks.resolveCreationRequest).toHaveBeenCalledTimes(1);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -587,13 +539,10 @@ describe("useEveFork", () => {
       }
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -607,7 +556,6 @@ describe("useEveFork", () => {
 
     try {
       let request: Promise<void> | undefined;
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         request = required(fork).compare(
           "Compare this request",
@@ -629,7 +577,6 @@ describe("useEveFork", () => {
       ).toContain(operation.operationId);
 
       delayed.resolve("11111111-1111-4111-8111-111111111115");
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await request;
       });
@@ -640,7 +587,6 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -655,13 +601,10 @@ describe("useEveFork", () => {
       new Error("Comparison is unconfirmed.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -674,7 +617,6 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).compare(
           "Keep the operation",
@@ -689,14 +631,12 @@ describe("useEveFork", () => {
         id: "11111111-1111-4111-8111-111111111116",
         sessionId: "session",
       });
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).retry();
       });
 
       expect(mocks.resolveCreationRequest.mock.calls[1]?.[2]).toEqual(original);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -714,12 +654,9 @@ describe("useEveFork", () => {
     };
     mocks.restoreAttachments.mockResolvedValueOnce([attachment]);
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -731,7 +668,6 @@ describe("useEveFork", () => {
     });
     await flushEffects();
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(
           userMessage([
@@ -752,7 +688,6 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -762,18 +697,14 @@ describe("useEveFork", () => {
   });
   it("locks an inline edit when an original attachment cannot be restored", async () => {
     vi.stubGlobal("sessionStorage", storage());
-    vi.stubGlobal("window", { location: { origin: "https://chatjs.example" } });
     mocks.restoreAttachments.mockRejectedValue(
       new Error("Unable to restore attachment.")
     );
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ForkProbe
           onValue={(
             value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
@@ -786,7 +717,6 @@ describe("useEveFork", () => {
     await flushEffects();
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(
           userMessage([
@@ -794,7 +724,7 @@ describe("useEveFork", () => {
               filename: "notes.pdf",
               mediaType: "application/pdf",
               type: "file",
-              url: "https://chatjs.example/api/files/notes.pdf",
+              url: `${window.location.origin}/api/files/notes.pdf`,
             },
           ])
         );
@@ -808,7 +738,6 @@ describe("useEveFork", () => {
         messageId: "seed_message_0",
       });
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();

@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test, vi } from "vitest";
@@ -30,27 +28,29 @@ vi.mock("../lib/eve/verify-local-coverage", () => ({
 vi.mock("../lib/eve/local-sandbox-fence", () => ({
   fenceLocalEveSandboxMutations: vi.fn(),
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/eve/local-sandbox-inventory") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 vi.mock("../lib/eve/local-sandbox-inventory", () => ({
+  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
   readLocalEveSandboxInventory: () =>
     Promise.resolve({ owned: [], unattributedDirectories: [] }),
+  /* oxlint-enable typescript/promise-function-async */
 }));
-/* oxlint-enable typescript/promise-function-async */
+
 vi.mock("../lib/file-storage", () => ({
   deleteFilesByUrls: () => {
     throw new Error("Unexpected fixture blob");
   },
 }));
 assertEveTestDatabase(env.DATABASE_URL);
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): if (!env.WORKFLOW_POSTGRES_URL) { throw new Error("Miss intentionally keeps the existing falsy-value behavior of env.WORKFLOW_POSTGRES_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-if (!env.WORKFLOW_POSTGRES_URL) {
+
+if (
+  env.WORKFLOW_POSTGRES_URL === undefined ||
+  env.WORKFLOW_POSTGRES_URL === null ||
+  env.WORKFLOW_POSTGRES_URL === ""
+) {
   throw new Error("Missing native database");
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 assertEveTestDatabase(env.WORKFLOW_POSTGRES_URL);
 const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
@@ -65,21 +65,20 @@ afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
-  for (const sessionId of sessionIds) {
-    await native`delete from workflow.workflow_stream_chunks where run_id = ${sessionId}`;
-    await native`delete from workflow.workflow_runs where id = ${sessionId}`;
-    await native`delete from workflow.eve_session_retirements where session_id = ${sessionId}`;
-    await native`delete from workflow.eve_payload_purges where session_id = ${sessionId}`;
-    await native`delete from workflow.eve_queue_purge_runs where session_id = ${sessionId}`;
-    await native`delete from workflow.eve_resource_fences where resource in ${native([`run:${sessionId}`, `stream:${sessionId}`])}`;
-  }
+  await Promise.all(
+    sessionIds.map(async (sessionId) => {
+      await native`delete from workflow.workflow_stream_chunks where run_id = ${sessionId}`;
+      await native`delete from workflow.workflow_runs where id = ${sessionId}`;
+      await native`delete from workflow.eve_session_retirements where session_id = ${sessionId}`;
+      await native`delete from workflow.eve_payload_purges where session_id = ${sessionId}`;
+      await native`delete from workflow.eve_queue_purge_runs where session_id = ${sessionId}`;
+      await native`delete from workflow.eve_resource_fences where resource in ${native([`run:${sessionId}`, `stream:${sessionId}`])}`;
+    })
+  );
   await native.end();
 });
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): fixture preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): fixture intentionally keeps the existing falsy-value behavior of parentId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-async function fixture(parentId?: string) {
+
+const fixture = async (parentId?: string) => {
   const sessionId = crypto.randomUUID();
   sessionIds.push(sessionId);
   await native`insert into workflow.workflow_runs(id, name, deployment_id, status, attributes) values (${sessionId}, 'delete-fixture', 'fixture', 'completed', '{}')`;
@@ -90,14 +89,13 @@ async function fixture(parentId?: string) {
     owner,
     crypto.randomUUID(),
     "Private fixture",
-    () => Promise.resolve(sessionId),
-    parentId
-      ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
-      : undefined
+    vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
+    parentId === undefined || parentId === null || parentId === ""
+      ? undefined
+      : { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
   );
   return { ...conversation, sessionId };
-}
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
+};
 
 test("full deletion keeps uncertain resources pending, then erases only its family and retries after payload removal", async () => {
   const target = await fixture();
@@ -129,22 +127,24 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
   expect(
     await deleteLocalEveConversationFamily(owner, child.id, "/fixture")
   ).toEqual({ rootId: pending.chatId });
-  for (const member of [target, child]) {
-    expect(
-      await native`select id from workflow.workflow_runs where id = ${member.sessionId}`
-    ).toEqual([]);
-    expect(
-      await native`select id from workflow.workflow_stream_chunks where run_id = ${member.sessionId}`
-    ).toEqual([]);
-    const [deleted] = await db
-      .select()
-      .from(eveConversation)
-      .where(eq(eveConversation.id, member.id));
-    expect(deleted).toMatchObject({
-      firstMessage: "",
-      state: "deleted",
-    });
-  }
+  await Promise.all(
+    [target, child].map(async (member) => {
+      expect(
+        await native`select id from workflow.workflow_runs where id = ${member.sessionId}`
+      ).toEqual([]);
+      expect(
+        await native`select id from workflow.workflow_stream_chunks where run_id = ${member.sessionId}`
+      ).toEqual([]);
+      const [deleted] = await db
+        .select()
+        .from(eveConversation)
+        .where(eq(eveConversation.id, member.id));
+      expect(deleted).toMatchObject({
+        firstMessage: "",
+        state: "deleted",
+      });
+    })
+  );
   const [deletedChat] = await db
     .select()
     .from(eveChat)

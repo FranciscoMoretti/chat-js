@@ -3,8 +3,6 @@ import { defineAgent, defineDynamic } from "eve";
 import { GUEST_SESSION_DURATION_MS } from "../../lib/eve/disposable-guest";
 import { resolveEveModel } from "../../lib/eve/model-selection";
 
-/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
-
 export default defineAgent({
   defaultTools: false,
   // Disposable guests use Vercel Workflow when deployed and isolated local storage
@@ -13,7 +11,7 @@ export default defineAgent({
   limits: { sessionTimeoutMs: GUEST_SESSION_DURATION_MS },
   model: defineDynamic({
     events: {
-      "step.started": (
+      "step.started": async (
         _event: unknown,
         context: Readonly<{
           session: Readonly<{
@@ -31,9 +29,8 @@ export default defineAgent({
         if (typeof modelId !== "string") {
           throw new TypeError("Guest session has no authorized model.");
         }
-        return resolveEveModel(modelId);
+        return await resolveEveModel(modelId);
       },
     },
   }),
 });
-/* oxlint-enable typescript/promise-function-async */

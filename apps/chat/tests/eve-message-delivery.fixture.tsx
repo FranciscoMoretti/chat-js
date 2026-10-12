@@ -16,8 +16,6 @@ const event = (operationId: string): MessageStreamEvent => ({
   type: "message.received",
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): Fixture intentionally keeps the existing falsy-value behavior of delivery.pending?.operationId; operationId; delivery.pending.rejection; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-
 const Fixture = (): React.JSX.Element => {
   const delivery = useEveMessageDelivery("fixture-session");
   const [draft, setDraft] = useState("");
@@ -62,10 +60,20 @@ const Fixture = (): React.JSX.Element => {
           Acknowledge another operation
         </button>
         <button
-          disabled={!delivery.pending?.operationId}
+          disabled={
+            delivery.pending === undefined ||
+            delivery.pending === null ||
+            delivery.pending.operationId === undefined ||
+            delivery.pending.operationId === null ||
+            delivery.pending.operationId === ""
+          }
           onClick={() => {
             const operationId = delivery.pending?.operationId;
-            if (operationId) {
+            if (
+              operationId !== undefined &&
+              operationId !== null &&
+              operationId !== ""
+            ) {
               delivery.accept(event(operationId));
             }
           }}
@@ -107,11 +115,13 @@ const Fixture = (): React.JSX.Element => {
             >
               {delivery.pending.operationId}
             </span>
-            {delivery.pending.rejection && (
-              <span className="block">
-                Rejected: {delivery.pending.rejection}
-              </span>
-            )}
+            {delivery.pending.rejection !== undefined &&
+              delivery.pending.rejection !== null &&
+              delivery.pending.rejection !== "" && (
+                <span className="block">
+                  Rejected: {delivery.pending.rejection}
+                </span>
+              )}
           </div>
         ) : (
           "No pending message"
@@ -120,7 +130,6 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const root = document.querySelector("#root");
 if (!root) {

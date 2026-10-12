@@ -1,5 +1,9 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import Link from "next/link";
 import type { JSX as ReactJSX } from "react";
 import React, { useRef, useState } from "react";
@@ -24,8 +28,6 @@ const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
     // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
   }
 };
-
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return -- EveCopyButton: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const EveCopyButton = ({
   sourceConversationId,
@@ -64,7 +66,7 @@ const EveCopyButton = ({
   };
 
   const save = async (): Promise<void> => {
-    if (lock.current || !ownerId) {
+    if (lock.current || !hasText(ownerId)) {
       return;
     }
     lock.current = true;
@@ -72,29 +74,33 @@ const EveCopyButton = ({
     setRejected(false);
     setFailure("");
     let input = recovery;
-    try {
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
-      if (!input) {
-        input = preparePendingEveCopy(
-          sessionStorage,
-          ownerId,
-          sourceConversationId,
-          getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
-        );
+    await withTaskCleanup(
+      async () => {
+        try {
+          const saved = recovery;
+          input =
+            saved ??
+            preparePendingEveCopy(
+              sessionStorage,
+              ownerId,
+              sourceConversationId,
+              getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
+            );
+          const result = await requestEveCopy(input);
+          forgetConfirmedRequest(ownerId, input);
+          globalThis.location.assign(`/chat/${result.id}`);
+        } catch (error) {
+          showFailure(error, input, ownerId);
+        }
+      },
+      () => {
+        lock.current = false;
+        setBusy(false);
       }
-      const result = await requestEveCopy(input);
-      forgetConfirmedRequest(ownerId, input);
-      globalThis.location.assign(`/chat/${result.id}`);
-    } catch (error) {
-      showFailure(error, input, ownerId);
-      // oxlint-disable-next-line react/todo -- Preserve lock cleanup while React Compiler lacks finally support.
-    } finally {
-      lock.current = false;
-      setBusy(false);
-    }
+    );
   };
 
-  if (!(session.isPending || ownerId)) {
+  if (!(session.isPending || hasText(ownerId))) {
     return (
       <p className="p-4 text-center text-sm">
         <Link
@@ -141,7 +147,7 @@ const EveCopyButton = ({
           {failure}
         </p>
       )}
-      {destination && (
+      {hasText(destination) && (
         <p className="pb-4 text-center text-sm">
           <Link className="underline" href={`/chat/${destination}`}>
             Open saved copy recovery
@@ -151,6 +157,5 @@ const EveCopyButton = ({
     </section>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 export { EveCopyButton };

@@ -11,9 +11,8 @@ afterEach(() => vi.useRealTimers());
 
 it("retries an undispatched message through the same send closure", async () => {
   vi.useFakeTimers();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  const send = vi.fn().mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  const send = vi.fn<() => Promise<void>>().mockResolvedValue();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   const getError = vi.fn().mockReturnValueOnce(busy).mockReturnValue(undefined);
   const result = sendCommand(send, vi.fn(), false, getError);
   await vi.advanceTimersByTimeAsync(2000);

@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import type { EveMessageInputRequest, InputResponse } from "eve/client";
 import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
@@ -34,8 +36,6 @@ import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- PendingInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including request.allowFreeform). */
-
 const PendingInput = ({
   request,
   disabled,
@@ -64,7 +64,7 @@ const PendingInput = ({
           </Button>
         ))}
       </div>
-      {request.allowFreeform && (
+      {request.allowFreeform === true && (
         <form
           className="space-y-2"
           onSubmit={(event: { readonly preventDefault: () => void }) => {
@@ -93,7 +93,6 @@ const PendingInput = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const toolStatus = (
   part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
@@ -235,25 +234,8 @@ const Part = ({
     </section>
   );
 };
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return -- EveMessages: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including eveUserForkBoundary(message)); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
-// Parts remain EVE-owned; the message chrome is shared with the original runtime.
-export const EveMessages = ({
-  conversationId,
-  messages,
-  isReadonly,
-  disabled,
-  respond,
-  onEdit,
-  onRegenerate,
-  onSuggestion,
-  editor,
-  renderVersions,
-  renderResponses,
-  modelForMessage,
-  actionsDisabled = disabled,
-  messageKey,
-}: {
+interface EveMessagesProps {
   readonly conversationId?: string;
   readonly messageKey?: (message: ReadonlyEveMessage) => string;
   readonly messages: readonly ReadonlyEveMessage[];
@@ -281,8 +263,284 @@ export const EveMessages = ({
   ) => string | undefined;
   readonly disabled: boolean;
   readonly respond: (response: InputResponse) => void;
-}) => {
+}
+
+interface MessageRowProps extends Omit<
+  EveMessagesProps,
+  "messages" | "messageKey"
+> {
+  readonly message: ReadonlyEveMessage;
+  readonly userMessage: ReadonlyEveMessage | undefined;
+  readonly isLast: boolean;
+  readonly latestDocumentCallId: string | undefined;
+  readonly actionsDisabled: boolean;
+}
+
+const AssistantFeedback = ({
+  message,
+  userMessage,
+  conversationId,
+  disabled,
+  actionsDisabled,
+  editor,
+  onRegenerate,
+  modelId,
+}: Pick<
+  MessageRowProps,
+  | "message"
+  | "userMessage"
+  | "conversationId"
+  | "disabled"
+  | "actionsDisabled"
+  | "editor"
+  | "onRegenerate"
+> & { readonly modelId: string | undefined }): ReactJSX.Element => (
+  <>
+    {hasText(conversationId) && (
+      <EveFeedbackActions
+        conversationId={conversationId}
+        disabled={disabled}
+        messageId={message.id}
+      />
+    )}
+    {onRegenerate && (
+      <RetryButtonView
+        disabled={
+          actionsDisabled ||
+          Boolean(editor) ||
+          !(
+            hasText(message.metadata?.turnId) ||
+            hasText(message.metadata?.modelId)
+          ) ||
+          !(userMessage && hasText(eveUserForkBoundary(userMessage)))
+        }
+        onRetry={() => {
+          if (userMessage) {
+            onRegenerate(userMessage, message);
+          }
+        }}
+      />
+    )}
+    {hasText(modelId) && (
+      <div className="ml-2 flex items-center">
+        <Tag>{modelId}</Tag>
+      </div>
+    )}
+  </>
+);
+
+const EveMessageActions = ({
+  message,
+  userMessage,
+  conversationId,
+  isReadonly,
+  disabled,
+  actionsDisabled,
+  editor,
+  onEdit,
+  onRegenerate,
+  renderVersions,
+  modelId,
+  isLast,
+  text,
+}: Pick<
+  MessageRowProps,
+  | "message"
+  | "userMessage"
+  | "conversationId"
+  | "isReadonly"
+  | "disabled"
+  | "actionsDisabled"
+  | "editor"
+  | "onEdit"
+  | "onRegenerate"
+  | "renderVersions"
+  | "isLast"
+> & {
+  readonly modelId: string | undefined;
+  readonly text: string;
+}): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
+  const editing = editor?.messageId === message.id ? editor : undefined;
+  return (
+    <MessageActionsView
+      editDisabled={
+        editing
+          ? editing.disabled
+          : actionsDisabled ||
+            Boolean(editor) ||
+            !hasText(eveUserForkBoundary(message))
+      }
+      isEditing={Boolean(editing)}
+      isLoading={disabled && isLast && !editing}
+      onCancelEdit={editing?.onCancel}
+      onStartEdit={
+        !isReadonly && onEdit
+          ? (): void => {
+              onEdit(message);
+            }
+          : undefined
+      }
+      role={message.role}
+      siblings={renderVersions?.(message, userMessage)}
+      onCopy={() => {
+        startEventAction(async () => {
+          if (!text.trim()) {
+            toast.error("There's no text to copy!");
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(text.trim());
+            toast.success("Copied to clipboard!");
+          } catch {
+            toast.error("Unable to copy this message.");
+          }
+        });
+      }}
+      feedback={
+        message.role === "assistant" && !isReadonly ? (
+          <AssistantFeedback
+            message={message}
+            userMessage={userMessage}
+            conversationId={conversationId}
+            disabled={disabled}
+            actionsDisabled={actionsDisabled}
+            editor={editor}
+            onRegenerate={onRegenerate}
+            modelId={modelId}
+          />
+        ) : undefined
+      }
+    />
+  );
+};
+
+const EveMessageRow = ({
+  message,
+  userMessage,
+  isLast,
+  latestDocumentCallId,
+  conversationId,
+  isReadonly,
+  disabled,
+  actionsDisabled,
+  respond,
+  onEdit,
+  onRegenerate,
+  onSuggestion,
+  editor,
+  renderVersions,
+  renderResponses,
+  modelForMessage,
+}: MessageRowProps): ReactJSX.Element => {
+  const editing = editor?.messageId === message.id ? editor : undefined;
+  const canEdit =
+    !isReadonly &&
+    onEdit !== undefined &&
+    !actionsDisabled &&
+    !editor &&
+    hasText(eveUserForkBoundary(message));
+  const text = message.parts
+    .filter((part: ReadonlyEveMessagePart) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+  const partOccurrences = new Map<string, number>();
+  const nextPartKey = (part: ReadonlyEveMessagePart): string => {
+    const identity = messagePartIdentity(part);
+    const occurrence = partOccurrences.get(identity) ?? 0;
+    partOccurrences.set(identity, occurrence + 1);
+    return `${message.id}:${identity}:${occurrence}`;
+  };
+  const modelId = modelForMessage?.(message);
+  const actions = (
+    <EveMessageActions
+      message={message}
+      userMessage={userMessage}
+      conversationId={conversationId}
+      isReadonly={isReadonly}
+      disabled={disabled}
+      actionsDisabled={actionsDisabled}
+      editor={editor}
+      onEdit={onEdit}
+      onRegenerate={onRegenerate}
+      renderVersions={renderVersions}
+      modelId={modelId}
+      isLast={isLast}
+      text={text}
+    />
+  );
+  if (message.role === "user") {
+    return (
+      <UserMessageView
+        actions={actions}
+        attachments={message.parts
+          .filter((part: ReadonlyEveMessagePart) => part.type === "file")
+          .map((part): React.JSX.Element => (
+            <EveAttachment key={nextPartKey(part)} part={part} />
+          ))}
+        editor={editing?.content}
+        editDisabled={!canEdit}
+        messageId={message.id}
+        responses={renderResponses?.(message)}
+        onEdit={
+          !isReadonly && onEdit
+            ? (): void => {
+                onEdit(message);
+              }
+            : undefined
+        }
+        text={text}
+      />
+    );
+  }
+  return (
+    <Message
+      className="w-full max-w-full items-start py-1"
+      data-message-id={message.id}
+      from={message.role}
+    >
+      <MessageContent className="w-full px-0 py-0 text-left">
+        <span className="sr-only">Assistant</span>
+        {message.parts
+          .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
+          .map((part): React.JSX.Element => (
+            <Part
+              disabled={disabled}
+              isReadonly={isReadonly}
+              key={nextPartKey(part)}
+              messageId={message.id}
+              part={part}
+              respond={respond}
+              previewDocument={
+                part.type === "dynamic-tool" &&
+                part.toolCallId === latestDocumentCallId
+              }
+            />
+          ))}
+        {actions}
+        {isLast &&
+          !isReadonly &&
+          !actionsDisabled &&
+          onSuggestion &&
+          config.ai.tools.followupSuggestions.enabled && (
+            <FollowUpSuggestionsView
+              onSelect={onSuggestion}
+              suggestions={messageFollowupSuggestions(message)}
+            />
+          )}
+      </MessageContent>
+    </Message>
+  );
+};
+
+// Parts remain EVE-owned; the message chrome is shared with the original runtime.
+export const EveMessages = ({
+  messages,
+  messageKey,
+  disabled,
+  actionsDisabled = disabled,
+  ...props
+}: EveMessagesProps): ReactJSX.Element[] => {
   const latestDocumentCallId = messages
     .flatMap(
       (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
@@ -294,172 +552,24 @@ export const EveMessages = ({
         Object.hasOwn(eveDocumentOperations, part.toolName) ||
         part.toolName === "readDocument"
     )?.toolCallId;
+  const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;
-  // oxlint-disable-next-line eslint/complexity -- A row combines streamed content with its role-specific shared controls.
-  return messages.map((message) => {
-    const userMessage = precedingUser;
+  for (const message of messages) {
+    precedingUsers.push(precedingUser);
     if (message.role === "user") {
-      // oxlint-disable-next-line react/immutability -- This local accumulator is assigned during the synchronous render map; it never changes after render.
       precedingUser = message;
     }
-    const editing = editor?.messageId === message.id ? editor : undefined;
-    const canEdit =
-      !isReadonly &&
-      onEdit &&
-      !actionsDisabled &&
-      !editor &&
-      eveUserForkBoundary(message);
-    const text = message.parts
-      .filter((part: ReadonlyEveMessagePart) => part.type === "text")
-      .map((part) => part.text)
-      .join("\n");
-    const partOccurrences = new Map<string, number>();
-    const nextPartKey = (part: ReadonlyEveMessagePart): string => {
-      const identity = messagePartIdentity(part);
-      const occurrence = partOccurrences.get(identity) ?? 0;
-      partOccurrences.set(identity, occurrence + 1);
-      return `${message.id}:${identity}:${occurrence}`;
-    };
-    const modelId = modelForMessage?.(message);
-    const actions = (
-      <MessageActionsView
-        editDisabled={
-          editing
-            ? editing.disabled
-            : actionsDisabled ||
-              Boolean(editor) ||
-              !eveUserForkBoundary(message)
-        }
-        isEditing={Boolean(editing)}
-        isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
-        onCancelEdit={editing?.onCancel}
-        onStartEdit={
-          !isReadonly && onEdit
-            ? (): void => {
-                onEdit(message);
-              }
-            : undefined
-        }
-        role={message.role}
-        siblings={renderVersions?.(message, userMessage)}
-
-        onCopy={() => {
-          startEventAction(async () => {
-            if (!text.trim()) {
-              toast.error("There's no text to copy!");
-              return;
-            }
-            try {
-              await navigator.clipboard.writeText(text.trim());
-              toast.success("Copied to clipboard!");
-            } catch {
-              toast.error("Unable to copy this message.");
-            }
-          });
-        }}
-
-        feedback={
-          message.role === "assistant" && !isReadonly ? (
-            <>
-              {conversationId && (
-                <EveFeedbackActions
-                  conversationId={conversationId}
-                  disabled={disabled}
-                  messageId={message.id}
-                />
-              )}
-              {onRegenerate && (
-                <RetryButtonView
-                  disabled={
-                    actionsDisabled ||
-                    Boolean(editor) ||
-                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback. Optional chain: Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-                    !(message.metadata?.turnId || message.metadata?.modelId) ||
-                    !(userMessage && eveUserForkBoundary(userMessage))
-                  }
-                  onRetry={() => {
-                    if (userMessage) {
-                      onRegenerate(userMessage, message);
-                    }
-                  }}
-                />
-              )}
-              {modelId && (
-                <div className="ml-2 flex items-center">
-                  <Tag>{modelId}</Tag>
-                </div>
-              )}
-            </>
-          ) : undefined
-        }
-      />
-    );
-    if (message.role === "user") {
-      return (
-        <UserMessageView
-          actions={actions}
-          attachments={message.parts
-            .filter((part: ReadonlyEveMessagePart) => part.type === "file")
-            .map((part): React.JSX.Element => (
-              <EveAttachment key={nextPartKey(part)} part={part} />
-            ))}
-          editor={editing?.content}
-          editDisabled={!canEdit}
-          key={messageKey?.(message) ?? message.id}
-          messageId={message.id}
-          responses={renderResponses?.(message)}
-          onEdit={
-            !isReadonly && onEdit
-              ? (): void => {
-                  onEdit(message);
-                }
-              : undefined
-          }
-          text={text}
-        />
-      );
-    }
-    return (
-      <Message
-        className="w-full max-w-full items-start py-1"
-        data-message-id={message.id}
-        from={message.role}
-        key={messageKey?.(message) ?? message.id}
-      >
-        <MessageContent className="w-full px-0 py-0 text-left">
-          <span className="sr-only">Assistant</span>
-          {message.parts
-            .filter(
-              (part: ReadonlyEveMessagePart) => part.type !== "step-start"
-            )
-            .map((part): React.JSX.Element => (
-              <Part
-                disabled={disabled}
-                isReadonly={isReadonly}
-                key={nextPartKey(part)}
-                messageId={message.id}
-                part={part}
-                respond={respond}
-                previewDocument={
-                  part.type === "dynamic-tool" &&
-                  part.toolCallId === latestDocumentCallId
-                }
-              />
-            ))}
-          {actions}
-          {message.id === messages.at(-1)?.id &&
-            !isReadonly &&
-            !actionsDisabled &&
-            onSuggestion &&
-            config.ai.tools.followupSuggestions.enabled && (
-              <FollowUpSuggestionsView
-                onSelect={onSuggestion}
-                suggestions={messageFollowupSuggestions(message)}
-              />
-            )}
-        </MessageContent>
-      </Message>
-    );
-  });
+  }
+  return messages.map((message, index) => (
+    <EveMessageRow
+      {...props}
+      key={messageKey?.(message) ?? message.id}
+      message={message}
+      userMessage={precedingUsers[index]}
+      isLast={message.id === messages.at(-1)?.id}
+      latestDocumentCallId={latestDocumentCallId}
+      disabled={disabled}
+      actionsDisabled={actionsDisabled}
+    />
+  ));
 };
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

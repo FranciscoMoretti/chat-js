@@ -20,7 +20,7 @@ const retryEveAdmission = async <AdmissionResult>(
   const deadline = Date.now() + ADMISSION_RETRY_WINDOW_MS;
   for (;;) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Await each admission inside this catch so only certified busy failures can trigger another attempt.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Only the preceding admission's certified busy error permits a retry; complete its delay and recheck the deadline before attempting admission again.
       return await admit();
     } catch (error) {
       if (
@@ -29,7 +29,7 @@ const retryEveAdmission = async <AdmissionResult>(
       ) {
         throw error;
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield between retryable admissions without holding a server connection.
+      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield between retryable admissions without holding a server connection. Only the preceding admission's certified busy error permits a retry; complete its delay and recheck the deadline before attempting admission again.
       await new Promise<void>((resolve) => {
         setTimeout(resolve, ADMISSION_RETRY_DELAY_MS);
       });

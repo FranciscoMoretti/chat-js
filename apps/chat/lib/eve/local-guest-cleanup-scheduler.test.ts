@@ -61,7 +61,7 @@ test("startup is singleton and sweeps never overlap", async () => {
   workingDirectory.mockRestore();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
@@ -132,7 +132,7 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   });
   await vi.advanceTimersByTimeAsync(60_000);
   stop?.();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);

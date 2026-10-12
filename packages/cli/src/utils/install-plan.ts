@@ -195,7 +195,7 @@ const installPlan = async (
       : [];
   if (!(options.fresh === true) && !(options.overwrite === true)) {
     for (const target of protectedFiles) {
-      // oxlint-disable-next-line no-await-in-loop -- Fail before any installer writes.
+      // oxlint-disable-next-line no-await-in-loop -- Read one user-edited file buffer at a time and reject the first modified target before mkdir/installItems; replacement tests assert no writes on conflict.
       const content = await optionalFile(path.join(cwd, target));
       if (content && receipt[target] !== hash(content)) {
         throw new Error(
@@ -216,7 +216,7 @@ const installPlan = async (
         ".chatjs",
         `replaced-${previous.id}-${randomUUID()}`
       );
-      // oxlint-disable-next-line no-await-in-loop -- Stage each old provider before registering the new complete installation.
+      // oxlint-disable-next-line no-await-in-loop -- Record each completed rename before starting the next; rollback restores exactly staged providers and must not race an outstanding rename after failure.
       await rename(from, to);
       staged.push({ from, to });
     }

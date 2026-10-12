@@ -451,7 +451,6 @@ const ConversationTree = ({
   </div>
 );
 
-/* oxlint-disable typescript/strict-boolean-expressions -- ThreadsLaunch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const ThreadsLaunch = ({
   content,
 }: {
@@ -487,7 +486,7 @@ export const ThreadsLaunch = ({
         )}
         {cursor && <Pointer {...cursor} />}
       </div>
-      {presentation.caption && (
+      {presentation.caption !== null && presentation.caption.length > 0 && (
         <Caption opacity={presentation.opacity}>{presentation.caption}</Caption>
       )}
 
@@ -526,4 +525,3 @@ export const ThreadsLaunch = ({
     </AbsoluteFill>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

@@ -1,8 +1,7 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
+import { vi } from "vitest";
 
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
 import { env } from "../lib/env";
@@ -12,14 +11,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a lost native creation reply recovers the same session from the retained compos preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a lost native creation reply recovers the same session from the retained composer", async ({
   page,
 }) => {
   test.setTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
@@ -38,33 +36,36 @@ test("a lost native creation reply recovers the same session from the retained c
       operation.message,
       async (id) => {
         const results = await Promise.all(
-          [0, 1].map(() =>
-            eveRequest(
-              session.user.id,
-              "/eve/chat/v1/session",
-              {
-                body: JSON.stringify({
-                  operationId: id,
-                  message: operation.message,
-                }),
-                method: "POST",
-                signal: AbortSignal.timeout(30_000),
-              },
-              operation.modelId
-            )
+          [0, 1].map(
+            async () =>
+              await eveRequest(
+                session.user.id,
+                "/eve/chat/v1/session",
+                {
+                  body: JSON.stringify({
+                    operationId: id,
+                    message: operation.message,
+                  }),
+                  method: "POST",
+                  signal: AbortSignal.timeout(30_000),
+                },
+                operation.modelId
+              )
           )
         );
         const sessionIds: string[] = [];
-        for (const result of results) {
-          expect(result.ok).toBe(true);
-          const response = z
-            .object({ sessionId: z.string() })
-            .parse(await result.json());
-          sessionIds.push(response.sessionId);
-          expect(result.headers.get("x-eve-session-id")).toBe(
-            response.sessionId
-          );
-        }
+        await Promise.all(
+          results.map(async (result) => {
+            expect(result.ok).toBe(true);
+            const response = z
+              .object({ sessionId: z.string() })
+              .parse(await result.json());
+            sessionIds.push(response.sessionId);
+            expect(result.headers.get("x-eve-session-id")).toBe(
+              response.sessionId
+            );
+          })
+        );
         expect(new Set(sessionIds).size).toBe(1);
         [nativeSessionId] = sessionIds;
         throw new Error("Simulated lost native reply before app binding");
@@ -129,15 +130,13 @@ test("a lost native creation reply recovers the same session from the retained c
     )
   ).toBeNull();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("an unresolved project conversation recovers after its project is deleted") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("an unresolved project conversation recovers after its project is deleted", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
@@ -165,8 +164,13 @@ test("an unresolved project conversation recovers after its project is deleted",
       session.user.id,
       operation.operationId,
       operation.message,
-      () => Promise.reject(new Error("Simulated dispatch interruption")),
-      { initialModelId: operation.modelId, initialProjectId: projectId }
+      vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("Simulated dispatch interruption")),
+      {
+        initialModelId: operation.modelId,
+        initialProjectId: projectId,
+      }
     )
   ).rejects.toThrow("Simulated dispatch interruption");
   const reservation = await getEveCreation(
@@ -207,12 +211,13 @@ test("an unresolved project conversation recovers after its project is deleted",
   await expect(recovery).toContainText(operation.message);
   await page.route(
     "**/api/agent-conversations",
-    (route) =>
-      route.fulfill({
+    async (route) => {
+      await route.fulfill({
         body: JSON.stringify({ error: "Temporary recovery failure" }),
         contentType: "application/json",
         status: 503,
-      }),
+      });
+    },
     { times: 1 }
   );
   await recovery.getByRole("button", { name: "Retry creation" }).click();
@@ -221,8 +226,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   );
   expect(
     await page.evaluate(
-      // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
-      (key) => JSON.parse(sessionStorage.getItem(key) ?? "null"),
+      (key): unknown => JSON.parse(sessionStorage.getItem(key) ?? "null"),
       storageKey
     )
   ).toEqual(operation);
@@ -263,15 +267,13 @@ test("an unresolved project conversation recovers after its project is deleted",
     "project-recovery-ok"
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a missing project preserves an unreserved request until definitive rejection") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a missing project preserves an unreserved request until definitive rejection", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
@@ -351,8 +353,10 @@ test("a missing project preserves an unreserved request until definitive rejecti
     operation.message
   );
   const saved = await page.evaluate(
-    ({ key: savedStorageKey, ownerId }) => ({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
+    ({
+      key: savedStorageKey,
+      ownerId,
+    }): { next: unknown; old: string | null } => ({
       next: JSON.parse(
         sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
       ),
@@ -365,20 +369,23 @@ test("a missing project preserves an unreserved request until definitive rejecti
     message: operation.message,
     modelId: operation.modelId,
   });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
-  expect(saved.next.operationId).not.toBe(operation.operationId);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
-  expect(saved.next.projectId).toBeUndefined();
-});
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a rejected project composer retains its request across project deletion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+  expect(
+    z.looseObject({ operationId: z.string() }).parse(saved.next).operationId
+  ).not.toBe(operation.operationId);
+
+  expect(
+    z.looseObject({ projectId: z.unknown().optional() }).parse(saved.next)
+      .projectId
+  ).toBeUndefined();
+});
+
 test("a rejected project composer retains its request across project deletion", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
@@ -399,8 +406,8 @@ test("a rejected project composer retains its request across project deletion", 
   await page
     .locator('[aria-label="Message"]')
     .fill("Preserve rejected composer");
-  await page.route("**/api/agent-conversations", (route) =>
-    route.fulfill({
+  await page.route("**/api/agent-conversations", async (route) => {
+    await route.fulfill({
       body: JSON.stringify({
         error: "Project not found",
         creationRejected: true,
@@ -408,8 +415,8 @@ test("a rejected project composer retains its request across project deletion", 
       }),
       contentType: "application/json",
       status: 404,
-    })
-  );
+    });
+  });
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(
@@ -437,4 +444,3 @@ test("a rejected project composer retains its request across project deletion", 
     )
   ).toBe(retained);
 });
-/* oxlint-enable typescript/promise-function-async */

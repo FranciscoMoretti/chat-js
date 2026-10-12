@@ -17,24 +17,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("aborts a stalled creation without resending or changing its operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("aborts a stalled creation without resending or changing its operation", async () => {
   vi.useFakeTimers();
   const fetchMock = vi.fn(
-    (_url: string, init: ReadonlyNativeSurface<RequestInit>) =>
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-      new Promise<Response>((_resolve, reject) => {
-        init.signal?.addEventListener(
-          "abort",
-          () => {
-            // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The fetch mock forwards the abort reason so the timeout test observes the original cancellation error.
-            reject(init.signal?.reason);
-          },
-          { once: true }
-        );
-      })
+    async (_url: string, init: ReadonlyNativeSurface<RequestInit>) => {
+      const pending = Promise.withResolvers<Response>();
+      init.signal?.addEventListener(
+        "abort",
+        () => {
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The fetch mock forwards the abort reason so the timeout test observes the original cancellation error.
+          pending.reject(init.signal?.reason);
+        },
+        { once: true }
+      );
+      return await pending.promise;
+    }
   );
   vi.stubGlobal("fetch", fetchMock);
   const result = expect(requestConversation(operation)).rejects.toThrow(
@@ -45,7 +42,6 @@ it("aborts a stalled creation without resending or changing its operation", asyn
   expect(fetchMock).toHaveBeenCalledTimes(1);
   expect(fetchMock.mock.calls[0]?.[1].body).toBe(JSON.stringify(operation));
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("returns the existing binding on retry and clears its deadline", async () => {
   vi.useFakeTimers();
@@ -121,7 +117,7 @@ it("identifies a missing project only on a definitive rejection", async () => {
 it("automatically retries busy creation with the same operation identity", async () => {
   vi.useFakeTimers();
   const fetchMock = vi
-    .fn()
+    .fn<(_url: string, init: RequestInit) => Promise<Response>>()
     .mockResolvedValueOnce(
       Response.json(
         { code: "usage_reconciliation_busy", error: "Busy" },
@@ -139,10 +135,7 @@ it("automatically retries busy creation with the same operation identity", async
 
   expect(
     fetchMock.mock.calls.map(
-      ([, init]: Readonly<(typeof fetchMock.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        init.body
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
+      ([, init]: Readonly<(typeof fetchMock.mock.calls)[number]>) => init.body
     )
   ).toEqual([JSON.stringify(operation), JSON.stringify(operation)]);
 });

@@ -15,7 +15,7 @@ type CodeExecutionContext = Pick<
   "abortSignal" | "callId" | "session"
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): CodeExecutionOutput preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+/* oxlint-disable typescript/consistent-type-definitions -- ToolResult requires ToolOutput's JSON-record index signature; an interface fails that actual constraint in code execution providers. */
 type CodeExecutionOutput = { chart: ToolOutput; message: string };
 /* oxlint-enable typescript/consistent-type-definitions */
 

@@ -1,4 +1,3 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -12,20 +11,18 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("history pages and searches older conversations without exposing other owners") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("history pages and searches older conversations without exposing other owners") intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("history pages and searches older conversations without exposing other owners", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const prefix = `history-${crypto.randomUUID()}`;
@@ -136,7 +133,9 @@ test("history pages and searches older conversations without exposing other owne
       animations: "disabled",
       path: "tests/eve-results/screenshots/eve-history-empty.png",
     });
-    await page.route("**/api/trpc/eve.list**", (route) => route.abort());
+    await page.route("**/api/trpc/eve.list**", async (route) => {
+      await route.abort();
+    });
     await search.fill(`${prefix} failed`);
     await expect(
       page.getByText("Could not load conversations.", { exact: true })
@@ -159,4 +158,3 @@ test("history pages and searches older conversations without exposing other owne
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

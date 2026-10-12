@@ -50,9 +50,6 @@ const identity = (): {
   sessionId,
   version: IDENTITY_VERSION,
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 beforeEach(async () => {
   root = await mkdtemp(nodePath.join(tmpdir(), "eve-coverage-"));
   // On macOS, /var is a link; the production verifier compares canonical roots.
@@ -75,18 +72,15 @@ beforeEach(async () => {
       await verify(sessionId);
     }
   );
-  mocks.fetch.mockImplementation(() =>
-    Promise.resolve(
-      Response.json({
-        local: identity(),
-        sessionId,
-        snapshotVersion: 2,
-        version: 1,
-      })
-    )
+  mocks.fetch.mockResolvedValue(
+    Response.json({
+      local: identity(),
+      sessionId,
+      snapshotVersion: 2,
+      version: 1,
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 afterEach(async () => {
   vi.unstubAllGlobals();
   await rm(root, { force: true, recursive: true });
@@ -113,21 +107,16 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it.each(["appRoot", "sessionId", "backendName"])(
   "rejects native %s mismatch",
   async (field) => {
-    mocks.fetch.mockImplementation(() =>
-      Promise.resolve(
-        Response.json({
-          local: { ...identity(), [field]: "different" },
-          sessionId,
-          snapshotVersion: 2,
-          version: 1,
-        })
-      )
+    mocks.fetch.mockResolvedValue(
+      Response.json({
+        local: { ...identity(), [field]: "different" },
+        sessionId,
+        snapshotVersion: 2,
+        version: 1,
+      })
     );
     await expect(
       verifyLocalEveFamilyCoverage("owner", root, inventories)
@@ -135,7 +124,6 @@ it.each(["appRoot", "sessionId", "backendName"])(
     expect(mocks.end).toHaveBeenCalledOnce();
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 it("rejects missing native evidence and mismatched local evidence", async () => {
   mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 503 }));
   await expect(

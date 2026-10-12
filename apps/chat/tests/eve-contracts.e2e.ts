@@ -1,9 +1,10 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+import { setTimeout as delay } from "node:timers/promises";
+
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
@@ -37,7 +38,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
-const randomSessionId = async (): Promise<string> => crypto.randomUUID();
+
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
@@ -46,9 +47,7 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("billing replay is atomic, rounds per turn and preserves unknown costs") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("billing replay is atomic, rounds per turn and preserves unknown costs", async () => {
   await db
     .insert(userCredit)
@@ -63,7 +62,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     sessionId,
     turnId: "turn_0",
   };
-  await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
+  await Promise.all(
+    Array.from({ length: 8 }, async () => await recordEveUsage(entry))
+  );
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
   let [balance] = await db
     .select()
@@ -102,24 +103,19 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   await recordEveUsage(precise);
   await recordEveUsage(precise);
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("concurrent retry reserves once and cannot cross owners") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("concurrent retry reserves once and cannot cross owners")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
+
 test("concurrent retry reserves once and cannot cross owners", async () => {
   const operation = crypto.randomUUID();
   let starts = 0;
   const start = async (): Promise<string> => {
     starts += 1;
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
-    });
+    await delay(50);
     return `test-${crypto.randomUUID()}`;
   };
   const results = await Promise.allSettled(
-    Array.from({ length: 8 }, () =>
-      createEveConversation(owner, operation, "hello", start)
+    Array.from(
+      { length: 8 },
+      async () => await createEveConversation(owner, operation, "hello", start)
     )
   );
   expect(starts).toBe(1);
@@ -142,21 +138,21 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a lost create reply is recovered through the same native operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("a lost create reply is recovered through the same native operation", async () => {
   const operation = crypto.randomUUID();
   const dispatched: string[] = [];
   const nativeSession = `test-${crypto.randomUUID()}`;
-  const start = (id: string): Promise<string> => {
-    dispatched.push(id);
-    if (dispatched.length === 1) {
-      return Promise.reject(new Error("lost reply"));
-    }
-    return Promise.resolve(nativeSession);
-  };
+  const start =
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (id: string): Promise<string> => {
+      dispatched.push(id);
+      if (dispatched.length === 1) {
+        throw new Error("lost reply");
+      }
+      return nativeSession;
+    };
+  /* oxlint-enable eslint/require-await */
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
@@ -173,11 +169,7 @@ test("a lost create reply is recovered through the same native operation", async
   ).toEqual(recovered);
   expect(dispatched).toHaveLength(2);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a stopped creator's reservation can be resumed without changing its identity") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a stopped creator's reservation can be resumed without changing its identity", async () => {
   const operation = crypto.randomUUID();
   const [reservation] = await insertEveConversationFixtures({
@@ -189,21 +181,23 @@ test("a stopped creator's reservation can be resumed without changing its identi
     owner,
     operation,
     "process stopped",
-    (id) => Promise.resolve(`test-${id}`)
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (id) => `test-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   expect(bound).toEqual({
     id: reservation.id,
     sessionId: `test-${reservation.id}`,
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("activity projection is owner-scoped, monotonic, and independent of metadata edits", async () => {
   const bound = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "activity",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const before = await getEveConversation(owner, bound.id);
   const activityAt = new Date(Date.now() + 60_000);
@@ -240,15 +234,15 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
   expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("fork reservations retain ancestry and reject changed sources on retry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
   let starts = 0;
-  const start = (): Promise<string> => {
-    starts += 1;
-    return Promise.resolve(crypto.randomUUID());
-  };
+  const start =
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (): Promise<string> => {
+      starts += 1;
+      return crypto.randomUUID();
+    };
+  /* oxlint-enable eslint/require-await */
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -307,17 +301,13 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   ).rejects.toThrow("source conversation");
   expect(starts).toBe(3);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("database constraints reject partial and cross-owner branch ancestry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("database constraints reject partial and cross-owner branch ancestry", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "constraint root",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     insertEveConversationFixtures({
@@ -351,11 +341,7 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.each(["codeExecution", "webSearch"])("%s receipts debit once per native call and preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["codeExecution", "webSearch"])(
   "%s receipts debit once per native call and keep missing cost evidence unresolved",
   async (toolName) => {
@@ -363,13 +349,15 @@ test.each(["codeExecution", "webSearch"])(
     const callId = crypto.randomUUID();
     const result = createToolResult({ message: "42", chart: "" }, 0.05);
     expect(JSON.stringify(result)).not.toContain('"updates"');
-    const event: MessageStreamEvent = {
+    // oxlint-disable-next-line unicorn/prefer-structured-clone -- The receipt's undefined updates field must be omitted exactly as it is on the JSON wire.
+    const wireResult = z.json().parse(JSON.parse(JSON.stringify(result)));
+    const event = {
       data: {
         result: {
           callId,
           kind: "tool-result",
-          // oxlint-disable-next-line typescript/no-unsafe-assignment, unicorn/prefer-structured-clone -- #806: EVE action events carry persisted JSON; the receipt has `updates: undefined`, which the wire omits.
-          output: JSON.parse(JSON.stringify(result)),
+
+          output: wireResult,
           toolName,
         },
         sequence: 0,
@@ -379,13 +367,15 @@ test.each(["codeExecution", "webSearch"])(
       },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
       type: "action.result",
-    };
+    } satisfies MessageStreamEvent;
     await Promise.all(
-      Array.from({ length: 8 }, () =>
-        ingestEveUsage(owner, sessionId, {
-          ...event,
-          meta: { ...event.meta, id: crypto.randomUUID() },
-        })
+      Array.from(
+        { length: 8 },
+        async () =>
+          await ingestEveUsage(owner, sessionId, {
+            ...event,
+            meta: { ...event.meta, id: crypto.randomUUID() },
+          })
       )
     );
     const [row] = await db
@@ -419,20 +409,19 @@ test.each(["codeExecution", "webSearch"])(
     expect(unpriced.chargedCents).toBe(0);
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["deleting", "deleted"] as const)(
   "%s conversations are fenced from access, mutation and creation replay",
   async (state) => {
     const operation = crypto.randomUUID();
     let starts = 0;
-    const start = (): Promise<string> => {
-      starts += 1;
-      return Promise.resolve(crypto.randomUUID());
-    };
+    const start =
+      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+      async (): Promise<string> => {
+        starts += 1;
+        return crypto.randomUUID();
+      };
+    /* oxlint-enable eslint/require-await */
     const bound = await createEveConversation(
       owner,
       operation,
@@ -510,23 +499,19 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("deletion fences the entire owned family and is retryable") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("deletion fences the entire owned family and is retryable", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "delete family",
-    randomSessionId
+    createEveTestSession
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "child",
-    randomSessionId,
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
@@ -542,17 +527,13 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
   expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("deletion waits for document commits and fences a concurrent fork") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("deletion waits for document commits and fences a concurrent fork", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "concurrent deletion",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   const locked = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
@@ -577,7 +558,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       expect(available).toBe(false);
     });
     expect(await getEveConversation(owner, root.id)).toBeDefined();
-    const start = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const start = vi.fn(createEveTestSession);
     const fork = createEveConversation(
       owner,
       crypto.randomUUID(),
@@ -599,24 +580,20 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     await deletion;
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("unresolved creation prevents a partial family deletion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("unresolved creation prevents a partial family deletion", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "recover first",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     createEveConversation(
       owner,
       crypto.randomUUID(),
       "uncertain child",
-      () => Promise.reject(new Error("offline")),
+      vi.fn<() => Promise<string>>().mockRejectedValue(new Error("offline")),
       { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
@@ -625,14 +602,10 @@ test("unresolved creation prevents a partial family deletion", async () => {
   );
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("final application deletion erases family content, preserves accounting and reje intentionally keeps the existing falsy-value behavior of deletedCreation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("final application deletion erases family content, preserves accounting and rejects old creation replay", async () => {
   const operation = crypto.randomUUID();
-  const start = vi.fn(async () => crypto.randomUUID());
+  const start = vi.fn(createEveTestSession);
   const root = await createEveConversation(
     owner,
     operation,
@@ -681,26 +654,28 @@ test("final application deletion erases family content, preserves accounting and
   await completeEveConversationDeletion(owner, child.id);
   await completeEveConversationDeletion(owner, root.id);
   await completeEveConversationDeletion(owner, root.id);
-  for (const id of [root.id, child.id]) {
-    const [row] = await db
-      .select()
-      .from(eveConversation)
-      .where(eq(eveConversation.id, id));
-    expect(row).toMatchObject({
-      firstMessage: "",
-      initialContentHash: null,
-      initialModelId: null,
-      initialRequest: null,
-      state: "deleted",
-      visibility: "private",
-    });
-    expect(row.sessionId).toBe(
-      id === root.id ? root.sessionId : child.sessionId
-    );
-    expect(await getEveConversation(owner, id)).toBeUndefined();
-  }
+  await Promise.all(
+    [root.id, child.id].map(async (id) => {
+      const [row] = await db
+        .select()
+        .from(eveConversation)
+        .where(eq(eveConversation.id, id));
+      expect(row).toMatchObject({
+        firstMessage: "",
+        initialContentHash: null,
+        initialModelId: null,
+        initialRequest: null,
+        state: "deleted",
+        visibility: "private",
+      });
+      expect(row.sessionId).toBe(
+        id === root.id ? root.sessionId : child.sessionId
+      );
+      expect(await getEveConversation(owner, id)).toBeUndefined();
+    })
+  );
   const deletedCreation = await getEveCreation(owner, operation);
-  if (!deletedCreation) {
+  if (deletedCreation === undefined) {
     throw new Error("Missing retained creation tombstone");
   }
   const [deletedChat] = await db
@@ -730,16 +705,13 @@ test("final application deletion erases family content, preserves accounting and
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "creating",
   "uncertain",
   "bound",
 ];
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test.each(copyReservationStates)(
   "ordinary creation cannot consume a %s copy reservation",
   async (state) => {
@@ -753,7 +725,7 @@ test.each(copyReservationStates)(
       sessionId,
       state,
     });
-    const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const create = vi.fn(createEveTestSession);
     await expect(
       createEveConversation(owner, operationId, "Same visible title", create)
     ).rejects.toThrow("different");
@@ -766,18 +738,14 @@ test.each(copyReservationStates)(
     });
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("copy reservations must be fresh roots and creation kinds are enforced by Postgr preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
   const sourceOperation = crypto.randomUUID();
   const source = await createEveConversation(
     owner,
     sourceOperation,
     "Source",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     insertEveConversationFixtures({
@@ -798,11 +766,7 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     creationKind: "message",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("auxiliary model calls settle once per actual attempt even without a valid annot preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
   const sessionId = crypto.randomUUID();
   const event: MessageStreamEvent = {
@@ -818,7 +782,10 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
     type: "hook.result",
   };
   await Promise.all(
-    Array.from({ length: 4 }, () => ingestEveUsage(owner, sessionId, event))
+    Array.from(
+      { length: 4 },
+      async () => await ingestEveUsage(owner, sessionId, event)
+    )
   );
   const entries = await db
     .select()
@@ -840,4 +807,3 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
     )
   ).toBe(1);
 });
-/* oxlint-enable typescript/promise-function-async */

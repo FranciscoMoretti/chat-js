@@ -14,7 +14,6 @@ import "./sandbox.css";
 
 const FIXED_DURATION = 2;
 
-/* oxlint-disable typescript/promise-function-async -- max-lines-per-function/max-statements: Keep the controlled and uncontrolled callback interactions, shared state gallery, capture and cleanup in one scenario; typescript/promise-function-async: Return the browser interaction promise directly to React act. */
 test("reasoning preserves standalone callbacks and controlled open state", async () => {
   const uncontrolledChanges: boolean[] = [];
   const controlledChanges: boolean[] = [];
@@ -59,17 +58,23 @@ test("reasoning preserves standalone callbacks and controlled open state", async
     await expect
       .element(uncontrolled)
       .toHaveAttribute("aria-expanded", "false");
-    await act(() => uncontrolled.click());
+    await act(async () => {
+      await uncontrolled.click();
+    });
     await expect.element(uncontrolled).toHaveAttribute("aria-expanded", "true");
     await expect.element(page.getByText("Uncontrolled content.")).toBeVisible();
     expect(uncontrolledChanges).toEqual([true]);
-    await act(() => uncontrolled.click());
+    await act(async () => {
+      await uncontrolled.click();
+    });
     await expect
       .element(uncontrolled)
       .toHaveAttribute("aria-expanded", "false");
     expect(uncontrolledChanges).toEqual([true, false]);
 
-    await act(() => controlled.click());
+    await act(async () => {
+      await controlled.click();
+    });
     expect(controlledChanges).toEqual([false]);
     await expect.element(controlled).toHaveAttribute("aria-expanded", "true");
     await expect.element(page.getByText("Controlled content.")).toBeVisible();
@@ -92,4 +97,3 @@ test("reasoning preserves standalone callbacks and controlled open state", async
     await unmount(fixture);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

@@ -35,13 +35,11 @@ const observeCleanup = async (
   }
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const executeCode: CodeExecutor = (
+const executeCode: CodeExecutor = async (
   { code, title, language },
   context: ReadonlyNativeSurface<CodeExecutionContext>
 ) =>
-  executeWithToolUsage(context, async (usage) => {
+  await executeWithToolUsage(context, async (usage) => {
     const { abortSignal } = context;
     const sandboxOwnership = eveCodeSandboxOwnership(context);
     const log = createModuleLogger("code-execution");
@@ -53,7 +51,7 @@ const executeCode: CodeExecutor = (
     const cleanupOwnedSandbox = async (): Promise<void> => {
       await cleanupSandbox(sandbox, log, requestId);
       if (sandbox) {
-        await (sandboxOwnership && sandboxOwnership.release());
+        await sandboxOwnership?.release();
       }
     };
     const stop = (): void => {
@@ -64,18 +62,18 @@ const executeCode: CodeExecutor = (
     };
 
     try {
-      if (abortSignal) {
+      if (abortSignal !== undefined) {
         abortSignal.throwIfAborted();
       }
       log.info({ language, requestId, runtime, title }, "creating sandbox");
-      const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
+      const auth =
+        sandboxOwnership === undefined ? undefined : resolveSandboxAuth();
       const name = auth
-        ? await (sandboxOwnership &&
-            sandboxOwnership.reserve(auth, abortSignal))
+        ? await sandboxOwnership?.reserve(auth, abortSignal)
         : undefined;
       sandbox = await createSandbox(runtime, abortSignal, name, auth);
-      await (sandboxOwnership && sandboxOwnership.created(sandbox.name));
-      if (abortSignal) {
+      await sandboxOwnership?.created(sandbox.name);
+      if (abortSignal !== undefined) {
         abortSignal.addEventListener("abort", stop, { once: true });
         abortSignal.throwIfAborted();
       }
@@ -108,15 +106,13 @@ const executeCode: CodeExecutor = (
         message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
-      if (abortSignal) {
+      if (abortSignal !== undefined) {
         abortSignal.removeEventListener("abort", stop);
       }
       stop();
       await cleanup;
     }
   });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
 
 const codeExecution = withCodeSandboxCleanup(
   defineTool({

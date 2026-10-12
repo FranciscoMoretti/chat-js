@@ -17,15 +17,13 @@ const makeTempDir = (name: string): string => {
   return dir;
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
-    tempDirs
-      .splice(FIRST_TEMP_DIRECTORY)
-      .map((dir) => rm(dir, { force: true, recursive: true }))
+    tempDirs.splice(FIRST_TEMP_DIRECTORY).map(async (dir) => {
+      await rm(dir, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it.each([false, true])(
   "preserves cloned source without registry access (ChatJS: %s)",

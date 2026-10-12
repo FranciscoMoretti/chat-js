@@ -1,5 +1,7 @@
 "use client";
 
+import { nonEmptyText } from "@/components/text-value";
+
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -122,25 +124,25 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
     status: "idle",
   });
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!isDesktopAppEnabled) {
-      return;
+      return undefined;
     }
 
     const id = authClient.ensureElectronRedirect();
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       clearInterval(id);
     };
   }, [isDesktopAppEnabled]);
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!isDesktopAppEnabled) {
-      return;
+      return undefined;
     }
 
     if (typeof window.requestAuth !== "function") {
-      return;
+      return undefined;
     }
 
     if (
@@ -149,7 +151,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       typeof window.onAuthError !== "function" ||
       typeof window.electronAPI?.onAuthStateChanged !== "function"
     ) {
-      return;
+      return undefined;
     }
 
     const loadAuthState = async (): Promise<void> => {
@@ -193,8 +195,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
     });
     const unsubscribeAuthError = window.onAuthError(
       (ctx: Readonly<ElectronAuthErrorContext>) => {
-        // oxlint-disable-next-line typescript/strict-boolean-expressions, typescript/prefer-nullish-coalescing -- Preserve one optional message read after resolving the toast method, and the empty-string fallback. Capturing ahead changes method/getter order; nullish coalescing preserves empty text.
-        toast.error(ctx.message || "Authentication failed");
+        toast.error(nonEmptyText(ctx.message) ?? "Authentication failed");
       }
     );
     const unsubscribeAuthState = window.electronAPI.onAuthStateChanged(
@@ -203,7 +204,6 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       }
     );
 
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       unsubscribeAuthenticated();
       unsubscribeUserUpdated();

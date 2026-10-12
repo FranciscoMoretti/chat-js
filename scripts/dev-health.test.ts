@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 
 import { checkHealth } from "./dev-health";
@@ -18,10 +19,11 @@ const servers: ReturnType<typeof Bun.serve>[] = [];
 const OS_ASSIGNED_PORT = 0;
 const FIRST_SERVER_INDEX = 0;
 afterEach(async (): Promise<void> => {
-  for (const server of servers.splice(FIRST_SERVER_INDEX)) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish stopping each test server before the next test starts.
-    await server.stop(true);
-  }
+  await Promise.all(
+    servers.splice(FIRST_SERVER_INDEX).map(async (server) => {
+      await server.stop(true);
+    })
+  );
 });
 const fixture = (
   auth: () => ReadonlyNativeSurface<Response>,
@@ -43,36 +45,52 @@ const fixture = (
 };
 
 test("requires the app health endpoint and a working unauthenticated auth route", async (): Promise<void> => {
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-  await expect(
-    checkHealth(fixture(() => Response.json(null)))
-  ).resolves.toBeUndefined();
+  const completion: Promise<unknown> = checkHealth(
+    fixture(() => Response.json(null))
+  );
+  expect(await completion).toBeUndefined();
 });
 
 test("rejects healthy infrastructure when dynamic auth routing returns a 404", async (): Promise<void> => {
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-  await expect(
-    checkHealth(fixture(() => new Response("Not found", { status: 404 })))
-  ).rejects.toThrow("Authentication route returned HTTP 404");
+  await rejects(
+    checkHealth(fixture(() => new Response("Not found", { status: 404 }))),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("Authentication route returned HTTP 404");
+      return true;
+    }
+  );
 });
 test("rejects HTML, redirects and unexpected sessions instead of reporting ready", async (): Promise<void> => {
-  for (const auth of [
-    () => new Response("<html>Not found</html>"),
-    () => Response.redirect("http://127.0.0.1/login"),
-    () => Response.json({ user: { id: "unexpected" } }),
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop, typescript/await-thenable, typescript/no-confusing-void-expression -- Await each Bun promise matcher before reusing the fixture; matcher declarations expose a void return.
-    await expect(checkHealth(fixture(auth))).rejects.toThrow();
-  }
+  await Promise.all(
+    [
+      () => new Response("<html>Not found</html>"),
+      () => Response.redirect("http://127.0.0.1/login"),
+      () => Response.json({ user: { id: "unexpected" } }),
+    ].map(async (auth) => {
+      await rejects(checkHealth(fixture(auth)), (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow();
+        return true;
+      });
+    })
+  );
 });
 test("still rejects unavailable infrastructure even when authentication routing works", async (): Promise<void> => {
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-  await expect(
+  await rejects(
     checkHealth(
       fixture(
         () => Response.json(null),
         () => Response.json({ status: "unavailable" }, { status: 503 })
       )
-    )
-  ).rejects.toThrow("Readiness returned HTTP 503");
+    ),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("Readiness returned HTTP 503");
+      return true;
+    }
+  );
 });

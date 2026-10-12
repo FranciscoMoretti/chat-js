@@ -52,7 +52,6 @@ interface HarnessOptions {
   readonly code?: string;
   readonly lockWait?: Readonly<Promise<void>>;
 }
-/* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const harness = ({
   failAt,
   cleanupFails = false,
@@ -77,10 +76,12 @@ const harness = ({
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
+          // oxlint-disable-next-line typescript/promise-function-async -- Failure cases below exercise a driver throwing synchronously during close; runMaintainerBuild must still retain the original migration failure.
           close: (): Promise<void> => {
             step("close");
             return Promise.resolve();
           },
+          // oxlint-disable-next-line typescript/promise-function-async -- failAt injects synchronous driver failures at SELECT/lock steps, which the phase-redaction tests exercise.
           execute: (query: string): Promise<void> => {
             step(query);
 
@@ -91,6 +92,7 @@ const harness = ({
           },
         };
       },
+      // oxlint-disable-next-line typescript/promise-function-async -- The migration/build failure cases exercise synchronous subprocess-launch failures as well as async driver work.
       run: (
         command: "db:migrate" | "build",
         env: Readonly<NodeJS.ProcessEnv>
@@ -102,7 +104,6 @@ const harness = ({
     },
   };
 };
-/* oxlint-enable typescript/promise-function-async */
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
   const test = harness();

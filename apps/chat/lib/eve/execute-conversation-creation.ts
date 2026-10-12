@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import {
   CreationConflictError,
   CreationProjectNotFoundError,
@@ -62,8 +64,8 @@ const resolveFork = async (
       { status: HTTP_NOT_FOUND }
     );
   }
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public fork inputs may expose string getters; preserve one guard read followed by the original second result read, including changed values and throws.
-  if (input.beforeMessageId) {
+
+  if (isNonEmptyString(input.beforeMessageId)) {
     return {
       beforeMessageId: input.beforeMessageId,
       sessionId: source.sessionId,
@@ -72,8 +74,10 @@ const resolveFork = async (
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the conditional own-key omission and one getter read for the guard followed by the original second result read; Object.assign and if/else conflict with the pinned prefer-object-spread and prefer-ternary rules.
-    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
+
+    ...(isNonEmptyString(input.checkpointId)
+      ? { checkpointId: input.checkpointId }
+      : {}),
   };
 };
 
@@ -119,8 +123,8 @@ export const executeEveConversationCreation = async (
   let preparedMessage = initialPreparedMessage;
   try {
     let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- getEveCreation destructures the first query row and can return undefined at runtime, although its current ConversationRow return annotation omits that absence.
-    if (!(await getEveCreation(ownerId, input.operationId))) {
+
+    if (!((await getEveCreation(ownerId, input.operationId)) !== undefined)) {
       const resolved = await resolveFork(ownerId, input.fork);
       if (resolved instanceof Response) {
         return resolved;

@@ -159,7 +159,6 @@ const ThreadInstallCommand = (): React.JSX.Element => {
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- Conversation: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const Conversation = ({
   chat,
   draft,
@@ -181,10 +180,9 @@ const Conversation = ({
 }): React.JSX.Element => {
   const transcript = useRef<HTMLDivElement>(null);
   const followTranscript = useRef(true);
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const element = transcript.current;
     if (!element) {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- Keep React's explicit no-cleanup result; bare return conflicts with typescript/consistent-return when the other branch returns cleanup.
       return undefined;
     }
     const observer = new ResizeObserver((): void => {
@@ -213,7 +211,7 @@ const Conversation = ({
   }, [textLength]);
   useEffect((): void => {
     followTranscript.current = true;
-    if (cursorId) {
+    if (typeof cursorId === "string" && cursorId !== "") {
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -271,7 +269,7 @@ const Conversation = ({
 
           const navigateToSibling = (nextIndex: number): void => {
             const sibling = siblings[nextIndex];
-            if (!sibling) {
+            if (sibling === undefined) {
               return;
             }
             const leaf = chat.tree.getLeaves(sibling.id).at(-1);
@@ -467,9 +465,7 @@ const Conversation = ({
     </section>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- TreeCanvas: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const TreeCanvas = ({
   chat,
 }: {
@@ -490,10 +486,9 @@ const TreeCanvas = ({
   );
   const canvas = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ height: 0, width: 0 });
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const viewport = canvas.current;
     if (!viewport) {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- Keep React's explicit no-cleanup result; bare return conflicts with typescript/consistent-return when the other branch returns cleanup.
       return undefined;
     }
     const observer = new ResizeObserver((): void => {
@@ -568,7 +563,7 @@ const TreeCanvas = ({
 
           {layout.nodes.map((node) => {
             const message = chat.tree.messagesById[node.id];
-            if (!message) {
+            if (message === undefined) {
               return null;
             }
             const isActive = activeIds.has(node.id);
@@ -631,7 +626,6 @@ const TreeCanvas = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const messageInput = (
   text: string,
@@ -655,8 +649,6 @@ const messageInput = (
   text,
 });
 
-/* oxlint-disable typescript/promise-function-async -- PlaygroundSession: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/strict-boolean-expressions -- PlaygroundSession: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const PlaygroundSession = (): React.JSX.Element => {
   const [draft, setDraft] = useState("");
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
@@ -714,16 +706,18 @@ const PlaygroundSession = (): React.JSX.Element => {
       setDraft("");
 
       const siblingRuns: ThreadRunHandle[] = await Promise.all(
-        Array.from({ length: count - 1 }, (_, index) =>
-          chat.tree.startRun({
-            follow: false,
-            from: userMessageId,
-            request: {
-              body: {
-                responseLabel: `Response ${index + 2} of ${count}`,
+        Array.from(
+          { length: count - 1 },
+          async (_, index) =>
+            await chat.tree.startRun({
+              follow: false,
+              from: userMessageId,
+              request: {
+                body: {
+                  responseLabel: `Response ${index + 2} of ${count}`,
+                },
               },
-            },
-          })
+            })
         )
       );
       const completions = [primaryRun.finished];
@@ -741,7 +735,7 @@ const PlaygroundSession = (): React.JSX.Element => {
     setPlaygroundError(null);
     try {
       const message = chat.tree.messagesById[messageId];
-      if (!message) {
+      if (message === undefined) {
         return;
       }
       chat.tree.setCursor(messageId);
@@ -795,7 +789,7 @@ const PlaygroundSession = (): React.JSX.Element => {
           onBranch={branchFrom}
           onDraftChange={setDraft}
           onResponseCountChange={setResponseCount}
-          onSend={(): Promise<void> => sendDraft()}
+          onSend={sendDraft}
           playgroundError={playgroundError}
           responseCount={responseCount}
         />
@@ -832,8 +826,6 @@ const PlaygroundSession = (): React.JSX.Element => {
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
 
 const ThreadPlayground = (): React.JSX.Element => {
   const [session, setSession] = useState(0);

@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { MessageStreamEvent } from "eve/client";
 import { useEveAgent } from "eve/react";
@@ -8,6 +10,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -100,7 +103,6 @@ const NativeObserver = ({
   }, [agent, controller, conversationId]);
   return null;
 };
-/* oxlint-disable typescript/strict-boolean-expressions -- RuntimeSlot: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including branch.sessionId). */
 
 const RuntimeSlot = ({
   runtime,
@@ -157,7 +159,7 @@ const RuntimeSlot = ({
     <>
       {snapshot.branches.map(
         (branch: { readonly sessionId: string | null; readonly id: string }) =>
-          branch.sessionId && (
+          hasText(branch.sessionId) && (
             <NativeObserver
               key={branch.sessionId}
               controller={runtime.controller}
@@ -168,7 +170,7 @@ const RuntimeSlot = ({
       )}
       {active && (
         <EveLogicalContext.Provider value={context}>
-          {agent && selected?.sessionId ? (
+          {agent && hasText(selected?.sessionId) ? (
             <EveConversation
               conversationId={selected.id}
               sessionId={selected.sessionId}
@@ -197,7 +199,6 @@ const RuntimeSlot = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /** Mounted in the layout: routes select a view; sessions belong to logical chats. */
 const EveRuntimeProvider = ({
@@ -211,10 +212,7 @@ const EveRuntimeProvider = ({
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [runtimes, setRuntimes] = useState<Runtime[]>([]);
-  // React state retains the lazily allocated registry for this mounted owner.
-  // A ref initializer would need render-time `.current` access and violates the effective react/refs rule; useMemo is only a cache, not an identity guarantee.
-  // oxlint-disable-next-line react/hook-use-state -- Preserve lazy registry identity for this provider lifetime under the active render-time ref restriction.
-  const [registry] = useState(() => new Map<string, Runtime>());
+  const registry = useRef(new Map<string, Runtime>());
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
       // Query resolves the requested chat identity before looking up its owning runtime.
@@ -227,7 +225,7 @@ const EveRuntimeProvider = ({
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,
       });
-      const existing = registry.get(identity.chatId);
+      const existing = registry.current.get(identity.chatId);
       const controller =
         existing?.controller ??
         new LogicalChat(identity.chatId, request.id, !navigate);
@@ -242,8 +240,8 @@ const EveRuntimeProvider = ({
         controller,
         title: identity.title,
       };
-      registry.set(identity.chatId, runtime);
-      setRuntimes([...registry.values()]);
+      registry.current.set(identity.chatId, runtime);
+      setRuntimes([...registry.current.values()]);
       if (
         navigate &&
         globalThis.location.pathname !== `/chat/${identity.chatId}`
@@ -261,9 +259,9 @@ const EveRuntimeProvider = ({
   );
   useEffect(() => {
     // Owner changes discard every observer; route changes do not cancel execution.
-    for (const [id, runtime] of registry) {
+    for (const [id, runtime] of registry.current) {
       if (runtime.ownerId !== ownerId) {
-        registry.delete(id);
+        registry.current.delete(id);
       }
     }
   }, [ownerId, registry]);

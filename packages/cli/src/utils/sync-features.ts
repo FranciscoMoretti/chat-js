@@ -235,7 +235,6 @@ const planContribution = async (
   return { content, file };
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateAttachmentUploads = async (
   cwd: string,
   expected?: boolean
@@ -246,8 +245,8 @@ const validateAttachmentUploads = async (
   );
   const uploads = await exists(uploadDescriptor);
   const uploadPresence = await Promise.all(
-    attachmentUploadFiles.map((file): Promise<boolean> =>
-      exists(path.join(cwd, file))
+    attachmentUploadFiles.map(
+      async (file): Promise<boolean> => await exists(path.join(cwd, file))
     )
   );
   if (!uploads && (expected === true || uploadPresence.some(Boolean))) {
@@ -275,9 +274,7 @@ const validateAttachmentUploads = async (
   }
   return uploads;
 };
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateMcp = async (
   cwd: string,
   expected?: boolean
@@ -285,7 +282,9 @@ const validateMcp = async (
   const descriptor = path.join(cwd, "features/mcp/chatjs.json");
   const mcp = await exists(descriptor);
   const presence = await Promise.all(
-    mcpFiles.map((file): Promise<boolean> => exists(path.join(cwd, file)))
+    mcpFiles.map(
+      async (file): Promise<boolean> => await exists(path.join(cwd, file))
+    )
   );
   if (!mcp && (expected === true || presence.some(Boolean))) {
     throw new Error(
@@ -310,10 +309,7 @@ const validateMcp = async (
   }
   return mcp;
 };
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const syncFeatures = async (
   cwd: string,
   options: Readonly<{
@@ -322,11 +318,12 @@ const syncFeatures = async (
     expectedUploads?: boolean;
   }> = {}
 ): Promise<void> => {
-  const uiFeatures =
-    options.addUi === true
-      ? ["mcp", "attachment-uploads"]
-      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- False explicitly disables optional UI installation; the empty array must replace false as well as undefined.
-        options.addUi || [];
+  let uiFeatures: readonly string[] = [];
+  if (options.addUi === true) {
+    uiFeatures = ["mcp", "attachment-uploads"];
+  } else if (options.addUi !== false && options.addUi !== undefined) {
+    uiFeatures = options.addUi;
+  }
 
   const observability = await planObservability(cwd);
   const mcp = await validateMcp(cwd, options.expectedMcp);
@@ -365,7 +362,7 @@ const syncFeatures = async (
       "@/features/attachment-uploads/integration",
       ["attach-files", "take-photo"],
       (binding): string => `...${binding}.controls`,
-      previous && previous.content
+      previous?.content
     );
     if (previous) {
       previous.content = edit.content;
@@ -407,28 +404,28 @@ const syncFeatures = async (
       )
     ),
     ...observability.files.map(
-      ({
+      async ({
         file,
         content,
-      }: Readonly<{ content: string; file: string }>): Promise<void> =>
-        writeFile(file, generatedRegistrationSource(content))
+      }: Readonly<{ content: string; file: string }>): Promise<void> => {
+        await writeFile(file, generatedRegistrationSource(content));
+      }
     ),
     ...ui.map(
-      ({
+      async ({
         file,
         content,
-      }: Readonly<{ content: string; file: string }>): Promise<void> =>
-        writeFile(file, content)
+      }: Readonly<{ content: string; file: string }>): Promise<void> => {
+        await writeFile(file, content);
+      }
     ),
   ]);
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
 const initializeFeatureUi = async (cwd: string): Promise<void> => {
   await initializeObservability(cwd);
-  for (const [file, name, marker, symbol] of [
+  const removals = [
     [
       "composer-controls.ts",
       "composerControls",
@@ -459,79 +456,88 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
       "@/features/mcp/settings",
       "mcpSettingsItem",
     ],
-  ] as const) {
-    const location = path.join(cwd, file);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Only new scaffolds initialize these app-owned files.
-    const source = await readFile(location, "utf-8");
-    const parsed = ts.createSourceFile(
-      file,
-      source,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const edits: { start: number; end: number; text: string }[] = [];
-    for (const node of parsed.statements) {
-      if (
-        ts.isImportDeclaration(node) &&
-        ts.isStringLiteral(node.moduleSpecifier) &&
-        node.moduleSpecifier.text === marker
-      ) {
-        edits.push({ end: node.end, start: node.getFullStart(), text: "" });
-      }
-      if (!ts.isVariableStatement(node)) {
-        continue;
-      }
-      for (const declaration of node.declarationList.declarations) {
-        if (
-          declaration.name.getText(parsed) !== name ||
-          !declaration.initializer ||
-          !ts.isArrayLiteralExpression(declaration.initializer)
-        ) {
-          continue;
-        }
-        const array = declaration.initializer;
-        const entries = array.elements.filter(
-          (entry: ReadonlyNative<ts.Expression>): boolean => {
-            if (
-              ts.isSpreadElement(entry) &&
-              entry.expression.getText(parsed) === `${symbol}.controls`
-            ) {
-              return false;
-            }
-            if (ts.isIdentifier(entry)) {
-              return entry.text !== symbol;
-            }
-            return (
-              !ts.isObjectLiteralExpression(entry) ||
-              !entry.properties.some(
-                (prop: ReadonlyNative<ts.ObjectLiteralElementLike>): boolean =>
-                  ts.isPropertyAssignment(prop) &&
-                  ts.isIdentifier(prop.initializer) &&
-                  prop.initializer.text === symbol
-              )
-            );
-          }
+  ] as const;
+  const files = [...new Set(removals.map(([file]) => file))];
+  await Promise.all(
+    files.map(async (file) => {
+      const location = path.join(cwd, file);
+      let source = await readFile(location, "utf-8");
+      for (const [, name, marker, symbol] of removals.filter(
+        ([target]) => target === file
+      )) {
+        const parsed = ts.createSourceFile(
+          file,
+          source,
+          ts.ScriptTarget.Latest,
+          true
         );
-        edits.push({
-          end: array.end,
-          start: array.getStart(parsed),
-          text: `[\n${entries.map((entry: ReadonlyNative<ts.Expression>): string => `${entry.getText(parsed)},`).join("\n")}\n]`,
-        });
+        const edits: { start: number; end: number; text: string }[] = [];
+        for (const node of parsed.statements) {
+          if (
+            ts.isImportDeclaration(node) &&
+            ts.isStringLiteral(node.moduleSpecifier) &&
+            node.moduleSpecifier.text === marker
+          ) {
+            edits.push({ end: node.end, start: node.getFullStart(), text: "" });
+          }
+          if (!ts.isVariableStatement(node)) {
+            continue;
+          }
+          for (const declaration of node.declarationList.declarations) {
+            if (
+              declaration.name.getText(parsed) !== name ||
+              !declaration.initializer ||
+              !ts.isArrayLiteralExpression(declaration.initializer)
+            ) {
+              continue;
+            }
+            const array = declaration.initializer;
+            const entries = array.elements.filter(
+              (entry: ReadonlyNative<ts.Expression>): boolean => {
+                if (
+                  ts.isSpreadElement(entry) &&
+                  entry.expression.getText(parsed) === `${symbol}.controls`
+                ) {
+                  return false;
+                }
+                if (ts.isIdentifier(entry)) {
+                  return entry.text !== symbol;
+                }
+                return (
+                  !ts.isObjectLiteralExpression(entry) ||
+                  !entry.properties.some(
+                    (
+                      prop: ReadonlyNative<ts.ObjectLiteralElementLike>
+                    ): boolean =>
+                      ts.isPropertyAssignment(prop) &&
+                      ts.isIdentifier(prop.initializer) &&
+                      prop.initializer.text === symbol
+                  )
+                );
+              }
+            );
+            edits.push({
+              end: array.end,
+              start: array.getStart(parsed),
+              text: `[\n${entries.map((entry: ReadonlyNative<ts.Expression>): string => `${entry.getText(parsed)},`).join("\n")}\n]`,
+            });
+          }
+        }
+        let content = source;
+        for (const edit of edits.toSorted(
+          (
+            leftEdit: Readonly<{ start: number }>,
+            rightEdit: Readonly<{ start: number }>
+          ): number => rightEdit.start - leftEdit.start
+        )) {
+          content =
+            content.slice(0, edit.start) + edit.text + content.slice(edit.end);
+        }
+        source = content;
       }
-    }
-    let content = source;
-    for (const edit of edits.toSorted(
-      (
-        leftEdit: Readonly<{ start: number }>,
-        rightEdit: Readonly<{ start: number }>
-      ): number => rightEdit.start - leftEdit.start
-    )) {
-      content =
-        content.slice(0, edit.start) + edit.text + content.slice(edit.end);
-    }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- See above.
-    await writeFile(location, content);
-  }
+      await writeFile(location, source);
+    })
+  );
   await syncFeatures(cwd);
 };
 

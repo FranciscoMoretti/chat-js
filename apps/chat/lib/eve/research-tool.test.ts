@@ -1,28 +1,28 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
+import { z } from "zod";
+import type { prepareResearch } from "@/tools/chatjs/deep-research/steps";
+import { getDeepResearchConfig } from "@/tools/chatjs/deep-research/configuration";
 
 import { executeEveResearch } from "@/tools/chatjs/deep-research/workflow";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
-  prepare: vi.fn(),
+  prepare: vi.fn<() => ReturnType<typeof prepareResearch>>(),
+  researchCompletionTime: vi.fn(),
   save: vi.fn(),
   searches: vi.fn(),
 }));
 vi.mock("@/tools/chatjs/deep-research/search-updates", () => ({
   researchSearchUpdates: mocks.searches,
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("@/tools/chatjs/deep-research/steps") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("@/tools/chatjs/deep-research/steps", () => ({
   prepareResearch: mocks.prepare,
-  researchCompletionTime: (): Promise<number> => Promise.resolve(100),
+  researchCompletionTime: mocks.researchCompletionTime,
   saveResearchReport: mocks.save,
 }));
-/* oxlint-enable typescript/promise-function-async */
-const agent = vi.fn();
+const agent = vi.fn<WorkflowToolContext["agent"]>();
 let controller: AbortController;
 let context: WorkflowToolContext;
 const document = {
@@ -36,6 +36,7 @@ const document = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.researchCompletionTime.mockResolvedValue(100);
   controller = new AbortController();
   context = {
     ...testToolContext({ abortSignal: controller.signal }),
@@ -45,6 +46,7 @@ beforeEach(() => {
   };
   mocks.prepare.mockResolvedValue({
     config: {
+      ...getDeepResearchConfig(),
       allow_clarification: false,
       max_concurrent_research_units: 2,
       max_researcher_iterations: 2,
@@ -85,11 +87,8 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     "researchPlanner",
     "researchWriter",
   ]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[4][1].message).toContain("First findings");
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[7][1].message).toContain("Follow-up findings");
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[8][1].message).toContain(
     "First findings\nFollow-up findings"
   );
@@ -109,24 +108,26 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
   });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("bounds adaptive decisions even when the supervisor never finishes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("bounds adaptive decisions even when the supervisor never finishes", async () => {
-  agent.mockImplementation((name: string) => {
-    if (name === "researchPlanner") {
-      return Promise.resolve(
-        agent.mock.calls.length === 1
-          ? { research_brief: "Brief", title: "Report" }
-          : { complete: false, topics: ["Topic"] }
+  agent.mockImplementation(
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
+    (name: string): ReturnType<WorkflowToolContext["agent"]> => {
+      if (name === "researchPlanner") {
+        return Promise.resolve<
+          Awaited<ReturnType<WorkflowToolContext["agent"]>>
+        >(
+          agent.mock.calls.length === 1
+            ? { research_brief: "Brief", title: "Report" }
+            : { complete: false, topics: ["Topic"] }
+        );
+      }
+      return Promise.resolve<Awaited<ReturnType<WorkflowToolContext["agent"]>>>(
+        name === "researchWriter"
+          ? { content: "Content", title: "Report" }
+          : { findings: "Evidence" }
       );
     }
-    return Promise.resolve(
-      name === "researchWriter"
-        ? { content: "Content", title: "Report" }
-        : { findings: "Evidence" }
-    );
-  });
+  );
   await Array.fromAsync(executeEveResearch({}, context));
   expect(
     agent.mock.calls.filter(
@@ -142,14 +143,11 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   ).toHaveLength(3);
   expect(mocks.save).toHaveBeenCalledOnce();
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("returns clarification without starting research or saving a document", async () => {
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const prepared = await mocks.prepare();
   mocks.prepare.mockResolvedValue({
     ...prepared,
-    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Rest/spread: Keep the existing prepared.config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     config: { ...prepared.config, allow_clarification: true },
   });
   agent.mockResolvedValue({
@@ -167,13 +165,11 @@ it("returns clarification without starting research or saving a document", async
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("runs topics sequentially and stops before new work or saving after cancellation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     .mockImplementationOnce(() => {
       controller.abort(new Error("Cancelled"));
       // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: AbortSignal.reason is typed as any; forward the controller’s Error unchanged to verify cancellation stops further topics and saving.
@@ -185,7 +181,6 @@ it("runs topics sequentially and stops before new work or saving after cancellat
   expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("validates native outputs and propagates failures without a successful report receipt", async () => {
   agent.mockResolvedValue({ research_brief: 12, title: "Report" });
@@ -214,10 +209,13 @@ it("rejects oversized topic batches before starting researchers", async () => {
     Array.fromAsync(executeEveResearch({}, context))
   ).rejects.toThrow();
   expect(agent).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(agent.mock.calls[1][1].outputSchema.properties.topics.maxItems).toBe(
-    2
-  );
+  expect(
+    z
+      .object({
+        properties: z.object({ topics: z.object({ maxItems: z.number() }) }),
+      })
+      .parse(agent.mock.calls[1][1].outputSchema).properties.topics.maxItems
+  ).toBe(2);
   expect(mocks.save).not.toHaveBeenCalled();
 });
 

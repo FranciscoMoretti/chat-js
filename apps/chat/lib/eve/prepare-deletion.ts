@@ -27,7 +27,7 @@ export const prepareEveFamilyDeletion = async (
   const lifecycle = requireEveDeletionLifecycle();
   const family = await retireEveFamilyForDeletion(ownerId, conversationId);
   if (!family) {
-    return;
+    return undefined;
   }
   const nativeInventories: {
     sessionId: string;
@@ -41,7 +41,7 @@ export const prepareEveFamilyDeletion = async (
     if (typeof sessionId !== "string" || sessionId === "") {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each authorized session's retirement and native preparation before the next; partial preparation must return no inventory and retry the full family.
     const inventory = await lifecycle.prepare(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });
@@ -53,7 +53,6 @@ export const prepareEveFamilyDeletion = async (
       streamIds.add(id);
     }
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: prepareEveFamilyDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     ...family,
     nativeInventories,

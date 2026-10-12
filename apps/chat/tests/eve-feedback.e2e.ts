@@ -1,8 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import type { Request, TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -19,15 +17,13 @@ const votesRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
 const mutationRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
   url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
- * typescript/promise-function-async (#606): test("assistant feedback survives reload, recovers from errors and stays out of publi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("assistant feedback survives reload, recovers from errors and stays out of publi's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("assistant feedback survives reload, recovers from errors and stays out of public shares", async ({
   page,
   browser,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -58,6 +54,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await expect(down).toBeEnabled();
     await page.reload();
     await expect(up).toHaveAttribute("aria-pressed", "true");
+    /* oxlint-disable eslint/no-await-in-loop -- One browser page must finish each viewport capture before its dimensions change. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
       await page.locator(".is-assistant").screenshot({
@@ -65,16 +62,18 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         path: testInfo.outputPath(`feedback-${width}.png`),
       });
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     await page.route(
       (url: Readonly<Pick<URL, "pathname">>) =>
         url.pathname.includes("eve.vote") &&
         !url.pathname.includes("eve.votes"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await down.click();
@@ -86,13 +85,13 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await page.reload();
     await expect(down).toHaveAttribute("aria-pressed", "true");
 
-    await page.route(votesRoute, (route) =>
-      route.fulfill({
+    await page.route(votesRoute, async (route) => {
+      await route.fulfill({
         body: "{}",
         contentType: "application/json",
         status: 500,
-      })
-    );
+      });
+    });
     await page.reload();
     const retry = page.getByRole("button", { name: "Retry loading feedback" });
     await expect(retry).toBeVisible();
@@ -152,9 +151,12 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       await staleReadFinished.promise;
       // A following browser task runs after the completed response is processed.
       await page.evaluate(
-        () =>
-          new Promise((resolve) => {
-            requestAnimationFrame(() => requestAnimationFrame(resolve));
+        async () =>
+          // oxlint-disable-next-line promise/avoid-new -- The browser callback-only double animation frame API supplies the completion signal required before the following assertion.
+          await new Promise((resolve) => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(resolve);
+            });
           })
       );
       await expect(up).toHaveAttribute("aria-pressed", "true");
@@ -177,9 +179,9 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         feedbackRequests.push(request.url());
       }
     });
-    await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await publicPage.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await publicPage.goto(`${new URL(page.url()).origin}/share/${binding.id}`);
     await expect(publicPage.getByRole("log")).toContainText(
       "feedback-fixture-ok"
@@ -200,15 +202,13 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       .where(eq(eveConversation.id, binding.id));
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("shared feedback controls render unrated, selected and pending states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("shared feedback controls render unrated, selected and pending states", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const styles = await page
     .locator('link[rel="stylesheet"]')
@@ -240,6 +240,7 @@ test("shared feedback controls render unrated, selected and pending states", asy
   await expect(page.getByTestId("message-downvote").nth(2)).toBeDisabled();
   await expect(page.getByTestId("message-upvote").nth(3)).toBeDisabled();
   await expect(page.getByTestId("message-downvote").nth(3)).toBeDisabled();
+  /* oxlint-disable eslint/no-await-in-loop -- One browser page must finish each viewport assertion and capture before its dimensions change. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -251,5 +252,5 @@ test("shared feedback controls render unrated, selected and pending states", asy
       path: testInfo.outputPath(`feedback-states-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
-/* oxlint-enable typescript/promise-function-async */

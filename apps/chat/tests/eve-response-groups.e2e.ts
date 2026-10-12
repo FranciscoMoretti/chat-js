@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -39,9 +37,7 @@ await db.insert(user).values({
   id: owner,
   name: "Response group test",
 });
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): afterAll intentionally keeps the existing falsy-value behavior of rows.filter((row) => row.parentConversationId); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 afterAll(async () => {
   await db.delete(eveResponseGroup).where(eq(eveResponseGroup.ownerId, owner));
   // Fork foreign keys require deleting children before roots.
@@ -49,20 +45,20 @@ afterAll(async () => {
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.ownerId, owner));
+  /* oxlint-disable eslint/no-await-in-loop -- Delete fork rows in fixture order before deleting their shared root; foreign keys constrain teardown. */
   for (const row of rows.filter(
     (candidate: Readonly<{ parentConversationId: string | null }>) =>
-      candidate.parentConversationId
+      candidate.parentConversationId !== undefined &&
+      candidate.parentConversationId !== null &&
+      candidate.parentConversationId !== ""
   )) {
     await db.delete(eveConversation).where(eq(eveConversation.id, row.id));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("parallel reservations and partial dispatch retries keep ordered exact identitie preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("parallel reservations and partial dispatch retries keep ordered exact identities", async () => {
   const input = {
     message: "Compare these models",
@@ -94,10 +90,13 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
         ownerId,
         operation.operationId,
         eveMessageTitle(operation.message),
-        (id) => {
+
+        /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+        async (id) => {
           nativeCalls.push(id);
-          return Promise.resolve(`session-${id}`);
+          return `session-${id}`;
         },
+        /* oxlint-enable eslint/require-await */
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
@@ -122,14 +121,15 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   expect(new Set(nativeCalls).size).toBe(3);
   expect(nativeCalls).toHaveLength(3);
   const root = await getEveCreation(owner, left.candidates[0].operationId);
-  for (const candidate of left.candidates.slice(1)) {
-    const child = await getEveCreation(owner, candidate.operationId);
-    expect(child?.parentConversationId).toBe(root?.id);
-    expect(child?.rootConversationId).toBe(root?.id);
-    expect(child?.forkTurnId).toBe("turn_0");
-  }
+  await Promise.all(
+    left.candidates.slice(1).map(async (candidate) => {
+      const child = await getEveCreation(owner, candidate.operationId);
+      expect(child?.parentConversationId).toBe(root?.id);
+      expect(child?.rootConversationId).toBe(root?.id);
+      expect(child?.forkTurnId).toBe("turn_0");
+    })
+  );
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("unconfirmed initial creation never starts independent secondary roots", async () => {
   vi.mocked(createEveConversationOperation)
@@ -148,15 +148,15 @@ test("unconfirmed initial creation never starts independent secondary roots", as
   expect(createEveConversationOperation).toHaveBeenCalledTimes(1);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("continuation candidates share one source checkpoint and reject inaccessible sou preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("continuation candidates share one source checkpoint and reject inaccessible sources", async () => {
   const source = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Original",
-    (id) => Promise.resolve(`source-${id}`)
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (id) => `source-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   vi.mocked(createEveConversationOperation)
     .mockReset()
@@ -165,7 +165,10 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
         ownerId,
         operation.operationId,
         eveMessageTitle(operation.message),
-        (id) => Promise.resolve(`continued-${id}`),
+
+        /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+        async (id) => `continued-${id}`,
+        /* oxlint-enable eslint/require-await */
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
@@ -181,11 +184,13 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   expect(
     result.candidates.every((candidate) => candidate.state === "bound")
   ).toBe(true);
-  for (const candidate of result.candidates) {
-    const row = await getEveCreation(owner, candidate.operationId);
-    expect(row?.parentConversationId).toBe(source.id);
-    expect(row?.forkTurnId).toBe(fork.beforeTurnId);
-  }
+  await Promise.all(
+    result.candidates.map(async (candidate) => {
+      const row = await getEveCreation(owner, candidate.operationId);
+      expect(row?.parentConversationId).toBe(source.id);
+      expect(row?.forkTurnId).toBe(fork.beforeTurnId);
+    })
+  );
   await expect(
     createEveResponseGroup(owner, {
       ...input,
@@ -194,7 +199,6 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
     })
   ).rejects.toThrow("Source conversation not found");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("definitive rejection is distinct from uncertainty and repeated model choices remain independent", async () => {
   const input = {
@@ -246,7 +250,10 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     owner,
     group.candidates[0].operationId,
     input.message,
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
     async (id) => `session-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   const forkInput = {
     ...input,
@@ -260,30 +267,32 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   });
   await beginEveConversationDeletion(owner, root.id);
   await completeEveConversationDeletion(owner, root.id);
-  for (const { saved, original } of [
-    { original: input, saved: group },
-    { original: forkInput, saved: pendingFork },
-  ]) {
-    const [row] = await db
-      .select()
-      .from(eveResponseGroup)
-      .where(eq(eveResponseGroup.id, saved.id));
-    expect(row).toMatchObject({
-      candidateOperationIds: saved.candidateOperationIds,
-      candidates: null,
-      deleted: true,
-      inputHash: null,
-    });
-    await expect(reserveEveResponseGroup(owner, original)).rejects.toThrow(
-      "deleted"
-    );
-  }
+  await Promise.all(
+    [
+      { original: input, saved: group },
+      { original: forkInput, saved: pendingFork },
+    ].map(async ({ saved, original }) => {
+      const [row] = await db
+        .select()
+        .from(eveResponseGroup)
+        .where(eq(eveResponseGroup.id, saved.id));
+      expect(row).toMatchObject({
+        candidateOperationIds: saved.candidateOperationIds,
+        candidates: null,
+        deleted: true,
+        inputHash: null,
+      });
+      await expect(reserveEveResponseGroup(owner, original)).rejects.toThrow(
+        "deleted"
+      );
+    })
+  );
   await expect(
     createEveConversation(
       owner,
       group.candidates[1].operationId,
       input.message,
-      async () => "must-not-create",
+      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create"),
       { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     )
   ).rejects.toThrow();
@@ -292,7 +301,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       owner,
       group.candidates[1].operationId,
       input.message,
-      async () => "must-not-create-root"
+      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create-root")
     )
   ).rejects.toThrow("response group has been deleted");
   const [untouched] = await db
@@ -308,7 +317,10 @@ test("group reservation racing retirement cannot leave an active unstarted group
     owner,
     crypto.randomUUID(),
     "Race",
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
     async (id) => `session-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   const input = {
     fork: { beforeTurnId: "turn_0", conversationId: root.id },
@@ -348,7 +360,10 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     owner,
     crypto.randomUUID(),
     "Old group",
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
     async (id) => `session-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   const input = {
     fork: { beforeTurnId: "turn_0", conversationId: root.id },
@@ -388,7 +403,10 @@ test("owner-only group reads preserve order and rejection recovery without expos
     owner,
     group.candidates[0].operationId,
     input.message,
+
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
     async (id) => `session-${id}`
+    /* oxlint-enable eslint/require-await */
   );
   await recordEveResponseGroupRejection(
     owner,
@@ -429,9 +447,6 @@ test("owner-only group reads preserve order and rejection recovery without expos
   ).rejects.toThrow("unavailable");
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("an in-flight candidate prevents family erasure until its binding resolves") intentionally keeps the existing falsy-value behavior of root; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("an in-flight candidate prevents family erasure until its binding resolves", async () => {
   const input = {
     message: "In flight",
@@ -455,7 +470,7 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
   await entered.promise;
   try {
     const root = await getEveCreation(owner, group.candidates[0].operationId);
-    if (!root) {
+    if (root === undefined) {
       throw new Error("Missing creating candidate");
     }
     await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
@@ -472,4 +487,3 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     await getEveCreation(owner, group.candidates[1].operationId)
   ).toBeUndefined();
 });
-/* oxlint-enable typescript/strict-boolean-expressions */

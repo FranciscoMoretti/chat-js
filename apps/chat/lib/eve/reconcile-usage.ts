@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
 import { Client } from "eve/client";
 import {
   advanceEveSubagentUsageCursor,
@@ -61,6 +60,7 @@ const reconcileEveSubagentUsage = async (
     }
     let childIndex = start;
     let childUnresolved = false;
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
     for await (const event of client.sessions.attach(child.sessionId).stream({
       follow: false,
       signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
@@ -81,8 +81,8 @@ const reconcileEveSubagentUsage = async (
         !discovered.has(event.data.childSessionId)
       ) {
         const nested = await getEveSubagent(ownerId, event.data.childSessionId);
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getEveSubagent destructures the first query row; an empty result is undefined at runtime even though the inferred row type omits absence.
-        if (!nested || nested.rootSessionId !== sessionId) {
+
+        if (!(nested !== undefined) || nested.rootSessionId !== sessionId) {
           throw new Error("Delegated usage requires an owned root binding.");
         }
         discovered.add(nested.sessionId);
@@ -92,6 +92,7 @@ const reconcileEveSubagentUsage = async (
     if (childUnresolved) {
       unresolved = true;
     } else if (childIndex > start) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
       await advanceEveSubagentUsageCursor(ownerId, child.sessionId, childIndex);
     }
   }
@@ -238,7 +239,7 @@ const reconcileAllOwnerUsage = async (
           typeof next.value.sessionId === "string" &&
           next.value.sessionId !== ""
         ) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
           await reconcileEveUsage(
             ownerId,
             next.value.sessionId,

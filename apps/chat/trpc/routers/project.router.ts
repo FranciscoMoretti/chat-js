@@ -97,8 +97,7 @@ export const projectRouter = createTRPCRouter({
         readonly input: ReadonlyNativeSurface<{ id: string }>;
       }) => {
         const project = await getProjectById({ id: input.id });
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!project) {
+        if (project === undefined) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",
@@ -136,8 +135,7 @@ export const projectRouter = createTRPCRouter({
         readonly input: ReadonlyNativeSurface<{ id: string }>;
       }) => {
         const project = await getProjectById({ id: input.id });
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!project) {
+        if (project === undefined) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",
@@ -173,8 +171,7 @@ export const projectRouter = createTRPCRouter({
         }>;
       }) => {
         const project = await getProjectById({ id: input.id });
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!project) {
+        if (project === undefined) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",
@@ -259,8 +256,7 @@ export const projectRouter = createTRPCRouter({
         }>;
       }) => {
         const project = await getProjectById({ id: input.id });
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- getProjectById destructures a possibly empty result array but infers a non-nullable object; retain the missing-project guard until its owned return contract includes undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!project) {
+        if (project === undefined) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Project not found",

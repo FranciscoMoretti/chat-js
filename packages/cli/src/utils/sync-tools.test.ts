@@ -1,3 +1,6 @@
+import assert from "node:assert/strict";
+import { requireJsonObject } from "#cli/helpers/json-object";
+import { toolDefinitionSchema } from "../../../registry/metadata";
 import { afterEach, expect, test } from "bun:test";
 import {
   mkdir,
@@ -37,6 +40,7 @@ const lintGeneratedRegistryComposition = async (
       "error",
       path.join(root, "tools/chatjs/tools.ts"),
       path.join(root, "tools/chatjs/ui.ts"),
+      path.join(root, "tools/chatjs/workflow-types.ts"),
     ],
     stderr: "pipe",
     stdout: "pipe",
@@ -54,13 +58,13 @@ const lintGeneratedRegistryComposition = async (
 
 const roots: string[] = [];
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root) => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 const project = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-sync-"));
   roots.push(root);
@@ -166,25 +170,27 @@ test("generated registries sort by registration key instead of directory name", 
   await install(root, "a-tool", "zebra");
   await install(root, "z-tool", "alpha");
   await syncTools(root);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { tools } = await import(path.join(root, "tools/chatjs/tools.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { ui } = await import(path.join(root, "tools/chatjs/ui.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const toolModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/tools.ts")),
+    "tool module"
+  );
+  const tools = requireJsonObject(toolModule.tools, "tool exports");
+  const uiModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/ui.ts")),
+    "UI module"
+  );
+  const ui = requireJsonObject(uiModule.ui, "UI exports");
   expect(Object.keys(tools)).toEqual(["alpha", "zebra"]);
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual(["tool-alpha", "tool-zebra"]);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { alpha } = await import(
-    path.join(root, "tools/chatjs/z-tool/tool.ts")
+  const { alpha } = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/z-tool/tool.ts")),
+    "alpha module"
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { zebra } = await import(
-    path.join(root, "tools/chatjs/a-tool/tool.ts")
+  const { zebra } = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/a-tool/tool.ts")),
+    "zebra module"
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(tools.alpha).toBe(alpha);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(tools.zebra).toBe(zebra);
   await syncTools(root);
 });
@@ -361,13 +367,17 @@ test("tools register natively, retain renderers and cannot collide with custom t
   const root = await project();
   await install(root, "native-counter", "countWords");
   await syncTools(root);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { tools } = await import(path.join(root, "tools/chatjs/tools.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { ui } = await import(path.join(root, "tools/chatjs/ui.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const toolModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/tools.ts")),
+    "tool module"
+  );
+  const tools = requireJsonObject(toolModule.tools, "tool exports");
+  const uiModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/ui.ts")),
+    "UI module"
+  );
+  const ui = requireJsonObject(uiModule.ui, "UI exports");
   expect(Object.keys(tools)).toEqual(["countWords"]);
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual(["tool-countWords"]);
   await writeFile(
     path.join(root, "tools/chatjs/custom-tools.ts"),
@@ -387,9 +397,13 @@ test("sync preserves request-context auth and environment credential fallbacks",
   const root = await project();
   await installExecution(root, "vercel-runner");
   const descriptor = path.join(root, "tools/chatjs/vercel-runner/chatjs.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const definition = toolDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
+  );
+  assert.ok(
+    definition.envRequirements?.[0] !== undefined,
+    "execution fixture requires an environment requirement"
+  );
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   const definitions = await syncTools(root);
@@ -430,16 +444,20 @@ test("a bundle registers each native tool and renderer and rejects cross-bundle 
     "export const DocumentRenderer = () => null;"
   );
   await syncTools(root);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { tools } = await import(path.join(root, "tools/chatjs/tools.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { ui } = await import(path.join(root, "tools/chatjs/ui.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const toolModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/tools.ts")),
+    "tool module"
+  );
+  const tools = requireJsonObject(toolModule.tools, "tool exports");
+  const uiModule = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/ui.ts")),
+    "UI module"
+  );
+  const ui = requireJsonObject(uiModule.ui, "UI exports");
   expect(Object.keys(tools)).toEqual([
     "createTextDocument",
     "editTextDocument",
   ]);
-  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual([
     "tool-createTextDocument",
     "tool-editTextDocument",
@@ -453,9 +471,9 @@ test("sync rejects removing a dependency but permits uninstalling a complete bun
   await install(root, "read-document", "readDocument");
   await install(root, "text-documents", "createTextDocument");
   const descriptor = path.join(root, "tools/chatjs/text-documents/chatjs.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const definition = toolDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
+  );
   definition.requiresTools = ["readDocument"];
   await writeFile(descriptor, JSON.stringify(definition));
   await syncTools(root);
@@ -483,11 +501,10 @@ test("saved-code registration requires an explicitly compatible executor", async
     root,
     "tools/chatjs/external-runner/chatjs.json"
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const definition = toolDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
+  );
   definition.codeExecutorExport = "executeCode";
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Amend the parsed external descriptor fixture before validating it through sync.
   definition.codeExecutionCapabilities = {
     cancellation: "terminate",
     cleanup: "durable-allocation",
@@ -520,9 +537,9 @@ export const runCode = {};`
   expect(registration).toContain(
     "codeExecutor: CodeExecutor | undefined = execute"
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { codeExecutor } = await import(
-    path.join(root, "tools/chatjs/code-executor.ts")
+  const { codeExecutor } = requireJsonObject(
+    await import(path.join(root, "tools/chatjs/code-executor.ts")),
+    "executor module"
   );
   expect(typeof codeExecutor).toBe("function");
 });
@@ -563,9 +580,11 @@ test.each([false, true])(
       );
       return;
     }
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const { tools } = await import(path.join(root, "tools/chatjs/tools.ts"));
-    // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+    const toolModule = requireJsonObject(
+      await import(path.join(root, "tools/chatjs/tools.ts")),
+      "tool module"
+    );
+    const tools = requireJsonObject(toolModule.tools, "tool exports");
     expect(Object.keys(tools)).toEqual([]);
     expect(
       await readFile(path.join(root, "tools/chatjs/workflow-types.ts"), "utf-8")
@@ -579,9 +598,9 @@ test("composer metadata follows installation and removal without editing UI orde
   const root = await project();
   await install(root);
   const descriptor = path.join(root, "tools/chatjs/word-count/chatjs.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const definition = toolDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
+  );
   definition.tools[0].composer = {
     icon: "Hash",
     name: "Count words",
@@ -614,9 +633,9 @@ test("invalid composer icon is rejected before generated files change", async ()
   const generated = path.join(root, "tools/chatjs/composer-tools.ts");
   const before = await readFile(generated, "utf-8");
   const descriptor = path.join(root, "tools/chatjs/word-count/chatjs.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  const definition = toolDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
+  );
   definition.tools[0].composer = {
     icon: "NotALucideIcon",
     name: "Count words",
@@ -633,9 +652,9 @@ test.each(["GlobeIcon", "BookOpen", "Edit3"])(
     const root = await project();
     await install(root);
     const descriptor = path.join(root, "tools/chatjs/word-count/chatjs.json");
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+    const definition = toolDefinitionSchema.parse(
+      JSON.parse(await readFile(descriptor, "utf-8"))
+    );
     definition.tools[0].composer = {
       icon,
       name: "Count words",

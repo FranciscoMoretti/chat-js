@@ -10,7 +10,6 @@ import { documentExecutionInput } from "./schemas";
  * @param {string} revisionId Revision identity required to match that run.
  * @returns {{ messageId: string; part: EveDynamicToolPart } | undefined} The newest matching tool part by original reference, or no result when that revision has not run.
  */
-// oxlint-disable-next-line typescript/consistent-return -- Explicitly returning undefined for a missing run conflicts with the enabled no-undefined rule; preserve this native-part-or-undefined lookup contract.
 export const latestDocumentRun = (
   messages: readonly ReadonlyNativeSurface<Pick<EveMessage, "id" | "parts">>[],
   documentId: string,
@@ -30,4 +29,5 @@ export const latestDocumentRun = (
       }
     }
   }
+  return undefined;
 };

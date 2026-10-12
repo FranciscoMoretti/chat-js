@@ -30,7 +30,7 @@ const readOptional = async (path: string): Promise<string | null> => {
 const generatedSource = (body: string): string => {
   const normalizedBody = body
     .replace(
-      "export type WorkflowTools = {\n\n};",
+      "export interface WorkflowTools {\n\n}",
       "export type WorkflowTools = Record<never, never>;"
     )
     .replace(
@@ -93,7 +93,6 @@ type Registration = ReturnType<typeof registrationsFor>[number];
 const registrationKey = (item: Readonly<Pick<Registration, "key">>): string =>
   item.key;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const readToolDefinition = async (
   cwd: string,
   directory: string,
@@ -136,8 +135,11 @@ const readToolDefinition = async (
     readFile(pathModule.join(cwd, directory, entryName, "tool.ts")),
     ...definition.tools
       .filter((tool) => tool.workflow)
-      .map((tool) =>
-        readFile(pathModule.join(cwd, "agent/tools", `${tool.toolExport}.ts`))
+      .map(
+        async (tool) =>
+          await readFile(
+            pathModule.join(cwd, "agent/tools", `${tool.toolExport}.ts`)
+          )
       ),
     ...(definition.documentKind ||
     (typeof definition.documentRunExport === "string" &&
@@ -153,7 +155,6 @@ const readToolDefinition = async (
   ]);
   return definition;
 };
-/* oxlint-enable typescript/promise-function-async */
 
 const collectDefinitions = async (
   cwd: string,
@@ -598,7 +599,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "workflow-types.ts"),
     generatedSource(
-      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n};\n`
+      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport interface WorkflowTools {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n}\n`
     )
   );
   const availability = definitions.filter(

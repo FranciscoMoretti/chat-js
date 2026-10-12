@@ -16,13 +16,11 @@ type InstalledToolPart<ToolType extends InstalledToolType> = Extract<
   { type: ToolType }
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the exported closed-record props alias and its implicit Record<string, unknown> assignability; an augmentable interface changes that contract. */
-type ToolRendererProps<ToolType extends InstalledToolType> = {
+interface ToolRendererProps<ToolType extends InstalledToolType> {
   tool: InstalledToolPart<ToolType>;
   messageId: string;
   isReadonly: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type ToolRendererRegistry = {
   [ToolType in InstalledToolType]?: ComponentType<ToolRendererProps<ToolType>>;
@@ -49,13 +47,13 @@ const getEveInstalledToolRenderer = (
     }> & { validatedToolRenderer: true })
   | undefined => {
   if (!isInstalledToolType(type)) {
-    return;
+    return undefined;
   }
   const renderer = toolRendererRegistry[type];
   if (isValidatedToolRenderer(renderer)) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveInstalledToolRenderer has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return renderer;
   }
+  return undefined;
 };
 
 export {

@@ -34,7 +34,6 @@ import type { McpConnector } from "@/lib/db/schema";
 import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const McpConnectDialog = ({
   open,
   onClose,
@@ -50,7 +49,7 @@ export const McpConnectDialog = ({
   const [isRedirecting, setIsRedirecting] = useState(false);
   const attempt = useRef(0);
   useEffect(() => {
-    if (!open || !connector?.id) {
+    if (!open || (connector?.id ?? "") === "") {
       attempt.current += 1;
     }
     return (): void => {
@@ -142,7 +141,9 @@ export const McpConnectDialog = ({
                 Connect {connector?.name ?? "connector"}
               </DialogTitle>
               <DialogDescription className="truncate">
-                {connector?.url ? getUrlWithoutParams(connector.url) : null}
+                {connector !== null && connector.url !== ""
+                  ? getUrlWithoutParams(connector.url)
+                  : null}
               </DialogDescription>
             </div>
           </div>
@@ -216,4 +217,3 @@ export const McpConnectDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

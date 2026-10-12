@@ -1,5 +1,6 @@
+import { renderRoot } from "@/tests/visual/primitive-mount";
 import "../../../apps/chat/tests/visual/sandbox.css";
-import React, { act } from "react";
+import React from "react";
 import { expect, test } from "vitest";
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 import { createRoot } from "react-dom/client";
@@ -17,25 +18,23 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
     state: "input-streaming" | "output-available",
     language = "python"
   ): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act((): void => {
-      root.render(
-        <CodeExecution
-          isReadonly={false}
-          messageId="sandbox-stream"
-          tool={{
-            input: {
-              code,
-              language,
-              title: "Calculate 53 multiplied by 41244",
-            },
-            output: { chart: "", message: "2185932" },
-            state,
-            toolCallId: "sandbox-stream",
-          }}
-        />
-      );
-    });
+    await renderRoot(
+      root,
+      <CodeExecution
+        isReadonly={false}
+        messageId="sandbox-stream"
+        tool={{
+          input: {
+            code,
+            language,
+            title: "Calculate 53 multiplied by 41244",
+          },
+          output: { chart: "", message: "2185932" },
+          state,
+          toolCallId: "sandbox-stream",
+        }}
+      />
+    );
   };
   await render("", "input-streaming");
   await render("print(53 *", "input-streaming");

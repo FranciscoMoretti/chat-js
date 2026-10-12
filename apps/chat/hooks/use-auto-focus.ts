@@ -22,9 +22,9 @@ export const useAutoFocus = ({
   readonly autoFocus: boolean;
   readonly editor: Readonly<Pick<LexicalEditor, "focus">> | null;
 }): void => {
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!(autoFocus && editor)) {
-      return;
+      return undefined;
     }
 
     let fallbackTimeout: number | null = null;
@@ -47,7 +47,6 @@ export const useAutoFocus = ({
       }
     });
 
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       globalThis.cancelAnimationFrame(raf);
       if (fallbackTimeout !== null) {

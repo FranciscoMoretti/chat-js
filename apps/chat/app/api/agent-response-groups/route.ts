@@ -11,7 +11,6 @@ import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 
 // Initial comparison candidates share a logical chat. Schedule its title from
 // the bound primary candidate while retaining deferred message/owner reads.
-/* oxlint-disable typescript/promise-function-async -- Next after receives the existing callback promise directly, preserving synchronous throws and promise identity. */
 const scheduleResponseGroupTitle = (
   result: ReadonlyNativeSurface<
     ReturnType<typeof eveResponseGroupResult.parse>
@@ -31,17 +30,16 @@ const scheduleResponseGroupTitle = (
       (candidate) => candidate.state === "bound"
     );
     if (source?.state === "bound") {
-      after(() =>
-        persistGeneratedEveConversationTitle({
+      after(async () => {
+        await persistGeneratedEveConversationTitle({
           conversationId: source.conversationId,
           message: input.data.message,
           ownerId: principal.ownerId,
-        })
-      );
+        });
+      });
     }
   }
 };
-/* oxlint-enable typescript/promise-function-async */
 
 export const POST = async (
   request: ReadonlyNativeSurface<Request>

@@ -48,9 +48,6 @@ type ActionResultEventReader =
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("copied document history survives source deletion and supports native editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copied document history survives source deletion and supports native editing", async ({
   page,
 }, testInfo: Readonly<{
@@ -68,7 +65,9 @@ test("copied document history survives source deletion and supports native editi
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
   const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
@@ -352,4 +351,3 @@ test("copied document history survives source deletion and supports native editi
   });
   expect(changed.status()).toBe(409);
 });
-/* oxlint-enable typescript/promise-function-async */

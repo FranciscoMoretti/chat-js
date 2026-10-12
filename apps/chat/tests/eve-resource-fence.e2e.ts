@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -35,22 +33,22 @@ afterAll(async () => {
   await query.end();
 });
 
-async function run(status = "completed"): Promise<string> {
+const run = async (status = "completed"): Promise<string> => {
   const id = crypto.randomUUID();
   runIds.push(id);
   await query`insert into workflow.workflow_runs (id, name, deployment_id, status)
     values (${id}, 'fence-fixture', 'fence-fixture', ${status})`;
   return id;
-}
-async function stream(
+};
+const stream = async (
   runId: string | null,
   id = crypto.randomUUID()
-): Promise<string> {
+): Promise<string> => {
   streamIds.push(id);
   await query`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("payload")}, false)`;
   return id;
-}
+};
 test("fence survives payload deletion and blocks replay, descendants, and every provider payload table", async () => {
   const id = await run();
   const streamId = await stream(id);
@@ -75,24 +73,25 @@ test("fence survives payload deletion and blocks replay, descendants, and every 
     query`insert into workflow.workflow_hooks (hook_id, run_id, token, owner_id, project_id, environment) values (${crypto.randomUUID()}, ${id}, 'late', 'fixture', 'fixture', 'test')`,
     query`insert into workflow.workflow_waits (wait_id, run_id, status) values (${crypto.randomUUID()}, ${id}, 'completed')`,
   ];
-  for (const write of rejected) {
-    await expect(write).rejects.toMatchObject({ code: "55000" });
-  }
+  await Promise.all(
+    rejected.map(async (write) => {
+      await expect(write).rejects.toMatchObject({ code: "55000" });
+    })
+  );
   await expect(stream(null, streamId)).rejects.toMatchObject({ code: "55000" });
   await expect(stream(id)).rejects.toMatchObject({ code: "55000" });
-  for (const attribute of [
-    "$parentRunId",
-    "$rootRunId",
-    "$eve.parent",
-    "$eve.root",
-  ]) {
-    const child = crypto.randomUUID();
-    runIds.push(child);
-    await expect(query`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
+  await Promise.all(
+    ["$parentRunId", "$rootRunId", "$eve.parent", "$eve.root"].map(
+      async (attribute) => {
+        const child = crypto.randomUUID();
+        runIds.push(child);
+        await expect(query`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'late-child', 'fixture', 'pending', ${query.json({ [attribute]: id })})`).rejects.toMatchObject(
-      { code: "55000" }
-    );
-  }
+          { code: "55000" }
+        );
+      }
+    )
+  );
   const unrelated = await run();
   await stream(unrelated);
   expect(
@@ -172,10 +171,10 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${streamId}, ${id}, ${Buffer.from("late")}, false)`;
   });
-  const rejected = expect(writer).rejects.toMatchObject({
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Vitest asymmetric matchers intentionally stand in for values in the expected error shape.
-    code: expect.stringMatching(rejectedWriteCode),
-  });
+  const rejected = expect(writer).rejects.toHaveProperty(
+    "code",
+    expect.stringMatching(rejectedWriteCode)
+  );
   try {
     await entered.promise;
     await fenceEvePostgresResources(query, { runIds: [id], streamIds: [] });

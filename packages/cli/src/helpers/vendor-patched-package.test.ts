@@ -1,3 +1,5 @@
+import { parsePackageJson } from "./package-manifest";
+import { requireJsonObject } from "./json-object";
 import { expect, it } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
@@ -93,12 +95,14 @@ it.each([
         packageName: name,
         patchPath,
       });
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const manifest = JSON.parse(
+      const manifest = parsePackageJson(
         await readFile(nodePath.join(destination, "package.json"), "utf-8")
       );
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies[name]).toBe(`file:vendor/${archiveName}`);
+      const dependencies = requireJsonObject(
+        manifest.dependencies,
+        "dependencies"
+      );
+      expect(dependencies[name]).toBe(`file:vendor/${archiveName}`);
       const archive = nodePath.join(destination, "vendor", archiveName);
       const metadata = execFileSync("tar", [
         "-xOf",

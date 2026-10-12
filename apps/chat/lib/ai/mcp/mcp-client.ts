@@ -185,7 +185,7 @@ export class MCPClient {
       abortSignal.throwIfAborted();
     }
     if (!this.connectPromise) {
-      // oxlint-disable-next-line promise/prefer-await-to-then -- Shared initialization clears independently of any cancelled caller's wait.
+      // oxlint-disable-next-line promise/prefer-await-to-then -- Cleanup belongs to this exact shared attempt, independently of caller cancellation; an async IIFE cannot safely type its own promise reference (TS2454).
       const promise = this.connectOnce(oauthState).finally((): void => {
         if (this.connectPromise === promise) {
           this.connectPromise = undefined;

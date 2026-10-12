@@ -31,12 +31,13 @@ test("fences every member before checking pending operations and never expires u
     await expect(
       fenceLocalEveSandboxMutations(appRoot, ["first", "second"])
     ).rejects.toThrow("still pending");
-    for (const id of ["first", "second"]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      expect(await readFile(nodePath.join(scope(id), "deleted"), "utf-8")).toBe(
-        "1\n"
-      );
-    }
+    await Promise.all(
+      ["first", "second"].map(async (id) => {
+        expect(
+          await readFile(nodePath.join(scope(id), "deleted"), "utf-8")
+        ).toBe("1\n");
+      })
+    );
     expect(await readFile(lease, "utf-8")).toContain('"pid":1');
     await rm(lease);
     await fenceLocalEveSandboxMutations(appRoot, ["first", "second", "first"]);

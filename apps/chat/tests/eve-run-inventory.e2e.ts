@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-
 import postgres from "postgres";
 import type { TransactionSql } from "postgres";
 import { afterAll, expect, test } from "vitest";
@@ -28,10 +26,10 @@ afterAll(async () => {
   await query.end();
 });
 
-async function run(
+const run = async (
   attributes: Readonly<Record<string, string>> = {},
   status = "completed"
-): Promise<string> {
+): Promise<string> => {
   const id = crypto.randomUUID();
   ids.push(id);
   await query`
@@ -40,12 +38,12 @@ async function run(
       ${query.json(attributes)}, ${query.json({ secret: "must not be loaded" })})
   `;
   return id;
-}
+};
 
-async function stream(
+const stream = async (
   runId: string | null,
   existingId?: string
-): Promise<string> {
+): Promise<string> => {
   const id = existingId ?? crypto.randomUUID();
   streamIds.push(id);
   await query`
@@ -53,7 +51,7 @@ async function stream(
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("private payload")}, false)
   `;
   return id;
-}
+};
 test("inventories native descendants and collectors without returning payloads or unrelated runs", async () => {
   const collector = await run();
   const root = await run({ "$eve.activity_collector": collector });

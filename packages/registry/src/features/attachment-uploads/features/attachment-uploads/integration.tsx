@@ -17,6 +17,17 @@ import { AttachFilesControl, TakePhotoControl } from "./controls";
 import { uploadAttachment } from "./upload";
 import { processFilesForUpload } from "./upload-prep";
 
+const withUploadCleanup = async (
+  upload: () => Promise<void>,
+  release: () => void
+): Promise<void> => {
+  try {
+    await upload();
+  } finally {
+    release();
+  }
+};
+
 type UploadPasteCaptureEvent = Readonly<{
   clipboardData: Readonly<{
     files: Readonly<Pick<FileList, "length" | typeof Symbol.iterator>>;
@@ -72,33 +83,35 @@ const useUploads = ({
     setUploadQueue(
       files.map((file: ReadonlyNativeSurface<File>): string => file.name)
     );
-    // oxlint-disable-next-line react/todo -- Keep queue cleanup in finally for upload recovery.
-    try {
-      const result = await processFilesForUpload(files, config.attachments);
-      if (
-        result.stillOversized.length > 0 ||
-        result.unsupportedFiles.length > 0
-      ) {
-        toast.error(
-          "Some files could not be attached. Use images or PDFs within the upload size limit."
-        );
-      }
-      for (const file of result.files) {
-        try {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
-          const attachment = await uploadAttachment(file);
-          currentCount.current += 1;
-          onUploaded(attachment);
-        } catch (error) {
+    await withUploadCleanup(
+      async () => {
+        const result = await processFilesForUpload(files, config.attachments);
+        if (
+          result.stillOversized.length > 0 ||
+          result.unsupportedFiles.length > 0
+        ) {
           toast.error(
-            error instanceof Error ? error.message : "Upload failed."
+            "Some files could not be attached. Use images or PDFs within the upload size limit."
           );
         }
+        for (const file of result.files) {
+          try {
+            // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
+            const attachment = await uploadAttachment(file);
+            currentCount.current += 1;
+            onUploaded(attachment);
+          } catch (error) {
+            toast.error(
+              error instanceof Error ? error.message : "Upload failed."
+            );
+          }
+        }
+      },
+      () => {
+        lock.current = false;
+        setUploadQueue([]);
       }
-    } finally {
-      lock.current = false;
-      setUploadQueue([]);
-    }
+    );
   };
   const { getRootProps } = useDropzone({
     disabled: uploadQueue.length > 0,

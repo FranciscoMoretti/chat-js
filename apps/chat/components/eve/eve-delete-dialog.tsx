@@ -133,7 +133,7 @@ const EveDeleteDialog = ({
   );
   const request = async (method: "GET" | "DELETE"): Promise<void> => {
     setPhase(method === "GET" ? "checking" : "deleting");
-    /* oxlint-disable react/todo -- Preserve the unconfirmed deletion recovery catch. */
+
     try {
       const response = await fetch(
         `/api/agent-conversations/${conversation.id}`,
@@ -148,8 +148,8 @@ const EveDeleteDialog = ({
         return;
       }
       if (!response.ok) {
-        // oxlint-disable-next-line react/todo -- Preserve the explicit unconfirmed deletion error.
-        throw new Error("Deletion unconfirmed");
+        setPhase("unconfirmed");
+        return;
       }
       const result = resultSchema.parse(await response.json());
       if (result.status === "active") {
@@ -166,7 +166,6 @@ const EveDeleteDialog = ({
     } catch {
       setPhase("unconfirmed");
     }
-    /* oxlint-enable react/todo */
   };
   return (
     <EveDeleteDialogView

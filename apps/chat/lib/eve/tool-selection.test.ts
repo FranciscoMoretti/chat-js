@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import {
   ContextContainer,
   contextStorage,
@@ -43,12 +45,8 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): startTurn preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): startTurn intentionally keeps the existing falsy-value behavior of selectedTool; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const startTurn = (selectedTool?: string, principalType = "user") =>
-  selectionHook.events?.["turn.started"]?.(
+const startTurn = async (selectedTool?: string, principalType = "user") =>
+  await selectionHook.events?.["turn.started"]?.(
     {
       data: { sequence: 1, turnId: "turn_1" },
       meta: { at: "2026-09-12T12:00:00Z", id: "event_1" },
@@ -67,7 +65,7 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
         auth: {
           current: {
             attributes: {
-              ...(selectedTool ? { selectedTool } : {}),
+              ...(isNonEmptyString(selectedTool) ? { selectedTool } : {}),
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
             authenticator: "gateway",
@@ -86,7 +84,6 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
       },
     }
   );
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
   await contextStorage.run(new ContextContainer(), async () => {

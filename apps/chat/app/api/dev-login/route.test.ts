@@ -104,7 +104,6 @@ afterEach(() => {
   state.data.session.length = 0;
 });
 
-/* oxlint-disable typescript/promise-function-async -- Keep the Better Auth integration scenario cohesive and preserve its returned promise and rejection behavior. */
 it.each(["http://localhost:3100", "https://localhost:3100"])(
   "dev-login issues a valid configured cookie on %s",
   async (baseUrl) => {
@@ -121,7 +120,9 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
       secret: state.secret,
     });
     state.auth = auth;
-    const responses = await Promise.all(Array.from({ length: 4 }, () => GET()));
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, async () => await GET())
+    );
     expect(
       responses.map((result: { readonly status: number }) => result.status)
     ).toEqual([
@@ -148,7 +149,6 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
     expect(state.data.session).toHaveLength(EXPECTED_DEVELOPMENT_SESSION_COUNT);
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 it("does not create a session outside development", async () => {
   vi.stubEnv("NODE_ENV", "production");

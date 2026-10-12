@@ -1,6 +1,8 @@
 "use client";
 
-import type { BundledLanguage, ShikiTransformer } from "shiki";
+import { hasCustomContent } from "@/components/custom-content";
+
+import type { BundledLanguage, TokensResult, ThemedToken } from "shiki";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, JSX as ReactJSX } from "react";
 import React, {
@@ -14,7 +16,7 @@ import React, {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { codeToHtml } from "shiki";
+import { codeToTokens, getTokenStyleObject } from "shiki";
 
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
@@ -33,69 +35,36 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-const lineNumberTransformer: ShikiTransformer = {
-  line(node, line) {
-    node.children.unshift({
-      children: [{ type: "text", value: String(line) }],
-      properties: {
-        className: [
-          "inline-block",
-          "min-w-10",
-          "mr-4",
-          "text-right",
-          "select-none",
-          "text-muted-foreground",
-        ],
-      },
-      tagName: "span",
-      type: "element",
-    });
-  },
-  name: "line-numbers",
-};
-
 const highlightCode = async (
   code: string,
-  language: BundledLanguage,
-  showLineNumbers = false
-): Promise<[string, string]> => {
-  const transformers: ShikiTransformer[] = showLineNumbers
-    ? [lineNumberTransformer]
-    : [];
-
-  return await Promise.all([
-    codeToHtml(code, {
+  language: BundledLanguage
+): Promise<[TokensResult, TokensResult]> =>
+  await Promise.all([
+    codeToTokens(code, {
       lang: language,
       theme: "one-light",
-      transformers,
     }),
-    codeToHtml(code, {
+    codeToTokens(code, {
       lang: language,
       theme: "one-dark-pro",
-      transformers,
     }),
   ]);
-};
 
 const useHighlightedCode = (
   code: string,
-  language: BundledLanguage,
-  showLineNumbers: boolean
-): { readonly html: string; readonly darkHtml: string } => {
-  const [html, setHtml] = useState<string>("");
-  const [darkHtml, setDarkHtml] = useState<string>("");
+  language: BundledLanguage
+): { readonly light?: TokensResult; readonly dark?: TokensResult } => {
+  const [highlighted, setHighlighted] = useState<{
+    light: TokensResult;
+    dark: TokensResult;
+  }>();
 
   useEffect(() => {
     let cancelled = false;
     const updateHighlightedCode = async (): Promise<void> => {
-      const [light, dark] = await highlightCode(
-        code,
-        language,
-        showLineNumbers
-      );
+      const [light, dark] = await highlightCode(code, language);
       if (!cancelled) {
-        setHtml(light);
-        setDarkHtml(dark);
+        setHighlighted({ light, dark });
       }
     };
     void updateHighlightedCode();
@@ -103,12 +72,62 @@ const useHighlightedCode = (
     return (): void => {
       cancelled = true;
     };
-  }, [code, language, showLineNumbers]);
+  }, [code, language]);
 
-  return { darkHtml, html };
+  return highlighted ?? {};
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- CodeBlock: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
+const tokenStyle = (token: ThemedToken): React.CSSProperties => {
+  const style = getTokenStyleObject(token);
+  return {
+    color: style.color,
+    backgroundColor: style["background-color"],
+    fontStyle: style["font-style"] === "italic" ? "italic" : undefined,
+    fontWeight: style["font-weight"] === "bold" ? "bold" : undefined,
+    textDecoration: style["text-decoration"],
+  };
+};
+
+const HighlightedCode = ({
+  result,
+  showLineNumbers,
+}: {
+  readonly result: TokensResult | undefined;
+  readonly showLineNumbers: boolean;
+}): React.JSX.Element | null => {
+  if (result === undefined) {
+    return null;
+  }
+  return (
+    <pre
+      className={`shiki ${result.themeName ?? ""}`}
+      style={{ backgroundColor: result.bg, color: result.fg }}
+      // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Preserve Shiki's focusable pre so keyboard users can scroll overflowing source without a pointer.
+      tabIndex={0}
+      aria-label="Code"
+    >
+      <code>
+        {result.tokens.map((line, index) => (
+          <React.Fragment key={index}>
+            <span className="line">
+              {showLineNumbers && (
+                <span className="text-muted-foreground mr-4 inline-block min-w-10 text-right select-none">
+                  {index + 1}
+                </span>
+              )}
+              {line.map((token) => (
+                <span key={token.offset} style={tokenStyle(token)}>
+                  {token.content}
+                </span>
+              ))}
+            </span>
+            {index < result.tokens.length - 1 ? "\n" : null}
+          </React.Fragment>
+        ))}
+      </code>
+    </pre>
+  );
+};
 
 const CodeBlock = ({
   code,
@@ -118,11 +137,7 @@ const CodeBlock = ({
   children,
   ...props
 }: CodeBlockProps): ReactJSX.Element => {
-  const { html, darkHtml } = useHighlightedCode(
-    code,
-    language,
-    showLineNumbers
-  );
+  const { light, dark } = useHighlightedCode(code, language);
 
   const contextValue = useMemo(() => ({ code }), [code]);
 
@@ -136,29 +151,24 @@ const CodeBlock = ({
         {...props}
       >
         <div className="relative">
-          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
-          <div
-            className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // oxlint-disable-next-line react/no-danger -- codeToHtml escapes source; line labels are numeric text in static spans.
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
-          <div
-            className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // oxlint-disable-next-line react/no-danger -- codeToHtml escapes source; line labels are numeric text in static spans.
-            dangerouslySetInnerHTML={{ __html: darkHtml }}
-          />
-          {children && (
+          <div className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm">
+            <HighlightedCode result={light} showLineNumbers={showLineNumbers} />
+          </div>
+          <div className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm">
+            <HighlightedCode result={dark} showLineNumbers={showLineNumbers} />
+          </div>
+          {hasCustomContent(children) ? (
             <div className="absolute top-2 right-2 flex items-center gap-2">
               {children}
             </div>
+          ) : (
+            children
           )}
         </div>
       </div>
     </CodeBlockContext.Provider>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type CodeBlockCopyButtonProps = Omit<
   ComponentProps<typeof Button>,

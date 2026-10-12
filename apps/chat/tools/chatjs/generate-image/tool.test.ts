@@ -137,9 +137,8 @@ it("retains provider cost if authorized storage fails", async () => {
 });
 it("forwards cancellation to EVE", async () => {
   const controller = new AbortController();
-  /* oxlint-disable typescript/promise-function-async -- Return the exact pending provider promise after registering its abort listener; an async callback would wrap that promise. */
   mocks.image.mockImplementation(
-    ({
+    async ({
       abortSignal,
     }: {
       readonly abortSignal: Readonly<
@@ -154,10 +153,9 @@ it("forwards cancellation to EVE", async () => {
         },
         { once: true }
       );
-      return pending.promise;
+      return await pending.promise;
     }
   );
-  /* oxlint-enable typescript/promise-function-async */
   const result = execute(testToolContext({ abortSignal: controller.signal }));
   await vi.waitFor(() => {
     expect(mocks.image).toHaveBeenCalledOnce();

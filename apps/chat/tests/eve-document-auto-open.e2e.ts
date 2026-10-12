@@ -3,9 +3,6 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("live document completion opens once without replacing an existing panel or open preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("live document completion opens once without replacing an existing panel or opening history", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
@@ -27,12 +24,12 @@ test("live document completion opens once without replacing an existing panel or
     ],
     { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
   );
-  await page.route("**/eve-component-fixture", (route) =>
-    route.fulfill({
+  await page.route("**/eve-component-fixture", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("/eve-component-fixture");
   await page.clock.setFixedTime(new Date("2026-09-22T12:00:00.000Z"));
   await page.addScriptTag({ content: script, type: "module" });
@@ -156,4 +153,3 @@ test("live document completion opens once without replacing an existing panel or
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */

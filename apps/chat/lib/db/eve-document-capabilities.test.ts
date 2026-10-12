@@ -2,9 +2,18 @@ import { readFile, readdir } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import { eveChat, eveConversation, user } from "./schema";
+import {
+  eveChat,
+  eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
+  eveDocumentHead,
+  eveDocumentRevision,
+  user,
+} from "./schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
@@ -20,6 +29,7 @@ vi.mock("@/lib/env", () => ({ env: {} }));
 const {
   captureEveDocumentCheckpoint,
   getEveDocumentRevision,
+  initializeEveForkDocuments,
   saveEveDocumentRevision,
 } = await import("./eve-documents");
 
@@ -29,13 +39,13 @@ beforeAll(async (): Promise<void> => {
   const migrationDirectory = new URL("migrations/", import.meta.url);
   const entries = await readdir(migrationDirectory);
   const filenames = entries.filter((name) => name.endsWith(".sql")).toSorted();
-  /* oxlint-disable eslint/no-await-in-loop -- Apply checked-in SQL migrations in order, before seeding fixtures. */
   for (const name of filenames) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply each checked-in migration after its predecessor so dependent SQL schema objects exist before the next migration and document fixtures.
     await postgres.exec(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply each checked-in migration after its predecessor so dependent SQL schema objects exist before the next migration and document fixtures.
       await readFile(new URL(name, migrationDirectory), "utf-8")
     );
   }
-  /* oxlint-enable eslint/no-await-in-loop */
   await database.insert(user).values({
     email: "documents@example.test",
     id: "document-owner",
@@ -83,6 +93,123 @@ const revisionInput = (
   ownerId: "document-owner",
   title,
   turnIndex: FIRST_TURN_INDEX,
+});
+
+it("backfills each document's native history before adding a manual revision", async () => {
+  const conversationId = crypto.randomUUID();
+  await seedConversation(conversationId);
+  const first = await saveEveDocumentRevision(
+    revisionInput(conversationId, crypto.randomUUID())
+  );
+  const second = await saveEveDocumentRevision(
+    revisionInput(conversationId, crypto.randomUUID())
+  );
+  await saveEveDocumentRevision(
+    {
+      ...revisionInput(conversationId, first.documentId),
+      expectedRevisionId: first.id,
+      operationId: crypto.randomUUID(),
+      turnIndex: null,
+    },
+    undefined,
+    [0, 1]
+  );
+  const checkpoints = await database
+    .select()
+    .from(eveDocumentCheckpoint)
+    .where(eq(eveDocumentCheckpoint.conversationId, conversationId));
+  expect(
+    checkpoints
+      .map((row) => row.turnIndex)
+      .toSorted((left, right) => left - right)
+  ).toEqual([0, 1]);
+  const entries = await database
+    .select()
+    .from(eveDocumentCheckpointEntry)
+    .where(eq(eveDocumentCheckpointEntry.conversationId, conversationId));
+  expect(
+    entries.map((row) => ({
+      documentId: row.documentId,
+      revisionId: row.revisionId,
+      turnIndex: row.turnIndex,
+    }))
+  ).toEqual(
+    expect.arrayContaining([
+      { documentId: first.documentId, revisionId: first.id, turnIndex: 1 },
+      { documentId: second.documentId, revisionId: second.id, turnIndex: 1 },
+    ])
+  );
+  expect(entries).toHaveLength(2);
+});
+
+it("initializes all legacy fork heads from their pre-turn ancestry", async () => {
+  const parentId = crypto.randomUUID();
+  const childId = crypto.randomUUID();
+  await seedConversation(parentId);
+  await seedConversation(childId);
+  const first = await saveEveDocumentRevision(
+    revisionInput(parentId, crypto.randomUUID())
+  );
+  const second = await saveEveDocumentRevision(
+    revisionInput(parentId, crypto.randomUUID())
+  );
+  await database
+    .update(eveConversation)
+    .set({
+      chatId: parentId,
+      parentConversationId: parentId,
+      rootConversationId: parentId,
+      forkTurnId: "turn_1",
+    })
+    .where(eq(eveConversation.id, childId));
+  await initializeEveForkDocuments("document-owner", childId);
+  const heads = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, childId));
+  expect(heads.map((row) => row.revisionId)).toEqual(
+    expect.arrayContaining([first.id, second.id])
+  );
+  expect(heads).toHaveLength(2);
+  await initializeEveForkDocuments("document-owner", childId);
+  const replayed = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, childId));
+  expect(replayed).toEqual(heads);
+});
+
+it("rolls back legacy fork head insertion when any ancestry contains a manual revision", async () => {
+  const parentId = crypto.randomUUID();
+  const childId = crypto.randomUUID();
+  await seedConversation(parentId);
+  await seedConversation(childId);
+  await saveEveDocumentRevision(revisionInput(parentId, crypto.randomUUID()));
+  const manualDocumentId = crypto.randomUUID();
+  const manual = await saveEveDocumentRevision(
+    revisionInput(parentId, manualDocumentId)
+  );
+  await database
+    .update(eveDocumentRevision)
+    .set({ turnIndex: null })
+    .where(eq(eveDocumentRevision.id, manual.id));
+  await database
+    .update(eveConversation)
+    .set({
+      chatId: parentId,
+      parentConversationId: parentId,
+      rootConversationId: parentId,
+      forkTurnId: "turn_1",
+    })
+    .where(eq(eveConversation.id, childId));
+  await expect(
+    initializeEveForkDocuments("document-owner", childId)
+  ).rejects.toThrow("Document checkpoint is not ready. Retry this fork.");
+  const heads = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, childId));
+  expect(heads).toEqual([]);
 });
 
 it("rejects a missing conversation before persisting a revision", async (): Promise<void> => {

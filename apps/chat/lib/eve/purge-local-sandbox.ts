@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { readFile, readdir } from "node:fs/promises";
 import type { Snapshot as MicrosandboxSnapshot } from "microsandbox";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -80,7 +82,7 @@ const readResourceRecords = async (
     (left, right) => Number(left > right) - Number(left < right)
   )) {
     if (!entry.endsWith(".tmp")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
       const recordText = await readFile(
         nodePath.join(resourceDirectory, entry),
         "utf-8"
@@ -147,7 +149,7 @@ const removeRecordedSnapshotPass = async (
   const errors: unknown[] = [];
   for (const snapshot of pending) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
       await Snapshot.remove(snapshot, { force: false });
       pending.delete(snapshot);
     } catch (error) {
@@ -185,15 +187,14 @@ const readForkCheckpointSnapshotNames = async (
   const directory = nodePath.join(input.sessionDirectory, "fork-checkpoints");
   const entries = await readDirectoryEntries(directory);
   const snapshots: string[] =
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve lazy snapshot selection (pinned unicorn/prefer-ternary rejects if/else assignment), the original optional-name guard, and the separate selected-value getter read while narrowing original metadata.
-    metadata && metadata.stateSnapshotName
+    metadata && isNonEmptyString(metadata.stateSnapshotName)
       ? [metadata.stateSnapshotName, ...recordedSnapshots]
       : [...recordedSnapshots];
   for (const entry of entries.toSorted(
     (left, right) => Number(left > right) - Number(left < right)
   )) {
     if (!entry.endsWith(".tmp")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
       const snapshotName = await readForkCheckpointSnapshotName(
         directory,
         entry,
@@ -260,7 +261,7 @@ const removeRecordedSnapshots = async (
   const pending = new Set(snapshotNames);
   while (pending.size > EMPTY_RESOURCE_COUNT) {
     // Retry only after a complete dependency pass removes a parent.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each pass depends on snapshot removals from the preceding pass.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
     await removeRecordedSnapshotPass(Snapshot, pending);
   }
 };
@@ -273,11 +274,11 @@ const destroyOwnedSandboxes = async (
     resources.flatMap((resource) => resource.sandboxNames)
   )) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
       const sandbox = await Sandbox.get(name);
       // Retirement fences execution but can leave the VM alive. Destroy stops
       // and removes this exact handle, refusing a same-name replacement.
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
       await sandbox.destroy();
     } catch (error) {
       if (
@@ -293,7 +294,6 @@ const destroyOwnedSandboxes = async (
   }
 };
 
-/* oxlint-disable typescript/promise-function-async -- Keep the inventory map callback as a direct promise return; adding async wraps each promise and changes promise identity. */
 /**
  * Purges only validated local-provider resources after every supplied family member is retired.
  * @param {readonly SessionResourceInput[]} inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
@@ -304,7 +304,7 @@ export const purgeLocalEveSandboxes = async (
 ): Promise<SandboxResources[]> => {
   // Validate every member before any provider side effect.
   const resources = await Promise.all(
-    inputs.map((input) => readLocalSandboxResources(input))
+    inputs.map(async (input) => await readLocalSandboxResources(input))
   );
   if (resources.length === EMPTY_RESOURCE_COUNT) {
     return resources;
@@ -318,4 +318,3 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
-/* oxlint-enable typescript/promise-function-async */

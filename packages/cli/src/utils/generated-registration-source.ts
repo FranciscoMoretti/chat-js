@@ -6,7 +6,7 @@ const registrationDeclaration = (
   grouped: boolean
 ): Record<string, string> | undefined => {
   const declaration =
-    /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(
+    /^export (?<kind>const|type|interface) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(
       line
     )?.groups;
   if (grouped && !declaration) {
@@ -28,13 +28,11 @@ const renderRegistration = (
   }
   const declaration = registrationDeclaration(line, grouped);
   const rendered = grouped ? line.slice("export ".length) : line;
-  const source = line.startsWith("export type WorkflowTools = {")
-    ? `// oxlint-disable-next-line typescript/consistent-type-definitions -- Generated workflow tool types are composed with installed tool contracts.\n${rendered}`
-    : rendered;
+  const source = rendered;
   if (grouped && declaration) {
     return {
       source,
-      [declaration.kind === "type" ? "type" : "value"]: declaration.name,
+      [declaration.kind === "const" ? "value" : "type"]: declaration.name,
     };
   }
   return { source };

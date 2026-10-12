@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveForkKind } from "./contracts";
 
 interface EveResponseGroupLineageConversation {
@@ -47,9 +49,85 @@ const laterConversation = (
   return left.createdAt > right.createdAt;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): resolveEveResponseGroupLineage intentionally keeps the existing falsy-value behavior of current.parentConversationId; candidate; boundary; conversation.parentConversationId; originalBoundary; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+const latestRegeneration = (
+  original: LineageConversation,
+  originalBoundary: string,
+  children: ReadonlyMap<string, readonly LineageConversation[]>,
+  selectedConversationId: string,
+  conversationsById: ReadonlyMap<string, LineageConversation>
+): LineageConversation | undefined => {
+  let latest = original;
+  const valid = new Set([original.id]);
+  const queue = [original];
+  for (const ancestor of queue) {
+    for (const child of children.get(ancestor.id) ?? []) {
+      if (
+        valid.has(child.id) ||
+        child.forkKind !== "regenerate" ||
+        child.forkMessageId !== null ||
+        child.forkTurnId !== originalBoundary
+      ) {
+        continue;
+      }
+      valid.add(child.id);
+      queue.push(child);
+      if (laterConversation(child, latest)) {
+        latest = child;
+      }
+    }
+  }
+  return valid.has(selectedConversationId)
+    ? conversationsById.get(selectedConversationId)
+    : latest;
+};
+
+const lineageReplacements = (
+  selectedConversationId: string,
+  conversations: readonly LineageConversation[],
+  candidateOperationIds: readonly string[],
+  conversationsById: ReadonlyMap<string, LineageConversation>
+): Map<string, { conversationId: string; sessionId: string }> => {
+  const children = new Map<string, LineageConversation[]>();
+  for (const conversation of conversations) {
+    if (!isNonEmptyString(conversation.parentConversationId)) {
+      continue;
+    }
+    const existing = children.get(conversation.parentConversationId);
+    if (existing) {
+      existing.push(conversation);
+    } else {
+      children.set(conversation.parentConversationId, [conversation]);
+    }
+  }
+  const replacements = new Map<
+    string,
+    { conversationId: string; sessionId: string }
+  >();
+  for (const operationId of candidateOperationIds) {
+    const original = conversations.find(
+      (conversation) => conversation.operationId === operationId
+    );
+    const originalBoundary = original ? localTurnBoundary(original) : null;
+    if (!(original && isNonEmptyString(originalBoundary))) {
+      continue;
+    }
+    const replacement = latestRegeneration(
+      original,
+      originalBoundary,
+      children,
+      selectedConversationId,
+      conversationsById
+    );
+    if (replacement) {
+      replacements.set(operationId, {
+        conversationId: replacement.id,
+        sessionId: replacement.sessionId,
+      });
+    }
+  }
+  return replacements;
+};
+
 /**
  * Resolve comparison ownership without treating edits or later turns as cards.
  * @param {string} selectedConversationId Selected conversation whose ancestry determines comparison ownership.
@@ -57,7 +135,6 @@ const laterConversation = (
  * @param {readonly { readonly candidateOperationIds: readonly string[]; readonly id: string; }[]} groups Comparison groups with their original candidate operation identities.
  * @returns {EveResponseGroupLineage | undefined} The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
  */
-// oxlint-disable-next-line eslint/complexity -- Candidate discovery, lineage validation, and retry selection form one fail-closed projection.
 const resolveEveResponseGroupLineage = (
   selectedConversationId: string,
   conversations: readonly LineageConversation[],
@@ -75,12 +152,12 @@ const resolveEveResponseGroupLineage = (
   while (current && !visited.has(current.id)) {
     reversedLineage.push(current);
     visited.add(current.id);
-    current = current.parentConversationId
+    current = isNonEmptyString(current.parentConversationId)
       ? conversationsById.get(current.parentConversationId)
       : undefined;
   }
   if (reversedLineage.length === 0 || current) {
-    return;
+    return undefined;
   }
   const lineage = reversedLineage.toReversed();
   const candidateLocation = lineage.findLastIndex((conversation) =>
@@ -89,15 +166,15 @@ const resolveEveResponseGroupLineage = (
     )
   );
   const candidate = lineage[candidateLocation];
-  if (!candidate) {
-    return;
+  if (!(candidate !== undefined)) {
+    return undefined;
   }
   const group = groups.find((entry) =>
     entry.candidateOperationIds.includes(candidate.operationId)
   );
   const boundary = localTurnBoundary(candidate);
-  if (!(group && boundary)) {
-    return;
+  if (!(group && isNonEmptyString(boundary))) {
+    return undefined;
   }
   const selectedSuffix = lineage.slice(candidateLocation + 1);
   if (
@@ -108,66 +185,17 @@ const resolveEveResponseGroupLineage = (
         conversation.forkMessageId !== null
     )
   ) {
-    return;
+    return undefined;
   }
 
-  const children = new Map<string, LineageConversation[]>();
-  for (const conversation of conversations) {
-    if (!conversation.parentConversationId) {
-      continue;
-    }
-    const existing = children.get(conversation.parentConversationId);
-    if (existing) {
-      existing.push(conversation);
-    } else {
-      children.set(conversation.parentConversationId, [conversation]);
-    }
-  }
-  const replacements = new Map<
-    string,
-    { conversationId: string; sessionId: string }
-  >();
-  for (const operationId of group.candidateOperationIds) {
-    const original = conversations.find(
-      (conversation) => conversation.operationId === operationId
-    );
-    const originalBoundary = original ? localTurnBoundary(original) : null;
-    if (!(original && originalBoundary)) {
-      continue;
-    }
-    let latest = original;
-    const valid = new Set([original.id]);
-    const queue = [original];
-    for (const ancestor of queue) {
-      for (const child of children.get(ancestor.id) ?? []) {
-        if (
-          valid.has(child.id) ||
-          child.forkKind !== "regenerate" ||
-          child.forkMessageId !== null ||
-          child.forkTurnId !== originalBoundary
-        ) {
-          continue;
-        }
-        valid.add(child.id);
-        queue.push(child);
-        if (laterConversation(child, latest)) {
-          latest = child;
-        }
-      }
-    }
-    const replacement = valid.has(selectedConversationId)
-      ? conversationsById.get(selectedConversationId)
-      : latest;
-    if (replacement) {
-      replacements.set(operationId, {
-        conversationId: replacement.id,
-        sessionId: replacement.sessionId,
-      });
-    }
-  }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: resolveEveResponseGroupLineage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+  const replacements = lineageReplacements(
+    selectedConversationId,
+    conversations,
+    group.candidateOperationIds,
+    conversationsById
+  );
   return { groupId: group.id, replacements };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 export { resolveEveResponseGroupLineage };
 export type { EveResponseGroupLineage, EveResponseGroupLineageConversation };

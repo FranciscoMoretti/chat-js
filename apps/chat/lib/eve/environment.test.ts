@@ -249,7 +249,7 @@ it("normalizes the schema's Playwright fallback URL", async () => {
   vi.stubEnv("PLAYWRIGHT_TEST_BASE_URL", "http://[::1]:3110/chat?test=1#chat");
   vi.resetModules();
   const { serverEnvSchema } = await import("@/lib/env-schema");
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise the schema's undefined input and default; parse requires an input argument.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The validator requires an input argument; this case explicitly verifies missing input/default behavior.
   expect(serverEnvSchema.EVE_INTERNAL_ORIGIN.parse(undefined)).toBe(
     "http://[::1]:3110"
   );

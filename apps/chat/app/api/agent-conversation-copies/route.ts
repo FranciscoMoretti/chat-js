@@ -24,7 +24,7 @@ const readCopyBody = async (
   let length = 0;
   try {
     while (true) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+      // oxlint-disable-next-line no-await-in-loop -- Check each chunk against the byte limit before requesting another; finally cancels the reader on overflow or error.
       const result = await reader.read();
       if (result.done) {
         break;

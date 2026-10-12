@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Assemble each fixture before starting the native worker. */
-
 /** Exercise the production workflow in a real EVE worker with deterministic models and storage. */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
@@ -53,24 +51,30 @@ const main = async (): Promise<void> => {
     path.join(fixture, "node_modules"),
     "dir"
   );
-  for (const name of `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts
+  await Promise.all(
+    `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts
 agent/subagents/researcher/tools/webSearch.ts tools/chatjs/deep-research/workflow.ts
  tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
  tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
- lib/file-url.ts lib/eve/tool-model-output.ts tools/chatjs/deep-research/prompts.ts`.split(
-    /\s+/u
-  )) {
-    await mkdir(path.dirname(path.join(fixture, name)), { recursive: true });
-    await cp(path.join(app, name), path.join(fixture, name));
-  }
-  for (const role of "researchPlanner researcher researchCompressor researchWriter".split(
-    " "
-  )) {
-    await write(
-      `agent/subagents/${role}/hooks/billing.ts`,
-      'export { default } from "../../../hooks/billing";'
-    );
-  }
+ lib/file-url.ts lib/eve/tool-model-output.ts tools/chatjs/deep-research/prompts.ts`
+      .split(/\s+/u)
+      .map(async (name) => {
+        await mkdir(path.dirname(path.join(fixture, name)), {
+          recursive: true,
+        });
+        await cp(path.join(app, name), path.join(fixture, name));
+      })
+  );
+  await Promise.all(
+    "researchPlanner researcher researchCompressor researchWriter"
+      .split(" ")
+      .map(async (role) => {
+        await write(
+          `agent/subagents/${role}/hooks/billing.ts`,
+          'export { default } from "../../../hooks/billing";'
+        );
+      })
+  );
   const ledger = path.join(fixture, "ledger");
   await write(
     "agent/channels/eve.ts",

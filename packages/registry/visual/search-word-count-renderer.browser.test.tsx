@@ -1,4 +1,5 @@
-import React, { act } from "react";
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
+import React from "react";
 import {
   createToolError,
   createToolResult,
@@ -36,119 +37,117 @@ test("search and word-count renderers preserve their visible states", async (): 
   document.body.append(container);
   const root = createRoot(container);
 
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => {
-    root.render(
-      <>
-        <section data-testid="firecrawl-search">
-          <FirecrawlSearchRenderer
-            isReadonly
-            messageId="firecrawl-message"
-            tool={{
-              input: {
-                search_queries: [{ maxResults: null, query: "latest news" }],
-              },
-              state: "input-available",
-              toolCallId: "firecrawl-search",
-            }}
-          />
-        </section>
-        <section data-testid="tavily-search">
-          <TavilySearchRenderer
-            isReadonly
-            messageId="tavily-message"
-            tool={{
-              input: {
-                exclude_domains: null,
-                searchDepth: null,
-                search_queries: [{ maxResults: null, query: "latest news" }],
-                topics: null,
-              },
-              output: { searches: [] },
-              state: "output-available",
-              toolCallId: "tavily-search",
-            }}
-          />
-        </section>
-        <section data-testid="word-count-loading">
-          <WordCountRenderer
-            isReadonly
-            messageId="word-count-message"
-            tool={{
-              input: { text: "one two three" },
-              state: "input-available",
-              toolCallId: "word-count-loading",
-            }}
-          />
-        </section>
-        <section data-testid="word-count-output">
-          <WordCountRenderer
-            isReadonly
-            messageId="word-count-message"
-            tool={{
-              input: { text: "one two three" },
-              output: {
-                characters: 13,
-                charactersNoSpaces: 11,
+  await renderRoot(
+    root,
+    <>
+      <section data-testid="firecrawl-search">
+        <FirecrawlSearchRenderer
+          isReadonly
+          messageId="firecrawl-message"
+          tool={{
+            input: {
+              search_queries: [{ maxResults: null, query: "latest news" }],
+            },
+            state: "input-available",
+            toolCallId: "firecrawl-search",
+          }}
+        />
+      </section>
+      <section data-testid="tavily-search">
+        <TavilySearchRenderer
+          isReadonly
+          messageId="tavily-message"
+          tool={{
+            input: {
+              exclude_domains: null,
+              searchDepth: null,
+              search_queries: [{ maxResults: null, query: "latest news" }],
+              topics: null,
+            },
+            output: { searches: [] },
+            state: "output-available",
+            toolCallId: "tavily-search",
+          }}
+        />
+      </section>
+      <section data-testid="word-count-loading">
+        <WordCountRenderer
+          isReadonly
+          messageId="word-count-message"
+          tool={{
+            input: { text: "one two three" },
+            state: "input-available",
+            toolCallId: "word-count-loading",
+          }}
+        />
+      </section>
+      <section data-testid="word-count-output">
+        <WordCountRenderer
+          isReadonly
+          messageId="word-count-message"
+          tool={{
+            input: { text: "one two three" },
+            output: {
+              characters: 13,
+              charactersNoSpaces: 11,
+              sentences: 1,
+              words: 3,
+            },
+            state: "output-available",
+            toolCallId: "word-count-output",
+          }}
+        />
+      </section>
+      <section data-testid="word-count-error">
+        <WordCountRenderer
+          isReadonly
+          messageId="word-count-message"
+          tool={{
+            errorText: "Tool unavailable",
+            input: undefined,
+            state: "output-error",
+            toolCallId: "word-count-error",
+          }}
+        />
+      </section>
+      <section data-testid="native-receipt">
+        <EveToolResult
+          isReadonly
+          messageId="native-message"
+          part={{
+            input: { text: "one two" },
+            output: createToolResult(
+              {
+                characters: 7,
+                charactersNoSpaces: 6,
                 sentences: 1,
-                words: 3,
+                words: 2,
               },
-              state: "output-available",
-              toolCallId: "word-count-output",
-            }}
-          />
-        </section>
-        <section data-testid="word-count-error">
-          <WordCountRenderer
-            isReadonly
-            messageId="word-count-message"
-            tool={{
-              errorText: "Tool unavailable",
-              input: undefined,
-              state: "output-error",
-              toolCallId: "word-count-error",
-            }}
-          />
-        </section>
-        <section data-testid="native-receipt">
-          <EveToolResult
-            isReadonly
-            messageId="native-message"
-            part={{
-              input: { text: "one two" },
-              output: createToolResult(
-                {
-                  characters: 7,
-                  charactersNoSpaces: 6,
-                  sentences: 1,
-                  words: 2,
-                },
-                0
-              ),
-              state: "output-available",
-              toolCallId: "native-success",
-              toolName: "wordCount",
-              type: "dynamic-tool",
-            }}
-          />
-        </section>
-        <section data-testid="native-receipt-error">
-          <EveToolResult
-            isReadonly
-            messageId="native-message"
-            part={{
-              input: { text: "one two" },
-              output: createToolError(0.02),
-              state: "output-available",
-              toolCallId: "native-error",
-              toolName: "wordCount",
-              type: "dynamic-tool",
-            }}
-          />
-        </section>
-      </>
-    );
-  });
+              0
+            ),
+            state: "output-available",
+            toolCallId: "native-success",
+            toolName: "wordCount",
+            type: "dynamic-tool",
+          }}
+        />
+      </section>
+      <section data-testid="native-receipt-error">
+        <EveToolResult
+          isReadonly
+          messageId="native-message"
+          part={{
+            input: { text: "one two" },
+            output: createToolError(0.02),
+            state: "output-available",
+            toolCallId: "native-error",
+            toolName: "wordCount",
+            type: "dynamic-tool",
+          }}
+        />
+      </section>
+    </>
+  );
 
   expect(
     container.querySelector("[data-testid=word-count-error]")?.textContent
@@ -163,7 +162,6 @@ test("search and word-count renderers preserve their visible states", async (): 
   expect(container.textContent).toContain("No spaces");
   expect(container.textContent).toContain("Searching…");
   await takeSnapshot("search-and-word-count-renderers");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => root.unmount());
+  await unmountRoot(root);
   container.remove();
 });

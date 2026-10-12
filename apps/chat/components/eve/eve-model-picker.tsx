@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText, nonEmptyText } from "@/components/text-value";
+
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 
@@ -11,7 +13,6 @@ import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return -- EveModelPicker: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including retainedModelId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 export const EveModelPicker = ({
   disabled = false,
@@ -41,10 +42,10 @@ export const EveModelPicker = ({
     );
   }
   const selectedModel =
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading id from getModelById(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    (retainedModelId && getModelById(retainedModelId)?.id) ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading value from modelSelection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    getPrimarySelectedModelId(modelSelection?.value) ||
+    nonEmptyText(
+      hasText(retainedModelId) ? getModelById(retainedModelId)?.id : undefined
+    ) ??
+    nonEmptyText(getPrimarySelectedModelId(modelSelection?.value)) ??
     defaultModel;
   return (
     <fieldset disabled={disabled}>
@@ -69,4 +70,3 @@ export const EveModelPicker = ({
     </fieldset>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

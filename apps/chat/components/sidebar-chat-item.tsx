@@ -26,8 +26,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-/* oxlint-disable typescript/promise-function-async -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
-
 const PureSidebarChatItem = ({
   chat,
   isActive,
@@ -172,13 +170,13 @@ const PureSidebarChatItem = ({
         <ShareDialog
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
+          // oxlint-disable-next-line typescript/promise-function-async -- ReactNode includes promises, but this render callback must retain synchronous element results for the client share dialog.
           renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}
     </SidebarMenuItem>
   );
 };
-/* oxlint-enable typescript/promise-function-async */
 
 export const SidebarChatItem = memo(
   PureSidebarChatItem,

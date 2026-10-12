@@ -14,7 +14,6 @@ type GenerateImageTool = ToolRendererProps<
   typeof generateImageResult
 >["tool"];
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GenerateImageView = ({
   tool,
 }: ReadonlyNativeSurface<{
@@ -37,7 +36,7 @@ const GenerateImageView = ({
     );
   }
   const { output } = tool;
-  if (!output) {
+  if (output === undefined) {
     return null;
   }
 
@@ -95,7 +94,6 @@ const GenerateImageView = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export const GenerateImageRenderer = defineToolRenderer({
   inputSchema: generateImageInput,

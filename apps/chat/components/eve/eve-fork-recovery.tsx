@@ -8,8 +8,6 @@ import { eveMessageTitle } from "@/lib/eve/message-input";
 
 import type { useEveFork } from "./use-eve-fork";
 
-/* oxlint-disable typescript/strict-void-return -- EveForkRecovery: ; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
-
 /** Only exceptional recovery needs extra chrome; successful forks stay in the transcript. */
 export const EveForkRecovery = ({
   fork,
@@ -87,4 +85,3 @@ export const EveForkRecovery = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-void-return */

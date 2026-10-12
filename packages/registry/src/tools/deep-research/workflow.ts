@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- EVE compiles top-level async workflow and step declarations. */
-/* oxlint-disable eslint/no-await-in-loop -- Adaptive rounds and research topics intentionally run in order. */
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -48,6 +46,7 @@ const INITIAL_RESEARCH_ROUND = 0;
 const RESEARCH_ROUND_INCREMENT = 1;
 const BRIEF_UPDATE_INDEX = 1;
 const EMPTY_TOPIC_COUNT = 0;
+// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler discovers this durable workflow only as a top-level async function declaration.
 export async function* executeEveResearch(
   _input: Readonly<Record<string, never>>,
   context: ResearchWorkflowContext
@@ -126,6 +125,7 @@ export async function* executeEveResearch(
   ) {
     context.abortSignal.throwIfAborted();
     const decision = decisionSchema.parse(
+      // oxlint-disable-next-line no-await-in-loop -- Each decision consumes the findings added by the preceding round.
       await context.agent("researchPlanner", {
         message: structuredMessage(
           `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
@@ -153,6 +153,7 @@ export async function* executeEveResearch(
       let raw: z.infer<typeof researchFindings>;
       try {
         raw = researchFindings.parse(
+          // oxlint-disable-next-line no-await-in-loop -- Publish each topic's progress and finish its child before advancing; failure must prevent later topics from starting.
           await context.agent("researcher", {
             message: structuredMessage(
               `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`
@@ -165,15 +166,18 @@ export async function* executeEveResearch(
         // Cancellation must stop promptly instead of starting more reads.
         context.abortSignal.throwIfAborted();
         const previousSearchUpdates = searchUpdates;
+        // oxlint-disable-next-line no-await-in-loop -- Preserve completed search evidence before publishing the failure and terminating the topic loop.
         searchUpdates = await researchSearchUpdates(context).catch(
           () => previousSearchUpdates
         );
         yield progress();
         throw error;
       }
+      // oxlint-disable-next-line no-await-in-loop -- Read the just-completed child's evidence before publishing progress and compressing its findings.
       searchUpdates = await researchSearchUpdates(context);
       yield progress();
       const compressed = researchFindings.parse(
+        // oxlint-disable-next-line no-await-in-loop -- Commit this topic's compressed notes before the next topic and supervisor decision.
         await context.agent("researchCompressor", {
           message: structuredMessage(
             `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`

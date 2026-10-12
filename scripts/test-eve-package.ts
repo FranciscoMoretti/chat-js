@@ -38,7 +38,6 @@ const originals = await Promise.all(
 const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
 
-/* oxlint-disable typescript/promise-function-async -- test-eve-package.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
   await Promise.all(
     originals
@@ -46,6 +45,7 @@ try {
         manifestPaths.includes(file)
       )
       .map(
+        // oxlint-disable-next-line typescript/promise-function-async -- Fail malformed manifest validation synchronously so map stops scheduling writes before finally restores originals; async rejection would let remaining writes race restoration.
         ({
           content,
           file,
@@ -75,11 +75,12 @@ try {
         manifestPaths.includes(file)
       )
       .map(
-        ({
+        async ({
           content,
           file,
-        }: Readonly<(typeof originals)[number]>): Promise<void> =>
-          writeFile(path.join(root, file), content)
+        }: Readonly<(typeof originals)[number]>): Promise<void> => {
+          await writeFile(path.join(root, file), content);
+        }
       )
   );
   run(["lint"]);
@@ -110,12 +111,12 @@ try {
   // Local tarball paths and their lockfile entries must never leak into a PR.
   await Promise.all(
     originals.map(
-      ({
+      async ({
         content,
         file,
-      }: Readonly<(typeof originals)[number]>): Promise<void> =>
-        writeFile(path.join(root, file), content)
+      }: Readonly<(typeof originals)[number]>): Promise<void> => {
+        await writeFile(path.join(root, file), content);
+      }
     )
   );
 }
-/* oxlint-enable typescript/promise-function-async */

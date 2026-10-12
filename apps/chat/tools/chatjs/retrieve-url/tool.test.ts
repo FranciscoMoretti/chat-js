@@ -71,3 +71,49 @@ test.each([false, true])(
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
+
+test.each([
+  {
+    data: {
+      content: "Extracted content",
+      description: "Extracted description",
+      title: "Extracted title",
+    },
+    expected: {
+      content: "Extracted content",
+      description: "Extracted description",
+      title: "Scraped title",
+    },
+  },
+  {
+    data: { description: "Partial description" },
+    expected: {
+      content: "",
+      description: "Partial description",
+      title: "Scraped title",
+    },
+  },
+  {
+    data: { content: 42, description: false, title: {} },
+    expected: { content: "", description: "", title: "Scraped title" },
+  },
+])(
+  "validates extracted fallback fields without replacing scraped values ($data)",
+  async ({ data, expected }) => {
+    mocks.scrape.mockResolvedValue({
+      markdown: "",
+      metadata: { description: "", title: "Scraped title" },
+      success: true,
+    });
+    mocks.extract.mockResolvedValue({ success: true, data });
+    const { retrieveUrl } = await import("./tool");
+    const result = await retrieveUrl.execute(
+      { url: "https://example.com/page?token=private" },
+      testToolContext()
+    );
+    expect(toolResultSchema.parse(result).output).toEqual({
+      results: [{ ...expected, url: "https://example.com/page" }],
+    });
+    expect(mocks.extract).toHaveBeenCalledOnce();
+  }
+);

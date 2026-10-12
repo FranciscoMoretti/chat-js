@@ -120,18 +120,15 @@ const getUserById = async ({
   return users[FIRST_RESULT_INDEX];
 };
 
-/* oxlint-disable typescript/promise-function-async --
-typescript/promise-function-async (#606): getUserModelPreferences preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
-const getUserModelPreferences = ({
+const getUserModelPreferences = async ({
   userId,
 }: {
   readonly userId: string;
 }): Promise<UserModelPreference[]> =>
-  db
+  await db
     .select()
     .from(userModelPreference)
     .where(eq(userModelPreference.userId, userId));
-/* oxlint-enable typescript/promise-function-async */
 
 const upsertUserModelPreference = async ({
   userId,
@@ -193,9 +190,6 @@ const getEveMessageVotes = (
       )
     );
 
-/* oxlint-disable typescript/promise-function-async --
-typescript/promise-function-async (#606): saveEveMessageVote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Saves a message vote after validating the message against the native Eve snapshot.
  * The owner and bound-conversation check runs under the conversation-family lock.
@@ -205,7 +199,7 @@ typescript/promise-function-async (#606): saveEveMessageVote preserves the retur
  * @param {boolean} isUpvoted Whether the message received a positive vote.
  * @returns {Promise<{ isUpvoted: boolean; messageId: string } | null>} The saved vote, or null when the conversation is no longer bound to the owner.
  */
-const saveEveMessageVote = (
+const saveEveMessageVote = async (
   ownerId: string,
   conversationId: string,
   messageId: string,
@@ -214,7 +208,7 @@ const saveEveMessageVote = (
   typeof eveVote.$inferSelect,
   "isUpvoted" | "messageId"
 > | null> =>
-  db.transaction(async (tx: ProjectWriteTransaction) => {
+  await db.transaction(async (tx: ProjectWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -244,16 +238,13 @@ const saveEveMessageVote = (
       });
     return saved;
   });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): assignEveConversationProject preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-const assignEveConversationProject = (
+const assignEveConversationProject = async (
   ownerId: string,
   routeId: string,
   projectId: string | null
 ): Promise<{ conversationId: string; projectId: string | null } | null> =>
-  db.transaction(async (tx: ProjectWriteTransaction) => {
+  await db.transaction(async (tx: ProjectWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -310,7 +301,6 @@ const assignEveConversationProject = (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
-/* oxlint-enable typescript/promise-function-async */
 export {
   assignEveConversationProject,
   createProject,

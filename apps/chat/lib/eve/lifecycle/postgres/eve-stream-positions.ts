@@ -36,7 +36,7 @@ const readEvePostgresStreamPositions = async (
     offset += STREAM_POSITION_BATCH_SIZE
   ) {
     const rows = positionRows.parse(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Issue authorized stream-name batches sequentially on the supplied connection; a rejected batch prevents later queries and preserves result insertion order.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Issue at most STREAM_POSITION_BATCH_SIZE authorized names per query on the supplied connection; stop on a failed batch and preserve result insertion order.
       await connection`
       select stream_id as "streamId",
         count(*) filter (where eof = false) as length

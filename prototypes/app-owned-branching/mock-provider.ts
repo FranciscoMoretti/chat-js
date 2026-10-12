@@ -1,6 +1,5 @@
 import type { SnapshotProvider, SqlConnection, SqlQueries } from "./model";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- Postgres returns an empty row array for missing records, while its RowList iterator declares nonnullable elements; preserve the missing-row guards and stopped-VM check. */
 /**
  * Simulate the provider contract with deterministic database-backed snapshots.
  * @param {SqlConnection} sql - Connection used to persist mock VM and snapshot state.
@@ -15,13 +14,13 @@ export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
       const [existing] = await tx<
         { source: string }[]
       >`select source from provider_snapshot where id=${key}`;
-      if (existing) {
+      if (existing !== undefined) {
         if (existing.source !== sandbox) {
           throw new Error("snapshot key conflict");
         }
         return;
       }
-      if (!vm || vm.stopped) {
+      if (vm === undefined || vm.stopped) {
         throw new Error("VM unavailable");
       }
       await tx`insert into provider_snapshot (id,source,files) values (${key},${sandbox},${tx.json(vm.files)})`;
@@ -33,11 +32,10 @@ export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
       const [snapshot] = await tx<
         { files: Record<string, string> }[]
       >`select files from provider_snapshot where id=${key}`;
-      if (!snapshot) {
+      if (snapshot === undefined) {
         throw new Error("snapshot absent");
       }
       await tx`insert into provider_vm (id,files) values (${sandbox},${tx.json(snapshot.files)}) on conflict do nothing`;
     });
   },
 });
-/* oxlint-enable typescript/strict-boolean-expressions */

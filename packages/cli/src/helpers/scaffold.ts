@@ -310,6 +310,10 @@ const normalizeElectronFiles = async (
       `spawnSync("${packageManager}", ["run", script], {`,
     ],
     [
+      'spawn("bun", ["run", script], {',
+      `spawn("${packageManager}", ["run", script], {`,
+    ],
+    [
       `bun run ${scriptPlaceholder} failed`,
       `${packageManager} run ${scriptPlaceholder} failed`,
     ],

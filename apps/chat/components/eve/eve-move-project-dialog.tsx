@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable typescript/strict-boolean-expressions -- EveMoveProjectDialog: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including available)
- */
 
 export const EveMoveProjectDialog = ({
   conversation,
@@ -83,7 +81,7 @@ export const EveMoveProjectDialog = ({
           value={projectId}
         >
           <option value="">No project</option>
-          {!available && (
+          {!(available === true) && (
             <option disabled value={projectId}>
               Project unavailable
             </option>
@@ -125,7 +123,7 @@ export const EveMoveProjectDialog = ({
               move.isPending ||
               projects.isPending ||
               projects.isError ||
-              !available ||
+              !(available === true) ||
               projectId === (conversation.projectId ?? "")
             }
             onClick={() => {
@@ -142,4 +140,3 @@ export const EveMoveProjectDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

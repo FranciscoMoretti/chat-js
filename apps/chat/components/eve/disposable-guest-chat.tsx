@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText, nonEmptyText } from "@/components/text-value";
+
 import { useEveAgent } from "eve/react";
 import React, { useEffect, useRef, useState } from "react";
 import type { JSX as ReactJSX } from "react";
@@ -61,8 +63,6 @@ const createGuestSession = async (modelId: string) => {
   }
   return bindingSchema.parse(await response.json());
 };
-/* oxlint-disable typescript/strict-boolean-expressions -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure)
- */
 
 /** Shared guest presentation, also exercised with deterministic visual fixtures. */
 const GuestConversationView = ({
@@ -110,7 +110,7 @@ const GuestConversationView = ({
         <ConversationScrollButton />
       </Conversation>
       <div className="mx-auto w-full max-w-3xl p-4">
-        {failure && (
+        {hasText(failure) && (
           <p role="alert" className="text-destructive mb-3 text-sm">
             {failure}
           </p>
@@ -153,9 +153,6 @@ const GuestConversationView = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-
-/* oxlint-disable typescript/strict-boolean-expressions -- GuestConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including agent.error?.message). */
 
 const GuestConversation = ({
   binding,
@@ -286,9 +283,8 @@ const GuestConversation = ({
       event.type === "turn.cancelled"
   );
   const failure =
-    commandError ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value. Optional chain: Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    agent.error?.message ||
+    nonEmptyText(commandError) ??
+    nonEmptyText(agent.error?.message) ??
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView
@@ -308,7 +304,6 @@ const GuestConversation = ({
     />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /** No URL, cookie, storage, or persisted application identity owns this chat. */
 const DisposableGuestChat = (): ReactJSX.Element => {

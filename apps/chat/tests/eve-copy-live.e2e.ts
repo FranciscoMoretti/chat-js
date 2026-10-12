@@ -43,14 +43,13 @@ type MessageCompletedEventReader =
     }>;
 const modelId = "google/gemini-2.5-flash-lite";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("saves without generation, recovers after source revocation and reload, and cont preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("saves without generation, recovers after source revocation and reload, and continues the native copy", async ({
   page,
   browser,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", { data: { model: modelId } });
@@ -288,11 +287,7 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): for (const attachment of [ { answer: "red", bytes: Buff preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 for (const attachment of [
   {
     answer: "red",
@@ -324,9 +319,9 @@ for (const attachment of [
   }>) => {
     test.setTimeout(360_000);
     page.setDefaultNavigationTimeout(120_000);
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.request.get("/api/dev-login", {
       maxRedirects: 0,
       timeout: 60_000,
@@ -508,21 +503,22 @@ for (const attachment of [
     ).toBeVisible();
     if (attachment.mediaType === "image/png") {
       await expect
-        .poll(() =>
-          editor
-            .getByRole("img", { exact: true, name: attachment.name })
-            .evaluate(
-              (
-                image: Readonly<{
-                  id: string;
-                  complete?: boolean;
-                  naturalWidth?: number;
-                }>
-              ) =>
-                image instanceof HTMLImageElement &&
-                image.complete &&
-                image.naturalWidth > 0
-            )
+        .poll(
+          async () =>
+            await editor
+              .getByRole("img", { exact: true, name: attachment.name })
+              .evaluate(
+                (
+                  image: Readonly<{
+                    id: string;
+                    complete?: boolean;
+                    naturalWidth?: number;
+                  }>
+                ) =>
+                  image instanceof HTMLImageElement &&
+                  image.complete &&
+                  image.naturalWidth > 0
+              )
         )
         .toBe(true);
     }
@@ -540,10 +536,11 @@ for (const attachment of [
                 animation.effect?.getTiming().iterations !==
                 Number.POSITIVE_INFINITY
             )
-            .map((animation: ReadonlyNativeSurface<Animation>) =>
-              animation.finished.catch(() => {
-                /* Ignore canceled animations while waiting for screenshot stability. */
-              })
+            .map(
+              async (animation: ReadonlyNativeSurface<Animation>) =>
+                await animation.finished.catch(() => {
+                  /* Ignore canceled animations while waiting for screenshot stability. */
+                })
             )
         );
       }
@@ -606,4 +603,3 @@ for (const attachment of [
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
 }
-/* oxlint-enable typescript/promise-function-async */

@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { and, eq, sql } from "drizzle-orm";
 
 import type { EveSearchText } from "@/lib/eve/search-text";
@@ -75,7 +77,7 @@ const writeEveSearchText = async (
     index < chunks.length;
     index += SEARCH_WRITE_BATCH_SIZE
   ) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each insert within the locked transaction.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Insert at most SEARCH_WRITE_BATCH_SIZE rows per query on the locked transaction; search-backfill awaits each committed batch before advancing.
     await tx
       .insert(eveSearchText)
       .values(
@@ -95,21 +97,17 @@ const writeEveSearchText = async (
   }
 };
 
-/* oxlint-disable typescript/promise-function-async --
-
-typescript/promise-function-async (#606): indexEveSearchText preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const indexEveSearchText = async (
   ownerId: string,
   conversationId: string,
   entries: readonly EveSearchText[]
 ): Promise<void> => {
   if (entries.length > EMPTY_RESULT_COUNT) {
-    await db.transaction((tx: SearchTransaction) =>
-      writeEveSearchText(tx, ownerId, conversationId, entries)
-    );
+    await db.transaction(async (tx: SearchTransaction) => {
+      await writeEveSearchText(tx, ownerId, conversationId, entries);
+    });
   }
 };
-/* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
@@ -137,9 +135,6 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): highlightSearchExcerpt intentionally keeps the existing falsy-value behavior of token.groups?.term; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const highlightSearchExcerpt = (
   excerpt: string,
   query: string,
@@ -158,7 +153,7 @@ const highlightSearchExcerpt = (
       groups.push(negated);
     } else if (token[FIRST_INDEX] === ")") {
       groups.pop();
-    } else if (!negated && token.groups?.term) {
+    } else if (!negated && isNonEmptyString(token.groups?.term)) {
       terms.push({
         prefix: Boolean(token.groups.prefix),
         text: token.groups.term
@@ -190,7 +185,6 @@ const highlightSearchExcerpt = (
     return marked;
   });
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /**
  * Searches an owner’s bound conversations and returns one ranked result per chat.

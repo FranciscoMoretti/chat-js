@@ -256,8 +256,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       );
       this.resetRegistration();
       await this.initializeOAuth();
-      // oxlint-disable-next-line typescript/consistent-return -- Registration reconciliation awaits fresh initialization then returns no credentials; explicit undefined conflicts with pinned eslint/no-undefined.
-      return;
+      return undefined;
     }
     return clientInfo;
   }

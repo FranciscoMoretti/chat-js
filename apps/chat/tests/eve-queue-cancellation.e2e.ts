@@ -1,4 +1,3 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 import { createServer } from "node:http";
 import type { ServerResponse } from "node:http";
 
@@ -12,10 +11,6 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue cancellation acceptance requires local Postgres.");
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return --
- * typescript/strict-boolean-expressions (#610): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * typescript/strict-void-return (#611): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
   const release = Promise.withResolvers<undefined>();
   const calls: string[] = [];
@@ -47,11 +42,12 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
       })();
     }
   );
+  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", resolve);
   });
   const address = server.address();
-  if (!address || typeof address === "string") {
+  if (address === null || typeof address === "string") {
     throw new Error("Missing address");
   }
   vi.stubEnv("WORKFLOW_LOCAL_BASE_URL", `http://127.0.0.1:${address.port}`);
@@ -104,6 +100,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
       [`${jobPrefix}flows`]
     );
     await pool.end();
+    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
     await new Promise<void>((resolve) => {
       server.close(() => {
         resolve();
@@ -112,4 +109,3 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     vi.unstubAllEnvs();
   }
 }, 15_000);
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

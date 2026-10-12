@@ -1,4 +1,6 @@
-import { afterEach, expect, test } from "bun:test";
+import { rejects } from "node:assert/strict";
+import { parseJsonObject } from "#cli/helpers/json-object";
+import { afterEach, expect, mock, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
 import path from "node:path";
@@ -15,15 +17,13 @@ import { planInstallation } from "./installation-plan";
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
 
 const roots: string[] = [];
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 const server = (): Bun.Server<undefined> =>
   Bun.serve({
     fetch(request: Readonly<Pick<Request, "url">>): Response {
@@ -91,9 +91,15 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root, { expected: first.expected });
     });
-    expect(
-      planInstallation(root, { features: [], tools: [source("second")] })
-    ).rejects.toThrow("--replace");
+    await rejects(
+      planInstallation(root, { features: [], tools: [source("second")] }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--replace");
+        return true;
+      }
+    );
     const plan = await planInstallation(
       root,
       { features: [], tools: [source("second")] },
@@ -104,11 +110,17 @@ test("explicit provider replacement preserves unrelated installations and refuse
       old,
       "// my implementation\nexport const executeCode = {};\n"
     );
-    expect(
+    await rejects(
       installPlan(root, plan, {}, async (): Promise<void> => {
         await syncTools(root);
-      })
-    ).rejects.toThrow("--overwrite");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--overwrite");
+        return true;
+      }
+    );
     expect(
       await Bun.file(
         path.join(root, "tools/chatjs/second/chatjs.json")
@@ -136,7 +148,6 @@ test("explicit provider replacement preserves unrelated installations and refuse
   }
 }, 30_000);
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test.each(["registration", "finalization"] as const)(
   "failed %s restores previous provider source, manifest, receipts and lockfiles",
   async (phase): Promise<void> => {
@@ -171,20 +182,22 @@ test.each(["registration", "finalization"] as const)(
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
       await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
-      const registrationContents = (target: string): Promise<string | null> => {
+      const registrationContents = async (
+        target: string
+      ): Promise<string | null> => {
         const file = Bun.file(path.join(root, target));
-        return file.exists().then((exists) => {
-          if (exists) {
-            return file.text();
-          }
-          return null;
-        });
+        if (await file.exists()) {
+          return await file.text();
+        }
+        return null;
       };
       const oldRegistrations = await Promise.all(
-        toolRegistrationTargets.map((target) => registrationContents(target))
+        toolRegistrationTargets.map(
+          async (target) => await registrationContents(target)
+        )
       );
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-      await expect(
+
+      await rejects(
         installPlan(
           root,
           plan,
@@ -210,8 +223,14 @@ test.each(["registration", "finalization"] as const)(
               throw new Error("fixture registration failed");
             }
           }
-        )
-      ).rejects.toThrow(`fixture ${phase} failed`);
+        ),
+        (reason: unknown) => {
+          expect(() => {
+            throw reason;
+          }).toThrow(`fixture ${phase} failed`);
+          return true;
+        }
+      );
       expect(await readFile(manifest, "utf-8")).toBe(oldManifest);
       expect(await readFile(dependencies, "utf-8")).toBe(oldDependencies);
       expect(await readFile(lockfile, "utf-8")).toBe("original lockfile");
@@ -224,7 +243,9 @@ test.each(["registration", "finalization"] as const)(
       expect(await readFile(config, "utf-8")).toBe(oldConfig);
       expect(
         await Promise.all(
-          toolRegistrationTargets.map((target) => registrationContents(target))
+          toolRegistrationTargets.map(
+            async (target) => await registrationContents(target)
+          )
         )
       ).toEqual(oldRegistrations);
       expect(
@@ -250,7 +271,6 @@ test.each(["registration", "finalization"] as const)(
   },
   30_000
 );
-/* oxlint-enable typescript/promise-function-async */
 
 test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
@@ -271,11 +291,10 @@ test("native shadcn source can be composed without overwriting or blessing user 
       await syncTools(root);
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const receipt = JSON.parse(
-      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8")
+    const receipt = parseJsonObject(
+      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8"),
+      "installed source receipt"
     );
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
     expect(
@@ -363,7 +382,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     );
     expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
     let registered = false;
-    expect(
+    await rejects(
       installPlan(
         root,
         storagePlan,
@@ -372,8 +391,14 @@ test("registration refreshes untouched rollback baselines without blessing user 
           registered = true;
           await writeFile(file, "must not reach registration");
         }
-      )
-    ).rejects.toThrow("No source was installed");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("No source was installed");
+        return true;
+      }
+    );
     expect(registered).toBe(false);
     expect(await readFile(file, "utf-8")).toContain("user storage notes");
   } finally {
@@ -381,7 +406,6 @@ test("registration refreshes untouched rollback baselines without blessing user 
   }
 }, 30_000);
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("provider installation refuses inferred native dependency destinations before any overwrite", async (): Promise<void> => {
   const root = await fixture();
   const ui = path.join(root, "components/ui/fixture.tsx");
@@ -444,16 +468,16 @@ test("provider installation refuses inferred native dependency destinations befo
       },
       { replace: true }
     );
-    let registered = false;
-    expect(
-      installPlan(root, plan, {}, (): Promise<void> => {
-        registered = true;
-        return Promise.reject(new Error("registration must not run"));
-      })
-    ).rejects.toThrow(
-      "Cannot safely overwrite inferred installer destinations"
+    const register = mock<() => Promise<void>>().mockRejectedValue(
+      new Error("registration must not run")
     );
-    expect(registered).toBe(false);
+    await rejects(installPlan(root, plan, {}, register), (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("Cannot safely overwrite inferred installer destinations");
+      return true;
+    });
+    expect(register).not.toHaveBeenCalled();
     expect(await readFile(ui, "utf-8")).toBe("// user UI customization\n");
     expect(await readFile(provider, "utf-8")).toBe(originalProvider);
     const native = await planInstallation(root, {
@@ -465,13 +489,23 @@ test("provider installation refuses inferred native dependency destinations befo
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");
-    expect(
-      installPlan(root, native, { overwrite: true }, (): Promise<void> =>
-        Promise.resolve()
-      )
-    ).rejects.toThrow("No source was installed");
+    await rejects(
+      installPlan(
+        root,
+        native,
+        { overwrite: true },
+        mock<() => Promise<void>>().mockRejectedValue(
+          new Error("registration must not run")
+        )
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("No source was installed");
+        return true;
+      }
+    );
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/promise-function-async */

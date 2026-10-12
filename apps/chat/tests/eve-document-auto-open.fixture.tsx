@@ -157,7 +157,7 @@ const Fixture = ({
     </main>
   );
 };
-/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): App preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+
 const App = (): React.JSX.Element => {
   const [branch, setBranch] = useState(conversationId);
   const [replaying, setReplaying] = useState(false);
@@ -173,11 +173,15 @@ const App = (): React.JSX.Element => {
         isExecutionBusy={
           busy === undefined ? undefined : (id) => busy && id === conversationId
         }
-        onStopExecution={(id) => {
-          setStopped(id);
-          setBusy(false);
-          return Promise.resolve();
-        }}
+        onStopExecution={
+          /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+          (id) => {
+            setStopped(id);
+            setBusy(false);
+            return Promise.resolve();
+          }
+          /* oxlint-enable typescript/promise-function-async */
+        }
       >
         <Fixture
           startReplay={() => {
@@ -197,7 +201,7 @@ const App = (): React.JSX.Element => {
     </>
   );
 };
-/* oxlint-enable typescript/promise-function-async */
+
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");

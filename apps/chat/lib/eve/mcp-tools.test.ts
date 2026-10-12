@@ -1,4 +1,6 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { jsonSchema, tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import mcp from "../../agent/tools/mcp";
@@ -10,7 +12,7 @@ import {
 import { createToolResult, hasEveToolReceipt } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
-  close: vi.fn(),
+  close: vi.fn<() => Promise<void>>(),
   configure: vi.fn(),
   connect: vi.fn(),
   enabled: { enabled: true },
@@ -82,7 +84,10 @@ const context = {
     turn: { id: "turn", sequence: 1 },
   },
 };
-const execute = vi.fn();
+const execute =
+  vi.fn<
+    (input: unknown, options: ToolExecutionOptions<unknown>) => Promise<unknown>
+  >();
 
 const definition = tool({
   description: "Echo",
@@ -105,10 +110,9 @@ beforeEach(() => {
   mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.connect.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.close.mockResolvedValue(undefined);
+  mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
 });
@@ -146,7 +150,7 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.get.mockResolvedValue(undefined);
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -200,26 +204,20 @@ it("permits global connectors with a separate namespace", async () => {
   ).toMatchObject({ output: "Echo output" });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("forwards cancellation and closes the connection once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("forwards cancellation and closes the connection once", async () => {
   const cancellation = new AbortController();
-  execute.mockImplementation(
-    (_input, options) =>
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-      new Promise((_resolve, reject) => {
-        // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-        options.abortSignal.addEventListener(
-          "abort",
-          () => {
-            // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/no-unsafe-member-access -- The tool mock forwards the controlled abort reason while verifying cancellation and single connection cleanup.
-            reject(options.abortSignal.reason);
-          },
-          { once: true }
-        );
-      })
-  );
+  execute.mockImplementation(async (_input, options) => {
+    const pending = Promise.withResolvers<unknown>();
+    options.abortSignal?.addEventListener(
+      "abort",
+      () => {
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The tool mock forwards the controlled abort reason while verifying cancellation and single connection cleanup.
+        pending.reject(options.abortSignal?.reason);
+      },
+      { once: true }
+    );
+    return await pending.promise;
+  });
   const result = executeEveMcpTool(
     "connector",
     "echo",
@@ -235,7 +233,6 @@ it("forwards cancellation and closes the connection once", async () => {
   await rejected;
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
   "enforces modern MCP schema keywords with dialect %s",
@@ -561,16 +558,13 @@ it("a timed-out connector does not discard completed discovery or suppress the n
   }
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("schema conversion cancellation stops later tool conversions after the pending sch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {
   const controller = new AbortController();
   const timeout = vi
     .spyOn(AbortSignal, "timeout")
     .mockReturnValue(controller.signal);
   const gate = Promise.withResolvers<{ type: "object" }>();
-  const firstSchema = vi.fn(() => gate.promise);
+  const firstSchema = vi.fn().mockReturnValue(gate.promise);
   const laterSchema = vi.fn(() => ({ type: "object" as const }));
   try {
     mocks.tools.mockResolvedValueOnce({
@@ -584,16 +578,12 @@ it("schema conversion cancellation stops later tool conversions after the pendin
     controller.abort(new DOMException("Timed out", "TimeoutError"));
     expect(await discovery).toEqual([]);
     gate.resolve({ type: "object" });
-    // oxlint-disable-next-line promise/avoid-new -- Let the cancelled background conversion drain before checking no subsequent work starts.
-    await new Promise((resolve) => {
-      setTimeout(resolve, 10);
-    });
+    await delay(10);
     expect(laterSchema).not.toHaveBeenCalled();
   } finally {
     timeout.mockRestore();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("runs without a receipt when approval is disabled for this connection", async () => {
   mocks.get.mockResolvedValue({ ...connector, requireApproval: false });

@@ -1,5 +1,5 @@
 import type { EveMessage } from "eve/client";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
@@ -32,9 +32,6 @@ const branch = (
   sessionId: `session-${id}`,
   ...extra,
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): agent preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const agent = (
   messages: readonly Readonly<
     Omit<EveMessage, "parts"> & {
@@ -43,21 +40,22 @@ const agent = (
   >[],
   status: NativeChatAgent["status"] = "ready"
 ): Parameters<LogicalChat["observe"]>[1] => ({
-  cancel: () => Promise.reject(new Error("unused")),
+  cancel: vi
+    .fn<NativeChatAgent["cancel"]>()
+    .mockRejectedValue(new Error("unused")),
   data: { messages },
   error: undefined,
   events: [],
-  prewarm: (): Promise<void> => Promise.resolve(),
+  prewarm: vi.fn<NativeChatAgent["prewarm"]>().mockResolvedValue(),
   reset: (): void => {
     // This test runtime has no resettable external state.
   },
-  respond: (): Promise<void> => Promise.resolve(),
-  resume: (): Promise<void> => Promise.resolve(),
-  send: (): Promise<void> => Promise.resolve(),
+  respond: vi.fn<NativeChatAgent["respond"]>().mockResolvedValue(),
+  resume: vi.fn<NativeChatAgent["resume"]>().mockResolvedValue(),
+  send: vi.fn<NativeChatAgent["send"]>().mockResolvedValue(),
   session: undefined,
   status,
 });
-/* oxlint-enable typescript/promise-function-async */
 const prefix = [
   message("u1", "user", "turn_0"),
   message("turn_0:assistant", "assistant", "turn_0"),

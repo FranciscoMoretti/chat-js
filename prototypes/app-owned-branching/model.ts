@@ -105,7 +105,6 @@ type SqlConnection = SqlQueries & Readonly<Pick<Sql, "begin">>;
 const hasBarrier = (barrier: string | null): boolean =>
   barrier !== null && barrier !== "";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- ownedBranch: The database result may be empty; this existing guard preserves its missing-row error. */
 const ownedBranch = async (
   sql: ReadonlySqlTag,
   owner: string,
@@ -114,12 +113,11 @@ const ownedBranch = async (
   const [row] = await sql<
     Branch[]
   >`select * from branch where id=${id} and owner=${owner} for update`;
-  if (!row) {
+  if (row === undefined) {
     throw new Error("not owned");
   }
   return row;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const history = async (
   sql: ReadonlySqlTag,

@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
@@ -23,19 +25,13 @@ type LogicalBranch = EveBranchReference & {
     | null;
 };
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): LogicalNode preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type LogicalNode = {
+interface LogicalNode {
   id: string;
   parentId: string | null;
   conversationId: string;
   message: EveMessage;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable typescript/consistent-type-definitions -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/consistent-type-definitions (#559): LogicalChatSnapshot preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type LogicalChatSnapshot = {
+}
+interface LogicalChatSnapshot {
   readyBranches: ReadonlySet<string>;
   chatId: string;
   conversationId: string;
@@ -47,8 +43,7 @@ type LogicalChatSnapshot = {
   branches: readonly LogicalBranch[];
   agents: ReadonlyMap<string, NativeChatAgent>;
   error?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   const custom = message.metadata?.custom?.chatjs;
@@ -97,20 +92,17 @@ const latestMessageTime = (
   return time;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const sourcePrefix = (
   branch: LogicalBranch,
   source: readonly string[],
   aliases: ReadonlyMap<string, string>,
   sourceAgent?: NativeChatAgent
 ): { prefix: string[]; replaced: string | undefined } => {
-  if (!branch.parentConversationId) {
+  if (!isNonEmptyString(branch.parentConversationId)) {
     return { prefix: [], replaced: undefined };
   }
   const sourceId = branch.parentConversationId;
-  const boundaryId = branch.forkMessageId
+  const boundaryId = isNonEmptyString(branch.forkMessageId)
     ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
     : aliases.get(
         aliasKey(
@@ -122,7 +114,7 @@ const sourcePrefix = (
           )?.id ?? ""
         )
       );
-  const index = boundaryId ? source.indexOf(boundaryId) : -1;
+  const index = isNonEmptyString(boundaryId) ? source.indexOf(boundaryId) : -1;
   // Named idle checkpoints have no following user yet: the entire source is inherited.
   if (index < 0 && branch.forkKind === "comparison") {
     return { prefix: [...source], replaced: undefined };
@@ -134,12 +126,32 @@ const sourcePrefix = (
   }
   return { prefix: source.slice(0, index), replaced: boundaryId };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-// oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
+const assertInheritedMessage = (
+  id: string,
+  message: NativeChatAgent["data"]["messages"][number],
+  branch: LogicalBranch,
+  nodes: ReadonlyMap<string, LogicalNode>,
+  aliases: ReadonlyMap<string, string>
+): void => {
+  const origin = nodes.get(id);
+  if (!origin || origin.message.role !== message.role) {
+    throw new Error(
+      "Inherited message identities do not match the saved fork."
+    );
+  }
+  // Both native checkpoints and imported user-boundary forks preserve the
+  // retained prefix IDs. Never guess a new alias from position or text.
+  if (message.id !== origin.message.id) {
+    const inherited = aliases.get(
+      aliasKey(branch.parentConversationId ?? "", message.id)
+    );
+    if (inherited !== id) {
+      throw new Error("Unknown inherited message identity.");
+    }
+  }
+};
+
 const projectBranch = (
   branch: LogicalBranch,
   agent: NativeChatAgent,
@@ -166,27 +178,16 @@ const projectBranch = (
   for (const [index, message] of messages.entries()) {
     let id = prefix[index];
     if (id) {
-      const origin = nodes.get(id);
-      if (!origin || origin.message.role !== message.role) {
-        throw new Error(
-          "Inherited message identities do not match the saved fork."
-        );
-      }
-      // Both native checkpoints and imported user-boundary forks preserve the
-      // retained prefix IDs. Never guess a new alias from position or text.
-      if (message.id !== origin.message.id) {
-        const inherited = aliases.get(
-          aliasKey(branch.parentConversationId ?? "", message.id)
-        );
-        if (inherited !== id) {
-          throw new Error("Unknown inherited message identity.");
-        }
-      }
+      assertInheritedMessage(id, message, branch, nodes, aliases);
     } else {
       const firstUser = index === prefix.length && message.role === "user";
-      if (firstUser && branch.forkKind === "regenerate" && replaced) {
+      if (
+        firstUser &&
+        branch.forkKind === "regenerate" &&
+        isNonEmptyString(replaced)
+      ) {
         id = replaced;
-      } else if (firstUser && branch.responseGroupId) {
+      } else if (firstUser && isNonEmptyString(branch.responseGroupId)) {
         id = `group:${branch.responseGroupId}:user`;
       } else {
         id = logicalNativeId(branch.sessionId ?? branch.id, message);
@@ -218,12 +219,7 @@ const projectBranch = (
   }
   return { hasLocalMessage: messages.length > prefix.length, path };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
-moving it below executable initialization can obscure ordering and API ownership.
-typescript/strict-boolean-expressions (#610): LogicalChat intentionally keeps the existing falsy-value behavior of path?.length; last; id; branch.parentConversationId; agent?.data.messages.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Chat identity and selection are independent of native session lifetime.
  * Durable branch intent plus native replay reconstructs this disposable index.
@@ -316,7 +312,11 @@ class LogicalChat {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
-    if (path?.length && this.snapshot.readyBranches.has(conversationId)) {
+    if (
+      path !== undefined &&
+      path.length > 0 &&
+      this.snapshot.readyBranches.has(conversationId)
+    ) {
       this.pendingSelection = undefined;
       this.selected = conversationId;
       this.cursor = path.at(-1) ?? null;
@@ -333,7 +333,7 @@ class LogicalChat {
       return;
     }
     let last = (this.snapshot.children.get(node.id) ?? []).at(-1);
-    while (last) {
+    while (isNonEmptyString(last)) {
       node = this.snapshot.nodes.get(last) ?? node;
       last = (this.snapshot.children.get(node.id) ?? []).at(-1);
     }
@@ -358,7 +358,7 @@ class LogicalChat {
     nativeId: string
   ): { ids: readonly string[]; index: number } {
     const id = this.logicalId(conversationId, nativeId);
-    if (!id) {
+    if (!isNonEmptyString(id)) {
       return { ids: [], index: -1 };
     }
     const node = this.snapshot.nodes.get(id);
@@ -369,7 +369,59 @@ class LogicalChat {
     return { ids, index: ids.indexOf(id) };
   }
 
-  // oxlint-disable-next-line eslint/complexity -- Atomically publish topology, aliases and selection after ordered projection.
+  private selectHydratedBranch(
+    paths: ReadonlyMap<string, readonly string[]>
+  ): void {
+    if (
+      this.hydrateLatest &&
+      paths.size === this.branches.length &&
+      this.branches.every(
+        (branch) => this.agents.get(branch.id)?.status !== "resuming"
+      )
+    ) {
+      this.hydrateLatest = false;
+      const newest = this.branches
+        .toSorted(
+          (left, right) =>
+            latestMessageTime(this.agents.get(left.id), left.createdAt) -
+            latestMessageTime(this.agents.get(right.id), right.createdAt)
+        )
+        .at(-1);
+      if (newest) {
+        this.selected = newest.id;
+      }
+    }
+  }
+
+  private selectReadyBranch(
+    paths: ReadonlyMap<string, readonly string[]>,
+    readyBranches: ReadonlySet<string>
+  ): void {
+    const { pendingSelection } = this;
+    const pendingPath = isNonEmptyString(pendingSelection)
+      ? paths.get(pendingSelection)
+      : pendingSelection;
+    if (
+      pendingPath !== undefined &&
+      pendingPath.length > 0 &&
+      isNonEmptyString(this.pendingSelection) &&
+      readyBranches.has(this.pendingSelection)
+    ) {
+      this.selected = this.pendingSelection;
+      this.pendingSelection = undefined;
+      this.cursor = pendingPath.at(-1) ?? null;
+    }
+  }
+
+  private followSelectedBranch(
+    paths: ReadonlyMap<string, readonly string[]>
+  ): void {
+    const selectedPath = paths.get(this.selected);
+    if (this.follow || !isNonEmptyString(this.cursor)) {
+      this.cursor = (selectedPath ?? []).at(-1) ?? this.cursor;
+    }
+  }
+
   private publish(): void {
     const nodes = new Map<string, LogicalNode>();
     const paths = new Map<string, string[]>();
@@ -383,13 +435,13 @@ class LogicalChat {
       let progressed = false;
       for (const [id, branch] of waiting) {
         if (
-          branch.parentConversationId &&
+          isNonEmptyString(branch.parentConversationId) &&
           !paths.has(branch.parentConversationId)
         ) {
           continue;
         }
         const agent = this.agents.get(id);
-        if (!agent?.data.messages.length) {
+        if (agent === undefined || agent.data.messages.length === 0) {
           continue;
         }
         try {
@@ -432,40 +484,9 @@ class LogicalChat {
       siblings.push(node.id);
       children.set(node.parentId, siblings);
     }
-    if (
-      this.hydrateLatest &&
-      paths.size === this.branches.length &&
-      this.branches.every(
-        (branch) => this.agents.get(branch.id)?.status !== "resuming"
-      )
-    ) {
-      this.hydrateLatest = false;
-      const newest = this.branches
-        .toSorted(
-          (left, right) =>
-            latestMessageTime(this.agents.get(left.id), left.createdAt) -
-            latestMessageTime(this.agents.get(right.id), right.createdAt)
-        )
-        .at(-1);
-      if (newest) {
-        this.selected = newest.id;
-      }
-    }
-    const pendingPath =
-      this.pendingSelection && paths.get(this.pendingSelection);
-    if (
-      pendingPath?.length &&
-      this.pendingSelection &&
-      readyBranches.has(this.pendingSelection)
-    ) {
-      this.selected = this.pendingSelection;
-      this.pendingSelection = undefined;
-      this.cursor = pendingPath.at(-1) ?? null;
-    }
-    const selectedPath = paths.get(this.selected);
-    if (this.follow || !this.cursor) {
-      this.cursor = (selectedPath ?? []).at(-1) ?? this.cursor;
-    }
+    this.selectHydratedBranch(paths);
+    this.selectReadyBranch(paths, readyBranches);
+    this.followSelectedBranch(paths);
     this.snapshot = {
       agents: new Map(this.agents),
       aliases,
@@ -484,7 +505,6 @@ class LogicalChat {
     }
   }
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>
   [...snapshot.agents.values()].some((agent) => busy(agent));

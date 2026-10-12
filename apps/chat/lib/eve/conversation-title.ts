@@ -110,7 +110,7 @@ const persistGeneratedEveConversationTitle = async ({
     if (
       !(await isEveRootTitlePending(ownerId, conversationId, fallbackTitle))
     ) {
-      return;
+      return undefined;
     }
   } catch (error) {
     log.warn(
@@ -120,7 +120,7 @@ const persistGeneratedEveConversationTitle = async ({
       },
       "Eve title eligibility check failed"
     );
-    return;
+    return undefined;
   }
   const generated = await generateEveConversationTitleResult(message);
   try {
@@ -141,7 +141,6 @@ const persistGeneratedEveConversationTitle = async ({
       "Eve title persistence failed"
     );
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
 export {

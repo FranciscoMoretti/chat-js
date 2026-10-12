@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-
 import { expect, test } from "@playwright/test";
 import type { Request } from "@playwright/test";
 import { z } from "zod";
@@ -14,15 +12,13 @@ const modelId = "openai/gpt-5-nano";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("project UI edits instructions, creates a native conversation and lists it after preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("project UI edits instructions, creates a native conversation and lists it after intentionally keeps the existing falsy-value behavior of conversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("project UI edits instructions, creates a native conversation and lists it after reload", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   if (
     await page
@@ -46,12 +42,13 @@ test("project UI edits instructions, creates a native conversation and lists it 
   await page.route(
     (url: Readonly<Pick<URL, "pathname">>) =>
       url.pathname.includes("project.create"),
-    (route) =>
-      route.fulfill({
+    async (route) => {
+      await route.fulfill({
         body: "{}",
         contentType: "application/json",
         status: 500,
-      }),
+      });
+    },
     { times: 1 }
   );
   await createDialog
@@ -116,6 +113,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
         animations: "disabled",
         path: testInfo.outputPath("sidebar-projects.png"),
       });
+    /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
       await expect(
@@ -138,6 +136,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
             'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
         });
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     await page.setViewportSize({ height: 850, width: 1100 });
     await page
       .getByRole("button", { exact: true, name: "Instructions" })
@@ -149,12 +148,13 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.route(
       (url: Readonly<Pick<URL, "pathname">>) =>
         url.pathname.includes("project.setInstructions"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await instructionDialog
@@ -300,12 +300,13 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.route(
       (url: Readonly<Pick<URL, "pathname">>) =>
         url.pathname.includes("project.remove"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await deleteDialog
@@ -344,7 +345,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
           expect(removed.ok(), await removed.text()).toBe(true);
         }
       } finally {
-        if (conversationId) {
+        if (
+          conversationId !== undefined &&
+          conversationId !== null &&
+          conversationId !== ""
+        ) {
           const url = `/api/agent-conversations/${conversationId}`;
           await expect
             .poll(
@@ -377,4 +382,3 @@ test("project UI edits instructions, creates a native conversation and lists it 
     throw cleanupFailure.error;
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -46,9 +46,6 @@ beforeEach(() => {
   mocks.research = true;
   mocks.text = true;
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it.each([
   "automatic",
   "selected",
@@ -59,8 +56,8 @@ it.each([
   "guest",
   "anonymous",
   "uninstalled",
-])("offers research only when available: %s", (scenario) =>
-  contextStorage.run(new ContextContainer(), async () => {
+])("offers research only when available: %s", async (scenario) => {
+  await contextStorage.run(new ContextContainer(), async () => {
     if (scenario === "uninstalled") {
       delete mocks.tools.webSearch;
     }
@@ -86,7 +83,7 @@ it.each([
     };
     const { session } = testToolContext();
     const provider = new MockLanguageModelV3({
-      doGenerate: () => Promise.reject(new Error("provider reached")),
+      doGenerate: vi.fn().mockRejectedValue(new Error("provider reached")),
     });
     const definition = tool({ inputSchema: z.object({}) });
     await expect(
@@ -114,9 +111,8 @@ it.each([
         ? ["deepResearch", "webSearch"]
         : ["webSearch"]
     );
-  })
-);
-/* oxlint-enable typescript/promise-function-async */
+  });
+});
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
   const original = new ContextContainer();

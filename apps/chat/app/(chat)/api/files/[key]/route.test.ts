@@ -27,14 +27,13 @@ beforeEach(() => {
   mocks.serve.mockResolvedValue(new Response("file"));
 });
 const key = "abcdefghijklmnopqrstuvwx.png";
-/* oxlint-disable typescript/promise-function-async*/
 
 describe("file route", () => {
   const request = new Request(
     `http://localhost/api/files/${key}?dpl=dpl_test&other=ignored`
   );
-  const getFile: () => ReturnType<typeof getPathFile> = () =>
-    getPathFile(request, { params: Promise.resolve({ key }) });
+  const getFile: () => ReturnType<typeof getPathFile> = async () =>
+    await getPathFile(request, { params: Promise.resolve({ key }) });
 
   test("a deletion fence denies storage redirects and bytes", async () => {
     mocks.access.mockResolvedValue({ allowed: false, managed: true });
@@ -65,7 +64,6 @@ describe("file route", () => {
     }
   );
 });
-/* oxlint-enable typescript/promise-function-async*/
 
 test("invalid path keys are rejected before authorization", async () => {
   const pathResponse = await getPathFile(

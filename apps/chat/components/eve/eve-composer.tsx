@@ -37,8 +37,6 @@ const modelSelectionIds = (
   return expandSelectedModelValue(selection ?? selected);
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model?.input.pdf). */
-
 const unsupportedAttachments = (
   models: readonly ReturnType<
     ReturnType<typeof useChatModels>["getModelById"]
@@ -48,18 +46,14 @@ const unsupportedAttachments = (
   models.some((model) =>
     files.some((file) => {
       if (file.contentType === "application/pdf") {
-        return !model?.input.pdf;
+        return !(model?.input.pdf === true);
       }
-      return !model?.input.image;
+      return !(model?.input.image === true);
     })
   );
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const isUnavailableTool = (tool: UiToolName | null): boolean =>
   Boolean(tool && !installedToolNames.has(tool));
-
-/* oxlint-disable typescript/strict-boolean-expressions -- EveComposer: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including props.readOnly)
- */
 
 export const EveComposer = ({
   files,
@@ -95,7 +89,8 @@ export const EveComposer = ({
     selected
   ).map((modelId) => getModelById(modelId));
   const unsupported =
-    !props.readOnly && unsupportedAttachments(models, files.attachments);
+    !(props.readOnly === true) &&
+    unsupportedAttachments(models, files.attachments);
   const unavailableTool = isUnavailableTool(selectedTool);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
@@ -119,7 +114,9 @@ export const EveComposer = ({
         attachments={
           <ContextBar
             attachments={files.attachments}
-            onRemoveAction={uploadLocked ? undefined : removeAttachment}
+            onRemoveAction={
+              uploadLocked === true ? undefined : removeAttachment
+            }
             uploadQueue={files.uploadQueue}
           />
         }
@@ -143,8 +140,9 @@ export const EveComposer = ({
               }}
             />
             <EveModelPicker
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback.
-              disabled={locked || props.readOnly || Boolean(retainedModelId)}
+              disabled={
+                locked || props.readOnly === true || Boolean(retainedModelId)
+              }
               modelSelection={modelSelection}
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}
@@ -166,4 +164,3 @@ export const EveComposer = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

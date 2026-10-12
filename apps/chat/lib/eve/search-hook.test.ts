@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
   return {
     index: vi.fn(),
-    recover: vi.fn(),
+    recover: vi.fn<() => Promise<void>>(),
     recovery: false,
     resolve: vi.fn(),
     state,
@@ -86,14 +86,10 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): dispatch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-const dispatch = (
+const dispatch = async (
   event: Readonly<HookEvent>,
   hookContext: Readonly<HookContext> = context
-) => search.events?.["*"]?.(event, hookContext);
-/* oxlint-enable typescript/promise-function-async */
+) => await search.events?.["*"]?.(event, hookContext);
 beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {
@@ -159,7 +155,7 @@ it("bounds failed retries by entry count and records how omitted events can be r
   mocks.index.mockRejectedValue(new Error("offline"));
   mocks.recover.mockRejectedValue(new Error("offline"));
   for (let index = 0; index < 300; index += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Dispatch 300 successive outage events against one recovery buffer to prove it stays bounded; parallel dispatch would test simultaneous writers instead.
     await dispatch({
       data: { message: "retry text", sequence: index, turnId: "turn_1" },
       meta: { ...restored.meta, id: String(index) },
@@ -172,8 +168,7 @@ it("bounds failed retries by entry count and records how omitted events can be r
     { omitted: 1, sessionId: "session" }
   );
   expect(mocks.recovery).toBe(true);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.recover.mockResolvedValue(undefined);
+  mocks.recover.mockResolvedValue();
   await dispatch(started);
   expect(mocks.recover).toHaveBeenLastCalledWith("owner", "branch", "session");
   expect(mocks.state).toEqual([]);

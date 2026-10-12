@@ -84,7 +84,7 @@ const mount = async (
   });
   const Fixture = (): React.JSX.Element => {
     const [value, setValue] = React.useState(selection);
-    /* oxlint-disable typescript/promise-function-async -- Return the producer's original promise and preserve synchronous throws in this controlled consumer fixture. */
+
     const changeSelection = React.useCallback(
       (next: SelectedModelValue): void | Promise<void> => {
         if (onSend) {
@@ -94,7 +94,7 @@ const mount = async (
       },
       []
     );
-    /* oxlint-enable typescript/promise-function-async */
+
     return (
       <SelectionBoundary>
         <ModelSelector

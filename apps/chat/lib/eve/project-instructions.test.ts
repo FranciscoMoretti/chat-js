@@ -79,14 +79,11 @@ const hookContext = (
   },
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): startTurn preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-const startTurn = (
+const startTurn = async (
   sequence: number,
   parent?: HookContext["session"]["parent"]
 ) =>
-  conversation.events?.["turn.started"]?.(
+  await conversation.events?.["turn.started"]?.(
     {
       data: { sequence, turnId: `turn_${sequence}` },
       meta: { at: "2026-09-11T12:00:00Z", id: `event_${sequence}` },
@@ -94,11 +91,8 @@ const startTurn = (
     },
     hookContext(sequence, parent)
   );
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): readInstructions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+// oxlint-disable-next-line typescript/promise-function-async -- The hook may return a promise by type, but this fixture asserts its synchronous instruction content and null results.
 const readInstructions = () =>
   instructions.events["turn.started"]?.(
     {},
@@ -112,7 +106,6 @@ const readInstructions = () =>
       },
     }
   );
-/* oxlint-enable typescript/promise-function-async */
 
 beforeEach(() => {
   vi.resetAllMocks();

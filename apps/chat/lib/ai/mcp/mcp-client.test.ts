@@ -99,7 +99,7 @@ it("concurrent connection requests share one transport and close it once", async
   const first = client.connect();
   const second = client.connect();
   expect(mocks.create).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await Promise.all([first, second]);
   await client.close();
@@ -168,7 +168,7 @@ it("closing an in-flight connection prevents the late transport from becoming ac
   const connecting = client.connect();
   const rejected = expect(connecting).rejects.toThrow("closed");
   await client.close();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await rejected;
   expect(client.status).toBe("disconnected");
@@ -207,7 +207,7 @@ it("callers cancel their shared connection waits independently", async () => {
   expect(
     mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
   ).toBe(false);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await second;
   expect(client.status).toBe("connected");
@@ -231,21 +231,18 @@ it("a fresh connection starts immediately after closing a pending attempt", asyn
   await client.connect();
   expect(client.status).toBe("connected");
   expect(mocks.create).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await rejected;
   expect(client.status).toBe("connected");
   await client.close();
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it.each(["tools", "listResources", "listPrompts"] as const)(
   "a retired client's late %s auth error cannot close its replacement",
   async (method) => {
     const gate = Promise.withResolvers<never>();
-    const oldMethod = vi.fn(() => gate.promise);
+    const oldMethod = vi.fn().mockReturnValue(gate.promise);
     const oldClose = vi.fn();
     const replacementClose = vi.fn();
     const invalidate = vi.fn<() => void>();
@@ -276,7 +273,6 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
     await client.close();
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 it("a retired provider's late OAuth redirect cannot authorise or close its replacement", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -299,7 +295,7 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   expect(mocks.create.mock.calls[0][0].transport.authProvider).not.toBe(
     mocks.create.mock.calls[1][0].transport.authProvider
   );
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gate.resolve(undefined);
   await rejected;
   expect(client.getAuthorizationUrl()).toBeUndefined();

@@ -1,5 +1,9 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import React, { createContext, useCallback, useContext, useState } from "react";
@@ -31,8 +35,6 @@ const useEveDeletion = () => {
   return open;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- EveDeletionProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including route.id). */
-
 const EveDeletionProvider = ({
   children,
 }: {
@@ -52,35 +54,39 @@ const EveDeletionProvider = ({
     [setOpenMobile]
   );
   const changed = async (rootId: string): Promise<void> => {
-    /* oxlint-disable react/todo -- Preserve cache invalidation in finally after route changes. */
-    try {
-      if (route.id && (route.type === "chat" || route.type === "projectChat")) {
-        const response = await fetch(`/api/agent-conversations/${route.id}`, {
-          signal: AbortSignal.timeout(10_000),
-        });
-        const status: unknown = await response.json();
+    await withTaskCleanup(
+      async () => {
         if (
-          response.ok &&
-          typeof status === "object" &&
-          status !== null &&
-          "rootId" in status &&
-          status.rootId === rootId
+          hasText(route.id) &&
+          (route.type === "chat" || route.type === "projectChat")
         ) {
-          const projectId =
-            conversation?.projectId ??
-            (route.source === "project" ? route.projectId : undefined);
-          router.replace(
-            typeof projectId === "string" && projectId !== ""
-              ? `/project/${projectId}`
-              : "/"
-          );
+          const response = await fetch(`/api/agent-conversations/${route.id}`, {
+            signal: AbortSignal.timeout(10_000),
+          });
+          const status: unknown = await response.json();
+          if (
+            response.ok &&
+            typeof status === "object" &&
+            status !== null &&
+            "rootId" in status &&
+            status.rootId === rootId
+          ) {
+            const projectId =
+              conversation?.projectId ??
+              (route.source === "project" ? route.projectId : undefined);
+            router.replace(
+              typeof projectId === "string" && projectId !== ""
+                ? `/project/${projectId}`
+                : "/"
+            );
+          }
         }
+      },
+      async () => {
+        await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
+        router.refresh();
       }
-    } finally {
-      await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
-      router.refresh();
-    }
-    /* oxlint-enable react/todo */
+    );
   };
   return (
     <DeletionContext.Provider value={openConversation}>
@@ -98,5 +104,5 @@ const EveDeletionProvider = ({
     </DeletionContext.Provider>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 export { EveDeletionProvider, useEveDeletion };

@@ -16,7 +16,7 @@ describe("isSocialAuthProvider", () => {
   it("rejects unknown provider ids", () => {
     expect(isSocialAuthProvider("discord")).toBe(false);
     expect(isSocialAuthProvider(null)).toBe(false);
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise undefined through the validator's required input argument.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The validator requires an input argument; this case explicitly verifies missing input/default behavior.
     expect(isSocialAuthProvider(undefined)).toBe(false);
   });
 });

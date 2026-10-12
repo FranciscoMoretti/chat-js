@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { expect, test, vi } from "vitest";
 
@@ -22,26 +22,25 @@ const storage = vi.hoisted(() => ({
   fail: false,
   objects: new Map<string, Date>(),
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/file-storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 vi.mock("../lib/file-storage", () => ({
-  deleteFilesByUrls: (urls: readonly string[]): Promise<void> => {
-    if (storage.fail) {
-      return Promise.reject(new Error("Provider unavailable"));
-    }
-    for (const url of urls) {
-      storage.objects.delete(keyFromFileUrl(url) ?? "");
-    }
-    return Promise.resolve();
-  },
+  deleteFilesByUrls:
+    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    async (urls: readonly string[]): Promise<void> => {
+      if (storage.fail) {
+        throw new Error("Provider unavailable");
+      }
+      for (const url of urls) {
+        storage.objects.delete(keyFromFileUrl(url) ?? "");
+      }
+    },
+  /* oxlint-enable eslint/require-await */
   *iterateStoredFiles() {
     for (const [pathname, uploadedAt] of storage.objects) {
       yield { pathname, uploadedAt };
     }
   },
 }));
-/* oxlint-enable typescript/promise-function-async */
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
@@ -58,9 +57,11 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     name: "Orphan sweep fixture",
   });
   try {
-    for (const key of [orphan, referenced, young]) {
-      await reserveEveUpload(owner, key);
-    }
+    await Promise.all(
+      [orphan, referenced, young].map(async (key) => {
+        await reserveEveUpload(owner, key);
+      })
+    );
     await db
       .update(eveStoredFile)
       .set({ createdAt: old })
@@ -69,7 +70,7 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
       owner,
       crypto.randomUUID(),
       "retain attachment",
-      async () => crypto.randomUUID()
+      createEveTestSession
     );
     await referenceEveFiles(owner, conversation.id, [referenced]);
     for (const key of [orphan, referenced, legacy]) {

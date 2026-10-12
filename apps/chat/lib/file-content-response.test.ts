@@ -109,17 +109,15 @@ describe("file content response", () => {
   });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("./db/file-storage-keys", () => ({
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   fileIdsForStorageKeys: (
     keys: readonly string[]
   ): Promise<Map<string, string>> =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     ),
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/promise-function-async */

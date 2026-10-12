@@ -45,11 +45,9 @@ it("does not accept an unrelated source receipt or a generic not found", async (
   ).rejects.toThrow("lookup is unavailable");
   expect(request).toHaveBeenCalledTimes(2);
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("times out without allocating or changing the requested checkpoint") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("times out without allocating or changing the requested checkpoint", async () => {
   vi.useFakeTimers();
+  // oxlint-disable-next-line typescript/promise-function-async -- Each poll needs a fresh Response body; the settled fixture has no work to await.
   request.mockImplementation(() =>
     Promise.resolve(
       Response.json({ code: "checkpoint_not_ready" }, { status: 404 })
@@ -67,7 +65,6 @@ it("times out without allocating or changing the requested checkpoint", async ()
     )
   ).toBe(true);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("requires the exact named checkpoint receipt and never falls back to a turn lookup", async () => {
   const checkpointId = crypto.randomUUID();
@@ -89,7 +86,7 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     { ...receipt, ready: false },
   ]) {
     request.mockResolvedValueOnce(Response.json(invalid));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case installs the next one-shot invalid checkpoint response; await its rejection before configuring another response on the shared request mock.
     await expect(
       waitForEveCheckpoint("owner", "source", "turn_1", checkpointId)
     ).rejects.toThrow("Invalid source checkpoint");

@@ -12,10 +12,6 @@ import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut intentionally keeps the existing falsy-value behavior of conversationId; origin; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("MCP OAuth callback persists credentials for fresh Eve clients and native execution", async ({
   page,
 }, testInfo) => {
@@ -26,9 +22,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
     const authSessionResponse = await page.request.get("/api/auth/get-session");
@@ -80,8 +76,8 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     ).toBe(true);
     expect(fixture.counters.tokenExchanges).toBe(1);
     await page.goto("/");
-    const discover = () =>
-      discoverEveMcpTools(owner.id, AbortSignal.timeout(15_000));
+    const discover = async () =>
+      await discoverEveMcpTools(owner.id, AbortSignal.timeout(15_000));
     const toolsAfterOAuthCallback = await discover();
     expect(
       toolsAfterOAuthCallback.map(
@@ -106,8 +102,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     );
     try {
       await Promise.allSettled(
-        clients.map((client: Readonly<Pick<MCPClient, "connect">>) =>
-          client.connect(undefined, AbortSignal.timeout(15_000))
+        clients.map(
+          async (client: Readonly<Pick<MCPClient, "connect">>) =>
+            await client.connect(undefined, AbortSignal.timeout(15_000))
         )
       );
       expect(
@@ -118,8 +115,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       expect(fixture.counters.refreshes).toBe(2);
       fixture.invalidateAccessTokens();
       const tools = await Promise.all(
-        clients.map((client: Readonly<Pick<MCPClient, "tools">>) =>
-          client.tools()
+        clients.map(
+          async (client: Readonly<Pick<MCPClient, "tools">>) =>
+            await client.tools()
         )
       );
       expect(
@@ -130,9 +128,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       expect(fixture.counters.refreshes).toBe(3);
     } finally {
       await Promise.all(
-        clients.map((client: Readonly<Pick<MCPClient, "close">>) =>
-          client.close()
-        )
+        clients.map(async (client: Readonly<Pick<MCPClient, "close">>) => {
+          await client.close();
+        })
       );
     }
     const toolsAfterSecondTokenRefresh = await discover();
@@ -173,7 +171,14 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
     try {
-      if (conversationId && origin) {
+      if (
+        conversationId !== undefined &&
+        conversationId !== null &&
+        conversationId !== "" &&
+        origin !== undefined &&
+        origin !== null &&
+        origin !== ""
+      ) {
         const requestOrigin = origin;
         const url = `/api/agent-conversations/${conversationId}`;
         await expect
@@ -198,4 +203,3 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     }
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

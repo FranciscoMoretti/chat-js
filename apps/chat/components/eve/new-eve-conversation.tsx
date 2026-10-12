@@ -1,7 +1,18 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { JSX as ReactJSX } from "react";
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { createClientSnapshot } from "@/components/client-snapshot";
+import type { JSX as ReactJSX, SetStateAction } from "react";
 
 import {
   Conversation,
@@ -34,8 +45,6 @@ import { EveInitialMessage } from "./eve-initial-message";
 import { useEveRuntime } from "./eve-logical-context";
 import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
-/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return -- NewEveConversation: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle
- */
 
 export const NewEveConversation = ({
   ownerId,
@@ -59,15 +68,101 @@ export const NewEveConversation = ({
   const [selection, setSelection] = useState<SelectedModelValue>();
   const files = useEveAttachments();
   const { setAttachments } = files;
-  const [draft, setDraft] = useState("");
-  const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   const [cleanupRejected, setCleanupRejected] = useState(false);
   const [projectRejected, setProjectRejected] = useState(false);
-  const [retainedOperationId, setRetainedOperationId] = useState<string>();
+  const store = useMemo(
+    () =>
+      createClientSnapshot<{
+        draft: string;
+        selectedTool: UiToolName | null;
+        retainedOperationId: string | undefined;
+        retainedModelId: string | undefined;
+        retainedModelIds: readonly string[] | undefined;
+        failure: string;
+      }>(
+        {
+          draft: "",
+          selectedTool: null,
+          retainedOperationId: undefined,
+          retainedModelId: undefined,
+          retainedModelIds: undefined,
+          failure: "",
+        },
+        (current) => {
+          try {
+            const pending = readCreationRequest(sessionStorage, ownerId, scope);
+            if (!pending) {
+              return current;
+            }
+            const restored = restoreDraft(pending.message);
+            setAttachments(restored.attachments);
+            return {
+              ...current,
+              draft: restored.text,
+              selectedTool: pending.selectedTool ?? null,
+              retainedOperationId: pending.operationId,
+              retainedModelIds:
+                "modelIds" in pending ? pending.modelIds : undefined,
+              retainedModelId:
+                "modelIds" in pending ? undefined : pending.modelId,
+            };
+          } catch {
+            return {
+              ...current,
+              failure: "The saved draft could not be restored.",
+            };
+          }
+        }
+      ),
+    [ownerId, scope, setAttachments]
+  );
+  const {
+    draft,
+    selectedTool,
+    retainedOperationId,
+    retainedModelId,
+    retainedModelIds,
+    failure,
+  } = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
+  const {
+    setDraft,
+    setSelectedTool,
+    setRetainedOperationId,
+    setRetainedModelId,
+    setRetainedModelIds,
+    setFailure,
+  } = useMemo(
+    () => ({
+      setDraft: (value: string): void => {
+        store.set("draft", value);
+      },
+      setSelectedTool: (value: SetStateAction<UiToolName | null>): void => {
+        store.update((current) => ({
+          ...current,
+          selectedTool:
+            typeof value === "function" ? value(current.selectedTool) : value,
+        }));
+      },
+      setRetainedOperationId: (value: string | undefined): void => {
+        store.set("retainedOperationId", value);
+      },
+      setRetainedModelId: (value: string | undefined): void => {
+        store.set("retainedModelId", value);
+      },
+      setRetainedModelIds: (value: readonly string[] | undefined): void => {
+        store.set("retainedModelIds", value);
+      },
+      setFailure: (value: string): void => {
+        store.set("failure", value);
+      },
+    }),
+    [store]
+  );
   const retained = retainedOperationId !== undefined;
-  const [retainedModelId, setRetainedModelId] = useState<string>();
-  const [retainedModelIds, setRetainedModelIds] = useState<readonly string[]>();
-  const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
   const [optimisticComparison, setOptimisticComparison] =
     useState<
@@ -80,25 +175,6 @@ export const NewEveConversation = ({
   useEffect(() => {
     onPendingChange?.(busy || retained);
   }, [busy, retained, onPendingChange]);
-  useEffect(() => {
-    try {
-      const pending = readCreationRequest(sessionStorage, ownerId, scope);
-      if (pending) {
-        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the recovery composer from its durable request.
-        setRetainedOperationId(pending.operationId);
-        setSelectedTool(pending.selectedTool ?? null);
-        const restored = restoreDraft(pending.message);
-        setDraft(restored.text);
-        setAttachments(restored.attachments);
-        setRetainedModelIds(
-          "modelIds" in pending ? pending.modelIds : undefined
-        );
-        setRetainedModelId("modelIds" in pending ? undefined : pending.modelId);
-      }
-    } catch {
-      setFailure("The saved draft could not be restored.");
-    }
-  }, [ownerId, scope, setAttachments]);
   const retainOperation = (
     operation: ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>
   ): void => {
@@ -119,61 +195,64 @@ export const NewEveConversation = ({
     setBusy(true);
     setFailure("");
     let navigating = false;
-    /* oxlint-disable react/todo -- Preserve operation lock cleanup across navigation and errors. */
-    try {
-      const modelIds = expandSelectedModelValue(selection ?? selectedModel);
-      const operation = prepareSelectedCreation(
-        sessionStorage,
-        ownerId,
-        draftMessage(draft, files.attachments),
-        modelIds,
-        scope,
-        selectedTool ?? undefined
-      );
-      retainOperation(operation);
-      const binding = await resolveCreationRequest(
-        sessionStorage,
-        ownerId,
-        operation,
-        scope
-      );
-      await openRuntime({ ...binding, operation, ownerId });
-      navigating = true;
-    } catch (error) {
-      if (
-        error instanceof CreationRejectedError &&
-        error.projectUnavailable &&
-        projectId
-      ) {
-        setProjectRejected(true);
-      } else if (error instanceof CreationRejectedError) {
+
+    await withTaskCleanup(
+      async () => {
         try {
-          finishCreation(sessionStorage, ownerId, scope);
-          setRetainedModelId(undefined);
-          setRetainedModelIds(undefined);
-          setOptimisticComparison(undefined);
-          setRetainedOperationId(undefined);
-        } catch {
-          setCleanupRejected(true);
-          setFailure(
-            "The rejected request could not be cleared. Keep this tab for recovery."
+          const modelIds = expandSelectedModelValue(selection ?? selectedModel);
+          const operation = prepareSelectedCreation(
+            sessionStorage,
+            ownerId,
+            draftMessage(draft, files.attachments),
+            modelIds,
+            scope,
+            selectedTool ?? undefined
           );
-          return;
+          retainOperation(operation);
+          const binding = await resolveCreationRequest(
+            sessionStorage,
+            ownerId,
+            operation,
+            scope
+          );
+          await openRuntime({ ...binding, operation, ownerId });
+          navigating = true;
+        } catch (error) {
+          if (
+            error instanceof CreationRejectedError &&
+            error.projectUnavailable &&
+            hasText(projectId)
+          ) {
+            setProjectRejected(true);
+          } else if (error instanceof CreationRejectedError) {
+            try {
+              finishCreation(sessionStorage, ownerId, scope);
+              setRetainedModelId(undefined);
+              setRetainedModelIds(undefined);
+              setOptimisticComparison(undefined);
+              setRetainedOperationId(undefined);
+            } catch {
+              setCleanupRejected(true);
+              setFailure(
+                "The rejected request could not be cleared. Keep this tab for recovery."
+              );
+              return;
+            }
+          }
+          setFailure(
+            error instanceof Error
+              ? error.message
+              : "Unable to start. Retain this operation before retrying."
+          );
+        }
+      },
+      () => {
+        lock.current = false;
+        if (!navigating) {
+          setBusy(false);
         }
       }
-      setFailure(
-        error instanceof Error
-          ? error.message
-          : "Unable to start. Retain this operation before retrying."
-      );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required operation lock cleanup in finally.
-    } finally {
-      lock.current = false;
-      if (!navigating) {
-        setBusy(false);
-      }
-    }
-    /* oxlint-enable react/todo */
+    );
   };
   const clearRejected = (): void => {
     try {
@@ -215,7 +294,7 @@ export const NewEveConversation = ({
           onChange: async (value) => {
             setSelection(value);
             const primary = getPrimarySelectedModelId(value);
-            if (primary) {
+            if (hasText(primary)) {
               await changeModel(primary);
             }
           },
@@ -263,9 +342,8 @@ export const NewEveConversation = ({
       </div>
     );
   }
-  if (projectId) {
+  if (hasText(projectId)) {
     return composer;
   }
   return <ChatWelcomeView>{composer}</ChatWelcomeView>;
 };
-/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

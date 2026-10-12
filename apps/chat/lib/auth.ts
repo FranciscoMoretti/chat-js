@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { authSessionOptions } from "./auth-session-options";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -23,9 +25,6 @@ interface SocialProviderCredentials {
   clientSecret: string;
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): auth intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 export const auth = betterAuth({
   baseURL: baseUrl,
   database: drizzleAdapter(db, {
@@ -86,12 +85,11 @@ export const auth = betterAuth({
   trustedOrigins: [
     baseUrl,
     // Vercel URL for preview branches
-    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+    ...(isNonEmptyString(env.VERCEL_URL) ? [`https://${env.VERCEL_URL}`] : []),
     config.appUrl,
     ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
   ],
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 // Infer session type from the auth instance for type safety
 export type Session = typeof auth.$Infer.Session;

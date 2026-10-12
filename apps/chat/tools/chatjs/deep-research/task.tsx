@@ -7,7 +7,6 @@ import { UpdateTitle } from "./update-title";
 import { WebSourceBadge } from "@/components/source-badge";
 import { motion } from "motion/react";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchTask = ({
   update,
   minimal,
@@ -43,7 +42,7 @@ export const ResearchTask = ({
       initial={{ height: 0, opacity: 0 }}
     >
       <div className="space-y-2 py-2 pr-2">
-        {update.type === "web" && update.queries && (
+        {update.type === "web" && update.queries !== undefined && (
           <div className="flex flex-wrap gap-2">
             {update.queries.map((query) => (
               <Badge
@@ -86,15 +85,16 @@ export const ResearchTask = ({
             </p>
           </div>
         )}
-        {update.type === "writing" && update.message && (
-          <div className="space-y-2">
-            <p className="text-foreground text-sm font-light">
-              {update.message}
-            </p>
-          </div>
-        )}
+        {update.type === "writing" &&
+          update.message !== undefined &&
+          update.message !== "" && (
+            <div className="space-y-2">
+              <p className="text-foreground text-sm font-light">
+                {update.message}
+              </p>
+            </div>
+          )}
       </div>
     </motion.div>
   </div>
 );
-/* oxlint-enable typescript/strict-boolean-expressions */

@@ -11,17 +11,14 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Deletion tests require local Postgres.");
 }
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): for (const state of ["deleting", "deleted"] as const) { preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 for (const state of ["deleting", "deleted"] as const) {
   test(`${state} conversation rejects browser access and old creation requests`, async ({
     page,
     browser,
   }) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
     const owner = z
@@ -61,8 +58,11 @@ for (const state of ["deleting", "deleted"] as const) {
       );
       expect(stream.status()).toBe(404);
       const publicPage = await anonymous.newPage();
-      await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-        route.abort()
+      await publicPage.route(
+        "https://unpkg.com/react-scan/**",
+        async (route) => {
+          await route.abort();
+        }
       );
       await publicPage.goto(`${new URL(page.url()).origin}/share/${id}`);
       await expect(
@@ -75,4 +75,3 @@ for (const state of ["deleting", "deleted"] as const) {
     }
   });
 }
-/* oxlint-enable typescript/promise-function-async */

@@ -1,10 +1,9 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /**
  * Builds a minimal valid, single-page PDF fixture with selectable text and an accurate xref table.
  * @param {string} text Text to place in the PDF content stream.
  * @returns {Buffer<ArrayBuffer>} Encoded PDF file bytes.
  */
-export function textPdf(text: string) {
+export const textPdf = (text: string) => {
   const stream = `BT /F1 18 Tf 50 700 Td (${text}) Tj ET`;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
@@ -27,4 +26,4 @@ export function textPdf(text: string) {
     .join("");
   result += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(result);
-}
+};

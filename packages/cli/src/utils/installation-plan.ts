@@ -230,7 +230,7 @@ export const planInstallation = async (
         (item: ReadonlyNative<ToolDefinition>): boolean => item.slot === slot
       )
     ) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each provider is resolved before validating the final installation.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- visit mutates the expected dependency graph; resolve the first default provider before target() decides whether the next slot is still missing.
       await visit(itemAddress(provider, "tool"));
     }
   }

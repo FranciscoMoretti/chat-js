@@ -30,7 +30,7 @@ export const sendCommand = async (
   if (afterCancellation) {
     const deadline = Date.now() + RECONCILIATION_TIMEOUT_MS;
     do {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Resume after the preceding reader finishes; inspect reconciliation/error state before starting another reader.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete the preceding reader and inspect acceptance/error state before the 250ms delay and next resume; ambiguous failures cannot resubmit the command.
       await resume();
       if (getError() || hasAcceptedInput()) {
         break;
@@ -40,7 +40,7 @@ export const sendCommand = async (
           "The accepted message is still being reconciled. Reconnect before retrying."
         );
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield 250 ms after an unaccepted resume before checking input and opening another reader.
+      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield 250 ms after an unaccepted resume before checking input and opening another reader. Complete the preceding reader and inspect acceptance/error state before the 250ms delay and next resume; ambiguous failures cannot resubmit the command.
       await new Promise<void>((resolve) => {
         setTimeout(resolve, RECONCILIATION_RETRY_DELAY_MS);
       });

@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -170,8 +172,6 @@ const subscribePlatform = () => unsubscribePlatform;
 
 const serverShortcut = (): string => "Ctrl+K";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- EveSearchChats: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId). */
-
 export const EveSearchChats = ({
   ownerId,
 }: {
@@ -218,7 +218,7 @@ export const EveSearchChats = ({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="overflow-hidden p-0"
-          showCloseButton={!ownerId}
+          showCloseButton={!hasText(ownerId)}
         >
           <DialogHeader className="sr-only">
             <DialogTitle>Search chats</DialogTitle>
@@ -226,12 +226,12 @@ export const EveSearchChats = ({
               Search your conversation history.
             </DialogDescription>
           </DialogHeader>
-          {open && !ownerId && (
+          {open && !hasText(ownerId) && (
             <p className="text-muted-foreground p-4 text-sm">
               Start a chat to see your conversation history.
             </p>
           )}
-          {open && ownerId && (
+          {open && hasText(ownerId) && (
             <SearchResults
               key={ownerId}
               ownerId={ownerId}
@@ -250,4 +250,3 @@ export const EveSearchChats = ({
     </>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

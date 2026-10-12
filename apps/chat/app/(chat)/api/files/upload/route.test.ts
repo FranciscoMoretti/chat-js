@@ -88,11 +88,9 @@ test("does not return a usable upload when ownership registration fails", async 
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable typescript/promise-function-async*/
-
 test("waits for durable ownership before starting storage I/O", async () => {
   const gate = Promise.withResolvers<undefined>();
-  mocks.register.mockImplementation(() => gate.promise);
+  mocks.register.mockReturnValue(gate.promise);
   const response = POST(request());
   await vi.waitFor(() => {
     expect(mocks.register).toHaveBeenCalledWith("owner", key);
@@ -109,7 +107,6 @@ test("waits for durable ownership before starting storage I/O", async () => {
     "image/png"
   );
 });
-/* oxlint-enable typescript/promise-function-async*/
 
 test("retains the reserved identity after an uncertain storage failure", async () => {
   mocks.upload.mockRejectedValue(new Error("storage response lost"));
@@ -124,14 +121,14 @@ test("retains the reserved identity after an uncertain storage failure", async (
   );
 });
 
-test("enforces retained upload type and byte limits before reserving storage", async () => {
-  for (const file of [
-    new File(["fixture"], "unsupported.txt", { type: "text/plain" }),
-    new File(["oversized fixture"], "large.png", { type: "image/png" }),
-  ]) {
+test.each([
+  new File(["fixture"], "unsupported.txt", { type: "text/plain" }),
+  new File(["oversized fixture"], "large.png", { type: "image/png" }),
+])(
+  "enforces retained upload type and byte limits before reserving storage: %p",
+  async (file) => {
     const form = new FormData();
     form.append("file", file);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Check each independent rejection before storage admission.
     const response = await POST(
       new Request("http://localhost/api/files/upload", {
         body: form,
@@ -139,10 +136,10 @@ test("enforces retained upload type and byte limits before reserving storage", a
       })
     );
     expect(response.status).toBe(HTTP_STATUS.badRequest);
+    expect(mocks.register).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
   }
-  expect(mocks.register).not.toHaveBeenCalled();
-  expect(mocks.upload).not.toHaveBeenCalled();
-});
+);
 
 test.each([undefined, "not multipart"])(
   "rejects malformed upload body %s before storage admission",
@@ -166,8 +163,6 @@ test("rejects a declared oversized request without reading its body", async () =
   expect(uploadRequest.bodyUsed).toBe(false);
   expect(mocks.register).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable typescript/strict-boolean-expressions*/
 
 test.each([undefined, "1"])(
   "bounds multipart consumption with content-length %s and cancels the source",
@@ -198,7 +193,7 @@ test.each([undefined, "1"])(
     const uploadHeaders = new Headers({
       "content-type": "multipart/form-data; boundary=upload",
     });
-    if (contentLength) {
+    if (contentLength !== undefined) {
       uploadHeaders.set("content-length", contentLength);
     }
     const init = {
@@ -219,7 +214,6 @@ test.each([undefined, "1"])(
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable typescript/strict-boolean-expressions*/
 
 test("accepts a file at the configured byte limit with multipart overhead", async () => {
   const form = new FormData();

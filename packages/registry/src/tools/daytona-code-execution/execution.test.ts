@@ -1,5 +1,6 @@
-/* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
-import { describe, expect, test } from "bun:test";
+import { rejects } from "node:assert/strict";
+
+import { describe, expect, mock, test } from "bun:test";
 import type { DaytonaResource } from "./sandbox";
 import { executeInDaytona } from "./execution";
 
@@ -35,53 +36,67 @@ type Fixture = Readonly<{
 const setup = (): Fixture => {
   const events: string[] = [];
   const controller = new AbortController();
-  /* oxlint-disable eslint/require-await -- DaytonaResource.delete and process.executeCommand are Promise-returning SDK methods; these fixtures resolve after recording their respective operations. */
+
   const resource = {
-    delete: async (): Promise<void> => {
-      // No external resource exists in this fixture.
-    },
+    delete: mock<() => Promise<void>>().mockReturnValue(Promise.resolve()),
     name: "allocation",
     organizationId: "org",
     process: {
-      executeCommand: async (): Promise<CommandReceipt> => {
-        events.push("execute");
-        return {
-          exitCode: 0,
-          result: '42\n__EXECUTION_STATUS__:{"success":true}\n',
-        };
-      },
+      executeCommand:
+        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+        async (): Promise<CommandReceipt> => {
+          events.push("execute");
+          return {
+            exitCode: 0,
+            result: '42\n__EXECUTION_STATUS__:{"success":true}\n',
+          };
+        },
+      /* oxlint-enable eslint/require-await */
     },
     state: "started",
   } satisfies DaytonaResource;
-  /* oxlint-enable eslint/require-await */
-  /* oxlint-disable eslint/require-await -- The selected provider exposes Promise-returning cleanup.deleteAndConfirmAbsent and create methods; these fixtures resolve after recording their operations. */
+
   const selected = {
     cleanup: {
-      deleteAndConfirmAbsent: async (): Promise<void> => {
-        events.push("delete");
-      },
+      deleteAndConfirmAbsent:
+        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+        async (): Promise<void> => {
+          events.push("delete");
+        },
+      /* oxlint-enable eslint/require-await */
       provider: { projectId: "api", teamId: "daytona:org" },
     },
-    create: async (): Promise<FixtureResource> => {
-      events.push("create");
-      return resource;
-    },
+    create:
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      async (): Promise<FixtureResource> => {
+        events.push("create");
+        return resource;
+      },
+    /* oxlint-enable eslint/require-await */
   };
-  /* oxlint-enable eslint/require-await */
-  /* oxlint-disable eslint/require-await -- SandboxOwnership.reserve, created and release are Promise-returning transaction methods; these fixtures resolve after recording each operation. */
+
   const ownership = {
-    created: async (): Promise<void> => {
-      events.push("confirm");
-    },
-    release: async (): Promise<void> => {
-      events.push("release");
-    },
-    reserve: async (): Promise<string> => {
-      events.push("reserve");
-      return "allocation";
-    },
+    created:
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      async (): Promise<void> => {
+        events.push("confirm");
+      },
+    /* oxlint-enable eslint/require-await */
+    release:
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      async (): Promise<void> => {
+        events.push("release");
+      },
+    /* oxlint-enable eslint/require-await */
+    reserve:
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      async (): Promise<string> => {
+        events.push("reserve");
+        return "allocation";
+      },
+    /* oxlint-enable eslint/require-await */
   };
-  /* oxlint-enable eslint/require-await */
+
   return { controller, events, ownership, resource, selected };
 };
 const input = {
@@ -111,53 +126,75 @@ describe("Daytona allocation lifecycle", () => {
   });
   test("an ambiguous create remains reserved and cannot execute or release", async () => {
     const state = setup();
-    // oxlint-disable-next-line eslint/require-await -- selected.create returns the provider's Promise; this fixture models a rejected create response.
-    state.selected.create = async (): Promise<FixtureResource> => {
-      throw new Error("create reply lost");
-    };
-    await expect(
+
+    state.selected.create = mock<
+      () => Promise<FixtureResource>
+    >().mockRejectedValue(new Error("create reply lost"));
+    await rejects(
       executeInDaytona(
         input,
         state.selected,
         state.ownership,
         state.controller.signal
-      )
-    ).rejects.toThrow("create reply lost");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("create reply lost");
+        return true;
+      }
+    );
     expect(state.events).toEqual(["reserve"]);
   });
   test("cancellation during create deletes the eventual allocation without executing", async () => {
     const state = setup();
-    // oxlint-disable-next-line eslint/require-await -- selected.create returns the provider's Promise while this fixture aborts and resolves a late allocation.
-    state.selected.create = async (): Promise<FixtureResource> => {
-      state.controller.abort();
-      return state.resource;
-    };
-    await expect(
+
+    state.selected.create =
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      async (): Promise<FixtureResource> => {
+        state.controller.abort();
+        return state.resource;
+      };
+    /* oxlint-enable eslint/require-await */
+    await rejects(
       executeInDaytona(
         input,
         state.selected,
         state.ownership,
         state.controller.signal
-      )
-    ).rejects.toThrow();
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow();
+        return true;
+      }
+    );
     expect(state.events).toEqual(["reserve", "delete", "confirm", "release"]);
   });
   test("cancellation during a command deletes once and never returns its result", async () => {
     const state = setup();
     state.resource.process.executeCommand =
-      // oxlint-disable-next-line eslint/require-await -- executeCommand returns the Daytona SDK's Promise while this fixture aborts and resolves late output.
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
       async (): Promise<CommandReceipt> => {
         state.controller.abort();
         return { exitCode: 0, result: "late output" };
       };
-    await expect(
+    /* oxlint-enable eslint/require-await */
+    await rejects(
       executeInDaytona(
         input,
         state.selected,
         state.ownership,
         state.controller.signal
-      )
-    ).rejects.toThrow();
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow();
+        return true;
+      }
+    );
     expect(state.events).toEqual([
       "reserve",
       "create",
@@ -168,34 +205,46 @@ describe("Daytona allocation lifecycle", () => {
   });
   test("failed deletion retains ownership for cleanup after restart", async () => {
     const state = setup();
-    // oxlint-disable-next-line eslint/require-await -- deleteAndConfirmAbsent returns its declared Promise and this fixture tests rejection propagation.
-    state.selected.cleanup.deleteAndConfirmAbsent = async (): Promise<void> => {
-      throw new Error("delete failed");
-    };
-    await expect(
+
+    state.selected.cleanup.deleteAndConfirmAbsent = mock<
+      () => Promise<void>
+    >().mockRejectedValue(new Error("delete failed"));
+    await rejects(
       executeInDaytona(
         input,
         state.selected,
         state.ownership,
         state.controller.signal
-      )
-    ).rejects.toThrow("delete failed");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("delete failed");
+        return true;
+      }
+    );
     expect(state.events).not.toContain("release");
   });
   test("failed durable confirmation still deletes the known resource", async () => {
     const state = setup();
-    // oxlint-disable-next-line eslint/require-await -- ownership.created returns its declared Promise and this fixture tests rejection propagation.
-    state.ownership.created = async (): Promise<void> => {
-      throw new Error("database unavailable");
-    };
-    await expect(
+
+    state.ownership.created = mock<() => Promise<void>>().mockRejectedValue(
+      new Error("database unavailable")
+    );
+    await rejects(
       executeInDaytona(
         input,
         state.selected,
         state.ownership,
         state.controller.signal
-      )
-    ).rejects.toThrow("database unavailable");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("database unavailable");
+        return true;
+      }
+    );
     expect(state.events).toEqual(["reserve", "create", "delete", "release"]);
   });
 });
@@ -247,7 +296,7 @@ test.each([false, true])(
     const state = setup();
     let calls = 0;
     state.resource.process.executeCommand =
-      // oxlint-disable-next-line eslint/require-await -- executeCommand returns the Daytona SDK's Promise; this fixture resolves receipts based on invocation order.
+      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
       async (): Promise<CommandReceipt> => {
         calls += ATTEMPTS_PER_CALL;
         if (extra && calls === FIRST_PACKAGE_INSTALLATION) {
@@ -255,6 +304,7 @@ test.each([false, true])(
         }
         return { exitCode: 1, result: "pip: no matching distribution" };
       };
+    /* oxlint-enable eslint/require-await */
     const result = await executeInDaytona(
       {
         code: extra ? "!pip install missing-package\nprint(42)" : "print(42)",

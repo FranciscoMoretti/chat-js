@@ -23,7 +23,6 @@ import {
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-/* oxlint-disable typescript/promise-function-async -- ProjectChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 export const ProjectChatItem = ({
   chat,
@@ -53,13 +52,13 @@ export const ProjectChatItem = ({
   const handleRename = async (title: string): Promise<void> => {
     await onRename(chat.id, title);
   };
-  /* oxlint-disable typescript/strict-boolean-expressions -- The original Date/string predicate narrows the conditional second chat.updatedAt read for the native Date constructor. Guarding a captured value does not narrow the preserved second property read; reusing one captured value changes dynamic-getter behavior. */
-  const lastMessageText = chat.updatedAt
-    ? formatDistance(new Date(chat.updatedAt), new Date(), {
-        addSuffix: true,
-      })
-    : "";
-  /* oxlint-enable typescript/strict-boolean-expressions */
+
+  const lastMessageText =
+    chat.updatedAt !== undefined && chat.updatedAt !== ""
+      ? formatDistance(new Date(chat.updatedAt), new Date(), {
+          addSuffix: true,
+        })
+      : "";
 
   return (
     <>
@@ -134,6 +133,7 @@ export const ProjectChatItem = ({
         <ShareDialog
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
+          // oxlint-disable-next-line typescript/promise-function-async -- ReactNode includes promises, but this render callback must retain synchronous element results for the client share dialog.
           renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}
@@ -150,4 +150,3 @@ export const ProjectChatItem = ({
     </>
   );
 };
-/* oxlint-enable typescript/promise-function-async */

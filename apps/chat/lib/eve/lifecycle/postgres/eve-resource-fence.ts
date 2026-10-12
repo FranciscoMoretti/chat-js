@@ -174,7 +174,7 @@ const fenceEvePostgresResourcesInTransaction = async (
   // Writers retain shared row locks through commit. This update waits for
   // admitted writes and prevents later writes from crossing the fence.
   for (const resource of resources) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire sorted resource row fences sequentially; admitted writers hold shared locks until commit and opposite acquisition order can deadlock deletion.
     await query`
       insert into workflow.eve_resource_fences(resource, fenced)
       values (${resource}, true)

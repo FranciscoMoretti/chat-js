@@ -1,5 +1,6 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import React, { act } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import type { ControllerRenderProps } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -102,39 +103,34 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
     "padding:24px;width:1000px;display:grid;grid-template-columns:1fr 1fr;gap:16px;background:white;color:black";
   document.body.append(container);
   const root = createRoot(container);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React's synchronous act overload is typed void but must be awaited to settle the render.
-  await act((): void => {
-    root.render(
-      <>
-        <FixtureForm invalid={false} />
-        <FixtureForm invalid />
-        <ToolOutput output={{ accepted: true }} errorText={undefined} />
-        <ToolOutput output="" errorText={undefined} />
-        <ToolOutput output={42} errorText={undefined} />
-        <ToolOutput
-          output={<strong>Custom element</strong>}
-          errorText={undefined}
-        />
-        <ToolOutput output={null} errorText="Provider failure" />
-        <ToolOutput output={7n} errorText={undefined} />
-        <SidebarProvider className="min-h-0">
-          <SidebarMenu>
-            <SidebarProjectItem
-              project={project}
-              isActive
-              setOpenMobile={noop}
-            />
-            <SidebarProjectItem
-              project={removedProject}
-              isActive={false}
-              setOpenMobile={noop}
-            />
-          </SidebarMenu>
-        </SidebarProvider>
-        <DiffView oldContent="Original words" newContent="Revised words" />
-      </>
-    );
-  });
+
+  await renderRoot(
+    root,
+    <>
+      <FixtureForm invalid={false} />
+      <FixtureForm invalid />
+      <ToolOutput output={{ accepted: true }} errorText={undefined} />
+      <ToolOutput output="" errorText={undefined} />
+      <ToolOutput output={42} errorText={undefined} />
+      <ToolOutput
+        output={<strong>Custom element</strong>}
+        errorText={undefined}
+      />
+      <ToolOutput output={null} errorText="Provider failure" />
+      <ToolOutput output={7n} errorText={undefined} />
+      <SidebarProvider className="min-h-0">
+        <SidebarMenu>
+          <SidebarProjectItem project={project} isActive setOpenMobile={noop} />
+          <SidebarProjectItem
+            project={removedProject}
+            isActive={false}
+            setOpenMobile={noop}
+          />
+        </SidebarMenu>
+      </SidebarProvider>
+      <DiffView oldContent="Original words" newContent="Revised words" />
+    </>
+  );
   await expect.poll(() => container.textContent).toContain("Revised");
   expect(container.textContent).toContain("Name is required");
   expect(container.textContent).toContain("Custom element");
@@ -144,7 +140,7 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
   await page.getByText("Rename", { exact: true }).click();
   await expect.element(page.getByRole("dialog")).toBeVisible();
   await takeSnapshot("retired-project-metadata-editor-fallback");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must settle cleanup before another capture runs.
-  await act((): void => root.unmount());
+
+  await unmountRoot(root);
   container.remove();
 });

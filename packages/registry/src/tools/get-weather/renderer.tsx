@@ -259,7 +259,6 @@ const WeatherCard = ({
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
 }: ReadonlyNativeSurface<{
@@ -275,13 +274,12 @@ const GetWeatherView = ({
     );
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return <WeatherCard weatherAtLocation={SAMPLE} />;
   }
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export const GetWeatherRenderer = defineToolRenderer({
   inputSchema: weatherInput,

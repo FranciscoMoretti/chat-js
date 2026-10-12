@@ -20,7 +20,7 @@ const context = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.owned.mockResolvedValue(undefined);
   mocks.download.mockResolvedValue(
     new Blob(["image bytes"], { type: "image/png" })

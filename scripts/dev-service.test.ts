@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { expect, test } from "bun:test";
 
 import { runDevService } from "./dev-service";
@@ -116,9 +117,15 @@ test("start awaits setup, stops the existing service, then bootstraps", async ()
 });
 test("start leaves the current service alone when setup fails", async (): Promise<void> => {
   const { events, operations } = fixture({ failAt: "write" });
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun's promise matcher declarations expose a void return.
-  await expect(runDevService("start", operations, "darwin")).rejects.toThrow(
-    "write failed"
+
+  await rejects(
+    runDevService("start", operations, "darwin"),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("write failed");
+      return true;
+    }
   );
   expect(events.some((event) => event.startsWith("run:launchctl"))).toBe(false);
 });
@@ -131,9 +138,15 @@ test("stop awaits launchd shutdown before removing the plist", async (): Promise
 });
 test("rejects unsupported platforms before invoking service operations", async (): Promise<void> => {
   const { events, operations } = fixture();
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun's promise matcher declarations expose a void return.
-  await expect(runDevService("status", operations, "linux")).rejects.toThrow(
-    "This local service uses macOS launchd."
+
+  await rejects(
+    runDevService("status", operations, "linux"),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("This local service uses macOS launchd.");
+      return true;
+    }
   );
   expect(events).toEqual([]);
 });

@@ -24,6 +24,20 @@ const FIRST_FILE_INDEX = 0;
 const NO_ACTIVE_OPERATIONS = 0;
 const MINIMUM_CONCURRENT_OPERATIONS = 1;
 
+it("rejects invalid snapshot concurrency before returning a promise", () => {
+  for (const concurrency of [0, -1, 1.5, Number.NaN]) {
+    assert.throws(
+      () => {
+        void collectSnapshot("unused", "", { concurrency });
+      },
+      {
+        message: "Snapshot concurrency must be a positive integer",
+        name: "RangeError",
+      }
+    );
+  }
+});
+
 const collectFileOrder = async (
   dir: string,
   prefix = ""
@@ -52,7 +66,6 @@ const collectFileOrder = async (
   );
   return paths.flat();
 };
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 it("collects ordered hashes with bounded nested filesystem concurrency", async () => {
   const root = await mkdtemp(
     path.join(process.cwd(), "sync-template-snapshot-")
@@ -64,8 +77,12 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
     const files = [
       ...Array.from(
         { length: SNAPSHOT_CONCURRENCY * FILES_PER_CONCURRENCY_BATCH },
-        (_, index) =>
-          writeFile(path.join(root, `file-${index}.txt`), `root-${index}`)
+        async (_, index) => {
+          await writeFile(
+            path.join(root, `file-${index}.txt`),
+            `root-${index}`
+          );
+        }
       ),
       writeFile(path.join(nested, "leaf.txt"), "nested-leaf"),
       writeFile(path.join(deeper, "deep.txt"), "deep-leaf"),
@@ -79,11 +96,14 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
       siblingDirectories.map(async (directory, directoryIndex) => {
         await mkdir(directory);
         await Promise.all(
-          Array.from({ length: FILES_PER_SIBLING_DIRECTORY }, (_, fileIndex) =>
-            writeFile(
-              path.join(directory, `file-${fileIndex}.txt`),
-              `nested-${directoryIndex}-${fileIndex}`
-            )
+          Array.from(
+            { length: FILES_PER_SIBLING_DIRECTORY },
+            async (_, fileIndex) => {
+              await writeFile(
+                path.join(directory, `file-${fileIndex}.txt`),
+                `nested-${directoryIndex}-${fileIndex}`
+              );
+            }
           )
         );
       })
@@ -118,4 +138,3 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable typescript/promise-function-async */

@@ -40,7 +40,7 @@ export const prepareEveOrphanedFilePurge = async (
     ...new Set(candidates.map((file) => file.ownerId)),
   ].toSorted()) {
     files.push(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Await each owner lock and fencing transaction before processing the next owner.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each owner's family lock and committed file fence before processing the next owner; failed owners must not enqueue later fencing transactions.
       ...(await db.transaction(async (tx: OrphanPurgeTransaction) => {
         await tx.execute(
           sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`

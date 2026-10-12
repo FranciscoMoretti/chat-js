@@ -1,6 +1,6 @@
+import { z } from "zod";
 import { mkdir } from "node:fs/promises";
 
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -33,16 +33,14 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const conversationUrl = /\/chat\/[^/]+$/u;
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("real provider, native application tool and replay-safe usage ledger") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("real provider, native application tool and replay-safe usage ledger") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("real provider, native application tool and replay-safe usage ledger", async ({
   page,
 }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash" },
@@ -59,8 +57,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   expect(
     created.ok(),
     JSON.stringify({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-      request: created.request().postDataJSON(),
+      request: created.request().postData(),
       status: created.status(),
     })
   ).toBe(true);
@@ -72,7 +69,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     timeout: 90_000,
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
   }
   const [conversation] = await db
@@ -83,7 +80,13 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session binding.");
   }
   const { ownerId, sessionId } = conversation;
@@ -155,19 +158,21 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
       event.type === "compaction.usage"
   );
   expect(compactionUsage.length).toBeGreaterThan(0);
-  for (const event of compactionUsage) {
-    expect(event.meta.id.startsWith("evt_")).toBe(true);
-    expect(event.data.sessionId).toBe(sessionId);
-    expect(event.data.usage?.costUsd).toBeGreaterThan(0);
-    // No reconciliation before this read: the authored billing hook must have
-    // received and recorded the same event delivered by the public client.
-    const [recorded] = await db
-      .select()
-      .from(eveUsage)
-      .where(eq(eveUsage.eventId, event.meta.id));
-    expect(recorded?.sessionId).toBe(sessionId);
-    expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
-  }
+  await Promise.all(
+    compactionUsage.map(async (event) => {
+      expect(event.meta.id.startsWith("evt_")).toBe(true);
+      expect(event.data.sessionId).toBe(sessionId);
+      expect(event.data.usage?.costUsd).toBeGreaterThan(0);
+      // No reconciliation before this read: the authored billing hook must have
+      // received and recorded the same event delivered by the public client.
+      const [recorded] = await db
+        .select()
+        .from(eveUsage)
+        .where(eq(eveUsage.eventId, event.meta.id));
+      expect(recorded?.sessionId).toBe(sessionId);
+      expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
+    })
+  );
   const rewind = await client.sessions.attach(sessionId).snapshot();
   expect(
     rewind.events.filter(
@@ -210,16 +215,13 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     path: "tests/eve-results/screenshots/tool-word-count.png",
   });
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("the composer selects models for initial and subsequent durable turns") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("the composer selects models for initial and subsequent durable turns") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("the composer selects models for initial and subsequent durable turns", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   await page.getByTestId("model-selector").filter({ visible: true }).click();
@@ -239,15 +241,16 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const creation = page.waitForResponse("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-  expect(created.request().postDataJSON().modelId).toBe(
-    "openai/gpt-4.1-mini-fast"
-  );
+
+  expect(
+    z
+      .looseObject({ modelId: z.string() })
+      .parse(created.request().postDataJSON()).modelId
+  ).toBe("openai/gpt-4.1-mini-fast");
   expect(
     created.ok(),
     JSON.stringify({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-      request: created.request().postDataJSON(),
+      request: created.request().postData(),
       status: created.status(),
     })
   ).toBe(true);
@@ -256,7 +259,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
     timeout: 90_000,
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation ID");
   }
   const [conversation] = await db
@@ -267,7 +270,13 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session");
   }
   const endpoint = `/api/eve/v1/session/${conversation.sessionId}`;
@@ -384,35 +393,35 @@ test("the composer selects models for initial and subsequent durable turns", asy
     )
   ).toBe(chargedCents);
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a definitive model rejection unlocks the composer and releases the operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a definitive model rejection unlocks the composer and releases the operation", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
-  await page.route("**/api/agent-conversations", (route) =>
-    route.fulfill({
+  await page.route("**/api/agent-conversations", async (route) => {
+    await route.fulfill({
       body: JSON.stringify({
         error: "This model is not available for chat.",
         creationRejected: true,
       }),
       contentType: "application/json",
       status: 400,
-    })
-  );
+    });
+  });
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Retain my draft");
   const firstRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const firstRequestResult = await firstRequest;
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-  const first = firstRequestResult.postDataJSON();
+
+  const first = z
+    .looseObject({ operationId: z.string() })
+    .parse(firstRequestResult.postDataJSON());
   await expect(
     page.getByRole("alert").filter({ hasText: "This model is not available" })
   ).toBeVisible();
@@ -427,11 +436,12 @@ test("a definitive model rejection unlocks the composer and releases the operati
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const secondRequestResult = await secondRequest;
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-  const second = secondRequestResult.postDataJSON();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
+
+  const second = z
+    .looseObject({ operationId: z.string(), modelId: z.string() })
+    .parse(secondRequestResult.postDataJSON());
+
   expect(second.operationId).not.toBe(first.operationId);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
+
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");
 });
-/* oxlint-enable typescript/promise-function-async */

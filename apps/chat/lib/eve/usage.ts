@@ -72,7 +72,58 @@ type UsageEventReader = ReadonlyNativeSurface<
 
 const NO_USAGE_COST_USD = 0;
 
-// oxlint-disable-next-line eslint/complexity -- Route subagent, hook, tool and step evidence with their existing distinct admission and pricing outcomes; these are sequential separate writes, not one atomic transaction.
+const ingestHookUsage = async (
+  ownerId: string,
+  billingSession: string,
+  eventId: string,
+  event: Extract<UsageEventReader, { type: "hook.result" }>,
+  attribution?: Readonly<{ sessionId: string; turnId: string }>
+): Promise<boolean> => {
+  let completedCallsPriced = true;
+  for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Persist each model-attempt receipt before the next; a rejected ledger write must stop later attempts and unresolved completed calls prevent cursor advance.
+    const priced = await recordEveUsage({
+      costUsd:
+        call.usage?.costUsd ??
+        (call.failed === true ? NO_USAGE_COST_USD : undefined),
+      eventId: `${eventId}:model-call:${index}`,
+      generationId: call.providerMetadata?.gateway?.generationId,
+      ownerId,
+      sessionId: billingSession,
+      turnId: attribution?.turnId ?? event.data.turnId,
+    });
+    if (call.failed !== true && !priced) {
+      completedCallsPriced = false;
+    }
+  }
+  return completedCallsPriced;
+};
+
+const ingestToolUsage = async (
+  ownerId: string,
+  billingSession: string,
+  sessionId: string,
+  event: Extract<UsageEventReader, { type: "action.result" }>,
+  attribution?: Readonly<{ sessionId: string; turnId: string }>
+): Promise<boolean | undefined> => {
+  if (event.data.result.kind !== "tool-result") {
+    return undefined;
+  }
+  const result = toolResultSchema.safeParse(event.data.result.output);
+  if (!hasEveToolReceipt(event.data.result.output)) {
+    return undefined;
+  }
+  const recordedCost = result.success ? result.data.usage.costUsd : undefined;
+  return await recordEveUsage({
+    costUsd:
+      event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
+    eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
+    ownerId,
+    sessionId: billingSession,
+    turnId: attribution?.turnId ?? event.data.turnId,
+  });
+};
+
 export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
@@ -93,42 +144,22 @@ export const ingestEveUsage = async (
     ? `eve-child:${sessionId}:${event.meta.id}`
     : event.meta.id;
   if (event.type === "hook.result") {
-    let completedCallsPriced = true;
-    for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Persist each model-attempt receipt before advancing; a rejected write must stop later attempts.
-      const priced = await recordEveUsage({
-        costUsd:
-          call.usage?.costUsd ??
-          (call.failed === true ? NO_USAGE_COST_USD : undefined),
-        eventId: `${eventId}:model-call:${index}`,
-        generationId: call.providerMetadata?.gateway?.generationId,
-        ownerId,
-        sessionId: billingSession,
-        turnId: attribution?.turnId ?? event.data.turnId,
-      });
-      if (call.failed !== true && !priced) {
-        completedCallsPriced = false;
-      }
-    }
-    return completedCallsPriced;
-  }
-  if (
-    event.type === "action.result" &&
-    event.data.result.kind === "tool-result"
-  ) {
-    const result = toolResultSchema.safeParse(event.data.result.output);
-    if (!hasEveToolReceipt(event.data.result.output)) {
-      return undefined;
-    }
-    const recordedCost = result.success ? result.data.usage.costUsd : undefined;
-    return await recordEveUsage({
-      costUsd:
-        event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
-      eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
+    return await ingestHookUsage(
       ownerId,
-      sessionId: billingSession,
-      turnId: attribution?.turnId ?? event.data.turnId,
-    });
+      billingSession,
+      eventId,
+      event,
+      attribution
+    );
+  }
+  if (event.type === "action.result") {
+    return await ingestToolUsage(
+      ownerId,
+      billingSession,
+      sessionId,
+      event,
+      attribution
+    );
   }
   if (
     event.type !== "step.completed" &&

@@ -42,13 +42,12 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
   ]);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("Canvas selection survives native history and edits while later turns reset to a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const intended = {
@@ -82,8 +81,14 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture the actual native operation payload; subsequent assertions verify tool selection on the wire.
-      operation = route.request().postDataJSON();
+      operation = z
+        .looseObject({
+          operationId: z.string(),
+          modelId: z.string(),
+          selectedTool: z.string(),
+          message: z.string(),
+        })
+        .parse(route.request().postDataJSON());
       const response = await route.fetch();
       expect(response.status()).toBe(200);
       binding = conversationBinding.parse(await response.json());
@@ -169,4 +174,3 @@ test("Canvas selection survives native history and edits while later turns reset
     path: testInfo.outputPath("tool-selection-edit-mobile.png"),
   });
 });
-/* oxlint-enable typescript/promise-function-async */

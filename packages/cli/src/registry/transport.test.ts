@@ -1,9 +1,25 @@
-import { expect, test } from "bun:test";
+import { expect, mock, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { installItems } from "./shadcn";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { withRegistryTransport } from "./transport";
+
+test("registry policy rejects insecure fetch synchronously inside an operation", async () => {
+  const complete = new Error("operation complete");
+  try {
+    await withRegistryTransport((): never => {
+      expect(() => {
+        void fetch("http://example.com/insecure.json");
+      }).toThrow("HTTPS");
+      throw complete;
+    });
+  } catch (error) {
+    expect(error).toBe(complete);
+    return;
+  }
+  throw new Error("Expected the operation completion marker");
+});
 
 test("shadcn transitive registry requests retain transport policy and restore host fetch", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-transport-"));
@@ -26,7 +42,7 @@ test("shadcn transitive registry requests retain transport policy and restore ho
     expect(globalThis.fetch).toBe(original);
     expect(
       await withRegistryTransport(
-        async () => await Promise.resolve("next operation")
+        mock<() => Promise<string>>().mockResolvedValue("next operation")
       )
     ).toBe("next operation");
     expect(globalThis.fetch).toBe(original);

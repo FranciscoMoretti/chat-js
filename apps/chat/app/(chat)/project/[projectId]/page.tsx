@@ -8,7 +8,6 @@ import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
 import { getProjectById } from "@/lib/db/queries";
-/* oxlint-disable typescript/strict-boolean-expressions -- ProjectContent: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/strict-boolean-expressions: preserve the missing-project guard; native explicit undefined and typeof guards conflict with no-undefined and unicorn/no-typeof-undefined respectively; */
 
 const ProjectContent = async ({
   params,
@@ -28,7 +27,7 @@ const ProjectContent = async ({
     redirect("/login");
   }
   const project = await getProjectById({ id: projectId });
-  if (!project || project.userId !== session.user.id) {
+  if (project === undefined || project.userId !== session.user.id) {
     return (
       <div className="p-4">
         <h1 className="text-xl font-semibold">Project unavailable</h1>
@@ -52,7 +51,6 @@ const ProjectContent = async ({
     />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const ProjectPageRoute = (
   props: Parameters<typeof ProjectContent>[0]

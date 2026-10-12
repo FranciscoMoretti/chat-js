@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
@@ -45,7 +47,7 @@ const reconcileRetiredSessionUsage = async (
 ): Promise<void> => {
   let unresolved = false;
   for (const event of events) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Ingest snapshot events in native order before subagent reconciliation; unresolved costs prevent retirement receipts and payload erasure.
     if ((await ingestEveUsage(ownerId, sessionId, event)) === false) {
       unresolved = true;
     }
@@ -71,8 +73,13 @@ const retireEveSessionForDeletion = async (
   sessionId: string
 ): Promise<SessionSnapshot> => {
   assertEveConfigured();
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original truthy deletion lookup guard; native SQL row destructuring can return undefined despite its declared nonnullable object type.
-  if (!(await getDeletingEveConversationForSession(ownerId, sessionId))) {
+
+  if (
+    !(
+      (await getDeletingEveConversationForSession(ownerId, sessionId)) !==
+      undefined
+    )
+  ) {
     throw new Error("Conversation is not pending deletion.");
   }
   const connection = getEveConnectionOptions(ownerId);
@@ -103,11 +110,10 @@ const retireEveFamilyForDeletion = async (
   await lifecycle.check();
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {
-    return;
+    return undefined;
   }
   const sessionIds = family.conversations.map((conversation) => {
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original nullable session guard and separate later sessionId read while narrowing the original conversation.
-    if (!conversation.sessionId) {
+    if (!isNonEmptyString(conversation.sessionId)) {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
     return conversation.sessionId;
@@ -115,7 +121,6 @@ const retireEveFamilyForDeletion = async (
   await lifecycle.retire(sessionIds, async (sessionId) => {
     await retireEveSessionForDeletion(ownerId, sessionId);
   });
-  // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
 export { retireEveFamilyForDeletion, retireEveSessionForDeletion };

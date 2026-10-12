@@ -2,9 +2,6 @@ import { defineHook } from "eve/hooks";
 
 import { recordEveUsage } from "../../../../lib/db/eve-billing";
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 // This worker uses only the local mock model, whose provider cost is known to be zero.
 export default defineHook({
   events: {
@@ -23,7 +20,7 @@ export default defineHook({
       }
     ) => {
       const ownerId = context.session.auth.initiator?.principalId;
-      if (!ownerId) {
+      if (ownerId === undefined || ownerId === null || ownerId === "") {
         throw new Error("Missing fixture owner.");
       }
       await recordEveUsage({
@@ -36,4 +33,3 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable typescript/strict-boolean-expressions */

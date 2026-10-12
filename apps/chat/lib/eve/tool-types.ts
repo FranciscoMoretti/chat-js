@@ -2,16 +2,12 @@ import type { ToolDefinition, WorkflowToolDefinition } from "eve/tools";
 
 import type { ToolOutput, ToolResult } from "./tool-result";
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): ToolUI preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type ToolUI<Input, Output> = {
+interface ToolUI<Input, Output> {
   input: Input;
   output: Output extends ToolResult<ToolOutput>
     ? Extract<Output, { status: "success" }>["output"]
     : Output;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 export type NativeToolUI<Definition> =
   Definition extends ToolDefinition<infer Input, infer Output>

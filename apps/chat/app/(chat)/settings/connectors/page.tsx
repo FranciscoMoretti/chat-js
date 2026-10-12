@@ -9,6 +9,7 @@ import {
 } from "@/components/settings/settings-page";
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
+import { preloadQuery } from "@/trpc/preload-query";
 import { trpc } from "@/trpc/server";
 
 const ConnectorsSettingsHeader = (): React.JSX.Element => (
@@ -25,8 +26,7 @@ const ConnectorsSettingsContent = async (): Promise<React.JSX.Element> => {
   await connection();
   // Keep this result out of the layout's earlier hydration boundary.
   const queryClient = makeQueryClient();
-  // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
+  await preloadQuery(queryClient.query(trpc.mcp.list.queryOptions()));
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

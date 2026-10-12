@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Ordered migrations and fixtures exercise the real schema. */
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
@@ -57,8 +56,9 @@ beforeAll(async () => {
     "0006_unpriced_usage_index.sql",
     "0007_kind_charles_xavier.sql",
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply the real migrations in sequence.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
     await postgres.exec(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
       await readFile(
         new URL(`migrations/${filename}`, import.meta.url),
         "utf-8"
@@ -73,23 +73,21 @@ beforeAll(async () => {
     [titleChat, titleBranch, "alice", "Saffron cooking"],
     [otherChat, otherBranch, "bob", "Private saffron"],
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Seed each owned chat and its binding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
     await postgres.query(
       `insert into "EveChat" (id, "ownerId", title) values ($1, $2, $3)`,
       [id, ownerId, title]
     );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Seed each owned chat and its binding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
     await postgres.query(
       `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, $3, '', $1::uuid, $1::text, 'bound')`,
       [conversationId, id, ownerId]
     );
   }
 }, DATABASE_SETUP_TIMEOUT_MS);
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-afterAll(() => postgres.close());
-/* oxlint-enable typescript/promise-function-async */
+afterAll(async () => {
+  await postgres.close();
+});
 
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
@@ -308,8 +306,10 @@ const repairPreviewSearchHistory = async (
     ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
   ] as const) {
     const hash = createHash("sha256")
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
       .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
       .digest("hex");
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
     await preview.query(
       "insert into drizzle.__drizzle_migrations values ($1, $2)",
       [hash, at]

@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { expect, test } from "vitest";
 
@@ -44,21 +44,25 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
       owner,
       crypto.randomUUID(),
       "storage purge",
-      async () => crypto.randomUUID()
+      createEveTestSession
     );
-    for (const key of keys) {
-      await reserveEveGeneratedFile(owner, conversation.id, key);
-    }
-    for (const key of keys.slice(0, 2)) {
-      await uploadFileAtKey(
-        key,
-        "purge.txt",
-        "test-owned removal fixture",
-        "text/plain"
-      );
-      const purgedFileMetadata = await getFileMetadata(key);
-      expect(purgedFileMetadata.size).toBe(26);
-    }
+    await Promise.all(
+      keys.map(async (key) => {
+        await reserveEveGeneratedFile(owner, conversation.id, key);
+      })
+    );
+    await Promise.all(
+      keys.slice(0, 2).map(async (key) => {
+        await uploadFileAtKey(
+          key,
+          "purge.txt",
+          "test-owned removal fixture",
+          "text/plain"
+        );
+        const purgedFileMetadata = await getFileMetadata(key);
+        expect(purgedFileMetadata.size).toBe(26);
+      })
+    );
     await beginEveConversationDeletion(owner, conversation.id);
     expect(await prepareEveFamilyFilePurge(owner, conversation.id)).toEqual(
       [...keys].toSorted()
@@ -67,12 +71,14 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
     await deleteFilesByUrls([urls[0]]);
     await purgeEveFamilyFiles(owner, conversation.id);
     await purgeEveFamilyFiles(owner, conversation.id);
-    for (const key of keys) {
-      // The current adapter classifies BlobNotFoundError as Provider.
-      await expect(getFileMetadata(key)).rejects.toThrow(
-        "The requested blob does not exist"
-      );
-    }
+    await Promise.all(
+      keys.map(async (key) => {
+        // The current adapter classifies BlobNotFoundError as Provider.
+        await expect(getFileMetadata(key)).rejects.toThrow(
+          "The requested blob does not exist"
+        );
+      })
+    );
     const rows = await db
       .select({ state: eveStoredFile.state })
       .from(eveStoredFile)

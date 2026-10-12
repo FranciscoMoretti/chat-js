@@ -34,6 +34,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "playwright.guest.config.ts",
   "lib/ai/eval-agent.ts",
   "lib/db/eve-document-capabilities.test.ts",
+  "lib/db/eve-guest-rate.test.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",

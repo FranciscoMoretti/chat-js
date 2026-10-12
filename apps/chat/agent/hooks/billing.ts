@@ -47,8 +47,10 @@ export default defineHook({
         return;
       }
       const binding = await getEveSubagent(ownerId, context.session.id);
-      // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original nullable-binding truthiness guard and repeated getter reads; direct property narrowing keeps the second rootSessionId read assignable to the usage API.
-      if (!binding?.rootSessionId) {
+      if (
+        typeof binding?.rootSessionId !== "string" ||
+        binding.rootSessionId === ""
+      ) {
         throw new Error("Child usage requires a native owner binding.");
       }
       await ingestEveUsage(ownerId, context.session.id, event, {

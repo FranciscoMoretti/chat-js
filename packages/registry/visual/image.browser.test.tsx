@@ -1,5 +1,7 @@
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
+import { page } from "vitest/browser";
 import { Favicon } from "@/components/favicon";
 import { MessageAttachment } from "@/components/ai-elements/message";
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
@@ -32,62 +34,60 @@ test("image tool loading, success, and unavailable states", async () => {
   const response = await fetch(imageUrl);
   const imageBlob = await response.blob();
   const blobUrl = URL.createObjectURL(imageBlob);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act(() => {
-    root.render(
-      <>
-        <GenerateImageRenderer
-          isReadonly
-          messageId="image-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            state: "input-available",
-            toolCallId: "loading",
-          }}
-        />
-        <GenerateImageRenderer
-          isReadonly
-          messageId="image-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            output: { imageUrl, prompt: "Blue sky" },
-            state: "output-available",
-            toolCallId: "success",
-          }}
-        />
-        <GenerateImageRenderer
-          isReadonly
-          messageId="image-fixture"
-          tool={{
-            input: { prompt: "Unavailable" },
-            output: {
-              imageUrl: "data:image/png;base64,invalid",
-              prompt: "Unavailable",
-            },
-            state: "output-available",
-            toolCallId: "missing",
-          }}
-        />
-        <MessageAttachment
-          data={{
-            filename: "Data attachment",
-            mediaType: "image/png",
-            type: "file",
-            url: imageUrl,
-          }}
-        />
-        <MessageAttachment
-          data={{
-            filename: "Blob attachment",
-            mediaType: "image/png",
-            type: "file",
-            url: blobUrl,
-          }}
-        />
-        <Favicon url={imageUrl} srcSet={`${imageUrl} 2x`} width="100%" />
-      </>
-    );
-  });
+  await renderRoot(
+    root,
+    <>
+      <GenerateImageRenderer
+        isReadonly
+        messageId="image-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          state: "input-available",
+          toolCallId: "loading",
+        }}
+      />
+      <GenerateImageRenderer
+        isReadonly
+        messageId="image-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          output: { imageUrl, prompt: "Blue sky" },
+          state: "output-available",
+          toolCallId: "success",
+        }}
+      />
+      <GenerateImageRenderer
+        isReadonly
+        messageId="image-fixture"
+        tool={{
+          input: { prompt: "Unavailable" },
+          output: {
+            imageUrl: "data:image/png;base64,invalid",
+            prompt: "Unavailable",
+          },
+          state: "output-available",
+          toolCallId: "missing",
+        }}
+      />
+      <MessageAttachment
+        data={{
+          filename: "Data attachment",
+          mediaType: "image/png",
+          type: "file",
+          url: imageUrl,
+        }}
+      />
+      <MessageAttachment
+        data={{
+          filename: "Blob attachment",
+          mediaType: "image/png",
+          type: "file",
+          url: blobUrl,
+        }}
+      />
+      <Favicon url={imageUrl} srcSet={`${imageUrl} 2x`} width="100%" />
+    </>
+  );
   try {
     await expect
       .poll(() => container.textContent)
@@ -99,8 +99,7 @@ test("image tool loading, success, and unavailable states", async () => {
     if (!button) {
       throw new Error("Image button missing");
     }
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act(() => button.focus());
+    button.focus();
     const actions = container.querySelector<HTMLElement>(
       String.raw`.group-focus-within\:opacity-100`
     );
@@ -126,8 +125,7 @@ test("image tool loading, success, and unavailable states", async () => {
     await expect.poll(() => blobImage.naturalWidth).toBe(300);
     expect(getComputedStyle(blobImage).objectFit).toBe("cover");
     await takeSnapshot("image-tool-states");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush React's native image-preview click before inspecting the mounted dialog.
-    await act(() => button.click());
+    await page.elementLocator(button).click();
     const modalImage = document.querySelector<HTMLImageElement>(
       '[role="dialog"] img'
     );
@@ -140,8 +138,7 @@ test("image tool loading, success, and unavailable states", async () => {
     expect(getComputedStyle(modalImage).objectFit).toBe("contain");
     await takeSnapshot("image-tool-intrinsic-modal");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     URL.revokeObjectURL(blobUrl);
     container.remove();
     style.remove();
@@ -177,18 +174,16 @@ test("image modal empty source and close transition stay console-error free", as
   const intrinsicWidth = 32;
   const handleClose = vi.fn<() => void>();
   const renderModal = async (isOpen: boolean, url: string): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush this controlled React prop transition before inspecting Radix presence.
-    await act(() => {
-      root.render(
-        <ImageModal
-          imageName="Empty URL fixture"
-          imageUrl={url}
-          isOpen={isOpen}
-          onClose={handleClose}
-          showActions={false}
-        />
-      );
-    });
+    await renderRoot(
+      root,
+      <ImageModal
+        imageName="Empty URL fixture"
+        imageUrl={url}
+        isOpen={isOpen}
+        onClose={handleClose}
+        showActions={false}
+      />
+    );
   };
   try {
     await renderModal(true, imageUrl);
@@ -218,8 +213,7 @@ test("image modal empty source and close transition stay console-error free", as
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(consoleError).not.toHaveBeenCalled();
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush Radix portal unmount before restoring the native console spy.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     consoleError.mockRestore();
     container.remove();
   }

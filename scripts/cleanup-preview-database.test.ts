@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 import { cleanupPreviewDatabase } from "./cleanup-preview-database.mjs";
 
@@ -71,57 +71,46 @@ interface GitHubState {
   readonly stateBeforeDelete: string;
   readonly openBeforeDelete: boolean;
 }
-/* oxlint-disable typescript/promise-function-async -- GitHub mock callbacks return their existing promises directly to preserve synchronous assertion throws. */
 const createGitHub = ({
   state,
   repo,
   open,
   stateBeforeDelete,
   openBeforeDelete,
-}: GitHubState): Parameters<typeof cleanupPreviewDatabase>[0]["github"] => {
-  let getCount = 0;
-  let listCount = 0;
-  return {
-    paginate: (_method: unknown, params: unknown) => {
-      expect(params).toEqual({
-        head: "owner:feature",
-        owner: "owner",
-        per_page: 100,
-        repo: "repo",
-        state: "open",
-      });
-      listCount += 1;
-      if (listCount === 1) {
-        if (open) {
-          return Promise.resolve([{}]);
-        }
-        return Promise.resolve([]);
-      }
-      if (openBeforeDelete) {
-        return Promise.resolve([{}]);
-      }
-      return Promise.resolve([]);
-    },
-    rest: {
-      pulls: {
-        get: () =>
-          Promise.resolve({
-            data: {
-              closed_at: "2026-09-29T00:00:00Z",
-              head: { ref: "feature", repo: { full_name: repo } },
-              state: (getCount += 1) === 1 ? state : stateBeforeDelete,
-            },
-          }),
-        list: (): void => {
-          // Pagination is handled by the mock; the list method is only a token.
-        },
+}: GitHubState): Parameters<typeof cleanupPreviewDatabase>[0]["github"] => ({
+  paginate: mock<
+    Parameters<typeof cleanupPreviewDatabase>[0]["github"]["paginate"]
+  >()
+    .mockResolvedValueOnce(open ? [{}] : [])
+    .mockResolvedValue(openBeforeDelete ? [{}] : []),
+  rest: {
+    pulls: {
+      get: mock<
+        Parameters<
+          typeof cleanupPreviewDatabase
+        >[0]["github"]["rest"]["pulls"]["get"]
+      >()
+        .mockResolvedValueOnce({
+          data: {
+            closed_at: "2026-09-29T00:00:00Z",
+            head: { ref: "feature", repo: { full_name: repo } },
+            state,
+          },
+        })
+        .mockResolvedValue({
+          data: {
+            closed_at: "2026-09-29T00:00:00Z",
+            head: { ref: "feature", repo: { full_name: repo } },
+            state: stateBeforeDelete,
+          },
+        }),
+      list: (): void => {
+        // Pagination is handled by the mock; the list method is only a token.
       },
     },
-  };
-};
-/* oxlint-enable typescript/promise-function-async */
+  },
+});
 
-/* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 type RunResult = Readonly<{
   calls: readonly Call[];
   result: Awaited<ReturnType<typeof cleanupPreviewDatabase>>;
@@ -136,31 +125,41 @@ const run = async ({
   stateBeforeDelete = state,
   openBeforeDelete = open,
 }: RunOptions = {}): Promise<RunResult> => {
-  const calls: Call[] = [];
-  let pageIndex = 0;
+  const github = createGitHub({
+    open,
+    openBeforeDelete,
+    repo,
+    state,
+    stateBeforeDelete,
+  });
+  const request =
+    mock<Parameters<typeof cleanupPreviewDatabase>[0]["request"]>();
+  for (const page of pages) {
+    request.mockResolvedValueOnce(Response.json(page));
+  }
+  request.mockResolvedValue(new Response(null, { status: deleteStatus }));
   const result = await cleanupPreviewDatabase({
     apiKey: "test-key",
-    github: createGitHub({
-      open,
-      openBeforeDelete,
-      repo,
-      state,
-      stateBeforeDelete,
-    }),
+    github,
     number: 123,
     repository: { owner: "owner", repo: "repo" },
-    request: (url: string, options: Readonly<Pick<RequestInit, "method">>) => {
-      calls.push({ method: options.method ?? "GET", url });
-      return Promise.resolve(
-        options.method === "DELETE"
-          ? new Response(null, { status: deleteStatus })
-          : Response.json(pages[(pageIndex += 1) - 1])
-      );
-    },
+    request,
   });
+  for (const [, params] of mock(github.paginate).mock.calls) {
+    expect(params).toEqual({
+      head: "owner:feature",
+      owner: "owner",
+      per_page: 100,
+      repo: "repo",
+      state: "open",
+    });
+  }
+  const calls: Call[] = request.mock.calls.map(([url, options]) => ({
+    method: options.method ?? "GET",
+    url,
+  }));
   return { calls, result };
 };
-/* oxlint-enable typescript/promise-function-async */
 
 describe("preview database cleanup", (): void => {
   it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {

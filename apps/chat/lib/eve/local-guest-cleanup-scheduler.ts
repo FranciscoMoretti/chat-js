@@ -41,7 +41,7 @@ const enabled = (): boolean => {
 export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   if (!enabled()) {
     schedulerGlobal.chatjsEveGuestCleanup?.stop();
-    return;
+    return undefined;
   }
   const appRoot = process.cwd();
   const run = async (): Promise<void> => {
@@ -60,7 +60,6 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
     // without adding another timer or overlapping an in-flight sweep.
     schedulerGlobal.chatjsEveGuestCleanup.run = run;
     schedulerGlobal.chatjsEveGuestCleanup.start();
-    // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return schedulerGlobal.chatjsEveGuestCleanup.stop;
   }
   let stopped = true;
@@ -103,6 +102,5 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();
-  // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return scheduler.stop;
 };

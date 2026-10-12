@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -23,7 +22,7 @@ afterAll(async () => {
   await query.end();
 });
 
-async function job(body: unknown): Promise<string> {
+const job = async (body: unknown): Promise<string> => {
   const [row] = await query<
     { id: string }[]
   >`select id::text from graphile_worker.add_job(
@@ -38,7 +37,7 @@ async function job(body: unknown): Promise<string> {
   )`;
   jobIds.push(row.id);
   return row.id;
-}
+};
 
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();

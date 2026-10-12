@@ -10,14 +10,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("rejected send survives reload as an unsent draft and can be restored and sent o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(210_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -116,9 +115,9 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.url()
   ).href;
   const operationIds: string[] = [];
-  await page.route(commandUrl, (route) => {
+  await page.route(commandUrl, async (route) => {
     operationIds.push(route.request().headers()["x-chatjs-message-operation"]);
-    return route.fulfill({
+    await route.fulfill({
       body: JSON.stringify({
         code: "usage_reconciliation_busy",
         error: "Usage reconciliation is busy.",
@@ -165,13 +164,13 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await expect(retryButton).toHaveCount(0);
 
   // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
-  await page.route(commandUrl, (route) =>
-    route.fulfill({
+  await page.route(commandUrl, async (route) => {
+    await route.fulfill({
       body: JSON.stringify({ error: "Upstream response failed" }),
       contentType: "application/json",
       status: 400,
-    })
-  );
+    });
+  });
   await composer.fill("Retain ambiguous delivery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -192,4 +191,3 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   expect(failedRead.status()).toBe(404);
   expect(await failedRead.json()).not.toHaveProperty("code");
 });
-/* oxlint-enable typescript/promise-function-async */

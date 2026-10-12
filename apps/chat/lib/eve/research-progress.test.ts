@@ -62,7 +62,7 @@ test("closing the native iterator cancels provider work", async () => {
     }
   );
   await iterator.next();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The async iterator return API requires an explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The AsyncGenerator return method requires its completion argument; undefined closes the iterator and exercises cancellation.
   await iterator.return(undefined);
   expect(cancelled).toHaveBeenCalledOnce();
 });

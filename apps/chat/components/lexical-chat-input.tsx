@@ -134,8 +134,6 @@ const LEXICAL_INITIAL_CONFIG: InitialConfigType = {
 };
 
 const CONTENT_EDITABLE_STYLE: React.CSSProperties = {
-  // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the Firefox-specific focus appearance override until browser rendering verifies its removal.
-  MozBoxShadow: "none",
   WebkitBoxShadow: "none",
   boxShadow: "none",
 };

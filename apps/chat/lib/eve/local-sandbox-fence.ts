@@ -22,9 +22,9 @@ export const fenceLocalEveSandboxMutations = async (
     )
   );
   for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
     await mkdir(scope, { recursive: true });
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
     await writeFile(nodePath.join(scope, "deleted"), "1\n", {
       flag: "wx",
       mode: 0o600,
@@ -37,7 +37,7 @@ export const fenceLocalEveSandboxMutations = async (
     });
   }
   for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
     const operations = await readdir(nodePath.join(scope, "operations")).catch(
       (error: unknown) => {
         if (

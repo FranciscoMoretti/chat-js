@@ -71,14 +71,14 @@ it("permits dispatch only for the first reservation and never marks replays as u
     ];
   for (const result of repeatedResults) {
     mocks.reserve.mockResolvedValue(result);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
     const repeated = await admitGuestMessage(request, "owner", "native", input);
     expect(repeated).toBeInstanceOf(Response);
     if (!(repeated instanceof Response)) {
       throw new Error("Expected reconnect response");
     }
     expect(repeated.status).toBe(409);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
     expect(await repeated.json()).toMatchObject({
       code: "chatjs_message_operation_exists",
     });
@@ -92,7 +92,7 @@ it("distinguishes content and destination in quota identity", async () => {
     ["two", "hello"],
     ["one", "changed"],
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }

@@ -16,9 +16,6 @@ vi.mock("@/lib/db/connection", () => ({
 
 beforeEach(() => vi.clearAllMocks());
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("cancellation after lock acquisition waits for the active refresh to finish and re preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("cancellation after lock acquisition waits for the active refresh to finish and release the transaction", async () => {
   mocks.begin.mockImplementation(
     async (run: (transaction: unknown) => Promise<unknown>) => {
@@ -30,7 +27,7 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
     }
   );
   const gate = Promise.withResolvers<string>();
-  const refresh = vi.fn(() => gate.promise);
+  const refresh = vi.fn().mockReturnValue(gate.promise);
   const controller = new AbortController();
   const pending = withMcpOAuthRefreshLock(
     "connector",
@@ -54,7 +51,6 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
   await rejected;
   expect(mocks.released).toHaveBeenCalledOnce();
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("cancellation while acquiring the lock cancels the query and never starts refresh work", async () => {
   const lock = Promise.withResolvers<unknown[]>();

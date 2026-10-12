@@ -1,3 +1,4 @@
+import { renderRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import type { EveMessage } from "eve/client";
 import React, { act } from "react";
@@ -173,17 +174,16 @@ test("EVE messages render streamed content and file parts", async () => {
       container,
       "Revenue grew this quarter."
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must flush the streamed append before verifying the existing response stayed mounted.
-    await act(() => {
-      root.render(
-        <EveMessages
-          disabled={false}
-          isReadonly
-          messages={streamedMessages}
-          respond={noop}
-        />
-      );
-    });
+
+    await renderRoot(
+      root,
+      <EveMessages
+        disabled={false}
+        isReadonly
+        messages={streamedMessages}
+        respond={noop}
+      />
+    );
     expect(container.contains(streamedResponse)).toBe(true);
     expect(container.querySelectorAll('[data-testid="response"]')).toHaveLength(
       responseCountAfterStream

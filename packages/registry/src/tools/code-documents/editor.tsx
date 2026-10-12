@@ -39,7 +39,7 @@ const getLanguageExtension = (language: string): ReturnType<typeof python> => {
     }
   }
 };
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+
 const PureCodeEditor = ({
   content,
   onSaveContent,
@@ -51,9 +51,9 @@ const PureCodeEditor = ({
 
   const configuration = useRef(new Compartment());
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!containerRef.current) {
-      return;
+      return undefined;
     }
     const view = new EditorView({
       parent: containerRef.current,
@@ -62,7 +62,6 @@ const PureCodeEditor = ({
       }),
     });
     editorRef.current = view;
-    // oxlint-disable-next-line typescript/consistent-return -- The effect returns a cleanup only when an editor exists; the inactive branch intentionally has no cleanup.
     return (): void => {
       view.destroy();
       editorRef.current = null;
@@ -86,7 +85,7 @@ const PureCodeEditor = ({
               isReadonly !== true &&
               update.transactions.some(
                 (transaction: ReadonlyNativeSurface<Transaction>): boolean =>
-                  !transaction.annotation(Transaction.remote)
+                  transaction.annotation(Transaction.remote) !== true
               )
             ) {
               onSaveContent(update.state.doc.toString(), true);
@@ -115,7 +114,6 @@ const PureCodeEditor = ({
     <div className="not-prose relative w-full text-sm" ref={containerRef} />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const areEqual = (
   prevProps: ReadonlyNativeSurface<EditorProps>,

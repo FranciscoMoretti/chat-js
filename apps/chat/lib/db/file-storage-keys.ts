@@ -15,8 +15,8 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
     .select({ storageKey: eveStoredFile.storageKey })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, fileId));
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- The query has no first row when the file is missing; preserve its exact guard and ordinary Error path.
-  if (!file) {
+
+  if (!(file !== undefined)) {
     throw new Error("File is not registered.");
   }
   return file.storageKey;

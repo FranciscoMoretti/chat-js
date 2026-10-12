@@ -127,9 +127,9 @@ const executeWithToolProgress = async function* executeWithToolProgress<
         }
       };
       try {
-        // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
-        const result = await executeWithToolUsage({ abortSignal }, (usage) =>
-          execute({ abortSignal, publish, usage })
+        const result = await executeWithToolUsage(
+          { abortSignal },
+          async (usage) => await execute({ abortSignal, publish, usage })
         );
         if (!cancelled) {
           controller.enqueue({ ...result, updates });

@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { MessageStreamEvent } from "eve/client";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
@@ -82,24 +83,23 @@ beforeEach(() => {
   );
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("keeps four reads busy when one conversation is slow") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("keeps four reads busy when one conversation is slow", async () => {
   const gates = Array.from({ length: 8 }, () =>
     Promise.withResolvers<undefined>()
   );
-  mocks.read.mockImplementation((id) => gates[Number(id)].promise);
+  mocks.read.mockImplementation(async (id) => {
+    await gates[Number(id)].promise;
+  });
   const reconciliation = reconcileEveOwnerUsage("owner");
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
   gates[1].resolve(undefined);
   await expect.poll(() => mocks.read.mock.calls.length).toBe(5);
   expect(
     mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
   ).toEqual(["0", "1", "2", "3", "4"]);
   for (const gate of gates) {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
     gate.resolve(undefined);
   }
   await reconciliation;
@@ -107,16 +107,14 @@ it("keeps four reads busy when one conversation is slow", async () => {
     mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
   ).toEqual(["0", "1", "2", "3", "4", "5", "6", "7"]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("stops scheduling on failure and waits for in-flight billing reads") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("stops scheduling on failure and waits for in-flight billing reads", async () => {
   const gates = Array.from({ length: 4 }, () =>
     Promise.withResolvers<undefined>()
   );
-  mocks.read.mockImplementation((id) => gates[Number(id)].promise);
+  mocks.read.mockImplementation(async (id) => {
+    await gates[Number(id)].promise;
+  });
   let finished = false;
   const reconciliation = reconcileEveOwnerUsage("owner").finally(() => {
     finished = true;
@@ -125,19 +123,15 @@ it("stops scheduling on failure and waits for in-flight billing reads", async ()
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
   gates[1].reject(new Error("lost stream"));
   // Let the failed worker observe the rejection before another read completes.
-  // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
+  await delay(0);
   expect(finished).toBe(false);
   for (const gate of gates) {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
     gate.resolve(undefined);
   }
   await rejection;
   expect(mocks.read).toHaveBeenCalledTimes(4);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("rejects uncertain ownership bindings before reading any stream", async () => {
   mocks.bindings.mockResolvedValue([
@@ -217,18 +211,16 @@ it("resumes managed reads at the persisted billing cursor without following live
 
 it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
   mocks.env.VERCEL = "1";
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    reconcile(false, new Set())
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(false, new Set());
+  });
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read.mock.calls).toEqual([["target"]]);
   expect(mocks.bindings).not.toHaveBeenCalled();
   mocks.read.mockClear();
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    reconcile(true, new Set())
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(true, new Set());
+  });
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read).toHaveBeenCalledTimes(8);
 });
@@ -246,10 +238,9 @@ it("replays historical unpriced evidence even when its stream cursor already adv
     { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
   ]);
   mocks.cursor.mockResolvedValue(20);
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    reconcile(false, new Set(["failed-attempt"]))
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(false, new Set(["failed-attempt"]));
+  });
   await reconcileEveOwnerUsage("owner", "failed-attempt");
   expect(mocks.streamOptions).toHaveBeenCalledWith(
     expect.objectContaining({ startIndex: 0 })

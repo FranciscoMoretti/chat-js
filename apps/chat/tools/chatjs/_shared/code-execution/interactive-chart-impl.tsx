@@ -206,8 +206,8 @@ const InteractiveChart = ({
     if (chart.type === "bar") {
       const data: Record<string, BarElement[]> = {};
       for (const item of chart.elements) {
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Dynamic record keys can be absent at runtime; preserve the existing falsy guard and repeated group getter evaluations before creating and pushing to the native mutable bucket.
-        if (!data[item.group]) {
+        const existingGroup = data[item.group];
+        if (existingGroup === undefined) {
           data[item.group] = [];
         }
         data[item.group].push(item);

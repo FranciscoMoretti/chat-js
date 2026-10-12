@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
@@ -52,8 +53,8 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   try {
     const source = `http://127.0.0.1:${server.port}`;
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun matcher before checking that planning made no writes.
-    await expect(
+
+    await rejects(
       planInstallation(
         root,
         {
@@ -61,8 +62,14 @@ test("plans transitive dependencies and repairs against the complete resulting i
           tools: [`${source}/text-documents.json`],
         },
         { documents: false, fresh: true }
-      )
-    ).rejects.toThrow("--no-documents");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--no-documents");
+        return true;
+      }
+    );
     expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
       false
     );
@@ -89,8 +96,14 @@ test("plans transitive dependencies and repairs against the complete resulting i
       path.join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
-    expect(planInstallation(root, { features: [], tools: [] })).rejects.toThrow(
-      "requires installed tools: readDocument"
+    await rejects(
+      planInstallation(root, { features: [], tools: [] }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed tools: readDocument");
+        return true;
+      }
     );
     const repair = await planInstallation(root, {
       features: [],
@@ -139,12 +152,18 @@ test("validates feature dependencies and exclusive storage slots before writing"
   });
   const source = `http://127.0.0.1:${server.port}`;
   try {
-    expect(
+    await rejects(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
-      })
-    ).rejects.toThrow("requires installed features: mcp");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed features: mcp");
+        return true;
+      }
+    );
     const plan = await planInstallation(root, {
       features: [`${source}/mcp.json`, `${source}/langfuse.json`],
       tools: [],
@@ -154,13 +173,19 @@ test("validates feature dependencies and exclusive storage slots before writing"
         .map((feature: { readonly id: string }): string => feature.id)
         .toSorted()
     ).toEqual(["langfuse", "mcp"]);
-    expect(
+    await rejects(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
         gateway: `${source}/mcp.json`,
         tools: [],
-      })
-    ).rejects.toThrow("Selected gateway item has incompatible ChatJS metadata");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Selected gateway item has incompatible ChatJS metadata");
+        return true;
+      }
+    );
     const dir = path.join(root, "features/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
@@ -168,18 +193,24 @@ test("validates feature dependencies and exclusive storage slots before writing"
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
     expect(
-      planInstallation(root, {
+      await planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
       })
-    ).resolves.toMatchObject({ features: [{ id: "langfuse" }] });
-    expect(
+    ).toMatchObject({ features: [{ id: "langfuse" }] });
+    await rejects(
       planInstallation(root, {
         features: [],
         storage: { options: {}, source: `${source}/first.json` },
         tools: [],
-      })
-    ).rejects.toThrow("Only one storage provider");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Only one storage provider");
+        return true;
+      }
+    );
     expect(
       await Bun.file(path.join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);

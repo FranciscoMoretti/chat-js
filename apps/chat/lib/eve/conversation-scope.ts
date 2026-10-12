@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { z } from "zod";
 
 import {
@@ -47,7 +49,6 @@ const assertNativeReceipt = async (
   }
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): resolveEveConversationScope intentionally keeps the existing falsy-value behavior of ownerId; identity.data; row; row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Auth attributes locate a reservation; only its exact native receipt authorizes binding.
  * @param {string | undefined} ownerId - Authenticated owner; absence raises an authentication error.
@@ -63,7 +64,7 @@ export const resolveEveConversationScope = async (
   reservationId?: unknown
 ): Promise<{ conversationId: string; ownerId: string }> => {
   abortSignal.throwIfAborted();
-  if (!ownerId) {
+  if (!isNonEmptyString(ownerId)) {
     throw new EveSessionMappingError("unauthenticated");
   }
   const identity = z.uuid().optional().safeParse(reservationId);
@@ -71,11 +72,13 @@ export const resolveEveConversationScope = async (
     throw new EveSessionMappingError("binding_conflict");
   }
   const row = await readEveSessionMapping(
-    identity.data ? { reservationId: identity.data } : { sessionId }
+    isNonEmptyString(identity.data)
+      ? { reservationId: identity.data }
+      : { sessionId }
   );
-  if (!row) {
+  if (!(row !== undefined)) {
     throw new EveSessionMappingError(
-      identity.data ? "identity_missing" : "identity_pending"
+      isNonEmptyString(identity.data) ? "identity_missing" : "identity_pending"
     );
   }
   if (row.ownerId !== ownerId) {
@@ -84,16 +87,16 @@ export const resolveEveConversationScope = async (
   if (row.state === "deleting" || row.state === "deleted") {
     throw new EveSessionMappingError("identity_deleted");
   }
-  if (row.sessionId && row.sessionId !== sessionId) {
+  if (isNonEmptyString(row.sessionId) && row.sessionId !== sessionId) {
     throw new EveSessionMappingError("binding_conflict");
   }
   if (row.state === "bound") {
-    if (!row.sessionId) {
+    if (!isNonEmptyString(row.sessionId)) {
       throw new EveSessionMappingError("binding_conflict");
     }
     return { conversationId: row.id, ownerId };
   }
-  if (row.sessionId) {
+  if (isNonEmptyString(row.sessionId)) {
     throw new EveSessionMappingError("binding_conflict");
   }
   // Seed acceptance has its own resource/copy journal and must finish there.
@@ -104,4 +107,3 @@ export const resolveEveConversationScope = async (
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
   return { conversationId: row.id, ownerId };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

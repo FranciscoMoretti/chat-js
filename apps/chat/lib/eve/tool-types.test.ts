@@ -8,14 +8,11 @@ import type { NativeToolUI } from "./tool-types";
 import { defineToolSet } from "./tool-types";
 import { executeWithToolUsage } from "./tool-usage";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("declared EVE generics preserve schema and output types across overloads") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("declared EVE generics preserve schema and output types across overloads", () => {
   const counted = defineTool({
     description: "Count",
-    execute: ({ text }, context) =>
-      executeWithToolUsage(context, (usage) => {
+    execute: async ({ text }, context) =>
+      await executeWithToolUsage(context, (usage) => {
         usage.addCostUsd(0);
         return { length: text.length };
       }),
@@ -61,4 +58,3 @@ test("declared EVE generics preserve schema and output types across overloads", 
     }),
   });
 });
-/* oxlint-enable typescript/promise-function-async */

@@ -41,17 +41,13 @@ vi.mock("@/lib/db/mcp-oauth-lock", () => ({
   ): Promise<unknown> => await run(),
 }));
 let stored: McpOAuthSession;
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): provider preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const provider = (): McpOAuthClientProvider =>
   new McpOAuthClientProvider({
     clientMetadata: { redirect_uris: ["http://localhost:3790/callback"] },
     mcpConnectorId: "connector",
-    onRedirectToAuthorization: (): Promise<void> => Promise.resolve(),
+    onRedirectToAuthorization: vi.fn<() => Promise<void>>().mockResolvedValue(),
     serverUrl: "http://127.0.0.1:3799/mcp",
   });
-/* oxlint-enable typescript/promise-function-async */
 const refreshRequest = (refreshToken: string): Request =>
   new Request("http://127.0.0.1:3799/token", {
     body: new URLSearchParams({
@@ -60,9 +56,6 @@ const refreshRequest = (refreshToken: string): Request =>
     }),
     method: "POST",
   });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   stored = {
@@ -81,6 +74,7 @@ beforeEach(() => {
     },
     updatedAt: new Date(0),
   };
+  // oxlint-disable-next-line typescript/promise-function-async -- Read current mutable fixture state on each call; no asynchronous work exists to await.
   mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.setClientInfo.mockImplementation(
     ({
@@ -154,7 +148,6 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
     token_endpoint: sdkMetadata.token_endpoint,
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 afterEach(() => vi.unstubAllGlobals());
 
 test("stored client information retains metadata, credentials, pins and extensions", async () => {
@@ -339,9 +332,6 @@ test("callback states cannot be adopted after a connector changes server URL", a
     "different MCP server"
   );
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("configured OAuth client information preserves credentials") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("configured OAuth client information preserves credentials", async () => {
   const client = new McpOAuthClientProvider({
     clientMetadata: {
@@ -351,7 +341,7 @@ test("configured OAuth client information preserves credentials", async () => {
     mcpConnectorId: "connector",
     oauthClientId: "configured-id",
     oauthClientSecret: "configured-secret",
-    onRedirectToAuthorization: (): Promise<void> => Promise.resolve(),
+    onRedirectToAuthorization: vi.fn<() => Promise<void>>().mockResolvedValue(),
     serverUrl: stored.serverUrl,
   });
   await expect(client.clientInformation()).resolves.toEqual({
@@ -361,7 +351,6 @@ test("configured OAuth client information preserves credentials", async () => {
     token_endpoint_auth_method: "client_secret_basic",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("failed client registration persistence can be retried without an optimistic cache", async () => {
   const client = provider();

@@ -30,7 +30,7 @@ export const backfillEveSearchConversation = async (
     for (const entry of eveEventSearchText(event)) {
       batch.push(entry);
       if (batch.length === SEARCH_INDEX_BATCH_SIZE) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each database write while consuming the snapshot.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Flush SEARCH_INDEX_BATCH_SIZE text entries before continuing the snapshot so a failed batch stops later writes and buffered indexing work stays bounded.
         await indexEveSearchText(ownerId, conversationId, batch);
         batch = [];
       }

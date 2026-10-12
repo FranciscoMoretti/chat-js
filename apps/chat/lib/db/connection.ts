@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "../is-non-empty-string";
+
 import { z } from "zod";
 
 /** Normalize empty environment strings before optional/default validation.
@@ -45,11 +47,11 @@ const databaseConnection = (
   },
   purpose: "runtime" | "migration" = "runtime"
 ): { options: { prepare: boolean; max?: number | undefined }; url: string } => {
-  const url =
-    purpose === "migration"
-      ? // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty migration URL means unset and must fall back to DATABASE_URL; preserve the short-circuit single migration-URL getter read.
-        environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
-      : environment.DATABASE_URL;
+  const migrationUrl =
+    purpose === "migration" ? environment.DATABASE_MIGRATION_URL : undefined;
+  const url = isNonEmptyString(migrationUrl)
+    ? migrationUrl
+    : environment.DATABASE_URL;
   if (typeof url !== "string" || url === "") {
     throw new Error(
       "DATABASE_URL is required (or DATABASE_MIGRATION_URL for schema operations)"

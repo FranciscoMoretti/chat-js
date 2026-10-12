@@ -42,8 +42,6 @@ const helperIcon = (label: string) => {
     }
   }
 };
-/* oxlint-disable typescript/strict-void-return -- EveDocumentAssistantActions: ; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle
- */
 
 export const EveDocumentAssistantActions = ({
   kind,
@@ -154,4 +152,3 @@ export const EveDocumentAssistantActions = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-void-return */

@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
@@ -47,25 +47,23 @@ afterAll(async () => {
 beforeEach(() => {
   transport.stream.mockReset();
 });
-async function session(): Promise<string> {
+const session = async (): Promise<string> => {
   const row = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Cursor fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   if (!row.sessionId) {
     throw new Error("Missing test session");
   }
   return row.sessionId;
-}
-function step(costUsd: number | undefined) {
-  return {
-    data: { turnId: "turn_0", usage: { costUsd } },
-    meta: { id: crypto.randomUUID() },
-    type: "step.completed",
-  };
-}
+};
+const step = (costUsd: number | undefined) => ({
+  data: { turnId: "turn_0", usage: { costUsd } },
+  meta: { id: crypto.randomUUID() },
+  type: "step.completed",
+});
 
 test("settled prefixes are not downloaded again and appended charges are ingested", async () => {
   const id = await session();

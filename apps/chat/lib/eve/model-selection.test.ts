@@ -7,14 +7,13 @@ import {
   resolveEveModel,
 } from "./model-selection";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../ai/active-gateway") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
     createLanguageModel: (id: string) =>
       new MockLanguageModelV3({
-        doGenerate: () => Promise.reject(new Error(`provider model: ${id}`)),
+        doGenerate: vi
+          .fn()
+          .mockRejectedValue(new Error(`provider model: ${id}`)),
         modelId: id,
         provider: "test",
       }),
@@ -28,7 +27,6 @@ vi.mock("../ai/active-gateway", () => ({
     },
   }),
 }));
-/* oxlint-enable typescript/promise-function-async */
 vi.mock("../config", () => ({
   config: {
     ai: {

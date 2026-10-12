@@ -124,11 +124,15 @@ const PureSpreadsheetEditor = ({
 
     const updatedData = newRows.map(
       (row: ReadonlyNativeSurface<Record<string, string | number>>) =>
-        columns.slice(1).map(
-          (col: ReadonlyNativeSurface<(typeof columns)[number]>) =>
-            // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the existing CSV fallback: numeric zero and empty strings serialize as blank; nullish coalescing would serialize zero as "0".
-            row[col.key] || ""
-        )
+        columns
+          .slice(1)
+          .map((col: ReadonlyNativeSurface<(typeof columns)[number]>) => {
+            const value = row[col.key];
+            if (typeof value === "number") {
+              return value === 0 || Number.isNaN(value) ? "" : value;
+            }
+            return value ?? "";
+          })
     );
 
     const newCsvContent = unparse(updatedData);

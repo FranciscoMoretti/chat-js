@@ -270,7 +270,7 @@ const completeEveConversationDeletion = async (
       eveDocumentHead,
       eveDocumentRevision,
     ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Read the nine dependency tables in declared order on this transaction, stopping at the first surviving row; parallel probes would dispatch later queries before that failure.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Probe dependent content tables in declared order and stop at the first surviving row before writing the completed deletion tombstone.
       const [remaining] = await readEveFamilyApplicationContent(tx, table, ids);
       if (remaining) {
         throw new Error("Application content cleanup is incomplete.");

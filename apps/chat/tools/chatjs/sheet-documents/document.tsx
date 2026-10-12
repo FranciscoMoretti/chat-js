@@ -3,25 +3,15 @@ import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
 import { parse, unparse } from "papaparse";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { SpreadsheetEditor as SpreadsheetEditorExport } from "./editor";
 import dynamic from "next/dynamic";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const SpreadsheetEditor = dynamic(
-  () =>
-    // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic expects a loader promise selecting the named editor export; this then maps the module to that component.
-    import("./editor").then(
-      (
-        editorModule: Readonly<{
-          SpreadsheetEditor: React.ExoticComponent<
-            React.ComponentProps<typeof SpreadsheetEditorExport>
-          >;
-        }>
-      ) => editorModule.SpreadsheetEditor
-    ),
+  async () => {
+    const { SpreadsheetEditor: Editor } = await import("./editor");
+    return Editor;
+  },
   { ssr: false }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 export const documentUi: DocumentUi = {
   Body: ({ editorProps }: ReadonlyNativeSurface<DocumentBodyProps>) => (

@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveMessage } from "eve/client";
 
 import type { EveForkInput, EveForkKind } from "./contracts";
@@ -6,29 +8,25 @@ import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
 const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;
 
-/* oxlint-disable typescript/strict-boolean-expressions --
-typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 const eveUserForkBoundary = (message: {
   readonly id: string;
   readonly role: EveMessage["role"];
   readonly metadata?: ReadonlyEveMessageMetadata;
 }): string | undefined => {
   if (message.role !== "user" || message.metadata?.optimistic) {
-    return;
+    return undefined;
   }
   if (
-    message.metadata?.turnId &&
+    isNonEmptyString(message.metadata?.turnId) &&
     nativeBoundary.test(message.metadata.turnId)
   ) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return message.metadata.turnId;
   }
   if (importedBoundary.test(message.id)) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return message.id;
   }
+  return undefined;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 interface EveBranchReference {
   forkKind?: EveForkKind | null;
@@ -40,8 +38,6 @@ interface EveBranchReference {
   responseGroupIndex?: number | null;
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions --
-typescript/strict-boolean-expressions (#610): resolveForkSource intentionally keeps the existing falsy-value behavior of current.parentConversationId; current.forkTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 /** Resolve native checkpoint ancestry while keeping imported seed boundaries local.
  * @param {string} conversationId Conversation version from which the edit or fork starts.
  * @param {string} boundaryId Imported message or native turn checkpoint immediately before the fork.
@@ -71,7 +67,10 @@ const resolveForkSource = (
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
     if (
-      !(current.parentConversationId && current.forkTurnId) ||
+      !(
+        isNonEmptyString(current.parentConversationId) &&
+        isNonEmptyString(current.forkTurnId)
+      ) ||
       BigInt(beforeTurnId.slice(5)) >= BigInt(current.forkTurnId.slice(5))
     ) {
       return { beforeTurnId, conversationId: current.id };
@@ -81,6 +80,6 @@ const resolveForkSource = (
   }
   throw new Error("The source version is unavailable. Reload before editing.");
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 export { eveUserForkBoundary, resolveForkSource };
 export type { EveBranchReference };

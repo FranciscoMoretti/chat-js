@@ -13,14 +13,13 @@ test.use({ channel: "chromium" });
 const blobUrl = /^blob:/u;
 const chatUrl = /\/chat\/[a-f0-9-]+$/u;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a PDF uploaded through the composer reaches the model and opens after reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a PDF uploaded through the composer reaches the model and opens after reload", async ({
   page,
 }) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-mini" },
@@ -122,4 +121,3 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     ]);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

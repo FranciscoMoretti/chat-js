@@ -47,8 +47,6 @@ const messages: EveMessage[] = [
     role: "assistant",
   },
 ];
-/* oxlint-disable typescript/strict-void-return --typescript/strict-void-return (#611): GuestVisualFixture's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 
 export const GuestVisualFixture = (): React.JSX.Element => {
   const [state, setState] = useState("welcome");
@@ -85,8 +83,12 @@ export const GuestVisualFixture = (): React.JSX.Element => {
                 expired={state === "expired"}
                 draft={draft}
                 onDraftChange={setDraft}
-                onSend={() => null}
-                onStop={() => null}
+                onSend={() => {
+                  // Static preview never submits.
+                }}
+                onStop={() => {
+                  // Static preview has no active request.
+                }}
               />
             </>
           )}
@@ -95,4 +97,3 @@ export const GuestVisualFixture = (): React.JSX.Element => {
     </ChatModelsProvider>
   );
 };
-/* oxlint-enable typescript/strict-void-return */

@@ -41,8 +41,6 @@ const parseUrl = (url: string): URL | null => {
 const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
   `${url.origin}${url.pathname}`;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
   description: `Fetch structured information from a single URL via Firecrawl.
 
@@ -51,8 +49,8 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  execute: ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
-    executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
+  execute: async ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
+    await executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
       usage.addCostUsd(UNBILLED_TOOL_COST_USD);
       try {
         if (!app) {
@@ -106,26 +104,31 @@ Avoid:
             schema,
           });
 
-          if (extractResult.success && extractResult.data) {
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            title ||= extractResult.data.title;
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            description ||= extractResult.data.description;
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            extractedContent ||= extractResult.data.content;
+          if (
+            extractResult.success &&
+            extractResult.data !== undefined &&
+            extractResult.data !== null
+          ) {
+            const extracted = schema.partial().safeParse(extractResult.data);
+            if (extracted.success) {
+              title = hasNonEmptyValue(title) ? title : extracted.data.title;
+              description = hasNonEmptyValue(description)
+                ? description
+                : extracted.data.description;
+              extractedContent = hasNonEmptyValue(extractedContent)
+                ? extractedContent
+                : extracted.data.content;
+            }
           }
         }
 
         return {
           results: [
             {
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              content: extractedContent || "",
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              description: description || "",
+              content: extractedContent ?? "",
+              description: description ?? "",
               language: metadata.language,
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              title: title || "Untitled",
+              title: hasNonEmptyValue(title) ? title : "Untitled",
               url: redactedUrl,
             },
           ],
@@ -145,5 +148,3 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */

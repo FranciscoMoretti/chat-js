@@ -108,8 +108,7 @@ beforeEach(async () => {
 type AppendInput =
   Parameters<typeof append> extends [unknown, infer Input] ? Input : never;
 
-/* oxlint-disable typescript/promise-function-async -- add: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-const add = (
+const add = async (
   id: string,
   expectedHead: string | null,
   {
@@ -119,9 +118,9 @@ const add = (
     branch?: string;
     message?: AppendInput["message"];
   }> = {}
-): Promise<void> =>
-  append(sql, { branch, expectedHead, id, message: value, owner });
-/* oxlint-enable typescript/promise-function-async */
+): Promise<void> => {
+  await append(sql, { branch, expectedHead, id, message: value, owner });
+};
 const checkpoint = async (): Promise<void> => {
   await reserve(sql, capture);
   await complete(sql, mockProvider(sql), owner, capture.id);

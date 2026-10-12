@@ -479,20 +479,12 @@ type DeepResearchToolInputFor<Gateway extends GatewayType> = Partial<
     finalReportModel: GatewayModelIdMap[Gateway];
   }
 >;
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): ImageToolInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
- */
-type ImageToolInputFor<Gateway extends GatewayType> = {
+interface ImageToolInputFor<Gateway extends GatewayType> {
   default?: GatewayImageModelIdMap[Gateway];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): VideoToolInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
- */
-type VideoToolInputFor<Gateway extends GatewayType> = {
+}
+interface VideoToolInputFor<Gateway extends GatewayType> {
   default?: GatewayVideoModelIdMap[Gateway];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 type FollowupSuggestionsToolInputFor<Gateway extends GatewayType> = Partial<{
   enabled: boolean;
   default: GatewayModelIdMap[Gateway];
@@ -513,11 +505,8 @@ interface AiToolsInputFor<Gateway extends GatewayType> {
   video?: VideoToolInputFor<Gateway>;
 }
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): AiInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
- */
 // Only gateway is required; everything else is an override on top of GATEWAY_MODEL_DEFAULTS
-type AiInputFor<Gateway extends GatewayType> = {
+interface AiInputFor<Gateway extends GatewayType> {
   gateway: Gateway;
   providerOrder?: AiShape["providerOrder"];
   disabledModels?: GatewayModelIdMap[Gateway][];
@@ -527,8 +516,7 @@ type AiInputFor<Gateway extends GatewayType> = {
     [Workflow in keyof AiShape["workflows"]]: GatewayModelIdMap[Gateway];
   }>;
   tools?: AiToolsInputFor<Gateway>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type ConfigInputForGateway<Gateway extends GatewayType> = Omit<
   ZodConfigInput,

@@ -42,8 +42,12 @@ const eveRequest = async (
     headers.set("x-chatjs-tool", selectedTool);
   }
 
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- BodyInit combines text, buffers and streams with null/undefined; retain no content-type for empty text or absent bodies. Explicit null comparisons also conflict with unicorn/no-null.
-  if (init.body) {
+  const { body } = init;
+  if (
+    typeof body === "string"
+      ? body.length > 0
+      : body !== null && body !== undefined
+  ) {
     headers.set("content-type", "application/json");
   }
   return await fetch(new URL(path, connection.host), {

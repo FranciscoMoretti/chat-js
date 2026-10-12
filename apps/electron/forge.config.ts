@@ -6,7 +6,8 @@ import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 
 interface Branding {
   appName: string;
@@ -45,6 +46,23 @@ const ensurePrebuild = (): void => {
 
   runBunScript("prebuild");
   prebuildComplete = true;
+};
+
+const runBunScriptAsync = async (
+  script: string,
+  env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
+): Promise<void> => {
+  const child = spawn("bun", ["run", script], {
+    env: { ...process.env, ...env },
+    stdio: "inherit",
+  });
+  const exit: readonly unknown[] = await once(child, "close");
+  const [status] = exit;
+  if (status !== SUCCESS_EXIT_CODE) {
+    throw new Error(
+      `bun run ${script} failed with exit code ${typeof status === "number" ? status : "unknown"}`
+    );
+  }
 };
 
 const loadBranding = (): Branding => {
@@ -98,17 +116,17 @@ const createForgeConfig = (): ForgeConfig => {
 
   return {
     hooks: {
-      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       generateAssets: async () => {
-        ensurePrebuild();
+        if (!prebuildComplete) {
+          await runBunScriptAsync("prebuild");
+          prebuildComplete = true;
+        }
       },
-      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       prePackage: async () => {
-        runBunScript("build", { NODE_ENV: "production" });
+        await runBunScriptAsync("build", { NODE_ENV: "production" });
       },
-      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       preStart: async () => {
-        runBunScript("build", { NODE_ENV: "development" });
+        await runBunScriptAsync("build", { NODE_ENV: "development" });
       },
     },
     makers: [

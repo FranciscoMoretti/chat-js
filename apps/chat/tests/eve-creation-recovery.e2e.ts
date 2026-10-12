@@ -24,26 +24,22 @@ vi.mock("../lib/eve/server", () => ({
 vi.mock("../lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/eve/prepare-message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 vi.mock("../lib/eve/prepare-message", () => ({
+  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
   prepareEveMessage: (message: string): Promise<string> =>
     Promise.resolve(message),
+  /* oxlint-enable typescript/promise-function-async */
 }));
-/* oxlint-enable typescript/promise-function-async */
 
 vi.mock("../lib/eve/conversation-title", () => ({
   eveConversationTitleFallback: (): string => "Recovery",
 }));
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/db/credits") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("../lib/db/credits", () => ({
-  canSpend: (): Promise<boolean> => Promise.resolve(true),
+  canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
 }));
-/* oxlint-enable typescript/promise-function-async */
+
 vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: native.positions,
 }));
@@ -57,10 +53,7 @@ afterAll(async () => {
   await db.delete(eveChat).where(inArray(eveChat.ownerId, owners));
   await db.delete(user).where(inArray(user.id, owners));
 });
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 test.each(["before-dispatch", "lost-response"])(
   "a new tab recovers %s before admitting another conversation",
   async (failure) => {
@@ -76,7 +69,11 @@ test.each(["before-dispatch", "lost-response"])(
       (_owner: string, path: string, init: Readonly<{ body?: unknown }>) => {
         if (path.startsWith("/eve/chat/v1/operation/")) {
           const sessionId = receipts.get(path.split("/").at(-1) ?? "");
-          if (sessionId) {
+          if (
+            sessionId !== undefined &&
+            sessionId !== null &&
+            sessionId !== ""
+          ) {
             return Response.json({ sessionId });
           }
           return Response.json(
@@ -103,8 +100,10 @@ test.each(["before-dispatch", "lost-response"])(
       }
     );
     native.positions.mockImplementation(
+      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
       (_url: string, sessions: readonly string[]) =>
         Promise.resolve(new Map(sessions.map((id) => [id, 0])))
+      /* oxlint-enable typescript/promise-function-async */
     );
     const command = {
       message: "original message",
@@ -164,7 +163,6 @@ test.each(["before-dispatch", "lost-response"])(
     expect(allocations).toHaveLength(2);
   }
 );
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 test("a verified native hook binds while dispatch is in flight without conflicting with the HTTP response", async () => {
   const owner = crypto.randomUUID();
@@ -211,9 +209,6 @@ test("a verified native hook binds while dispatch is in flight without conflicti
   ).rejects.toThrow("binding_conflict");
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("concurrent bindings cannot claim one native session for two branches") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent bindings cannot claim one native session for two branches", async () => {
   const owner = crypto.randomUUID();
   owners.push(owner);
@@ -229,8 +224,9 @@ test("concurrent bindings cannot claim one native session for two branches", asy
   );
   const sessionId = `wrun_${crypto.randomUUID()}`;
   const outcomes = await Promise.allSettled(
-    rows.map((row: Readonly<{ id: string }>) =>
-      bindAcceptedEveConversation(owner, row.id, sessionId)
+    rows.map(
+      async (row: Readonly<{ id: string }>) =>
+        await bindAcceptedEveConversation(owner, row.id, sessionId)
     )
   );
   expect(
@@ -249,7 +245,6 @@ test("concurrent bindings cannot claim one native session for two branches", asy
     status: "rejected",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("mapping rejects deletion, foreign ownership and inherited subagent identity without rebinding", async () => {
   const owner = crypto.randomUUID();

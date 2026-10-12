@@ -42,9 +42,9 @@ import {
 import React, {
   Children,
   useCallback,
-  useEffect,
-  useRef,
+  useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   Select,
@@ -146,7 +146,7 @@ const PromptInputButton = ({
 }: PromptInputButtonProps): React.JSX.Element => {
   const newSize =
     size ??
-    // oxlint-disable-next-line react/no-react-children -- The public button accepts opaque ReactNode children: Children.count counts null/boolean array entries, traverses nested arrays, and treats a Fragment as one child; toArray drops empty entries, while array inspection cannot preserve nesting or Fragment semantics. Changing this requires a narrower caller API.
+    // oxlint-disable-next-line react/no-react-children -- Native boundary tests cover null slots, nested arrays and opaque fragments; normalizing children would change this public sizing contract.
     (Children.count(props.children) > SINGLE_BUTTON_CHILD ? "sm" : "icon-sm");
 
   return (
@@ -369,6 +369,38 @@ const initializeSpeechRecognition = (
   return speechRecognition;
 };
 
+const createSpeechRecognitionStore = (
+  onResult: NonNullable<SpeechRecognition["onresult"]>,
+  setIsListening: (listening: boolean) => void
+) => {
+  let recognition: SpeechRecognition | null = null;
+  return {
+    getSnapshot: () => recognition,
+    getServerSnapshot: () => null,
+    subscribe: (notify: () => void) => {
+      if (
+        "window" in globalThis &&
+        ("SpeechRecognition" in globalThis.window ||
+          "webkitSpeechRecognition" in globalThis.window)
+      ) {
+        const Constructor =
+          globalThis.window.SpeechRecognition ??
+          globalThis.window.webkitSpeechRecognition;
+        recognition = initializeSpeechRecognition(
+          Constructor,
+          onResult,
+          setIsListening
+        );
+        notify();
+      }
+      return () => {
+        recognition?.stop();
+        recognition = null;
+      };
+    },
+  };
+};
+
 const useSpeechRecognition = (
   onResult: NonNullable<SpeechRecognition["onresult"]>
 ): Readonly<{
@@ -377,35 +409,15 @@ const useSpeechRecognition = (
   toggleListening: () => void;
 }> => {
   const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
-    null
+  const store = useMemo(
+    () => createSpeechRecognitionStore(onResult, setIsListening),
+    [onResult]
   );
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  useEffect(() => {
-    if (
-      "window" in globalThis &&
-      ("SpeechRecognition" in globalThis.window ||
-        "webkitSpeechRecognition" in globalThis.window)
-    ) {
-      const SpeechRecognition =
-        globalThis.window.SpeechRecognition ??
-        globalThis.window.webkitSpeechRecognition;
-      const speechRecognition = initializeSpeechRecognition(
-        SpeechRecognition,
-        onResult,
-        setIsListening
-      );
-
-      recognitionRef.current = speechRecognition;
-      // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.
-      setRecognition(speechRecognition);
-    }
-    return (): void => {
-      if (recognitionRef.current !== null) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, [onResult]);
+  const recognition = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
 
   const toggleListening = useCallback(() => {
     if (recognition === null) {

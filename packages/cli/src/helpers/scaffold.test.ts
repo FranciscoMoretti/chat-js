@@ -1,6 +1,8 @@
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
+import { once } from "node:events";
+import { ChildProcess } from "node:child_process";
 import {
   mkdir,
   readFile,
@@ -16,7 +18,8 @@ import {
 } from "./scaffold";
 import { buildConfigTs } from "./config-builder";
 import { createRequire } from "node:module";
-import { parseJsonObject } from "./json-object";
+import { parseJsonObject, requireJsonObject } from "./json-object";
+import { parsePackageJson } from "./package-manifest";
 import pathModule from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
@@ -47,8 +50,16 @@ const runGeneratedPackageManagerCommand = async (
   destination: string,
   packageManager: "bun" | "npm"
 ): Promise<void> => {
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(Bun.env)) {
+    if (typeof value === "string") {
+      env[key] = value;
+    }
+  }
+  env.PATH = `${pathModule.resolve(getCliPackageRoot(), "../../node_modules/.bin")}${pathModule.delimiter}${env.PATH ?? ""}`;
   const process = Bun.spawn([...command], {
     cwd: destination,
+    env,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -112,7 +123,6 @@ const runGeneratedGatewaySnapshotWarningTest = async (
   await runGeneratedPackageManagerCommand(command, destination, packageManager);
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   if (originalUserAgent === undefined) {
     delete process.env.npm_config_user_agent;
@@ -122,10 +132,11 @@ afterEach(async (): Promise<void> => {
   await Promise.all(
     tempDirs
       .splice(FIRST_TEMP_DIRECTORY_INDEX)
-      .map((dir): Promise<void> => rm(dir, { force: true, recursive: true }))
+      .map(async (dir): Promise<void> => {
+        await rm(dir, { force: true, recursive: true });
+      })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
 describe("buildConfigTs", (): void => {
   it("writes desktopApp.enabled=false for web-only scaffolds", (): void => {
@@ -213,7 +224,6 @@ describe("buildConfigTs", (): void => {
   });
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldFromTemplate", (): void => {
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
@@ -231,17 +241,18 @@ describe("scaffoldFromTemplate", (): void => {
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
 
-    for (const [packageName, archiveName] of Object.entries(archives)) {
-      expect(manifest.dependencies[packageName]).toBe(
-        `file:vendor/${archiveName}`
-      );
-      expect(
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Check each generated archive against the same staged scaffold.
-        await Bun.file(
-          pathModule.join(destination, "vendor", archiveName)
-        ).exists()
-      ).toBe(true);
-    }
+    await Promise.all(
+      Object.entries(archives).map(async ([packageName, archiveName]) => {
+        expect(manifest.dependencies[packageName]).toBe(
+          `file:vendor/${archiveName}`
+        );
+        expect(
+          await Bun.file(
+            pathModule.join(destination, "vendor", archiveName)
+          ).exists()
+        ).toBe(true);
+      })
+    );
   });
   it("omits maintainer harnesses while preserving application source and starter tests", async (): Promise<void> => {
     const destination = makeTempDir("maintainer-boundary");
@@ -326,10 +337,14 @@ describe("scaffoldFromTemplate", (): void => {
         lint: "next typegen . && ultracite check",
       },
     });
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const manifest = JSON.parse(
+    const manifest = parsePackageJson(
       await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
+    const devDependencies = requireJsonObject(
+      manifest.devDependencies,
+      "devDependencies"
+    );
+    const scripts = requireJsonObject(manifest.scripts, "scripts");
     for (const dependency of [
       "@electric-sql/pglite",
       "pg",
@@ -337,10 +352,8 @@ describe("scaffoldFromTemplate", (): void => {
       "evalite",
       "better-sqlite3",
     ]) {
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.devDependencies[dependency]).toBeUndefined();
+      expect(devDependencies[dependency]).toBeUndefined();
     }
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary. Optional chain: Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(manifest.overrides?.evalite).toBeUndefined();
     for (const script of [
       "eval:dev",
@@ -349,23 +362,22 @@ describe("scaffoldFromTemplate", (): void => {
       "test:research:native",
       "test:tools:live",
     ]) {
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.scripts[script]).toBeUndefined();
+      expect(scripts[script]).toBeUndefined();
     }
   });
   it("leaves the storage slot and provider peers to registry installation", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const manifest = JSON.parse(
+    const manifest = parsePackageJson(
       await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    expect(manifest.dependencies["files-sdk"]).toBe("2.5.0");
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
+    const dependencies = requireJsonObject(
+      manifest.dependencies,
+      "dependencies"
+    );
+    expect(dependencies["files-sdk"]).toBe("2.5.0");
+    expect(dependencies["@vercel/blob"]).toBeUndefined();
+    expect(dependencies["@aws-sdk/client-s3"]).toBeUndefined();
     expect(
       await Bun.file(
         pathModule.join(destination, "lib/storage-provider.ts")
@@ -505,8 +517,11 @@ describe("scaffoldFromTemplate", (): void => {
     ];
     expect(
       await Promise.all(
-        neonFiles.map((file): Promise<boolean> =>
-          Bun.file(pathModule.join(destination, "scripts", file)).exists()
+        neonFiles.map(
+          async (file): Promise<boolean> =>
+            await Bun.file(
+              pathModule.join(destination, "scripts", file)
+            ).exists()
         )
       )
     ).toEqual(neonFiles.map((): boolean => false));
@@ -695,7 +710,6 @@ describe("scaffoldFromTemplate", (): void => {
     }
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
 describe("scaffoldFromGit", (): void => {
   it("leaves repositories without the ChatJS storage seam untouched", async (): Promise<void> => {
@@ -737,7 +751,6 @@ describe("scaffoldFromGit", (): void => {
   });
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldElectron", (): void => {
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-node-prebuild");
@@ -780,8 +793,7 @@ describe("scaffoldElectron", (): void => {
       exitCode: result.exitCode,
       stderr: result.stderr.toString(),
     }).toEqual({ exitCode: 0, stderr: "" });
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const branding = JSON.parse(
+    const branding: unknown = JSON.parse(
       await readFile(pathModule.join(electronDir, "branding.json"), "utf-8")
     );
     expect(branding).toEqual({
@@ -792,8 +804,11 @@ describe("scaffoldElectron", (): void => {
       orgName: "Test",
     });
     const icons = await Promise.all(
-      ["png", "icns", "ico"].map((extension) =>
-        readFile(pathModule.join(electronDir, "build", `icon.${extension}`))
+      ["png", "icns", "ico"].map(
+        async (extension) =>
+          await readFile(
+            pathModule.join(electronDir, "build", `icon.${extension}`)
+          )
       )
     );
     for (const icon of icons) {
@@ -832,6 +847,7 @@ describe("scaffoldElectron", (): void => {
       command: string;
       nodeEnv?: string;
     }[] = [];
+    let completedBuilds = 0;
     const context = createContext({ process: { env: {} } });
     const configPath = pathModule.join(electronDir, "forge.config.ts");
     const configModule = new SourceTextModule(outputText, {
@@ -848,6 +864,19 @@ describe("scaffoldElectron", (): void => {
 
       if (specifier === "node:child_process") {
         moduleExports = {
+          spawn: (
+            command: string,
+            args: readonly string[],
+            options: { readonly env: Readonly<NodeJS.ProcessEnv> }
+          ) => {
+            commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
+            const child = new ChildProcess();
+            queueMicrotask(() => {
+              completedBuilds += 1;
+              child.emit("close", 0);
+            });
+            return child;
+          },
           spawnSync: (
             command: string,
             args: readonly string[],
@@ -857,6 +886,8 @@ describe("scaffoldElectron", (): void => {
             return { status: 0 };
           },
         };
+      } else if (specifier === "node:events") {
+        moduleExports = { once };
       } else if (specifier === "node:fs") {
         moduleExports = { existsSync, readFileSync };
       } else if (specifier === "node:path") {
@@ -906,6 +937,7 @@ describe("scaffoldElectron", (): void => {
     await config.hooks.generateAssets();
     await config.hooks.preStart();
     await config.hooks.prePackage();
+    expect(completedBuilds).toBe(2);
     expect(commands).toEqual([
       { args: ["run", "prebuild"], command: "npm", nodeEnv: undefined },
       { args: ["run", "build"], command: "npm", nodeEnv: "development" },
@@ -1018,4 +1050,3 @@ describe("scaffoldElectron", (): void => {
     expect(workspaceConfig).toContain("sharp: true");
   });
 });
-/* oxlint-enable typescript/promise-function-async */

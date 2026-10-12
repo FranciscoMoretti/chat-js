@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
@@ -60,16 +62,13 @@ const authorizeDeletionRequest = async (
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): gatewaySessionPolicy intentionally keeps the existing falsy-value behavior of compactionSession; ordinaryCheckpoint; checkpointSession; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const gatewaySessionPolicy = (
   path: string,
   method: string
 ): ReturnType<typeof parseSessionRequest> | { sessionId: string } => {
   const compactionSession =
     method === "POST" && (compactionPath.exec(path) ?? [])[1];
-  if (compactionSession) {
+  if (typeof compactionSession === "string" && compactionSession.length > 0) {
     return { sessionId: compactionSession };
   }
   const ordinaryCheckpoint =
@@ -77,18 +76,17 @@ const gatewaySessionPolicy = (
     (checkpointLookupPath.exec(path) ?? [])[1];
   const namedCheckpoint =
     method === "GET" && (namedCheckpointLookupPath.exec(path) ?? [])[1];
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
+  const checkpointSession =
+    typeof ordinaryCheckpoint === "string" && ordinaryCheckpoint.length > 0
+      ? ordinaryCheckpoint
+      : namedCheckpoint;
 
-  if (checkpointSession) {
+  if (typeof checkpointSession === "string" && checkpointSession.length > 0) {
     return { sessionId: checkpointSession };
   }
   return parseSessionRequest(path, method);
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const readCreationReservation = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
@@ -108,7 +106,7 @@ const readCreationReservation = async (
     reservationId: command.data.operationId,
   });
   if (
-    !reservation ||
+    !(reservation !== undefined) ||
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
     reservation.state === "deleted" ||
@@ -118,16 +116,13 @@ const readCreationReservation = async (
   }
   return reservation.id;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): readGatewayAttributes intentionally keeps the existing falsy-value behavior of modelId; reservationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const readGatewayAttributes = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
 ): Promise<Record<string, string> | null> => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     await loadEveModelDefinition(modelId);
   }
   const toolHeader = request.headers.get("x-chatjs-tool");
@@ -141,7 +136,7 @@ const readGatewayAttributes = async (
   if (selectedTool.data) {
     attributes.selectedTool = selectedTool.data;
   }
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     attributes.modelId = modelId;
   }
   if (
@@ -149,7 +144,7 @@ const readGatewayAttributes = async (
     request.method === "POST"
   ) {
     const reservationId = await readCreationReservation(request, owner);
-    if (!reservationId) {
+    if (!isNonEmptyString(reservationId)) {
       return null;
     }
     // Derive this from the authenticated command and durable reservation, never a header.
@@ -157,7 +152,6 @@ const readGatewayAttributes = async (
   }
   return attributes;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const guestAttributesAllowed = (
   expiresAt: ReadonlyNativeSurface<Date>,
@@ -191,8 +185,6 @@ const ownsGatewaySession = async (
   return Boolean(await getEveSubagent(owner, sessionId));
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): authenticateEveGateway intentionally keeps the existing falsy-value behavior of owner; guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 export const authenticateEveGateway = async (
   request: ReadonlyNativeSurface<Request>
 ): Promise<{
@@ -212,7 +204,7 @@ export const authenticateEveGateway = async (
     return null;
   }
   const owner = request.headers.get("x-chatjs-owner");
-  if (!owner) {
+  if (!isNonEmptyString(owner)) {
     return null;
   }
   const path = new URL(request.url).pathname;
@@ -247,7 +239,7 @@ export const authenticateEveGateway = async (
   }
   const guest = await readEveGuestOwner(owner);
   if (
-    guest &&
+    guest !== undefined &&
     request.headers.get("x-chatjs-deletion") !== "1" &&
     !guestAttributesAllowed(
       guest.expiresAt,
@@ -257,7 +249,7 @@ export const authenticateEveGateway = async (
   ) {
     return null;
   }
-  if (guest) {
+  if (guest !== undefined) {
     attributes.chatjsGuest = "true";
   }
   return {
@@ -269,4 +261,3 @@ export const authenticateEveGateway = async (
     subject: owner,
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

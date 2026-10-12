@@ -23,11 +23,10 @@ type DeleteDocumentResponseContext = Readonly<
   }
 >;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const deleteDocument = defineTool({
   approval: {
-    request: (context: DeleteDocumentRequestContext) =>
-      requestDocumentDeletion(context.toolInput, context),
+    request: async (context: DeleteDocumentRequestContext) =>
+      await requestDocumentDeletion(context.toolInput, context),
     response: ({ responder, session }: DeleteDocumentResponseContext) => {
       if (responder.principalId === (session.initiator ?? {}).principalId) {
         return { status: "allowed" };
@@ -43,4 +42,3 @@ export const deleteDocument = defineTool({
   execute: executeDocumentDeletion,
   inputSchema: deleteDocumentInput,
 });
-/* oxlint-enable typescript/promise-function-async */

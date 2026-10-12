@@ -1,9 +1,8 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { mkdir } from "node:fs/promises";
 
 import type { Page, Request, Response } from "@playwright/test";
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
@@ -18,10 +17,10 @@ const conversationUrl = /\/chat\/[^/]+$/u;
 const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
 
-async function capture(
+const capture = async (
   page: Readonly<Pick<Page, "screenshot">>,
   name: string
-): Promise<void> {
+): Promise<void> => {
   await mkdir("tests/eve-results/screenshots", { recursive: true });
   await page.screenshot({
     animations: "disabled",
@@ -29,28 +28,26 @@ async function capture(
     style:
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
-}
+};
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.beforeEach(async ({ page }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   await expect(
     page.getByRole("heading", { exact: true, name: "Chat" })
   ).toBeVisible();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-async function create(page: Page, message: string): Promise<void> {
+const create = async (page: Page, message: string): Promise<void> => {
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(message);
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
-}
+};
 
 test("native transcript survives reload; streaming preserves the next draft; cancellation permits another send", async ({
   page,
@@ -247,9 +244,6 @@ test("lost creation reply retries the same conversation and access checks reject
   }
 });
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("exhausted credits block new messages but permit rejecting an approval") intentionally keeps the existing falsy-value behavior of owner; balance; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("exhausted credits block new messages but permit rejecting an approval", async ({
   page,
 }) => {
@@ -261,14 +255,14 @@ test("exhausted credits block new messages but permit rejecting an approval", as
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user.");
   }
   const [balance] = await db
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner.id));
-  if (!balance) {
+  if (balance === undefined) {
     throw new Error("Missing credit balance.");
   }
   try {
@@ -300,11 +294,7 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .where(eq(userCredit.userId, owner.id));
   }
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test("unknown completed usage prevents new admission until its cost is reconciled") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; usage; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("unknown completed usage prevents new admission until its cost is reconciled", async ({
   page,
   baseURL,
@@ -314,21 +304,27 @@ test("unknown completed usage prevents new admission until its cost is reconcile
     page.getByText("Verified: known zero-cost fixture", { exact: true })
   ).toBeVisible();
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
   }
   const [conversation] = await db
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session binding.");
   }
   const [usage] = await db
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, conversation.sessionId));
-  if (!usage) {
+  if (usage === undefined) {
     throw new Error("Missing fixture usage.");
   }
   try {
@@ -355,7 +351,6 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .where(eq(eveUsage.eventId, usage.eventId));
   }
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 test("normal navigation and sidebar search use Eve without sending to the old chat API", async ({
   page,
@@ -384,7 +379,8 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
       exact: true,
       name: "Expand sidebar",
     });
-    // oxlint-disable-next-line unicorn/prefer-ternary -- This browser flow awaits exactly one click based on the visible sidebar control; eslint/no-ternary also rejects the ternary form.
+
+    // oxlint-disable-next-line unicorn/prefer-ternary -- Each branch awaits a click on the appropriate sidebar control; configured no-ternary forbids the suggested alternate syntax.
     if (await expand.isVisible()) {
       await expand.click();
     } else {
@@ -410,23 +406,27 @@ test("unknown conversations and removed legacy APIs are unavailable", async ({
   page,
 }) => {
   const id = crypto.randomUUID();
+  /* oxlint-disable eslint/no-await-in-loop -- Navigate and inspect each 404 on the same browser page before the next navigation. */
   for (const path of [`/chat/${id}`, `/share/${id}`]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const legacySend = await page.request.post("/api/chat", { data: {} });
   expect(legacySend.status()).toBe(404);
-  for (const procedure of [
-    "getChatById",
-    "getChatMessages",
-    "getPublicChat",
-    "getPublicChatMessages",
-  ]) {
-    const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
-      params: { input: JSON.stringify({ json: { chatId: id } }) },
-    });
-    expect(response.status()).toBe(404);
-  }
+  await Promise.all(
+    [
+      "getChatById",
+      "getChatMessages",
+      "getPublicChat",
+      "getPublicChatMessages",
+    ].map(async (procedure) => {
+      const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
+        params: { input: JSON.stringify({ json: { chatId: id } }) },
+      });
+      expect(response.status()).toBe(404);
+    })
+  );
 });
 
 test("ChatJS editor supports Enter, multiline drafts and composition", async ({
@@ -460,6 +460,7 @@ test("stalled creation releases the composer and retries the retained operation"
   test.setTimeout(90_000);
   const attempts: unknown[] = [];
   let release: (() => void) | undefined;
+  // oxlint-disable-next-line promise/avoid-new -- This externally released void gate preserves its no-argument completion contract; native withResolvers<void>() is rejected by configured no-invalid-void-type.
   const stalled = new Promise<void>((resolve) => {
     release = resolve;
   });
@@ -559,9 +560,6 @@ test("reload before acceptance recovers a late message without resending", async
   await capture(page, "reload-recovered");
 });
 
-/* oxlint-disable typescript/strict-void-return --
- * typescript/strict-void-return (#611): test("reload retains text when the send never reaches the server")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 test("reload retains text when the send never reaches the server", async ({
   page,
 }) => {
@@ -571,9 +569,7 @@ test("reload retains text when the send never reaches the server", async ({
   ).toBeVisible();
   await page.route("**/api/eve/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
-      await new Promise((resolve) => {
-        setTimeout(resolve, 5000);
-      });
+      await delay(5000);
       await route.abort().catch(() => {
         /* Ignore abort errors when the route has already completed. */
       });
@@ -608,4 +604,3 @@ test("reload retains text when the send never reaches the server", async ({
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
   ).toBeVisible();
 });
-/* oxlint-enable typescript/strict-void-return */

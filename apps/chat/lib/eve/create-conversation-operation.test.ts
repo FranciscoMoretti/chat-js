@@ -1,4 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { z } from "zod";
+import type { eveRequest } from "./server";
+import type { createEveConversation } from "../db/eve-queries";
 
 import { CreationConflictError } from "@/lib/db/creation-conflict-error";
 import { CreationProjectNotFoundError } from "@/lib/db/creation-project-not-found-error";
@@ -7,11 +10,17 @@ import { createEveConversationOperation } from "./create-conversation-operation"
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 const mocks = vi.hoisted(() => ({
+  canSpend: vi.fn(),
   creation: vi.fn(),
-  readiness: vi.fn(),
+  readiness: vi.fn<() => Promise<void>>(),
   reconcile: vi.fn(),
-  request: vi.fn(),
-  reserve: vi.fn(),
+  request: vi.fn<typeof eveRequest>(),
+  reserve:
+    vi.fn<
+      (
+        ...args: Parameters<typeof createEveConversation>
+      ) => Promise<{ sessionId: string }>
+    >(),
   source: vi.fn(),
 }));
 vi.mock("./server", () => ({
@@ -33,23 +42,16 @@ vi.mock("@/lib/db/eve-guests", () => ({
     // This test exercises non-guest conversation creation.
   },
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("@/lib/db/credits") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("@/lib/db/credits", () => ({
-  canSpend: (): Promise<boolean> => Promise.resolve(true),
+  canSpend: mocks.canSpend,
 }));
-/* oxlint-enable typescript/promise-function-async */
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("./prepare-message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("./prepare-message", () => ({
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   prepareEveMessage: (message: string): Promise<string> =>
     Promise.resolve(message),
 }));
-/* oxlint-enable typescript/promise-function-async */
 vi.mock("./reconcile-usage", () => ({
   reconcileEveOwnerUsage: mocks.reconcile,
 }));
@@ -65,29 +67,26 @@ const input = {
   modelId: "openai/gpt-4o",
   operationId: "ba1d7f02-597b-47a7-a8de-20f700500f0d",
 };
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of path.startsWith("/eve/chat/v1/operation/"); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.canSpend.mockResolvedValue(true);
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
   mocks.reserve.mockImplementation(
     async (_owner, operationId, _title, dispatch) => ({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       sessionId: await dispatch(operationId),
     })
   );
+  // oxlint-disable-next-line typescript/promise-function-async -- The response varies by route; the fixture resolves locally without I/O to await.
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })
     )
   );
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
+
 it("does not allocate a native child before the initial checkpoint is ready", async () => {
   mocks.readiness.mockRejectedValue(new Error("pending"));
   const response = await createEveConversationOperation("owner", input);
@@ -96,22 +95,16 @@ it("does not allocate a native child before the initial checkpoint is ready", as
 
   expect(
     mocks.request.mock.calls.map(
-      (call: Readonly<(typeof mocks.request.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return -- #598: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
-        call[1]
-      /* oxlint-enable typescript/no-unsafe-return */
+      (call: Readonly<(typeof mocks.request.mock.calls)[number]>) => call[1]
     )
   ).toEqual([`/eve/chat/v1/operation/${input.operationId}`]);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.readiness.mockResolvedValue(undefined);
+  mocks.readiness.mockResolvedValue();
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
+  expect(mocks.request.mock.calls.at(-1)?.[2]?.body).toContain(
     input.operationId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
+  expect(mocks.request.mock.calls.at(-1)?.[2]?.body).toContain(
     '"beforeTurnId":"turn_0"'
   );
 });
@@ -149,7 +142,7 @@ it("recovers an already allocated native operation without needing its checkpoin
   expect(mocks.request).toHaveBeenCalledOnce();
 });
 it("refuses a foreign or deleted source before reservation or checkpoint access", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.source.mockResolvedValue(undefined);
   const resolvedResult2 = await createEveConversationOperation(
     "stranger",
@@ -172,9 +165,11 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     "turn_0",
     checkpointId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const body = JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  const body = z
+    .object({ fork: z.unknown() })
+    .parse(
+      JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
+    );
   expect(body.fork).toEqual({
     beforeTurnId: "turn_0",
     checkpointId,
@@ -189,11 +184,9 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
   } satisfies Parameters<typeof createEveConversationOperation>[1];
   const response = await createEveConversationOperation("owner", regeneration);
   expect(response.status).toBe(200);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.reserve.mock.calls.at(-1)?.[4].forkKind).toBe("regenerate");
+  expect(mocks.reserve.mock.calls.at(-1)?.[4]?.forkKind).toBe("regenerate");
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body)
+    JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
   ).not.toHaveProperty("forkKind");
 });
 
@@ -220,8 +213,13 @@ it("dispatches imported forks by message identity without requiring an execution
   );
   expect(resolvedResult4.status).toBe(200);
   expect(mocks.readiness).not.toHaveBeenCalled();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body).fork).toEqual({
+  expect(
+    z
+      .object({ fork: z.unknown() })
+      .parse(
+        JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
+      ).fork
+  ).toEqual({
     beforeMessageId: "seed_message_2",
     sessionId: "source",
   });
@@ -244,15 +242,13 @@ it("forwards selected tools on creation and includes them in the reservation ide
     selectedTool: "webSearch",
   });
   expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
+  const originalHash = mocks.reserve.mock.calls.at(-1)?.[4]?.initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
     ...input,
     selectedTool: "deepResearch",
   });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
+  expect(mocks.reserve.mock.calls.at(-1)?.[4]?.initialContentHash).not.toBe(
     originalHash
   );
 });
@@ -260,8 +256,7 @@ it("forwards selected tools on creation and includes them in the reservation ide
 it("persists a compact fallback title before native creation", async () => {
   await createEveConversationOperation("owner", input);
 
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialTitle).toBe(
+  expect(mocks.reserve.mock.calls.at(-1)?.[4]?.initialTitle).toBe(
     "Fallback: compare"
   );
 });
@@ -271,8 +266,7 @@ it("journals the complete creation command before dispatch so another tab can re
     typeof createEveConversationOperation
   >[1];
   await createEveConversationOperation("owner", command);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
+  expect(mocks.reserve.mock.calls.at(-1)?.[4]?.initialRequest).toEqual(command);
 });
 
 it("recovers an accepted fork after the source was deleted", async () => {
@@ -280,7 +274,7 @@ it("recovers an accepted fork after the source was deleted", async () => {
     creationKind: "message",
     state: "uncertain",
   });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.source.mockResolvedValue(undefined);
   mocks.request.mockResolvedValue(
     Response.json({ sessionId: "accepted-child" })
@@ -297,8 +291,7 @@ it("preserves creation identity when billing recovery is busy", async () => {
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(503);
   expect(response.headers.get("Retry-After")).toBe("2");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  const body = await response.json();
+  const body: unknown = await response.json();
   expect(body).toMatchObject({
     code: "usage_reconciliation_busy",
     retryable: true,

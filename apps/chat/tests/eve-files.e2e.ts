@@ -1,8 +1,8 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
@@ -75,16 +75,15 @@ test("server-created file ownership is retryable but cannot be reassigned", asyn
 });
 
 test("registration rejects URLs and invalid storage keys", async () => {
-  for (const key of [
-    "../file",
-    "https://example.com/file.png",
-    "",
-    "a".repeat(25),
-  ]) {
-    await expect(registerEveStoredFile(owner, key)).rejects.toThrow(
-      "Invalid file ownership"
-    );
-  }
+  await Promise.all(
+    ["../file", "https://example.com/file.png", "", "a".repeat(25)].map(
+      async (key) => {
+        await expect(registerEveStoredFile(owner, key)).rejects.toThrow(
+          "Invalid file ownership"
+        );
+      }
+    )
+  );
 });
 
 test("references reject foreign files and become immutable behind the deletion fence", async () => {
@@ -131,7 +130,7 @@ test("fork reservation retains the source file references before dispatch", asyn
     owner,
     crypto.randomUUID(),
     "source",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, key);
@@ -189,21 +188,23 @@ test("attachment creation commits references before dispatch with a single appli
   }
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("generated file reservations survive storage failure and cannot write after dele preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("generated file reservations survive storage failure and cannot write after deletion begins", async () => {
   const conversation = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "generated",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
   await expect(
-    writeEveGeneratedFile(owner, conversation.id, key, () =>
-      Promise.reject(new Error("storage failed"))
+    writeEveGeneratedFile(
+      owner,
+      conversation.id,
+      key,
+      vi
+        .fn<() => Promise<void>>()
+        .mockRejectedValue(new Error("storage failed"))
     )
   ).rejects.toThrow("storage failed");
   expect(
@@ -215,24 +216,29 @@ test("generated file reservations survive storage failure and cannot write after
   await beginEveConversationDeletion(owner, conversation.id);
   let wrote = false;
   await expect(
-    writeEveGeneratedFile(owner, conversation.id, key, () => {
-      wrote = true;
-      return Promise.resolve();
-    })
+    writeEveGeneratedFile(
+      owner,
+      conversation.id,
+      key,
+      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+      async () => {
+        wrote = true;
+      }
+      /* oxlint-enable eslint/require-await */
+    )
   ).rejects.toThrow("unavailable");
   expect(wrote).toBe(false);
   await expect(
     reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("deletion waits for an admitted generated-file write before fencing the family", async () => {
   const conversation = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "writing",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
@@ -278,13 +284,13 @@ test("file purge preserves outside references and keeps durable progress across 
     owner,
     crypto.randomUUID(),
     "purge",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const survivor = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "survivor",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const [targetRow] = await db
     .select({ chatId: eveConversation.chatId })
@@ -327,13 +333,13 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     owner,
     crypto.randomUUID(),
     "first",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const second = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "second",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const [firstRow] = await db
     .select({ chatId: eveConversation.chatId })
@@ -419,9 +425,6 @@ test("upload reservations are durable and reject existing identities even for th
   );
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("orphan cleanup retains references and young uploads and retries reappearing tom preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("orphan cleanup retains references and young uploads and retries reappearing tombstones", async () => {
   const keys = Array.from({ length: 5 }, () =>
     crypto.randomUUID().replaceAll("-", "").slice(0, 24)
@@ -441,7 +444,7 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     owner,
     crypto.randomUUID(),
     "retained reference",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   await referenceEveFiles(owner, conversation.id, [referenced]);
   const cutoff = new Date("2026-01-01");
@@ -466,10 +469,15 @@ test("orphan cleanup retains references and young uploads and retries reappearin
   ).rejects.toThrow("not owned");
   let wrote = false;
   await expect(
-    writeEveUpload(owner, orphan, () => {
-      wrote = true;
-      return Promise.resolve();
-    })
+    writeEveUpload(
+      owner,
+      orphan,
+      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+      async () => {
+        wrote = true;
+      }
+      /* oxlint-enable eslint/require-await */
+    )
   ).rejects.toThrow("unavailable");
   expect(wrote).toBe(false);
   expect(await isEveFileUnavailable(orphan)).toBe(true);
@@ -481,7 +489,6 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     { key: orphan, ownerId: owner },
   ]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("orphan cleanup waits for an admitted upload before committing its fence", async () => {
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);

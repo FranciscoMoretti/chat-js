@@ -53,9 +53,6 @@ test("retains reported costs only for explicitly reported domain failures", asyn
   expect(JSON.stringify(result)).not.toContain("credentials");
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each([
   new Error("Unexpected provider failure"),
   { authorization: "required" },
@@ -70,13 +67,12 @@ test.each([
     ).rejects.toBe(failure);
     await expect(
       Array.fromAsync(
-        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #785: Preserve the plain-object provider rejection reason; the assertion checks rejection identity.
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/promise-function-async -- Preserve the plain-object provider rejection identity; this fixture has no asynchronous operation to await.
         executeWithToolProgress(context(), () => Promise.reject(failure))
       )
     ).rejects.toBe(failure);
   }
 );
-/* oxlint-enable typescript/promise-function-async */
 
 test("cancellation propagates before and during execution", async () => {
   const controller = new AbortController();

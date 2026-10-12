@@ -1,6 +1,5 @@
 import { mkdir } from "node:fs/promises";
 
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import { eq, inArray } from "drizzle-orm";
 
@@ -13,21 +12,19 @@ const metadataTitle = /renamed|metadata newer/u;
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("rename and pin persist, preserve input, and reject another owner's changes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("rename and pin persist, preserve input, and reject another owner's changes") intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("rename and pin persist, preserve input, and reject another owner's changes", async ({
   page,
   browser,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const ids = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
@@ -127,15 +124,17 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       .toBe(false);
     await page.reload();
     await expect(conversationLinks.first()).toHaveText(secondTitle);
-    for (const { procedure, input } of [
-      { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
-      { input: { id: ids[2], isPinned: true }, procedure: "pin" },
-    ]) {
-      const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
-        data: { json: input },
-      });
-      expect(response.status()).toBe(404);
-    }
+    await Promise.all(
+      [
+        { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
+        { input: { id: ids[2], isPinned: true }, procedure: "pin" },
+      ].map(async ({ procedure, input }) => {
+        const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
+          data: { json: input },
+        });
+        expect(response.status()).toBe(404);
+      })
+    );
     const invalid = await page.request.post("/api/trpc/eve.rename", {
       data: { json: { id: ids[0], title: "  " } },
     });
@@ -177,4 +176,3 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

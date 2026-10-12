@@ -90,9 +90,9 @@ const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
 > {
   let cursor: string | undefined;
   do {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each page requires the preceding cursor.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The next inventory page needs this page's cursor; resolve only this page's file-ID mapping before yielding and fetching another page.
     const page = await getFiles().list({ cursor, limit: INVENTORY_PAGE_SIZE });
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Resolve only the current inventory page.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The next inventory page needs this page's cursor; resolve only this page's file-ID mapping before yielding and fetching another page.
     const ids = await fileIdsForStorageKeys(
       page.items.map((file: { readonly key: string }) => file.key)
     );

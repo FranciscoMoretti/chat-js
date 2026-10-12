@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
@@ -53,8 +54,7 @@ for (const runtime of ["nodejs", "edge"]) {
         throw new Error("Missing register export");
       }
       await (fail
-        ? // oxlint-disable-next-line typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-          expect(exports.register()).rejects.toBe(failure)
+        ? rejects(exports.register(), (reason: unknown) => reason === failure)
         : exports.register());
       expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
       expect(events).toEqual([

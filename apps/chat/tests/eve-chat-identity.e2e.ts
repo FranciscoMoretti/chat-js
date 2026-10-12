@@ -8,15 +8,13 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("generated chat identity stays selected across edited branch paths") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("generated chat identity stays selected across edited branch paths") intentionally keeps the existing falsy-value behavior of chat; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("generated chat identity stays selected across edited branch paths", async ({
   page,
 }, testInfo) => {
   test.setTimeout(150_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
@@ -60,7 +58,7 @@ test("generated chat identity stays selected across edited branch paths", async 
       )
       .toBe("generated");
     const chat = await readChat();
-    if (!chat) {
+    if (chat === undefined) {
       throw new Error("Missing test chat identity");
     }
     const title = page
@@ -135,4 +133,3 @@ test("generated chat identity stays selected across edited branch paths", async 
       .toBe(200);
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

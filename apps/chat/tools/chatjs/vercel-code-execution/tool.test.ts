@@ -172,12 +172,10 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
   const execution = Promise.withResolvers<never>();
   const cleanup = Promise.withResolvers<undefined>();
   mocks.javascript.mockReturnValue(execution.promise);
-  /* oxlint-disable typescript/promise-function-async -- Reject execution as the cleanup side effect, then return the exact deferred cleanup promise observed by the test. */
-  mocks.cleanup.mockImplementation(() => {
+  mocks.cleanup.mockImplementation(async () => {
     execution.reject(new Error("Sandbox stopped"));
-    return cleanup.promise;
+    await cleanup.promise;
   });
-  /* oxlint-enable typescript/promise-function-async */
   const controller = new AbortController();
   const result = codeExecution.execute?.(
     {

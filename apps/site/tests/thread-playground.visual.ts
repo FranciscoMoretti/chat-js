@@ -25,7 +25,6 @@ const capture = async (
   });
 };
 
-/* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
@@ -37,7 +36,7 @@ try {
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto(`http://localhost:${process.env.PORT}/threads`);
   await page.getByTestId("thread-playground").waitFor();
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => await document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
   const intro = page.locator("main > section").first();
   assert.match(
@@ -52,8 +51,9 @@ try {
   assert.equal(await docsLinks.count(), 2);
   const links = await docsLinks.all();
   const hrefs = await Promise.all(
-    links.map((link: Pick<Locator, "getAttribute">) =>
-      link.getAttribute("href")
+    links.map(
+      async (link: Pick<Locator, "getAttribute">) =>
+        await link.getAttribute("href")
     )
   );
   for (const href of hrefs) {
@@ -291,4 +291,3 @@ try {
 } finally {
   await browser.close();
 }
-/* oxlint-enable typescript/promise-function-async */

@@ -122,7 +122,6 @@ const assertConnector = (
   return connector;
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const withConnector = async <T>(
   connector: Readonly<
     Pick<
@@ -150,33 +149,33 @@ const withConnector = async <T>(
     url: connector.url,
   });
   let closing: Promise<void> | undefined;
-  const close = (): Promise<void> => {
+  const close = async (): Promise<void> => {
     closing ??= client.close();
-    return closing;
+    await closing;
   };
   const cancel = (): void => {
     void close();
   };
   signal.addEventListener("abort", cancel, { once: true });
   try {
-    await withAbort(() => client.connect(undefined, signal), signal);
+    await withAbort(
+      async () => await client.connect(undefined, signal),
+      signal
+    );
     signal.throwIfAborted();
     if (client.status !== "connected") {
       throw new Error(
         "Connect this MCP server in settings before using its tools."
       );
     }
-    const tools = await withAbort(() => client.tools(), signal);
+    const tools = await withAbort(async () => await client.tools(), signal);
     signal.throwIfAborted();
-    return await withAbort(() => run(tools), signal);
+    return await withAbort(async () => await run(tools), signal);
   } finally {
     signal.removeEventListener("abort", cancel);
     await close();
   }
 };
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Discovers serializable MCP descriptions while closing every opened connector client.
  * @param {string | undefined} ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
@@ -204,7 +203,7 @@ const discoverEveMcpTools = async (
   }
   requireMcpCredentials();
   const connectors = await withAbort(
-    () => getMcpConnectorsByUserId({ userId: ownerId }),
+    async () => await getMcpConnectorsByUserId({ userId: ownerId }),
     signal
   );
   const descriptions: (Awaited<ReturnType<typeof describeMcpTool>> & {
@@ -278,7 +277,6 @@ const discoverEveMcpTools = async (
   }
   return descriptions;
 };
-/* oxlint-enable typescript/promise-function-async */
 
 const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   const schema = await asSchema(tool.inputSchema).jsonSchema;
@@ -332,7 +330,6 @@ const validateMcpInput = async (
   }
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const executeEveMcpTool = async (
   connectorId: string,
   remoteName: string,
@@ -347,7 +344,7 @@ const executeEveMcpTool = async (
   context.abortSignal.throwIfAborted();
   const connector = assertConnector(
     await withAbort(
-      () => getMcpConnectorById({ id: connectorId }),
+      async () => await getMcpConnectorById({ id: connectorId }),
       context.abortSignal
     ),
     ownerId
@@ -389,9 +386,6 @@ const executeEveMcpTool = async (
     });
   });
 };
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Evaluates current MCP approval policy using serializable identifiers and a temporary client.
  * @param {string} connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
@@ -415,7 +409,10 @@ const requestEveMcpApproval = async (
     AbortSignal.timeout(MCP_APPROVAL_TIMEOUT_MS),
   ]);
   const connector = assertConnector(
-    await withAbort(() => getMcpConnectorById({ id: connectorId }), signal),
+    await withAbort(
+      async () => await getMcpConnectorById({ id: connectorId }),
+      signal
+    ),
     ownerId
   );
   return await withConnector(connector, signal, async (tools) => {
@@ -430,7 +427,6 @@ const requestEveMcpApproval = async (
     return "not-applicable";
   });
 };
-/* oxlint-enable typescript/promise-function-async */
 
 export {
   discoverEveMcpTools,

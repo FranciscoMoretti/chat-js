@@ -77,8 +77,6 @@ const LegacyMessageActionsReference = ({
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): LegacyUserMessageReference intentionally keeps the existing falsy-value behavior of selection?.toString(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
-
 /** Frozen UserMessage layout with provider-backed dependencies adapted to props. */
 const LegacyUserMessageReference = ({
   editor,
@@ -135,7 +133,8 @@ const LegacyUserMessageReference = ({
             ) => {
               const selection = globalThis.getSelection();
               if (
-                selection?.toString() &&
+                selection !== null &&
+                selection.toString() !== "" &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {
                 return;
@@ -173,5 +172,5 @@ const LegacyUserMessageReference = ({
     </Message>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 export { LegacyMessageActionsReference, LegacyUserMessageReference };

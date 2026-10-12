@@ -3,9 +3,6 @@ import { execFileSync } from "node:child_process";
 import type { Page, Route, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("response cards preserve layout and select native candidates on desktop and mobi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 // Dense state gallery uses the real application CSS and components, without a server or database.
 test("response cards preserve layout and select native candidates on desktop and mobile", async ({
   page,
@@ -28,12 +25,12 @@ test("response cards preserve layout and select native candidates on desktop and
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://eve-cards.test/", (route: Route) =>
-    route.fulfill({
+  await page.route("http://eve-cards.test/", async (route: Route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("http://eve-cards.test/");
   await page.addScriptTag({ content: script, type: "module" });
   const cards = page.getByRole("region", { name: "Eve response states" });
@@ -97,4 +94,3 @@ test("response cards preserve layout and select native candidates on desktop and
   ).toBe(true);
   expect(errors).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */

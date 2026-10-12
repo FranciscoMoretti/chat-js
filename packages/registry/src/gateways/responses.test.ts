@@ -20,8 +20,9 @@ const fallback: AiGatewayModel = {
 };
 const adapters = [OpenAIGateway, OpenAICompatibleGateway, OpenRouterGateway];
 
-test("provider models keep nullable defaults, unknown fields, and live IDs", async (): Promise<void> => {
-  for (const Adapter of adapters) {
+test.each(adapters)(
+  "%p models keep nullable defaults, unknown fields, and live IDs",
+  async (Adapter): Promise<void> => {
     const gateway = new Adapter({
       env: {
         OPENAI_API_KEY: "test",
@@ -45,38 +46,41 @@ test("provider models keep nullable defaults, unknown fields, and live IDs", asy
         })
       ),
     });
-    // oxlint-disable-next-line no-await-in-loop -- Each adapter must independently convert the same wire fixture.
     const models = await gateway.fetchModels();
     expect(models).toMatchObject([
       { context_window: 0, created: 0, id: "new/provider-id", max_tokens: 0 },
     ]);
   }
-});
+);
 
-test("malformed provider envelopes use the existing catalog fallback", async (): Promise<void> => {
-  for (const Adapter of adapters) {
-    for (const body of [
-      {},
-      { data: null },
-      { data: "invalid" },
-      { data: [null] },
-      { data: [{ id: false }] },
-      { data: [{ created: "invalid", id: "model" }] },
-    ]) {
-      const gateway = new Adapter({
-        env: {
-          OPENAI_API_KEY: "test",
-          OPENAI_COMPATIBLE_BASE_URL: "https://example.com",
-          OPENROUTER_API_KEY: "test",
-        },
-        fetch: mock().mockResolvedValue(Response.json(body)),
-        getFallbackModels: (): AiGatewayModel[] => [fallback],
-      });
-      // oxlint-disable-next-line no-await-in-loop -- Exercise each malformed envelope through every independent adapter boundary.
-      expect(await gateway.fetchModels()).toEqual([fallback]);
-    }
+const malformedEnvelopes = [
+  {},
+  { data: null },
+  { data: "invalid" },
+  { data: [null] },
+  { data: [{ id: false }] },
+  { data: [{ created: "invalid", id: "model" }] },
+];
+
+test.each(
+  adapters.flatMap((Adapter) =>
+    malformedEnvelopes.map((body) => ({ Adapter, body }))
+  )
+)(
+  "malformed provider envelopes use the existing catalog fallback: %p",
+  async ({ Adapter, body }): Promise<void> => {
+    const gateway = new Adapter({
+      env: {
+        OPENAI_API_KEY: "test",
+        OPENAI_COMPATIBLE_BASE_URL: "https://example.com",
+        OPENROUTER_API_KEY: "test",
+      },
+      fetch: mock().mockResolvedValue(Response.json(body)),
+      getFallbackModels: (): AiGatewayModel[] => [fallback],
+    });
+    expect(await gateway.fetchModels()).toEqual([fallback]);
   }
-});
+);
 
 test("OpenRouter rejects malformed modality fields", async (): Promise<void> => {
   const gateway = new OpenRouterGateway({
@@ -91,8 +95,9 @@ test("OpenRouter rejects malformed modality fields", async (): Promise<void> => 
   expect(await gateway.fetchModels()).toEqual([fallback]);
 });
 
-test("valid catalog entries survive malformed neighbors in original order", async (): Promise<void> => {
-  for (const Adapter of adapters) {
+test.each(adapters)(
+  "%p valid catalog entries survive malformed neighbors in original order",
+  async (Adapter): Promise<void> => {
     const gateway = new Adapter({
       env: {
         OPENAI_API_KEY: "test",
@@ -112,17 +117,17 @@ test("valid catalog entries survive malformed neighbors in original order", asyn
       ),
       getFallbackModels: (): AiGatewayModel[] => [fallback],
     });
-    // oxlint-disable-next-line no-await-in-loop -- Each independent adapter must preserve the same valid entry order.
     const models = await gateway.fetchModels();
     expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
       "first",
       "second",
     ]);
   }
-});
+);
 
-test("an explicit empty catalog stays empty instead of using fallback", async (): Promise<void> => {
-  for (const Adapter of adapters) {
+test.each(adapters)(
+  "%p explicit empty catalog stays empty instead of using fallback",
+  async (Adapter): Promise<void> => {
     const gateway = new Adapter({
       env: {
         OPENAI_API_KEY: "test",
@@ -132,10 +137,9 @@ test("an explicit empty catalog stays empty instead of using fallback", async ()
       fetch: mock().mockResolvedValue(Response.json({ data: [] })),
       getFallbackModels: (): AiGatewayModel[] => [fallback],
     });
-    // oxlint-disable-next-line no-await-in-loop -- Check the empty wire contract on every adapter.
     expect(await gateway.fetchModels()).toEqual([]);
   }
-});
+);
 
 const capabilityModelResponse = {
   data: [

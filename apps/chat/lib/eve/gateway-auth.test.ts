@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Exercise each denied child mutation independently. */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { authenticateEveGateway } from "./gateway-auth";
@@ -39,9 +38,9 @@ const reservationId = "01912345-1234-7123-8123-123456789abc";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.child.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.guest.mockResolvedValue(undefined);
   mocks.mapping.mockResolvedValue({
     id: reservationId,
@@ -77,7 +76,7 @@ it.each([
       principalId: "owner",
     });
     expect(mocks.deleting).toHaveBeenCalledWith("owner", "session");
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
     mocks.deleting.mockResolvedValue(undefined);
     expect(await authenticateEveGateway(request(path, method))).toBeNull();
   }
@@ -190,21 +189,22 @@ it("only allows fenced descendants of an owner-matched deleting root", async () 
     "root",
     "child"
   );
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.deleting.mockResolvedValue(undefined);
   expect(await authenticateEveGateway(read)).toBeNull();
 });
 it("root proof headers cannot authorize descendant mutations or transcript reads", async () => {
   mocks.descendant.mockResolvedValue(true);
-  for (const [path, method] of [
-    ["reset", "POST"],
-    ["stream", "GET"],
-  ]) {
-    const read = request(`/eve/v1/session/child/${path}`, method);
-    read.headers.set("x-chatjs-deletion-root", "root");
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    expect(await authenticateEveGateway(read)).toBeNull();
-  }
+  await Promise.all(
+    [
+      ["reset", "POST"],
+      ["stream", "GET"],
+    ].map(async ([path, method]) => {
+      const read = request(`/eve/v1/session/child/${path}`, method);
+      read.headers.set("x-chatjs-deletion-root", "root");
+      expect(await authenticateEveGateway(read)).toBeNull();
+    })
+  );
   expect(mocks.descendant).not.toHaveBeenCalled();
 });
 it("accepts only a known tool selection as a gateway attribute", async () => {
@@ -291,10 +291,8 @@ it("does not let a seed reservation use the message operation namespace", async 
     attributes: { chatjsReservationId: reservationId },
   });
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("authorizes owned child streams without granting child mutation or cross-owner acc preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
+  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
   mocks.child.mockImplementation((owner, session) => {
     if (owner === "owner" && session === "child") {
       return Promise.resolve({ rootSessionId: "root" });
@@ -310,20 +308,21 @@ it("authorizes owned child streams without granting child mutation or cross-owne
   expect(await authenticateEveGateway(read)).toMatchObject({
     principalId: "owner",
   });
-  for (const suffix of ["", "/cancel", "/reset"]) {
-    expect(
-      await authenticateEveGateway(
-        new Request(`http://localhost/eve/v1/session/child${suffix}`, {
-          headers: read.headers,
-          method: "POST",
-        })
-      )
-    ).toBeNull();
-  }
+  await Promise.all(
+    ["", "/cancel", "/reset"].map(async (suffix) => {
+      expect(
+        await authenticateEveGateway(
+          new Request(`http://localhost/eve/v1/session/child${suffix}`, {
+            headers: read.headers,
+            method: "POST",
+          })
+        )
+      ).toBeNull();
+    })
+  );
   const foreign = new Headers(read.headers);
   foreign.set("x-chatjs-owner", "other");
   expect(
     await authenticateEveGateway(new Request(read.url, { headers: foreign }))
   ).toBeNull();
 });
-/* oxlint-enable typescript/promise-function-async */

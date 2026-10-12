@@ -17,9 +17,6 @@ const originalModel = "google/gemini-2.5-flash-lite";
 const selectedModel = "google/gemini-2.5-flash";
 const answer = /^provenance-ready\.?$/iu;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("copied responses regenerate with their original model after reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copied responses regenerate with their original model after reload", async ({
   page,
 }, testInfo: Readonly<{
@@ -29,7 +26,9 @@ test("copied responses regenerate with their original model after reload", async
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", {
     data: { model: originalModel },
@@ -134,4 +133,3 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 30_000,
   });
 });
-/* oxlint-enable typescript/promise-function-async */

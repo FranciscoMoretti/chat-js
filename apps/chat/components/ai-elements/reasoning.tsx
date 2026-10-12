@@ -122,8 +122,7 @@ const useReasoningAutoClose = ({
 }: ReasoningAutoCloseOptions): void => {
   const [hasAutoClosed, setHasAutoClosed] = useState(false);
 
-  // oxlint-disable-next-line typescript/consistent-return -- The effect returns cleanup only when it installed a timer; inactive branches intentionally install no resource.
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (defaultOpen && !isStreaming && isOpen && !hasAutoClosed) {
       const timer = setTimeout(() => {
         setIsOpen(false);
@@ -134,6 +133,7 @@ const useReasoningAutoClose = ({
         clearTimeout(timer);
       };
     }
+    return undefined;
   }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosed]);
 };
 

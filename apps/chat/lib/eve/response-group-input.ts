@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -7,7 +9,6 @@ import { eveForkInput } from "./contracts";
 import { eveMessageInput } from "./message-input";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): eveResponseGroupInput intentionally keeps the existing falsy-value behavior of input.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 export const eveResponseGroupInput = z
   .object({
     operationId: z.uuid(),
@@ -20,15 +21,17 @@ export const eveResponseGroupInput = z
   })
   .strict()
   .refine(
-    (input: { readonly fork?: unknown; readonly projectId?: string }) =>
-      !(input.fork && input.projectId),
+    (input: {
+      readonly fork?: z.infer<typeof eveForkInput>;
+      readonly projectId?: string;
+    }) => !(input.fork !== undefined && isNonEmptyString(input.projectId)),
     "Forks inherit their source project."
   )
   .refine(
     (input: {
       readonly forkKind?: "edit" | "comparison";
-      readonly fork?: unknown;
-    }) => !input.forkKind || input.fork,
+      readonly fork?: z.infer<typeof eveForkInput>;
+    }) => !input.forkKind || input.fork !== undefined,
     "Fork intent requires a source conversation."
   )
   .transform(
@@ -70,4 +73,3 @@ export const eveResponseGroupInput = z
       operationId: input.operationId.toLowerCase(),
     })
   );
-/* oxlint-enable typescript/strict-boolean-expressions */

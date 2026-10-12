@@ -73,13 +73,13 @@ const resolvePageResponse = ({
   }
 
   if (isAuthPage(pathname) || isPublicPage(pathname)) {
-    // oxlint-disable-next-line typescript/consistent-return -- Public/authentication pages pass through; protected pages may produce a native redirect response.
-    return;
+    return undefined;
   }
 
   if (!isLoggedIn) {
     return NextResponse.redirect(new URL("/login", url));
   }
+  return undefined;
 };
 
 export const proxy = async (
@@ -97,7 +97,7 @@ export const proxy = async (
     isPlaywrightTestEnvironment
   ) {
     // API/metadata and anonymous Playwright requests never reach session I/O.
-    return;
+    return undefined;
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
@@ -105,7 +105,6 @@ export const proxy = async (
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);
 
-  // oxlint-disable-next-line typescript/consistent-return -- Metadata/public API and fixture requests pass through; page requests may produce the native redirect response.
   return resolvePageResponse({
     isDeviceLoginRoute,
     isLoggedIn,

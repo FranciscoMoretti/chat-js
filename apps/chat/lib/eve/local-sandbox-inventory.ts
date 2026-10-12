@@ -86,7 +86,7 @@ const readLocalEveSandboxInventory = async (
       unattributedDirectories.push(sessionDirectory);
       continue;
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Read and classify sorted owner.json records one at a time to bound raw owner-file memory and preserve deterministic owned/unattributed output.
     const raw = await readFile(
       nodePath.join(sessionDirectory, "owner.json"),
       "utf-8"

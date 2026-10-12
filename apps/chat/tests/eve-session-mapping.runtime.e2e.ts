@@ -2,6 +2,7 @@ import { setTimeout } from "node:timers/promises";
 
 import { eq } from "drizzle-orm";
 import { expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
@@ -28,22 +29,24 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
       expect(response.ok).toBe(true);
       // Hold the native response inside the transport: the caller cannot bind.
       const deadline = Date.now() + 25_000;
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
-      const session = await response.clone().json();
+
+      const session = z
+        .looseObject({ sessionId: z.string() })
+        .parse(await response.clone().json());
+      /* oxlint-disable eslint/no-await-in-loop -- Each poll observes the worker before the next bounded delay and exits when binding completes. */
       while (Date.now() < deadline) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Observe the independent real worker while the HTTP caller is held.
         const [row] = await db
           .select()
           .from(eveConversation)
-          // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
+
           .where(eq(eveConversation.sessionId, session.sessionId));
         if (row?.state === "bound") {
           probe.beforeResponse = true;
           break;
         }
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound polling while the worker executes its hook.
         await setTimeout(100);
       }
+      /* oxlint-enable eslint/no-await-in-loop */
       throw new TypeError("Injected lost native response after acceptance");
     },
   };
@@ -83,9 +86,6 @@ test("real native hook binds before a lost response, and retry keeps the accepte
   expect(probe.dispatches).toBe(1);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("native acceptance deduplicates concurrent callers and rejects foreign or forged preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("native acceptance deduplicates concurrent callers and rejects foreign or forged identity", async () => {
   const actual = await vi.importActual<{ eveRequest: typeof eveRequest }>(
     "../lib/eve/server"
@@ -125,13 +125,14 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       });
       expect(forged.status).toBe(403);
       const responses = await Promise.all(
-        [0, 1].map(() =>
-          actual.eveRequest(
-            owner,
-            "/eve/chat/v1/session",
-            init,
-            "google/gemini-2.5-flash-lite"
-          )
+        [0, 1].map(
+          async () =>
+            await actual.eveRequest(
+              owner,
+              "/eve/chat/v1/session",
+              init,
+              "google/gemini-2.5-flash-lite"
+            )
         )
       );
       expect(
@@ -140,18 +141,17 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
         )
       ).toEqual([202, 202]);
       const receipts = await Promise.all(
-        responses.map((response: Readonly<Pick<Response, "json">>) =>
-          response.json()
+        responses.map(async (response: Readonly<Pick<Response, "json">>) =>
+          z.object({ sessionId: z.string() }).parse(await response.json())
         )
       );
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
+
       expect(receipts[0].sessionId).toBe(receipts[1].sessionId);
       const ownReceipt = await actual.eveRequest(
         owner,
         `/eve/chat/v1/operation/${reservationId}`
       );
       expect(await ownReceipt.json()).toMatchObject({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
         sessionId: receipts[0].sessionId,
       });
       const foreignReceipt = await actual.eveRequest(
@@ -159,7 +159,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
         `/eve/chat/v1/operation/${reservationId}`
       );
       expect(foreignReceipt.status).toBe(404);
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
+
       return receipts[0].sessionId;
     }
   );
@@ -168,4 +168,3 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
     state: "bound",
   });
 });
-/* oxlint-enable typescript/promise-function-async */

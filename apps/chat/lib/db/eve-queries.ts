@@ -309,8 +309,7 @@ const getEveChatPageConversation = async (
     .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
     .limit(SINGLE_MATCH_LIMIT);
   if (!hasQueryRow(logical)) {
-    // oxlint-disable-next-line typescript/consistent-return -- A missing owned chat resolves to undefined; spelling the absent value explicitly conflicts with the pinned no-undefined rule.
-    return;
+    return undefined;
   }
   if (isNonemptyString(logical.activeConversationId)) {
     const active = await getEveConversation(
@@ -520,6 +519,48 @@ const assignCreationProject = async (
     .onConflictDoNothing();
 };
 
+const resolveCreationChat = async (
+  tx: CreationTransactionView,
+  value: ReadonlyNativeSurface<
+    Omit<typeof eveConversation.$inferInsert, "chatId">
+  >,
+  fork?: EveForkInput
+): Promise<{ chatId: string; source: ConversationRow | undefined }> => {
+  const [source] = fork
+    ? await tx
+        .select()
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.id, fork.conversationId),
+            eq(eveConversation.ownerId, value.ownerId),
+            eq(eveConversation.state, "bound")
+          )
+        )
+    : [];
+  if (fork && !isNonemptyString(source?.sessionId)) {
+    throw new CreationConflictError(
+      "The source conversation is not available for editing."
+    );
+  }
+  const [initialGroup] = hasQueryRow(source)
+    ? []
+    : await tx
+        .select({ id: eveResponseGroup.id })
+        .from(eveResponseGroup)
+        .where(
+          and(
+            eq(eveResponseGroup.ownerId, value.ownerId),
+            eq(eveResponseGroup.deleted, false),
+            isNull(eveResponseGroup.sourceConversationId),
+            sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+          )
+        )
+        .limit(SINGLE_MATCH_LIMIT);
+  const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+  return { chatId, source };
+};
+
 const reserveEveConversation = async (
   value: ReadonlyNativeSurface<
     Omit<typeof eveConversation.$inferInsert, "chatId">
@@ -528,7 +569,6 @@ const reserveEveConversation = async (
   fork?: EveForkInput,
   guestReservationId?: string
 ): Promise<ConversationRow[]> =>
-  // oxlint-disable-next-line eslint/complexity -- Reservation keeps identity, admission, project, and fork writes in one transaction.
   await db.transaction(async (tx: CreationTransactionView) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
@@ -558,38 +598,7 @@ const reserveEveConversation = async (
     if (hasQueryRow(existingReservation)) {
       return [];
     }
-    const [source] = fork
-      ? await tx
-          .select()
-          .from(eveConversation)
-          .where(
-            and(
-              eq(eveConversation.id, fork.conversationId),
-              eq(eveConversation.ownerId, value.ownerId),
-              eq(eveConversation.state, "bound")
-            )
-          )
-      : [];
-    if (fork && !isNonemptyString(source?.sessionId)) {
-      throw new CreationConflictError(
-        "The source conversation is not available for editing."
-      );
-    }
-    const [initialGroup] = hasQueryRow(source)
-      ? []
-      : await tx
-          .select({ id: eveResponseGroup.id })
-          .from(eveResponseGroup)
-          .where(
-            and(
-              eq(eveResponseGroup.ownerId, value.ownerId),
-              eq(eveResponseGroup.deleted, false),
-              isNull(eveResponseGroup.sourceConversationId),
-              sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
-            )
-          )
-          .limit(SINGLE_MATCH_LIMIT);
-    const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+    const { chatId, source } = await resolveCreationChat(tx, value, fork);
     const [createdChat] = await tx
       .insert(eveChat)
       .values({ id: chatId, ownerId: value.ownerId, title: initialTitle })
@@ -616,9 +625,10 @@ const reserveEveConversation = async (
         forkMessageId: fork?.beforeMessageId,
         forkTurnId: fork?.beforeTurnId,
         parentConversationId: fork?.conversationId,
-        rootConversationId: hasQueryRow(source)
-          ? (source.rootConversationId ?? source.id)
-          : undefined,
+        rootConversationId:
+          source === undefined
+            ? undefined
+            : (source.rootConversationId ?? source.id),
       })
       .onConflictDoNothing()
       .returning();
@@ -631,7 +641,7 @@ const reserveEveConversation = async (
         value.initialProjectId
       );
     }
-    if (hasQueryRow(created) && hasQueryRow(source)) {
+    if (hasQueryRow(created) && source !== undefined) {
       // Retain inherited files conservatively; native history owns turn contents.
       const references = await tx
         .select({ key: eveFileReference.key })
@@ -673,79 +683,82 @@ const beginEveConversationDeletion = async (
     }
   | undefined
 > =>
-  await db.transaction(async (tx: CreationTransactionView) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [source] = await tx
-      .select({ chatId: eveChat.id })
-      .from(eveChat)
-      .leftJoin(
-        eveConversation,
-        and(
-          eq(eveConversation.chatId, eveChat.id),
-          eq(eveConversation.ownerId, eveChat.ownerId),
-          eq(eveConversation.id, id)
-        )
-      )
-      .where(
-        and(
-          eq(eveChat.ownerId, ownerId),
-          or(eq(eveChat.id, id), eq(eveConversation.id, id))
-        )
-      );
-    if (!hasQueryRow(source)) {
-      return;
-    }
-    const familyCondition = and(
-      eq(eveConversation.ownerId, ownerId),
-      eq(eveConversation.chatId, source.chatId)
-    );
-    const family = await tx
-      .select()
-      .from(eveConversation)
-      .where(familyCondition)
-      .orderBy(eveConversation.id);
-    if (
-      family.some(
-        (row: Readonly<Pick<ConversationRow, "state">>) =>
-          row.state === "creating" || row.state === "uncertain"
-      )
-    ) {
-      throw new CreationConflictError(
-        "Finish recovering conversation creation before deleting this conversation."
-      );
-    }
-    await tombstoneEveResponseGroups(tx, ownerId, family);
-    // Document writers hold this same lock through their commit. Once the fence
-    // commits, later writers fail their bound-conversation check.
-    for (const row of family) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+  await db.transaction(
+    async (
+      tx: CreationTransactionView
+    ): ReturnType<typeof beginEveConversationDeletion> => {
       await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );
-    }
-    const conversations = await tx
-      .update(eveConversation)
-      .set({ state: "deleting", visibility: "private" })
-      .where(
-        and(
-          familyCondition,
-          inArray(eveConversation.state, ["bound", "deleting"])
+      const [source] = await tx
+        .select({ chatId: eveChat.id })
+        .from(eveChat)
+        .leftJoin(
+          eveConversation,
+          and(
+            eq(eveConversation.chatId, eveChat.id),
+            eq(eveConversation.ownerId, eveChat.ownerId),
+            eq(eveConversation.id, id)
+          )
         )
-      )
-      .returning({
-        id: eveConversation.id,
-        sessionId: eveConversation.sessionId,
-      });
-    // oxlint-disable-next-line typescript/consistent-return -- #580: beginEveConversationDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-    return {
-      conversations: conversations.toSorted((left, right) =>
-        left.id.localeCompare(right.id)
-      ),
-      rootId: source.chatId,
-    };
-  });
+        .where(
+          and(
+            eq(eveChat.ownerId, ownerId),
+            or(eq(eveChat.id, id), eq(eveConversation.id, id))
+          )
+        );
+      if (!hasQueryRow(source)) {
+        return undefined;
+      }
+      const familyCondition = and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.chatId, source.chatId)
+      );
+      const family = await tx
+        .select()
+        .from(eveConversation)
+        .where(familyCondition)
+        .orderBy(eveConversation.id);
+      if (
+        family.some(
+          (row: Readonly<Pick<ConversationRow, "state">>) =>
+            row.state === "creating" || row.state === "uncertain"
+        )
+      ) {
+        throw new CreationConflictError(
+          "Finish recovering conversation creation before deleting this conversation."
+        );
+      }
+      await tombstoneEveResponseGroups(tx, ownerId, family);
+      // Document writers hold this same lock through their commit. Once the fence
+      // commits, later writers fail their bound-conversation check.
+      for (const row of family) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Family deletion must acquire each eve-document advisory lock before changing bound rows to deleting; document writers hold these locks through commit.
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
+        );
+      }
+      const conversations = await tx
+        .update(eveConversation)
+        .set({ state: "deleting", visibility: "private" })
+        .where(
+          and(
+            familyCondition,
+            inArray(eveConversation.state, ["bound", "deleting"])
+          )
+        )
+        .returning({
+          id: eveConversation.id,
+          sessionId: eveConversation.sessionId,
+        });
+      return {
+        conversations: conversations.toSorted((left, right) =>
+          left.id.localeCompare(right.id)
+        ),
+        rootId: source.chatId,
+      };
+    }
+  );
 
 const matchesEveFork = (
   existing: Pick<
@@ -834,6 +847,31 @@ const bindConversationSession = async (
   return { id: bound.id, sessionId: bound.sessionId };
 };
 
+const assertMatchingMessageCreation = (
+  existing: ConversationRow | undefined,
+  message: string,
+  initialModelId: string | undefined,
+  initialContentHash: string | undefined,
+  initialProjectId: string | undefined,
+  fork: ReadonlyNativeSurface<EveForkInput> | undefined,
+  forkKind: typeof eveConversation.$inferInsert.forkKind
+): ConversationRow => {
+  if (
+    existing === undefined ||
+    existing.creationKind !== "message" ||
+    existing.firstMessage !== message ||
+    existing.initialModelId !== (initialModelId ?? null) ||
+    existing.initialContentHash !== (initialContentHash ?? null) ||
+    existing.initialProjectId !== (initialProjectId ?? null) ||
+    !matchesEveFork(existing, fork, forkKind ?? null)
+  ) {
+    throw new CreationConflictError(
+      "This operation already has a different message, attachments, model, tool selection, project, or source turn."
+    );
+  }
+  return existing;
+};
+
 /**
  * Reserves a conversation under the owner’s operation ID and binds it to a native session.
  * The reserved conversation ID is passed to the native creator as its idempotency key.
@@ -852,7 +890,6 @@ const bindConversationSession = async (
  * @param {string} [guestReservationId] Existing guest reservation to consume.
  * @returns {Promise<BoundConversation>} The bound conversation after native session creation succeeds.
  */
-// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 const createEveConversation = async (
   ownerId: string,
   operationId: string,
@@ -918,24 +955,20 @@ const createEveConversation = async (
     if (hasQueryRow(existing)) {
       assertCreationAvailable(existing.state);
     }
-    if (
-      !hasQueryRow(existing) ||
-      existing.creationKind !== "message" ||
-      existing.firstMessage !== message ||
-      existing.initialModelId !== (initialModelId ?? null) ||
-      existing.initialContentHash !== (initialContentHash ?? null) ||
-      existing.initialProjectId !== (initialProjectId ?? null) ||
-      !matchesEveFork(existing, fork, forkKind ?? null)
-    ) {
-      throw new CreationConflictError(
-        "This operation already has a different message, attachments, model, tool selection, project, or source turn."
-      );
-    }
-    const binding = boundConversation(existing);
+    const matching = assertMatchingMessageCreation(
+      existing,
+      message,
+      initialModelId,
+      initialContentHash,
+      initialProjectId,
+      fork,
+      forkKind
+    );
+    const binding = boundConversation(matching);
     if (binding) {
       return binding;
     }
-    reservation = existing;
+    reservation = matching;
   }
   try {
     // This idempotent initialization commits before dispatch and acquires its own
@@ -1200,7 +1233,7 @@ const listEveConversationBranches = async (
     conversationId
   );
   if (!conversation) {
-    return;
+    return undefined;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const branches = await db
@@ -1238,7 +1271,6 @@ const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
 
@@ -1332,8 +1364,6 @@ const listPendingEveCreations = async (
       )
     );
 
-/* oxlint-disable typescript/promise-function-async -- typescript/promise-function-async (#606): bindAcceptedEveConversation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Caller must verify a native operation receipt for this reservation and exact session.
  * @param {string} ownerId Owner whose reservation is bound under its transaction lock.
@@ -1346,10 +1376,10 @@ const bindAcceptedEveConversation = async (
   reservationId: string,
   sessionId: string
 ): Promise<BoundConversation> =>
-  await db.transaction((tx: CreationTransactionView) =>
-    bindConversationSession(tx, ownerId, reservationId, sessionId)
+  await db.transaction(
+    async (tx: CreationTransactionView) =>
+      await bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
-/* oxlint-enable typescript/promise-function-async */
 
 export {
   beginEveConversationDeletion,

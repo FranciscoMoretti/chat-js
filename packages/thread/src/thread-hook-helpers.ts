@@ -182,7 +182,7 @@ const createThreadHelpers = <TMessage extends UIMessage>({
 }>): UseThreadHelpers<TMessage> => ({
   addToolApprovalResponse: thread.addToolApprovalResponse,
   addToolOutput: thread.addToolOutput,
-  // oxlint-disable-next-line typescript/no-deprecated -- Keep the public AI SDK-compatible helper name until consumers migrate their tool-result calls.
+  // oxlint-disable-next-line typescript/no-deprecated -- Forward the public legacy helper itself: callers can override addToolResult independently of addToolOutput, so redirecting this property would change that compatibility contract.
   addToolResult: thread.addToolResult,
   clearError: thread.clearError,
   error,

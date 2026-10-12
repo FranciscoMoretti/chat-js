@@ -2,9 +2,8 @@ import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import type postgresType from "postgres";
+import postgres from "postgres";
 
 const EMPTY_MESSAGE_LENGTH = 0;
 const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
@@ -97,15 +96,8 @@ const runMaintainerBuild = async (
   }
 };
 
-/* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 if (import.meta.main) {
   try {
-    const require = createRequire(
-      new URL("../apps/chat/package.json", import.meta.url)
-    );
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Resolve the chat workspace postgres package explicitly; its exported default has the imported postgres type.
-    const { default: postgres }: { default: typeof postgresType } =
-      await import(require.resolve("postgres"));
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {
@@ -115,8 +107,9 @@ if (import.meta.main) {
           max_lifetime: POSTGRES_MAX_LIFETIME_SECONDS,
         });
         return {
-          close: (): Promise<void> =>
-            connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS }),
+          close: async (): Promise<void> => {
+            await connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS });
+          },
           execute: async (query): Promise<void> => {
             await connection.unsafe(query);
           },
@@ -148,5 +141,4 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
-/* oxlint-enable typescript/promise-function-async */
 export { runMaintainerBuild };

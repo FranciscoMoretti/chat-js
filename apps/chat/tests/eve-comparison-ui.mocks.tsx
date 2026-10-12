@@ -37,13 +37,13 @@ const useSession = () => ({
 });
 // Comparisons use no connected MCP servers; the real control is covered by eve-mcp.e2e.ts.
 const ConnectorsControl = () => null;
-/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): EveArtifactLayout preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+
 const EveArtifactLayout = ({
   children,
 }: {
   readonly children: ReadonlyReactNode;
 }) => children;
-/* oxlint-enable typescript/promise-function-async */
+
 const ChatWelcomeView = ({
   children,
 }: {
@@ -66,8 +66,6 @@ const useRouter = () => ({
 
 const usePathname = (): string => globalThis.location.pathname;
 
-/* oxlint-disable typescript/strict-void-return --typescript/strict-void-return (#611): EveConversation's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 const EveConversation = ({
   header,
   sessionId,
@@ -109,7 +107,9 @@ const EveConversation = ({
           onToolChange={(value) => {
             draft.setSelectedTool(value);
           }}
-          onAttach={() => null}
+          onAttach={() => {
+            // Attachment uploads are outside this comparison fixture.
+          }}
           selectedTool={draft.selectedTool}
         />
         <label>
@@ -154,7 +154,7 @@ const EveConversation = ({
     </main>
   );
 };
-/* oxlint-enable typescript/strict-void-return */
+
 export {
   ChatWelcomeView,
   ConnectorsControl,

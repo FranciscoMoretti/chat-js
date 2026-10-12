@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
@@ -65,8 +67,8 @@ export const WebSearch = ({
   ];
   return (
     <div className="space-y-3">
-      {/* oxlint-disable-next-line typescript/strict-boolean-expressions -- The optional error string is also the exact empty or missing React child when no error is present. */}
-      {result.data.error && <p role="alert">{result.data.error}</p>}
+      {}
+      {hasText(result.data.error) && <p role="alert">{result.data.error}</p>}
       {uniqueSources.length > 0 && <Sources sources={uniqueSources} />}
     </div>
   );

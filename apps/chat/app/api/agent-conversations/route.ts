@@ -15,9 +15,6 @@ import {
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
-/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): POST preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-
 export const POST = async (
   request: ReadonlyNativeSurface<Request>
 ): Promise<Response> => {
@@ -85,15 +82,14 @@ export const POST = async (
         .catch(() => null)
     );
     if (binding.success) {
-      after(() =>
-        persistGeneratedEveConversationTitle({
+      after(async () => {
+        await persistGeneratedEveConversationTitle({
           conversationId: binding.data.id,
           message: input.data.message,
           ownerId: principal.ownerId,
-        })
-      );
+        });
+      });
     }
   }
   return response;
 };
-/* oxlint-enable typescript/promise-function-async */

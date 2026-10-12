@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { completeEveConversationDeletion } from "@/lib/db/eve-deletion";
 
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
@@ -14,12 +16,11 @@ const purgeConversationSessions = async (
   >
 ): Promise<void> => {
   for (const conversation of conversations) {
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original nullable session guard and separate later sessionId read while narrowing the original conversation.
-    if (!conversation.sessionId) {
+    if (!isNonEmptyString(conversation.sessionId)) {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
     const { sessionId } = conversation;
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Await each native family purge before its sibling and before completeEveConversationDeletion; partial purge retains pending state for a full ordered retry.
     await lifecycle.purge(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });
@@ -45,10 +46,9 @@ export const deleteLocalEveConversationFamily = async (
     appRoot
   );
   if (!family) {
-    return;
+    return undefined;
   }
   await purgeConversationSessions(ownerId, family.conversations, lifecycle);
   await completeEveConversationDeletion(ownerId, family.rootId);
-  // oxlint-disable-next-line typescript/consistent-return -- A missing resource family returns without a value; a completed family returns its root identity. Preserve this optional result instead of fabricating a root or changing the absence sentinel.
   return { rootId: family.rootId };
 };

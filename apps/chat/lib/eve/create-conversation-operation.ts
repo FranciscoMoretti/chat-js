@@ -22,7 +22,6 @@ import {
 
 const logger = createModuleLogger("eve/admission");
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): createEveConversationOperation intentionally keeps the existing falsy-value behavior of existing; await readEveGuestOwner(ownerId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 export const createEveConversationOperation = async (
   ownerId: string,
   input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
@@ -61,7 +60,7 @@ export const createEveConversationOperation = async (
         { status: 404 }
       );
     }
-    if (!existing) {
+    if (!(existing !== undefined)) {
       try {
         await loadEveModelDefinition(input.modelId);
         await assertEveFilesOwned(ownerId, eveMessageFileKeys(input.message));
@@ -75,7 +74,7 @@ export const createEveConversationOperation = async (
           { status: 400 }
         );
       }
-      if (!(await readEveGuestOwner(ownerId))) {
+      if (!((await readEveGuestOwner(ownerId)) !== undefined)) {
         await reconcileEveOwnerUsage(ownerId);
         if (!(await canSpend(ownerId))) {
           return Response.json(
@@ -117,4 +116,3 @@ export const createEveConversationOperation = async (
     preparedMessage
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

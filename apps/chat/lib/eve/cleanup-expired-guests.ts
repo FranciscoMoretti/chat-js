@@ -27,18 +27,18 @@ export const cleanupExpiredEveGuests = async (
   let deletedCount = 0;
   let pendingCount = 0;
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
     const [family] = await claimExpiredEveGuestFamilies();
     if (typeof family !== "object") {
       break;
     }
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
       if (await isUnacceptedEveCopy(family.ownerId, family.id)) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
         await deleteUnacceptedEveCopy(family.ownerId, family.id);
       } else if (
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
         !(await deleteLocalEveConversationFamily(
           family.ownerId,
           family.id,

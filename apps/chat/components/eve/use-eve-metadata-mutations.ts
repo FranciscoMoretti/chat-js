@@ -8,7 +8,6 @@ import {
   pendingEveMetadataMutations,
 } from "@/lib/eve/optimistic-metadata";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable typescript/promise-function-async -- useEveMetadataMutations: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 /** Logical metadata is shared by every branch detail and every loaded history. */
 export const useEveMetadataMutations = () => {
@@ -23,11 +22,11 @@ export const useEveMetadataMutations = () => {
       cache.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
     ]);
   };
-  const optimistic = (
+  const optimistic = async (
     id: string,
     patch: { readonly title?: string; readonly isPinned?: boolean }
   ) =>
-    optimisticEveMetadata(
+    await optimisticEveMetadata(
       cache,
       trpc.eve.list.pathKey(),
       trpc.eve.get.pathKey(),
@@ -41,7 +40,7 @@ export const useEveMetadataMutations = () => {
         rollback?.();
         toast.error(error.message);
       },
-      onMutate: ({ id, title }) => optimistic(id, { title }),
+      onMutate: async ({ id, title }) => await optimistic(id, { title }),
       onSettled: settle,
       scope: { id: "eve-rename" },
     })
@@ -53,11 +52,10 @@ export const useEveMetadataMutations = () => {
         rollback?.();
         toast.error(error.message);
       },
-      onMutate: ({ id, isPinned }) => optimistic(id, { isPinned }),
+      onMutate: async ({ id, isPinned }) => await optimistic(id, { isPinned }),
       onSettled: settle,
       scope: { id: "eve-pin" },
     })
   );
   return { pin, rename };
 };
-/* oxlint-enable typescript/promise-function-async */

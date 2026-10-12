@@ -9,7 +9,7 @@ const HTTP_STATUS = {
 
 const STALLED_DATABASE_RESPONSE_ADVANCE_MS = 4500;
 
-const database = vi.hoisted(() => vi.fn());
+const database = vi.hoisted(() => vi.fn<() => Promise<void>>());
 vi.mock("@/lib/db/health", () => ({ checkDatabase: database }));
 vi.mock("@/lib/env", () => ({
   env: {
@@ -25,8 +25,7 @@ afterEach(() => {
 });
 
 test("requires a genuine Eve health response, not a login page", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  database.mockResolvedValue(undefined);
+  database.mockResolvedValue();
   vi.stubGlobal(
     "fetch",
     vi.fn().mockResolvedValue(new Response("<html>login</html>"))
@@ -36,8 +35,7 @@ test("requires a genuine Eve health response, not a login page", async () => {
 });
 
 test("reports ready only with database and Eve available", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  database.mockResolvedValue(undefined);
+  database.mockResolvedValue();
   vi.stubGlobal(
     "fetch",
     vi
@@ -55,12 +53,7 @@ test("reports ready only with database and Eve available", async () => {
 
 test("bounds a stalled database check", async () => {
   vi.useFakeTimers();
-  database.mockReturnValue(
-    // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
-    new Promise(() => {
-      // Leave the readiness check pending to exercise its timeout.
-    })
-  );
+  database.mockReturnValue(Promise.withResolvers<never>().promise);
   vi.stubGlobal(
     "fetch",
     vi

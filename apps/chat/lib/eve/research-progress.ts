@@ -20,10 +20,9 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
 ): AsyncGenerator<ToolResult<Output | { searches: [] }>> =>
   executeWithToolProgress<Output | { searches: [] }>(
     context,
-    // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise and synchronous throw without an async wrapper.
-    ({ abortSignal, usage, publish }) => {
+    async ({ abortSignal, usage, publish }) => {
       const updates = new Map<string, ReadonlyNativeSurface<ResearchUpdate>>();
-      return execute({
+      return await execute({
         abortSignal,
         dataStream: {
           write(part): void {

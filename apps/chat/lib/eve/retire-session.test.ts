@@ -5,13 +5,9 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("./reconcile-usage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("./reconcile-usage", () => ({
-  reconcileEveSubagentUsage: vi.fn(() => Promise.resolve(true)),
+  reconcileEveSubagentUsage: vi.fn().mockResolvedValue(true),
 }));
-/* oxlint-enable typescript/promise-function-async */
 
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
@@ -64,7 +60,7 @@ beforeEach(() => {
   mocks.deleting.mockResolvedValue({ id: "conversation" });
   mocks.reset.mockResolvedValue({ status: "reset" });
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.usage.mockResolvedValue(undefined);
 });
 
@@ -85,7 +81,7 @@ it("retires before reading and settling the final snapshot, including retries", 
 });
 
 it("rejects non-deleting or foreign sessions before native access", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.deleting.mockResolvedValue(undefined);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "not pending deletion"
@@ -93,9 +89,6 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
   expect(mocks.reset).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("refuses erasure when retirement or cost settlement is incomplete") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("refuses erasure when retirement or cost settlement is incomplete", async () => {
   mocks.snapshot.mockResolvedValue({ events: [{ type: "step.completed" }] });
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
@@ -106,6 +99,7 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     events: [{ type: "step.completed" }, { type: "session.completed" }],
   });
   mocks.usage.mockImplementation(
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     (_owner: string, _session: string, event: { readonly type: string }) =>
       Promise.resolve(event.type === "step.completed" ? false : undefined)
   );
@@ -113,10 +107,9 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     "Usage must be reconciled"
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.begin.mockResolvedValueOnce(undefined);
   expect(
     await retireEveFamilyForDeletion("stranger", "conversation")

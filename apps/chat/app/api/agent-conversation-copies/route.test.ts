@@ -51,19 +51,19 @@ it("requires login and same origin before copy work", async () => {
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("rejects browser seeds, execution controls and oversized bodies", async () => {
-  for (const body of [
-    { ...input, seed: { messages: [] } },
-    { ...input, fork: {} },
-    { ...input, sourceSessionId: "private" },
-    { ...input, modelId: "x".repeat(3000) },
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+it.each([
+  { ...input, seed: { messages: [] } },
+  { ...input, fork: {} },
+  { ...input, sourceSessionId: "private" },
+  { ...input, modelId: "x".repeat(3000) },
+])(
+  "rejects browser seeds, execution controls and oversized bodies: %p",
+  async (body) => {
     const resolvedResult4 = await POST(request(body));
     expect(resolvedResult4.status).toBe(HTTP_STATUS.badRequest);
+    expect(mocks.save).not.toHaveBeenCalled();
   }
-  expect(mocks.save).not.toHaveBeenCalled();
-});
+);
 
 it("canonicalizes operation coordinates and returns only the owned binding", async () => {
   const response = await POST(

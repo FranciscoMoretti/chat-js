@@ -1,5 +1,7 @@
 "use client";
 
+import { hasCustomContent } from "@/components/custom-content";
+
 import "streamdown/styles.css";
 
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
@@ -9,12 +11,7 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
-import type {
-  ComponentProps,
-  HTMLAttributes,
-  ReactElement,
-  JSX as ReactJSX,
-} from "react";
+import type { ComponentProps, HTMLAttributes, JSX as ReactJSX } from "react";
 import type { FileUIPart, UIMessage } from "ai";
 import React, {
   createContext,
@@ -33,7 +30,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Streamdown } from "streamdown";
 import { cn } from "@/lib/utils";
 import { code } from "@streamdown/code";
@@ -144,10 +140,8 @@ interface MessageBranchContextType {
   totalBranches: number;
   goToPrevious: () => void;
   goToNext: () => void;
-  branches: readonly ReadonlyNativeSurface<ReactElement>[];
-  setBranches: (
-    branches: readonly ReadonlyNativeSurface<ReactElement>[]
-  ) => void;
+  branches: readonly React.ReactNode[];
+  setBranches: (branches: readonly React.ReactNode[]) => void;
 }
 
 const MessageBranchContext = createContext<MessageBranchContextType | null>(
@@ -181,9 +175,7 @@ const useMessageBranchState = (
   onBranchChange: MessageBranchProps["onBranchChange"]
 ): MessageBranchContextType => {
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
-  const [branches, setBranches] = useState<
-    readonly ReadonlyNativeSurface<ReactElement>[]
-  >([]);
+  const [branches, setBranches] = useState<readonly React.ReactNode[]>([]);
 
   const handleBranchChange = useCallback(
     (newBranch: number) => {
@@ -246,14 +238,16 @@ const MessageBranch = ({
 
 type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
 
+const isNodeArray = (value: React.ReactNode): value is React.ReactNode[] =>
+  Array.isArray(value);
+
 const MessageBranchContent = ({
   children,
   ...props
 }: MessageBranchContentProps): React.JSX.Element[] => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
   const childrenArray = useMemo(() => {
-    if (Array.isArray(children)) {
-      // oxlint-disable-next-line typescript/no-unsafe-return -- #598: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
+    if (isNodeArray(children)) {
       return children;
     }
     return [children];
@@ -273,8 +267,7 @@ const MessageBranchContent = ({
         index === currentBranch ? "block" : "hidden"
       )}
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract. #597: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
-      key={branch.key}
+      key={React.isValidElement(branch) ? branch.key : undefined}
       {...props}
     >
       {branch}
@@ -497,14 +490,12 @@ const MessageAttachment = ({
 
 type MessageAttachmentsProps = ComponentProps<"div">;
 
-/* oxlint-disable typescript/strict-boolean-expressions -- MessageAttachments: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
 const MessageAttachments = ({
   children,
   className,
   ...props
 }: MessageAttachmentsProps): React.JSX.Element | null => {
-  if (!children) {
+  if (!hasCustomContent(children)) {
     return null;
   }
 
@@ -520,7 +511,6 @@ const MessageAttachments = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type MessageToolbarProps = ComponentProps<"div">;
 

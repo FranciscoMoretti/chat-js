@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import {
   useInfiniteQuery,
   useQuery,
@@ -61,8 +63,6 @@ const groupLabel = (
   }
   return "Older";
 };
-/* oxlint-disable typescript/strict-boolean-expressions -- EveHistoryList: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId)
- */
 
 export const EveHistoryList = ({
   initialPage,
@@ -123,7 +123,7 @@ export const EveHistoryList = ({
       readonly titleStatus: "generated" | "manual" | "pending" | "fallback";
     }) => conversation.titleStatus === "pending"
   );
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!hasPendingTitle) {
       if (
         hadPendingTitle.current &&
@@ -135,17 +135,15 @@ export const EveHistoryList = ({
       }
       hadPendingTitle.current = false;
       titlePollStartedAt.current = undefined;
-      return;
+      return undefined;
     }
     hadPendingTitle.current = true;
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
-    if (titlePollStartedAt.current === undefined) {
-      titlePollStartedAt.current = Date.now();
-    }
-    const remaining =
-      titlePollLimitMs - (Date.now() - titlePollStartedAt.current);
+
+    const startedAt = titlePollStartedAt.current ?? Date.now();
+    titlePollStartedAt.current = startedAt;
+    const remaining = titlePollLimitMs - (Date.now() - startedAt);
     if (remaining <= 0) {
-      return;
+      return undefined;
     }
     const interval = globalThis.setInterval(() => {
       if (pendingEveMetadataMutations(queryClient) === 0) {
@@ -158,7 +156,7 @@ export const EveHistoryList = ({
         void history.refetch();
       }
     }, remaining);
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       globalThis.clearInterval(interval);
       globalThis.clearTimeout(timeout);
@@ -174,7 +172,7 @@ export const EveHistoryList = ({
     return true;
   });
   const { rename, pin } = useEveMetadataMutations();
-  const grouped = projectId
+  const grouped = hasText(projectId)
     ? [{ items: filtered, label: "" }]
     : [
         "Pinned",
@@ -193,9 +191,11 @@ export const EveHistoryList = ({
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
-      className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
+      className={
+        hasText(projectId) ? "p-0" : "group-data-[collapsible=icon]:hidden"
+      }
     >
-      {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
+      {!hasText(projectId) && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
       {grouped
         .filter(
           (group: Readonly<{ items: readonly unknown[] }>) => group.items.length
@@ -232,7 +232,7 @@ export const EveHistoryList = ({
                         </li>
                       );
                     }
-                    if (projectId) {
+                    if (hasText(projectId)) {
                       return (
                         <li key={item.id}>
                           {index > 0 && <Separator />}
@@ -341,7 +341,7 @@ export const EveHistoryList = ({
         </Button>
       )}
       {!(filtered.length > 0 || history.isPending || history.isError) &&
-        (projectId ? (
+        (hasText(projectId) ? (
           <div className="border-border/60 rounded-xl border px-4 py-6">
             <p className="text-foreground text-sm font-medium">
               No chats in this project
@@ -368,4 +368,3 @@ export const EveHistoryList = ({
     </SidebarGroup>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

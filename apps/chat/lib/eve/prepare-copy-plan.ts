@@ -50,9 +50,9 @@ export const prepareEveCopyPlan = async (
     ...projection.resources.fileKeys,
     ...resources.fileKeys,
   ])) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Read and hash one source Blob at a time, retaining only its digest and size in the plan; parallel reads would retain all attachment byte buffers.
     const source = await readPublicFile(key);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Read and hash one source Blob at a time, retaining only its digest and size in the plan; parallel reads would retain all attachment byte buffers.
     const bytes = Buffer.from(await source.arrayBuffer());
     const destination = createFileId();
     allocations.files.set(key, destination);
@@ -87,7 +87,7 @@ export const prepareEveCopyPlan = async (
   const seed = await materializeEveCopyTranscript(
     projection.seed,
     allocations,
-    // oxlint-disable-next-line typescript/promise-function-async -- The metadata resolver throws synchronously for a missing allocation and otherwise returns the resolved file promise unchanged.
+    // oxlint-disable-next-line typescript/promise-function-async -- Metadata lookup throws synchronously for missing allocations and otherwise resolves an in-memory value; no asynchronous work exists to await.
     (key) => {
       const file = metadata.get(key);
       if (!file) {

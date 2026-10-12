@@ -41,9 +41,7 @@ type ResearchEventReader =
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
 const researchSummary = /^Researched for /u;
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): test.afterEach intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 test.afterEach(
   async (
     { page },
@@ -62,17 +60,20 @@ test.afterEach(
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, id.data));
-    if (conversation?.sessionId) {
+    if (
+      conversation !== undefined &&
+      conversation !== null &&
+      conversation.sessionId !== undefined &&
+      conversation.sessionId !== null &&
+      conversation.sessionId !== ""
+    ) {
       await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
         .attach(conversation.sessionId)
         .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
     }
   }
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("native deep research saves a reloadable report in ChatJS with a usage receipt") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("native deep research saves a reloadable report in ChatJS with a usage receipt", async ({
   page,
 }) => {
@@ -86,7 +87,9 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
       }
     }
   );
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
@@ -248,4 +251,3 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     )
   );
 });
-/* oxlint-enable typescript/promise-function-async */

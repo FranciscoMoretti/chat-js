@@ -1,5 +1,6 @@
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 import "../../../apps/chat/app/globals.css";
-import React, { act } from "react";
+import React from "react";
 import { expect, test, vi } from "vitest";
 import type {
   retrievedInput,
@@ -20,12 +21,10 @@ import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
-  () => import("../src/ui/code-execution/interactive-chart-impl")
+  async () => await import("../src/ui/code-execution/interactive-chart-impl")
 );
-/* oxlint-enable typescript/promise-function-async */
 
 // Focus this capture on chart output, independently of the code editor.
 vi.mock("@/components/sandbox", () => ({ SandboxComposed: (): null => null }));
@@ -114,7 +113,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 test("chart output validates shapes and fits PNG output", async (): Promise<void> => {
   const container = document.createElement("main");
   document.documentElement.classList.add("dark");
@@ -157,31 +155,29 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     },
   ];
   const outputs = [...malformed, ...valid, png];
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => {
-    root.render(
-      <>
-        {outputs.map((chart: unknown, index) => (
-          <section
-            key={JSON.stringify(chart)}
-            data-testid={`output-${index}`}
-            style={index < malformed.length ? { display: "none" } : undefined}
-          >
-            <CodeExecution
-              isReadonly
-              messageId="code-fixture"
-              tool={{
-                input: { code: "", language: "python", title: "Chart" },
-                output: { chart, message: "" },
-                state: "output-available",
-                toolCallId: `fixture-${index}`,
-              }}
-            />
-          </section>
-        ))}
-      </>
-    );
-  });
+  await renderRoot(
+    root,
+    <>
+      {outputs.map((chart: unknown, index) => (
+        <section
+          key={JSON.stringify(chart)}
+          data-testid={`output-${index}`}
+          style={index < malformed.length ? { display: "none" } : undefined}
+        >
+          <CodeExecution
+            isReadonly
+            messageId="code-fixture"
+            tool={{
+              input: { code: "", language: "python", title: "Chart" },
+              output: { chart, message: "" },
+              state: "output-available",
+              toolCallId: `fixture-${index}`,
+            }}
+          />
+        </section>
+      ))}
+    </>
+  );
   for (let index = 0; index < malformed.length; index += 1) {
     expect(
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
@@ -197,7 +193,11 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .poll((): boolean =>
       [...container.querySelectorAll("h3")].every((heading) => {
         const panel = heading.parentElement?.parentElement?.parentElement;
-        return panel && getComputedStyle(panel).opacity === "1";
+        return (
+          panel !== null &&
+          panel !== undefined &&
+          getComputedStyle(panel).opacity === "1"
+        );
       })
     )
     .toBe(true);
@@ -205,8 +205,9 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .poll((): boolean =>
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
-      ].every((element) =>
-        getInstanceByDom(element)?.getZr().animation.isFinished()
+      ].every(
+        (element) =>
+          getInstanceByDom(element)?.getZr().animation.isFinished() === true
       )
     )
     .toBe(true);
@@ -218,81 +219,76 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   expect(img.naturalWidth).toBe(600);
   expect(img.getBoundingClientRect().width).toBeLessThanOrEqual(900);
   await takeSnapshot("validated-chart-output");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => root.unmount());
+  await unmountRoot(root);
   container.remove();
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 test("weather and retrieved URL renderer states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
   document.body.append(container);
   const root = createRoot(container);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => {
-    root.render(
-      <>
-        <GetWeatherRenderer
-          isReadonly
-          messageId="weather-loading"
-          tool={weatherLoadingTool}
-        />
-        <GetWeatherRenderer
-          isReadonly
-          messageId="weather-output"
-          tool={weatherOutputTool}
-        />
+  await renderRoot(
+    root,
+    <>
+      <GetWeatherRenderer
+        isReadonly
+        messageId="weather-loading"
+        tool={weatherLoadingTool}
+      />
+      <GetWeatherRenderer
+        isReadonly
+        messageId="weather-output"
+        tool={weatherOutputTool}
+      />
+      <RetrieveUrlRenderer
+        isReadonly
+        messageId="url-loading"
+        tool={retrieveUrlLoadingTool}
+      />
+      <RetrieveUrlRenderer
+        isReadonly
+        messageId="url-error"
+        tool={retrieveUrlErrorTool}
+      />
+      <section id="url-invalid">
         <RetrieveUrlRenderer
           isReadonly
-          messageId="url-loading"
-          tool={retrieveUrlLoadingTool}
+          messageId="url-invalid"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [{ content: {}, title: false }] },
+            state: "output-available",
+            toolCallId: "invalid",
+          }}
         />
+      </section>
+      <section id="url-empty">
         <RetrieveUrlRenderer
           isReadonly
-          messageId="url-error"
-          tool={retrieveUrlErrorTool}
+          messageId="url-empty"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [] },
+            state: "output-available",
+            toolCallId: "empty",
+          }}
         />
-        <section id="url-invalid">
-          <RetrieveUrlRenderer
-            isReadonly
-            messageId="url-invalid"
-            tool={{
-              input: { url: "https://example.com" },
-              output: { results: [{ content: {}, title: false }] },
-              state: "output-available",
-              toolCallId: "invalid",
-            }}
-          />
-        </section>
-        <section id="url-empty">
-          <RetrieveUrlRenderer
-            isReadonly
-            messageId="url-empty"
-            tool={{
-              input: { url: "https://example.com" },
-              output: { results: [] },
-              state: "output-available",
-              toolCallId: "empty",
-            }}
-          />
-        </section>
-        <section id="url-output">
-          <RetrieveUrlRenderer
-            isReadonly
-            messageId="url-output"
-            tool={retrieveUrlOutputTool}
-          />
-        </section>
-      </>
-    );
-  });
+      </section>
+      <section id="url-output">
+        <RetrieveUrlRenderer
+          isReadonly
+          messageId="url-output"
+          tool={retrieveUrlOutputTool}
+        />
+      </section>
+    </>
+  );
   expect(container.querySelector("#url-invalid")).toHaveProperty(
     "textContent",
     expect.stringMatching(/Retrieved Content.*Unknown.*No content available/u)
   );
   await takeSnapshot("weather-and-retrieved-url-states");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => root.unmount());
+  await unmountRoot(root);
   container.remove();
 });

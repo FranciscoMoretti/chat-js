@@ -13,12 +13,14 @@ test(
     const app = path.resolve(import.meta.dir, "../../../../apps/chat");
     const pages = ["core/configuration", "reference/config"];
     const sources = new Map<string, string>();
-    for (const page of pages) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
-      const markdown = await readFile(
-        path.join(app, `../docs/${page}.mdx`),
-        "utf-8"
-      );
+    const markdownPages = await Promise.all(
+      pages.map(
+        async (page) =>
+          await readFile(path.join(app, `../docs/${page}.mdx`), "utf-8")
+      )
+    );
+    for (const [pageIndex, page] of pages.entries()) {
+      const markdown = markdownPages[pageIndex] ?? "";
       const snippets = [
         ...markdown.matchAll(/```typescript[^\n]*\n(?<source>[\s\S]*?)```/gu),
       ];

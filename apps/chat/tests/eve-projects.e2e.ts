@@ -1,6 +1,5 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -58,14 +57,13 @@ afterAll(async () => {
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Project fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
@@ -189,19 +187,16 @@ test("conversation deletion fences assignment and removes metadata without touch
   ).toHaveLength(1);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("fork paths share their chat project and retry cannot restore an old assignment" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("fork paths share their chat project and retry cannot restore an old assignment", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
-  const createFork = () =>
-    createEveConversation(
+  const createFork = async () =>
+    await createEveConversation(
       owner,
       operationId,
       "Fork fixture",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
@@ -228,12 +223,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       )
   ).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("an unresolved fork retains its project route for creation recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("an unresolved fork retains its project route for creation recovery") intentionally keeps the existing falsy-value behavior of pending; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("an unresolved fork retains its project route for creation recovery", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
@@ -243,13 +233,15 @@ test("an unresolved fork retains its project route for creation recovery", async
       owner,
       operationId,
       "Uncertain fork",
-      () => Promise.reject(new Error("Lost creation reply")),
+      vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("Lost creation reply")),
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
   expect(pending?.state).toBe("uncertain");
-  if (!pending) {
+  if (pending === undefined) {
     throw new Error("Missing unresolved fork");
   }
   const pendingProject = await getEveConversationProject(owner, pending.id);
@@ -258,11 +250,7 @@ test("an unresolved fork retains its project route for creation recovery", async
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("project creation binds before dispatch and preserves its initial intent through preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {
   const projectId = crypto.randomUUID();
   await db.insert(project).values({
@@ -279,11 +267,17 @@ test("project creation binds before dispatch and preserves its initial intent th
     });
     return crypto.randomUUID();
   });
-  const create = (requestedProject: string | undefined) =>
-    createEveConversation(owner, operationId, "Project creation", dispatch, {
-      fileKeys: [],
-      initialProjectId: requestedProject,
-    });
+  const create = async (requestedProject: string | undefined) =>
+    await createEveConversation(
+      owner,
+      operationId,
+      "Project creation",
+      dispatch,
+      {
+        fileKeys: [],
+        initialProjectId: requestedProject,
+      }
+    );
   const binding = await create(projectId);
   await assignEveConversationProject(owner, binding.id, ownProject);
   expect(await create(projectId)).toEqual(binding);
@@ -297,22 +291,23 @@ test("project creation binds before dispatch and preserves its initial intent th
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
-  const dispatch = vi.fn(async () => crypto.randomUUID());
-  for (const projectId of [foreignProject, crypto.randomUUID()]) {
-    const operationId = crypto.randomUUID();
-    await expect(
-      createEveConversation(
-        owner,
-        operationId,
-        "Unauthorized project",
-        dispatch,
-        { fileKeys: [], initialProjectId: projectId }
-      )
-    ).rejects.toThrow("Project not found");
-    expect(await getEveCreation(owner, operationId)).toBeUndefined();
-  }
+  const dispatch = vi.fn(createEveTestSession);
+  await Promise.all(
+    [foreignProject, crypto.randomUUID()].map(async (projectId) => {
+      const operationId = crypto.randomUUID();
+      await expect(
+        createEveConversation(
+          owner,
+          operationId,
+          "Unauthorized project",
+          dispatch,
+          { fileKeys: [], initialProjectId: projectId }
+        )
+      ).rejects.toThrow("Project not found");
+      expect(await getEveCreation(owner, operationId)).toBeUndefined();
+    })
+  );
   expect(dispatch).not.toHaveBeenCalled();
 });

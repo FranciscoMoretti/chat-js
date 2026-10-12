@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryClientProvider, isServer } from "@tanstack/react-query";
+import { QueryClientProvider, environmentManager } from "@tanstack/react-query";
 import React, { useState } from "react";
 import type { AppRouter } from "@/trpc/routers/_app";
 import type { QueryClient } from "@tanstack/react-query";
@@ -23,8 +23,7 @@ const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient | undefined;
 
 const getQueryClient = (): QueryClient => {
-  // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve TanStack Query server detection until its SSR and hydration boundary is migrated together.
-  if (isServer) {
+  if (environmentManager.isServer()) {
     // Server: always make a new query client
     return makeQueryClient();
   }
@@ -32,10 +31,7 @@ const getQueryClient = (): QueryClient => {
   // This is very important, so we don't re-make a new client if React
   // suspends during the initial render. This may not be needed if we
   // have a suspense boundary BELOW the creation of the query client
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
-  if (!browserQueryClient) {
-    browserQueryClient = makeQueryClient();
-  }
+  browserQueryClient ??= makeQueryClient();
   return browserQueryClient;
 };
 

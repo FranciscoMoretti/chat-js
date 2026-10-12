@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -81,6 +80,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     .where(eq(eveGuest.ownerId, guest.ownerId));
   const claimed: string[] = [];
   // Other expired local fixtures may exist; each call remains bounded and rotates fairly.
+  /* oxlint-disable eslint/no-await-in-loop -- Each bounded claim round updates claimed families and determines whether another round is needed. */
   for (let round = 0; round < 30 && claimed.length < roots.length; round += 1) {
     const batches = await Promise.all([
       claimExpiredEveGuestFamilies(),
@@ -100,6 +100,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       );
     }
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   expect(new Set(claimed).size).toBe(11);
   expect(claimed).toHaveLength(11);
   expect(

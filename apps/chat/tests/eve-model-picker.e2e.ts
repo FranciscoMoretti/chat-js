@@ -18,10 +18,6 @@ const conversationUrl = /\/chat\/[0-9a-f-]+$/u;
 const modelId = "openai/gpt-5-nano";
 const modelName = "GPT-5 nano";
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("the single-model picker dispatches and retains the selected native model") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("the single-model picker dispatches and retains the selected native model") intentionally keeps the existing falsy-value behavior of conversation?.sessionId; conversationId; origin; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("the single-model picker dispatches and retains the selected native model", async ({
   page,
 }, testInfo) => {
@@ -29,9 +25,9 @@ test("the single-model picker dispatches and retains the selected native model",
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
     const authSessionResponse = await page.request.get("/api/auth/get-session");
@@ -85,7 +81,13 @@ test("the single-model picker dispatches and retains the selected native model",
       .from(eveConversation)
       .where(eq(eveConversation.id, conversationId));
     expect(conversation?.initialModelId).toBe(modelId);
-    if (!conversation?.sessionId) {
+    if (
+      conversation === undefined ||
+      conversation === null ||
+      conversation.sessionId === undefined ||
+      conversation.sessionId === null ||
+      conversation.sessionId === ""
+    ) {
       throw new Error("Missing native session binding.");
     }
 
@@ -112,7 +114,14 @@ test("the single-model picker dispatches and retains the selected native model",
     ).toContainText(marker);
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
-    if (conversationId && origin) {
+    if (
+      conversationId !== undefined &&
+      conversationId !== null &&
+      conversationId !== "" &&
+      origin !== undefined &&
+      origin !== null &&
+      origin !== ""
+    ) {
       const url = `/api/agent-conversations/${conversationId}`;
       const headers = { origin };
       await expect
@@ -130,4 +139,3 @@ test("the single-model picker dispatches and retains the selected native model",
     }
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -109,9 +109,9 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
       ? "waiting-for-app"
       : state;
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (shouldWaitForApp) {
-      return;
+      return undefined;
     }
 
     let cancelled = false;
@@ -162,7 +162,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         setState("waiting-for-app");
       }
     })();
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       cancelled = true;
     };

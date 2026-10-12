@@ -42,12 +42,12 @@ const getCodeSandboxCleanup = (
     tool === null ||
     (typeof tool !== "object" && typeof tool !== "function")
   ) {
-    return;
+    return undefined;
   }
   if (hasCodeSandboxCleanup(tool)) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: getCodeSandboxCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return tool[codeSandboxCleanup];
   }
+  return undefined;
 };
 export { getCodeSandboxCleanup, withCodeSandboxCleanup };
 export type { CodeSandboxCleanupCapability, CodeSandboxCleanupSession };

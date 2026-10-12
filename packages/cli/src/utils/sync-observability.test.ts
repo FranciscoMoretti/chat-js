@@ -5,6 +5,8 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+import { parsePackageJson } from "#cli/helpers/package-manifest";
+import { requireJsonObject } from "#cli/helpers/json-object";
 
 import { installItems } from "#cli/registry/shadcn";
 
@@ -45,15 +47,13 @@ const lintInstalledObservability = async (root: string): Promise<void> => {
 };
 
 const roots: string[] = [];
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-observability-"));
   roots.push(root);
@@ -137,14 +137,16 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   });
 }
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const item of observabilityItems) {
   test(`shadcn installs ${item.name} independently into an omitted scaffold`, async (): Promise<void> => {
     const root = await fixture();
     await scaffoldFromTemplate(root);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const manifest = JSON.parse(
+    const manifest = parsePackageJson(
       await readFile(path.join(root, "package.json"), "utf-8")
+    );
+    const dependencies = requireJsonObject(
+      manifest.dependencies,
+      "dependencies"
     );
     for (const dependency of [
       "@vercel/analytics",
@@ -153,13 +155,12 @@ for (const item of observabilityItems) {
       "langfuse",
       "langfuse-vercel",
     ]) {
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies[dependency]).toBeUndefined();
+      expect(dependencies[dependency]).toBeUndefined();
     }
     const descriptors = await Promise.all(
       observabilityItems.map(
-        (feature: { readonly name: string }): Promise<boolean> =>
-          Bun.file(
+        async (feature: { readonly name: string }): Promise<boolean> =>
+          await Bun.file(
             path.join(root, `features/${feature.name}/chatjs.json`)
           ).exists()
       )
@@ -183,9 +184,12 @@ for (const item of observabilityItems) {
         root
       );
       await syncFeatures(root);
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const installedManifest = JSON.parse(
+      const installedManifest = parsePackageJson(
         await readFile(path.join(root, "package.json"), "utf-8")
+      );
+      const installedDependencies = requireJsonObject(
+        installedManifest.dependencies,
+        "installed dependencies"
       );
       for (const dependency of item.dependencies) {
         const versionSeparator = dependency.lastIndexOf("@");
@@ -193,8 +197,7 @@ for (const item of observabilityItems) {
           versionSeparator > 0
             ? dependency.slice(0, versionSeparator)
             : dependency;
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-        expect(installedManifest.dependencies[name]).toBeDefined();
+        expect(installedDependencies[name]).toBeDefined();
       }
       const registration = await readFile(
         path.join(root, "features/installed.ts"),
@@ -238,4 +241,3 @@ for (const item of observabilityItems) {
     ).toBe(false);
   });
 }
-/* oxlint-enable typescript/promise-function-async */

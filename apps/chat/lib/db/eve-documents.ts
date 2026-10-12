@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { EveCopyBoundary } from "@/lib/eve/copy-boundaries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { SQL } from "drizzle-orm";
@@ -266,7 +266,7 @@ const purgeEveFamilyDocuments = async (
       }
       const ids = family.map((row) => row.id);
       for (const id of ids) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire each family document advisory lock before deleting checkpoint rows; document writers retain those locks through commit.
         await tx.execute(
           sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
         );
@@ -416,42 +416,54 @@ const backfillDocumentCheckpoints = async (
         eq(eveDocumentHead.ownerId, ownerId)
       )
     );
-  const histories: {
-    documentId: string;
-    history: {
-      id: string;
-      parentRevisionId: string | null;
-      turnIndex: number | null;
-    }[];
-  }[] = [];
-  for (const head of heads) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-    const revisions = await tx
-      .select({
-        id: eveDocumentRevision.id,
-        parentRevisionId: eveDocumentRevision.parentRevisionId,
-        turnIndex: eveDocumentRevision.turnIndex,
-      })
-      .from(eveDocumentRevision)
-      .where(
-        inArray(
-          eveDocumentRevision.id,
-          ancestorIds(ownerId, head.documentId, head.revisionId)
-        )
-      );
-    const history = orderRevisionHistory(revisions, head.revisionId);
+  const revisions =
+    heads.length > 0
+      ? await tx
+          .select({
+            documentId: eveDocumentRevision.documentId,
+            id: eveDocumentRevision.id,
+            parentRevisionId: eveDocumentRevision.parentRevisionId,
+            turnIndex: eveDocumentRevision.turnIndex,
+          })
+          .from(eveDocumentRevision)
+          .where(
+            or(
+              ...heads.map((head) =>
+                inArray(
+                  eveDocumentRevision.id,
+                  ancestorIds(ownerId, head.documentId, head.revisionId)
+                )
+              )
+            )
+          )
+      : [];
+  const revisionsByDocument = new Map<string, typeof revisions>();
+  for (const revision of revisions) {
+    const history = revisionsByDocument.get(revision.documentId);
+    if (history) {
+      history.push(revision);
+    } else {
+      revisionsByDocument.set(revision.documentId, [revision]);
+    }
+  }
+  const histories = heads.map((head) => {
+    const history = orderRevisionHistory(
+      revisionsByDocument.get(head.documentId) ?? [],
+      head.revisionId
+    );
     if (history.some((revision) => revision.turnIndex === null)) {
       throw new Error(
         "Document checkpoint is not ready. Retry saving shortly."
       );
     }
-    histories.push({ documentId: head.documentId, history });
-  }
+    return { documentId: head.documentId, history };
+  });
+  await tx
+    .insert(eveDocumentCheckpoint)
+    .values(
+      missing.map((turnIndex) => ({ conversationId, ownerId, turnIndex }))
+    );
   for (const turnIndex of missing) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-    await tx
-      .insert(eveDocumentCheckpoint)
-      .values({ conversationId, ownerId, turnIndex });
     const entries = histories.flatMap(
       ({
         documentId,
@@ -484,7 +496,7 @@ const backfillDocumentCheckpoints = async (
       }
     );
     if (entries.length > 0) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Headers are already inserted; write one turn's manifest at a time instead of retaining entries for every missing turn times every document.
       await tx.insert(eveDocumentCheckpointEntry).values(entries);
     }
   }
@@ -516,6 +528,24 @@ const prepareManualRevision = async (
   }
 };
 
+const assertRevisionReplay = (
+  replay: typeof eveDocumentRevision.$inferSelect,
+  input: z.infer<typeof revisionInput>
+): void => {
+  if (
+    replay.documentId !== input.documentId ||
+    replay.ownerId !== input.ownerId ||
+    replay.parentRevisionId !== input.expectedRevisionId ||
+    replay.turnIndex !== input.turnIndex ||
+    replay.title !== input.title ||
+    replay.content !== input.content ||
+    JSON.stringify(replay.fileIds) !== JSON.stringify(input.fileIds) ||
+    replay.kind !== input.kind
+  ) {
+    throw new Error("Document operation changed during replay.");
+  }
+};
+
 /**
  * Save a revision and move only this conversation's head, atomically and replay-safely.
  * @param {z.input<typeof revisionInput>} value - Revision payload with the expected head and immutable operation ID.
@@ -532,128 +562,114 @@ const saveEveDocumentRevision = async (
     signal.throwIfAborted();
   }
   const input = revisionInput.parse(value);
-  return await db.transaction(
-    // oxlint-disable-next-line eslint/complexity -- Keep the atomic transaction boundary.
-    async (tx: DocumentWriteTransaction) => {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
+  return await db.transaction(async (tx: DocumentWriteTransaction) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
+    );
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${input.conversationId}`}, 0))`
+    );
+    if (signal) {
+      signal.throwIfAborted();
+    }
+    const conversationRows = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, input.conversationId),
+          eq(eveConversation.ownerId, input.ownerId),
+          eq(eveConversation.state, "bound")
+        )
       );
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${input.conversationId}`}, 0))`
+    const conversation = conversationRows.at(FIRST_ROW_INDEX);
+    if (!conversation) {
+      throw new Error("Conversation not found.");
+    }
+    const replayRows = await tx
+      .select()
+      .from(eveDocumentRevision)
+      .where(
+        and(
+          eq(eveDocumentRevision.conversationId, input.conversationId),
+          eq(eveDocumentRevision.operationId, input.operationId)
+        )
       );
-      if (signal) {
-        signal.throwIfAborted();
-      }
-      const conversationRows = await tx
-        .select()
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.id, input.conversationId),
-            eq(eveConversation.ownerId, input.ownerId),
-            eq(eveConversation.state, "bound")
-          )
-        );
-      const conversation = conversationRows.at(FIRST_ROW_INDEX);
-      if (!conversation) {
-        throw new Error("Conversation not found.");
-      }
-      const replayRows = await tx
+    const replay = replayRows.at(FIRST_ROW_INDEX);
+    if (replay) {
+      assertRevisionReplay(replay, input);
+      return replay;
+    }
+    const headRows = await tx
+      .select()
+      .from(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, input.conversationId),
+          eq(eveDocumentHead.documentId, input.documentId)
+        )
+      );
+    const head = headRows.at(FIRST_ROW_INDEX);
+    if ((head?.revisionId ?? null) !== input.expectedRevisionId) {
+      throw new Error("Document changed. Reload before saving.");
+    }
+    if (head) {
+      const previousRows = await tx
         .select()
         .from(eveDocumentRevision)
-        .where(
-          and(
-            eq(eveDocumentRevision.conversationId, input.conversationId),
-            eq(eveDocumentRevision.operationId, input.operationId)
-          )
-        );
-      const replay = replayRows.at(FIRST_ROW_INDEX);
-      if (replay) {
-        if (
-          replay.documentId !== input.documentId ||
-          replay.ownerId !== input.ownerId ||
-          replay.parentRevisionId !== input.expectedRevisionId ||
-          replay.turnIndex !== input.turnIndex ||
-          replay.title !== input.title ||
-          replay.content !== input.content ||
-          JSON.stringify(replay.fileIds) !== JSON.stringify(input.fileIds) ||
-          replay.kind !== input.kind
-        ) {
-          throw new Error("Document operation changed during replay.");
-        }
-        return replay;
+        .where(eq(eveDocumentRevision.id, head.revisionId));
+      const previous = previousRows.at(FIRST_ROW_INDEX);
+      if (
+        !previous ||
+        previous.kind !== input.kind ||
+        (previous.turnIndex ?? -1) >
+          (input.turnIndex ?? Number.POSITIVE_INFINITY)
+      ) {
+        throw new Error("Invalid document revision.");
       }
-      const headRows = await tx
-        .select()
-        .from(eveDocumentHead)
-        .where(
-          and(
-            eq(eveDocumentHead.conversationId, input.conversationId),
-            eq(eveDocumentHead.documentId, input.documentId)
-          )
-        );
-      const head = headRows.at(FIRST_ROW_INDEX);
-      if ((head?.revisionId ?? null) !== input.expectedRevisionId) {
-        throw new Error("Document changed. Reload before saving.");
-      }
-      if (head) {
-        const previousRows = await tx
-          .select()
-          .from(eveDocumentRevision)
-          .where(eq(eveDocumentRevision.id, head.revisionId));
-        const previous = previousRows.at(FIRST_ROW_INDEX);
-        if (
-          !previous ||
-          previous.kind !== input.kind ||
-          (previous.turnIndex ?? -1) >
-            (input.turnIndex ?? Number.POSITIVE_INFINITY)
-        ) {
-          throw new Error("Invalid document revision.");
-        }
-      }
-      await retainEveDocumentFiles(
-        tx,
-        input.ownerId,
-        input.conversationId,
-        input.fileIds
-      );
-      await prepareManualRevision(tx, input, historicalTurns);
-      if (signal) {
-        signal.throwIfAborted();
-      }
-      const [revision] = await tx
-        .insert(eveDocumentRevision)
-        .values({
-          content: input.content,
-          conversationId: input.conversationId,
-          documentId: input.documentId,
-          fileIds: input.fileIds,
-          kind: input.kind,
-          operationId: input.operationId,
-          ownerId: input.ownerId,
-          parentRevisionId: input.expectedRevisionId,
-          title: input.title,
-          turnIndex: input.turnIndex,
-        })
-        .returning();
-      await tx
-        .insert(eveDocumentHead)
-        .values({
-          conversationId: input.conversationId,
-          documentId: input.documentId,
-          ownerId: input.ownerId,
-          revisionId: revision.id,
-        })
-        .onConflictDoUpdate({
-          set: { revisionId: revision.id },
-          target: [eveDocumentHead.conversationId, eveDocumentHead.documentId],
-        });
-      if (signal) {
-        signal.throwIfAborted();
-      }
-      return revision;
     }
-  );
+    await retainEveDocumentFiles(
+      tx,
+      input.ownerId,
+      input.conversationId,
+      input.fileIds
+    );
+    await prepareManualRevision(tx, input, historicalTurns);
+    if (signal) {
+      signal.throwIfAborted();
+    }
+    const [revision] = await tx
+      .insert(eveDocumentRevision)
+      .values({
+        content: input.content,
+        conversationId: input.conversationId,
+        documentId: input.documentId,
+        fileIds: input.fileIds,
+        kind: input.kind,
+        operationId: input.operationId,
+        ownerId: input.ownerId,
+        parentRevisionId: input.expectedRevisionId,
+        title: input.title,
+        turnIndex: input.turnIndex,
+      })
+      .returning();
+    await tx
+      .insert(eveDocumentHead)
+      .values({
+        conversationId: input.conversationId,
+        documentId: input.documentId,
+        ownerId: input.ownerId,
+        revisionId: revision.id,
+      })
+      .onConflictDoUpdate({
+        set: { revisionId: revision.id },
+        target: [eveDocumentHead.conversationId, eveDocumentHead.documentId],
+      });
+    if (signal) {
+      signal.throwIfAborted();
+    }
+    return revision;
+  });
 };
 
 /**
@@ -1049,8 +1065,9 @@ const initializeEveForkDocuments = async (
           eq(eveDocumentHead.ownerId, ownerId)
         )
       );
+    const inheritedHeads: (typeof eveDocumentHead.$inferInsert)[] = [];
     for (const head of heads) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Legacy fork inference reads only one document's ancestry at a time; loading all document histories together would increase peak memory before selecting the pre-turn heads.
       const ancestors = await tx
         .select({
           id: eveDocumentRevision.id,
@@ -1073,17 +1090,19 @@ const initializeEveForkDocuments = async (
           version.turnIndex !== null && version.turnIndex < beforeTurn
       );
       if (selectedRevision) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-        await tx
-          .insert(eveDocumentHead)
-          .values({
-            conversationId,
-            documentId: head.documentId,
-            ownerId,
-            revisionId: selectedRevision.id,
-          })
-          .onConflictDoNothing();
+        inheritedHeads.push({
+          conversationId,
+          documentId: head.documentId,
+          ownerId,
+          revisionId: selectedRevision.id,
+        });
       }
+    }
+    if (inheritedHeads.length > 0) {
+      await tx
+        .insert(eveDocumentHead)
+        .values(inheritedHeads)
+        .onConflictDoNothing();
     }
   });
 };
@@ -1270,9 +1289,8 @@ const getEveDocumentRevision = async (
             revision.id === revisionId
         );
   if (!selected) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
 
@@ -1314,7 +1332,7 @@ const getAccessibleEveDocument = async (
     !conversation ||
     (conversation.ownerId !== viewerId && conversation.visibility !== "public")
   ) {
-    return;
+    return undefined;
   }
   const history = await getEveDocumentHistory(
     conversation.ownerId,
@@ -1332,7 +1350,7 @@ const getAccessibleEveDocument = async (
     ? await readDocumentRevision(conversation.ownerId, documentId, selected.id)
     : undefined;
   if (!revision) {
-    return;
+    return undefined;
   }
   // Recheck visibility after the potentially slow ancestry/content read.
   const currentRows = await db
@@ -1349,9 +1367,8 @@ const getAccessibleEveDocument = async (
     !current ||
     (current.ownerId !== viewerId && current.visibility !== "public")
   ) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getAccessibleEveDocument has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     canEdit: current.ownerId === viewerId,
     history,

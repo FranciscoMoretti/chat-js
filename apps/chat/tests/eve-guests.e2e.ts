@@ -1,6 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -38,24 +35,20 @@ assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): findEveGuest intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-async function findEveGuest(
+const findEveGuest = async (
   tokenHash: string
-): Promise<typeof eveGuest.$inferSelect | undefined> {
+): Promise<typeof eveGuest.$inferSelect | undefined> => {
   const [row] = await db
     .select()
     .from(eveGuest)
     .where(eq(eveGuest.tokenHash, tokenHash));
-  if (row && row.expiresAt > new Date()) {
+  if (row !== undefined && row.expiresAt > new Date()) {
     return row;
   }
   return undefined;
-}
-/* oxlint-enable typescript/strict-boolean-expressions */
+};
 
-async function guest(messageLimit = 10) {
+const guest = async (messageLimit = 10) => {
   const credential = createEveGuestCredential();
   const row = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
@@ -64,9 +57,9 @@ async function guest(messageLimit = 10) {
   });
   owners.push(row.ownerId);
   return row;
-}
+};
 
-function request(ownerId: string) {
+const request = (ownerId: string) => {
   const ipHash = createEveGuestCredential().tokenHash;
   ips.push(ipHash);
   return {
@@ -77,7 +70,7 @@ function request(ownerId: string) {
     requestsPerMinute: 100,
     requestsPerMonth: 100,
   };
-}
+};
 
 afterAll(async () => {
   if (owners.length > 0) {
@@ -115,14 +108,11 @@ test("guest identity is server-owned, expires and grants no BetterAuth session o
   });
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("concurrent replay reserves once and rejects changed request content") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent replay reserves once and rejects changed request content", async () => {
   const row = await guest();
   const input = request(row.ownerId);
   const attempts = await Promise.all(
-    Array.from({ length: 8 }, () => reserveEveGuestMessage(input))
+    Array.from({ length: 8 }, async () => await reserveEveGuestMessage(input))
   );
   expect(
     attempts.filter((result) => result.status === "reserved")
@@ -146,17 +136,18 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     })
   ).toEqual({ status: "conflict" });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("distinct concurrent sends cannot overspend the guest balance") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("distinct concurrent sends cannot overspend the guest balance", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
   const results = await Promise.all(
-    Array.from({ length: 6 }, () =>
-      reserveEveGuestMessage({ ...input, operationId: crypto.randomUUID() })
+    Array.from(
+      { length: 6 },
+      async () =>
+        await reserveEveGuestMessage({
+          ...input,
+          operationId: crypto.randomUUID(),
+        })
     )
   );
   expect(results.filter((result) => result.status === "reserved")).toHaveLength(
@@ -168,7 +159,6 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
   expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("IP quotas survive cookie replacement and rejected limits spend no guest balance", async () => {
   const first = await guest();
@@ -213,9 +203,7 @@ test("simultaneous guests share one IP admission limit", async () => {
     "reserved",
   ]);
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry", async () => {
   const row = await guest();
   const other = await guest();
@@ -232,12 +220,14 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   ).toBe(false);
   const releases = await Promise.all(
-    Array.from({ length: 6 }, () =>
-      releaseEveGuestMessage(
-        row.ownerId,
-        input.operationId,
-        first.reservationId
-      )
+    Array.from(
+      { length: 6 },
+      async () =>
+        await releaseEveGuestMessage(
+          row.ownerId,
+          input.operationId,
+          first.reservationId
+        )
     )
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
@@ -272,7 +262,6 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
   expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("committing and releasing the same attempt are mutually exclusive", async () => {
   const row = await guest(1);
@@ -292,9 +281,6 @@ test("committing and releasing the same attempt are mutually exclusive", async (
   );
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("guest provider accounting survives expiry and replay without creating monetary  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("guest provider accounting survives expiry and replay without creating monetary credit", async () => {
   const row = await guest();
   await db
@@ -309,8 +295,9 @@ test("guest provider accounting survives expiry and replay without creating mone
   };
   expect(await recordEveUsage(evidence)).toBe(false);
   await Promise.all(
-    Array.from({ length: 6 }, () =>
-      recordEveUsage({ ...evidence, costUsd: 0.002 })
+    Array.from(
+      { length: 6 },
+      async () => await recordEveUsage({ ...evidence, costUsd: 0.002 })
     )
   );
   const rows = await db
@@ -324,11 +311,7 @@ test("guest provider accounting survives expiry and replay without creating mone
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("first admission creates one guest and reserves once across different IPs") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("first admission creates one guest and reserves once across different IPs", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -340,9 +323,9 @@ test("first admission creates one guest and reserves once across different IPs",
     tokenHash: credential.tokenHash,
   };
   const attempts = await Promise.all(
-    Array.from({ length: 6 }, () => {
+    Array.from({ length: 6 }, async () => {
       const other = request(ownerId);
-      return reserveEveGuestMessage(
+      return await reserveEveGuestMessage(
         { ...input, ipHash: other.ipHash },
         bootstrap
       );
@@ -363,9 +346,9 @@ test("first admission creates one guest and reserves once across different IPs",
     await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("denied first admission creates no account or quota rows", async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Denial cases assert shared admission-rate state remains absent before the next case. */
   for (const denial of ["rate", "balance"] as const) {
     const credential = createEveGuestCredential();
     const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -396,6 +379,7 @@ test("denied first admission creates no account or quota rows", async () => {
         .where(eq(eveGuestRate.ipHash, input.ipHash))
     ).toEqual([]);
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("bootstrap cannot replace an expired identity or reset its balance", async () => {
@@ -488,15 +472,12 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
   ).toEqual([1, 1]);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("concurrent comparison retries debit each distinct candidate exactly once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
   const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
   const results = await Promise.all(
-    Array.from({ length: 4 }, () => reserveEveGuestMessages(inputs))
+    Array.from({ length: 4 }, async () => await reserveEveGuestMessages(inputs))
   );
   for (const result of results) {
     expect(result.status).toBe("admitted");
@@ -568,7 +549,6 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     )
   ).toEqual([2, 2]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
   const row = await guest(10);
@@ -598,9 +578,6 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
   ).rejects.toThrow("unique operations");
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("comparison persistence failure rolls back guest identity and every quota reserv preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("comparison persistence failure rolls back guest identity and every quota reservation", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -629,7 +606,8 @@ test("comparison persistence failure rolls back guest identity and every quota r
         messageLimit: 2,
         tokenHash: credential.tokenHash,
       },
-      (tx) => reserveEveResponseGroupInTransaction(tx, ownerId, input)
+      async (tx) =>
+        await reserveEveResponseGroupInTransaction(tx, ownerId, input)
     )
   ).rejects.toThrow("Source conversation not found");
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual([]);
@@ -646,7 +624,6 @@ test("comparison persistence failure rolls back guest identity and every quota r
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("refunded guest creation cannot dispatch late, while a new admission can recover", async () => {
   const row = await guest(1);
@@ -662,7 +639,9 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
       original.reservationId
     )
   ).toBe(true);
-  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  const dispatch = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(`native-${input.operationId}`);
   await expect(
     createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
       guestReservationId: original.reservationId,
@@ -697,6 +676,7 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
 });
 
 test("creation claims and refunds serialize without a free native dispatch", async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Run one creation/refund race at a time so shared IP admission counters do not add interference. */
   for (let index = 0; index < 4; index += 1) {
     const row = await guest(1);
     const input = request(row.ownerId);
@@ -704,7 +684,9 @@ test("creation claims and refunds serialize without a free native dispatch", asy
     if (quota.status !== "reserved") {
       throw new Error("Missing admission");
     }
-    const dispatch = vi.fn(async () => `native-race-${input.operationId}`);
+    const dispatch = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValue(`native-race-${input.operationId}`);
     const [creation, refund] = await Promise.allSettled([
       createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
         guestReservationId: quota.reservationId,
@@ -731,6 +713,7 @@ test("creation claims and refunds serialize without a free native dispatch", asy
       expect(guestAfterCreationWins?.remainingMessages).toBe(0);
     }
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
@@ -745,7 +728,9 @@ test("committed quota without a creation journal cannot authorize a new dispatch
     input.operationId,
     quota.reservationId
   );
-  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  const dispatch = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(`native-${input.operationId}`);
   await expect(
     createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
       guestReservationId: quota.reservationId,

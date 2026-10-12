@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   complete: vi.fn(),
   inventory: vi.fn(),
   prepare: vi.fn<typeof prepareEveOrphanedFilePurge>(),
-  remove: vi.fn(),
+  remove: vi.fn<() => Promise<void>>(),
 }));
 vi.mock("../db/eve-orphaned-files", () => ({
   prepareEveOrphanedFilePurge: mocks.prepare,
@@ -22,16 +22,13 @@ vi.mock("../file-storage", () => ({
 const cutoff = new Date("2026-01-01");
 const old = new Date("2025-12-31");
 const key = "abcdefghijklmnopqrstuvwx.png";
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 beforeEach(() => {
   vi.resetAllMocks();
+  // oxlint-disable-next-line typescript/promise-function-async -- The result depends on each call's keys; the mock returns an immediately settled mapped value.
   mocks.prepare.mockImplementation((keys: readonly string[]) =>
     Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
     yield {
@@ -75,8 +72,7 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   });
   mocks.remove
     .mockRejectedValueOnce(new Error("partial storage failure"))
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-    .mockResolvedValue(undefined);
+    .mockResolvedValue();
   await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
 
   expect(

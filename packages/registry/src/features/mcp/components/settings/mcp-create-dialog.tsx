@@ -59,8 +59,7 @@ const mcpConnectorFormSchema = z.object({
   url: z
     .string()
     .min(1, { message: "URL is required" })
-    // oxlint-disable-next-line typescript/no-deprecated -- Keep the current validation order and error messages; replacing this chained API would change the form validation contract.
-    .url({ message: "Please enter a valid URL" }),
+    .check(z.url({ error: "Please enter a valid URL" })),
 });
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
@@ -83,7 +82,6 @@ type ReadonlyFormEvent = Readonly<{
   isPropagationStopped: () => boolean;
 }>;
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const McpCreateDialog = ({
   open,
   onClose,
@@ -98,6 +96,13 @@ export const McpCreateDialog = ({
   const { appName } = config;
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [previousOpen, setPreviousOpen] = useState(open);
+  if (previousOpen !== open) {
+    setPreviousOpen(open);
+    if (open) {
+      setAdvancedOpen(false);
+    }
+  }
 
   const form = useForm<McpConnectorFormValues>({
     defaultValues: {
@@ -122,9 +127,6 @@ export const McpCreateDialog = ({
       type: "http",
       url: "",
     });
-
-    // oxlint-disable-next-line react/set-state-in-effect -- Reset the controlled form's advanced section on open.
-    setAdvancedOpen(false);
   }, [open, form]);
 
   const { mutate: createConnector, isPending } = useMutation(
@@ -142,12 +144,14 @@ export const McpCreateDialog = ({
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
-      oauthClientId: values.oauthClientId?.trim()
-        ? values.oauthClientId
-        : undefined,
-      oauthClientSecret: values.oauthClientSecret?.trim()
-        ? values.oauthClientSecret
-        : undefined,
+      oauthClientId:
+        (values.oauthClientId?.trim() ?? "") === ""
+          ? undefined
+          : values.oauthClientId,
+      oauthClientSecret:
+        (values.oauthClientSecret?.trim() ?? "") === ""
+          ? undefined
+          : values.oauthClientSecret,
       url: values.url.trim(),
     };
 
@@ -389,4 +393,3 @@ export const McpCreateDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

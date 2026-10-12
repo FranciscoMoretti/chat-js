@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 import { tmpdir } from "node:os";
+import { z } from "zod";
 
 const repoRoot = pathModule.resolve(import.meta.dir, "../../../..");
 const turbo = pathModule.join(repoRoot, "node_modules/.bin/turbo");
@@ -119,13 +120,18 @@ test.each([
       "--exit-code",
     ]);
     expect(result.exitCode, result.stderr.toString()).toBe(Number(affected));
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const output = JSON.parse(result.stdout.toString());
-    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+    const output = z
+      .object({
+        data: z.object({
+          affectedTasks: z.object({
+            items: z.array(z.object({ fullName: z.string() })),
+          }),
+        }),
+      })
+      .parse(JSON.parse(result.stdout.toString()));
     const taskNames = output.data.affectedTasks.items.map(
       (task: { readonly fullName: string }): string => task.fullName
     );
-    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(taskNames.includes("@chat-js/cli#test:scaffold")).toBe(affected);
 
     // CI's execution phase must agree with the pre-install query, including
@@ -140,9 +146,11 @@ test.each([
     expect(execution.exitCode, execution.stderr.toString()).toBe(
       successExitCode
     );
+    const planned = z
+      .object({ tasks: z.array(z.object({ taskId: z.string() })) })
+      .parse(JSON.parse(execution.stdout.toString()));
     const plannedTasks = new Set(
-      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      JSON.parse(execution.stdout.toString()).tasks.map(
+      planned.tasks.map(
         (task: { readonly taskId: string }): string => task.taskId
       )
     );

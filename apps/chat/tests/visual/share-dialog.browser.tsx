@@ -23,7 +23,6 @@ const flushReact = async (update: () => void): Promise<void> => {
     await Promise.resolve();
   });
 };
-/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 test("share link confirms a completed copy and reports clipboard rejection", async () => {
   const copy = Promise.withResolvers<undefined>();
@@ -43,7 +42,7 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
       root.render(
         <>
           <ShareDialog
-            onOpenChange={vi.fn()}
+            onOpenChange={vi.fn<(_open: boolean) => void>()}
             open
             renderContent={(onClose): React.JSX.Element => (
               <ShareDialogView
@@ -51,7 +50,7 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
                 isPending={false}
                 isPublic
                 onClose={onClose}
-                setVisibility={() => Promise.resolve()}
+                setVisibility={vi.fn<() => Promise<void>>().mockResolvedValue()}
               />
             )}
           />
@@ -106,4 +105,3 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     vi.restoreAllMocks();
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */

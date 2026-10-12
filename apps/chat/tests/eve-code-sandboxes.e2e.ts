@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -33,14 +33,13 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Sandbox fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();

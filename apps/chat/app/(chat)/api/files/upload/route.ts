@@ -108,7 +108,6 @@ const validateUploadForm = (
   return { file };
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const POST = async (
   request: ReadonlyNativeSurface<Request>
 ): Promise<
@@ -155,8 +154,8 @@ export const POST = async (
       const key = createFileId();
       await reserveEveUpload(session.user.id, key);
       // Keep the reservation if storage fails: an uncertain write can still finish.
-      const write = (): ReturnType<typeof uploadFileAtKey> =>
-        uploadFileAtKey(key, filename, fileBuffer, file.type);
+      const write = async (): ReturnType<typeof uploadFileAtKey> =>
+        await uploadFileAtKey(key, filename, fileBuffer, file.type);
       const data = await writeEveUpload(session.user.id, key, write);
       return NextResponse.json(data);
     } catch {
@@ -169,4 +168,3 @@ export const POST = async (
     );
   }
 };
-/* oxlint-enable typescript/promise-function-async */

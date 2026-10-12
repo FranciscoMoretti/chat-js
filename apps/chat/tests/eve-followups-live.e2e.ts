@@ -11,13 +11,12 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const RAINBOW_EXPLANATION =
   /light.*(?:refract|reflect|bend|color)|(?:refract|reflect|bend|color).*light/isu;
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("native follow-ups survive reload, submit normally and preserve unsent composer  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("native follow-ups survive reload, submit normally and preserve unsent composer content", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -114,4 +113,3 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     path: testInfo.outputPath("followups-integrated.png"),
   });
 });
-/* oxlint-enable typescript/promise-function-async */

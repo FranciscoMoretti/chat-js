@@ -15,9 +15,6 @@ import { eveResponseGroupInput } from "./response-group-input";
 
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions -- * typescript/promise-function-async (#606): createEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): createEveResponseGroup intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Sequential root reservation followed by independent forks; retries reuse all identities.
  *
@@ -130,13 +127,13 @@ export const createEveResponseGroup = async (
   if (input.fork) {
     return {
       candidates: await Promise.all(
-        group.candidates.map((candidate) => dispatch(candidate))
+        group.candidates.map(async (candidate) => await dispatch(candidate))
       ),
       id: group.id,
     };
   }
   const [first, ...rest] = group.candidates;
-  if (!first) {
+  if (!(first !== undefined)) {
     throw new Error("Response group has no candidates.");
   }
   const primary = await dispatch(first);
@@ -174,13 +171,13 @@ export const createEveResponseGroup = async (
     };
   }
   const candidates = await Promise.all(
-    rest.map((candidate) =>
-      dispatch(candidate, {
-        beforeTurnId: "turn_0",
-        conversationId: primary.conversationId,
-      })
+    rest.map(
+      async (candidate) =>
+        await dispatch(candidate, {
+          beforeTurnId: "turn_0",
+          conversationId: primary.conversationId,
+        })
     )
   );
   return { candidates: [primary, ...candidates], id: group.id };
 };
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

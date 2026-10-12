@@ -1,3 +1,4 @@
+import { hasText } from "@/components/text-value";
 import { File, Loader2, Pencil } from "lucide-react";
 import React, { memo } from "react";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
@@ -157,7 +158,7 @@ const PureDocumentToolCall = ({
         </div>
 
         <div className="text-left">
-          {`${getActionText(type, "present")} ${/* oxlint-disable typescript/strict-boolean-expressions -- Empty or missing titles deliberately omit the optional label suffix. */ args.title /* oxlint-enable typescript/strict-boolean-expressions */ ? `"${args.title}"` : ""}`}
+          {`${getActionText(type, "present")} ${hasText(args.title) ? `"${args.title}"` : ""}`}
         </div>
       </div>
 

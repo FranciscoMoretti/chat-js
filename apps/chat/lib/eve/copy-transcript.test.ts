@@ -8,7 +8,7 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
@@ -299,9 +299,6 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
   );
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("materializes only allocated destination attachments and remaps case-insensitive n preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("materializes only allocated destination attachments and remaps case-insensitive native document references", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -335,6 +332,7 @@ it("materializes only allocated destination attachments and remaps case-insensit
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     (key) => {
       reads.push(key);
       return Promise.resolve({ size: 11, type: "image/png" });
@@ -350,16 +348,12 @@ it("materializes only allocated destination attachments and remaps case-insensit
   expect(JSON.stringify(result)).not.toContain(sourceFile);
   expect(JSON.stringify(prepared.seed)).toContain(sourceFile);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
   const value = Object.freeze({ nested: Object.freeze({ url: sourceUrl }) });
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("keeps attachment bytes out of the seed and reads destination metadata once per fi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("keeps attachment bytes out of the seed and reads destination metadata once per file", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -378,6 +372,7 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
+    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     () => {
       reads += 1;
       return Promise.resolve({ size: 1024 * 1024, type: "image/png" });
@@ -389,11 +384,7 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("externalizes six distinct inline images through durable destination allocations") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("externalizes six distinct inline images through durable destination allocations", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -422,11 +413,9 @@ it("externalizes six distinct inline images through durable destination allocati
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     { ...allocations, inlineFiles },
-    () =>
-      Promise.resolve({
-        size: 1024 * 1024,
-        type: "image/png",
-      }),
+    vi
+      .fn<() => Promise<{ size: number; type: string }>>()
+      .mockResolvedValue({ size: 1024 * 1024, type: "image/png" }),
     "https://chatjs.example"
   );
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
@@ -435,11 +424,7 @@ it("externalizes six distinct inline images through durable destination allocati
     expect(file.bytes[0]).toBe(index);
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("refuses missing inline allocations and metadata changes before dispatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("refuses missing inline allocations and metadata changes before dispatch", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -461,7 +446,9 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     materializeEveCopyTranscript(
       prepared.seed,
       allocations,
-      () => Promise.resolve({ size: 2, type: "image/png" }),
+      vi
+        .fn<() => Promise<{ size: number; type: string }>>()
+        .mockResolvedValue({ size: 2, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("allocation");
@@ -472,12 +459,13 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
-      () => Promise.resolve({ size: 3, type: "image/png" }),
+      vi
+        .fn<() => Promise<{ size: number; type: string }>>()
+        .mockResolvedValue({ size: 3, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("metadata changed");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it.each([
   "data:image/png;base64,aGk",

@@ -2,9 +2,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { createEveResponseGroup } from "./response-group";
 import { eveResponseGroupCandidates } from "./response-group-candidates";
+import type { createEveConversationOperation } from "./create-conversation-operation";
 
 const mocks = vi.hoisted(() => ({
-  create: vi.fn(),
+  create: vi.fn<typeof createEveConversationOperation>(),
   refund: vi.fn(),
   reserve: vi.fn(),
   settle: vi.fn(),
@@ -95,9 +96,7 @@ it("marks every multi-model edited candidate with the shared user intent", async
   expect(
     mocks.create.mock.calls.map(
       (call: Readonly<(typeof mocks.create.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
         call[1].forkKind
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
     )
   ).toEqual(["edit", "edit"]);
 });

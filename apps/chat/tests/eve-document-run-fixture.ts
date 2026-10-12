@@ -52,10 +52,6 @@ const states: {
   },
 ];
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): process.stdout.write preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): process.stdout.write intentionally keeps the existing falsy-value behavior of readOnly; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 process.stdout.write(
   renderToStaticMarkup(
     createElement(
@@ -79,7 +75,12 @@ process.stdout.write(
               messages: part
                 ? [{ id: title, role: "assistant", parts: [part] }]
                 : [],
-              onAction: readOnly ? undefined : () => Promise.resolve(),
+              onAction:
+                readOnly === true
+                  ? undefined
+                  : /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+                    () => Promise.resolve(),
+              /* oxlint-enable typescript/promise-function-async */
               title: "saved.js",
             })
           )
@@ -87,4 +88,3 @@ process.stdout.write(
     )
   )
 );
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -217,7 +217,7 @@ export const purgeEvePostgresQueue = async (
         pass < MAX_DISCOVERY_PASSES;
         pass += NEXT_DISCOVERY_PASS
       ) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Each pass inventories writes admitted before the newly acquired fences.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Read queue associations, fence newly discovered runs, then repeat; persist stable inventory before removing its last queued associations.
         const inventory = await readEvePostgresQueueInventory(query, {
           runIds: [...known],
           taskIdentifier: parsed.taskIdentifier,
@@ -225,10 +225,10 @@ export const purgeEvePostgresQueue = async (
         assertIdleQueueInventory(inventory);
         const newIds = discoverQueueRuns(inventory, known);
         if (newIds.length > EMPTY_COUNT) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Fence the newly discovered run set before its next inventory pass.
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Read queue associations, fence newly discovered runs, then repeat; persist stable inventory before removing its last queued associations.
           await fenceDiscoveredQueueRuns(query, known, newIds);
         } else {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Persist the stable inventory before removing its last queued associations.
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Read queue associations, fence newly discovered runs, then repeat; persist stable inventory before removing its last queued associations.
           return await finishQueuePurge(
             query,
             {

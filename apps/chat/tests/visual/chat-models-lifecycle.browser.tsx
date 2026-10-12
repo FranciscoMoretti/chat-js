@@ -1,8 +1,11 @@
-import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
-import { act, create } from "react-test-renderer";
+import {
+  ChatModelsProvider,
+  useChatModels,
+} from "@/providers/chat-models-provider";
+import { createDomHarness } from "@/components/test-dom-harness";
 import { describe, expect, it, vi } from "vitest";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import React from "react";
+import React, { act } from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";
 
@@ -78,23 +81,21 @@ const ContextProbe = ({
   return null;
 };
 
-/* oxlint-disable typescript/strict-void-return -- * typescript/strict-void-return (#611): describe("ChatModelsProvider")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary. */
 describe("ChatModelsProvider", () => {
   it("preserves the context identity when its semantic inputs are unchanged", () => {
     const values: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>[] =
       [];
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ChatModelsProvider models={models}>
           <ContextProbe
             onValue={(
               value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
-            ) => values.push(value)}
+            ) => {
+              values.push(value);
+            }}
           />
         </ChatModelsProvider>
       );
@@ -106,14 +107,15 @@ describe("ChatModelsProvider", () => {
     }
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.update(
           <ChatModelsProvider models={models}>
             <ContextProbe
               onValue={(
                 value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
-              ) => values.push(value)}
+              ) => {
+                values.push(value);
+              }}
             />
           </ChatModelsProvider>
         );
@@ -122,7 +124,6 @@ describe("ChatModelsProvider", () => {
       expect(values).toHaveLength(2);
       expect(values[1]).toBe(values[0]);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.unmount();
       });
@@ -132,18 +133,17 @@ describe("ChatModelsProvider", () => {
   it("updates lookup and filtered models when the model input changes", () => {
     const values: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>[] =
       [];
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    let renderer: ReturnType<typeof create> | undefined;
+    let renderer: ReturnType<typeof createDomHarness> | undefined;
 
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      renderer = create(
+      renderer = createDomHarness(
         <ChatModelsProvider models={models}>
           <ContextProbe
             onValue={(
               value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
-            ) => values.push(value)}
+            ) => {
+              values.push(value);
+            }}
           />
         </ChatModelsProvider>
       );
@@ -155,14 +155,15 @@ describe("ChatModelsProvider", () => {
     }
 
     try {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.update(
           <ChatModelsProvider models={updatedModels}>
             <ContextProbe
               onValue={(
                 value: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>
-              ) => values.push(value)}
+              ) => {
+                values.push(value);
+              }}
             />
           </ChatModelsProvider>
         );
@@ -175,11 +176,9 @@ describe("ChatModelsProvider", () => {
         updatedModels[0]
       );
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.unmount();
       });
     }
   });
 });
-/* oxlint-enable typescript/strict-void-return */

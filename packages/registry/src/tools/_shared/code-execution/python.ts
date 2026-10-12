@@ -3,6 +3,7 @@ import type {
   CodeExecutionResult,
   ExecutionSandbox,
 } from "./types";
+import { z } from "zod";
 
 type PythonExecutionContext = Readonly<{
   sandbox: Readonly<ExecutionSandbox>;
@@ -10,10 +11,18 @@ type PythonExecutionContext = Readonly<{
   log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
 }>;
 
-interface PythonExecutionInfo {
-  error?: { name: string; value: string; traceback: string };
-  success: boolean;
-}
+const pythonExecutionInfoSchema = z.looseObject({
+  error: z
+    .looseObject({
+      name: z.string(),
+      value: z.string(),
+      traceback: z.string(),
+    })
+    .optional(),
+  success: z.boolean().optional(),
+});
+
+type PythonExecutionInfo = z.infer<typeof pythonExecutionInfoSchema>;
 
 interface PythonExecutionOutput {
   chartData: Record<string, unknown> | null;
@@ -221,8 +230,7 @@ const parseExecutionOutput = async (
   try {
     const outLines = (stdout ?? "").trim().split("\n");
     const lastLine = outLines.at(LAST_LINE_INDEX);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
-    execInfo = JSON.parse(lastLine ?? "{}");
+    execInfo = pythonExecutionInfoSchema.parse(JSON.parse(lastLine ?? "{}"));
     outLines.pop();
 
     const chartLineIdx = outLines.findIndex((line) =>
@@ -259,7 +267,6 @@ const parseExecutionOutput = async (
   return { chartData, execInfo, outputText };
 };
 
-// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
   chartPath: string,
   { sandbox, requestId, log }: PythonExecutionContext
@@ -277,6 +284,7 @@ const checkForChart = async (
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
+  return undefined;
 };
 
 const buildResponseMessage = ({
@@ -288,10 +296,7 @@ const buildResponseMessage = ({
 }: Readonly<{
   outputText: string;
   stderr: string;
-  execInfo: Readonly<{
-    success: boolean;
-    error?: Readonly<{ name: string; value: string; traceback: string }>;
-  }>;
+  execInfo: Readonly<PythonExecutionInfo>;
   log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
   requestId: string;
 }>): string => {

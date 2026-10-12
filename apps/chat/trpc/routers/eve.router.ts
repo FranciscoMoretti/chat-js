@@ -59,8 +59,6 @@ const eveOwnedProcedure = publicProcedure.use(
   }
 );
 
-/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): eveRouter preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 export const eveRouter = createTRPCRouter({
   assignProject: eveProcedure
     .input(
@@ -159,8 +157,7 @@ export const eveRouter = createTRPCRouter({
         readonly input: { readonly id: string };
       }) => {
         const row = await getEveChatIdentity(ctx.eveOwnerId, input.id);
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!row) {
+        if (row === undefined) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return row;
@@ -208,8 +205,7 @@ export const eveRouter = createTRPCRouter({
           input.id,
           { isPinned: input.isPinned }
         );
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!updated) {
+        if (updated === undefined) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return updated;
@@ -235,8 +231,7 @@ export const eveRouter = createTRPCRouter({
           input.id,
           { title: input.title }
         );
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!updated) {
+        if (updated === undefined) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return updated;
@@ -250,7 +245,7 @@ export const eveRouter = createTRPCRouter({
       })
     )
     .mutation(
-      ({
+      async ({
         ctx,
         input,
       }: {
@@ -259,7 +254,7 @@ export const eveRouter = createTRPCRouter({
           conversationId: string;
           messageId: string;
         }>;
-      }) => restoreMessageAttachments(ctx.eveOwnerId, input)
+      }) => await restoreMessageAttachments(ctx.eveOwnerId, input)
     ),
   saveDocument: eveOwnedProcedure.input(eveManualDocumentInput).mutation(
     async ({
@@ -344,8 +339,7 @@ export const eveRouter = createTRPCRouter({
         const row = await updateEveConversationMetadata(ctx.user.id, input.id, {
           visibility: input.visibility,
         });
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Database readers destructure possibly empty result arrays but declare non-nullable objects; retain the missing-row guard until those owned return contracts include undefined. Explicit undefined is rejected by no-undefined, and typeof undefined by no-typeof-undefined.
-        if (!row) {
+        if (row === undefined) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return row;
@@ -393,4 +387,3 @@ export const eveRouter = createTRPCRouter({
       }) => await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
 });
-/* oxlint-enable typescript/promise-function-async */

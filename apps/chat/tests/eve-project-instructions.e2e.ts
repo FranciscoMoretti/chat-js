@@ -5,13 +5,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("project instructions apply from the first native turn, refresh, and clear after preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("project instructions apply from the first native turn, refresh, and clear after detachment", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: {
@@ -99,4 +98,3 @@ test("project instructions apply from the first native turn, refresh, and clear 
     expect(deleted.ok(), await deleted.text()).toBe(true);
   }
 });
-/* oxlint-enable typescript/promise-function-async */

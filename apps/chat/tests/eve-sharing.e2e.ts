@@ -25,15 +25,13 @@ type SharingEventReader =
       readonly data?: unknown;
     };
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("sharing exposes only a read-only transcript, enforces ownership and revokes the preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("sharing exposes only a read-only transcript, enforces ownership and revokes the intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("sharing exposes only a read-only transcript, enforces ownership and revokes the link", async ({
   page,
   browser,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -50,9 +48,9 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     .parse(await created.json());
   const anonymous = await browser.newContext();
   const publicPage = await anonymous.newPage();
-  await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-    route.abort()
-  );
+  await publicPage.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   const foreignId = crypto.randomUUID();
   const foreignChat = crypto.randomUUID();
   await db.insert(user).values({
@@ -81,7 +79,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       .select({ id: eveConversation.ownerId })
       .from(eveConversation)
       .where(eq(eveConversation.id, binding.id));
-    if (!owner) {
+    if (owner === undefined) {
       throw new Error("Missing fixture owner.");
     }
     const native = new Client(
@@ -160,4 +158,3 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     await db.delete(user).where(eq(user.id, foreignId));
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

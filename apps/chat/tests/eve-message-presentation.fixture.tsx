@@ -110,9 +110,6 @@ const VersionControls = ({
   );
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): Transcript intentionally keeps the existing falsy-value behavior of editingId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-
 const Transcript = ({
   isReadonly,
   loading,
@@ -133,7 +130,7 @@ const Transcript = ({
         onCancel: () => void;
       }
     | undefined => {
-    if (editingId) {
+    if (editingId !== undefined && editingId !== null && editingId !== "") {
       return {
         content: (
           <Editor
@@ -194,7 +191,6 @@ const Transcript = ({
     </section>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const LegacyReference = ({
   isReadonly,

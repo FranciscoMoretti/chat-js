@@ -26,15 +26,13 @@ type DeleteDocumentEventReader =
       data?: unknown;
     }>;
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): test("installed deleteDocument requires approval, survives reload, and honors rejecti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("installed deleteDocument requires approval, survives reload, and honors rejecti intentionally keeps the existing falsy-value behavior of chatId; document?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("installed deleteDocument requires approval, survives reload, and honors rejection", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
@@ -71,7 +69,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   ).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const chatId = new URL(page.url()).pathname.split("/").at(-1);
-  if (!chatId) {
+  if (chatId === undefined || chatId === null || chatId === "") {
     throw new Error("Missing conversation");
   }
   const [document] = await db
@@ -91,7 +89,13 @@ test("installed deleteDocument requires approval, survives reload, and honors re
         eq(eveConversation.ownerId, session.user.id)
       )
     );
-  if (!document?.sessionId) {
+  if (
+    document === undefined ||
+    document === null ||
+    document.sessionId === undefined ||
+    document.sessionId === null ||
+    document.sessionId === ""
+  ) {
     throw new Error("Missing created document");
   }
   const { conversationId } = document;
@@ -175,4 +179,3 @@ test("installed deleteDocument requires approval, survives reload, and honors re
     ).toBe(true);
   }
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

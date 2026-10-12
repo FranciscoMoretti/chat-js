@@ -1,5 +1,6 @@
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 import "../../../apps/chat/app/globals.css";
-import React, { act } from "react";
+import React from "react";
 import { expect, test } from "vitest";
 import { GenerateVideoRenderer } from "../src/tools/generate-video/renderer";
 import { createRoot } from "react-dom/client";
@@ -16,50 +17,48 @@ test("video tool streaming, loading, player, and error states", async () => {
     "* { animation:none !important;transition:none !important; }";
   document.head.append(style);
   const root = createRoot(container);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act(() => {
-    root.render(
-      <>
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{ state: "input-streaming", toolCallId: "streaming" }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            state: "input-available",
-            toolCallId: "loading",
-          }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            output: {
-              prompt: "Blue sky",
-              videoUrl: new URL("fixtures/blue.mp4", import.meta.url).href,
-            },
-            state: "output-available",
-            toolCallId: "success",
-          }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            errorText: "Provider failed",
-            input: { prompt: "Blue sky" },
-            state: "output-error",
-            toolCallId: "error",
-          }}
-        />
-      </>
-    );
-  });
+  await renderRoot(
+    root,
+    <>
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{ state: "input-streaming", toolCallId: "streaming" }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          state: "input-available",
+          toolCallId: "loading",
+        }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          output: {
+            prompt: "Blue sky",
+            videoUrl: new URL("fixtures/blue.mp4", import.meta.url).href,
+          },
+          state: "output-available",
+          toolCallId: "success",
+        }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          errorText: "Provider failed",
+          input: { prompt: "Blue sky" },
+          state: "output-error",
+          toolCallId: "error",
+        }}
+      />
+    </>
+  );
   try {
     const video = container.querySelector("video");
     if (!video) {
@@ -77,8 +76,7 @@ test("video tool streaming, loading, player, and error states", async () => {
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
     style.remove();
   }

@@ -9,12 +9,10 @@ const NO_OPERATIONS = 0;
 const MINIMUM_SNAPSHOT_CONCURRENCY = 1;
 const ONE_OPERATION = 1;
 
-/* oxlint-disable typescript/consistent-type-definitions -- The exported SnapshotOptions alias retains implicit Record index assignability; converting it to an interface changes that structural contract. */
-type SnapshotOptions = {
+interface SnapshotOptions {
   concurrency?: number;
   onActiveOperationsChange?: (activeOperations: number) => void;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 class SnapshotIoLimiter {
   private activeOperations = NO_OPERATIONS;
@@ -74,14 +72,13 @@ class SnapshotIoLimiter {
   }
 }
 
-/* oxlint-disable typescript/promise-function-async -- The readdir/readFile callbacks hand their native promises directly to the limiter; async changes promise identity and synchronous throw timing. */
 const collectSnapshotWithLimiter = async (
   dir: string,
   prefix: string,
   limiter: Readonly<SnapshotIoLimiter>
 ): Promise<Map<string, string>> => {
-  const entries = await limiter.run(() =>
-    readdir(dir, { withFileTypes: true })
+  const entries = await limiter.run(
+    async () => await readdir(dir, { withFileTypes: true })
   );
   const snapshots = await Promise.all(
     entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
@@ -93,7 +90,7 @@ const collectSnapshotWithLimiter = async (
       if (!entry.isFile()) {
         return new Map<string, string>();
       }
-      const bytes = await limiter.run(() => readFile(absolute));
+      const bytes = await limiter.run(async () => await readFile(absolute));
       const hash = createHash("sha256").update(bytes).digest("hex");
       return new Map([[rel, hash]]);
     })
@@ -106,15 +103,13 @@ const collectSnapshotWithLimiter = async (
   }
   return output;
 };
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async -- collectSnapshot: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+// oxlint-disable-next-line typescript/promise-function-async -- Construct the limiter before returning so invalid concurrency throws synchronously; sync-template-snapshot.test.ts characterizes this public validation contract.
 const collectSnapshot = (
   dir: string,
   prefix = "",
   options: Readonly<SnapshotOptions> = {}
 ): Promise<Map<string, string>> =>
   collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
-/* oxlint-enable typescript/promise-function-async */
 export { collectSnapshot, SNAPSHOT_CONCURRENCY };
 export type { SnapshotOptions };

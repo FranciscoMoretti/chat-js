@@ -37,7 +37,6 @@ import { installedFeatures } from "@/features/installed";
 import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const CustomConnectorRow = ({
   connector,
   onConnect,
@@ -169,7 +168,7 @@ const CustomConnectorRow = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {authStatus?.isAuthenticated ? (
+            {authStatus?.isAuthenticated === true ? (
               <>
                 <DropdownMenuItem
                   disabled={isDisconnecting}
@@ -208,7 +207,6 @@ const CustomConnectorRow = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const BuiltInConnectorRow = ({
   connector,

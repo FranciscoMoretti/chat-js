@@ -13,12 +13,13 @@ vi.mock("../db/eve-queries", () => ({
 }));
 vi.mock("./server", () => ({ eveRequest: mocks.request }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): resolve preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-const resolve = (id: unknown = reservationId) =>
-  resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000), id);
-/* oxlint-enable typescript/promise-function-async */
+const resolve = async (id: unknown = reservationId) =>
+  await resolveEveConversationScope(
+    "owner",
+    "native",
+    AbortSignal.timeout(1000),
+    id
+  );
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.read.mockResolvedValue({
@@ -117,7 +118,7 @@ it("leaves pending copies to their resource journal", async () => {
   expect(mocks.request).not.toHaveBeenCalled();
 });
 it("does not call missing pre-attribute identity corruption", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.read.mockResolvedValue(undefined);
   await expect(
     resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000))

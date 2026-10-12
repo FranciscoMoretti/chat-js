@@ -13,9 +13,6 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const modelId = "openai/gpt-5-nano";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("fork API preserves native history in ChatJS and rejects changed retries and for preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("fork API preserves native history in ChatJS and rejects changed retries and foreign sources", async ({
   page,
 }, testInfo) => {
@@ -24,9 +21,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     await page.request.post("/api/chat-model", {
       data: { model: modelId },
@@ -227,4 +224,3 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     throw cleanupFailure.error;
   }
 });
-/* oxlint-enable typescript/promise-function-async */

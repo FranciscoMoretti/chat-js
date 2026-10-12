@@ -25,7 +25,7 @@ const tokenClaims = (
 ): { projectId: string; teamId: string } | undefined => {
   const parts = token.split(".");
   if (parts.length !== JWT_PART_COUNT) {
-    return;
+    return undefined;
   }
   let payload: unknown;
   try {
@@ -53,7 +53,6 @@ const tokenClaims = (
   ) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
-  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return { projectId: payload.project_id, teamId: payload.owner_id };
 };
 
@@ -132,24 +131,22 @@ const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
   );
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-const createSandbox = (
+const createSandbox = async (
   runtime: string,
   signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
   auth?: Readonly<SandboxAuth>
 ): Promise<Sandbox> =>
-  Sandbox.create({
+  await Sandbox.create({
     name,
     persistent: false,
     resources: { vcpus: SANDBOX_VCPUS },
-    // oxlint-disable-next-line typescript/no-deprecated -- The pinned Sandbox SDK still accepts this configured runtime; switching runtime identifiers requires execution compatibility validation.
+    // oxlint-disable-next-line typescript/no-deprecated -- Existing deployments configure runtime IDs (node22/python3.13); the replacement image option requires a VCR image and cannot preserve those runtime/environment contracts by renaming this field.
     runtime,
     signal,
     timeout: SANDBOX_TIMEOUT_MS,
     ...(auth ?? getTokenAuth()),
   });
-/* oxlint-enable typescript/promise-function-async */
 
 const cleanupSandbox = async (
   sandbox: Pick<Sandbox, "delete" | "stop"> | undefined,
@@ -191,8 +188,7 @@ const findSandboxForCleanup = async (
       error instanceof APIError &&
       error.response.status === NOT_FOUND_STATUS
     ) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
     throw error;
   }

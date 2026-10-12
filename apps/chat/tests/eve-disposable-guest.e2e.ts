@@ -7,16 +7,13 @@ const bindingSchema = z.object({
   sessionId: z.string(),
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("anonymous chat stays disposable and disappears on reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("anonymous chat stays disposable and disappears on reload", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(120_000);
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
-  );
+  await page.route("**/react-scan/**", async (route) => {
+    await route.fulfill({ body: "", contentType: "text/javascript" });
+  });
   const requests: string[] = [];
   const errors: string[] = [];
   page.on("request", (request: Readonly<Pick<Request, "url">>) =>
@@ -87,20 +84,16 @@ test("anonymous chat stays disposable and disappears on reload", async ({
   await expect(page).toHaveURL(/\/$/u);
   expect(errors).toEqual([]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("guest bootstrap failures preserve the draft and expired sessions offer a fresh  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("guest bootstrap failures preserve the draft and expired sessions offer a fresh start", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
-  );
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({ json: { error: "Unavailable" }, status: 502 })
-  );
+  await page.route("**/react-scan/**", async (route) => {
+    await route.fulfill({ body: "", contentType: "text/javascript" });
+  });
+  await page.route("**/api/eve-guest", async (route) => {
+    await route.fulfill({ json: { error: "Unavailable" }, status: 502 });
+  });
   await page.goto("/");
   await page.addStyleTag({
     content: "nextjs-portal { display: none !important; }",
@@ -117,21 +110,21 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
     path: testInfo.outputPath("guest-bootstrap-error.png"),
   });
   await page.unroute("**/api/eve-guest");
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({
+  await page.route("**/api/eve-guest", async (route) => {
+    await route.fulfill({
       json: {
         credential: "expired-fixture",
         expiresAt: 0,
         sessionId: "expired-session",
       },
-    })
-  );
-  await page.route("**/eve/guest/v1/session/**", (route) =>
-    route.fulfill({
+    });
+  });
+  await page.route("**/eve/guest/v1/session/**", async (route) => {
+    await route.fulfill({
       json: { error: "This temporary chat has expired." },
       status: 401,
-    })
-  );
+    });
+  });
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByText("This chat has expired. Start a new chat to continue.")
@@ -152,17 +145,13 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
     page.getByRole("alert").filter({ hasText: "expired" })
   ).toHaveCount(0);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("guest shell keeps release controls and New Chat clears the in-memory draft") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("guest shell keeps release controls and New Chat clears the in-memory draft", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
-  );
+  await page.route("**/react-scan/**", async (route) => {
+    await route.fulfill({ body: "", contentType: "text/javascript" });
+  });
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await expect(
@@ -191,11 +180,7 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
     path: testInfo.outputPath("guest-welcome-mobile.png"),
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("New Chat discards late bootstrap results and retires their session") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("New Chat discards late bootstrap results and retires their session", async ({
   page,
 }) => {
@@ -214,11 +199,11 @@ test("New Chat discards late bootstrap results and retires their session", async
       },
     });
   });
-  await page.route("**/eve/guest/v1/session/**", (route) => {
+  await page.route("**/eve/guest/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
       messages.push(new URL(route.request().url()).pathname);
     }
-    return route.fulfill({ json: { ok: true } });
+    await route.fulfill({ json: { ok: true } });
   });
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
@@ -239,26 +224,22 @@ test("New Chat discards late bootstrap results and retires their session", async
   await expect(page.getByRole("log")).toHaveCount(0);
   expect(messages).toEqual(["/eve/guest/v1/session/discarded-session/reset"]);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("back-forward cache restoration starts a fresh guest chat") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("back-forward cache restoration starts a fresh guest chat", async ({
   page,
 }) => {
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({
+  await page.route("**/api/eve-guest", async (route) => {
+    await route.fulfill({
       json: {
         credential: "fixture",
         expiresAt: 0,
         sessionId: "retired-session",
       },
-    })
-  );
-  await page.route("**/eve/guest/v1/session/**", (route) =>
-    route.fulfill({ json: { error: "Expired" }, status: 401 })
-  );
+    });
+  });
+  await page.route("**/eve/guest/v1/session/**", async (route) => {
+    await route.fulfill({ json: { error: "Expired" }, status: 401 });
+  });
   await page.goto("/");
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
@@ -277,4 +258,3 @@ test("back-forward cache restoration starts a fresh guest chat", async ({
   ).toBeVisible();
   await expect(page.getByRole("log")).toHaveCount(0);
 });
-/* oxlint-enable typescript/promise-function-async */

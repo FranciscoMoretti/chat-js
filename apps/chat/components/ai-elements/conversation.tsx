@@ -1,5 +1,7 @@
 "use client";
 
+import { hasCustomContent } from "@/components/custom-content";
+
 import React, { useCallback } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { ArrowDownIcon } from "lucide-react";
@@ -40,8 +42,6 @@ type ConversationEmptyStateProps = ComponentProps<"div"> & {
   icon?: React.ReactNode;
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- ConversationEmptyState: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including icon). */
-
 const ConversationEmptyState = ({
   className,
   title = "No messages yet",
@@ -59,7 +59,11 @@ const ConversationEmptyState = ({
   >
     {children ?? (
       <>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+        {hasCustomContent(icon) ? (
+          <div className="text-muted-foreground">{icon}</div>
+        ) : (
+          icon
+        )}
         <div className="space-y-1">
           <h3 className="text-sm font-medium">{title}</h3>
           {description && (
@@ -70,7 +74,6 @@ const ConversationEmptyState = ({
     )}
   </div>
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 

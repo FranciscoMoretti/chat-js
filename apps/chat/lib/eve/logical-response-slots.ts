@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import type { LogicalBranch, LogicalChatSnapshot } from "./logical-chat";
@@ -107,7 +109,6 @@ const selectedSlotAttempt = (
   };
 };
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
  * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
@@ -127,11 +128,11 @@ export const logicalResponseSlots = (
 ): { groupId: string; slots: LogicalResponseSlot[] } | undefined => {
   const groupBranch = snapshot.branches.find(
     (branch: Readonly<Pick<LogicalBranch, "responseGroupId">>) =>
-      branch.responseGroupId &&
+      isNonEmptyString(branch.responseGroupId) &&
       userId === `group:${branch.responseGroupId}:user`
   );
-  if (!groupBranch?.responseGroupId) {
-    return;
+  if (!isNonEmptyString(groupBranch?.responseGroupId)) {
+    return undefined;
   }
   const groupId = groupBranch.responseGroupId;
   const candidates =
@@ -175,7 +176,5 @@ export const logicalResponseSlots = (
       selected,
     };
   });
-  // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */

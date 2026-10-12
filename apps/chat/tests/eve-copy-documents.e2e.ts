@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -110,6 +109,7 @@ await db.insert(eveDocumentHead).values([
   },
 ]);
 afterAll(async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Delete checkpoint entries before their checkpoint headers to satisfy foreign keys. */
   for (const table of [
     eveImportedDocumentCheckpointEntry,
     eveImportedDocumentCheckpoint,
@@ -118,6 +118,7 @@ afterAll(async () => {
   ]) {
     await db.delete(table).where(eq(table.ownerId, ownerId));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(eveDocumentHead).where(eq(eveDocumentHead.ownerId, ownerId));
   await db
     .delete(eveDocumentRevision)

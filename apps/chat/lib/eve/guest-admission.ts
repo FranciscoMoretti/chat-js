@@ -249,7 +249,6 @@ const admitGuestCreation = async (
   );
 };
 
-// oxlint-disable-next-line typescript/consistent-return -- #580: settleGuestCreation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
 const settleGuestCreation = async (
   response: ReadonlyNativeSurface<Response>,
   ownerId: string,
@@ -273,6 +272,7 @@ const settleGuestCreation = async (
       return await releaseEveGuestCreation(ownerId, operationId, reservationId);
     }
   }
+  return undefined;
 };
 export {
   admitGuestCreation,

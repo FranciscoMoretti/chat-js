@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -18,6 +18,68 @@ const composerDraft = z.object({
 type Draft = ReadonlyNativeSurface<z.infer<typeof composerDraft>>;
 
 const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
+interface DraftSnapshot {
+  value: Draft;
+  loaded: boolean;
+  error: string | undefined;
+}
+const createDraftStore = (key: string) => {
+  const initial: DraftSnapshot = {
+    value: emptyDraft,
+    loaded: false,
+    error: undefined,
+  };
+  let snapshot = initial;
+  const listeners = new Set<() => void>();
+  const publish = (next: DraftSnapshot): void => {
+    snapshot = next;
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  return {
+    getSnapshot: () => snapshot,
+    getServerSnapshot: () => initial,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      if (!snapshot.loaded) {
+        try {
+          const saved = sessionStorage.getItem(key);
+          const value =
+            typeof saved === "string" && saved !== ""
+              ? composerDraft.parse(JSON.parse(saved))
+              : emptyDraft;
+          publish({ value, loaded: true, error: undefined });
+        } catch {
+          publish({
+            ...snapshot,
+            loaded: true,
+            error:
+              "The saved draft could not be restored. Keep this tab open for recovery.",
+          });
+        }
+      }
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    update: (change: (draft: Draft) => Draft): void => {
+      const value = change(snapshot.value);
+      let error: string | undefined;
+      try {
+        if (value.text || value.attachments.length > 0 || value.selectedTool) {
+          sessionStorage.setItem(key, JSON.stringify(value));
+        } else {
+          sessionStorage.removeItem(key);
+        }
+      } catch {
+        error =
+          "Your draft could not be saved. Keep this tab open before switching responses.";
+      }
+      publish({ ...snapshot, value, error });
+    },
+  };
+};
 type ComposerDraftState = Draft & {
   error: string | undefined;
   loaded: boolean;
@@ -39,48 +101,13 @@ export const useEveComposerDraft = (
   scopeId: string
 ): ComposerDraftState => {
   const key = `chatjs.eve.composer:${ownerId}:${scopeId}`;
-  const current = useRef<Draft>(emptyDraft);
-  const [value, setValue] = useState(emptyDraft);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<string>();
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(key);
-      const restored =
-        typeof saved === "string" && saved !== ""
-          ? composerDraft.parse(JSON.parse(saved))
-          : { attachments: [], selectedTool: null, text: "" };
-      current.current = restored;
-      // oxlint-disable-next-line react/set-state-in-effect -- Hydrate controlled editor state from session storage on mount.
-      setValue(restored);
-      setError(undefined);
-    } catch {
-      setError(
-        "The saved draft could not be restored. Keep this tab open for recovery."
-      );
-    }
-    setLoaded(true);
-  }, [key]);
-  const update = useCallback(
-    (change: (draft: Draft) => Draft): void => {
-      const next = change(current.current);
-      current.current = next;
-      setValue(next);
-      try {
-        if (next.text || next.attachments.length > 0 || next.selectedTool) {
-          sessionStorage.setItem(key, JSON.stringify(next));
-        } else {
-          sessionStorage.removeItem(key);
-        }
-        setError(undefined);
-      } catch {
-        setError(
-          "Your draft could not be saved. Keep this tab open before switching responses."
-        );
-      }
-    },
-    [key]
+  const store = useMemo(() => createDraftStore(key), [key]);
+  const { value, loaded, error } = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
   );
+  const { update } = store;
   const setText = useCallback(
     (text: SetStateAction<string>): void => {
       update((draft) => ({

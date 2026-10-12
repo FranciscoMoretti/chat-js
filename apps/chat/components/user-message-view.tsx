@@ -4,9 +4,8 @@ import React from "react";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { hasCustomContent } from "@/components/custom-content";
 import { cn } from "@/lib/utils";
-
-/* oxlint-disable typescript/strict-boolean-expressions -- UserMessageView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: editor is rendered ReactNode content; its established truthiness controls editing chrome and preserves the original false, null, undefined, empty string or zero child. A non-null presence predicate changes those branches. */
 
 /**
  * Inline editing and message chrome for EVE messages.
@@ -41,13 +40,21 @@ export const UserMessageView = ({
   readonly messageId?: string;
 }): React.JSX.Element => (
   <Message
-    className={cn(editor ? "max-w-full [&>div]:max-w-full" : undefined, "py-1")}
+    className={cn(
+      hasCustomContent(editor) ? "max-w-full [&>div]:max-w-full" : undefined,
+      "py-1"
+    )}
     data-message-id={messageId}
     from="user"
   >
-    <div className={cn("flex w-full flex-col gap-2", !editor && "items-end")}>
-      {!editor && responses}
-      {!editor &&
+    <div
+      className={cn(
+        "flex w-full flex-col gap-2",
+        !hasCustomContent(editor) && "items-end"
+      )}
+    >
+      {!hasCustomContent(editor) && responses}
+      {!hasCustomContent(editor) &&
         (onEdit ? (
           <button
             aria-disabled={editDisabled}
@@ -90,11 +97,12 @@ export const UserMessageView = ({
             <pre className="font-sans whitespace-pre-wrap">{text}</pre>
           </MessageContent>
         ))}
-      {editor && (
+      {hasCustomContent(editor) ? (
         <div className="flex flex-row items-start gap-2">{editor}</div>
+      ) : (
+        editor
       )}
       <div className="self-end">{actions}</div>
     </div>
   </Message>
 );
-/* oxlint-enable typescript/strict-boolean-expressions */

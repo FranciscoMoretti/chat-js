@@ -31,13 +31,14 @@ test("groups registration values without changing literal data or initializer or
 });
 test("keeps type exports separate without obsolete capability exceptions", () => {
   const generated = generatedRegistrationSource(
-    "export type WorkflowTools = { tool: string };\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const codeExecutor: (() => void) | undefined = undefined;\n"
+    "export interface WorkflowTools { tool: string }\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const codeExecutor: (() => void) | undefined = undefined;\n"
   );
   expect(generated).toContain("export type { WorkflowTools };");
   expect(generated).toContain(
     "export { composerTools, DocumentRun, codeExecutor };"
   );
-  expect(generated).toContain("typescript/consistent-type-definitions");
+  expect(generated).toContain("interface WorkflowTools { tool: string }");
+  expect(generated).not.toContain("typescript/consistent-type-definitions");
   expect(generated).not.toContain("no-undefined");
   expect(generated).not.toContain("import/no-named-export");
   expect(generated).not.toContain("import/prefer-default-export");
@@ -106,7 +107,7 @@ const exportPolicyFixtures: Readonly<Record<string, string>> = {
   empty: "",
   inlineTypeReexport: 'export { type Contract } from "./source";\n',
   mixed:
-    "export const one = 1;\nexport type WorkflowTools = { tool: string };\n",
+    "export const one = 1;\nexport interface WorkflowTools { tool: string }\n",
   mixedReexport: 'export { one, type Contract } from "./source";\n',
   multiple: "export const one = 1;\nexport const two = 2;\n",
   multipleReexport: 'export { one, two } from "./source";\n',
@@ -114,7 +115,7 @@ const exportPolicyFixtures: Readonly<Record<string, string>> = {
   reexport: 'export { one } from "./source";\n',
   single: "export const one = 1;\n",
   star: 'export * from "./source";\n',
-  type: "export type WorkflowTools = { tool: string };\n",
+  type: "export interface WorkflowTools { tool: string }\n",
   typeReexport: 'export type { Contract } from "./source";\n',
 };
 

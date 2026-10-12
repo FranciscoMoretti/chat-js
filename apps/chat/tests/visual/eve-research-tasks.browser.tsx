@@ -1,8 +1,10 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import "./sandbox.css";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
+import { page } from "vitest/browser";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ReasonSearchResearchProgress } from "@/tools/chatjs/deep-research/progress";
@@ -108,8 +110,7 @@ test("research task progress renders its update states together", async () => {
   const root = createRoot(container);
 
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush rendering before assertions and capture.
-    await act(() => root.render(<ResearchTasks updates={updates} />));
+    await renderRoot(root, <ResearchTasks updates={updates} />);
     await expect
       .poll(() => container.textContent)
       .toContain("Research complete");
@@ -121,19 +122,17 @@ test("research task progress renders its update states together", async () => {
       .toBe(updates.length);
     await takeSnapshot("research-task-progress-states");
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act is thenable at runtime; await it to flush the progress rerender before assertions.
-    await act(() => {
-      root.render(
-        <div className="grid gap-4">
-          <section aria-label="Research in progress">
-            <ReasonSearchResearchProgress updates={activeUpdates} />
-          </section>
-          <section aria-label="Completed research">
-            <ReasonSearchResearchProgress updates={updates} />
-          </section>
-        </div>
-      );
-    });
+    await renderRoot(
+      root,
+      <div className="grid gap-4">
+        <section aria-label="Research in progress">
+          <ReasonSearchResearchProgress updates={activeUpdates} />
+        </section>
+        <section aria-label="Completed research">
+          <ReasonSearchResearchProgress updates={updates} />
+        </section>
+      </div>
+    );
     await expect
       .poll(() => container.textContent)
       .toContain("Writing the answer");
@@ -146,15 +145,15 @@ test("research task progress renders its update states together", async () => {
     if (!(completedPanel instanceof HTMLButtonElement)) {
       throw new Error("Completed research progress control was not rendered.");
     }
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush the expanded task list before capture.
-    await act(() => completedPanel.click());
+    await act(async () => {
+      await page.elementLocator(completedPanel).click();
+    });
     await expect
       .poll(() => container.textContent)
       .toContain("Research complete");
     await takeSnapshot("research-progress-active-and-complete");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush unmount before teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });
@@ -163,21 +162,17 @@ test("search rows keep identity when workflow updates append", async () => {
   const container = document.createElement("main");
   const root = createRoot(container);
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush rendering before reading the search row.
-    await act(() => {
-      root.render(<ResearchTasks updates={workflowWithSearch} />);
-    });
+    await renderRoot(root, <ResearchTasks updates={workflowWithSearch} />);
     const initialSearchRow = findSearchRow(container);
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must flush the workflow insertion before checking that the same row remains mounted.
-    await act(() => {
-      root.render(<ResearchTasks updates={workflowAfterAnotherUpdate} />);
-    });
+    await renderRoot(
+      root,
+      <ResearchTasks updates={workflowAfterAnotherUpdate} />
+    );
     const updatedSearchRow = findSearchRow(container);
     expect(updatedSearchRow).toBe(initialSearchRow);
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await React act to flush unmount before tearing down the DOM container.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });

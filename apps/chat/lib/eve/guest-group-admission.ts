@@ -37,7 +37,7 @@ export const admitGuestResponseGroup = async (
   );
   const inputs: Parameters<typeof reserveEveGuestMessages>[0][number][] = [];
   for (const candidate of candidates) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate candidates in input order and return the first policy/ownership Response before any atomic group reservation; do not invoke later validators after rejection.
     const ipHash = await validateGuestCreation(request, principal, {
       ...candidate,
       fork: input.fork,

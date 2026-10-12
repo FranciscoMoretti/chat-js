@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -35,10 +33,18 @@ assertEveTestDatabase(env.DATABASE_URL);
 const mocks = vi.hoisted(() => ({
   download: vi.fn(),
   files: new Map<string, Blob>(),
-  model: vi.fn(),
+  model: vi.fn<() => Promise<void>>(),
   native: new Map<string, { sessionId: string; seed: EveCopySeed }>(),
   remove: vi.fn(),
-  request: vi.fn(),
+  request:
+    vi.fn<
+      (
+        owner: string,
+        path: string,
+        init?: { readonly body?: unknown },
+        modelId?: string
+      ) => Promise<Response>
+    >(),
   source: vi.fn(),
   upload: vi.fn(),
 }));
@@ -73,6 +79,7 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Delete copy files and checkpoint entries before their headers, documents and conversation parents. */
   for (const table of [
     eveConversationCopyFile,
     eveConversationCopy,
@@ -86,6 +93,7 @@ afterAll(async () => {
   ]) {
     await db.delete(table).where(inArray(table.ownerId, owners));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(user).where(inArray(user.id, owners));
 });
 const installNativeCopyRequestMock = (): void => {
@@ -120,41 +128,46 @@ const installNativeCopyRequestMock = (): void => {
   );
 };
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.files.clear();
   mocks.native.clear();
-  mocks.remove.mockImplementation((urls: readonly string[]) => {
-    for (const url of urls) {
-      const key = keyFromFileUrl(url);
-      if (key) {
-        mocks.files.delete(key);
+  mocks.remove.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    (urls: readonly string[]) => {
+      for (const url of urls) {
+        const key = keyFromFileUrl(url);
+        if (key !== undefined && key !== null && key !== "") {
+          mocks.files.delete(key);
+        }
       }
+      return Promise.resolve();
     }
-    return Promise.resolve();
-  });
-  mocks.download.mockImplementation((key: string) => {
-    const file = mocks.files.get(key);
-    if (!file) {
-      throw new Error("File missing");
+    /* oxlint-enable typescript/promise-function-async */
+  );
+  mocks.download.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    (key: string) => {
+      const file = mocks.files.get(key);
+      if (!file) {
+        throw new Error("File missing");
+      }
+      return Promise.resolve(file);
     }
-    return Promise.resolve(file);
-  });
+    /* oxlint-enable typescript/promise-function-async */
+  );
   mocks.upload.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.resolve();
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   installNativeCopyRequestMock();
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-async function fixture() {
+const fixture = async () => {
   const source = {
     id: crypto.randomUUID(),
     ownerId: sourceOwnerId,
@@ -270,7 +283,7 @@ async function fixture() {
     key,
     source,
   };
-}
+};
 
 test("saves a complete independent copy, including inline bytes and files only in old document revisions", async () => {
   const fixtureData = await fixture();
@@ -336,15 +349,16 @@ test("a lost native reply recovers without reopening or reading a revoked source
   if (!original) {
     throw new Error("Missing native fixture");
   }
-  mocks.request.mockImplementation(async (...args: readonly unknown[]) => {
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-assignment -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
-    const response = await original(...args);
-    if (args[1] === "/eve/chat/v1/session") {
-      throw new Error("Lost native reply");
+  mocks.request.mockImplementation(
+    async (...args: Parameters<typeof original>) => {
+      const response = await original(...args);
+      if (args[1] === "/eve/chat/v1/session") {
+        throw new Error("Lost native reply");
+      }
+
+      return response;
     }
-    // oxlint-disable-next-line typescript/no-unsafe-return -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
-    return response;
-  });
+  );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Lost native reply");
@@ -391,16 +405,16 @@ test("unrelated private file references are denied before any bytes or destinati
     await getEveCopyOperation(ownerId, fixtureData.input.operationId)
   ).toBeUndefined();
 });
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("uncertain storage writes retry persisted keys without taking another snapshot o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("uncertain storage writes retry persisted keys without taking another snapshot or making a second copy", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Lost storage reply"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -426,7 +440,6 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     )
   ).rejects.toThrow("different source or model");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("an unavailable native lookup leaves acceptance recoverable and never blindly dispatches", async () => {
   const fixtureData = await fixture();
@@ -445,14 +458,17 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   expect(mocks.native.size).toBe(0);
 });
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("concurrent requests converge on the persisted allocation and one native copy") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent requests converge on the persisted allocation and one native copy", async () => {
   const fixtureData = await fixture();
   const attempts = await Promise.allSettled(
-    Array.from({ length: 3 }, () =>
-      saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
+    Array.from(
+      { length: 3 },
+      async () =>
+        await saveEveCopyOperation(
+          ownerId,
+          fixtureData.input,
+          "https://chatjs.example"
+        )
     )
   );
   expect(
@@ -479,18 +495,16 @@ test("concurrent requests converge on the persisted allocation and one native co
     )
   ).toHaveLength(1);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("revocation before acceptance purges only the rejected destination and keeps a r preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("revocation before acceptance purges only the rejected destination and keeps a replay tombstone", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -518,18 +532,16 @@ test("revocation before acceptance purges only the rejected destination and keep
   ).rejects.toThrow();
   expect(mocks.source).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
+    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -560,7 +572,6 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.files.size).toBe(1);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 test("deletion of an unwritten source file rejects preparation before another storage read", async () => {
   const fixtureData = await fixture();
@@ -607,8 +618,7 @@ test("a definitive model rejection tombstones the operation but transient catalo
     creationKind: "copy",
     state: "deleted",
   });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.model.mockResolvedValue(undefined);
+  mocks.model.mockResolvedValue();
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow();

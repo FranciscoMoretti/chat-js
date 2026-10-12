@@ -11,6 +11,7 @@ import {
 import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
 import type { MenuItemConstructorOptions } from "electron";
 import { electronAuthClient } from "./lib/auth-client";
+import { parseAuthRequestOptions } from "./auth-request-options";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -277,7 +278,7 @@ registerProtocolClient();
 ipcMain.removeHandler("better-auth:requestAuth");
 ipcMain.handle(
   "better-auth:requestAuth",
-  async (_event: unknown, options): Promise<void> => {
+  async (_event: unknown, options: unknown): Promise<void> => {
     if (isAuthFlowInProgress) {
       if (mainWindow) {
         mainWindow.show();
@@ -297,8 +298,7 @@ ipcMain.handle(
     });
 
     try {
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- Electron IPC supplies untyped payloads; Better Auth validates its request options at this bridge.
-      await electronAuthClient.requestAuth(options);
+      await electronAuthClient.requestAuth(parseAuthRequestOptions(options));
     } catch (error) {
       isAuthFlowInProgress = false;
       await setAuthState({
@@ -314,7 +314,6 @@ ipcMain.handle(
 ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
   await resetAuthFlow();
 });
-/* oxlint-disable typescript/promise-function-async -- syncAuthSessionCookies: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const syncAuthSessionCookies = async (
   win?: AuthSessionWindow | null
 ): Promise<void> => {
@@ -332,9 +331,9 @@ const syncAuthSessionCookies = async (
       .filter((cookie: Readonly<Electron.Cookie>): boolean =>
         isBetterAuthCookieName(cookie.name)
       )
-      .map((cookie: Readonly<Electron.Cookie>): Promise<void> =>
-        targetSession.cookies.remove(url.origin, cookie.name)
-      )
+      .map(async (cookie: Readonly<Electron.Cookie>): Promise<void> => {
+        await targetSession.cookies.remove(url.origin, cookie.name);
+      })
   );
 
   const cookieHeader = electronAuthClient.getCookie();
@@ -363,18 +362,20 @@ const syncAuthSessionCookies = async (
 
   await Promise.all(
     cookies.map(
-      (cookie: Readonly<{ name: string; value: string }>): Promise<void> =>
-        targetSession.cookies.set({
+      async (
+        cookie: Readonly<{ name: string; value: string }>
+      ): Promise<void> => {
+        await targetSession.cookies.set({
           name: cookie.name,
           path: "/",
           secure: url.protocol === "https:",
           url: url.origin,
           value: cookie.value,
-        })
+        });
+      }
     )
   );
 };
-/* oxlint-enable typescript/promise-function-async */
 
 ipcMain.removeHandler("better-auth:signOut");
 ipcMain.handle("better-auth:signOut", async () => {

@@ -38,9 +38,9 @@ const formatSignedCookie = (
   if (isSecure) {
     cookie += "; Secure";
   }
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve one optional cookie getter read for the guard and TypeScript narrowing for subsequent native string methods; direct Boolean casts conflict with no-extra-boolean-cast.
-  if (opt.sameSite) {
-    cookie += `; SameSite=${opt.sameSite.charAt(FIRST_CHARACTER_INDEX).toUpperCase() + opt.sameSite.slice(AFTER_FIRST_CHARACTER_INDEX)}`;
+  const { sameSite } = opt;
+  if (typeof sameSite === "string" && sameSite.length > 0) {
+    cookie += `; SameSite=${sameSite.charAt(FIRST_CHARACTER_INDEX).toUpperCase() + sameSite.slice(AFTER_FIRST_CHARACTER_INDEX)}`;
   }
   return cookie;
 };

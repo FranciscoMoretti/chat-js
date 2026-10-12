@@ -20,7 +20,6 @@ const Stat = ({
   </div>
 );
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const WordCountView = ({
   tool,
 }: ReadonlyNativeSurface<{
@@ -40,7 +39,7 @@ const WordCountView = ({
     return null;
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return null;
   }
 
@@ -55,7 +54,6 @@ const WordCountView = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export const WordCountRenderer = defineToolRenderer({
   inputSchema: wordCountInput,

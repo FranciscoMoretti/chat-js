@@ -64,9 +64,6 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-
 const RootLayout = ({
   children,
 }: {
@@ -86,7 +83,7 @@ const RootLayout = ({
         {THEME_COLOR_SCRIPT}
       </Script>
       {process.env.NODE_ENV === "development" &&
-      !process.env.PLAYWRIGHT &&
+      (process.env.PLAYWRIGHT ?? "") === "" &&
       env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
         <Script
           src="https://unpkg.com/react-scan/dist/auto.global.js"
@@ -127,7 +124,6 @@ const RootLayout = ({
     </body>
   </html>
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export { metadata, viewport };
 export default RootLayout;

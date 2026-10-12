@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import {
   FILES_PATH,
@@ -276,8 +278,10 @@ const copyAssistantSeedMessage = (message: {
   readonly metadata?: EveMessage["metadata"];
 }): Seed["messages"][number] => ({
   role: "assistant",
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the original nullable model ID truthiness guard so TypeScript narrows the original metadata receiver without caching or changing either getter read. Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  ...(message.metadata?.modelId ? { modelId: message.metadata.modelId } : {}),
+
+  ...(isNonEmptyString(message.metadata?.modelId)
+    ? { modelId: message.metadata.modelId }
+    : {}),
   parts: message.parts.map(completedPart),
 });
 
@@ -650,7 +654,7 @@ const materializeEveCopyTranscript = async (
   for (const message of copied.messages) {
     for (const part of message.parts) {
       if (part.type === "file") {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Materialization mutates the detached transcript and caches metadata per destination key; finish one part before revisiting the same file or rewriting later parts.
         await materializeFile(part);
       } else if (
         part.type === "text" ||

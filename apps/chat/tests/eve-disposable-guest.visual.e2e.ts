@@ -1,23 +1,20 @@
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("disposable guest presentation uses stable desktop and mobile baselines") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("disposable guest presentation uses stable desktop and mobile baselines", async ({
   page,
 }) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
-  );
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({ json: { error: "Unavailable" }, status: 502 })
-  );
-  await page.route("https://models.dev/logos/openai.svg", (route) =>
-    route.fulfill({
+  await page.route("**/react-scan/**", async (route) => {
+    await route.fulfill({ body: "", contentType: "text/javascript" });
+  });
+  await page.route("**/api/eve-guest", async (route) => {
+    await route.fulfill({ json: { error: "Unavailable" }, status: 502 });
+  });
+  await page.route("https://models.dev/logos/openai.svg", async (route) => {
+    await route.fulfill({
       contentType: "image/svg+xml",
       path: "tests/fixtures/models/openai.svg",
-    })
-  );
+    });
+  });
   await page.goto("/visual-fixtures/disposable-guest");
   await page.addStyleTag({
     content:
@@ -64,4 +61,3 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
   await expect(fixture.getByRole("heading")).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-welcome-mobile.png");
 });
-/* oxlint-enable typescript/promise-function-async */
