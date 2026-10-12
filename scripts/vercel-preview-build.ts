@@ -3,7 +3,6 @@ import {
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
 import { fileURLToPath } from "node:url";
-import postgres from "postgres";
 
 const EMPTY_MESSAGE_LENGTH = 0;
 const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
@@ -98,6 +97,7 @@ const runMaintainerBuild = async (
 
 if (import.meta.main) {
   try {
+    const { default: postgres } = await import("postgres");
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {

@@ -1,7 +1,40 @@
 import { expect, it } from "bun:test";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { runMaintainerBuild } from "./vercel-preview-build";
+
+it("loads build orchestration before workspace dependencies are installed", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "preview-build-import-"));
+  try {
+    await Promise.all(
+      ["vercel-preview-build.ts", "vercel-preview-environment.ts"].map(
+        async (file) => {
+          await copyFile(
+            new URL(file, import.meta.url),
+            path.join(directory, file)
+          );
+        }
+      )
+    );
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        "--no-install",
+        "--eval",
+        'const { runMaintainerBuild } = await import("./vercel-preview-build.ts"); if (typeof runMaintainerBuild !== "function") throw new Error("Missing build operation");',
+      ],
+      { cwd: directory, stderr: "pipe", stdout: "pipe" }
+    );
+    const error = await new Response(child.stderr).text();
+    expect(error).toBe("");
+    expect(await child.exited).toBe(0);
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
+});
 
 const preview = {
   CHATJS_PREVIEW_NEON_PROJECT_ID: "test",
