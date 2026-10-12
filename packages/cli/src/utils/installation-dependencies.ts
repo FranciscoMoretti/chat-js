@@ -73,7 +73,10 @@ const binaryAssets = new Set([
 const maxSourceBytes = 1_048_576;
 
 // Conservative protection for dependencies used by source outside registry items.
-const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
+const protectSourceDependencies = async (
+  cwd: string,
+  unused: Set<string>
+): Promise<void> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
     if (
@@ -87,29 +90,33 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
     }
     if (entry.isSymbolicLink()) {
       // Unknown source behind a symlink cannot prove a dependency is unused.
-      return true;
+      unused.clear();
+      return;
     }
     const file = path.join(cwd, entry.name);
     if (entry.isDirectory()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Stop scanning once a subtree proves usage or contains unknown source; later unreadable files must not invalidate that conservative result.
-      if (await sourceUses(file, name)) {
-        return true;
-      }
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Stop scanning once every candidate is protected by usage or unknown source; later unreadable files must not invalidate that conservative result.
+      await protectSourceDependencies(file, unused);
     } else if (entry.isFile()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Bound memory before reading each user-authored file.
       const metadata = await stat(file);
       if (metadata.size > maxSourceBytes) {
         // Unknown oversized source cannot prove that a dependency is unused.
-        return true;
+        unused.clear();
+        return;
       }
       // oxlint-disable-next-line eslint/no-await-in-loop -- Read only after the size check and release each buffer before the next file; arbitrary user trees must not load every source file at once.
       const content = await readFile(file);
-      if (content.includes(name)) {
-        return true;
+      for (const name of unused) {
+        if (content.includes(name)) {
+          unused.delete(name);
+        }
       }
     }
+    if (unused.size === 0) {
+      return;
+    }
   }
-  return false;
 };
 export const prepareDependencyUpdate = async (
   cwd: string,
@@ -166,18 +173,23 @@ export const prepareDependencyUpdate = async (
         receipt.owned[name] = version;
       }
     }
+    const candidates = new Map<string, Record<string, string>>();
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;
-      if (
-        !required.has(name) &&
-        group &&
-        group[name] === installedVersion &&
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Each unused-dependency proof scans the user source tree; serial scans retain the per-file memory bound rather than multiplying it by the dependency count.
-        !(await sourceUses(cwd, name))
-      ) {
+      if (!required.has(name) && group && group[name] === installedVersion) {
+        candidates.set(name, group);
+      }
+    }
+    const unused = new Set(candidates.keys());
+    if (unused.size > 0) {
+      await protectSourceDependencies(cwd, unused);
+    }
+    for (const name of unused) {
+      const group = candidates.get(name);
+      if (group) {
         Reflect.deleteProperty(group, name);
         Reflect.deleteProperty(receipt.owned, name);
       }
