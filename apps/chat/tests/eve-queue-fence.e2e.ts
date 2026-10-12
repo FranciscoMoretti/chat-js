@@ -152,3 +152,61 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
   const purgeResult = await purgeEvePostgresQueue(query, input);
   expect(purgeResult.removedJobIds).toEqual([id]);
 });
+
+test.each([99, 100])(
+  "queue purge preserves the discovery boundary for a chain of %i descendants",
+  async (descendantCount) => {
+    const root = runId();
+    const descendants = Array.from({ length: descendantCount }, () => runId());
+    const family = [root, ...descendants];
+    const payloads = family.map((id, index) =>
+      JSON.stringify(
+        envelope({
+          runId: id,
+          ...(index > 0 && {
+            runInput: { attributes: { $parentRunId: family[index - 1] } },
+          }),
+        })
+      )
+    );
+    const queued = await query<{ id: string }[]>`
+      select (graphile_worker.add_job(
+        ${task}, payload::json, run_at := now() + interval '1 day'
+      )).id::text as id from unnest(${query.array(payloads)}::text[]) payload`;
+    const jobIds = queued.map(({ id }) => id);
+    ids.push(...jobIds);
+    await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
+    const input = { runIds: [root], sessionId: root, taskIdentifier: task };
+
+    if (descendantCount === 99) {
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: jobIds.toSorted(),
+        runIds: family.toSorted(),
+      });
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: [],
+        runIds: family.toSorted(),
+      });
+      return;
+    }
+
+    await expect(purgeEvePostgresQueue(query, input)).rejects.toThrow(
+      "Queue inventory did not stabilize"
+    );
+    expect(
+      await query`select id from graphile_worker._private_jobs where id::text in ${query(jobIds)}`
+    ).toHaveLength(family.length);
+    expect(
+      await query`select run_id from workflow.eve_queue_purge_runs
+        where session_id = ${root} and task_identifier = ${task}`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource in ${query(descendants.map((id) => `run:${id}`))} and fenced`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource = ${`run:${root}`} and fenced`
+    ).toHaveLength(1);
+  }
+);

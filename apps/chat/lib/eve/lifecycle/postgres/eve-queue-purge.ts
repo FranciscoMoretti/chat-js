@@ -212,6 +212,7 @@ export const purgeEvePostgresQueue = async (
     "isolation level read committed",
     async (query: QueueQuery) => {
       const known = await readQueuePurgeScope(query, parsed);
+      let stableInventory: QueueInventory | undefined;
       for (
         let pass = EMPTY_COUNT;
         pass < MAX_DISCOVERY_PASSES;
@@ -228,19 +229,22 @@ export const purgeEvePostgresQueue = async (
           // oxlint-disable-next-line eslint/no-await-in-loop -- Read queue associations, fence newly discovered runs, then repeat; persist stable inventory before removing its last queued associations.
           await fenceDiscoveredQueueRuns(query, known, newIds);
         } else {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Read queue associations, fence newly discovered runs, then repeat; persist stable inventory before removing its last queued associations.
-          return await finishQueuePurge(
-            query,
-            {
-              inventory,
-              sessionId: parsed.sessionId,
-              taskIdentifier: parsed.taskIdentifier,
-            },
-            known
-          );
+          stableInventory = inventory;
+          break;
         }
       }
-      throw new Error("Queue inventory did not stabilize; retry cleanup.");
+      if (stableInventory === undefined) {
+        throw new Error("Queue inventory did not stabilize; retry cleanup.");
+      }
+      return await finishQueuePurge(
+        query,
+        {
+          inventory: stableInventory,
+          sessionId: parsed.sessionId,
+          taskIdentifier: parsed.taskIdentifier,
+        },
+        known
+      );
     }
   );
 };
