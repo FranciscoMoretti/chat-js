@@ -11,7 +11,7 @@ Type-aware linting remains enabled. The Vitest preset is not enabled: the reposi
 
 ## Repository configuration
 
-Repository-specific lint configuration is limited to type-aware checks, ignored generated/evaluation directories, and exact filename exceptions preserving the EVE-discovered `deepResearch.ts` and `webSearch.ts` tool IDs where applicable. Pinned Oxlint reports filename diagnostics at offset zero, where inline suppression comments do not work.
+Repository-specific lint configuration is limited to type-aware checks, ignored library-installed/generated/evaluation files, and exact filename exceptions preserving the EVE-discovered `deepResearch.ts` and `webSearch.ts` tool IDs where applicable. Pinned Oxlint reports filename diagnostics at offset zero, where inline suppression comments do not work.
 
 The formatter retains `sortImports: false` in the root and standalone-app Oxfmt configurations. Formatting must preserve module evaluation order. Named bindings can still be arranged through deliberate source changes when their semantics are understood.
 
@@ -24,6 +24,10 @@ Remove disabled rule names from mixed directives while preserving the remaining 
 Stock defaults permit native async/await, optional chaining, named exports, object spread, and ternary expressions. These constructs do not need the previous policy's suppression comments. This does not relax independently enabled Promise safety, type safety, or React correctness checks.
 
 ## Generated source
+
+Oxlint and Oxfmt exclude library-installed `components/ai-elements` and `components/ui`, plus the generator-owned registration modules under `features/installed*.ts` and `tools/chatjs`. These are config-level exclusions, not per-rule source suppressions. Custom registrations (`custom-tools.ts` and `custom-ui.ts`), feature implementations, and generator source remain checked. Type checking still covers excluded TypeScript files.
+
+Ultracite's inherited exclusions cover standard generated names (`*.generated.*`, `*.gen.*`, and `*.auto.*`), generated directories, framework build output, `next-env.d.ts`, and lockfiles. Oxfmt also excludes Drizzle's generated migration metadata; authored schema and migration logic remain checked.
 
 CLI emitters must not recreate obsolete suppressions. Generated registration modules preserve their public bindings, initializer order, and existing value/type export layout. Only exceptions required by an enabled rule are emitted.
 

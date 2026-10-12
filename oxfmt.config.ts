@@ -8,6 +8,9 @@ export default defineConfig({
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
     "examples/**",
+    "**/components/{ai-elements,ui}/**",
+    "**/features/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
+    "**/lib/db/migrations/meta/**",
     "**/composer-icons.generated.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",

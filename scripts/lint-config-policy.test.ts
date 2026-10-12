@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
@@ -100,6 +100,91 @@ test.each(["oxlint.config.ts", "apps/chat/oxlint.config.ts"])(
           files: toolFiles.slice(0, -1),
           rules: { "unicorn/filename-case": "allow" },
         });
+      }
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+
+test.each(["", "apps/chat/"])(
+  "%s configs exclude installed and generated files but check authored code",
+  async (sourcePrefix) => {
+    const temporary = await mkdtemp(
+      path.join(tmpdir(), "chatjs-lint-excludes-")
+    );
+    const fixturePrefix = sourcePrefix === "" ? "apps/chat/" : "";
+    const ignored = [
+      "components/ui/button.ts",
+      "components/ai-elements/message.ts",
+      "features/installed.ts",
+      "features/installed-routers.ts",
+      "features/installed-uploads.ts",
+      "features/installed-layout.ts",
+      "features/installed-instrumentation.ts",
+      "tools/chatjs/tools.ts",
+      "tools/chatjs/ui.ts",
+      "tools/chatjs/providers.ts",
+      "tools/chatjs/code-executor.ts",
+      "tools/chatjs/workflow-types.ts",
+      "tools/chatjs/tool-availability.ts",
+      "tools/chatjs/document-ui.ts",
+      "tools/chatjs/document-run.ts",
+      "tools/chatjs/installed-features.ts",
+      "tools/chatjs/composer-tools.ts",
+      "lib/ai/models.generated.ts",
+      "next-env.d.ts",
+      ".next/types/routes.ts",
+      ".eve/worker.ts",
+    ];
+    const checked = [
+      "components/authored.ts",
+      "features/mcp/component.ts",
+      "tools/chatjs/custom-tools.ts",
+      "tools/chatjs/custom-ui.ts",
+      "tools/chatjs/retrieve-url/tool.ts",
+      "scripts/generate-models.ts",
+    ];
+    const malformed = "debugger;export  const chosen={answer:42}\n";
+    try {
+      await writeConfig(temporary, `${sourcePrefix}oxlint.config.ts`);
+      await writeFile(
+        path.join(temporary, "oxfmt.config.ts"),
+        `import config from ${JSON.stringify(path.join(root, sourcePrefix, "oxfmt.config.ts"))};\nexport default config;\n`
+      );
+      await Promise.all(
+        [...ignored, ...checked].map(async (file) => {
+          const target = path.join(temporary, fixturePrefix, file);
+          await mkdir(path.dirname(target), { recursive: true });
+          await writeFile(target, malformed);
+        })
+      );
+      const lint = await runNative(temporary, "oxlint", [
+        ".",
+        "--format",
+        "unix",
+      ]);
+      expect(lint.exitCode).toBe(1);
+      for (const file of ignored) {
+        expect(lint.output).not.toContain(`${file}:`);
+      }
+      for (const file of checked) {
+        expect(lint.output).toContain(`${file}:`);
+      }
+      const format = await runNative(temporary, "oxfmt", ["--write", "."]);
+      expect(format.exitCode).toBe(0);
+      const contents = await Promise.all(
+        [...ignored, ...checked].map(
+          async (file) =>
+            await readFile(path.join(temporary, fixturePrefix, file), "utf-8")
+        )
+      );
+      expect(contents.slice(0, ignored.length)).toEqual(
+        ignored.map(() => malformed)
+      );
+      for (const content of contents.slice(ignored.length)) {
+        expect(content).not.toBe(malformed);
       }
     } finally {
       await rm(temporary, { force: true, recursive: true });
