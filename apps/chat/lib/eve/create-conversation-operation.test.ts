@@ -274,8 +274,6 @@ it("recovers an accepted fork after the source was deleted", async () => {
     creationKind: "message",
     state: "uncertain",
   });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.source.mockResolvedValue(undefined);
   mocks.request.mockResolvedValue(
     Response.json({ sessionId: "accepted-child" })
   );

@@ -213,12 +213,12 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
   await writeFile(ownerPath, JSON.stringify(owner));
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
-    expect(await purgeLocalEveSandboxes([input])).toEqual([
-      { sandboxNames: [], snapshotNames: [] },
-    ]);
-  }
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
   expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,

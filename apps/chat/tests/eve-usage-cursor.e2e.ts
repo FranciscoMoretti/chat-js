@@ -59,7 +59,7 @@ const session = async (): Promise<string> => {
   }
   return row.sessionId;
 };
-const step = (costUsd: number | undefined) => ({
+const step = (costUsd?: number) => ({
   data: { turnId: "turn_0", usage: { costUsd } },
   meta: { id: crypto.randomUUID() },
   type: "step.completed",
@@ -141,8 +141,7 @@ test.each(["step.completed", "compaction.usage"])(
   "missing %s cost blocks cursor advancement until durable provider reconciliation",
   async (type) => {
     const id = await session();
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise absent usage cost through the required fixture argument.
-    const event = { ...step(undefined), type };
+    const event = { ...step(), type };
     transport.stream.mockImplementation(function* streamMissingCostEvent({
       startIndex,
     }) {

@@ -93,9 +93,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    () => Promise.resolve(crypto.randomUUID())
-    /* oxlint-enable typescript/promise-function-async */
+    () => crypto.randomUUID()
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");

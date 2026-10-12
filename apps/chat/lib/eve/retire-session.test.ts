@@ -98,11 +98,7 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
   mocks.snapshot.mockResolvedValue({
     events: [{ type: "step.completed" }, { type: "session.completed" }],
   });
-  mocks.usage.mockImplementation(
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    (_owner: string, _session: string, event: { readonly type: string }) =>
-      Promise.resolve(event.type === "step.completed" ? false : undefined)
-  );
+  mocks.usage.mockResolvedValueOnce(false);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "Usage must be reconciled"
   );

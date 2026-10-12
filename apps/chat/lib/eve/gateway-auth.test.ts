@@ -292,13 +292,7 @@ it("does not let a seed reservation use the message operation namespace", async 
   });
 });
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
-  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-  mocks.child.mockImplementation((owner, session) => {
-    if (owner === "owner" && session === "child") {
-      return Promise.resolve({ rootSessionId: "root" });
-    }
-    return Promise.resolve();
-  });
+  mocks.child.mockResolvedValueOnce({ rootSessionId: "root" });
   const read = new Request("http://localhost/eve/v1/session/child/stream", {
     headers: {
       authorization: "Bearer fixture-secret",
@@ -320,9 +314,11 @@ it("authorizes owned child streams without granting child mutation or cross-owne
       ).toBeNull();
     })
   );
+  expect(mocks.child).toHaveBeenCalledExactlyOnceWith("owner", "child");
   const foreign = new Headers(read.headers);
   foreign.set("x-chatjs-owner", "other");
   expect(
     await authenticateEveGateway(new Request(read.url, { headers: foreign }))
   ).toBeNull();
+  expect(mocks.child).toHaveBeenLastCalledWith("other", "child");
 });

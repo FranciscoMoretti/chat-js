@@ -267,7 +267,7 @@ test("project creation binds before dispatch and preserves its initial intent th
     });
     return crypto.randomUUID();
   });
-  const create = async (requestedProject: string | undefined) =>
+  const create = async (requestedProject?: string) =>
     await createEveConversation(
       owner,
       operationId,
@@ -285,8 +285,7 @@ test("project creation binds before dispatch and preserves its initial intent th
     id: ownProject,
   });
   await expect(create(ownProject)).rejects.toThrow("different");
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise absent project selection through the required fixture argument.
-  await expect(create(undefined)).rejects.toThrow("different");
+  await expect(create()).rejects.toThrow("different");
   await db.delete(project).where(eq(project.id, projectId));
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);

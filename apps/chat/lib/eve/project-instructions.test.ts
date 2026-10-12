@@ -92,8 +92,9 @@ const startTurn = async (
     hookContext(sequence, parent)
   );
 
-// oxlint-disable-next-line typescript/promise-function-async -- The hook may return a promise by type, but this fixture asserts its synchronous instruction content and null results.
-const readInstructions = () =>
+const readInstructions = ():
+  | ReturnType<NonNullable<(typeof instructions.events)["turn.started"]>>
+  | undefined =>
   instructions.events["turn.started"]?.(
     {},
     {
