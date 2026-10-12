@@ -42,7 +42,6 @@ import type { RegistryIndexItem } from "#cli/registry/schema";
 import type { StorageSelection } from "#cli/registry/storage";
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import { highlighter } from "#cli/utils/highlighter";
-import { logger } from "#cli/utils/logger";
 import { resolveStorage } from "#cli/registry/storage";
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
@@ -100,8 +99,6 @@ const AUTH_LABELS: Record<AuthProvider, string> = {
   vercel: "Vercel OAuth",
 };
 
-const EMPTY_AUTH_SELECTION_LENGTH = 0;
-
 const PROMPT_CANCEL_EXIT_CODE = 1;
 const OBSERVABILITY_CANCEL_EXIT_CODE = 0;
 
@@ -121,15 +118,6 @@ const toKebabCase = (value: string | undefined): string =>
     .replaceAll(/[^a-z0-9-]/gu, "-")
     .replaceAll(/-+/gu, "-")
     .replaceAll(/^-|-$/gu, "");
-
-const toSelectionRecord = <Key extends string>(
-  keys: readonly Key[],
-  selected: readonly string[]
-): Record<Key, boolean> =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: Every input key is emitted exactly once with a boolean value. Native Object.fromEntries types erase finite generic keys; Record<Key, boolean> cannot be initialized incrementally without another assertion. Callers pass the closed auth, core, document, and built-in tool catalogs.
-  Object.fromEntries(
-    keys.map((key) => [key, selected.includes(key)])
-  ) as Record<Key, boolean>;
 
 const promptProjectName = async (
   targetArg: string | undefined,
@@ -357,9 +345,13 @@ const promptCoreFeatures = async (
   });
   handleCancel(selected);
 
-  const result = toSelectionRecord(CORE_FEATURE_KEYS, selected);
-  result.mcp = mcp ?? result.mcp;
-  return result;
+  return {
+    attachments: selected.includes("attachments"),
+    parallelResponses: selected.includes("parallelResponses"),
+    documents: selected.includes("documents"),
+    mcp: mcp ?? selected.includes("mcp"),
+    followupSuggestions: selected.includes("followupSuggestions"),
+  };
 };
 const promptDocumentTypes = async (
   skipPrompt: boolean,
@@ -372,7 +364,7 @@ const promptDocumentTypes = async (
   };
 
   if (!documentsEnabled) {
-    return toSelectionRecord(DOCUMENT_TYPE_KEYS, []);
+    return { text: false, code: false, sheet: false };
   }
 
   if (skipPrompt) {
@@ -393,7 +385,11 @@ const promptDocumentTypes = async (
   });
   handleCancel(selected);
 
-  return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
+  return {
+    text: selected.includes("text"),
+    code: selected.includes("code"),
+    sheet: selected.includes("sheet"),
+  };
 };
 const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
   const { hidden } = item;
@@ -479,12 +475,14 @@ const promptAssistantTools = async (
   });
   handleCancel(selected);
 
-  const builtInTools = toSelectionRecord(
-    BUILT_IN_TOOL_KEYS,
-    selected.filter((value): value is BuiltInToolKey =>
-      (BUILT_IN_TOOL_KEYS as readonly string[]).includes(value)
-    )
-  );
+  const builtInTools = {
+    webSearch: selected.includes("webSearch"),
+    urlRetrieval: selected.includes("urlRetrieval"),
+    deepResearch: selected.includes("deepResearch"),
+    codeExecution: selected.includes("codeExecution"),
+    imageGeneration: selected.includes("imageGeneration"),
+    videoGeneration: selected.includes("videoGeneration"),
+  };
   if (builtInTools.deepResearch) {
     builtInTools.webSearch = true;
   }
@@ -507,29 +505,23 @@ const promptAuth = async (
     (provider) => AUTH_DEFAULTS[provider]
   );
 
-  let selectedProviders: AuthProvider[] = [];
+  const selectedProviders = await multiselect({
+    initialValues: defaultProviders,
+    message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
+    options: AUTH_PROVIDERS.map((provider) => ({
+      hint: authEnvRequirements[provider].description,
+      label: AUTH_LABELS[provider],
+      value: provider,
+    })),
+    required: true,
+  });
+  handleCancel(selectedProviders);
 
-  while (selectedProviders.length === EMPTY_AUTH_SELECTION_LENGTH) {
-    // oxlint-disable-next-line no-await-in-loop -- Retry only after the user submits an empty selection.
-    const selected = await multiselect({
-      initialValues: defaultProviders,
-      message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
-      options: AUTH_PROVIDERS.map((provider) => ({
-        hint: authEnvRequirements[provider].description,
-        label: AUTH_LABELS[provider],
-        value: provider,
-      })),
-      required: false,
-    });
-    handleCancel(selected);
-
-    selectedProviders = selected;
-    if (selectedProviders.length === EMPTY_AUTH_SELECTION_LENGTH) {
-      logger.warn("At least one auth provider is required. Please select one.");
-    }
-  }
-
-  return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
+  return {
+    google: selectedProviders.includes("google"),
+    github: selectedProviders.includes("github"),
+    vercel: selectedProviders.includes("vercel"),
+  };
 };
 
 const promptElectron = async (

@@ -25,14 +25,10 @@ const openSidebar = async (page: Page): Promise<void> => {
     name: "Expand sidebar",
   });
 
-  // oxlint-disable-next-line unicorn/prefer-ternary -- Each branch awaits a click on the appropriate sidebar control; configured no-ternary forbids the suggested alternate syntax.
-  if (await expand.isVisible()) {
-    await expand.click();
-  } else {
-    await page
-      .getByRole("button", { exact: true, name: "Toggle Sidebar" })
-      .click();
-  }
+  const sidebarControl = (await expand.isVisible())
+    ? expand
+    : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
+  await sidebarControl.click();
 };
 
 for (const width of [1280, 390]) {

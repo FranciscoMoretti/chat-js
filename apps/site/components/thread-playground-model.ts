@@ -138,12 +138,12 @@ const delay = async (
   signal?: Readonly<AbortSignal>
 ): Promise<void> => {
   signal?.throwIfAborted();
-  const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+  const { promise, resolve, reject }: PromiseWithResolvers<void> =
+    Promise.withResolvers();
   const abort = new AbortController();
   const timeout = setTimeout((): void => {
     abort.abort();
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Native withResolvers<undefined> requires a completion argument; site visual tests exercise completed and aborted response streams.
-    resolve(undefined);
+    resolve();
   }, ms);
   const onAbort = (): void => {
     clearTimeout(timeout);

@@ -82,6 +82,82 @@ it("canonicalizes operation coordinates and returns only the owned binding", asy
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
 
+it("decodes a valid copy request across UTF-8 byte boundaries", async () => {
+  const body = new ReadableStream<Uint8Array>({
+    start(controller): void {
+      const bytes = new TextEncoder().encode(
+        JSON.stringify({ ...input, modelId: "model-ñ" })
+      );
+      for (const byte of bytes) {
+        controller.enqueue(Uint8Array.of(byte));
+      }
+      controller.close();
+    },
+  });
+  const init = {
+    body,
+    duplex: "half",
+    headers: request().headers,
+    method: "POST",
+  };
+  const response = await POST(new Request(request().url, init));
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(mocks.save).toHaveBeenCalledWith(
+    "owner",
+    { ...input, modelId: "model-ñ" },
+    "http://localhost:3790"
+  );
+  expect(body.locked).toBe(false);
+});
+
+it("cancels an oversized streamed request before reading another chunk", async () => {
+  const cancel = vi.fn();
+  let chunksRead = 0;
+  const body = new ReadableStream<Uint8Array>(
+    {
+      cancel,
+      pull(controller): void {
+        chunksRead += 1;
+        controller.enqueue(new Uint8Array(2049));
+      },
+    },
+    { highWaterMark: 0 }
+  );
+  const init = {
+    body,
+    duplex: "half",
+    headers: request().headers,
+    method: "POST",
+  };
+  const response = await POST(new Request(request().url, init));
+  expect(response.status).toBe(HTTP_STATUS.badRequest);
+  expect(chunksRead).toBe(1);
+  expect(cancel).toHaveBeenCalledTimes(1);
+  expect(body.locked).toBe(false);
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
+it("releases a failed request stream and rejects its partial JSON", async () => {
+  const body = new ReadableStream<Uint8Array>(
+    {
+      pull(controller): void {
+        controller.error(new Error("Disconnected"));
+      },
+    },
+    { highWaterMark: 0 }
+  );
+  const init = {
+    body,
+    duplex: "half",
+    headers: request().headers,
+    method: "POST",
+  };
+  const response = await POST(new Request(request().url, init));
+  expect(response.status).toBe(HTTP_STATUS.badRequest);
+  expect(body.locked).toBe(false);
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
 it("retains ambiguous operations and exposes only an owned recovery location", async () => {
   mocks.save.mockRejectedValue(new Error("sensitive native failure"));
   mocks.creation.mockResolvedValue({

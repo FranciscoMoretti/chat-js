@@ -1,9 +1,12 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import {
+  writeEvePackageManifests,
+  writePackageFiles,
+} from "./test-eve-manifests";
 
 const COMMAND_ARGUMENTS_START_INDEX = 2;
-const MANIFEST_INDENTATION_SPACES = 2;
 const root = path.resolve(import.meta.dir, "..");
 const [argument] = process.argv.slice(COMMAND_ARGUMENTS_START_INDEX);
 if (!argument) {
@@ -37,52 +40,21 @@ const originals = await Promise.all(
 );
 const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
+const manifestOriginals = originals.filter(
+  ({ file }: Readonly<(typeof originals)[number]>): boolean =>
+    manifestPaths.includes(file)
+);
+const writePackageFile = async (
+  file: string,
+  content: string
+): Promise<void> => {
+  await writeFile(path.join(root, file), content);
+};
 
 try {
-  await Promise.all(
-    originals
-      .filter(({ file }: Readonly<(typeof originals)[number]>): boolean =>
-        manifestPaths.includes(file)
-      )
-      .map(
-        // oxlint-disable-next-line typescript/promise-function-async -- Fail malformed manifest validation synchronously so map stops scheduling writes before finally restores originals; async rejection would let remaining writes race restoration.
-        ({
-          content,
-          file,
-        }: Readonly<(typeof originals)[number]>): Promise<void> => {
-          const manifest: unknown = JSON.parse(content);
-          if (
-            typeof manifest !== "object" ||
-            manifest === null ||
-            !("dependencies" in manifest) ||
-            typeof manifest.dependencies !== "object" ||
-            manifest.dependencies === null
-          ) {
-            throw new Error(`Expected dependencies in ${file}`);
-          }
-          Object.assign(manifest.dependencies, { eve: `file:${archive}` });
-          return writeFile(
-            path.join(root, file),
-            `${JSON.stringify(manifest, null, MANIFEST_INDENTATION_SPACES)}\n`
-          );
-        }
-      )
-  );
+  await writeEvePackageManifests(manifestOriginals, archive, writePackageFile);
   run(["install", "--ignore-scripts"]);
-  await Promise.all(
-    originals
-      .filter(({ file }: Readonly<(typeof originals)[number]>): boolean =>
-        manifestPaths.includes(file)
-      )
-      .map(
-        async ({
-          content,
-          file,
-        }: Readonly<(typeof originals)[number]>): Promise<void> => {
-          await writeFile(path.join(root, file), content);
-        }
-      )
-  );
+  await writePackageFiles(manifestOriginals, writePackageFile);
   run(["lint"]);
   run(["test:types"]);
   run(
@@ -109,14 +81,5 @@ try {
   ]);
 } finally {
   // Local tarball paths and their lockfile entries must never leak into a PR.
-  await Promise.all(
-    originals.map(
-      async ({
-        content,
-        file,
-      }: Readonly<(typeof originals)[number]>): Promise<void> => {
-        await writeFile(path.join(root, file), content);
-      }
-    )
-  );
+  await writePackageFiles(originals, writePackageFile);
 }

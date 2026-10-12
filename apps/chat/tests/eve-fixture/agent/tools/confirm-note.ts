@@ -16,9 +16,7 @@ const confirmNote = defineTool({
   },
   description:
     "Confirm a short note after explicit human approval. No external side effects.",
-  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-  execute: ({ note }) => Promise.resolve({ confirmed: true, note }),
-  /* oxlint-enable typescript/promise-function-async */
+  execute: ({ note }) => ({ confirmed: true, note }),
   inputSchema: z.object({
     note: z.string().trim().min(1).max(500),
   }),

@@ -101,6 +101,38 @@ test("gateway replacement edits only the active root config discriminator", asyn
 });
 
 test.each([
+  ["/* leading comment */ const /* binding comment */", true],
+  ["let", false],
+  ["var", false],
+])(
+  "gateway replacement follows only immutable %s bindings with one use",
+  async (declaration, safe) => {
+    const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-binding-"));
+    roots.push(root);
+    const source = `${declaration} config = { ai: { gateway: "openai" } };\nexport default defineConfig(config);\n`;
+    await writeFile(path.join(root, "chat.config.ts"), source);
+    const item = builtInGateways.find(
+      (gateway: {
+        readonly meta: { readonly chatjs: { readonly id: string } };
+      }) => gateway.meta.chatjs.id === "vercel"
+    );
+    if (!item) {
+      throw new Error("Missing Vercel fixture");
+    }
+    const selection = { definition: item.meta.chatjs, source: "vercel" };
+    if (safe) {
+      expect(await gatewayConfigEdit(root, selection)).toBe(
+        source.replace('gateway: "openai"', 'gateway: "vercel"')
+      );
+    } else {
+      expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+        "literal ai.gateway"
+      );
+    }
+  }
+);
+
+test.each([
   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],
   ['{ ai: { gateway: "openai" }, ...loadConfig() }', false],
   ['{ ai: { gateway: "openai", [settingKey]: "other" } }', false],

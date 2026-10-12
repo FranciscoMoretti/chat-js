@@ -40,26 +40,17 @@ beforeAll(async () => {
       )
     );
   }
-  for (const [id, owner, session] of [
-    [conversationId, "owner", "root"],
-    [otherId, "other", "foreign-root"],
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-    await postgres.query(
-      'insert into "user" (id,name,email) values ($1,$1,$1)',
-      [owner]
-    );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-    await postgres.query(
-      'insert into "EveChat" (id,"ownerId",title) values ($1,$2,\'Research\')',
-      [id, owner]
-    );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-    await postgres.query(
-      'insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$2,$1,\'Research\',$3,\'bound\')',
-      [id, owner, session]
-    );
-  }
+  await postgres.exec(
+    `insert into "user" (id,name,email) values ('owner','owner','owner'), ('other','other','other')`
+  );
+  await postgres.query(
+    `insert into "EveChat" (id,"ownerId",title) values ($1,'owner','Research'), ($2,'other','Research')`,
+    [conversationId, otherId]
+  );
+  await postgres.query(
+    `insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,'owner',$1,'Research','root','bound'), ($2,$2,'other',$2,'Research','foreign-root','bound')`,
+    [conversationId, otherId]
+  );
 }, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
 afterAll(async () => {
   await postgres.close();

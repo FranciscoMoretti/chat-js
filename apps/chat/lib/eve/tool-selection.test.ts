@@ -95,10 +95,22 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
       webSearch: {},
       wordCount: {},
     };
-    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    const available = filterEveTools(tools);
+    expect(Object.keys(available)).toEqual(["webSearch"]);
+    expect(available.webSearch).toBe(tools.webSearch);
+    expect(Object.keys(tools)).toEqual([
+      "confirm_note",
+      "deepResearch",
+      "server__echo",
+      "webSearch",
+      "wordCount",
+    ]);
     expect(eveTurnTool.get()).toBe("webSearch");
     await startTurn();
-    expect(filterEveTools(tools)).toEqual(tools);
+    const automatic = filterEveTools(tools);
+    expect(automatic).toEqual(tools);
+    expect(automatic).not.toBe(tools);
+    expect(automatic.confirm_note).toBe(tools.confirm_note);
   });
 });
 it("includes document revision reads without leaking unrelated tools", () => {

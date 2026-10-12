@@ -25,7 +25,7 @@ const storage = vi.hoisted(() => ({
 
 vi.mock("../lib/file-storage", () => ({
   deleteFilesByUrls:
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
+    /* oxlint-disable eslint/require-await -- The Promise-only storage adapter must reject when the provider is unavailable and delete current Map entries on each successful retry; a settled mock would omit the deletion effects this sweep verifies. */
     async (urls: readonly string[]): Promise<void> => {
       if (storage.fail) {
         throw new Error("Provider unavailable");

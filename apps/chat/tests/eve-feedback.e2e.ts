@@ -104,16 +104,18 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await expect(down).toHaveAttribute("aria-pressed", "true");
 
     // A focus refetch starts during a save and returns the previous vote last.
-    const mutationStarted = Promise.withResolvers<undefined>();
-    const resumeMutation = Promise.withResolvers<undefined>();
-    const staleReadStarted = Promise.withResolvers<undefined>();
-    const releaseStaleRead = Promise.withResolvers<undefined>();
-    const staleReadFinished = Promise.withResolvers<undefined>();
+    const mutationStarted: PromiseWithResolvers<void> = Promise.withResolvers();
+    const resumeMutation: PromiseWithResolvers<void> = Promise.withResolvers();
+    const staleReadStarted: PromiseWithResolvers<void> =
+      Promise.withResolvers();
+    const releaseStaleRead: PromiseWithResolvers<void> =
+      Promise.withResolvers();
+    const staleReadFinished: PromiseWithResolvers<void> =
+      Promise.withResolvers();
     await page.route(
       mutationRoute,
       async (route) => {
-        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-        mutationStarted.resolve(undefined);
+        mutationStarted.resolve();
         await resumeMutation.promise;
         await route.continue();
       },
@@ -123,14 +125,12 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       votesRoute,
       async (route) => {
         const response = await route.fetch();
-        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-        staleReadStarted.resolve(undefined);
+        staleReadStarted.resolve();
         await releaseStaleRead.promise;
         try {
           await route.fulfill({ response });
         } finally {
-          // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-          staleReadFinished.resolve(undefined);
+          staleReadFinished.resolve();
         }
       },
       { times: 1 }
@@ -143,29 +143,23 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         globalThis.dispatchEvent(new Event("visibilitychange"))
       );
       await staleReadStarted.promise;
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      resumeMutation.resolve(undefined);
+      resumeMutation.resolve();
       await expect(up).toHaveAttribute("aria-pressed", "true");
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      releaseStaleRead.resolve(undefined);
+      releaseStaleRead.resolve();
       await staleReadFinished.promise;
       // A following browser task runs after the completed response is processed.
-      await page.evaluate(
-        async () =>
-          // oxlint-disable-next-line promise/avoid-new -- The browser callback-only double animation frame API supplies the completion signal required before the following assertion.
-          await new Promise((resolve) => {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(resolve);
-            });
-          })
-      );
+      await page.evaluate(async () => {
+        const nextPaint = Promise.withResolvers<number>();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(nextPaint.resolve);
+        });
+        await nextPaint.promise;
+      });
       await expect(up).toHaveAttribute("aria-pressed", "true");
       await expect(down).toBeEnabled();
     } finally {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      resumeMutation.resolve(undefined);
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      releaseStaleRead.resolve(undefined);
+      resumeMutation.resolve();
+      releaseStaleRead.resolve();
     }
 
     const shared = await page.request.post("/api/trpc/eve.setVisibility", {

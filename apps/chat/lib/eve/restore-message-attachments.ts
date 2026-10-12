@@ -72,7 +72,7 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
 interface HistoricalAttachment {
   readonly contentType: ReturnType<typeof parseContentType>;
   readonly name: string;
-  readonly read: () => Promise<Blob> | ReturnType<typeof downloadFile>;
+  readonly read: () => Blob | Promise<Blob> | ReturnType<typeof downloadFile>;
 }
 
 const storedHistoricalAttachmentKey = (url: string): string => {
@@ -175,8 +175,7 @@ export const restoreMessageAttachments = async (
         files.push({
           contentType,
           name,
-          // oxlint-disable-next-line typescript/promise-function-async -- Inline decoding runs synchronously and resolves a Blob; an async wrapper changes the throw boundary without asynchronous work to await.
-          read: () => Promise.resolve(inlineAttachment(url, contentType)),
+          read: () => inlineAttachment(url, contentType),
         });
       } else {
         const key = storedHistoricalAttachmentKey(url);

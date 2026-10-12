@@ -16,35 +16,24 @@ const headers = { "cache-control": "no-store" };
 const readCopyBody = async (
   request: ReadonlyNativeSurface<Pick<Request, "body">>
 ): Promise<unknown> => {
-  const reader = request.body?.getReader();
-  if (!reader) {
+  const body = request.body?.values();
+  if (!body) {
     return null;
   }
   const chunks: Uint8Array[] = [];
   let length = 0;
   try {
-    while (true) {
-      // oxlint-disable-next-line no-await-in-loop -- Check each chunk against the byte limit before requesting another; finally cancels the reader on overflow or error.
-      const result = await reader.read();
-      if (result.done) {
-        break;
-      }
-      length += result.value.byteLength;
+    // Native iteration releases the reader and cancels on an early return.
+    for await (const chunk of body) {
+      length += chunk.byteLength;
       if (length > MAX_COPY_BODY_BYTES) {
         return null;
       }
-      chunks.push(result.value);
+      chunks.push(chunk);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
   } catch {
     return null;
-  } finally {
-    try {
-      await reader.cancel();
-    } catch {
-      // Cancellation can reject after the body stream fails.
-    }
-    reader.releaseLock();
   }
 };
 

@@ -40,21 +40,6 @@ await db.insert(user).values({
 
 afterAll(async () => {
   await db.delete(eveResponseGroup).where(eq(eveResponseGroup.ownerId, owner));
-  // Fork foreign keys require deleting children before roots.
-  const rows = await db
-    .select()
-    .from(eveConversation)
-    .where(eq(eveConversation.ownerId, owner));
-  /* oxlint-disable eslint/no-await-in-loop -- Delete fork rows in fixture order before deleting their shared root; foreign keys constrain teardown. */
-  for (const row of rows.filter(
-    (candidate: Readonly<{ parentConversationId: string | null }>) =>
-      candidate.parentConversationId !== undefined &&
-      candidate.parentConversationId !== null &&
-      candidate.parentConversationId !== ""
-  )) {
-    await db.delete(eveConversation).where(eq(eveConversation.id, row.id));
-  }
-  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
@@ -91,12 +76,10 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
         operation.operationId,
         eveMessageTitle(operation.message),
 
-        /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-        async (id) => {
+        (id) => {
           nativeCalls.push(id);
           return `session-${id}`;
         },
-        /* oxlint-enable eslint/require-await */
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
@@ -154,9 +137,7 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
     crypto.randomUUID(),
     "Original",
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `source-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `source-${id}`
   );
   vi.mocked(createEveConversationOperation)
     .mockReset()
@@ -166,9 +147,7 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
         operation.operationId,
         eveMessageTitle(operation.message),
 
-        /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-        async (id) => `continued-${id}`,
-        /* oxlint-enable eslint/require-await */
+        (id) => `continued-${id}`,
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
@@ -251,9 +230,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     group.candidates[0].operationId,
     input.message,
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `session-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `session-${id}`
   );
   const forkInput = {
     ...input,
@@ -318,9 +295,7 @@ test("group reservation racing retirement cannot leave an active unstarted group
     crypto.randomUUID(),
     "Race",
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `session-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `session-${id}`
   );
   const input = {
     fork: { beforeTurnId: "turn_0", conversationId: root.id },
@@ -361,9 +336,7 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     crypto.randomUUID(),
     "Old group",
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `session-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `session-${id}`
   );
   const input = {
     fork: { beforeTurnId: "turn_0", conversationId: root.id },
@@ -404,9 +377,7 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.candidates[0].operationId,
     input.message,
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `session-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `session-${id}`
   );
   await recordEveResponseGroupRejection(
     owner,
@@ -454,15 +425,14 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const creation = createEveConversation(
     owner,
     group.candidates[0].operationId,
     input.message,
     async (id) => {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      entered.resolve(undefined);
+      entered.resolve();
       await release.promise;
       return `session-${id}`;
     }
@@ -477,8 +447,7 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
       "Finish recovering"
     );
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
   }
   const root = await creation;
   await beginEveConversationDeletion(owner, root.id);

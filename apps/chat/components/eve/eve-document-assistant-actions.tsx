@@ -56,7 +56,9 @@ export const EveDocumentAssistantActions = ({
   readonly documentId: string;
   readonly revisionId: string;
   readonly disabled: boolean;
-  readonly onAction?: (request: DocumentAssistantRequest) => Promise<void>;
+  readonly onAction?: (
+    request: DocumentAssistantRequest
+  ) => void | Promise<void>;
   readonly busy?: boolean;
   readonly onStop?: () => Promise<void>;
 }): ReactJSX.Element | null => {

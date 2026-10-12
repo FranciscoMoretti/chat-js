@@ -16,6 +16,7 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
+import type { readLocalEveSandboxInventory } from "../lib/eve/local-sandbox-inventory";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
@@ -30,10 +31,9 @@ vi.mock("../lib/eve/local-sandbox-fence", () => ({
 }));
 
 vi.mock("../lib/eve/local-sandbox-inventory", () => ({
-  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-  readLocalEveSandboxInventory: () =>
-    Promise.resolve({ owned: [], unattributedDirectories: [] }),
-  /* oxlint-enable typescript/promise-function-async */
+  readLocalEveSandboxInventory: vi
+    .fn<typeof readLocalEveSandboxInventory>()
+    .mockResolvedValue({ owned: [], unattributedDirectories: [] }),
 }));
 
 vi.mock("../lib/file-storage", () => ({

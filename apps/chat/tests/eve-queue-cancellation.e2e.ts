@@ -1,5 +1,7 @@
 import { createServer } from "node:http";
 import type { ServerResponse } from "node:http";
+import { once } from "node:events";
+import { promisify } from "node:util";
 
 import { createWorld } from "@workflow/world-postgres";
 import { Pool } from "pg";
@@ -12,7 +14,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
 }
 
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
-  const release = Promise.withResolvers<undefined>();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const calls: string[] = [];
 
   const server = createServer(
@@ -42,10 +44,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
       })();
     }
   );
-  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
+  await once(server.listen(0, "127.0.0.1"), "listening");
   const address = server.address();
   if (address === null || typeof address === "string") {
     throw new Error("Missing address");
@@ -73,8 +72,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await queue.queue("__wkf_workflow_fixture", { runId });
     await expect.poll(() => calls.length).toBe(2);
     expect(calls).toHaveLength(2);
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await expect.poll(pendingJobs).toBe(0);
     const idempotencyKey = crypto.randomUUID();
     await Promise.all([
@@ -87,8 +85,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await expect.poll(pendingJobs).toBe(0);
     expect(calls).toHaveLength(3);
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     server.closeAllConnections();
     await queue.close?.();
     await pool.query(
@@ -100,12 +97,12 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
       [`${jobPrefix}flows`]
     );
     await pool.end();
-    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-    await new Promise<void>((resolve) => {
+    await promisify((onClose: () => void): void => {
       server.close(() => {
-        resolve();
+        // The queue fixture intentionally ignores callback close errors.
+        onClose();
       });
-    });
+    })();
     vi.unstubAllEnvs();
   }
 }, 15_000);

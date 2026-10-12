@@ -55,7 +55,7 @@ const PureSidebarChatItem = ({
   readonly renderShareContent: (
     chatId: string,
     onClose: () => void
-  ) => ReactNode;
+  ) => Exclude<ReactNode, Promise<unknown>>;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const { projectId } = chat;
@@ -170,7 +170,6 @@ const PureSidebarChatItem = ({
         <ShareDialog
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
-          // oxlint-disable-next-line typescript/promise-function-async -- ReactNode includes promises, but this render callback must retain synchronous element results for the client share dialog.
           renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}

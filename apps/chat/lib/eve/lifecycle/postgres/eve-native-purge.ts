@@ -36,7 +36,7 @@ const withRetiredNativeSession = async <Result>(
   sessionId: string,
   stages: {
     readonly retire: () => Promise<void>;
-    readonly afterRetirement: () => Promise<Result>;
+    readonly afterRetirement: () => Result | Promise<Result>;
   }
 ): Promise<Result> => {
   // One connection holds the session lock across stage commits; a second runs
@@ -186,8 +186,9 @@ const retireEveNativeSessions = async (
     for (const sessionId of new Set(sessionIds)) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Purge the currently fenced queue, then fence newly discovered runs before the next inventory pass; retire each session before committing its native retirement marker.
       await withRetiredNativeSession(connection, sessionId, {
-        // oxlint-disable-next-line typescript/promise-function-async -- This completed retirement stage intentionally does no work; awaiting a fabricated promise would add a fake await.
-        afterRetirement: () => Promise.resolve(),
+        afterRetirement: () => {
+          // Retirement has no following purge stage.
+        },
         retire: async () => {
           await retire(sessionId);
         },

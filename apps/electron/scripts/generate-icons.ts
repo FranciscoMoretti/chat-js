@@ -29,18 +29,19 @@ const readIconFormats = async (): Promise<{
   return { icns, ico };
 };
 const generateIcons = async (): Promise<void> => {
-  await mkdir(buildDir, { recursive: true });
-  const { icns, ico } = await readIconFormats();
+  try {
+    await mkdir(buildDir, { recursive: true });
+    const { icns, ico } = await readIconFormats();
 
-  await copyFile(src, `${outputBase}.png`);
-  await writeFile(`${outputBase}.icns`, icns);
-  await writeFile(`${outputBase}.ico`, ico);
-  clearCache();
+    await copyFile(src, `${outputBase}.png`);
+    await writeFile(`${outputBase}.icns`, icns);
+    await writeFile(`${outputBase}.ico`, ico);
+    clearCache();
 
-  console.log("Generated build/icon.{png,icns,ico}");
+    console.log("Generated build/icon.{png,icns,ico}");
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  }
 };
-// oxlint-disable-next-line promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- Generated Node/tsx prebuilds run in CommonJS; handle rejection here because that transform cannot support top-level await.
-generateIcons().catch((error: unknown): void => {
-  console.error(error);
-  process.exitCode = 1;
-});
+void generateIcons();

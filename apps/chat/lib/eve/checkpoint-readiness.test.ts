@@ -4,6 +4,10 @@ import { waitForEveCheckpoint } from "./checkpoint-readiness";
 
 const request = vi.hoisted(() => vi.fn());
 vi.mock("./server", () => ({ eveRequest: request }));
+// Advance the test clock for the server timer while keeping polling sequential.
+vi.mock("node:timers/promises", () => ({
+  setTimeout: vi.advanceTimersByTimeAsync,
+}));
 afterEach(() => {
   vi.useRealTimers();
   request.mockReset();
@@ -22,7 +26,6 @@ it("waits through source initialization and verifies exact checkpoint identity",
       })
     );
   const ready = waitForEveCheckpoint("owner", "source", "turn_0");
-  await vi.advanceTimersByTimeAsync(250);
   await ready;
   expect(request).toHaveBeenCalledTimes(2);
   expect(request.mock.calls[0].slice(0, 2)).toEqual([
@@ -56,7 +59,6 @@ it("times out without allocating or changing the requested checkpoint", async ()
   const pending = expect(
     waitForEveCheckpoint("owner", "source", "turn_0")
   ).rejects.toThrow("not ready");
-  await vi.advanceTimersByTimeAsync(15_000);
   await pending;
   expect(
     request.mock.calls.every(
@@ -80,17 +82,31 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     "owner",
     `/eve/chat/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
   ]);
-  for (const invalid of [
-    { ...receipt, checkpointId: crypto.randomUUID() },
-    { ...receipt, checkpointId: undefined },
-    { ...receipt, ready: false },
-  ]) {
-    request.mockResolvedValueOnce(Response.json(invalid));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case installs the next one-shot invalid checkpoint response; await its rejection before configuring another response on the shared request mock.
-    await expect(
-      waitForEveCheckpoint("owner", "source", "turn_1", checkpointId)
-    ).rejects.toThrow("Invalid source checkpoint");
-  }
+});
+
+it.each([
+  { checkpointId: crypto.randomUUID() },
+  { checkpointId: undefined },
+  { ready: false },
+])("rejects an invalid named checkpoint receipt %j", async (invalid) => {
+  const checkpointId = crypto.randomUUID();
+  request.mockResolvedValueOnce(
+    Response.json({
+      beforeTurnId: "turn_1",
+      checkpointId,
+      ready: true,
+      sessionId: "source",
+      ...invalid,
+    })
+  );
+  await expect(
+    waitForEveCheckpoint("owner", "source", "turn_1", checkpointId)
+  ).rejects.toThrow("Invalid source checkpoint");
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request.mock.calls[0].slice(0, 2)).toEqual([
+    "owner",
+    `/eve/chat/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
+  ]);
 });
 
 it.each(["source_not_idle", "source_advanced"])(

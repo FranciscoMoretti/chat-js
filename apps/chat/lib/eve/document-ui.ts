@@ -46,7 +46,9 @@ interface DocumentRunProps {
     readonly parts: readonly ReadonlyEveMessagePart[];
   }[];
   readonly disabled: boolean;
-  readonly onAction?: (request: DocumentAssistantRequest) => Promise<void>;
+  readonly onAction?: (
+    request: DocumentAssistantRequest
+  ) => void | Promise<void>;
 }
 export type {
   DocumentBodyProps,

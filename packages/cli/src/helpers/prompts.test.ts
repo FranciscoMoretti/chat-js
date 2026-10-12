@@ -1,7 +1,9 @@
-import { expect, it } from "bun:test";
+import { expect, it, spyOn } from "bun:test";
+import * as clack from "@clack/prompts";
 
 import {
   promptAssistantTools,
+  promptAuth,
   promptCoreFeatures,
   promptDocumentTypes,
   promptObservability,
@@ -9,6 +11,59 @@ import {
 import { collectEnvChecklist } from "./env-checklist";
 import { externalGatewayFixture } from "../../test/external-gateway";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+  DOCUMENT_TYPE_KEYS,
+} from "../types";
+
+it("returns complete selections from interactive prompts in catalog order", async () => {
+  const multiselect = spyOn(clack, "multiselect")
+    .mockResolvedValueOnce(["github"])
+    .mockResolvedValueOnce(["parallelResponses", "documents"])
+    .mockResolvedValueOnce(["sheet"])
+    .mockResolvedValueOnce(["deepResearch"]);
+
+  try {
+    const auth = await promptAuth(false);
+    expect(auth).toEqual({ github: true, google: false, vercel: false });
+    expect(Object.keys(auth)).toEqual([...AUTH_PROVIDERS]);
+
+    const definition = externalGatewayFixture().root.meta.chatjs;
+    const features = await promptCoreFeatures(false, definition, true);
+    expect(features).toEqual({
+      attachments: false,
+      documents: true,
+      followupSuggestions: false,
+      mcp: true,
+      parallelResponses: true,
+    });
+    expect(Object.keys(features)).toEqual([...CORE_FEATURE_KEYS]);
+
+    const documents = await promptDocumentTypes(false, true);
+    expect(documents).toEqual({ code: false, sheet: true, text: false });
+    expect(Object.keys(documents)).toEqual([...DOCUMENT_TYPE_KEYS]);
+
+    const { builtInTools, installableTools } = await promptAssistantTools(
+      [],
+      false,
+      definition
+    );
+    expect(builtInTools).toEqual({
+      codeExecution: false,
+      deepResearch: true,
+      imageGeneration: false,
+      urlRetrieval: false,
+      videoGeneration: false,
+      webSearch: true,
+    });
+    expect(Object.keys(builtInTools)).toEqual([...BUILT_IN_TOOL_KEYS]);
+    expect(installableTools).toEqual([]);
+  } finally {
+    multiselect.mockRestore();
+  }
+});
 
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
@@ -65,6 +120,14 @@ it("defaults media tool installation selections to false with --yes", async () =
   );
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
+});
+
+it("disables every document type when documents are not installed", async () => {
+  expect(await promptDocumentTypes(true, false)).toEqual({
+    code: false,
+    sheet: false,
+    text: false,
+  });
 });
 it.each([true, false])(
   "honors an explicit MCP installation choice with --yes: %s",

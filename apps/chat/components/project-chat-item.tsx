@@ -42,7 +42,7 @@ export const ProjectChatItem = ({
   readonly renderShareContent: (
     chatId: string,
     onClose: () => void
-  ) => ReactNode;
+  ) => Exclude<ReactNode, Promise<unknown>>;
   readonly onRename: (chatId: string, title: string) => Promise<void>;
 }): ReactJSX.Element => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -133,7 +133,6 @@ export const ProjectChatItem = ({
         <ShareDialog
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
-          // oxlint-disable-next-line typescript/promise-function-async -- ReactNode includes promises, but this render callback must retain synchronous element results for the client share dialog.
           renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}

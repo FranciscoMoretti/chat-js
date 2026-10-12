@@ -9,6 +9,7 @@ import { DocumentBody } from "@/components/eve/eve-document-body";
 import { documentUi } from "@/tools/chatjs/document-ui";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
+import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 
 import "./sandbox.css";
 
@@ -139,7 +140,7 @@ test("saved code run controls follow installed execution and retain disabled sta
   vi.spyOn(installedToolNames, "has").mockImplementation((name) =>
     installed.has(name)
   );
-  const onAction = vi.fn();
+  const onAction = vi.fn<(request: DocumentAssistantRequest) => void>();
   const props = {
     disabled: false,
     documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",

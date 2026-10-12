@@ -21,13 +21,11 @@ const NODE_VERSION_COMMAND = [
   String.raw`process.execPath + '\n' + process.versions.node`,
 ];
 const NODE_VERSION_COMMAND_OUTPUT = "utf-8";
-const execFileAsync: (
-  file: string,
-  args: readonly string[],
-  options: Readonly<{ encoding: "utf-8" }>
-) => Promise<{ stdout: string; stderr: string }> =
-  // oxlint-disable-next-line typescript/strict-void-return -- `promisify(execFile)` exposes stdout/stderr while retaining the direct executable invocation.
-  promisify(execFile);
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+const execFileAsync = promisifyExecFile(execFile);
 
 interface ServiceOperations {
   readonly run: (file: string, args: readonly string[]) => Promise<string>;

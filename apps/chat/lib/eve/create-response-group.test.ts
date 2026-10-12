@@ -274,53 +274,55 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
   );
 });
 
-test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
-  const { storage } = fixture();
-  const conversationId = crypto.randomUUID();
-  const fork = {
-    beforeTurnId: "turn_1",
-    checkpointId: crypto.randomUUID(),
-    conversationId,
-  };
-  const scope = { conversationId };
-  const operation = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Keep this draft",
-    ["a", "b"],
-    { ...scope, fork }
-  );
-  const rejection = {
-    checkpointRejected: true,
-    reason: "source_advanced",
-    ...fork,
-  };
-  const fetcher = vi.fn<typeof fetch>();
-  vi.stubGlobal("fetch", fetcher);
-  for (const body of [
-    { ...rejection, checkpointId: crypto.randomUUID() },
-    { ...rejection, beforeTurnId: "turn_2" },
-    { ...rejection, conversationId: crypto.randomUUID() },
-    { ...rejection, reason: "unknown" },
-  ]) {
-    fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case installs a one-shot rejection body against the same storage operation; finish resolving and assert recovery persistence before configuring the next.
-    await expect(
+test.each([
+  { change: {}, definitive: true },
+  { change: { checkpointId: crypto.randomUUID() }, definitive: false },
+  { change: { beforeTurnId: "turn_2" }, definitive: false },
+  { change: { conversationId: crypto.randomUUID() }, definitive: false },
+  { change: { reason: "unknown" }, definitive: false },
+])(
+  "recognizes only exact durable checkpoint rejection %j",
+  async ({ change, definitive }) => {
+    const { storage } = fixture();
+    const conversationId = crypto.randomUUID();
+    const fork = {
+      beforeTurnId: "turn_1",
+      checkpointId: crypto.randomUUID(),
+      conversationId,
+    };
+    const scope = { conversationId };
+    const operation = prepareResponseGroupCreation(
+      storage,
+      "owner",
+      "Keep this draft",
+      ["a", "b"],
+      { ...scope, fork }
+    );
+    const rejection = {
+      checkpointRejected: true,
+      reason: "source_advanced",
+      ...fork,
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({ ...rejection, ...change }, { status: 409 })
+      );
+    vi.stubGlobal("fetch", fetcher);
+    const rejected = expect(
       resolveCreationRequest(storage, "owner", operation, scope)
-    ).rejects.not.toBeInstanceOf(CreationRejectedError);
+    ).rejects;
+    await (definitive
+      ? rejected.toBeInstanceOf(CreationRejectedError)
+      : rejected.not.toBeInstanceOf(CreationRejectedError));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(
+      fetcher.mock.calls.every(
+        ([url]: Readonly<(typeof fetcher.mock.calls)[number]>) =>
+          typeof url === "string" && url.endsWith("/checkpoint")
+      )
+    ).toBe(true);
+    // The UI owns releasing the matching pending request; the original draft is never erased here.
     expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
   }
-  fetcher.mockResolvedValueOnce(Response.json(rejection, { status: 409 }));
-  await expect(
-    resolveCreationRequest(storage, "owner", operation, scope)
-  ).rejects.toBeInstanceOf(CreationRejectedError);
-
-  expect(
-    fetcher.mock.calls.every(
-      ([url]: Readonly<(typeof fetcher.mock.calls)[number]>) =>
-        typeof url === "string" && url.endsWith("/checkpoint")
-    )
-  ).toBe(true);
-  // The UI owns releasing the matching pending request; the original draft is never erased here.
-  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
-});
+);

@@ -1,4 +1,4 @@
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
@@ -127,39 +127,6 @@ const readOwnedEveDeletionIdentity = (
     )
     .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
 
-/** Read the first surviving application-content row from one of the nine cleanup dependency tables.
- * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability.
- * @param {Readonly<typeof eveFileReference | typeof eveImportedDocumentCheckpointEntry | typeof eveImportedDocumentCheckpoint | typeof eveNamedDocumentCheckpointEntry | typeof eveNamedDocumentCheckpoint | typeof eveDocumentCheckpointEntry | typeof eveDocumentCheckpoint | typeof eveDocumentHead | typeof eveDocumentRevision>} table - Original native dependency table in declared cleanup order.
- * @param {readonly string[]} ids - Same family ID array supplied to the native inArray column overload.
- * @returns {QueryPromise<readonly ({ readonly conversationId: typeof table.$inferSelect.conversationId } | undefined)[]>} Original native query object; an empty result has no first row.
- */
-const readEveFamilyApplicationContent = (
-  query: Readonly<Pick<typeof db, "select">>,
-
-  table: Readonly<
-    | typeof eveFileReference
-    | typeof eveImportedDocumentCheckpointEntry
-    | typeof eveImportedDocumentCheckpoint
-    | typeof eveNamedDocumentCheckpointEntry
-    | typeof eveNamedDocumentCheckpoint
-    | typeof eveDocumentCheckpointEntry
-    | typeof eveDocumentCheckpoint
-    | typeof eveDocumentHead
-    | typeof eveDocumentRevision
-  >,
-  ids: readonly string[]
-): QueryPromise<
-  readonly (
-    | { readonly conversationId: typeof table.$inferSelect.conversationId }
-    | undefined
-  )[]
-> =>
-  query
-    .select({ conversationId: table.conversationId })
-    .from(table)
-    .where(inArray(table.conversationId, ids))
-    .limit(SINGLE_MATCH_LIMIT);
-
 /** Read the first owner-visible identity and joined member state for a deletion receipt.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability, forwarded without cloning or rebinding.
  * @param {string} ownerId - Owner required by the joined identity predicate.
@@ -259,7 +226,7 @@ const completeEveConversationDeletion = async (
     if (sandbox) {
       throw new Error("Code sandbox cleanup is incomplete.");
     }
-    for (const table of [
+    const contentTables = [
       eveFileReference,
       eveImportedDocumentCheckpointEntry,
       eveImportedDocumentCheckpoint,
@@ -269,12 +236,29 @@ const completeEveConversationDeletion = async (
       eveDocumentCheckpoint,
       eveDocumentHead,
       eveDocumentRevision,
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Probe dependent content tables in declared order and stop at the first surviving row before writing the completed deletion tombstone.
-      const [remaining] = await readEveFamilyApplicationContent(tx, table, ids);
-      if (remaining) {
-        throw new Error("Application content cleanup is incomplete.");
-      }
+    ];
+    // Only existence matters: check the fenced family's content in one snapshot.
+    const remaining = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          inArray(eveConversation.id, ids),
+          or(
+            ...contentTables.map((table) =>
+              exists(
+                tx
+                  .select({ conversationId: table.conversationId })
+                  .from(table)
+                  .where(eq(table.conversationId, eveConversation.id))
+              )
+            )
+          )
+        )
+      )
+      .limit(SINGLE_MATCH_LIMIT);
+    if (remaining.length > EMPTY_FAMILY_SIZE) {
+      throw new Error("Application content cleanup is incomplete.");
     }
     // Transcript preparation and provenance must not survive a completed family deletion.
     await tx

@@ -43,15 +43,21 @@ const eveInstalledToolEnabled = (name: string): boolean => {
 
 const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   const selected = selectedEveTools(eveTurnTool.get());
-  const available: Partial<T> = { ...tools };
-  for (const name in available) {
+  const snapshot = { ...tools };
+  const available: Partial<T> = {};
+  for (const name of Reflect.ownKeys(snapshot)) {
     if (
-      !eveInstalledToolEnabled(name) ||
-      !eveToolAllowed(name) ||
-      (selected && !selected.includes(name))
+      typeof name === "string" &&
+      (!eveInstalledToolEnabled(name) ||
+        !eveToolAllowed(name) ||
+        (selected && !selected.includes(name)))
     ) {
-      // oxlint-disable-next-line typescript/no-dynamic-delete -- Filter a copy while preserving each registry key's concrete definition type.
-      delete available[name];
+      continue;
+    }
+    // Keep spread's data-property semantics for symbols and special names.
+    const descriptor = Object.getOwnPropertyDescriptor(snapshot, name);
+    if (descriptor) {
+      Object.defineProperty(available, name, descriptor);
     }
   }
   return available;

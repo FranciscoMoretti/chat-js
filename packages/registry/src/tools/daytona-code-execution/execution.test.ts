@@ -4,9 +4,6 @@ import { describe, expect, mock, test } from "bun:test";
 import type { DaytonaResource } from "./sandbox";
 import { executeInDaytona } from "./execution";
 
-const ATTEMPTS_PER_CALL = 1;
-const FIRST_PACKAGE_INSTALLATION = 1;
-
 type CommandReceipt = Readonly<{ exitCode: number; result: string }>;
 interface FixtureResource {
   delete: () => Promise<void>;
@@ -17,7 +14,7 @@ interface FixtureResource {
 }
 type Fixture = Readonly<{
   controller: AbortController;
-  events: string[];
+  events: readonly string[];
   ownership: {
     created: () => Promise<void>;
     release: () => Promise<void>;
@@ -34,70 +31,64 @@ type Fixture = Readonly<{
 }>;
 
 const setup = (): Fixture => {
-  const events: string[] = [];
   const controller = new AbortController();
+  const execute = mock<() => Promise<CommandReceipt>>().mockResolvedValue({
+    exitCode: 0,
+    result: '42\n__EXECUTION_STATUS__:{"success":true}\n',
+  });
+  const deleteResource = mock<() => Promise<void>>().mockResolvedValue();
+  const created = mock<() => Promise<void>>().mockResolvedValue();
+  const release = mock<() => Promise<void>>().mockResolvedValue();
+  const reserve = mock<() => Promise<string>>().mockResolvedValue("allocation");
 
   const resource = {
     delete: mock<() => Promise<void>>().mockReturnValue(Promise.resolve()),
     name: "allocation",
     organizationId: "org",
     process: {
-      executeCommand:
-        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-        async (): Promise<CommandReceipt> => {
-          events.push("execute");
-          return {
-            exitCode: 0,
-            result: '42\n__EXECUTION_STATUS__:{"success":true}\n',
-          };
-        },
-      /* oxlint-enable eslint/require-await */
+      executeCommand: execute,
     },
     state: "started",
   } satisfies DaytonaResource;
+  const create =
+    mock<() => Promise<FixtureResource>>().mockResolvedValue(resource);
 
   const selected = {
     cleanup: {
-      deleteAndConfirmAbsent:
-        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-        async (): Promise<void> => {
-          events.push("delete");
-        },
-      /* oxlint-enable eslint/require-await */
+      deleteAndConfirmAbsent: deleteResource,
       provider: { projectId: "api", teamId: "daytona:org" },
     },
-    create:
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async (): Promise<FixtureResource> => {
-        events.push("create");
-        return resource;
-      },
-    /* oxlint-enable eslint/require-await */
+    create,
   };
 
   const ownership = {
-    created:
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async (): Promise<void> => {
-        events.push("confirm");
-      },
-    /* oxlint-enable eslint/require-await */
-    release:
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async (): Promise<void> => {
-        events.push("release");
-      },
-    /* oxlint-enable eslint/require-await */
-    reserve:
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async (): Promise<string> => {
-        events.push("reserve");
-        return "allocation";
-      },
-    /* oxlint-enable eslint/require-await */
+    created,
+    release,
+    reserve,
   };
 
-  return { controller, events, ownership, resource, selected };
+  const recorded = [
+    { event: "reserve", operation: reserve },
+    { event: "create", operation: create },
+    { event: "confirm", operation: created },
+    { event: "execute", operation: execute },
+    { event: "delete", operation: deleteResource },
+    { event: "release", operation: release },
+  ];
+  return {
+    controller,
+    get events() {
+      return recorded
+        .flatMap(({ event, operation }) =>
+          operation.mock.invocationCallOrder.map((order) => ({ event, order }))
+        )
+        .toSorted((left, right) => left.order - right.order)
+        .map(({ event }) => event);
+    },
+    ownership,
+    resource,
+    selected,
+  };
 };
 const input = {
   code: "return 42",
@@ -150,7 +141,7 @@ describe("Daytona allocation lifecycle", () => {
     const state = setup();
 
     state.selected.create =
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      /* oxlint-disable eslint/require-await -- The Promise-only provider create hook must abort during its invocation, before its allocation resolves, to exercise cancellation of an eventual resource. */
       async (): Promise<FixtureResource> => {
         state.controller.abort();
         return state.resource;
@@ -175,7 +166,7 @@ describe("Daytona allocation lifecycle", () => {
   test("cancellation during a command deletes once and never returns its result", async () => {
     const state = setup();
     state.resource.process.executeCommand =
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
+      /* oxlint-disable eslint/require-await -- The Promise-only command hook must abort during invocation before resolving late output, to exercise command cancellation and cleanup. */
       async (): Promise<CommandReceipt> => {
         state.controller.abort();
         return { exitCode: 0, result: "late output" };
@@ -272,7 +263,6 @@ test("cancellation settles even when the command never responds, after deletion 
     return await command.promise;
   };
   state.selected.cleanup.deleteAndConfirmAbsent = async (): Promise<void> => {
-    state.events.push("delete");
     deleting.resolve(true);
     await deletion.promise;
   };
@@ -294,17 +284,15 @@ test.each([false, true])(
   "Python package failure preserves combined output (extra=%s)",
   async (extra) => {
     const state = setup();
-    let calls = 0;
-    state.resource.process.executeCommand =
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async (): Promise<CommandReceipt> => {
-        calls += ATTEMPTS_PER_CALL;
-        if (extra && calls === FIRST_PACKAGE_INSTALLATION) {
-          return { exitCode: 0, result: "installed" };
-        }
-        return { exitCode: 1, result: "pip: no matching distribution" };
-      };
-    /* oxlint-enable eslint/require-await */
+    const execute = mock<() => Promise<CommandReceipt>>();
+    if (extra) {
+      execute.mockResolvedValueOnce({ exitCode: 0, result: "installed" });
+    }
+    execute.mockResolvedValue({
+      exitCode: 1,
+      result: "pip: no matching distribution",
+    });
+    state.resource.process.executeCommand = execute;
     const result = await executeInDaytona(
       {
         code: extra ? "!pip install missing-package\nprint(42)" : "print(42)",

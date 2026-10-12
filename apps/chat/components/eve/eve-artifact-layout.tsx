@@ -49,14 +49,14 @@ const emptyEveMessages: readonly ReadonlyEveMessage[] = [];
 interface DocumentActionProps {
   readonly messages?: readonly ReadonlyEveMessage[];
   readonly replaying?: boolean;
-  readonly onStopExecution?: (conversationId: string) => Promise<void>;
+  readonly onStopExecution?: (conversationId: string) => void | Promise<void>;
   readonly isExecutionBusy?: (conversationId: string) => boolean;
   readonly getExecutionMessages?: (
     conversationId: string
   ) => readonly ReadonlyEveMessage[];
   readonly onDocumentAction?: (
     request: DocumentAssistantRequest
-  ) => Promise<void>;
+  ) => void | Promise<void>;
   readonly documentActionsDisabled?: boolean;
 }
 

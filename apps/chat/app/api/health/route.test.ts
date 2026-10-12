@@ -1,3 +1,5 @@
+import * as timers from "node:timers/promises";
+
 import { afterEach, expect, test, vi } from "vitest";
 
 import { GET } from "./route";
@@ -7,9 +9,8 @@ const HTTP_STATUS = {
   serviceUnavailable: 503,
 };
 
-const STALLED_DATABASE_RESPONSE_ADVANCE_MS = 4500;
-
 const database = vi.hoisted(() => vi.fn<() => Promise<void>>());
+vi.mock("node:timers/promises", { spy: true });
 vi.mock("@/lib/db/health", () => ({ checkDatabase: database }));
 vi.mock("@/lib/env", () => ({
   env: {
@@ -22,6 +23,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.resetAllMocks();
+  vi.restoreAllMocks();
 });
 
 test("requires a genuine Eve health response, not a login page", async () => {
@@ -35,6 +37,7 @@ test("requires a genuine Eve health response, not a login page", async () => {
 });
 
 test("reports ready only with database and Eve available", async () => {
+  const timeout = vi.mocked(timers.setTimeout);
   database.mockResolvedValue();
   vi.stubGlobal(
     "fetch",
@@ -46,13 +49,14 @@ test("reports ready only with database and Eve available", async () => {
   );
   const resolvedResult2 = await GET();
   expect(resolvedResult2.status).toBe(HTTP_STATUS.ok);
+  expect(timeout.mock.calls[0]?.[2]?.signal?.aborted).toBe(true);
   database.mockRejectedValue(new Error("database disconnected"));
   const resolvedResult3 = await GET();
   expect(resolvedResult3.status).toBe(HTTP_STATUS.serviceUnavailable);
+  expect(timeout.mock.calls[1]?.[2]?.signal?.aborted).toBe(true);
 });
 
 test("bounds a stalled database check", async () => {
-  vi.useFakeTimers();
   database.mockReturnValue(Promise.withResolvers<never>().promise);
   vi.stubGlobal(
     "fetch",
@@ -62,11 +66,9 @@ test("bounds a stalled database check", async () => {
         Response.json({ ok: true, status: "ready", workflowId: "test" })
       )
   );
-  const response = GET();
-  await vi.advanceTimersByTimeAsync(STALLED_DATABASE_RESPONSE_ADVANCE_MS);
-  const resolvedResult4 = await response;
+  const resolvedResult4 = await GET();
   expect(resolvedResult4.status).toBe(HTTP_STATUS.serviceUnavailable);
-});
+}, 10_000);
 
 const unavailableStatus = 503;
 test("a failed guest worker makes the production instance unavailable", async () => {

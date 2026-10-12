@@ -17,7 +17,7 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
       dataStream: ToolProgressWriter;
     }>
   ) => Promise<Output>
-): AsyncGenerator<ToolResult<Output | { searches: [] }>> =>
+): AsyncGenerator<ToolResult<Output | { searches: [] }>, void> =>
   executeWithToolProgress<Output | { searches: [] }>(
     context,
     async ({ abortSignal, usage, publish }) => {

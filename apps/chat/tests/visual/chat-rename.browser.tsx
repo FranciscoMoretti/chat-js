@@ -167,7 +167,7 @@ test.each([
     readonly outcome: string;
     readonly externalClose: boolean;
   }) => {
-    const oldRequest = Promise.withResolvers<undefined>();
+    const oldRequest: PromiseWithResolvers<void> = Promise.withResolvers();
     const newRequest = Promise.withResolvers<undefined>();
     const requestsBeforeRetry = 2;
     const requestsAfterRetry = 3;
@@ -246,8 +246,7 @@ test.each([
       await act(async () => {
         await Promise.resolve();
         if (outcome === "success") {
-          // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-          oldRequest.resolve(undefined);
+          oldRequest.resolve();
         } else {
           oldRequest.reject(new Error("Old request failed"));
         }

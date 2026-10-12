@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { afterEach, expect, it, vi } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -25,8 +26,9 @@ it("aborts a stalled creation without resending or changing its operation", asyn
       init.signal?.addEventListener(
         "abort",
         () => {
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The fetch mock forwards the abort reason so the timeout test observes the original cancellation error.
-          pending.reject(init.signal?.reason);
+          const reason: unknown = init.signal?.reason;
+          assert.ok(reason instanceof DOMException);
+          pending.reject(reason);
         },
         { once: true }
       );

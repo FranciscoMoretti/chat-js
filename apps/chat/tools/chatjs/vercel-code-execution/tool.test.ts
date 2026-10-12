@@ -170,7 +170,7 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
 
 it("cancelling execution starts sandbox cleanup and observes its completion", async () => {
   const execution = Promise.withResolvers<never>();
-  const cleanup = Promise.withResolvers<undefined>();
+  const cleanup: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.javascript.mockReturnValue(execution.promise);
   mocks.cleanup.mockImplementation(async () => {
     execution.reject(new Error("Sandbox stopped"));
@@ -193,8 +193,7 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
     expect(mocks.cleanup).toHaveBeenCalledOnce();
   });
 
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-  cleanup.resolve(undefined);
+  cleanup.resolve();
   await expect(result).rejects.toBe(controller.signal.reason);
 });
 

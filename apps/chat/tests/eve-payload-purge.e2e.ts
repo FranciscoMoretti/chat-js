@@ -160,18 +160,11 @@ test("queue-discovered native runs remain in the payload inventory after queue r
 test("native coordinator retains retirement across failure and retries after payload erasure", async () => {
   const root = await fixture();
   const scope = { sessionId: root, taskIdentifier: task };
-  let retirements = 0;
+  const failedRetirement = vi
+    .fn<() => Promise<void>>()
+    .mockRejectedValue(new Error("unsettled usage"));
   await expect(
-    purgeEveNativeSession(
-      env.DATABASE_URL,
-      scope,
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      () => {
-        retirements += 1;
-        return Promise.reject(new Error("unsettled usage"));
-      }
-      /* oxlint-enable typescript/promise-function-async */
-    )
+    purgeEveNativeSession(env.DATABASE_URL, scope, failedRetirement)
   ).rejects.toThrow("unsettled usage");
   expect(
     await query`select session_id from workflow.eve_session_retirements where session_id = ${root}`
@@ -179,17 +172,9 @@ test("native coordinator retains retirement across failure and retries after pay
   // Retirement succeeded, but a reachable child has not finished yet.
   const child = await fixture(root);
   await query`update workflow.workflow_runs set status = 'running' where id = ${child}`;
+  const completedRetirement = vi.fn<() => Promise<void>>().mockResolvedValue();
   await expect(
-    purgeEveNativeSession(
-      env.DATABASE_URL,
-      scope,
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      () => {
-        retirements += 1;
-        return Promise.resolve();
-      }
-      /* oxlint-enable typescript/promise-function-async */
-    )
+    purgeEveNativeSession(env.DATABASE_URL, scope, completedRetirement)
   ).rejects.toThrow();
   expect(
     await query`select session_id from workflow.eve_session_retirements where session_id = ${root}`
@@ -208,25 +193,21 @@ test("native coordinator retains retirement across failure and retries after pay
       rejectUnexpectedRetirement
     )
   ).toEqual(receipt);
-  expect(retirements).toBe(2);
+  expect([
+    ...failedRetirement.mock.calls,
+    ...completedRetirement.mock.calls,
+  ]).toEqual([[], []]);
 });
 
 test("concurrent native cleanup attempts retire once and share the completed receipt", async () => {
   const root = await fixture();
   const scope = { sessionId: root, taskIdentifier: task };
-  let retirements = 0;
-  const retire =
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    (): Promise<void> => {
-      retirements += 1;
-      return Promise.resolve();
-    };
-  /* oxlint-enable typescript/promise-function-async */
+  const retire = vi.fn<() => Promise<void>>().mockResolvedValue();
   const receipts = await Promise.all([
     purgeEveNativeSession(env.DATABASE_URL, scope, retire),
     purgeEveNativeSession(env.DATABASE_URL, scope, retire),
   ]);
-  expect(retirements).toBe(1);
+  expect(retire).toHaveBeenCalledExactlyOnceWith();
   expect(receipts[0]).toEqual(receipts[1]);
   expect(receipts[0].runIds).toEqual([root]);
 });
@@ -234,39 +215,31 @@ test("concurrent native cleanup attempts retire once and share the completed rec
 test("family retirement persists partial progress without erasing another member's payloads", async () => {
   const first = await fixture();
   const second = await fixture();
-  const retired: string[] = [];
+  const firstPass = vi
+    .fn<(id: string) => Promise<void>>()
+    .mockResolvedValueOnce()
+    .mockRejectedValueOnce(new Error("usage not settled"));
   await expect(
-    retireEveNativeSessions(
-      env.DATABASE_URL,
-      [first, second],
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      (id) => {
-        retired.push(id);
-        if (id === second) {
-          return Promise.reject(new Error("usage not settled"));
-        }
-        return Promise.resolve();
-      }
-      /* oxlint-enable typescript/promise-function-async */
-    )
+    retireEveNativeSessions(env.DATABASE_URL, [first, second], firstPass)
   ).rejects.toThrow("usage not settled");
+  expect(firstPass.mock.calls).toEqual([[first], [second]]);
   expect(
     await query`select session_id from workflow.eve_session_retirements where session_id in ${query([first, second])}`
   ).toEqual([{ session_id: first }]);
   expect(
     await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
   ).toHaveLength(2);
+  const retry = vi.fn<(id: string) => Promise<void>>().mockResolvedValue();
   await retireEveNativeSessions(
     env.DATABASE_URL,
     [first, second, first],
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    (id) => {
-      retired.push(id);
-      return Promise.resolve();
-    }
-    /* oxlint-enable typescript/promise-function-async */
+    retry
   );
-  expect(retired).toEqual([first, second, second]);
+  expect([...firstPass.mock.calls, ...retry.mock.calls]).toEqual([
+    [first],
+    [second],
+    [second],
+  ]);
   expect(
     await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
   ).toHaveLength(2);
@@ -286,14 +259,7 @@ test("preparation keeps native payloads for inventory and recovers the same iden
   };
   await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
   const scope = { sessionId: root, taskIdentifier: task };
-  let retirements = 0;
-  const retire =
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    (): Promise<void> => {
-      retirements += 1;
-      return Promise.resolve();
-    };
-  /* oxlint-enable typescript/promise-function-async */
+  const retire = vi.fn<() => Promise<void>>().mockResolvedValue();
   const inventory = await prepareEveNativeSessionPurge(
     env.DATABASE_URL,
     scope,
@@ -323,7 +289,7 @@ test("preparation keeps native payloads for inventory and recovers the same iden
   expect(
     await prepareEveNativeSessionPurge(env.DATABASE_URL, scope, retire)
   ).toEqual(inventory);
-  expect(retirements).toBe(1);
+  expect(retire).toHaveBeenCalledExactlyOnceWith();
 });
 
 test("missing queue-discovered runs stop preparation before payload erasure", async () => {
@@ -367,14 +333,9 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   const child = await fixture(root);
   await query`update workflow.workflow_runs set name = 'workflow//eve//workflowEntry' where id in ${query([root, child])}`;
   const input = { appRoot: "/fixture", runIds: [root, child], sessionId: root };
-  let reads = 0;
-  const verify =
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    (): Promise<void> => {
-      reads += 1;
-      return Promise.resolve();
-    };
-  /* oxlint-enable typescript/promise-function-async */
+  const verify = vi
+    .fn<(sessionId: string) => Promise<void>>()
+    .mockResolvedValue();
   await expect(verifyEveSandboxCoverage(query, input, verify)).rejects.toThrow(
     "Fence native writers"
   );
@@ -397,7 +358,9 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   expect(await verifyEveSandboxCoverage(query, input, verify)).toEqual(
     [root, child].toSorted()
   );
-  expect(reads).toBe(2);
+  expect(verify.mock.calls).toEqual(
+    [root, child].toSorted().map((sessionId) => [sessionId])
+  );
   await purgeEvePostgresQueue(query, {
     runIds: inventory.runIds,
     sessionId: root,
@@ -418,23 +381,21 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   await expect(
     verifyEveSandboxCoverage(query, { ...input, runIds: [root] }, verify)
   ).rejects.toThrow("scope changed");
+  expect(verify).toHaveBeenCalledTimes(2);
 });
 
 test("unknown workflow coverage never calls the ownership verifier", async () => {
   const root = await fixture();
   await fenceEvePostgresSession(query, root);
-  let called = false;
+  const verify = vi
+    .fn<(sessionId: string) => Promise<void>>()
+    .mockResolvedValue();
   await expect(
     verifyEveSandboxCoverage(
       query,
       { appRoot: "/fixture", runIds: [root], sessionId: root },
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      () => {
-        called = true;
-        return Promise.resolve();
-      }
-      /* oxlint-enable typescript/promise-function-async */
+      verify
     )
   ).rejects.toThrow("incomplete sandbox workflow coverage");
-  expect(called).toBe(false);
+  expect(verify).not.toHaveBeenCalled();
 });

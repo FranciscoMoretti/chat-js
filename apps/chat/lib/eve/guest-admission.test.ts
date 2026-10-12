@@ -5,6 +5,8 @@ import {
 } from "./guest-admission";
 import { beforeEach, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
+import type { assertEveFilesOwned } from "../db/eve-files";
+import type { loadEveModelDefinition } from "./model-selection";
 
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),
@@ -15,8 +17,8 @@ const mocks = vi.hoisted(() => ({
     VERCEL_URL: "",
   },
   existing: vi.fn(),
-  files: vi.fn(),
-  model: vi.fn(),
+  files: vi.fn<typeof assertEveFilesOwned>(),
+  model: vi.fn<typeof loadEveModelDefinition>(),
   release: vi.fn(),
   reserve: vi.fn(),
   source: vi.fn(),
@@ -66,10 +68,23 @@ beforeEach(() => {
   mocks.source.mockResolvedValue(undefined);
   // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
   mocks.existing.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.files.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.model.mockResolvedValue(undefined);
+  mocks.files.mockResolvedValue();
+  mocks.model.mockResolvedValue({
+    apiModelId: "cheap",
+    context_window: 1000,
+    description: "Guest test model",
+    id: "cheap",
+    input: { audio: false, image: false, pdf: false, text: true, video: false },
+    max_tokens: 1000,
+    name: "Guest test model",
+    object: "model",
+    output: { audio: false, image: false, text: true, video: false },
+    owned_by: "test",
+    pricing: {},
+    reasoning: false,
+    toolCall: false,
+    type: "language",
+  });
   mocks.reserve.mockResolvedValue({
     reservationId: "attempt",
     status: "reserved",

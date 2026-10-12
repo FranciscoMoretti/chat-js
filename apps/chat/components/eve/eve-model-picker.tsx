@@ -25,7 +25,7 @@ export const EveModelPicker = ({
   readonly retainedModelIds?: readonly string[];
   readonly modelSelection?: {
     readonly value: SelectedModelValue;
-    readonly onChange: (value: SelectedModelValue) => Promise<void>;
+    readonly onChange: (value: SelectedModelValue) => void | Promise<void>;
   };
 }): ReactJSX.Element => {
   const defaultModel = useDefaultModel();

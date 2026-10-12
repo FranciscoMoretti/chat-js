@@ -208,15 +208,14 @@ it.each([
   }
 );
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
-  const { promise: pending, resolve: acquired } =
-    Promise.withResolvers<undefined>();
+  const { promise: pending, resolve: acquired }: PromiseWithResolvers<void> =
+    Promise.withResolvers();
   const test = harness({ lockWait: pending });
   const build = runMaintainerBuild(preview, test.operations);
   await delay(0);
   expect(test.events).toContain(lockQuery);
   expect(test.commands).toEqual([]);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-  acquired(undefined);
+  acquired();
   await build;
   expect(
     test.commands.map(

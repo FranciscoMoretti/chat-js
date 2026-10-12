@@ -1,3 +1,5 @@
+import { setTimeout as delay } from "node:timers/promises";
+
 import { z } from "zod";
 
 import { checkDatabase } from "@/lib/db/health";
@@ -16,7 +18,7 @@ const eveHealth = z.object({
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
   // Both workers must be ready before the host sends traffic to this instance.
-  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new AbortController();
   try {
     await Promise.race([
       Promise.all([
@@ -36,12 +38,10 @@ export const GET = async (): Promise<Response> => {
           eveHealth.parse(await response.json());
         }),
       ]),
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
-      new Promise<never>((_resolve, reject) => {
-        timeout = setTimeout(() => {
-          reject(new Error("Readiness timed out"));
-        }, READINESS_TIMEOUT_MS);
-      }),
+      (async () => {
+        await delay(READINESS_TIMEOUT_MS, null, { signal: timeout.signal });
+        throw new Error("Readiness timed out");
+      })(),
     ]);
     return Response.json(
       { status: "ready" },
@@ -53,6 +53,6 @@ export const GET = async (): Promise<Response> => {
       { headers: { "cache-control": "no-store" }, status: 503 }
     );
   } finally {
-    clearTimeout(timeout);
+    timeout.abort();
   }
 };

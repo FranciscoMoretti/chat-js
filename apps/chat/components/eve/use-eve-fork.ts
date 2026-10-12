@@ -464,13 +464,11 @@ export const useEveFork = (
       isNavigating ||
       Boolean(pending),
     modelSelection: {
-      // oxlint-disable-next-line typescript/promise-function-async -- This action only commits local selection synchronously and resolves; there is no asynchronous operation to await.
       onChange: (value: SelectedModelValue) => {
         if (busy || pending || isNavigating) {
-          return Promise.resolve();
+          return;
         }
         setModelSelectionValue(value);
-        return Promise.resolve();
       },
       value: modelSelectionValue ?? selectedModel,
     },

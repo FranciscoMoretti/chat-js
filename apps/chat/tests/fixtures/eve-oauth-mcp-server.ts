@@ -1,4 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { once } from "node:events";
+import { text } from "node:stream/consumers";
+import { promisify } from "node:util";
 
 import { createHash, randomUUID } from "node:crypto";
 import { createServer } from "node:http";
@@ -50,19 +53,10 @@ interface RefreshGrant {
 const pkceChallenge = (verifier: string): string =>
   createHash("sha256").update(verifier).digest("base64url");
 
-const readBody = async (request: IncomingMessage): Promise<string> =>
-  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-  await new Promise<string>((resolve, reject) => {
-    let body = "";
-    request.setEncoding("utf-8");
-    request.on("data", (chunk: string) => {
-      body += chunk;
-    });
-    request.on("end", () => {
-      resolve(body);
-    });
-    request.on("error", reject);
-  });
+const readBody = async (request: IncomingMessage): Promise<string> => {
+  request.setEncoding("utf-8");
+  return await text(request);
+};
 
 const sendJson = (
   response: ServerResponse,
@@ -367,10 +361,7 @@ export const startEveOAuthMcpServer = async (): Promise<EveOAuthMcpServer> => {
     })();
   });
 
-  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
+  await once(server.listen(0, "127.0.0.1"), "listening");
   const address = server.address();
   if (address === null || typeof address === "string") {
     throw new Error("OAuth MCP fixture did not receive a loopback address.");
@@ -379,16 +370,9 @@ export const startEveOAuthMcpServer = async (): Promise<EveOAuthMcpServer> => {
   return {
     async close(): Promise<void> {
       server.closeAllConnections();
-      // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-      await new Promise<void>((resolve, reject) => {
-        server.close((error: Readonly<Error> | undefined) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve();
-        });
-      });
+      await promisify((onClose: (error?: Error) => void): void => {
+        server.close(onClose);
+      })();
     },
     counters,
     invalidateAccessTokens(): void {

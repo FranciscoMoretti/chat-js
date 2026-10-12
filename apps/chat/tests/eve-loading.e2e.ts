@@ -22,7 +22,7 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
   const binding = z
     .looseObject({ id: z.string() })
     .parse(await response.json());
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route("**/api/trpc/*", async (route) => {
     if (route.request().url().includes("eve.branches")) {
       await gate.promise;
@@ -44,8 +44,7 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
         "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }",
     });
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })

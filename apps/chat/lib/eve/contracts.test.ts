@@ -126,58 +126,42 @@ describe("Eve command recovery", () => {
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
   it("surfaces callback-only failures and catches up after cancellation", async () => {
-    let replayed = 0;
+    const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
     await expect(
       sendCommand(
         vi.fn<() => Promise<void>>().mockResolvedValue(),
-        // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-        () => {
-          replayed += 1;
-          return Promise.resolve();
-        },
+        resume,
         true,
         () => new Error("failed")
       )
     ).rejects.toThrow("failed");
-    expect(replayed).toBe(0);
+    expect(resume).toHaveBeenCalledTimes(0);
     await sendCommand(
       vi.fn<() => Promise<void>>().mockResolvedValue(),
-      // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-      () => {
-        replayed += 1;
-        return Promise.resolve();
-      },
+      resume,
       true,
       () => {
         // This test verifies replay without an additional side effect.
       }
     );
-    expect(replayed).toBe(1);
+    expect(resume).toHaveBeenCalledTimes(1);
   });
 });
 
 it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
-  let submissions = 0;
-  let snapshots = 0;
+  const send = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
   await sendCommand(
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    () => {
-      submissions += 1;
-      return Promise.resolve();
-    },
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    () => {
-      snapshots += 1;
-      return Promise.resolve();
-    },
+    send,
+    resume,
     true,
     () => {
       // This test verifies cancellation without an additional side effect.
     },
-    () => snapshots >= 2
+    () => resume.mock.calls.length >= 2
   );
-  expect(submissions).toBe(1);
-  expect(snapshots).toBe(2);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(resume).toHaveBeenCalledTimes(2);
 });
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {

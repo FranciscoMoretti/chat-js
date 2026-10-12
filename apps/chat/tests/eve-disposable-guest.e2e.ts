@@ -184,12 +184,11 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
 test("New Chat discards late bootstrap results and retires their session", async ({
   page,
 }) => {
-  const started = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const messages: string[] = [];
   await page.route("**/api/eve-guest", async (route) => {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    started.resolve(undefined);
+    started.resolve();
     await release.promise;
     await route.fulfill({
       json: {
@@ -217,8 +216,7 @@ test("New Chat discards late bootstrap results and retires their session", async
     (request: Readonly<Pick<Request, "url">>) =>
       request.url().endsWith("/discarded-session/reset")
   );
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-  release.resolve(undefined);
+  release.resolve();
   await retired;
   await expect(composer).toHaveText("Fresh draft");
   await expect(page.getByRole("log")).toHaveCount(0);

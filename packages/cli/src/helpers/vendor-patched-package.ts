@@ -4,8 +4,11 @@ import nodePath from "node:path";
 import { promisify } from "node:util";
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line typescript/strict-void-return -- Node documents promisify(execFile): execFile immediately returns ChildProcess, and its native custom promisifier owns the stdout/stderr promise and rejection details rather than consuming that immediate return.
-const exec = promisify(execFile);
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+const exec = promisifyExecFile(execFile);
 const SCOPED_PACKAGE_PREFIX = /^@/u;
 const JSON_INDENTATION_SPACES = 2;
 const PACKING_OUTPUT_LIMIT_BYTES = 8_388_608;

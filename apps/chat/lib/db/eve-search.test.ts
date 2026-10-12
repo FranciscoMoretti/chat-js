@@ -68,22 +68,14 @@ beforeAll(async () => {
   await postgres.exec(
     `insert into "user" (id, name, email) values ('alice', 'Alice', 'alice@example.test'), ('bob', 'Bob', 'bob@example.test')`
   );
-  for (const [id, conversationId, ownerId, title] of [
-    [chat, branch, "alice", "Weekend notes"],
-    [titleChat, titleBranch, "alice", "Saffron cooking"],
-    [otherChat, otherBranch, "bob", "Private saffron"],
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-    await postgres.query(
-      `insert into "EveChat" (id, "ownerId", title) values ($1, $2, $3)`,
-      [id, ownerId, title]
-    );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-    await postgres.query(
-      `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, $3, '', $1::uuid, $1::text, 'bound')`,
-      [conversationId, id, ownerId]
-    );
-  }
+  await postgres.query(
+    `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Weekend notes'), ($2, 'alice', 'Saffron cooking'), ($3, 'bob', 'Private saffron')`,
+    [chat, titleChat, otherChat]
+  );
+  await postgres.query(
+    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound'), ($3::uuid, $4, 'alice', '', $3::uuid, $3::text, 'bound'), ($5::uuid, $6, 'bob', '', $5::uuid, $5::text, 'bound')`,
+    [branch, chat, titleBranch, titleChat, otherBranch, otherChat]
+  );
 }, DATABASE_SETUP_TIMEOUT_MS);
 afterAll(async () => {
   await postgres.close();
@@ -291,6 +283,55 @@ it("hides deleting chats and permanently erases text without allowing a late bac
   expect(count.rows[0].count).toBe(0);
 });
 
+it("blocks deletion for retained document revisions only within the requested family", async () => {
+  const deletingChat = crypto.randomUUID();
+  const deletingConversation = crypto.randomUUID();
+  const unrelatedChat = crypto.randomUUID();
+  const unrelatedConversation = crypto.randomUUID();
+  await postgres.query(
+    `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Delete me'), ($2, 'alice', 'Keep me')`,
+    [deletingChat, unrelatedChat]
+  );
+  await postgres.query(
+    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", state) values ($1, $2, 'alice', 'Delete me', $1, 'deleting'), ($3, $4, 'alice', 'Keep me', $3, 'bound')`,
+    [deletingConversation, deletingChat, unrelatedConversation, unrelatedChat]
+  );
+  await postgres.query(
+    `insert into "EveDocumentRevision" ("conversationId", "documentId", "ownerId", "operationId", content, kind, title) values ($1, $2, 'alice', 'retain', 'Private payload', 'text', 'Retained'), ($3, $4, 'alice', 'unrelated', 'Other payload', 'text', 'Unrelated')`,
+    [
+      deletingConversation,
+      crypto.randomUUID(),
+      unrelatedConversation,
+      crypto.randomUUID(),
+    ]
+  );
+  await expect(
+    completeEveConversationDeletion("alice", deletingChat)
+  ).rejects.toThrow("Application content cleanup is incomplete.");
+  const pending = await postgres.query<{ state: string }>(
+    `select state from "EveConversation" where id = $1`,
+    [deletingConversation]
+  );
+  expect(pending.rows[0].state).toBe("deleting");
+  await postgres.query(
+    `delete from "EveDocumentRevision" where "conversationId" = $1`,
+    [deletingConversation]
+  );
+  await completeEveConversationDeletion("alice", deletingChat);
+  const finalized = await postgres.query<{
+    state: string;
+    firstMessage: string;
+  }>(`select state, "firstMessage" from "EveConversation" where id = $1`, [
+    deletingConversation,
+  ]);
+  expect(finalized.rows[0]).toEqual({ firstMessage: "", state: "deleted" });
+  const unrelated = await postgres.query<{ content: string }>(
+    `select content from "EveDocumentRevision" where "conversationId" = $1`,
+    [unrelatedConversation]
+  );
+  expect(unrelated.rows).toEqual([{ content: "Other payload" }]);
+});
+
 const repairPreviewSearchHistory = async (
   preview: Readonly<Pick<PGlite, "exec" | "query">>
 ): Promise<void> => {
@@ -301,20 +342,21 @@ const repairPreviewSearchHistory = async (
       create table "EveChat" (title text);
       insert into "EveChat" values ('Retained conversation');
     `);
-  for (const [file, at] of [
-    ["0000_eve_baseline.sql", 1_789_411_557_764],
-    ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
-  ] as const) {
-    const hash = createHash("sha256")
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-      .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
-      .digest("hex");
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-    await preview.query(
-      "insert into drizzle.__drizzle_migrations values ($1, $2)",
-      [hash, at]
-    );
-  }
+  const [baseline, nextMigration] = await Promise.all([
+    readFile(new URL("migrations/0000_eve_baseline.sql", import.meta.url)),
+    readFile(
+      new URL("migrations/0001_brainy_the_stranger.sql", import.meta.url)
+    ),
+  ]);
+  await preview.query(
+    "insert into drizzle.__drizzle_migrations values ($1, $2), ($3, $4)",
+    [
+      createHash("sha256").update(baseline).digest("hex"),
+      1_789_411_557_764,
+      createHash("sha256").update(nextMigration).digest("hex"),
+      1_789_979_176_755,
+    ]
+  );
   const repair = await readFile(
     new URL("../../scripts/repair-search-preview.sql", import.meta.url),
     "utf-8"

@@ -4,7 +4,6 @@ import { setTimeout as delay } from "node:timers/promises";
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
-import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
@@ -141,18 +140,11 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
 
 test("a lost create reply is recovered through the same native operation", async () => {
   const operation = crypto.randomUUID();
-  const dispatched: string[] = [];
   const nativeSession = `test-${crypto.randomUUID()}`;
-  const start =
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id: string): Promise<string> => {
-      dispatched.push(id);
-      if (dispatched.length === 1) {
-        throw new Error("lost reply");
-      }
-      return nativeSession;
-    };
-  /* oxlint-enable eslint/require-await */
+  const start = vi
+    .fn<(id: string) => Promise<string>>()
+    .mockRejectedValueOnce(new Error("lost reply"))
+    .mockResolvedValue(nativeSession);
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
@@ -163,11 +155,11 @@ test("a lost create reply is recovered through the same native operation", async
     start
   );
   expect(recovered.sessionId).toBe(nativeSession);
-  expect(dispatched).toEqual([recovered.id, recovered.id]);
+  expect(start.mock.calls).toEqual([[recovered.id], [recovered.id]]);
   expect(
     await createEveConversation(owner, operation, "uncertain", start)
   ).toEqual(recovered);
-  expect(dispatched).toHaveLength(2);
+  expect(start).toHaveBeenCalledTimes(2);
 });
 
 test("a stopped creator's reservation can be resumed without changing its identity", async () => {
@@ -182,9 +174,7 @@ test("a stopped creator's reservation can be resumed without changing its identi
     operation,
     "process stopped",
 
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (id) => `test-${id}`
-    /* oxlint-enable eslint/require-await */
+    (id) => `test-${id}`
   );
   expect(bound).toEqual({
     id: reservation.id,
@@ -236,13 +226,10 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
 
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
   let starts = 0;
-  const start =
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (): Promise<string> => {
-      starts += 1;
-      return crypto.randomUUID();
-    };
-  /* oxlint-enable eslint/require-await */
+  const start = (): string => {
+    starts += 1;
+    return crypto.randomUUID();
+  };
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -349,25 +336,23 @@ test.each(["codeExecution", "webSearch"])(
     const callId = crypto.randomUUID();
     const result = createToolResult({ message: "42", chart: "" }, 0.05);
     expect(JSON.stringify(result)).not.toContain('"updates"');
-    // oxlint-disable-next-line unicorn/prefer-structured-clone -- The receipt's undefined updates field must be omitted exactly as it is on the JSON wire.
-    const wireResult = z.json().parse(JSON.parse(JSON.stringify(result)));
     const event = {
       data: {
         result: {
           callId,
           kind: "tool-result",
 
-          output: wireResult,
+          output: result,
           toolName,
         },
-        sequence: 0,
         status: "completed",
-        stepIndex: 0,
         turnId: "tool-receipt",
       },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
       type: "action.result",
-    } satisfies MessageStreamEvent;
+    } satisfies Parameters<typeof ingestEveUsage>[2] & {
+      data: { result: { toolName: string } };
+    };
     await Promise.all(
       Array.from(
         { length: 8 },
@@ -391,7 +376,7 @@ test.each(["codeExecution", "webSearch"])(
         result: {
           ...event.data.result,
           callId: crypto.randomUUID(),
-          output: "result lost its receipt",
+          output: { ...result, usage: {} },
         },
       },
     };
@@ -415,13 +400,10 @@ test.each(["deleting", "deleted"] as const)(
   async (state) => {
     const operation = crypto.randomUUID();
     let starts = 0;
-    const start =
-      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-      async (): Promise<string> => {
-        starts += 1;
-        return crypto.randomUUID();
-      };
-    /* oxlint-enable eslint/require-await */
+    const start = (): string => {
+      starts += 1;
+      return crypto.randomUUID();
+    };
     const bound = await createEveConversation(
       owner,
       operation,
@@ -535,14 +517,13 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     "concurrent deletion",
     createEveTestSession
   );
-  const locked = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const locked: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const documentWrite = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
     );
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    locked.resolve(undefined);
+    locked.resolve();
     await release.promise;
   });
   await locked.promise;
@@ -567,15 +548,13 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
     await rejected;
     expect(start).not.toHaveBeenCalled();
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
   }

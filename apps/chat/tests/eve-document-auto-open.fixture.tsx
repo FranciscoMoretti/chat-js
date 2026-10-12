@@ -173,15 +173,10 @@ const App = (): React.JSX.Element => {
         isExecutionBusy={
           busy === undefined ? undefined : (id) => busy && id === conversationId
         }
-        onStopExecution={
-          /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-          (id) => {
-            setStopped(id);
-            setBusy(false);
-            return Promise.resolve();
-          }
-          /* oxlint-enable typescript/promise-function-async */
-        }
+        onStopExecution={(id) => {
+          setStopped(id);
+          setBusy(false);
+        }}
       >
         <Fixture
           startReplay={() => {

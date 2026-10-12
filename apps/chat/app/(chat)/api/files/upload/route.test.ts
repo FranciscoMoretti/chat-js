@@ -89,15 +89,14 @@ test("does not return a usable upload when ownership registration fails", async 
 });
 
 test("waits for durable ownership before starting storage I/O", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.register.mockReturnValue(gate.promise);
   const response = POST(request());
   await vi.waitFor(() => {
     expect(mocks.register).toHaveBeenCalledWith("owner", key);
   });
   expect(mocks.upload).not.toHaveBeenCalled();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-  gate.resolve(undefined);
+  gate.resolve();
   const resolvedResult1 = await response;
   expect(resolvedResult1.status).toBe(HTTP_STATUS.ok);
   expect(mocks.upload).toHaveBeenCalledWith(

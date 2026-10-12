@@ -46,7 +46,7 @@ beforeEach(() => {
 });
 
 test("all resources and native family payloads finish before the application tombstone", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.native.mockImplementationOnce(
     async (_sessionId: string, retire: () => Promise<void>) => {
       await retire();
@@ -75,8 +75,7 @@ test("all resources and native family payloads finish before the application tom
     )
   ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
 });

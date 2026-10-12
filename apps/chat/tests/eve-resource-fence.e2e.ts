@@ -118,12 +118,11 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
 });
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
   const id = await run();
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin(async (tx) => {
     await tx`update workflow.workflow_runs set output = '{"admitted":true}'::jsonb where id = ${id}`;
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
   });
   await entered.promise;
@@ -145,8 +144,7 @@ test("fencing waits for admitted writers to commit before rejecting later writes
       })
       .toBe(true);
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await writer;
     await fencing;
     await fencer.end();
@@ -161,12 +159,11 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
   const id = await run();
   const streamId = crypto.randomUUID();
   streamIds.push(streamId);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin("isolation level repeatable read", async (tx) => {
     await tx`select resource from workflow.eve_resource_fences where resource = ${`run:${id}`}`;
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${streamId}, ${id}, ${Buffer.from("late")}, false)`;
@@ -179,8 +176,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
     await entered.promise;
     await fenceEvePostgresResources(query, { runIds: [id], streamIds: [] });
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await rejected;
   }
   expect(
@@ -212,15 +208,14 @@ test("session fencing re-inventories a collector child committed while its fence
   const childStream = crypto.randomUUID();
   runIds.push(child);
   streamIds.push(childStream);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin(async (tx) => {
     await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${childStream}, ${child}, ${Buffer.from("admitted")}, false)`;
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
   });
   await entered.promise;
@@ -240,8 +235,7 @@ test("session fencing re-inventories a collector child committed while its fence
         })
         .toBe(true);
     } finally {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      release.resolve(undefined);
+      release.resolve();
       await writer;
     }
     const result = await fencing;

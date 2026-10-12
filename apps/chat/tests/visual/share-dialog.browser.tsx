@@ -25,7 +25,7 @@ const flushReact = async (update: () => void): Promise<void> => {
 };
 
 test("share link confirms a completed copy and reports clipboard rejection", async () => {
-  const copy = Promise.withResolvers<undefined>();
+  const copy: PromiseWithResolvers<void> = Promise.withResolvers();
   const clipboard = vi
     .spyOn(navigator.clipboard, "writeText")
     .mockReturnValueOnce(copy.promise)
@@ -68,8 +68,7 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     expect(failure).not.toHaveBeenCalled();
 
     await flushReact(() => {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      copy.resolve(undefined);
+      copy.resolve();
     });
     await expect
       .element(page.getByText("Share link copied to clipboard"))

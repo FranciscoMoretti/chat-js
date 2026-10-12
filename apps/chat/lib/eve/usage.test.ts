@@ -1,6 +1,5 @@
 import type { MessageStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
-import { z } from "zod";
 import type { recordEveUsage } from "../db/eve-billing";
 
 import { ingestEveUsage } from "./usage";
@@ -89,18 +88,17 @@ const toolEvent = (
     MessageStreamEvent,
     { type: "action.result" }
   >["data"]["status"] = "completed"
-): MessageStreamEvent => ({
+): Parameters<typeof ingestEveUsage>[2] & {
+  data: { result: { toolName: string } };
+} => ({
   data: {
     result: {
       callId: "call-external",
       kind: "tool-result",
-      // oxlint-disable-next-line unicorn/prefer-structured-clone -- #806: EVE action events carry JSON wire output; omit optional undefined object fields before validating the event payload.
-      output: z.json().parse(JSON.parse(JSON.stringify(output))),
+      output,
       toolName: "externalPaidTool",
     },
-    sequence: 1,
     status,
-    stepIndex: 0,
     turnId: "turn_1",
   },
   meta: { at: "2026-09-27T00:00:00Z", id },
@@ -142,26 +140,29 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
   });
 });
 
-it("omits undefined receipt fields from persisted EVE action events", async () => {
+it("requires reconciliation for unpriced tool executions", async () => {
   const { executeWithToolUsage } = await import("./tool-usage");
   const output = await executeWithToolUsage(
     { abortSignal: new AbortController().signal },
     () => ({ answer: "unpriced result" })
   );
-  const event = toolEvent(output);
-  expect(event).toMatchObject({
-    data: {
-      result: { output: { kind: "chatjs.tool-result", usage: {} } },
-    },
-    type: "action.result",
+  record.mockResolvedValue(false);
+  expect(await ingestEveUsage("owner", "session", toolEvent(output))).toBe(
+    false
+  );
+  expect(record).toHaveBeenCalledExactlyOnceWith({
+    costUsd: undefined,
+    eventId: "eve-tool:session:call-external",
+    ownerId: "owner",
+    sessionId: "session",
+    turnId: "turn_1",
   });
-  expect(event).not.toHaveProperty("data.result.output.updates");
-  expect(event).not.toHaveProperty("data.result.output.usage.costUsd");
 });
 
-it("retains unpriced and malformed external receipts for reconciliation", async () => {
-  record.mockResolvedValue(false);
-  for (const usage of [{}, { costUsd: -1 }]) {
+it.each([{}, { costUsd: -1 }])(
+  "retains unpriced and malformed external receipt %j for reconciliation",
+  async (usage) => {
+    record.mockResolvedValue(false);
     const output = {
       kind: "chatjs.tool-result",
       output: {},
@@ -170,17 +171,16 @@ it("retains unpriced and malformed external receipts for reconciliation", async 
       version: 1,
     };
     // A malformed receipt must not bypass accounting because its name is new.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each malformed receipt is ingested and asserted before the shared billing mock is reused; unresolved external receipts must stay visible to reconciliation.
     const priced = await ingestEveUsage("owner", "session", toolEvent(output));
     expect(priced).toBe(false);
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(
+      record.mock.calls.map(
+        ([value]: Readonly<(typeof record.mock.calls)[number]>) => value.costUsd
+      )
+    ).toEqual([undefined]);
   }
-
-  expect(
-    record.mock.calls.map(
-      ([value]: Readonly<(typeof record.mock.calls)[number]>) => value.costUsd
-    )
-  ).toEqual([undefined, undefined]);
-});
+);
 
 it("does not infer billing from ordinary tool output", async () => {
   await ingestEveUsage(

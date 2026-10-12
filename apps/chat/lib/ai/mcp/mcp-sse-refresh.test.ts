@@ -25,8 +25,10 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     let validAccessToken = tokens.access_token;
     let refreshes = 0;
     let oldTokenRequests = 0;
-    const firstRefreshSaved = Promise.withResolvers<undefined>();
-    const bothOldTokenRequestsStarted = Promise.withResolvers<undefined>();
+    const firstRefreshSaved: PromiseWithResolvers<void> =
+      Promise.withResolvers();
+    const bothOldTokenRequestsStarted: PromiseWithResolvers<void> =
+      Promise.withResolvers();
     const encoder = new TextEncoder();
 
     const provider: OAuthClientProvider = {
@@ -42,8 +44,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
       },
       saveTokens: (nextTokens): void => {
         tokens = nextTokens;
-        // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-        firstRefreshSaved.resolve(undefined);
+        firstRefreshSaved.resolve();
       },
       tokens: () => tokens,
     };
@@ -110,8 +111,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         if (authorization !== `Bearer ${validAccessToken}`) {
           oldTokenRequests += 1;
           if (oldTokenRequests >= 2) {
-            // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-            bothOldTokenRequestsStarted.resolve(undefined);
+            bothOldTokenRequestsStarted.resolve();
           }
           if (timing === "after-save" && oldTokenRequests === 2) {
             await firstRefreshSaved.promise;

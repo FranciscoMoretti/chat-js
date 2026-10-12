@@ -84,23 +84,21 @@ beforeEach(() => {
 });
 
 it("keeps four reads busy when one conversation is slow", async () => {
-  const gates = Array.from({ length: 8 }, () =>
-    Promise.withResolvers<undefined>()
+  const gates = Array.from({ length: 8 }, (): PromiseWithResolvers<void> =>
+    Promise.withResolvers()
   );
   mocks.read.mockImplementation(async (id) => {
     await gates[Number(id)].promise;
   });
   const reconciliation = reconcileEveOwnerUsage("owner");
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gates[1].resolve(undefined);
+  gates[1].resolve();
   await expect.poll(() => mocks.read.mock.calls.length).toBe(5);
   expect(
     mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
   ).toEqual(["0", "1", "2", "3", "4"]);
   for (const gate of gates) {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await reconciliation;
   expect(
@@ -109,8 +107,8 @@ it("keeps four reads busy when one conversation is slow", async () => {
 });
 
 it("stops scheduling on failure and waits for in-flight billing reads", async () => {
-  const gates = Array.from({ length: 4 }, () =>
-    Promise.withResolvers<undefined>()
+  const gates = Array.from({ length: 4 }, (): PromiseWithResolvers<void> =>
+    Promise.withResolvers()
   );
   mocks.read.mockImplementation(async (id) => {
     await gates[Number(id)].promise;
@@ -126,8 +124,7 @@ it("stops scheduling on failure and waits for in-flight billing reads", async ()
   await delay(0);
   expect(finished).toBe(false);
   for (const gate of gates) {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await rejection;
   expect(mocks.read).toHaveBeenCalledTimes(4);

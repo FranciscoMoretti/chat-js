@@ -18,7 +18,7 @@ for (const project of [false, true]) {
       name: "Message composer",
     });
     let projectId: string | undefined;
-    const release = Promise.withResolvers<undefined>();
+    const release: PromiseWithResolvers<void> = Promise.withResolvers();
     let received = false;
     await page.route("**/api/agent-conversations", async (route) => {
       received = true;
@@ -106,8 +106,7 @@ for (const project of [false, true]) {
             .getByTestId("input-attachment-preview")
         ).toHaveCount(0);
       }
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      release.resolve(undefined);
+      release.resolve();
       await expect(page.getByRole("alert")).toBeVisible();
       await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
         "Optimistic first message"
@@ -131,8 +130,7 @@ for (const project of [false, true]) {
         ).toBeVisible();
       }
     } finally {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      release.resolve(undefined);
+      release.resolve();
       if (projectId !== undefined && projectId !== null && projectId !== "") {
         const removed = await page.request.post("/api/trpc/project.remove", {
           data: { json: { id: projectId } },
@@ -161,8 +159,8 @@ for (const identity of ["registered", "guest"]) {
     const input = page.getByLabel("Message", { exact: true });
     await expect(input).toHaveAttribute("contenteditable", "true");
     const message = "Do not use tools. Reply with exactly: Runtime ready";
-    const creation = Promise.withResolvers<undefined>();
-    const stream = Promise.withResolvers<undefined>();
+    const creation: PromiseWithResolvers<void> = Promise.withResolvers();
+    const stream: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route("**/api/agent-conversations", async (route) => {
       await creation.promise;
       await route.continue();
@@ -207,8 +205,7 @@ for (const identity of ["registered", "guest"]) {
           { once: true }
         );
       }, message);
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      creation.resolve(undefined);
+      creation.resolve();
       await expect(page).toHaveURL(chatPath);
       await expect(page.getByRole("log")).toContainText(message);
       await page.screenshot({
@@ -218,8 +215,7 @@ for (const identity of ["registered", "guest"]) {
       });
       expect(await page.evaluate(() => performance.timeOrigin)).toBe(origin);
       expect(documents).toBe(0);
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      stream.resolve(undefined);
+      stream.resolve();
       await expect(
         page.getByRole("log").getByText("Runtime ready", { exact: true })
       ).toBeVisible({ timeout: 60_000 });
@@ -261,10 +257,8 @@ for (const identity of ["registered", "guest"]) {
       await expect(input).toHaveText("");
       await expect(page.getByRole("log")).toHaveCount(0);
     } finally {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      creation.resolve(undefined);
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      stream.resolve(undefined);
+      creation.resolve();
+      stream.resolve();
     }
   });
 }

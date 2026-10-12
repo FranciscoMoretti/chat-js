@@ -1,4 +1,5 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import type { SearchResultItem } from "../research-updates-schema";
 import { deduplicateByDomainAndUrl } from "./search-utils";
 import { generateUUID } from "@/lib/utils";
 
@@ -9,16 +10,9 @@ type SearchQuery = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
-type MultiQuerySearchResult = {
-  query: SearchQuery;
-  results: {
-    url: string;
-    title: string;
-    content: string;
-  }[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+type MultiQuerySearchResult = Awaited<
+  ReturnType<typeof createSearchTasks>[number]
+>;
 
 /* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
 type MultiQuerySearchResponse = {
@@ -29,7 +23,7 @@ type MultiQuerySearchResponse = {
 type SearchProvider = (
   query: SearchQuery,
   index: number
-) => Promise<Readonly<MultiQuerySearchResult["results"][number]>[]>;
+) => Promise<Readonly<Pick<SearchResultItem, "url" | "title" | "content">>[]>;
 
 const writeSearchStatus = ({
   dataStream,
@@ -60,7 +54,7 @@ const writeSearchStatus = ({
 const createSearchTasks = (
   queries: readonly SearchQuery[],
   search: SearchProvider
-): Promise<MultiQuerySearchResult>[] =>
+) =>
   queries.map(async (query, index) => {
     const results = await search(query, index);
     return {

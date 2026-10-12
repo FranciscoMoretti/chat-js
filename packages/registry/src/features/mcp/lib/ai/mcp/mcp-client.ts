@@ -185,13 +185,19 @@ export class MCPClient {
       abortSignal.throwIfAborted();
     }
     if (!this.connectPromise) {
-      // oxlint-disable-next-line promise/prefer-await-to-then -- Cleanup belongs to this exact shared attempt, independently of caller cancellation; an async IIFE cannot safely type its own promise reference (TS2454).
-      const promise = this.connectOnce(oauthState).finally((): void => {
-        if (this.connectPromise === promise) {
-          this.connectPromise = undefined;
+      const { generation } = this;
+      this.connectPromise = (async (): Promise<
+        McpClientInstance | undefined
+      > => {
+        try {
+          return await this.connectOnce(oauthState);
+        } finally {
+          // Only close() can retire a pending attempt and allow a replacement.
+          if (this.generation === generation) {
+            this.connectPromise = undefined;
+          }
         }
-      });
-      this.connectPromise = promise;
+      })();
     }
     if (!abortSignal) {
       return await this.connectPromise;

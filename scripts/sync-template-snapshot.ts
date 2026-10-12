@@ -104,12 +104,11 @@ const collectSnapshotWithLimiter = async (
   return output;
 };
 
-// oxlint-disable-next-line typescript/promise-function-async -- Construct the limiter before returning so invalid concurrency throws synchronously; sync-template-snapshot.test.ts characterizes this public validation contract.
-const collectSnapshot = (
+const collectSnapshot = async (
   dir: string,
   prefix = "",
   options: Readonly<SnapshotOptions> = {}
 ): Promise<Map<string, string>> =>
-  collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
+  await collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
 export { collectSnapshot, SNAPSHOT_CONCURRENCY };
 export type { SnapshotOptions };

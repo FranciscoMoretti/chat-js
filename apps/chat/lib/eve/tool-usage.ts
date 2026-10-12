@@ -100,7 +100,7 @@ const executeWithToolProgress = async function* executeWithToolProgress<
 >(
   context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
   execute: (options: ToolProgressOptions<Output>) => Promise<Output>
-): AsyncGenerator<ToolResult<Output>> {
+): AsyncGenerator<ToolResult<Output>, void> {
   context.abortSignal.throwIfAborted();
   const cancellation = new AbortController();
   const abortSignal = AbortSignal.any([

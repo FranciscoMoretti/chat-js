@@ -1,3 +1,5 @@
+import { setTimeout as delay } from "node:timers/promises";
+
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
@@ -127,10 +129,8 @@ const waitForEveCheckpoint = async (
     if (Date.now() >= deadline) {
       break;
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Retry only after the preceding attempt and delay have completed. A named checkpoint request and its validation must finish before the retry delay; timeout stops polling without allocating or switching checkpoint identity.
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, CHECKPOINT_POLL_INTERVAL_MS);
-    });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- A named checkpoint request and its validation must finish before the retry delay; timeout stops polling without allocating or switching checkpoint identity.
+    await delay(CHECKPOINT_POLL_INTERVAL_MS);
   } while (Date.now() < deadline);
   throw new Error(
     "Source checkpoint is not ready. Retry the same operation shortly."

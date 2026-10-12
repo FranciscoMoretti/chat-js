@@ -2,18 +2,15 @@ import { rejects } from "node:assert/strict";
 
 import { commandSandbox, createDaytonaProvider } from "./sandbox";
 import { describe, expect, mock, test } from "bun:test";
-import type { CreateSandboxFromSnapshotParams } from "@daytona/sdk";
 import { DaytonaNotFoundError } from "@daytona/sdk";
 import type { DaytonaResource } from "./sandbox";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-const ATTEMPTS_PER_CALL = 1;
 const NOT_FOUND_STATUS = 404;
 const DELETE_TIMEOUT_SECONDS = 60;
 const COMMAND_TIMEOUT_SECONDS = 300;
 const FAILED_COMMAND_EXIT_CODE = 1;
-const FIRST_DELETE_ATTEMPT = 1;
 const EXPECTED_DELETE_ATTEMPTS = 2;
+type DaytonaClient = NonNullable<Parameters<typeof createDaytonaProvider>[1]>;
 
 const credentials = { apiKey: "test-only", organizationId: "org-a" };
 
@@ -32,37 +29,36 @@ const resource = (
   ...overrides,
 });
 
-// oxlint-disable-next-line eslint/require-await -- Provider create/get require a Promise and must construct a fresh resource for each invocation rather than share a precomputed fixture.
-const freshResource = async (): Promise<DaytonaResource> => resource();
+const resourceClient = (): DaytonaClient => {
+  const sandbox = resource();
+  return {
+    create: mock<DaytonaClient["create"]>().mockResolvedValue(sandbox),
+    get: mock<DaytonaClient["get"]>().mockResolvedValue(sandbox),
+  };
+};
 
 describe("Daytona durable resource boundary", () => {
   test("creates a private ephemeral named resource with a wall-clock TTL", async () => {
-    const calls: unknown[] = [];
+    const create =
+      mock<DaytonaClient["create"]>().mockResolvedValue(resource());
     const adapter = createDaytonaProvider(credentials, {
-      create:
-        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-        async (
-          params: ReadonlyNativeSurface<CreateSandboxFromSnapshotParams>,
-          options?: Readonly<{ timeout?: number }>
-        ) => {
-          calls.push(params, options);
-          return resource();
-        },
-      /* oxlint-enable eslint/require-await */
-      get: freshResource,
+      ...resourceClient(),
+      create,
     });
     await adapter.create("allocation-a", "python");
-    expect(calls).toEqual([
-      {
-        autoStopInterval: 10,
-        ephemeral: true,
-        labels: { "chatjs-allocation": "allocation-a" },
-        language: "python",
-        name: "allocation-a",
-        public: false,
-        ttlMinutes: 10,
-      },
-      { timeout: 60 },
+    expect(create.mock.calls).toEqual([
+      [
+        {
+          autoStopInterval: 10,
+          ephemeral: true,
+          labels: { "chatjs-allocation": "allocation-a" },
+          language: "python",
+          name: "allocation-a",
+          public: false,
+          ttlMinutes: 10,
+        },
+        { timeout: 60 },
+      ],
     ]);
     expect(adapter.cleanup.provider.teamId).toBe("daytona:org-a");
     expect(adapter.cleanup.provider.projectId).toMatch(
@@ -70,20 +66,16 @@ describe("Daytona durable resource boundary", () => {
     );
     const rotated = createDaytonaProvider(
       { ...credentials, apiKey: "rotated-key" },
-      { create: freshResource, get: freshResource }
+      resourceClient()
     );
     expect(rotated.cleanup.provider).not.toEqual(adapter.cleanup.provider);
   });
 
   test("refuses cross-organization cleanup and identity mismatches", async () => {
-    let deleted = false;
+    const deleteResource =
+      mock<DaytonaResource["delete"]>().mockResolvedValue();
     const foreign = resource({
-      delete:
-        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-        async () => {
-          deleted = true;
-        },
-      /* oxlint-enable eslint/require-await */
+      delete: deleteResource,
       organizationId: "org-b",
     });
     const adapter = createDaytonaProvider(credentials, {
@@ -108,44 +100,43 @@ describe("Daytona durable resource boundary", () => {
         return true;
       }
     );
-    expect(deleted).toBe(false);
+    expect(deleteResource).not.toHaveBeenCalled();
   });
 
   test("waits for deletion and then confirms provider absence", async () => {
-    const calls: unknown[] = [];
-    let deleted = false;
+    const deleteResource =
+      mock<DaytonaResource["delete"]>().mockResolvedValue();
     const sandbox = resource({
-      delete:
-        /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-        async (...args: Readonly<Parameters<DaytonaResource["delete"]>>) => {
-          calls.push(args);
-          deleted = true;
-        },
-      /* oxlint-enable eslint/require-await */
+      delete: deleteResource,
     });
+    const get = mock<DaytonaClient["get"]>(
+      /* oxlint-disable eslint/require-await -- The Promise-only provider lookup must inspect whether deletion has been invoked, rejecting as absent only after that invocation rather than following a precomputed result sequence. */
+      async () => {
+        if (deleteResource.mock.calls.length > 0) {
+          throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
+        }
+        return sandbox;
+      }
+      /* oxlint-enable eslint/require-await */
+    );
     const adapter = createDaytonaProvider(credentials, {
       create: mock<() => Promise<typeof sandbox>>().mockResolvedValue(sandbox),
-      get:
-        /* oxlint-disable eslint/require-await -- The provider get callback must inspect current deletion state and asynchronously reject after the recorded delete, not precompute an earlier result. */
-        async () => {
-          calls.push("get");
-          if (deleted) {
-            throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
-          }
-          return sandbox;
-        },
-      /* oxlint-enable eslint/require-await */
+      get,
     });
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
-    expect(calls).toEqual(["get", [DELETE_TIMEOUT_SECONDS, true], "get"]);
+    expect(get.mock.calls).toEqual([["allocation-a"], ["allocation-a"]]);
+    expect(deleteResource.mock.calls).toEqual([[DELETE_TIMEOUT_SECONDS, true]]);
+    expect(get.mock.invocationCallOrder.at(0)).toBeLessThan(
+      deleteResource.mock.invocationCallOrder.at(0) ?? Infinity
+    );
+    expect(deleteResource.mock.invocationCallOrder.at(0)).toBeLessThan(
+      get.mock.invocationCallOrder.at(1) ?? -Infinity
+    );
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
   });
 
   test("does not mistake network errors or incomplete deletion for absence", async () => {
-    const adapter = createDaytonaProvider(credentials, {
-      create: freshResource,
-      get: freshResource,
-    });
+    const adapter = createDaytonaProvider(credentials, resourceClient());
     await rejects(
       adapter.cleanup.deleteAndConfirmAbsent("allocation-a"),
       (reason: unknown) => {
@@ -156,7 +147,7 @@ describe("Daytona durable resource boundary", () => {
       }
     );
     const unavailable = createDaytonaProvider(credentials, {
-      create: freshResource,
+      ...resourceClient(),
       get: mock<() => Promise<never>>().mockRejectedValue(new Error("network")),
     });
     await rejects(
@@ -171,21 +162,13 @@ describe("Daytona durable resource boundary", () => {
   });
 
   test("quotes source as one shell argument, enforces timeout and preserves output once", async () => {
-    const calls: unknown[] = [];
+    const execute = mock<
+      DaytonaResource["process"]["executeCommand"]
+    >().mockResolvedValue({ exitCode: 1, result: "traceback" });
     const sandbox = commandSandbox(
       resource({
         process: {
-          executeCommand:
-            /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-            async (
-              ...args: ReadonlyNativeSurface<
-                Parameters<DaytonaResource["process"]["executeCommand"]>
-              >
-            ) => {
-              calls.push(args);
-              return { exitCode: 1, result: "traceback" };
-            },
-          /* oxlint-enable eslint/require-await */
+          executeCommand: execute,
         },
       }),
       new AbortController().signal
@@ -194,7 +177,7 @@ describe("Daytona durable resource boundary", () => {
       args: ["-c", "print('hello'); # $(touch /tmp/escaped)"],
       cmd: "python3",
     });
-    expect(calls).toEqual([
+    expect(execute.mock.calls).toEqual([
       [
         String.raw`'python3' '-c' 'print('\''hello'\''); # $(touch /tmp/escaped)'`,
         "/tmp",
@@ -208,19 +191,15 @@ describe("Daytona durable resource boundary", () => {
   });
 
   test("aborted calls cannot start a command", async () => {
-    let executed = false;
+    const execute = mock<
+      DaytonaResource["process"]["executeCommand"]
+    >().mockResolvedValue({ exitCode: 0, result: "" });
     const controller = new AbortController();
     controller.abort();
     const sandbox = commandSandbox(
       resource({
         process: {
-          executeCommand:
-            /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-            async () => {
-              executed = true;
-              return { exitCode: 0, result: "" };
-            },
-          /* oxlint-enable eslint/require-await */
+          executeCommand: execute,
         },
       }),
       controller.signal
@@ -234,33 +213,25 @@ describe("Daytona durable resource boundary", () => {
         return true;
       }
     );
-    expect(executed).toBe(false);
+    expect(execute).not.toHaveBeenCalled();
   });
 });
 
 test("a new provider session retries cleanup after restart without allocating", async () => {
-  let deleted = false;
-  let attempts = 0;
+  const deleteResource = mock<DaytonaResource["delete"]>()
+    .mockRejectedValueOnce(new Error("transient delete failure"))
+    .mockResolvedValue();
   const sandbox = resource({
-    delete:
-      /* oxlint-disable eslint/require-await -- This Promise-returning provider fixture records invocation-time calls or changes cancellation/deletion state before settling; a precomputed settled mock would skip or move those effects. */
-      async () => {
-        attempts += ATTEMPTS_PER_CALL;
-        if (attempts === FIRST_DELETE_ATTEMPT) {
-          throw new Error("transient delete failure");
-        }
-        deleted = true;
-      },
-    /* oxlint-enable eslint/require-await */
+    delete: deleteResource,
   });
   const client = {
     create: mock<() => Promise<DaytonaResource>>().mockRejectedValue(
       new Error("must not allocate during cleanup")
     ),
     get:
-      /* oxlint-disable eslint/require-await -- The provider get callback must inspect current deletion state and asynchronously reject after the recorded delete, not precompute an earlier result. */
+      /* oxlint-disable eslint/require-await -- The Promise-only lookup must inspect successful deletion attempts across provider sessions and reject as absent only after the retry, preserving invocation-dependent restart state. */
       async (): Promise<DaytonaResource> => {
-        if (deleted) {
+        if (deleteResource.mock.calls.length >= EXPECTED_DELETE_ATTEMPTS) {
           throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
         }
         return sandbox;
@@ -282,18 +253,15 @@ test("a new provider session retries cleanup after restart without allocating", 
     credentials,
     client
   ).cleanup.deleteAndConfirmAbsent("allocation-a");
-  expect(attempts).toBe(EXPECTED_DELETE_ATTEMPTS);
-  expect(deleted).toBe(true);
+  expect(deleteResource).toHaveBeenCalledTimes(EXPECTED_DELETE_ATTEMPTS);
+  expect(client.create).not.toHaveBeenCalled();
 });
 
 test("empty required credentials fail before provider allocation", () => {
   expect(() =>
     createDaytonaProvider(
       { ...credentials, organizationId: " " },
-      {
-        create: freshResource,
-        get: freshResource,
-      }
+      resourceClient()
     )
   ).toThrow("DAYTONA_API_KEY and DAYTONA_ORGANIZATION_ID");
 });

@@ -87,13 +87,12 @@ export const prepareEveCopyPlan = async (
   const seed = await materializeEveCopyTranscript(
     projection.seed,
     allocations,
-    // oxlint-disable-next-line typescript/promise-function-async -- Metadata lookup throws synchronously for missing allocations and otherwise resolves an in-memory value; no asynchronous work exists to await.
     (key) => {
       const file = metadata.get(key);
       if (!file) {
         throw new Error("Missing copied file metadata.");
       }
-      return Promise.resolve(file);
+      return file;
     },
     origin
   );

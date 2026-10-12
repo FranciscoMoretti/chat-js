@@ -814,6 +814,56 @@ describe("scaffoldElectron", (): void => {
     for (const icon of icons) {
       expect(icon.length).toBeGreaterThan(MINIMUM_NONEMPTY_FILE_LENGTH);
     }
+
+    await Promise.all([
+      rm(pathModule.join(electronDir, "branding.json")),
+      rm(pathModule.join(electronDir, "build"), { recursive: true }),
+    ]);
+    await Promise.all([
+      mkdir(pathModule.join(electronDir, "branding.json")),
+      writeFile(pathModule.join(electronDir, "build"), "blocked"),
+    ]);
+    for (const { script, errorCode } of [
+      { errorCode: "EISDIR", script: "write-branding.ts" },
+      { errorCode: "EEXIST", script: "generate-icons.ts" },
+    ]) {
+      const failed = Bun.spawnSync(
+        ["node", resolveDependency("tsx/cli"), `scripts/${script}`],
+        { cwd: electronDir, stderr: "pipe", stdout: "pipe" }
+      );
+      expect(failed.exitCode).toBe(1);
+      expect(failed.stderr.toString()).toContain(errorCode);
+    }
+
+    // A branding write failure must stop prebuild before icon generation starts.
+    await rm(pathModule.join(electronDir, "build"));
+    const brandingFailure = Bun.spawnSync(["npm", "run", "prebuild"], {
+      cwd: electronDir,
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    expect(brandingFailure.exitCode).toBe(1);
+    expect(brandingFailure.stderr.toString()).toContain("EISDIR");
+    expect(brandingFailure.stdout.toString()).not.toContain(
+      "branding.json written:"
+    );
+    expect(existsSync(pathModule.join(electronDir, "build"))).toBe(false);
+
+    // A missing input must also fail after the output directory is created.
+    await rm(pathModule.join(electronDir, "icon.png"));
+    const iconFailure = Bun.spawnSync(["npm", "run", "generate-icons"], {
+      cwd: electronDir,
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    expect(iconFailure.exitCode).toBe(1);
+    expect(iconFailure.stderr.toString()).toContain("ENOENT");
+    expect(iconFailure.stdout.toString()).not.toContain("Generated build/icon");
+    for (const extension of ["png", "icns", "ico"]) {
+      expect(
+        existsSync(pathModule.join(electronDir, "build", `icon.${extension}`))
+      ).toBe(false);
+    }
   });
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-forge");

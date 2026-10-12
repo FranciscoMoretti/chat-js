@@ -40,10 +40,11 @@ export const sendCommand = async (
           "The accepted message is still being reconciled. Reconnect before retrying."
         );
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield 250 ms after an unaccepted resume before checking input and opening another reader. Complete the preceding reader and inspect acceptance/error state before the 250ms delay and next resume; ambiguous failures cannot resubmit the command.
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, RECONCILIATION_RETRY_DELAY_MS);
-      });
+      const retryDelay: { promise: Promise<void>; resolve: () => void } =
+        Promise.withResolvers();
+      setTimeout(retryDelay.resolve, RECONCILIATION_RETRY_DELAY_MS);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete the reader and delay before checking acceptance and resuming again.
+      await retryDelay.promise;
     } while (!hasAcceptedInput());
   }
   const replayError = getError();

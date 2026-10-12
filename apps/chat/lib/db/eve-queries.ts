@@ -878,7 +878,7 @@ const assertMatchingMessageCreation = (
  * @param {string} ownerId Owner creating the conversation.
  * @param {string} operationId Stable owner-scoped operation ID used to find or reuse the conversation reservation.
  * @param {string} message First user message and default conversation title.
- * @param {(id: string) => Promise<string>} create Native-session creator called with the reserved conversation ID as native idempotency key.
+ * @param {(id: string) => string | Promise<string>} create Native-session creator called with the reserved conversation ID as native idempotency key; its result is awaited before binding.
  * @param {string} [initialModelId] Initial model to use for the conversation.
  * @param {unknown} [initialRequest] Initial request metadata persisted with the conversation.
  * @param {string} [initialContentHash] Hash used to identify the initial content.
@@ -894,7 +894,7 @@ const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
-  create: (id: string) => Promise<string>,
+  create: (id: string) => string | Promise<string>,
   {
     initialModelId,
     initialRequest,

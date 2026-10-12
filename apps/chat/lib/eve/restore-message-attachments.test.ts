@@ -360,10 +360,8 @@ it.each(["next-part", "first-copy"])(
     };
     const body = new Blob(["abc"], { type: "image/png" });
     const metadata: Awaited<ReturnType<typeof getFileMetadata>> = {
-      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
-      arrayBuffer: () => body.arrayBuffer(),
-      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
-      blob: () => Promise.resolve(body),
+      arrayBuffer: async () => await body.arrayBuffer(),
+      blob: vi.fn<() => Promise<Blob>>().mockResolvedValue(body),
       key: "abcdefghijklmnopqrstuvwx.png",
       name: "first.png",
       get size(): number {
@@ -377,8 +375,7 @@ it.each(["next-part", "first-copy"])(
         return body.size;
       },
       stream: () => body.stream(),
-      // oxlint-disable-next-line typescript/promise-function-async -- Native metadata fixture callbacks retain Blob promise settlement relative to queued metadata getter effects.
-      text: () => body.text(),
+      text: async () => await body.text(),
       type: body.type,
     };
     mocks.metadata.mockResolvedValue(metadata);

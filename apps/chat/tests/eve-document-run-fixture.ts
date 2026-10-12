@@ -78,9 +78,9 @@ process.stdout.write(
               onAction:
                 readOnly === true
                   ? undefined
-                  : /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-                    () => Promise.resolve(),
-              /* oxlint-enable typescript/promise-function-async */
+                  : () => {
+                      // Static rendering only needs an available action.
+                    },
               title: "saved.js",
             })
           )

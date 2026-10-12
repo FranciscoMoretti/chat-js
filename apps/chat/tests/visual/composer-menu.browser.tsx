@@ -404,8 +404,8 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toBeDisabled();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- This intentionally invokes a disabled native button without actionability waiting; React act still supplies the runtime completion thenable.
-    await act(() => {
+    // Select act's completion overload for this synchronous, undefined-returning callback.
+    await act<undefined>((): undefined => {
       const trigger = page
         .getByRole("button", { name: "Composer options" })
         .element();
@@ -822,8 +822,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- This dispatches an exact file-bearing ClipboardEvent; the browser locator has no equivalent file clipboard action, and React act completion must still be awaited.
-    await act(() => {
+    await act<undefined>((): undefined => {
       message.dispatchEvent(
         new ClipboardEvent("paste", {
           bubbles: true,
@@ -838,8 +837,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const composer = page
       .getByRole("group", { name: "Message composer" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- This dispatches an exact file-bearing DataTransfer drop/paste payload, including unsupported-file and omitted-handler cases; locator element dragging does not supply these fixture files. React act completion must remain awaited.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,
@@ -858,8 +856,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     unsupported.items.add(
       new File(["plain text"], "notes.txt", { type: "text/plain" })
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- This dispatches an exact file-bearing DataTransfer drop/paste payload, including unsupported-file and omitted-handler cases; locator element dragging does not supply these fixture files. React act completion must remain awaited.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,
@@ -909,8 +906,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- This dispatches an exact file-bearing DataTransfer drop/paste payload, including unsupported-file and omitted-handler cases; locator element dragging does not supply these fixture files. React act completion must remain awaited.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,

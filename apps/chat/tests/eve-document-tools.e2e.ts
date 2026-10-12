@@ -369,14 +369,13 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(editor).toHaveAttribute("contenteditable", "true");
   await editor.fill("Final manual text");
   await expect(panel).toContainText("Version 6 of 6");
-  const accepted = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const accepted: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route(
     "**/api/trpc/eve.saveDocument*",
     async (route) => {
       const response = await route.fetch();
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      accepted.resolve(undefined);
+      accepted.resolve();
       await release.promise;
       await route.fulfill({ response });
     },
@@ -387,8 +386,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await accepted.promise;
     await editor.fill("Newer queued content");
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
   }
   await expect(panel).toContainText("Version 8 of 8");
   await expect(editor).toHaveText("Newer queued content");

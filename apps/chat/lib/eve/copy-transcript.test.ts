@@ -328,18 +328,18 @@ it("materializes only allocated destination attachments and remaps case-insensit
     ])
   );
   expect(prepared.resources.documentIds).toEqual([documentId]);
-  const reads: string[] = [];
+  const loadDestinationFile = vi
+    .fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>()
+    .mockResolvedValue({ size: 11, type: "image/png" });
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    (key) => {
-      reads.push(key);
-      return Promise.resolve({ size: 11, type: "image/png" });
-    },
+    loadDestinationFile,
     "https://chatjs.example"
   );
-  expect(reads).toEqual([copiedFile]);
+  expect(loadDestinationFile.mock.calls.map(([key]) => key)).toEqual([
+    copiedFile,
+  ]);
   expect(JSON.stringify(result)).toContain(
     `https://chatjs.example/api/files/${copiedFile}`
   );
@@ -368,18 +368,16 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
       },
     ])
   );
-  let reads = 0;
+  const loadDestinationFile = vi
+    .fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>()
+    .mockResolvedValue({ size: 1024 * 1024, type: "image/png" });
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    () => {
-      reads += 1;
-      return Promise.resolve({ size: 1024 * 1024, type: "image/png" });
-    },
+    loadDestinationFile,
     "https://chatjs.example"
   );
-  expect(reads).toBe(1);
+  expect(loadDestinationFile).toHaveBeenCalledTimes(1);
   expect(result.attachments).toBe("channel");
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);

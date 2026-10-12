@@ -36,9 +36,7 @@ const useCompatibilityCheck = (): UseThreadHelpers => {
   thread.tree.getSnapshot();
   void thread.tree.startRun({ from: messageId, message: { text: "branch" } });
 
-  // oxlint-disable-next-line typescript/no-unnecessary-type-arguments -- Pin the hook result to the public UIMessage specialization even if the helper alias default changes.
-  const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
-  return explicitHelpers;
+  return thread;
 };
 
 class StateBackedThread extends AbstractThread {

@@ -347,9 +347,9 @@ test("first admission creates one guest and reserves once across different IPs",
   ).toEqual([]);
 });
 
-test("denied first admission creates no account or quota rows", async () => {
-  /* oxlint-disable eslint/no-await-in-loop -- Denial cases assert shared admission-rate state remains absent before the next case. */
-  for (const denial of ["rate", "balance"] as const) {
+test.each(["rate", "balance"])(
+  "denied first admission for %s creates no account or quota rows",
+  async (denial) => {
     const credential = createEveGuestCredential();
     const ownerId = eveGuestOwnerId(credential.tokenHash);
     owners.push(ownerId);
@@ -379,8 +379,7 @@ test("denied first admission creates no account or quota rows", async () => {
         .where(eq(eveGuestRate.ipHash, input.ipHash))
     ).toEqual([]);
   }
-  /* oxlint-enable eslint/no-await-in-loop */
-});
+);
 
 test("bootstrap cannot replace an expired identity or reset its balance", async () => {
   const row = await guest(1);
@@ -675,9 +674,9 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
 
-test("creation claims and refunds serialize without a free native dispatch", async () => {
-  /* oxlint-disable eslint/no-await-in-loop -- Run one creation/refund race at a time so shared IP admission counters do not add interference. */
-  for (let index = 0; index < 4; index += 1) {
+test.each([0, 1, 2, 3])(
+  "creation claims and refunds serialize without a free native dispatch (attempt %i)",
+  async () => {
     const row = await guest(1);
     const input = request(row.ownerId);
     const quota = await reserveEveGuestMessage(input);
@@ -713,8 +712,7 @@ test("creation claims and refunds serialize without a free native dispatch", asy
       expect(guestAfterCreationWins?.remainingMessages).toBe(0);
     }
   }
-  /* oxlint-enable eslint/no-await-in-loop */
-});
+);
 
 test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
   const row = await guest(1);

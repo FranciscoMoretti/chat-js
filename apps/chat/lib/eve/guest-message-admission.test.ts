@@ -60,42 +60,45 @@ it("requires an explicit operation and allowed model before charging", async () 
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-it("permits dispatch only for the first reservation and never marks replays as unsent", async () => {
+it("permits dispatch for the first reservation", async () => {
   expect(await admitGuestMessage(request, "owner", "native", input)).toEqual(
     admission
   );
-  const repeatedResults: Awaited<ReturnType<typeof reserveEveGuestMessage>>[] =
-    [
-      { reservationId: admission.reservationId, status: "replay" },
-      { status: "conflict" },
-    ];
-  for (const result of repeatedResults) {
+});
+
+it.each([
+  { reservationId: admission.reservationId, status: "replay" },
+  { status: "conflict" },
+] satisfies Awaited<ReturnType<typeof reserveEveGuestMessage>>[])(
+  "never marks $status operations as unsent",
+  async (result) => {
     mocks.reserve.mockResolvedValue(result);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
     const repeated = await admitGuestMessage(request, "owner", "native", input);
     expect(repeated).toBeInstanceOf(Response);
     if (!(repeated instanceof Response)) {
       throw new Error("Expected reconnect response");
     }
     expect(repeated.status).toBe(409);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
     expect(await repeated.json()).toMatchObject({
       code: "chatjs_message_operation_exists",
     });
   }
-});
+);
 
 it("distinguishes content and destination in quota identity", async () => {
-  const hashes: unknown[] = [];
-  for (const [sessionId, message] of [
-    ["one", "hello"],
-    ["two", "hello"],
-    ["one", "changed"],
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case reconfigures the shared reserve mock or reads its lastCall hash; finish admission and JSON assertions before reusing that mutable fixture.
-    await admitGuestMessage(request, "owner", sessionId, { ...input, message });
-    hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
-  }
+  await Promise.all([
+    admitGuestMessage(request, "owner", "one", input),
+    admitGuestMessage(request, "owner", "two", input),
+    admitGuestMessage(request, "owner", "one", {
+      ...input,
+      message: "changed",
+    }),
+  ]);
+  expect(mocks.reserve).toHaveBeenCalledTimes(3);
+  const hashes = mocks.reserve.mock.calls.map(
+    ([value]: Readonly<(typeof mocks.reserve.mock.calls)[number]>) =>
+      value.requestHash
+  );
   expect(new Set(hashes).size).toBe(3);
 });
 

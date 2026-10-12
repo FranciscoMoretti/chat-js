@@ -56,15 +56,19 @@ describe("file storage", () => {
       Array.from({ length: 32 }, (_value, codePoint) =>
         String.fromCodePoint(codePoint)
       ).join("") + String.fromCodePoint(127);
+    const c1Controls = Array.from({ length: 32 }, (_value, codePoint) =>
+      String.fromCodePoint(codePoint + 128)
+    ).join("");
+    const preservedCharacters = ` ~${c1Controls}\u200D\u2028🧪`;
     const uploaded = await uploadFileAtKey(
       createFileId(),
-      `../pre${controlCharacters}report🧪.txt`,
+      `../pre${controlCharacters}report${preservedCharacters}.txt`,
       "hello",
       "text/plain"
     );
 
     try {
-      assert.equal(uploaded.pathname, "prereport🧪.txt");
+      assert.equal(uploaded.pathname, `prereport${preservedCharacters}.txt`);
     } finally {
       await deleteFilesByUrls([uploaded.url]);
     }

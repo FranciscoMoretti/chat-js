@@ -362,33 +362,24 @@ test("accepted copies recover after source revocation and a lost native reply, t
     .set({ state: "deleting", visibility: "private" })
     .where(eq(eveConversation.id, ctx.sourceId));
   const nativeId = crypto.randomUUID();
-  const operations: string[] = [];
+  const lostReply = vi
+    .fn<(operation: string) => Promise<string>>()
+    .mockRejectedValue(new Error("Lost native response"));
   await expect(
-    dispatchEveCopy(
-      ownerId,
-      ctx.saved.conversation.id,
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      (operation) => {
-        operations.push(operation);
-        return Promise.reject(new Error("Lost native response"));
-      }
-      /* oxlint-enable typescript/promise-function-async */
-    )
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, lostReply)
   ).rejects.toThrow("Lost native");
   const uncertain = await getEveCopyOperation(ownerId, ctx.input.operationId);
   expect(uncertain?.conversation.state).toBe("uncertain");
   expect(
     await resolveAcceptedEveCopySeed(ownerId, ctx.saved.conversation.id)
   ).toEqual(ctx.input.plan.seed);
+  const recoveredReply = vi
+    .fn<(operation: string) => Promise<string>>()
+    .mockResolvedValue(nativeId);
   const bound = await dispatchEveCopy(
     ownerId,
     ctx.saved.conversation.id,
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-    (operation) => {
-      operations.push(operation);
-      return Promise.resolve(nativeId);
-    }
-    /* oxlint-enable typescript/promise-function-async */
+    recoveredReply
   );
   const noDispatch = vi
     .fn<() => Promise<string>>()
@@ -397,9 +388,9 @@ test("accepted copies recover after source revocation and a lost native reply, t
     await dispatchEveCopy(ownerId, ctx.saved.conversation.id, noDispatch)
   ).toEqual(bound);
   expect(noDispatch).not.toHaveBeenCalled();
-  expect(operations).toEqual([
-    ctx.saved.conversation.id,
-    ctx.saved.conversation.id,
+  expect([...lostReply.mock.calls, ...recoveredReply.mock.calls]).toEqual([
+    [ctx.saved.conversation.id],
+    [ctx.saved.conversation.id],
   ]);
   const journal = await getEveCopyOperation(ownerId, ctx.input.operationId);
   expect(journal?.copy).toMatchObject({
@@ -563,11 +554,10 @@ test("concurrent accepted retries dispatch once and return the same binding", as
   const ctx = await fixture();
   await prepare(ctx);
   await acceptEveCopy(ownerId, ctx.saved.conversation.id);
-  const started = Promise.withResolvers<undefined>();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
   const finish = Promise.withResolvers<string>();
   const create = vi.fn(async () => {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    started.resolve(undefined);
+    started.resolve();
     return await finish.promise;
   });
   const first = dispatchEveCopy(ownerId, ctx.saved.conversation.id, create);

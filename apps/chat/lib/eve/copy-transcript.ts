@@ -527,7 +527,9 @@ const copyAttachmentResolver = (
   allocations: ReadonlyNativeSurface<
     Readonly<Pick<CopyAllocations, "files" | "inlineFiles">>
   >,
-  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
+  loadDestinationFile: (
+    key: string
+  ) => Pick<Blob, "type" | "size"> | Promise<Pick<Blob, "type" | "size">>,
   origin: string
 ): ((part: Extract<SeedPart, { type: "file" }>) => Promise<void>) => {
   const destinationKeys = new Set(allocations.files.values());
@@ -541,7 +543,10 @@ const copyAttachmentResolver = (
     }
     destinationKeys.add(key);
   }
-  const metadata = new Map<string, Promise<Pick<Blob, "type" | "size">>>();
+  const metadata = new Map<
+    string,
+    Pick<Blob, "type" | "size"> | Promise<Pick<Blob, "type" | "size">>
+  >();
   return async (
     part: Extract<
       SeedPart,
@@ -626,14 +631,16 @@ const rewriteDocumentPart = (
  * Materializes reserved destination attachments and document references in a copied seed.
  * @param {Seed} seed Prepared transcript cloned before destination URLs and metadata are written.
  * @param {CopyAllocations} allocations Durable destination allocations validated against source resource identities.
- * @param {(key: string) => Promise<Pick<Blob, "type" | "size">>} loadDestinationFile Reads committed destination MIME type and size for receipt checks.
+ * @param {(key: string) => Pick<Blob, "type" | "size"> | Promise<Pick<Blob, "type" | "size">>} loadDestinationFile Reads committed destination MIME type and size or returns allocated in-memory metadata for receipt checks.
  * @param {string} origin HTTP(S) origin used to construct copied file URLs without credentials.
  * @returns {Promise<Seed>} A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
  */
 const materializeEveCopyTranscript = async (
   seed: Seed,
   allocations: ReadonlyNativeSurface<CopyAllocations>,
-  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
+  loadDestinationFile: (
+    key: string
+  ) => Pick<Blob, "type" | "size"> | Promise<Pick<Blob, "type" | "size">>,
   origin: string
 ): Promise<Seed> => {
   const base = new URL(origin);

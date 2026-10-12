@@ -1,5 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+import { once } from "node:events";
+import { promisify } from "node:util";
 
 import { expect, test } from "@playwright/test";
 import type { Request, Response, TestInfo } from "@playwright/test";
@@ -119,10 +121,7 @@ const localMcpServer = async (
       })();
     }
   );
-  // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
+  await once(server.listen(0, "127.0.0.1"), "listening");
   const address = server.address();
   if (address === null || typeof address === "string") {
     throw new Error("Missing local MCP address");
@@ -260,16 +259,9 @@ test("composer connector controls persist and fence native tool execution", asyn
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
     server.closeAllConnections();
-    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-    await new Promise<void>((resolve, reject) => {
-      server.close((error: Readonly<Error> | undefined) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
+    await promisify((onClose: (error?: Error) => void): void => {
+      server.close(onClose);
+    })();
   }
 });
 
@@ -398,16 +390,9 @@ test("native MCP executes and its saved result survives connector removal and re
     }
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
-    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-    await new Promise<void>((resolve, reject) => {
-      server.close((error: Readonly<Error> | undefined) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
+    await promisify((onClose: (error?: Error) => void): void => {
+      server.close(onClose);
+    })();
   }
 });
 
@@ -502,21 +487,14 @@ test("stopping a pending MCP call closes its transport and permits another messa
     });
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
-    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-    await new Promise<void>((resolve, reject) => {
-      server.close((error: Readonly<Error> | undefined) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
+    await promisify((onClose: (error?: Error) => void): void => {
+      server.close(onClose);
+    })();
   }
 });
 
 test("the real MCP client aborts an in-flight HTTP tool request", async () => {
-  const started = Promise.withResolvers<undefined>();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
   const finished = Promise.withResolvers<unknown>();
   let disconnected = false;
   const { server, address } = await localMcpServer(
@@ -525,8 +503,7 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
         disconnected = !response.writableEnded;
         finished.resolve({ content: [] });
       });
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      started.resolve(undefined);
+      started.resolve();
       return await finished.promise;
     }
   );
@@ -571,15 +548,8 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     await client.close();
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
-    // oxlint-disable-next-line promise/avoid-new -- Adapt the callback-only server/stream API while preserving synchronous setup, completion, and rejection semantics.
-    await new Promise<void>((resolve, reject) => {
-      server.close((error: Readonly<Error> | undefined) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
+    await promisify((onClose: (error?: Error) => void): void => {
+      server.close(onClose);
+    })();
   }
 });

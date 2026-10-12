@@ -13,8 +13,7 @@ import { createStorageAdapter } from "./storage-provider";
 import { storageOptions } from "./storage-options";
 
 const PATH_SEPARATOR = /[\\/]/u;
-// oxlint-disable-next-line no-control-regex -- The upload result's pathname contract removes every ASCII C0 and DEL character while preserving all other filename characters.
-const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F]/gu;
+const ASCII_CONTROL_CHARACTERS = /[\p{ASCII}&&\p{Control}]/gv;
 const FILE_ID_LENGTH = 24;
 const INVENTORY_PAGE_SIZE = 100;
 const SIGNED_URL_LIFETIME_SECONDS = 300;
@@ -32,7 +31,10 @@ const getFiles = (): Files => {
 
 const sanitizeFilename = (filename: string): string => {
   const basename = filename.split(PATH_SEPARATOR).pop() ?? "";
-  const withoutControlCharacters = basename.replace(CONTROL_CHARACTERS, "");
+  const withoutControlCharacters = basename.replace(
+    ASCII_CONTROL_CHARACTERS,
+    ""
+  );
   return withoutControlCharacters.trim() || "file";
 };
 

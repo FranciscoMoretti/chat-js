@@ -166,18 +166,18 @@ it("returns clarification without starting research or saving a document", async
 });
 
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
+  const cancellation = new Error("Cancelled");
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
     // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
     .mockImplementationOnce(() => {
-      controller.abort(new Error("Cancelled"));
-      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: AbortSignal.reason is typed as any; forward the controller’s Error unchanged to verify cancellation stops further topics and saving.
-      return Promise.reject(controller.signal.reason);
+      controller.abort(cancellation);
+      return Promise.reject(cancellation);
     });
-  await expect(
-    Array.fromAsync(executeEveResearch({}, context))
-  ).rejects.toThrow("Cancelled");
+  await expect(Array.fromAsync(executeEveResearch({}, context))).rejects.toBe(
+    cancellation
+  );
   expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });

@@ -140,14 +140,13 @@ test("saves without generation, recovers after source revocation and reload, and
   });
   await page.unroute("**/api/agent-conversation-copies");
   const copied = Promise.withResolvers<z.infer<typeof conversationBinding>>();
-  const held = Promise.withResolvers<undefined>();
-  const started = Promise.withResolvers<undefined>();
+  const held: PromiseWithResolvers<void> = Promise.withResolvers();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route("**/api/agent-conversation-copies", async (route) => {
     const input = eveCopyInput.parse(route.request().postDataJSON());
     expect(input.modelId).toBe(modelId);
     expect(input.operationId).not.toBe(rejectedOperation);
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    started.resolve(undefined);
+    started.resolve();
     await held.promise;
     try {
       const response = await route.fetch();
@@ -170,8 +169,7 @@ test("saves without generation, recovers after source revocation and reload, and
       path: testInfo.outputPath("copy-pending.png"),
     });
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    held.resolve(undefined);
+    held.resolve();
   }
   const destination = await copied.promise;
   await expect(save.getByRole("alert")).toBeVisible();

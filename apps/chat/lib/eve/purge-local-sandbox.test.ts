@@ -92,21 +92,20 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "runtime library not found" })],
   });
 });
-test("validates all records before deletion and rejects another session or shared template", async () => {
+test.each([
+  { sessionKey: "other-session" },
+  { optionsHash: 42 },
+  { snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
+])("rejects invalid ownership record %j before deletion", async (invalid) => {
   const input = await fixture();
-  for (const record of [
-    { ...input.record, sessionKey: "other-session" },
-    { ...input.record, optionsHash: 42 },
-    { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
-    await writeFile(input.path, JSON.stringify(record));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
-    await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
-    expect(remove).not.toHaveBeenCalled();
-    expect(mocks.destroySandbox).not.toHaveBeenCalled();
-  }
-  await writeFile(input.path, JSON.stringify(input.record));
+  await writeFile(input.path, JSON.stringify({ ...input.record, ...invalid }));
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
+  expect(remove).not.toHaveBeenCalled();
+  expect(mocks.destroySandbox).not.toHaveBeenCalled();
+});
+
+test("validates every ownership record before deletion", async () => {
+  const input = await fixture();
   await writeFile(
     nodePath.join(input.sessionDirectory, "fork-checkpoints", "z-invalid.json"),
     "{}"

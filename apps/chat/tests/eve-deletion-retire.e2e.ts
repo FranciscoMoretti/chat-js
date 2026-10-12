@@ -27,6 +27,11 @@ import {
   retireEveSessionForDeletion,
 } from "../lib/eve/retire-session";
 
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
 }
@@ -121,8 +126,7 @@ test("internal retirement settles usage after access revocation and is retryable
   const purgeResources = async (): Promise<unknown> => {
     // Playwright loads this suite as CommonJS; run the ESM-only storage adapter
     // under the app's Bun runtime with the same local environment and app root.
-    // oxlint-disable-next-line typescript/strict-void-return -- Node execFile returns its ChildProcess while completing through the callback consumed by promisify.
-    const { stdout } = await promisify(execFile)(
+    const { stdout } = await promisifyExecFile(execFile)(
       "bun",
       [
         "-e",

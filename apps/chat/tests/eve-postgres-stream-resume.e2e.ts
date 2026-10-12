@@ -80,23 +80,14 @@ test("batched default-stream positions match the provider without counting EOF o
     new Map()
   );
 });
+
 const read = async (name: string, index: number) => {
   const stream = await streamer.streams.get(runId, name, index);
-  const reader = stream.getReader();
   const result: string[] = [];
-  try {
-    /* oxlint-disable eslint/no-await-in-loop -- Each read advances the same stream reader and appends its next chunk before checking completion. */
-    for (;;) {
-      const next = await reader.read();
-      if (next.done) {
-        return result;
-      }
-      result.push(new TextDecoder().decode(next.value));
-    }
-    /* oxlint-enable eslint/no-await-in-loop */
-  } finally {
-    await reader.cancel();
+  for await (const chunk of stream) {
+    result.push(new TextDecoder().decode(chunk));
   }
+  return result;
 };
 
 test("resume excludes consumed payloads in SQL, including an at-tail read", async () => {

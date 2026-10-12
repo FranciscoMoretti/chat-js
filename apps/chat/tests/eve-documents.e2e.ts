@@ -438,15 +438,14 @@ test("a document save cancelled while waiting for its lock never writes", async 
   const chat = await conversation();
   const input = draft(chat.id);
   const controller = new AbortController();
-  const held = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const held: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const lockKey = `eve-document:${chat.id}`;
   const locker = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`
     );
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    held.resolve(undefined);
+    held.resolve();
     await release.promise;
   });
   await held.promise;
@@ -465,8 +464,7 @@ test("a document save cancelled while waiting for its lock never writes", async 
     controller.abort();
   } finally {
     controller.abort();
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await locker;
     await saving;
   }
@@ -1041,14 +1039,9 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
 test("missing or mismatched named document boundaries stop native allocation", async () => {
   const chat = await conversation();
   const checkpointId = crypto.randomUUID();
-  let allocations = 0;
-  const allocate =
-    /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-    async (): Promise<string> => {
-      allocations += 1;
-      return crypto.randomUUID();
-    };
-  /* oxlint-enable eslint/require-await */
+  const allocate = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(crypto.randomUUID());
   const missing = {
     beforeTurnId: "turn_1",
     checkpointId,
@@ -1073,7 +1066,7 @@ test("missing or mismatched named document boundaries stop native allocation", a
       { fork: missing }
     )
   ).rejects.toThrow("Named document checkpoint");
-  expect(allocations).toBe(0);
+  expect(allocate).not.toHaveBeenCalled();
 });
 
 test.each([false, true])(

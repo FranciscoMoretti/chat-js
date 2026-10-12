@@ -1,6 +1,5 @@
 import { expect, test, vi } from "vitest";
 
-import { toolResultSchema } from "./tool-result";
 import {
   createToolUsage,
   executeWithToolProgress,
@@ -17,26 +16,24 @@ test("distinguishes explicitly free work from unreported usage", async () => {
   const unpriced = await executeWithToolUsage(context(), () => ({ words: 2 }));
   expect(free.usage.costUsd).toBe(0);
   expect(unpriced.usage.costUsd).toBeUndefined();
-  const persisted = toolResultSchema.array().parse(
-    // oxlint-disable-next-line unicorn/prefer-structured-clone -- #806: Persisted JSON omits undefined optional receipt fields; structuredClone would retain them.
-    JSON.parse(JSON.stringify([free, unpriced]))
+  expect(JSON.stringify([free, unpriced])).toBe(
+    JSON.stringify([
+      {
+        kind: "chatjs.tool-result",
+        output: { words: 2 },
+        status: "success",
+        usage: { costUsd: 0 },
+        version: 1,
+      },
+      {
+        kind: "chatjs.tool-result",
+        output: { words: 2 },
+        status: "success",
+        usage: {},
+        version: 1,
+      },
+    ])
   );
-  expect(persisted).toStrictEqual([
-    {
-      kind: "chatjs.tool-result",
-      output: { words: 2 },
-      status: "success",
-      usage: { costUsd: 0 },
-      version: 1,
-    },
-    {
-      kind: "chatjs.tool-result",
-      output: { words: 2 },
-      status: "success",
-      usage: {},
-      version: 1,
-    },
-  ]);
 });
 
 test("retains reported costs only for explicitly reported domain failures", async () => {
@@ -67,8 +64,10 @@ test.each([
     ).rejects.toBe(failure);
     await expect(
       Array.fromAsync(
-        // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/promise-function-async -- Preserve the plain-object provider rejection identity; this fixture has no asynchronous operation to await.
-        executeWithToolProgress(context(), () => Promise.reject(failure))
+        executeWithToolProgress(
+          context(),
+          vi.fn<() => Promise<never>>().mockRejectedValue(failure)
+        )
       )
     ).rejects.toBe(failure);
   }

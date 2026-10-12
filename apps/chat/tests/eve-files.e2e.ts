@@ -214,20 +214,11 @@ test("generated file reservations survive storage failure and cannot write after
       .where(eq(eveFileReference.conversationId, conversation.id))
   ).toEqual([{ key }]);
   await beginEveConversationDeletion(owner, conversation.id);
-  let wrote = false;
+  const write = vi.fn<() => Promise<void>>().mockResolvedValue();
   await expect(
-    writeEveGeneratedFile(
-      owner,
-      conversation.id,
-      key,
-      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-      async () => {
-        wrote = true;
-      }
-      /* oxlint-enable eslint/require-await */
-    )
+    writeEveGeneratedFile(owner, conversation.id, key, write)
   ).rejects.toThrow("unavailable");
-  expect(wrote).toBe(false);
+  expect(write).not.toHaveBeenCalled();
   await expect(
     reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
   ).rejects.toThrow("unavailable");
@@ -242,15 +233,14 @@ test("deletion waits for an admitted generated-file write before fencing the fam
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writing = writeEveGeneratedFile(
     owner,
     conversation.id,
     key,
     async () => {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-      entered.resolve(undefined);
+      entered.resolve();
       await release.promise;
       return "stored";
     }
@@ -267,8 +257,7 @@ test("deletion waits for an admitted generated-file write before fencing the fam
       })
       .toBe(true);
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await writing;
     await deletion;
   }
@@ -467,19 +456,11 @@ test("orphan cleanup retains references and young uploads and retries reappearin
   await expect(
     referenceEveFiles(owner, conversation.id, [orphan])
   ).rejects.toThrow("not owned");
-  let wrote = false;
-  await expect(
-    writeEveUpload(
-      owner,
-      orphan,
-      /* oxlint-disable eslint/require-await -- This native fixture callback performs synchronous per-call work but its receiving API requires a Promise; precomputing the result would change invocation-time state or side effects. */
-      async () => {
-        wrote = true;
-      }
-      /* oxlint-enable eslint/require-await */
-    )
-  ).rejects.toThrow("unavailable");
-  expect(wrote).toBe(false);
+  const write = vi.fn<() => Promise<void>>().mockResolvedValue();
+  await expect(writeEveUpload(owner, orphan, write)).rejects.toThrow(
+    "unavailable"
+  );
+  expect(write).not.toHaveBeenCalled();
   expect(await isEveFileUnavailable(orphan)).toBe(true);
   expect(await isEveFileUnavailable(referenced)).toBe(false);
   expect(await isEveFileUnavailable(legacy)).toBe(false);
@@ -497,11 +478,10 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .update(eveStoredFile)
     .set({ createdAt: new Date("2025-01-01") })
     .where(eq(eveStoredFile.key, key));
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writing = writeEveUpload(owner, key, async () => {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
     return "stored";
   });
@@ -517,8 +497,7 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
       })
       .toBe(true);
   } finally {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    release.resolve(undefined);
+    release.resolve();
     await writing;
     await cleanup;
   }

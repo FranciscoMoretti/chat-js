@@ -1,7 +1,11 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type { assertEveFilesOwned } from "../db/eve-files";
 import { fetchEveChannelFile } from "./channel-files";
 
-const mocks = vi.hoisted(() => ({ download: vi.fn(), owned: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  download: vi.fn(),
+  owned: vi.fn<typeof assertEveFilesOwned>(),
+}));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
 
@@ -20,8 +24,7 @@ const context = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.owned.mockResolvedValue(undefined);
+  mocks.owned.mockResolvedValue();
   mocks.download.mockResolvedValue(
     new Blob(["image bytes"], { type: "image/png" })
   );

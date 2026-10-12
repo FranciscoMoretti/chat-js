@@ -203,12 +203,14 @@ const gatewayConfigEdit = async (
   const exported = parsed.statements.find(ts.isExportAssignment);
   const declarations = parsed.statements
     .filter(ts.isVariableStatement)
-    // Mutable bindings may no longer refer to their initializer at runtime.
-    .filter(
-      (statement: ReadonlyNative<ts.VariableStatement>): number =>
-        // oxlint-disable-next-line eslint/no-bitwise -- NodeFlags.AwaitUsing includes Const, so equality misses this immutable declaration; TypeScript exposes no typed public predicate for the combined flag.
-        statement.declarationList.flags & ts.NodeFlags.Const
-    )
+    // Follow const and await using bindings; mutable bindings may have changed.
+    .filter((statement: ReadonlyNative<ts.VariableStatement>): boolean => {
+      const keyword = statement.declarationList.getFirstToken(parsed)?.kind;
+      return (
+        keyword === ts.SyntaxKind.ConstKeyword ||
+        keyword === ts.SyntaxKind.AwaitKeyword
+      );
+    })
     .flatMap(
       (statement: ReadonlyNative<ts.VariableStatement>) =>
         statement.declarationList.declarations

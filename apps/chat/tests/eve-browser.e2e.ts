@@ -380,14 +380,10 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
       name: "Expand sidebar",
     });
 
-    // oxlint-disable-next-line unicorn/prefer-ternary -- Each branch awaits a click on the appropriate sidebar control; configured no-ternary forbids the suggested alternate syntax.
-    if (await expand.isVisible()) {
-      await expand.click();
-    } else {
-      await page
-        .getByRole("button", { exact: true, name: "Toggle Sidebar" })
-        .click();
-    }
+    const sidebarControl = (await expand.isVisible())
+      ? expand
+      : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
+    await sidebarControl.click();
   }
   await search.fill("sidebar migration check");
   await capture(page, "sidebar-search");
@@ -459,15 +455,12 @@ test("stalled creation releases the composer and retries the retained operation"
 }) => {
   test.setTimeout(90_000);
   const attempts: unknown[] = [];
-  let release: (() => void) | undefined;
-  // oxlint-disable-next-line promise/avoid-new -- This externally released void gate preserves its no-argument completion contract; native withResolvers<void>() is rejected by configured no-invalid-void-type.
-  const stalled = new Promise<void>((resolve) => {
-    release = resolve;
-  });
+  const stalled: { promise: Promise<void>; resolve: () => void } =
+    Promise.withResolvers();
   await page.route("**/api/agent-conversations", async (route) => {
     attempts.push(route.request().postDataJSON());
     if (attempts.length === 1) {
-      await stalled;
+      await stalled.promise;
       await route.abort().catch(() => {
         // The browser may have already closed this request after its timeout.
       });
@@ -491,7 +484,7 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toBeEditable();
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
-    release?.();
+    stalled.resolve();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("alert").filter({ hasText: "Worker is unavailable" })
@@ -499,7 +492,7 @@ test("stalled creation releases the composer and retries the retained operation"
     expect(attempts).toHaveLength(2);
     expect(attempts[1]).toEqual(attempts[0]);
   } finally {
-    release?.();
+    stalled.resolve();
   }
 });
 

@@ -392,8 +392,8 @@ test("dismissed OAuth ignores a late authorization result", async () => {
     await act(async () => {
       await page.getByRole("button", { exact: true, name: "Cancel" }).click();
     });
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- The real authorization callback is synchronous; React act still returns a runtime completion thenable.
-    await act(() => {
+    // Select act's completion overload for this synchronous, undefined-returning callback.
+    await act<undefined>((): undefined => {
       callbacks.onSuccess({
         authorizationUrl: "https://authorization.example.test",
       });
@@ -483,8 +483,7 @@ test("invalid authorization links keep the dialog open and display an error", as
       throw new Error("Missing authorization callbacks");
     }
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- The real authorization callback is synchronous; React act still returns a runtime completion thenable.
-    await act(() => {
+    await act<undefined>((): undefined => {
       callbacks.onSuccess({ authorizationUrl: "not a URL" });
     });
     await expect

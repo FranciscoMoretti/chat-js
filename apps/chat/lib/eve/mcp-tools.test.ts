@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { jsonSchema, tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
@@ -211,8 +212,9 @@ it("forwards cancellation and closes the connection once", async () => {
     options.abortSignal?.addEventListener(
       "abort",
       () => {
-        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- The tool mock forwards the controlled abort reason while verifying cancellation and single connection cleanup.
-        pending.reject(options.abortSignal?.reason);
+        const reason: unknown = options.abortSignal?.reason;
+        assert.ok(reason instanceof DOMException);
+        pending.reject(reason);
       },
       { once: true }
     );

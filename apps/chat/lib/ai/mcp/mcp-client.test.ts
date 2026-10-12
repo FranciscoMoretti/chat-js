@@ -87,7 +87,7 @@ it("notifies the web owner after disconnect and authentication errors", async ()
   expect(invalidate).toHaveBeenCalledTimes(2);
 });
 it("concurrent connection requests share one transport and close it once", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.create.mockImplementationOnce(async () => {
     await gate.promise;
     return { close: mocks.close, tools: mocks.tools };
@@ -99,8 +99,7 @@ it("concurrent connection requests share one transport and close it once", async
   const first = client.connect();
   const second = client.connect();
   expect(mocks.create).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await Promise.all([first, second]);
   await client.close();
   expect(mocks.close).toHaveBeenCalledOnce();
@@ -156,7 +155,7 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
 });
 
 it("closing an in-flight connection prevents the late transport from becoming active", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.create.mockImplementationOnce(async () => {
     await gate.promise;
     return { close: mocks.close, tools: mocks.tools };
@@ -168,8 +167,7 @@ it("closing an in-flight connection prevents the late transport from becoming ac
   const connecting = client.connect();
   const rejected = expect(connecting).rejects.toThrow("closed");
   await client.close();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await rejected;
   expect(client.status).toBe("disconnected");
   expect(mocks.close).toHaveBeenCalledOnce();
@@ -189,7 +187,7 @@ it("connection initialization always receives a cancellation signal", async () =
 });
 
 it("callers cancel their shared connection waits independently", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.create.mockImplementationOnce(async () => {
     await gate.promise;
     return { close: mocks.close, tools: mocks.tools };
@@ -207,16 +205,36 @@ it("callers cancel their shared connection waits independently", async () => {
   expect(
     mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
   ).toBe(false);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await second;
   expect(client.status).toBe("connected");
   expect(mocks.create).toHaveBeenCalledOnce();
   await client.close();
 });
 
+it("cleans up a failed shared attempt after its only caller cancels", async () => {
+  const initialization = Promise.withResolvers<never>();
+  mocks.create.mockReturnValueOnce(initialization.promise);
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const controller = new AbortController();
+  const waiting = client.connect(undefined, controller.signal);
+  controller.abort(new Error("caller cancelled"));
+  await expect(waiting).rejects.toThrow("caller cancelled");
+  initialization.reject(new Error("shared initialization failed"));
+  await vi.waitFor(() => {
+    expect(client.status).toBe("disconnected");
+  });
+  await client.connect();
+  expect(mocks.create).toHaveBeenCalledTimes(2);
+  expect(client.status).toBe("connected");
+  await client.close();
+});
+
 it("a fresh connection starts immediately after closing a pending attempt", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.create.mockImplementationOnce(async () => {
     await gate.promise;
     return { close: mocks.close, tools: mocks.tools };
@@ -231,11 +249,38 @@ it("a fresh connection starts immediately after closing a pending attempt", asyn
   await client.connect();
   expect(client.status).toBe("connected");
   expect(mocks.create).toHaveBeenCalledTimes(2);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await rejected;
   expect(client.status).toBe("connected");
   await client.close();
+});
+
+it("a retired attempt cannot clear a replacement that is still connecting", async () => {
+  const retired = Promise.withResolvers<never>();
+  const replacement = Promise.withResolvers<{
+    close: typeof mocks.close;
+    tools: typeof mocks.tools;
+  }>();
+  mocks.create
+    .mockReturnValueOnce(retired.promise)
+    .mockReturnValueOnce(replacement.promise);
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const first = client.connect();
+  const rejected = expect(first).rejects.toThrow("retired connection failed");
+  await client.close();
+  const second = client.connect();
+  retired.reject(new Error("retired connection failed"));
+  await rejected;
+  const third = client.connect();
+  expect(mocks.create).toHaveBeenCalledTimes(2);
+  replacement.resolve({ close: mocks.close, tools: mocks.tools });
+  await Promise.all([second, third]);
+  expect(client.status).toBe("connected");
+  await client.close();
+  expect(mocks.close).toHaveBeenCalledOnce();
 });
 
 it.each(["tools", "listResources", "listPrompts"] as const)(
@@ -275,7 +320,7 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
 );
 
 it("a retired provider's late OAuth redirect cannot authorise or close its replacement", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.create.mockImplementationOnce(async () => {
     const [[providerConfig]] = mocks.provider.mock.calls;
     await gate.promise;
@@ -295,8 +340,7 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   expect(mocks.create.mock.calls[0][0].transport.authProvider).not.toBe(
     mocks.create.mock.calls[1][0].transport.authProvider
   );
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await rejected;
   expect(client.getAuthorizationUrl()).toBeUndefined();
   expect(client.status).toBe("connected");

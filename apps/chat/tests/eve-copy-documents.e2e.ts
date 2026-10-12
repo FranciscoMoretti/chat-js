@@ -219,15 +219,14 @@ test("requires publication even for an empty resource manifest", async () => {
   ).toEqual({ checkpoints: [], documents: [] });
 });
 test("observes revocation committed while preparation is waiting on the source row", async () => {
-  const updated = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const updated: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const revocation = db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
       .set({ visibility: "private" })
       .where(eq(eveConversation.id, conversationId));
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-    updated.resolve(undefined);
+    updated.resolve();
     await release.promise;
   });
   await updated.promise;
@@ -238,8 +237,7 @@ test("observes revocation committed while preparation is waiting on the source r
     []
   );
   const rejected = expect(snapshot).rejects.toThrow("unavailable");
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
-  release.resolve(undefined);
+  release.resolve();
   await revocation;
   await rejected;
   await db

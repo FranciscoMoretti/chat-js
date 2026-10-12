@@ -24,19 +24,25 @@ const FIRST_FILE_INDEX = 0;
 const NO_ACTIVE_OPERATIONS = 0;
 const MINIMUM_CONCURRENT_OPERATIONS = 1;
 
-it("rejects invalid snapshot concurrency before returning a promise", () => {
-  for (const concurrency of [0, -1, 1.5, Number.NaN]) {
-    assert.throws(
-      () => {
-        void collectSnapshot("unused", "", { concurrency });
-      },
+it.each([0, -1, 1.5, Number.NaN])(
+  "rejects invalid snapshot concurrency before starting filesystem operations: %s",
+  async (concurrency) => {
+    const activeOperations: number[] = [];
+    await assert.rejects(
+      collectSnapshot("unused", "", {
+        concurrency,
+        onActiveOperationsChange: (active) => {
+          activeOperations.push(active);
+        },
+      }),
       {
         message: "Snapshot concurrency must be a positive integer",
         name: "RangeError",
       }
     );
+    assert.deepEqual(activeOperations, []);
   }
-});
+);
 
 const collectFileOrder = async (
   dir: string,

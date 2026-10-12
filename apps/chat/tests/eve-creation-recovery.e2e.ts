@@ -12,10 +12,14 @@ import { eveChat, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { resolveEveConversationScope } from "../lib/eve/conversation-scope";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
+import type { getEvePostgresStreamPositions } from "../lib/eve/lifecycle/postgres/eve-stream-positions";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
-const native = vi.hoisted(() => ({ positions: vi.fn(), request: vi.fn() }));
+const native = vi.hoisted(() => ({
+  positions: vi.fn<typeof getEvePostgresStreamPositions>(),
+  request: vi.fn(),
+}));
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
@@ -23,13 +27,6 @@ vi.mock("../lib/eve/server", () => ({
 }));
 vi.mock("../lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
-}));
-
-vi.mock("../lib/eve/prepare-message", () => ({
-  /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-  prepareEveMessage: (message: string): Promise<string> =>
-    Promise.resolve(message),
-  /* oxlint-enable typescript/promise-function-async */
 }));
 
 vi.mock("../lib/eve/conversation-title", () => ({
@@ -99,12 +96,6 @@ test.each(["before-dispatch", "lost-response"])(
         return Response.json({ sessionId });
       }
     );
-    native.positions.mockImplementation(
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
-      (_url: string, sessions: readonly string[]) =>
-        Promise.resolve(new Map(sessions.map((id) => [id, 0])))
-      /* oxlint-enable typescript/promise-function-async */
-    );
     const command = {
       message: "original message",
       modelId: "openai/gpt-4o",
@@ -117,6 +108,9 @@ test.each(["before-dispatch", "lost-response"])(
     );
     expect(interruptedResponse.status).toBe(409);
     const interrupted = await getEveCreation(owner, command.operationId);
+    if (interrupted === undefined) {
+      throw new Error("Missing interrupted creation");
+    }
     expect(interrupted?.state).toBe("uncertain");
     expect(interrupted?.initialRequest).toEqual(command);
 
@@ -137,6 +131,9 @@ test.each(["before-dispatch", "lost-response"])(
       expect(retained?.initialRequest).toEqual(command);
     }
     fail = false;
+    native.positions.mockResolvedValue(
+      new Map([[`wrun_${interrupted.id}`, 0]])
+    );
     const next = await createEveConversationOperation(owner, {
       ...command,
       message: "new tab",

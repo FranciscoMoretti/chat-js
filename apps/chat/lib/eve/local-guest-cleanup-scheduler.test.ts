@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 test("startup is singleton and sweeps never overlap", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
@@ -61,8 +61,7 @@ test("startup is singleton and sweeps never overlap", async () => {
   workingDirectory.mockRestore();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   expect(mocks.cleanup).toHaveBeenLastCalledWith("/refreshed-worktree");
@@ -125,15 +124,14 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   expect(error).toHaveBeenCalledOnce();
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
   });
   await vi.advanceTimersByTimeAsync(60_000);
   stop?.();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- The completion-only gate has Promise<undefined>; its resolver requires a value. withResolvers<void>() is rejected by pinned no-invalid-void-type; no output value is consumed.
-  gate.resolve(undefined);
+  gate.resolve();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
