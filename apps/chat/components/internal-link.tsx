@@ -9,6 +9,7 @@ import Link from "next/link";
 import React from "react";
 
 import type { Route } from "next";
+import type { UrlObject } from "node:url";
 
 import { isElectronRenderer } from "@/lib/electron-auth";
 
@@ -17,18 +18,21 @@ import { useRouter } from "next/navigation";
 const PRIMARY_MOUSE_BUTTON = 0;
 const AUXILIARY_MOUSE_BUTTON = 1;
 
-type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
-  href: string | Exclude<ReactComponentProps<typeof Link>["href"], string>;
+type InternalLinkProps<T extends string> = Omit<
+  ReactComponentProps<typeof Link>,
+  "href"
+> & {
+  href: Route<T> | UrlObject;
   onNavigate?: () => void;
 };
 
-export const InternalLink = ({
+export const InternalLink = <T extends string>({
   onAuxClick,
   onClick,
   onNavigate,
   href,
   ...props
-}: InternalLinkProps): React.JSX.Element => {
+}: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
@@ -40,7 +44,7 @@ export const InternalLink = ({
     onNavigate?.();
     const targetHref = event.currentTarget.getAttribute("href");
     if (typeof targetHref === "string" && targetHref !== "") {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Electron modified/auxiliary clicks route the actual rendered anchor href; the public string/URL contract includes runtime paths absent from generated Route literals.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Electron modified/auxiliary clicks route the actual rendered anchor href, including URL objects and caller changes to the DOM.
       router.push(targetHref as Route);
     }
   };
@@ -83,9 +87,7 @@ export const InternalLink = ({
   return (
     <Link
       {...props}
-
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing dynamic string/URL public Link contract; generated Route literals cannot enumerate caller-provided runtime URLs.
-      href={href as Route}
+      href={href}
       onAuxClick={handleAuxClick}
       onClick={handleClick}
     />
