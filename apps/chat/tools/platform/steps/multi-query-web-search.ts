@@ -14,12 +14,9 @@ type MultiQuerySearchResult = Awaited<
   ReturnType<typeof createSearchTasks>[number]
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
-type MultiQuerySearchResponse = {
-  error?: string;
-  searches: MultiQuerySearchResult[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+type MultiQuerySearchResponse = Awaited<
+  ReturnType<typeof multiQueryWebSearchStep>
+>;
 type SearchProvider = (
   query: SearchQuery,
   index: number
@@ -114,7 +111,7 @@ const multiQueryWebSearchStep = async ({
   readonly search: SearchProvider;
   readonly dataStream?: Readonly<ToolProgressWriter>;
   readonly toolCallId: string;
-}): Promise<MultiQuerySearchResponse> => {
+}) => {
   const updateId = generateUUID();
   try {
     writeSearchStatus({

@@ -27,7 +27,6 @@ const searchQueriesSchema = z
   .max(MAX_SEARCH_QUERIES)
   .describe(`Array of search queries. Maximum ${MAX_SEARCH_QUERIES} queries.`);
 type SearchExecution = Parameters<typeof multiQueryWebSearchStep>[number];
-type SearchResponse = Awaited<ReturnType<typeof multiQueryWebSearchStep>>;
 
 const writeSearchLifecycle = (options: {
   readonly dataStream: Readonly<ToolProgressWriter> | undefined;
@@ -105,7 +104,7 @@ const executeMultiQuerySearch = async ({
   readonly writeTopLevelUpdates: boolean;
   readonly title: string;
   readonly completeTitle: string;
-}): Promise<SearchResponse> => {
+}) => {
   const log = createModuleLogger("tools/web-search");
   log.debug(
     { queriesCount: search_queries.length },
