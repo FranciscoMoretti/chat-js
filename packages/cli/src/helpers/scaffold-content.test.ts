@@ -19,6 +19,8 @@ test.each([
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
       "tests/native-research-runtime.ts",
+      "tests/fixtures/eve-oauth-mcp-server.ts",
+      "tests/fixtures/eve-oauth-mcp-server.test.ts",
       "scripts/db-branch-create.sh",
       "scripts/db-branch-delete.sh",
       "scripts/db-branch-use.sh",

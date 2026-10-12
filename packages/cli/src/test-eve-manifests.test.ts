@@ -17,7 +17,7 @@ const originals = [
   },
 ];
 
-it.each(["{", "null", "{}", '{"dependencies":null}'])(
+it.each(["{", "null", "{}", '{"dependencies":null}', '{"dependencies":[]}'])(
   "validates every manifest before starting any writes: %s",
   async (content) => {
     let writeStarted = false;

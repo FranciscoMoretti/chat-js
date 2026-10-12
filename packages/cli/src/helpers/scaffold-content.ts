@@ -52,6 +52,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
   "tests/fixtures/eve-oauth-mcp-server.ts",
+  "tests/fixtures/eve-oauth-mcp-server.test.ts",
   "vitest.eve.config.ts",
   "vitest.eve-provider.config.ts",
 ]);

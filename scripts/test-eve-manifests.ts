@@ -34,7 +34,8 @@ const writeEvePackageManifests = async (
         manifest === null ||
         !("dependencies" in manifest) ||
         typeof manifest.dependencies !== "object" ||
-        manifest.dependencies === null
+        manifest.dependencies === null ||
+        Array.isArray(manifest.dependencies)
       ) {
         throw new Error(`Expected dependencies in ${file}`);
       }
