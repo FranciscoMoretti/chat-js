@@ -109,7 +109,13 @@ Avoid:
             extractResult.data !== undefined &&
             extractResult.data !== null
           ) {
-            const extracted = schema.partial().safeParse(extractResult.data);
+            const extracted = schema
+              .extend({
+                content: schema.shape.content.catch(""),
+                description: schema.shape.description.catch(""),
+                title: schema.shape.title.catch(""),
+              })
+              .safeParse(extractResult.data);
             if (extracted.success) {
               title = hasNonEmptyValue(title) ? title : extracted.data.title;
               description = hasNonEmptyValue(description)

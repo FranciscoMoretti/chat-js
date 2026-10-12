@@ -86,6 +86,18 @@ test.each([
     },
   },
   {
+    data: {
+      content: "Valid extracted content",
+      description: "Valid extracted description",
+      title: { malformed: true },
+    },
+    expected: {
+      content: "Valid extracted content",
+      description: "Valid extracted description",
+      title: "Scraped title",
+    },
+  },
+  {
     data: { description: "Partial description" },
     expected: {
       content: "",
