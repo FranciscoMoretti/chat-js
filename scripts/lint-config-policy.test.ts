@@ -118,6 +118,8 @@ test.each(["", "apps/chat/"])(
     const ignored = [
       "components/ui/button.ts",
       "components/ai-elements/message.ts",
+      "components/ui/nested/installed.ts",
+      "components/ai-elements/nested/installed.ts",
       "features/installed.ts",
       "features/installed-routers.ts",
       "features/installed-uploads.ts",
@@ -140,6 +142,16 @@ test.each(["", "apps/chat/"])(
     ];
     const checked = [
       "components/authored.ts",
+      "components/ui/extra/wrapper.ts",
+      "components/ai-elements/extra/mcp-tool-header.ts",
+      "components/ui/extra/nested/wrapper.ts",
+      "components/ai-elements/extra/nested/wrapper.ts",
+      "components/ui/button.test.ts",
+      "components/ai-elements/message.spec.ts",
+      "components/ui/nested/button.spec.ts",
+      "components/ai-elements/nested/message.test.ts",
+      "components/ui/__tests__/fixture.ts",
+      "components/ai-elements/nested/__tests__/fixture.ts",
       "features/mcp/component.ts",
       "tools/chatjs/custom-tools.ts",
       "tools/chatjs/custom-ui.ts",

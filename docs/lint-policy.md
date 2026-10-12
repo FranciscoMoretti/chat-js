@@ -25,7 +25,7 @@ Stock defaults permit native async/await, optional chaining, named exports, obje
 
 ## Generated source
 
-Oxlint and Oxfmt exclude library-installed `components/ai-elements` and `components/ui`, plus the generator-owned registration modules under `features/installed*.ts` and `tools/chatjs`. These are config-level exclusions, not per-rule source suppressions. Custom registrations (`custom-tools.ts` and `custom-ui.ts`), feature implementations, and generator source remain checked. Type checking still covers excluded TypeScript files.
+Oxlint and Oxfmt exclude library-installed `components/ai-elements` and `components/ui`, but keep their local `extra/` wrappers, `*.test.*`/`*.spec.*` files, and `__tests__/` directories checked. Generator-owned registration modules under `features/installed*.ts` and `tools/chatjs` are also excluded. These are config-level exclusions, not per-rule source suppressions. Custom registrations (`custom-tools.ts` and `custom-ui.ts`), feature implementations, and generator source remain checked. Type checking still covers excluded TypeScript files.
 
 Ultracite's inherited exclusions cover standard generated names (`*.generated.*`, `*.gen.*`, and `*.auto.*`), generated directories, framework build output, `next-env.d.ts`, and lockfiles. Oxfmt also excludes Drizzle's generated migration metadata; authored schema and migration logic remain checked.
 
