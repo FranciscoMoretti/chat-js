@@ -82,7 +82,7 @@ const readResourceRecords = async (
     (left, right) => Number(left > right) - Number(left < right)
   )) {
     if (!entry.endsWith(".tmp")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read and parse one uncapped resource record per session at a time to bound raw JSON memory; all ownership validation must finish before provider effects.
       const recordText = await readFile(
         nodePath.join(resourceDirectory, entry),
         "utf-8"
@@ -149,7 +149,7 @@ const removeRecordedSnapshotPass = async (
   const errors: unknown[] = [];
   for (const snapshot of pending) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Snapshot parent removal depends on earlier child deletions; retain dependency order within each pass and retry blocked parents only after progress.
       await Snapshot.remove(snapshot, { force: false });
       pending.delete(snapshot);
     } catch (error) {
@@ -194,7 +194,7 @@ const readForkCheckpointSnapshotNames = async (
     (left, right) => Number(left > right) - Number(left < right)
   )) {
     if (!entry.endsWith(".tmp")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read and parse one uncapped fork manifest per session at a time to bound raw JSON memory; all ownership validation must finish before provider effects.
       const snapshotName = await readForkCheckpointSnapshotName(
         directory,
         entry,
@@ -261,7 +261,7 @@ const removeRecordedSnapshots = async (
   const pending = new Set(snapshotNames);
   while (pending.size > EMPTY_RESOURCE_COUNT) {
     // Retry only after a complete dependency pass removes a parent.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each pass changes the pending dependency set; retry blocked parents only after a completed pass removes a child.
     await removeRecordedSnapshotPass(Snapshot, pending);
   }
 };
@@ -274,11 +274,11 @@ const destroyOwnedSandboxes = async (
     resources.flatMap((resource) => resource.sandboxNames)
   )) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound provider cleanup to one live VM handle at a time; resolve the exact handle before destruction and finish every VM before snapshot removal.
       const sandbox = await Sandbox.get(name);
       // Retirement fences execution but can leave the VM alive. Destroy stops
       // and removes this exact handle, refusing a same-name replacement.
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate resource records before provider effects; snapshot removal passes depend on prior child deletions, and VM destruction must finish before snapshot cleanup.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish destruction of the resolved exact VM before opening another handle; keep provider cleanup bounded to one active VM.
       await sandbox.destroy();
     } catch (error) {
       if (

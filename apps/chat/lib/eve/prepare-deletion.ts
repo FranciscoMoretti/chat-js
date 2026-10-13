@@ -41,7 +41,7 @@ export const prepareEveFamilyDeletion = async (
     if (typeof sessionId !== "string" || sessionId === "") {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each authorized session's retirement and native preparation before the next; partial preparation must return no inventory and retry the full family.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Use one dedicated two-connection native preparation pool at a time; siblings can share descendant resources and no partial family inventory may reach provider cleanup.
     const inventory = await lifecycle.prepare(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });

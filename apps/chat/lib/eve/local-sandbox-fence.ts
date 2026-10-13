@@ -2,6 +2,9 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import nodePath from "node:path";
 
+// Conservative cleanup budget, independent of the filesystem worker pool size.
+const MAX_CONCURRENT_FENCE_OPERATIONS = 4;
+
 /**
  * Permanently stop new local sandbox operations for an authorized native family.
  * Existing operation records must disappear before inventory and cleanup proceed.
@@ -21,39 +24,75 @@ export const fenceLocalEveSandboxMutations = async (
       createHash("sha256").update(id).digest("hex")
     )
   );
-  for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
-    await mkdir(scope, { recursive: true });
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
-    await writeFile(nodePath.join(scope, "deleted"), "1\n", {
-      flag: "wx",
-      mode: 0o600,
-    }).catch((error: unknown) => {
-      if (
-        !(error instanceof Error && "code" in error && error.code === "EEXIST")
-      ) {
-        throw error;
-      }
-    });
-  }
-  for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Create every family deletion marker before inspecting operation leases; each write depends on mkdir, and pending work must fail closed without expiring a lease.
-    const operations = await readdir(nodePath.join(scope, "operations")).catch(
-      (error: unknown) => {
-        if (
-          error instanceof Error &&
-          "code" in error &&
-          error.code === "ENOENT"
-        ) {
-          return [];
-        }
-        throw error;
-      }
+  // Drain each bounded batch before admitting more work or reporting failure.
+  for (
+    let offset = 0;
+    offset < scopes.length;
+    offset += MAX_CONCURRENT_FENCE_OPERATIONS
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound filesystem cleanup to four active marker chains; drain every started write before admitting the next batch or returning failure.
+    const markers = await Promise.allSettled(
+      scopes
+        .slice(offset, offset + MAX_CONCURRENT_FENCE_OPERATIONS)
+        .map(async (scope) => {
+          await mkdir(scope, { recursive: true });
+          await writeFile(nodePath.join(scope, "deleted"), "1\n", {
+            flag: "wx",
+            mode: 0o600,
+          }).catch((error: unknown) => {
+            if (
+              !(
+                error instanceof Error &&
+                "code" in error &&
+                error.code === "EEXIST"
+              )
+            ) {
+              throw error;
+            }
+          });
+        })
     );
-    if (operations.length > 0) {
-      throw new Error(
-        "Sandbox operations are still pending. Resolve them before cleanup."
-      );
+    for (const marker of markers) {
+      if (marker.status === "rejected") {
+        throw marker.reason;
+      }
+    }
+  }
+  // Lease inspection starts only once every marker is written. Keep failures
+  // in family order, independent of filesystem completion order.
+  for (
+    let offset = 0;
+    offset < scopes.length;
+    offset += MAX_CONCURRENT_FENCE_OPERATIONS
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound lease reads to four active requests; drain each inspection batch before admitting more or returning its first failure.
+    const inspections = await Promise.allSettled(
+      scopes
+        .slice(offset, offset + MAX_CONCURRENT_FENCE_OPERATIONS)
+        .map(async (scope) => {
+          const operations = await readdir(
+            nodePath.join(scope, "operations")
+          ).catch((error: unknown) => {
+            if (
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "ENOENT"
+            ) {
+              return [];
+            }
+            throw error;
+          });
+          if (operations.length > 0) {
+            throw new Error(
+              "Sandbox operations are still pending. Resolve them before cleanup."
+            );
+          }
+        })
+    );
+    for (const inspection of inspections) {
+      if (inspection.status === "rejected") {
+        throw inspection.reason;
+      }
     }
   }
 };

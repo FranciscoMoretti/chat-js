@@ -31,7 +31,7 @@ export const cleanupEveOrphanedFiles = async (
       for (const ownerId of new Set(
         files.map((file: Readonly<OrphanedFile>) => file.ownerId)
       )) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Storage deletion already succeeded; finish each owner's durable file-purge receipt in this bounded batch before marking the batch counted, preserving stop-on-receipt-failure behavior.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound receipt transactions to one active owner lock instead of queuing up to 100 transactions on the shared database pool; count only after all receipts commit.
         await completeEveFilePurge(
           ownerId,
           files

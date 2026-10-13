@@ -184,7 +184,7 @@ const retireEveNativeSessions = async (
   const connection = postgres(databaseUrl, { max: 2 });
   try {
     for (const sessionId of new Set(sessionIds)) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Purge the currently fenced queue, then fence newly discovered runs before the next inventory pass; retire each session before committing its native retirement marker.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Hold one retirement session lock at a time in the dedicated two-connection pool; retirement can reconcile overlapping descendant usage before its durable marker commits.
       await withRetiredNativeSession(connection, sessionId, {
         afterRetirement: () => {
           // Retirement has no following purge stage.

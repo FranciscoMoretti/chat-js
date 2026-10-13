@@ -20,7 +20,7 @@ const purgeConversationSessions = async (
       throw new Error("Resolve the missing session binding before cleanup.");
     }
     const { sessionId } = conversation;
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Await each native family purge before its sibling and before completeEveConversationDeletion; partial purge retains pending state for a full ordered retry.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Use one dedicated two-connection native purge pool at a time; sibling sessions can overlap descendant resources, and every purge must finish before deletion completes.
     await lifecycle.purge(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });

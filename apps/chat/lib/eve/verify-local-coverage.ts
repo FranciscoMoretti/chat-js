@@ -54,7 +54,7 @@ export const verifyLocalEveFamilyCoverage = async (
   });
   try {
     for (const inventory of inventories) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Use the single-connection coverage transaction and finish native/local identity verification before checking the next family inventory; mismatch must stop proof generation.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each proof transaction on the max-one connection before submitting another; identity verification holds native resource fences until that transaction ends.
       await verifyEveSandboxCoverage(
         connection,
         { ...inventory, appRoot: canonicalRoot },

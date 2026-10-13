@@ -130,7 +130,7 @@ const verifyEveSandboxCoverage = async (
       }
       const sessionIds = await readFencedSandboxCoverage(query, input, runIds);
       for (const sessionId of sessionIds) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Verify every native session identity before inserting the saved coverage proof; stop on the first mismatch while the transaction's resource fences remain held.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound native HTTP and local identity reads to one request at a time while holding resource fences; all identities must match before the coverage proof commits.
         await verifyIdentity(sessionId);
       }
       await query`insert into workflow.eve_sandbox_coverage(session_id, app_root, run_ids, sandbox_session_ids) values (${input.sessionId}, ${input.appRoot}, ${query.array(runIds)}::text[], ${query.array(sessionIds)}::text[])`;

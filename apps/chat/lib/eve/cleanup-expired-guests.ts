@@ -27,18 +27,18 @@ export const cleanupExpiredEveGuests = async (
   let deletedCount = 0;
   let pendingCount = 0;
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep only one native/provider family cleanup in flight; claims are cooldown timestamps, not exclusive leases, and inventory failure must stop further claims.
     const [family] = await claimExpiredEveGuestFamilies();
     if (typeof family !== "object") {
       break;
     }
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Classify the current claim before deleting it; keep native/provider cleanup bounded to one family at a time.
       if (await isUnacceptedEveCopy(family.ownerId, family.id)) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this claimed copy's cleanup before claiming more work, bounding native/provider cleanup to one family.
         await deleteUnacceptedEveCopy(family.ownerId, family.id);
       } else if (
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Claim one expired family and complete its unaccepted-copy or retired-family deletion before the next claim; the five-attempt budget and pending counters depend on that result.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this claimed family's cleanup before claiming more work, bounding native/provider cleanup to one family.
         !(await deleteLocalEveConversationFamily(
           family.ownerId,
           family.id,
