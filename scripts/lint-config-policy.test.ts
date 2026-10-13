@@ -233,11 +233,9 @@ test.each([null, "lint", "test:types"])(
       expect(result.errors).toContain(
         failingScript === "lint" ? "lint failed" : "lint checked"
       );
-      if (failingScript !== "lint") {
-        expect(result.errors).toContain(
-          failingScript === "test:types" ? "types failed" : "types checked"
-        );
-      }
+      expect(result.errors).toContain(
+        failingScript === "test:types" ? "types failed" : "types checked"
+      );
       expect(
         await readFile(path.join(temporary, "untouched.ts"), "utf-8")
       ).toBe(untouched);
