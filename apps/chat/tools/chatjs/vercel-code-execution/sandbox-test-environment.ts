@@ -3,14 +3,10 @@ import { afterEach, beforeEach, vi } from "vitest";
 const envMock = vi.hoisted(
   (): {
     VERCEL_PROJECT_ID: string | undefined;
-    VERCEL_SANDBOX_IMAGE_PYTHON: string | undefined;
-    VERCEL_SANDBOX_IMAGE_JAVASCRIPT: string | undefined;
     VERCEL_TEAM_ID: string | undefined;
     VERCEL_TOKEN: string | undefined;
   } => ({
     VERCEL_PROJECT_ID: undefined,
-    VERCEL_SANDBOX_IMAGE_JAVASCRIPT: undefined,
-    VERCEL_SANDBOX_IMAGE_PYTHON: undefined,
     VERCEL_TEAM_ID: undefined,
     VERCEL_TOKEN: undefined,
   })
@@ -31,8 +27,14 @@ const setupSandboxTestEnvironment = (): {
   readonly configureSandboxCredentials: typeof configureSandboxCredentials;
 } => {
   beforeEach(() => {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest requires an explicit undefined value to remove this environment variable.
-    vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
+    for (const name of [
+      "VERCEL_OIDC_TOKEN",
+      "VERCEL_SANDBOX_IMAGE_JAVASCRIPT",
+      "VERCEL_SANDBOX_IMAGE_PYTHON",
+    ]) {
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest requires an explicit undefined value to remove this environment variable.
+      vi.stubEnv(name, undefined);
+    }
     for (const key of Object.keys(envMock).filter(
       (candidate): candidate is keyof typeof envMock =>
         Object.hasOwn(envMock, candidate)

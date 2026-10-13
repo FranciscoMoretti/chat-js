@@ -30,4 +30,3 @@ type CodeExecutor = (
 ) => Promise<ToolResult<CodeExecutionOutput>>;
 
 export type { CodeExecutionContext, CodeExecutionInput, CodeExecutor };
-export { codeExecutionOutputSchema };

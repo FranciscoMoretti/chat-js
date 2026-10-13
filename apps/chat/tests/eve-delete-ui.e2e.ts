@@ -101,7 +101,7 @@ for (const width of [1280, 390]) {
         })
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
-      expect(await getEveConversation(owner.id, id)).toBeUndefined();
+      expect(await getEveConversation(owner.id, id)).toBeNull();
       const conversationMatchesDuringPendingCleanup =
         await listEveConversations(owner.id, {
           search: title,

@@ -1,6 +1,7 @@
-import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, notExists } from "drizzle-orm";
 
 import { db } from "./client";
+import { lockEveCopyOwners } from "./eve-copy-journal";
 import { eveFileReference, eveStoredFile } from "./schema";
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
@@ -37,19 +38,8 @@ export const prepareEveOrphanedFilePurge = async (
     return [];
   }
   return await db.transaction(async (tx: OrphanPurgeTransaction) => {
-    // Acquire the bounded batch's family locks in numeric lock order to avoid
-    // deadlocks between overlapping inventories, then commit every fence together.
-    await tx.execute(sql`
-      select pg_advisory_xact_lock(lock_id)
-      from (
-        select distinct hashtextextended(owner_lock, 0) as lock_id
-        from (values ${sql.join(
-          owners.map((ownerId) => sql`(${`eve-family:${ownerId}`})`),
-          sql`, `
-        )}) as owners(owner_lock)
-        order by lock_id
-      ) locks
-    `);
+    // Copy and cleanup must acquire every family lock in the same owner order.
+    await lockEveCopyOwners(tx, owners);
     const references = tx
       .select({ key: eveFileReference.key })
       .from(eveFileReference)

@@ -1516,6 +1516,27 @@ it(
       )
     ).toContain("daytona-code-execution/tool");
     await run(cwd, ["bun", "run", "test:types"]);
+    // Existing apps retain core files when a provider is installed or replaced.
+    const corePath = nodePath.join(cwd, "lib/eve/code-executor.ts");
+    const currentCore = await readFile(corePath, "utf-8");
+    const olderCore = `import type { ToolContext } from "eve/tools";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolOutput, ToolResult } from "./tool-result";
+type CodeExecutionInput = Readonly<{code: string; language: "python" | "javascript"; title: string}>;
+type CodeExecutionContext = Pick<ToolContext, "abortSignal" | "callId" | "session">;
+type CodeExecutionOutput = {chart: ToolOutput; message: string};
+export type CodeExecutor = (input: CodeExecutionInput, context: ReadonlyNativeSurface<CodeExecutionContext>) => Promise<ToolResult<CodeExecutionOutput>>;
+export type {CodeExecutionInput, CodeExecutionContext, CodeExecutionOutput};
+`;
+    await writeFile(corePath, olderCore);
+    const envSchemaPath = nodePath.join(cwd, "lib/env-schema.ts");
+    const currentEnvSchema = await readFile(envSchemaPath, "utf-8");
+    const olderEnvSchema = currentEnvSchema.replaceAll(
+      "VERCEL_SANDBOX_IMAGE_",
+      "VERCEL_SANDBOX_RUNTIME_"
+    );
+    await writeFile(envSchemaPath, olderEnvSchema);
+
     await run(cwd, [
       "node",
       cliEntry,
@@ -1535,6 +1556,7 @@ it(
         "utf-8"
       )
     ).toContain("vercel-code-execution/tool");
+    await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, [
       "node",
       cliEntry,
@@ -1552,6 +1574,10 @@ it(
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).toContain("DAYTONA_API_KEY");
+    expect(await readFile(corePath, "utf-8")).toBe(olderCore);
+    expect(await readFile(envSchemaPath, "utf-8")).toBe(olderEnvSchema);
+    await run(cwd, ["bun", "run", "test:types"]);
+    await writeFile(corePath, currentCore);
     await run(cwd, ["bun", "run", "format"]);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);

@@ -123,7 +123,13 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
 });
 
 test("a multi-owner fence waits for family writers and rechecks references before committing", async () => {
-  const owners = [crypto.randomUUID(), crypto.randomUUID()];
+  // These owners sort lexically opposite to their PostgreSQL advisory hashes.
+  // A copy holds the first owner before requesting the second; cleanup must
+  // wait on the first without taking the second and creating a deadlock.
+  const owners = [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+  ];
   const keys = [crypto.randomUUID(), crypto.randomUUID()];
   const conversationId = crypto.randomUUID();
   const cutoff = new Date("2026-01-01");
@@ -159,7 +165,7 @@ test("a multi-owner fence waits for family writers and rechecks references befor
       }))
     );
     await query.begin(async (tx) => {
-      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[1]}`}, 0))`;
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[0]}`}, 0))`;
       pendingPurge = prepareEveOrphanedFilePurge(keys, cutoff);
       // Keep a rejection observed while this transaction deliberately blocks it.
       void pendingPurge.catch(() => {
@@ -174,6 +180,7 @@ test("a multi-owner fence waits for family writers and rechecks references befor
           return rows[0].waiting;
         })
         .toBe(1);
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[1]}`}, 0))`;
       await tx`insert into "EveFileReference" ("conversationId", "key", "ownerId")
         values (${conversationId}, ${keys[1]}, ${owners[1]})`;
     });

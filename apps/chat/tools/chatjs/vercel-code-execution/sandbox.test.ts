@@ -3,7 +3,7 @@ import type { Mock, MockInstance } from "vitest";
 import { assert, describe, expect, it, vi } from "vitest";
 import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
 
-const { envMock, configureSandboxCredentials } = setupSandboxTestEnvironment();
+const { configureSandboxCredentials } = setupSandboxTestEnvironment();
 
 const LOOKUP_AND_CONFIRM_CALLS = 2;
 
@@ -69,7 +69,7 @@ const createSandboxFixture = (
 const imageScenarios: readonly Readonly<{
   language: "python" | "javascript";
   name: string;
-  overrides: Readonly<Partial<typeof envMock>>;
+  overrides: Readonly<Record<string, string>>;
   image: string;
 }>[] = [
   {
@@ -105,8 +105,15 @@ const imageScenarios: readonly Readonly<{
 ];
 
 describe("getSandboxImage", () => {
+  it("rejects an empty image override before provisioning", async () => {
+    vi.stubEnv("VERCEL_SANDBOX_IMAGE_PYTHON", "");
+    const { getSandboxImage } = await import("./execution-sandbox");
+    expect(() => getSandboxImage("python")).toThrow();
+  });
   it.each(imageScenarios)("$name", async ({ language, overrides, image }) => {
-    Object.assign(envMock, overrides);
+    for (const [name, value] of Object.entries(overrides)) {
+      vi.stubEnv(name, value);
+    }
     const { getSandboxImage } = await import("./execution-sandbox");
     expect(getSandboxImage(language)).toBe(image);
   });
