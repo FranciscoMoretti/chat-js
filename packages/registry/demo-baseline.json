@@ -150,7 +150,7 @@
     "tools/chatjs/ui.ts": "779388a411f9e89b6e8e785ddec0af1e1a170d721f6bbe73ad6c52c6a33aebf4",
     "tools/chatjs/vercel-code-execution/chatjs.json": "81f21440ccc667306e9e9b11f01d6d55cd69a5645ba288b450ae997b511346cc",
     "tools/chatjs/vercel-code-execution/execution-sandbox.ts": "99987eb5bfc70abf0d9896b367a16336198b3cb18a123cb3b0eaeff4c103fb44",
-    "tools/chatjs/vercel-code-execution/renderer.tsx": "ee93ee46d344665a70db9d0d6d1bcac73a9e299fdec124482d6c9f240407f5b1",
+    "tools/chatjs/vercel-code-execution/renderer.tsx": "81b0fffb8e388928be938f3da8890a5b30d5c3aeacec4a170de74550cff5c226",
     "tools/chatjs/vercel-code-execution/schemas.ts": "7e0fa6f63b2b09ea822389dca315ce19241280be05438eb6cba9c9d612324f33",
     "tools/chatjs/vercel-code-execution/tool.ts": "446e1a710944264d16e29673e999a7d68c2c690a0ea94b8b98015a4b553f2a3b",
     "tools/chatjs/word-count/chatjs.json": "19da65e93cd8b34684894c6d4a2f471b9ce9c4fe301a9917b039ef9e8342a977",

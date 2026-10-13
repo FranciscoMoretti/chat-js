@@ -57,9 +57,9 @@ const CodeExecution = defineToolRenderer({
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
   streamingInputSchema: codeExecutionInput.partial().extend({
-    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- #574: Zod schema fallback, not a Promise. Zod requires a fallback argument; undefined preserves the optional invalid-input result.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- oxc-project/oxc#22161: synchronous Zod fallback preserves streamed code on invalid language. Zod requires the undefined fallback argument.
     language: codeExecutionInput.shape.language.optional().catch(undefined),
-    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- #574: Zod schema fallback, not a Promise. Zod requires a fallback argument; undefined preserves the optional invalid-input result.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- oxc-project/oxc#22161: synchronous Zod fallback preserves streamed code on invalid title. Zod requires the undefined fallback argument.
     title: codeExecutionInput.shape.title.optional().catch(undefined),
   }),
 });
