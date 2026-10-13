@@ -82,7 +82,11 @@ const executeWithToolUsage = async <Output extends ToolOutput>(
   } catch (error) {
     context.abortSignal.throwIfAborted();
     if (!(error instanceof ExpectedToolFailureError)) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Provider rejection values are diagnostics, not domain receipts or control flow.
+      throw new Error("Unexpected tool failure.", { cause: error });
     }
     const costUsd = await usage.totalUsd();
     context.abortSignal.throwIfAborted();

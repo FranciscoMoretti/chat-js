@@ -1,3 +1,7 @@
+import {
+  createRuntimeToolResultFromToolError,
+  createToolResultMessagePartFromToolError,
+} from "@eve-test/dist/src/harness/action-result-helpers.js";
 import { expect, test, vi } from "vitest";
 
 import {
@@ -50,33 +54,84 @@ test("retains reported costs only for explicitly reported domain failures", asyn
   expect(JSON.stringify(result)).not.toContain("credentials");
 });
 
-test.each([
-  new Error("Unexpected provider failure"),
-  { authorization: "required" },
-])(
-  "preserves native exceptions unchanged: %s",
-  async (failure: Readonly<Error | { authorization: string }>) => {
-    await expect(
-      executeWithToolUsage(context(), () => {
-        // oxlint-disable-next-line typescript/only-throw-error -- #601: Preserve the plain-object provider failure's rejection identity.
-        throw failure;
-      })
-    ).rejects.toBe(failure);
-    await expect(
-      Array.fromAsync(
-        executeWithToolProgress(
-          context(),
-          vi.fn<() => Promise<never>>().mockRejectedValue(failure)
-        )
+test("preserves native exceptions unchanged", async () => {
+  const failure = new Error("Provider authorization required", {
+    cause: { authorization: "required" },
+  });
+  await expect(
+    executeWithToolUsage(context(), () => {
+      throw failure;
+    })
+  ).rejects.toBe(failure);
+  await expect(
+    Array.fromAsync(
+      executeWithToolProgress(
+        context(),
+        vi.fn<() => Promise<never>>().mockRejectedValue(failure)
       )
-    ).rejects.toBe(failure);
-  }
-);
+    )
+  ).rejects.toBe(failure);
+});
+
+test.each([
+  { authorization: "required", credentials: "private provider details" },
+  "private provider details",
+  null,
+  undefined,
+])("normalizes untyped provider rejections: %j", async (failure) => {
+  const provider = vi.fn<() => Promise<never>>().mockRejectedValue(failure);
+  const settleCost = vi.fn<() => Promise<number>>();
+  const result = executeWithToolUsage(context(), async (usage) => {
+    usage.addCostUsd(0.05);
+    usage.addDeferredCost(settleCost);
+    return await provider();
+  });
+  await expect(result).rejects.toBeInstanceOf(Error);
+  await expect(result).rejects.toMatchObject({
+    cause: failure,
+    message: "Unexpected tool failure.",
+  });
+  expect(settleCost).not.toHaveBeenCalled();
+  await expect(
+    Array.fromAsync(executeWithToolProgress(context(), provider))
+  ).rejects.toMatchObject({
+    cause: failure,
+    message: "Unexpected tool failure.",
+  });
+});
+
+test("EVE projects normalized failures into failed actions and model error text", async () => {
+  const failure: unknown = await executeWithToolUsage(
+    context(),
+    vi.fn<() => Promise<never>>().mockRejectedValue({ credentials: "private" })
+  ).catch((error: unknown) => error);
+  const toolError = {
+    error: failure,
+    input: {},
+    toolCallId: "call-1",
+    toolName: "meteredTool",
+    type: "tool-error",
+  } satisfies Parameters<typeof createRuntimeToolResultFromToolError>[0];
+  expect(createRuntimeToolResultFromToolError(toolError)).toEqual({
+    callId: "call-1",
+    isError: true,
+    kind: "tool-result",
+    output: "Unexpected tool failure.",
+    toolName: "meteredTool",
+  });
+  expect(createToolResultMessagePartFromToolError(toolError)).toEqual({
+    output: { type: "error-text", value: "Unexpected tool failure." },
+    toolCallId: "call-1",
+    toolName: "meteredTool",
+    type: "tool-result",
+  });
+});
 
 test("cancellation propagates before and during execution", async () => {
+  const cancellationReason = { code: "cancelled" };
   const controller = new AbortController();
   const execute = vi.fn();
-  controller.abort();
+  controller.abort(cancellationReason);
   await expect(
     executeWithToolUsage({ abortSignal: controller.signal }, execute)
   ).rejects.toBe(controller.signal.reason);
@@ -85,7 +140,7 @@ test("cancellation propagates before and during execution", async () => {
   await expect(
     executeWithToolUsage({ abortSignal: running.signal }, (usage) => {
       usage.addCostUsd(0.04);
-      running.abort();
+      running.abort(cancellationReason);
       return usage.fail();
     })
   ).rejects.toBe(running.signal.reason);
