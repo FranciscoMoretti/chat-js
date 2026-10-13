@@ -41,7 +41,7 @@ To repeat runtime lint after materializing `runtime-fixture.patch` in D's frozen
   "$proof_root"/runtime*.ts "$proof_root/runtime-fixture"
 ```
 
-Repository lint alone does not parse patch bodies. The explicit materialized audit above is required.
+Repository lint alone does not parse patch bodies. The explicit materialized audit above is required. The payload includes `tsconfig.json` extending `tsconfig.proof.json`: Oxlint 1.87 type-aware discovery requires this conventional filename even when `--tsconfig` supplies import-resolution configuration. D independently reproduced the clean 11-file audit, isolated type check, and three boundary tests after adding this configuration bridge.
 
 ## Affected Postgres and old-run controllers
 
@@ -62,4 +62,4 @@ These paths are local disposable experiment artifacts, not committed dependencie
 - Stopped owned cluster: `chatjs-retirement-pg.31fuhk` under that temporary parent.
 - Source/checkpoint logs: `/tmp/lane-b-typed-source-final-tests.log`, `/tmp/lane-b-typed-checkpoint.log`.
 
-Payload compliance is ready for D's integration. Fork retirement remains subject to the documented Postgres recovery and old-run compatibility constraints; this change does not remove the production fork dependency.
+Payload compliance is ready for D's integration. The old-run replay failure is a historical compatibility observation: the accepted [prelaunch retirement procedure](../../docs/eve-prelaunch-cutover.md) already preserves readable history while terminally retiring those sessions. Old-session resumability is no longer a product requirement. Production recovery still needs the documented deployment/ownership choice, and fork removal is not authorized by this maintenance.

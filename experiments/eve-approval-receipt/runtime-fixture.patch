@@ -1356,3 +1356,11 @@ new file mode 100644
 +    return { effect: true };
 +  },
 +});
+diff --git a/tsconfig.json b/tsconfig.json
+new file mode 100644
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,3 @@
++{
++  "extends": "./tsconfig.proof.json"
++}
