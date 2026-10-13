@@ -14,6 +14,7 @@ export default defineConfig({
     "!**/components/{ai-elements,ui}/**/__tests__/**",
     "**/features/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
     "**/lib/db/migrations/meta/**",
+    "**/composer-icons.generated.ts",
     ".eve/**",
     "tests/eve-results/**",
     // The model catalog is generator-owned; avoid unrelated snapshot churn.

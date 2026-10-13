@@ -11,7 +11,7 @@
     "analyze": "next experimental-analyze",
     "start": "next start",
     "prod": "bun run build && bun run start",
-    "lint": "next typegen . && oxlint --type-aware . && oxfmt --check .",
+    "lint": "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error",
     "format": "oxfmt --write .",
     "check-env": "bun scripts/check-env.ts",
     "search:backfill": "tsx scripts/backfill-eve-search.ts",

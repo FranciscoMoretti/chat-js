@@ -10,15 +10,11 @@ case "${1:-}" in
   edit)
     exec bun run ultracite fix --hook
     ;;
-  check)
-    status=0
-    bun run lint >&2 || status=2
-    bun run test:types >&2 || status=2
-    [ "$status" -eq 0 ] || exit "$status"
-    printf '{}\n'
+  start|check)
+    exec bun "$ROOT_DIR/scripts/ai-handoff.ts" "$1"
     ;;
   *)
-    echo "Usage: $0 {edit|check}" >&2
+    echo "Usage: $0 {edit|start|check}" >&2
     exit 64
     ;;
 esac

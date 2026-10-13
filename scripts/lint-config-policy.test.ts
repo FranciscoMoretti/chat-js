@@ -57,7 +57,7 @@ const runNative = async (
 const writeConfig = async (temporary: string, source: string) => {
   await writeFile(
     path.join(temporary, "oxlint.config.ts"),
-    `import config from ${JSON.stringify(path.join(root, source))};\nexport default { ...config, options: { typeAware: false } };\n`
+    `import config from ${JSON.stringify(path.join(root, source))};\nexport default { ...config, options: { ...config.options, typeAware: false } };\n`
   );
 };
 
@@ -66,6 +66,10 @@ const writeHookFixture = async (temporary: string): Promise<void> => {
   await writeFile(
     path.join(temporary, "scripts/ai-post-codegen.sh"),
     await readFile(path.join(root, "scripts/ai-post-codegen.sh"), "utf-8")
+  );
+  await writeFile(
+    path.join(temporary, "scripts/ai-handoff.ts"),
+    await readFile(path.join(root, "scripts/ai-handoff.ts"), "utf-8")
   );
   await symlink(
     path.join(root, "node_modules"),
@@ -80,7 +84,7 @@ const writeHookFixture = async (temporary: string): Promise<void> => {
 
 const runAgentHook = async (
   temporary: string,
-  mode: "edit" | "check",
+  mode: "edit" | "start" | "check",
   payload: unknown
 ): Promise<{ exitCode: number; output: string; errors: string }> => {
   const child = Bun.spawn(
@@ -108,6 +112,48 @@ const runAgentHook = async (
     await child.exited;
   }
 };
+
+const hookCommand = (
+  mode: "start" | "edit" | "check",
+  rootCommand = '"$(git rev-parse --show-toplevel)"'
+) => ({
+  type: "command",
+  command: `${rootCommand}/scripts/ai-post-codegen.sh ${mode}`,
+});
+
+test("agent configurations invoke the maintained hook modes", async () => {
+  const codex: unknown = JSON.parse(
+    await readFile(path.join(root, ".codex/hooks.json"), "utf-8")
+  );
+  const claude: unknown = JSON.parse(
+    await readFile(path.join(root, ".claude/settings.json"), "utf-8")
+  );
+  const cursor: unknown = JSON.parse(
+    await readFile(path.join(root, ".cursor/hooks.json"), "utf-8")
+  );
+  expect(codex).toMatchObject({
+    hooks: {
+      UserPromptSubmit: [{ hooks: [hookCommand("start")] }],
+      PostToolUse: [{ matcher: "apply_patch", hooks: [hookCommand("edit")] }],
+      Stop: [{ hooks: [hookCommand("check")] }],
+    },
+  });
+  expect(claude).toMatchObject({
+    hooks: {
+      PostToolUse: [
+        {
+          matcher: "Write|Edit|MultiEdit",
+          hooks: [hookCommand("edit", '"$CLAUDE_PROJECT_DIR"')],
+        },
+      ],
+    },
+  });
+  expect(cursor).toMatchObject({
+    hooks: {
+      afterFileEdit: [{ command: "bash scripts/ai-post-codegen.sh edit" }],
+    },
+  });
+});
 
 test.each(["codex", "cursor", "claude"])(
   "%s edit hook fixes only the edited file, even from a nested directory",
@@ -225,11 +271,45 @@ test.each([null, "lint", "test:types"])(
           },
         })
       );
-      const result = await runAgentHook(temporary, "check", {});
+      const initialize = Bun.spawnSync(["git", "init"], { cwd: temporary });
+      expect(initialize.exitCode).toBe(0);
+      const commit = Bun.spawnSync(
+        [
+          "git",
+          "-c",
+          "user.name=Fixture",
+          "-c",
+          "user.email=fixture@example.test",
+          "-c",
+          "commit.gpgsign=false",
+          "commit",
+          "--allow-empty",
+          "-m",
+          "fixture",
+        ],
+        { cwd: temporary }
+      );
+      expect(commit.exitCode).toBe(0);
+      const payload = { session_id: "check-fixture" };
+      const started = await runAgentHook(temporary, "start", payload);
+      expect(started.exitCode).toBe(0);
+      const discussion = await runAgentHook(temporary, "check", payload);
+      expect(discussion.output).toBe("{}");
+      expect(discussion.errors).toBe("");
+      await writeFile(
+        path.join(temporary, "changed.ts"),
+        "export const changed = true;\n"
+      );
+      const otherSession = await runAgentHook(temporary, "check", {
+        session_id: "different-session",
+      });
+      expect(otherSession.output).toContain("no prompt-start snapshot");
+      expect(otherSession.errors).toBe("");
+      const result = await runAgentHook(temporary, "check", payload);
       expect(result.exitCode, result.errors).toBe(
         failingScript === null ? 0 : 2
       );
-      expect(result.output).toBe(failingScript === null ? "{}\n" : "");
+      expect(result.output).toBe(failingScript === null ? "{}" : "");
       expect(result.errors).toContain(
         failingScript === "lint" ? "lint failed" : "lint checked"
       );
@@ -239,6 +319,60 @@ test.each([null, "lint", "test:types"])(
       expect(
         await readFile(path.join(temporary, "untouched.ts"), "utf-8")
       ).toBe(untouched);
+      const unchanged = await runAgentHook(temporary, "check", payload);
+      expect(unchanged.exitCode).toBe(0);
+      expect(unchanged.output).toContain(
+        failingScript === null ? "{}" : "previously failed"
+      );
+      expect(unchanged.errors).toBe("");
+      await writeFile(
+        path.join(temporary, "changed.ts"),
+        "export const changed = false;\n"
+      );
+      const continued = await runAgentHook(temporary, "check", {
+        ...payload,
+        stop_hook_active: true,
+      });
+      expect(continued.exitCode).toBe(0);
+      expect(continued.errors).toContain(
+        failingScript === "lint" ? "lint failed" : "lint checked"
+      );
+      expect(continued.output).toContain(
+        failingScript === null ? "{}" : "Automatic continuation stopped"
+      );
+      if (failingScript === null) {
+        const staged = Bun.spawnSync(["git", "add", "--", "changed.ts"], {
+          cwd: temporary,
+        });
+        expect(staged.exitCode).toBe(0);
+        const committed = Bun.spawnSync(
+          [
+            "git",
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.test",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            "change",
+          ],
+          { cwd: temporary }
+        );
+        expect(committed.exitCode).toBe(0);
+        const afterCommit = await runAgentHook(temporary, "check", payload);
+        expect(afterCommit.errors).toContain("lint checked");
+        await writeFile(
+          path.join(temporary, "changed.ts"),
+          "export const changed = 3;\n"
+        );
+        const trackedEdit = await runAgentHook(temporary, "check", payload);
+        expect(trackedEdit.errors).toContain("lint checked");
+        await rm(path.join(temporary, "changed.ts"));
+        const deletion = await runAgentHook(temporary, "check", payload);
+        expect(deletion.errors).toContain("lint checked");
+      }
     } finally {
       await rm(temporary, { force: true, recursive: true });
     }
@@ -248,6 +382,44 @@ test.each([null, "lint", "test:types"])(
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+test.each(["oxlint.config.ts", "apps/chat/oxlint.config.ts"])(
+  "%s rejects unused suppressions but retains necessary ones",
+  async (source) => {
+    const temporary = await mkdtemp(
+      path.join(tmpdir(), "chatjs-unused-disable-")
+    );
+    try {
+      await writeConfig(temporary, source);
+      await writeFile(
+        path.join(temporary, "stale.ts"),
+        "// oxlint-disable-next-line no-debugger\nexport const value = 1;\n"
+      );
+      await writeFile(
+        path.join(temporary, "necessary.ts"),
+        "// oxlint-disable-next-line no-debugger\ndebugger;\n"
+      );
+      const flags =
+        source === "oxlint.config.ts"
+          ? []
+          : ["--report-unused-disable-directives-severity", "error"];
+      const stale = await runNative(temporary, "oxlint", [
+        "stale.ts",
+        ...flags,
+      ]);
+      expect(stale.exitCode).toBe(1);
+      expect(stale.output).toContain("Unused");
+      const necessary = await runNative(temporary, "oxlint", [
+        "necessary.ts",
+        ...flags,
+      ]);
+      expect(necessary.exitCode, necessary.output).toBe(0);
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
 
 const readEffectiveConfig = async (temporary: string, filename: string) => {
   const { output, exitCode } = await runNative(temporary, "oxlint", [
@@ -328,6 +500,7 @@ test.each(["", "apps/chat/"])(
       "tools/chatjs/installed-features.ts",
       "tools/chatjs/composer-tools.ts",
       "lib/ai/models.generated.ts",
+      "features/composer-icons.generated.ts",
       "next-env.d.ts",
       ".next/types/routes.ts",
       ".eve/worker.ts",

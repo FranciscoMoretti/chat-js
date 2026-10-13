@@ -334,7 +334,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(lintManifest).toMatchObject({
       devDependencies: { "oxlint-tsgolint": "7.0.2004" },
       scripts: {
-        lint: "next typegen . && ultracite check",
+        lint: "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error",
       },
     });
     const manifest = parsePackageJson(
@@ -658,7 +658,7 @@ describe("scaffoldFromTemplate", (): void => {
       expect(lintManifest).toMatchObject({
         devDependencies: { "oxlint-tsgolint": "7.0.2004" },
         scripts: {
-          lint: "next typegen . && ultracite check",
+          lint: "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error",
         },
       });
 

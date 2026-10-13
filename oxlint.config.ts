@@ -21,5 +21,5 @@ export default defineConfig({
     "**/.eve/**",
     "**/tests/eve-results/**",
   ],
-  options: { typeAware: true },
+  options: { reportUnusedDisableDirectives: "error", typeAware: true },
 });
