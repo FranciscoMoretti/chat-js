@@ -11,8 +11,10 @@ case "${1:-}" in
     exec bun run ultracite fix --hook
     ;;
   check)
-    bun run lint
-    bun run test:types
+    if ! bun run lint >&2 || ! bun run test:types >&2; then
+      exit 2
+    fi
+    printf '{}\n'
     ;;
   *)
     echo "Usage: $0 {edit|check}" >&2

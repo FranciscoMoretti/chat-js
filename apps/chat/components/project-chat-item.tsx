@@ -38,8 +38,10 @@ const updateCurrentTime = (): void => {
 
 const subscribeToTime = (listener: () => void): (() => void) => {
   timeListeners.add(listener);
-  updateCurrentTime();
-  clockInterval ??= setInterval(updateCurrentTime, 30_000);
+  if (timeListeners.size === 1) {
+    updateCurrentTime();
+    clockInterval = setInterval(updateCurrentTime, 30_000);
+  }
   return () => {
     timeListeners.delete(listener);
     if (timeListeners.size === 0) {

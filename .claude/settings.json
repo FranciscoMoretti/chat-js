@@ -6,8 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/ai-post-codegen.sh claude",
-            "async": true,
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/ai-post-codegen.sh edit",
             "timeout": 600
           }
         ]

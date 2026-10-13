@@ -109,7 +109,7 @@ const runAgentHook = async (
   }
 };
 
-test.each(["codex", "cursor"])(
+test.each(["codex", "cursor", "claude"])(
   "%s edit hook fixes only the edited file, even from a nested directory",
   async (host) => {
     const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-edit-hook-"));
@@ -121,16 +121,23 @@ test.each(["codex", "cursor"])(
         "export  const chosen={answer:42}\n"
       );
       await writeFile(path.join(temporary, "untouched.ts"), untouched);
-      const payload =
-        host === "codex"
-          ? {
-              hook_event_name: "PostToolUse",
-              tool_name: "apply_patch",
-              tool_input:
-                "*** Begin Patch\n*** Update File: edited.ts\n@@\n+export  const chosen={answer:42}\n*** End Patch",
-            }
-          : { file_path: path.join(temporary, "edited.ts") };
-      const result = await runAgentHook(temporary, "edit", payload);
+      const payloads = {
+        codex: {
+          hook_event_name: "PostToolUse",
+          tool_name: "apply_patch",
+          tool_input: {
+            command:
+              "*** Begin Patch\n*** Update File: edited.ts\n@@\n+export  const chosen={answer:42}\n*** End Patch",
+          },
+        },
+        claude: {
+          hook_event_name: "PostToolUse",
+          tool_name: "Edit",
+          tool_input: { file_path: path.join(temporary, "edited.ts") },
+        },
+        cursor: { file_path: path.join(temporary, "edited.ts") },
+      };
+      const result = await runAgentHook(temporary, "edit", payloads[host]);
       expect(result.exitCode, result.errors).toBe(0);
       expect(await readFile(path.join(temporary, "edited.ts"), "utf-8")).toBe(
         "export const chosen = { answer: 42 };\n"
@@ -195,9 +202,9 @@ test(
   testDeadlineMs
 );
 
-test(
-  "handoff hook runs lint and types without fixing files",
-  async () => {
+test.each([null, "lint", "test:types"])(
+  "handoff hook reports %s failures without fixing files",
+  async (failingScript) => {
     const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-check-hook-"));
     const untouched = "export  const untouched={answer:0}\n";
     try {
@@ -207,14 +214,30 @@ test(
         path.join(temporary, "package.json"),
         JSON.stringify({
           scripts: {
-            lint: "bun -e 'console.log(\"lint checked\")'",
-            "test:types": "bun -e 'console.log(\"types checked\")'",
+            lint:
+              failingScript === "lint"
+                ? "bun -e 'console.error(\"lint failed\"); process.exit(1)'"
+                : "bun -e 'console.log(\"lint checked\")'",
+            "test:types":
+              failingScript === "test:types"
+                ? "bun -e 'console.error(\"types failed\"); process.exit(1)'"
+                : "bun -e 'console.log(\"types checked\")'",
           },
         })
       );
       const result = await runAgentHook(temporary, "check", {});
-      expect(result.exitCode, result.errors).toBe(0);
-      expect(result.output).toBe("lint checked\ntypes checked\n");
+      expect(result.exitCode, result.errors).toBe(
+        failingScript === null ? 0 : 2
+      );
+      expect(result.output).toBe(failingScript === null ? "{}\n" : "");
+      expect(result.errors).toContain(
+        failingScript === "lint" ? "lint failed" : "lint checked"
+      );
+      if (failingScript !== "lint") {
+        expect(result.errors).toContain(
+          failingScript === "test:types" ? "types failed" : "types checked"
+        );
+      }
       expect(
         await readFile(path.join(temporary, "untouched.ts"), "utf-8")
       ).toBe(untouched);
