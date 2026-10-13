@@ -4,7 +4,7 @@ import { formatDistance } from "date-fns";
 
 import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import React, { useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,34 @@ import {
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
+
+// Share a sampled clock across rows and keep the hydration snapshot deterministic.
+let currentTime: number | null = null;
+const timeListeners = new Set<() => void>();
+let clockInterval: ReturnType<typeof setInterval> | undefined;
+
+const updateCurrentTime = (): void => {
+  currentTime = Date.now();
+  for (const listener of timeListeners) {
+    listener();
+  }
+};
+
+const subscribeToTime = (listener: () => void): (() => void) => {
+  timeListeners.add(listener);
+  updateCurrentTime();
+  clockInterval ??= setInterval(updateCurrentTime, 30_000);
+  return () => {
+    timeListeners.delete(listener);
+    if (timeListeners.size === 0) {
+      clearInterval(clockInterval);
+      clockInterval = undefined;
+    }
+  };
+};
+
+const getCurrentTime = (): number | null => currentTime;
+const getServerTime = (): null => null;
 
 export const ProjectChatItem = ({
   chat,
@@ -47,6 +75,11 @@ export const ProjectChatItem = ({
 }): ReactJSX.Element => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const referenceTime = useSyncExternalStore(
+    subscribeToTime,
+    getCurrentTime,
+    getServerTime
+  );
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
 
   const handleRename = async (title: string): Promise<void> => {
@@ -54,10 +87,16 @@ export const ProjectChatItem = ({
   };
 
   const lastMessageText =
-    chat.updatedAt !== undefined && chat.updatedAt !== ""
-      ? formatDistance(new Date(chat.updatedAt), new Date(), {
-          addSuffix: true,
-        })
+    referenceTime !== null &&
+    chat.updatedAt !== undefined &&
+    chat.updatedAt !== ""
+      ? formatDistance(
+          new Date(chat.updatedAt),
+          Math.max(referenceTime, new Date(chat.updatedAt).getTime()),
+          {
+            addSuffix: true,
+          }
+        )
       : "";
 
   return (

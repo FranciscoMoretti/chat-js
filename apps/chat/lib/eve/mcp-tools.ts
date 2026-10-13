@@ -36,9 +36,7 @@ const MCP_APPROVAL_TIMEOUT_MS = 30_000;
 const MAXIMUM_VALIDATION_ERRORS = 3;
 type ValidatedMcpTool<NativeTool> = NativeTool extends Tool
   ? Omit<NativeTool, "inputSchema"> & {
-      inputSchema: ReturnType<
-        typeof jsonSchema<Record<string, NonNullable<unknown>>>
-      >;
+      inputSchema: ReturnType<typeof jsonSchema<Record<string, unknown>>>;
     }
   : never;
 

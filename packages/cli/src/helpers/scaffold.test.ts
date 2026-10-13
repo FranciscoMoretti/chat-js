@@ -332,7 +332,7 @@ describe("scaffoldFromTemplate", (): void => {
       await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     expect(lintManifest).toMatchObject({
-      devDependencies: { "oxlint-tsgolint": "7.0.2001" },
+      devDependencies: { "oxlint-tsgolint": "7.0.2004" },
       scripts: {
         lint: "next typegen . && ultracite check",
       },
@@ -656,7 +656,7 @@ describe("scaffoldFromTemplate", (): void => {
         await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
       );
       expect(lintManifest).toMatchObject({
-        devDependencies: { "oxlint-tsgolint": "7.0.2001" },
+        devDependencies: { "oxlint-tsgolint": "7.0.2004" },
         scripts: {
           lint: "next typegen . && ultracite check",
         },

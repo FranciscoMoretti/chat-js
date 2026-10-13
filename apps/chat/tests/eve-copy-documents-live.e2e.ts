@@ -27,7 +27,7 @@ type HistorySeedEventReader =
   | Readonly<{
       type: "history.seeded";
       data: Readonly<{
-        messages: readonly Readonly<Record<never, never>>[];
+        messages: readonly unknown[];
       }>;
     }>
   | Readonly<{

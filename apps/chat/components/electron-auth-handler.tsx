@@ -170,27 +170,27 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
     };
+    const syncAuthenticatedSession = async (): Promise<void> => {
+      try {
+        await syncAndRefresh();
+      } catch (error) {
+        console.error(
+          "Failed to sync auth session after authentication",
+          error
+        );
+      }
+    };
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
-      const syncAuthenticatedSession = async (): Promise<void> => {
-        try {
-          await syncAndRefresh();
-        } catch (error) {
-          console.error(
-            "Failed to sync auth session after authentication",
-            error
-          );
-        }
-      };
       void syncAuthenticatedSession();
     });
+    const syncUpdatedUser = async (): Promise<void> => {
+      try {
+        await syncAndRefresh();
+      } catch (error) {
+        console.error("Failed to sync auth session after user update", error);
+      }
+    };
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
-      const syncUpdatedUser = async (): Promise<void> => {
-        try {
-          await syncAndRefresh();
-        } catch (error) {
-          console.error("Failed to sync auth session after user update", error);
-        }
-      };
       void syncUpdatedUser();
     });
     const unsubscribeAuthError = window.onAuthError(

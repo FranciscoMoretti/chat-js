@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
@@ -53,6 +60,170 @@ const writeConfig = async (temporary: string, source: string) => {
     `import config from ${JSON.stringify(path.join(root, source))};\nexport default { ...config, options: { typeAware: false } };\n`
   );
 };
+
+const writeHookFixture = async (temporary: string): Promise<void> => {
+  await mkdir(path.join(temporary, "scripts"));
+  await writeFile(
+    path.join(temporary, "scripts/ai-post-codegen.sh"),
+    await readFile(path.join(root, "scripts/ai-post-codegen.sh"), "utf-8")
+  );
+  await symlink(
+    path.join(root, "node_modules"),
+    path.join(temporary, "node_modules")
+  );
+  await writeConfig(temporary, "oxlint.config.ts");
+  await writeFile(
+    path.join(temporary, "oxfmt.config.ts"),
+    `import config from ${JSON.stringify(path.join(root, "oxfmt.config.ts"))};\nexport default config;\n`
+  );
+};
+
+const runAgentHook = async (
+  temporary: string,
+  mode: "edit" | "check",
+  payload: unknown
+): Promise<{ exitCode: number; output: string; errors: string }> => {
+  const child = Bun.spawn(
+    ["bash", path.join(temporary, "scripts/ai-post-codegen.sh"), mode],
+    {
+      cwd: path.join(temporary, "scripts"),
+      stdin: new Blob([JSON.stringify(payload)]),
+      stdout: "pipe",
+      stderr: "pipe",
+    }
+  );
+  const deadline = setTimeout(() => {
+    child.kill("SIGKILL");
+  }, childDeadlineMs);
+  try {
+    const [output, errors, exitCode] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ]);
+    return { errors, exitCode, output };
+  } finally {
+    clearTimeout(deadline);
+    child.kill("SIGKILL");
+    await child.exited;
+  }
+};
+
+test.each(["codex", "cursor"])(
+  "%s edit hook fixes only the edited file, even from a nested directory",
+  async (host) => {
+    const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-edit-hook-"));
+    const untouched = "export  const untouched={answer:0}\n";
+    try {
+      await writeHookFixture(temporary);
+      await writeFile(
+        path.join(temporary, "edited.ts"),
+        "export  const chosen={answer:42}\n"
+      );
+      await writeFile(path.join(temporary, "untouched.ts"), untouched);
+      const payload =
+        host === "codex"
+          ? {
+              hook_event_name: "PostToolUse",
+              tool_name: "apply_patch",
+              tool_input:
+                "*** Begin Patch\n*** Update File: edited.ts\n@@\n+export  const chosen={answer:42}\n*** End Patch",
+            }
+          : { file_path: path.join(temporary, "edited.ts") };
+      const result = await runAgentHook(temporary, "edit", payload);
+      expect(result.exitCode, result.errors).toBe(0);
+      expect(await readFile(path.join(temporary, "edited.ts"), "utf-8")).toBe(
+        "export const chosen = { answer: 42 };\n"
+      );
+      expect(
+        await readFile(path.join(temporary, "untouched.ts"), "utf-8")
+      ).toBe(untouched);
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+
+test(
+  "deletion-only hooks do not fall back to fixing the whole repository",
+  async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-delete-hook-"));
+    const untouched = "export  const untouched={answer:0}\n";
+    try {
+      await writeHookFixture(temporary);
+      await writeFile(path.join(temporary, "untouched.ts"), untouched);
+      const result = await runAgentHook(temporary, "edit", {
+        hook_event_name: "PostToolUse",
+        tool_name: "apply_patch",
+        tool_input:
+          "*** Begin Patch\n*** Delete File: deleted.ts\n*** End Patch",
+      });
+      expect(result.exitCode, result.errors).toBe(0);
+      expect(
+        await readFile(path.join(temporary, "untouched.ts"), "utf-8")
+      ).toBe(untouched);
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+
+test(
+  "Codex receives remaining lint errors through hook stderr and exit code 2",
+  async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-error-hook-"));
+    try {
+      await writeHookFixture(temporary);
+      await writeFile(
+        path.join(temporary, "edited.ts"),
+        "export const execute = (source: string): unknown => eval(source);\n"
+      );
+      const result = await runAgentHook(temporary, "edit", {
+        hook_event_name: "PostToolUse",
+        tool_name: "apply_patch",
+        tool_input:
+          "*** Begin Patch\n*** Update File: edited.ts\n@@\n+eval(source);\n*** End Patch",
+      });
+      expect(result.exitCode, result.errors).toBe(2);
+      expect(result.errors).toContain("no-eval");
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+
+test(
+  "handoff hook runs lint and types without fixing files",
+  async () => {
+    const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-check-hook-"));
+    const untouched = "export  const untouched={answer:0}\n";
+    try {
+      await writeHookFixture(temporary);
+      await writeFile(path.join(temporary, "untouched.ts"), untouched);
+      await writeFile(
+        path.join(temporary, "package.json"),
+        JSON.stringify({
+          scripts: {
+            lint: "bun -e 'console.log(\"lint checked\")'",
+            "test:types": "bun -e 'console.log(\"types checked\")'",
+          },
+        })
+      );
+      const result = await runAgentHook(temporary, "check", {});
+      expect(result.exitCode, result.errors).toBe(0);
+      expect(result.output).toBe("lint checked\ntypes checked\n");
+      expect(
+        await readFile(path.join(temporary, "untouched.ts"), "utf-8")
+      ).toBe(untouched);
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);

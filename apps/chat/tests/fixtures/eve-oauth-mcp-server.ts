@@ -68,6 +68,14 @@ const sendJson = (
     .end(JSON.stringify(value));
 };
 
+const sendMcpResult = (
+  response: ServerResponse,
+  id: string | number,
+  result: unknown
+): void => {
+  sendJson(response, 200, { id, jsonrpc: "2.0", result });
+};
+
 /**
  * Starts an OAuth-protected Streamable HTTP MCP server for local Eve tests.
  * The authorization endpoint immediately redirects to the registered callback.
@@ -233,14 +241,6 @@ export const startEveOAuthMcpServer = async (): Promise<EveOAuthMcpServer> => {
       return;
     }
     sendJson(response, 400, { error: "unsupported_grant_type" });
-  };
-
-  const sendMcpResult = (
-    response: ServerResponse,
-    id: string | number,
-    result: unknown
-  ): void => {
-    sendJson(response, 200, { id, jsonrpc: "2.0", result });
   };
 
   const handleMcp = async (

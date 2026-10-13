@@ -49,11 +49,11 @@ beforeEach(() => {
   mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({});
   mocks.create.mockResolvedValue({ close: mocks.close, tools: mocks.tools });
-  mocks.provider.mockImplementation(
-    function provider(this: { fetch: typeof fetch }) {
-      this.fetch = vi.fn<typeof fetch>();
-    }
-  );
+  mocks.provider.mockImplementation(function provider(this: {
+    fetch: typeof fetch;
+  }) {
+    this.fetch = vi.fn<typeof fetch>();
+  });
 });
 it("connects, discovers and closes without web cache dependencies", async () => {
   const client = new MCPClient("id", "Test", {

@@ -3,6 +3,8 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
+const COPYRIGHT_YEAR = new Date().getFullYear();
+
 const PRODUCT_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   { href: siteLinks.threads, label: "Threads" },
   { href: siteLinks.demo, label: "Demo" },
@@ -103,8 +105,8 @@ export const Footer = (): React.JSX.Element => (
       {/* Bottom bar */}
       <div className="border-border/40 mt-12 border-t pt-6">
         <p className="text-foreground/65 text-sm">
-          &copy; {new Date().getFullYear()} ChatJS. Open source under the Apache
-          2.0 license.
+          &copy; {COPYRIGHT_YEAR} ChatJS. Open source under the Apache 2.0
+          license.
         </p>
       </div>
     </div>
