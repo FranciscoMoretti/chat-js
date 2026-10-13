@@ -35,32 +35,22 @@ export const admitGuestResponseGroup = async (
     input.operationId,
     input.modelIds
   );
-  const inputs: Parameters<typeof reserveEveGuestMessages>[0][number][] = [];
-  for (const candidate of candidates) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Validate candidates in input order and return the first policy/ownership Response before any atomic group reservation; do not invoke later validators after rejection.
-    const ipHash = await validateGuestCreation(request, principal, {
-      ...candidate,
-      fork: input.fork,
-      message: input.message,
-      projectId: input.projectId,
-      selectedTool: input.selectedTool,
-    });
-    if (ipHash instanceof Response) {
-      return ipHash;
-    }
-    inputs.push({
-      ipHash,
-      operationId: candidate.operationId,
-      ownerId: principal.ownerId,
-      requestHash: createHash("sha256")
-        .update(
-          JSON.stringify({ group: input, candidate: candidate.operationId })
-        )
-        .digest("hex"),
-      requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
-      requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
-    });
+  const ipHash = await validateGuestCreation(request, principal, input);
+  if (ipHash instanceof Response) {
+    return ipHash;
   }
+  const inputs = candidates.map((candidate) => ({
+    ipHash,
+    operationId: candidate.operationId,
+    ownerId: principal.ownerId,
+    requestHash: createHash("sha256")
+      .update(
+        JSON.stringify({ group: input, candidate: candidate.operationId })
+      )
+      .digest("hex"),
+    requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
+    requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
+  }));
   const result = await reserveEveGuestMessages(
     inputs,
     {

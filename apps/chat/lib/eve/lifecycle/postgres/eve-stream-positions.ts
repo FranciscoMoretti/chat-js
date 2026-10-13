@@ -36,7 +36,7 @@ const readEvePostgresStreamPositions = async (
     offset += STREAM_POSITION_BATCH_SIZE
   ) {
     const rows = positionRows.parse(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Issue at most STREAM_POSITION_BATCH_SIZE authorized names per query on the supplied connection; stop on a failed batch and preserve result insertion order.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bounded resources: the adapter opens a max: 1 pool and also accepts transaction connections; run one 500-name statement at a time instead of queuing every inventory batch on that connection.
       await connection`
       select stream_id as "streamId",
         count(*) filter (where eof = false) as length

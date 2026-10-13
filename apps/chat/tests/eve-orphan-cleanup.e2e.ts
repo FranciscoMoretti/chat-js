@@ -1,17 +1,21 @@
 import { createEveTestSession } from "./eve-native-session.fixture";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+import postgres from "postgres";
 import { expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
+import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
 import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
 import { createEveConversation } from "../lib/db/eve-queries";
 import {
   eveConversation,
+  eveChat,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+import { env } from "../lib/env";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 // Keep this as the final static import to preserve prior dependency evaluation order.
@@ -118,5 +122,101 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
     await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, owner));
     await db.delete(user).where(eq(user.id, owner));
+  }
+});
+
+test("a multi-owner fence waits for family writers and rechecks references before committing", async () => {
+  const owners = [crypto.randomUUID(), crypto.randomUUID()];
+  const keys = [crypto.randomUUID(), crypto.randomUUID()];
+  const conversationId = crypto.randomUUID();
+  const cutoff = new Date("2026-01-01");
+  const query = postgres(env.DATABASE_URL, { max: 2 });
+  let pendingPurge: ReturnType<typeof prepareEveOrphanedFilePurge> | undefined;
+  await db.insert(user).values(
+    owners.map((id) => ({
+      email: `${id}@test.invalid`,
+      id,
+      name: "Multi-owner orphan fixture",
+    }))
+  );
+  try {
+    await db.insert(eveChat).values({
+      id: conversationId,
+      ownerId: owners[1],
+      title: "Retain attachment",
+    });
+    await db.insert(eveConversation).values({
+      chatId: conversationId,
+      id: conversationId,
+      ownerId: owners[1],
+      firstMessage: "Retain attachment",
+      operationId: conversationId,
+      sessionId: conversationId,
+      state: "bound",
+    });
+    await db.insert(eveStoredFile).values(
+      keys.map((key, index) => ({
+        createdAt: new Date("2025-01-01"),
+        key,
+        ownerId: owners[index],
+      }))
+    );
+    await query.begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[1]}`}, 0))`;
+      pendingPurge = prepareEveOrphanedFilePurge(keys, cutoff);
+      // Keep a rejection observed while this transaction deliberately blocks it.
+      void pendingPurge.catch(() => {
+        // Assert the original promise after this transaction releases its lock.
+      });
+      await expect
+        .poll(async () => {
+          const rows = await query<
+            { waiting: number }[]
+          >`select count(*)::int as waiting from pg_locks
+          where locktype = 'advisory' and not granted`;
+          return rows[0].waiting;
+        })
+        .toBe(1);
+      await tx`insert into "EveFileReference" ("conversationId", "key", "ownerId")
+        values (${conversationId}, ${keys[1]}, ${owners[1]})`;
+    });
+    await expect(pendingPurge).resolves.toEqual([
+      { key: keys[0], ownerId: owners[0] },
+    ]);
+    const files = await db
+      .select({ key: eveStoredFile.key, state: eveStoredFile.state })
+      .from(eveStoredFile)
+      .where(inArray(eveStoredFile.key, keys));
+    expect(files).toEqual(
+      expect.arrayContaining([
+        { key: keys[0], state: "deleting" },
+        { key: keys[1], state: "active" },
+      ])
+    );
+    await expect(
+      Promise.all([
+        prepareEveOrphanedFilePurge(keys, cutoff),
+        prepareEveOrphanedFilePurge(keys.toReversed(), cutoff),
+      ])
+    ).resolves.toEqual([
+      [{ key: keys[0], ownerId: owners[0] }],
+      [{ key: keys[0], ownerId: owners[0] }],
+    ]);
+  } finally {
+    await pendingPurge?.catch(() => {
+      // Drain any failed purge before removing its fixtures.
+    });
+    await db
+      .delete(eveFileReference)
+      .where(inArray(eveFileReference.ownerId, owners));
+    await db
+      .delete(eveConversation)
+      .where(eq(eveConversation.id, conversationId));
+    await db.delete(eveChat).where(eq(eveChat.id, conversationId));
+    await db
+      .delete(eveStoredFile)
+      .where(inArray(eveStoredFile.ownerId, owners));
+    await db.delete(user).where(inArray(user.id, owners));
+    await query.end();
   }
 });

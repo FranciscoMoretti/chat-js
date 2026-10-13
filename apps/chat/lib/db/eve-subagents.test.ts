@@ -30,15 +30,18 @@ beforeAll(async () => {
         )
       )
     );
-  for (const entry of journal.entries) {
+  const migrations = await Promise.all(
+    journal.entries.map(
+      async (entry) =>
+        await readFile(
+          new URL(`migrations/${entry.tag}.sql`, import.meta.url),
+          "utf-8"
+        )
+    )
+  );
+  for (const migration of migrations) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-    await postgres.exec(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-      await readFile(
-        new URL(`migrations/${entry.tag}.sql`, import.meta.url),
-        "utf-8"
-      )
-    );
+    await postgres.exec(migration);
   }
   await postgres.exec(
     `insert into "user" (id,name,email) values ('owner','owner','owner'), ('other','other','other')`

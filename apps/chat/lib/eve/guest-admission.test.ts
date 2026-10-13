@@ -3,6 +3,7 @@ import {
   guestRequestIpHash,
   settleGuestCreation,
 } from "./guest-admission";
+import { admitGuestResponseGroup } from "./guest-group-admission";
 import { beforeEach, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import type { assertEveFilesOwned } from "../db/eve-files";
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   },
   existing: vi.fn(),
   files: vi.fn<typeof assertEveFilesOwned>(),
+  group: vi.fn(),
   model: vi.fn<typeof loadEveModelDefinition>(),
   release: vi.fn(),
   reserve: vi.fn(),
@@ -26,7 +28,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
-    AVAILABLE_MODELS: ["cheap"],
+    AVAILABLE_MODELS: ["cheap", "other-cheap"],
     AVAILABLE_TOOLS: [],
     CREDITS: 10,
     RATE_LIMIT: { REQUESTS_PER_MINUTE: 5, REQUESTS_PER_MONTH: 10 },
@@ -38,6 +40,10 @@ vi.mock("../db/eve-guests", () => ({
   readExistingEveGuestMessage: mocks.existing,
   releaseEveGuestCreation: mocks.release,
   reserveEveGuestMessage: mocks.reserve,
+  reserveEveGuestMessages: mocks.group,
+}));
+vi.mock("../db/eve-response-groups", () => ({
+  reserveEveResponseGroupInTransaction: vi.fn(),
 }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.source,
@@ -88,6 +94,11 @@ beforeEach(() => {
   mocks.reserve.mockResolvedValue({
     reservationId: "attempt",
     status: "reserved",
+  });
+  mocks.group.mockResolvedValue({
+    admission: { id: input.operationId },
+    reservations: [],
+    status: "admitted",
   });
 });
 
@@ -162,6 +173,83 @@ it("checks guest policy and ownership before reserving account/quota", async () 
     Response
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
+});
+
+it("checks a comparison's shared ownership once and each distinct guest model before reserving", async () => {
+  const sourceId = crypto.randomUUID();
+  mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
+  await expect(
+    admitGuestResponseGroup(request, principal, {
+      fork: { beforeTurnId: "turn_1", conversationId: sourceId },
+      message: input.message,
+      modelIds: ["cheap", "other-cheap", "cheap"],
+      operationId: input.operationId,
+    })
+  ).resolves.toEqual({
+    group: { id: input.operationId },
+    reservations: [],
+  });
+  expect(mocks.source).toHaveBeenCalledExactlyOnceWith("guest", sourceId);
+  expect(mocks.files).toHaveBeenCalledExactlyOnceWith("guest", []);
+  expect(mocks.model.mock.calls).toEqual([["cheap"], ["other-cheap"]]);
+  expect(mocks.group).toHaveBeenCalledWith(
+    [
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+    ],
+    expect.any(Object),
+    expect.any(Function)
+  );
+});
+
+it("does not reserve a comparison when any model, source, or attachment is unavailable", async () => {
+  const groupInput = {
+    message: input.message,
+    modelIds: ["cheap", "premium"],
+    operationId: input.operationId,
+  };
+  expect(
+    await admitGuestResponseGroup(request, principal, groupInput)
+  ).toBeInstanceOf(Response);
+  expect(mocks.model).not.toHaveBeenCalled();
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  mocks.model.mockRejectedValueOnce(new Error("model unavailable"));
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["other-cheap", "cheap"],
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["cheap", "cheap"],
+      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  mocks.files.mockRejectedValueOnce(new Error("attachment not owned"));
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["cheap", "cheap"],
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
 });
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({

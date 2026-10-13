@@ -92,7 +92,7 @@ const guestRequestIpHash = (
  * Checks guest policy, source ownership, and model/file availability before quota reservation.
  * @param {ReadonlyNativeSurface<Request>} request Request used to resolve the trusted client-address hash.
  * @param {Readonly< Extract< EvePrincipal, { kind: "guest"; } > >} principal Guest ownership and credential identity used for source/file checks.
- * @param {ReadonlyGuestCreationInput} input Creation request whose model, tool, project, fork, and attachments are validated.
+ * @param {Omit<ReadonlyGuestCreationInput, "modelId" | "operationId"> & { readonly modelIds: readonly string[] }} input Shared creation intent and the models that must all pass preflight.
  * @returns {Promise<string | Response>} The trusted IP hash, or a response rejecting the request before quota is reserved.
  */
 const validateGuestCreation = async (
@@ -105,12 +105,14 @@ const validateGuestCreation = async (
       }
     >
   >,
-  input: ReadonlyGuestCreationInput
+  input: Omit<ReadonlyGuestCreationInput, "modelId" | "operationId"> & {
+    readonly modelIds: readonly string[];
+  }
 ): Promise<string | Response> => {
   if (
     (typeof input.projectId === "string" && input.projectId !== "") ||
-    !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
-      (model) => model === input.modelId
+    !input.modelIds.every((modelId) =>
+      ANONYMOUS_LIMITS.AVAILABLE_MODELS.some((model) => model === modelId)
     ) ||
     (input.selectedTool &&
       !ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
@@ -152,7 +154,12 @@ const validateGuestCreation = async (
     );
   }
   try {
-    await loadEveModelDefinition(input.modelId);
+    // Policy limits the distinct reads to the configured guest model inventory.
+    await Promise.all(
+      [...new Set(input.modelIds)].map(
+        async (modelId) => await loadEveModelDefinition(modelId)
+      )
+    );
     await assertEveFilesOwned(
       principal.ownerId,
       eveMessageFileKeys(input.message)
@@ -210,7 +217,10 @@ const admitGuestCreation = async (
     }
     return { reservationId: existing.reservationId, status: "replay" } as const;
   }
-  const ipHash = await validateGuestCreation(request, principal, input);
+  const ipHash = await validateGuestCreation(request, principal, {
+    ...input,
+    modelIds: [input.modelId ?? ""],
+  });
   if (ipHash instanceof Response) {
     return ipHash;
   }

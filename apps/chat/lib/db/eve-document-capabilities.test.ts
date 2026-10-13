@@ -39,12 +39,14 @@ beforeAll(async (): Promise<void> => {
   const migrationDirectory = new URL("migrations/", import.meta.url);
   const entries = await readdir(migrationDirectory);
   const filenames = entries.filter((name) => name.endsWith(".sql")).toSorted();
-  for (const name of filenames) {
+  const migrations = await Promise.all(
+    filenames.map(
+      async (name) => await readFile(new URL(name, migrationDirectory), "utf-8")
+    )
+  );
+  for (const migration of migrations) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Apply each checked-in migration after its predecessor so dependent SQL schema objects exist before the next migration and document fixtures.
-    await postgres.exec(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply each checked-in migration after its predecessor so dependent SQL schema objects exist before the next migration and document fixtures.
-      await readFile(new URL(name, migrationDirectory), "utf-8")
-    );
+    await postgres.exec(migration);
   }
   await database.insert(user).values({
     email: "documents@example.test",
@@ -189,6 +191,12 @@ it("rolls back legacy fork head insertion when any ancestry contains a manual re
   const manual = await saveEveDocumentRevision(
     revisionInput(parentId, manualDocumentId)
   );
+  await saveEveDocumentRevision({
+    ...revisionInput(parentId, manualDocumentId),
+    expectedRevisionId: manual.id,
+    operationId: crypto.randomUUID(),
+    turnIndex: NEXT_TURN_INDEX,
+  });
   await database
     .update(eveDocumentRevision)
     .set({ turnIndex: null })
@@ -205,6 +213,88 @@ it("rolls back legacy fork head insertion when any ancestry contains a manual re
   await expect(
     initializeEveForkDocuments("document-owner", childId)
   ).rejects.toThrow("Document checkpoint is not ready. Retry this fork.");
+  const heads = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, childId));
+  expect(heads).toEqual([]);
+});
+
+it("selects the nearest pre-turn legacy revision and omits documents created at the fork boundary", async () => {
+  const parentId = crypto.randomUUID();
+  const childId = crypto.randomUUID();
+  await seedConversation(parentId);
+  await seedConversation(childId);
+  const documentId = crypto.randomUUID();
+  const first = await saveEveDocumentRevision(
+    revisionInput(parentId, documentId)
+  );
+  const selected = await saveEveDocumentRevision({
+    ...revisionInput(parentId, documentId),
+    expectedRevisionId: first.id,
+    operationId: crypto.randomUUID(),
+  });
+  await saveEveDocumentRevision({
+    ...revisionInput(parentId, documentId),
+    expectedRevisionId: selected.id,
+    operationId: crypto.randomUUID(),
+    turnIndex: NEXT_TURN_INDEX,
+  });
+  await saveEveDocumentRevision({
+    ...revisionInput(parentId, crypto.randomUUID()),
+    turnIndex: NEXT_TURN_INDEX,
+  });
+  await database
+    .update(eveConversation)
+    .set({
+      chatId: parentId,
+      parentConversationId: parentId,
+      rootConversationId: parentId,
+      forkTurnId: "turn_1",
+    })
+    .where(eq(eveConversation.id, childId));
+
+  await initializeEveForkDocuments("document-owner", childId);
+  const heads = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, childId));
+  expect(heads).toEqual([
+    expect.objectContaining({ documentId, revisionId: selected.id }),
+  ]);
+});
+
+it("rejects cyclic legacy ancestry without inserting any fork heads", async () => {
+  const parentId = crypto.randomUUID();
+  const childId = crypto.randomUUID();
+  await seedConversation(parentId);
+  await seedConversation(childId);
+  const revision = await saveEveDocumentRevision(
+    revisionInput(parentId, crypto.randomUUID())
+  );
+  const head = await saveEveDocumentRevision({
+    ...revisionInput(parentId, revision.documentId),
+    expectedRevisionId: revision.id,
+    operationId: crypto.randomUUID(),
+    turnIndex: NEXT_TURN_INDEX,
+  });
+  await database
+    .update(eveDocumentRevision)
+    .set({ parentRevisionId: head.id })
+    .where(eq(eveDocumentRevision.id, revision.id));
+  await database
+    .update(eveConversation)
+    .set({
+      chatId: parentId,
+      parentConversationId: parentId,
+      rootConversationId: parentId,
+      forkTurnId: "turn_1",
+    })
+    .where(eq(eveConversation.id, childId));
+
+  await expect(
+    initializeEveForkDocuments("document-owner", childId)
+  ).rejects.toThrow("Document history could not be loaded.");
   const heads = await database
     .select()
     .from(eveDocumentHead)

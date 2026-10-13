@@ -38,20 +38,30 @@ const tables = [
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
 afterAll(async () => {
-  /* oxlint-disable eslint/no-await-in-loop -- Teardown removes dependent workflow table rows in their declared order before run deletion. */
-  for (const table of tables) {
-    await query`delete from ${query(`workflow.${table}`)} where run_id in ${query(runIds)}`;
+  try {
+    // Drain the six independent payload deletes before run deletion or pool closure.
+    const deletions = await Promise.allSettled(
+      tables.map(
+        (table) =>
+          query`delete from ${query(`workflow.${table}`)} where run_id in ${query(runIds)}`
+      )
+    );
+    const failed = deletions.find((result) => result.status === "rejected");
+    if (failed) {
+      const reason: unknown = failed.reason;
+      throw reason;
+    }
+    await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
+    await query`delete from workflow.eve_sandbox_coverage where session_id in ${query(runIds)}`;
+    await query`delete from workflow.eve_session_retirements where session_id in ${query(runIds)}`;
+    await query`delete from workflow.eve_payload_purges where task_identifier = ${task}`;
+    await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
+    await query`delete from workflow.eve_queue_tasks where identifier = ${task}`;
+    await query`delete from graphile_worker._private_tasks where identifier = ${task}`;
+    await query`delete from workflow.eve_resource_fences where resource in ${query(runIds.flatMap((id) => [`run:${id}`, `stream:${id}`]))}`;
+  } finally {
+    await query.end();
   }
-  /* oxlint-enable eslint/no-await-in-loop */
-  await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
-  await query`delete from workflow.eve_sandbox_coverage where session_id in ${query(runIds)}`;
-  await query`delete from workflow.eve_session_retirements where session_id in ${query(runIds)}`;
-  await query`delete from workflow.eve_payload_purges where task_identifier = ${task}`;
-  await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
-  await query`delete from workflow.eve_queue_tasks where identifier = ${task}`;
-  await query`delete from graphile_worker._private_tasks where identifier = ${task}`;
-  await query`delete from workflow.eve_resource_fences where resource in ${query(runIds.flatMap((id) => [`run:${id}`, `stream:${id}`]))}`;
-  await query.end();
 });
 
 const fixture = async (parent?: string): Promise<string> => {
