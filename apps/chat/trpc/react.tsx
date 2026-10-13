@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClientProvider, environmentManager } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import type { AppRouter } from "@/trpc/routers/_app";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -49,37 +49,39 @@ const TRPCReactProvider = (props: {
 }): React.JSX.Element => {
   const queryClient = getQueryClient();
 
-  // A state initializer creates the client lazily and preserves identity for this provider mount.
-  // A ref initializer requires render-time `.current` access under the effective react/refs rule; useMemo does not guarantee resource identity.
-  // oxlint-disable-next-line react/hook-use-state -- Keep this mounted TRPC client stable under the active render-time ref restriction.
-  const [trpcClient] = useState(() =>
-    createTRPCClient<AppRouter>({
-      links: [
-        loggerLink({
-          enabled: (op: {
-            readonly direction: string;
-            readonly result?: unknown;
-          }): boolean => {
-            if (op.direction === "down" && isAbortedRequest(op.result)) {
-              return false;
-            }
-            return (
-              process.env.NODE_ENV === "development" ||
-              (op.direction === "down" && op.result instanceof Error)
-            );
-          },
-        }),
-        httpBatchLink({
-          headers: () => {
-            const headers = new Headers();
-            headers.set("x-trpc-source", "nextjs-react");
-            return headers;
-          },
-          transformer: superjson,
-          url: getUrl(),
-        }),
-      ],
-    })
+  // Memoization avoids rebuilding transport links on ordinary rerenders. Cache
+  // ownership stays with queryClient; existing requests retain their own links
+  // and remain valid if React discards this memoized client.
+  const trpcClient = useMemo(
+    () =>
+      createTRPCClient<AppRouter>({
+        links: [
+          loggerLink({
+            enabled: (op: {
+              readonly direction: string;
+              readonly result?: unknown;
+            }): boolean => {
+              if (op.direction === "down" && isAbortedRequest(op.result)) {
+                return false;
+              }
+              return (
+                process.env.NODE_ENV === "development" ||
+                (op.direction === "down" && op.result instanceof Error)
+              );
+            },
+          }),
+          httpBatchLink({
+            headers: () => {
+              const headers = new Headers();
+              headers.set("x-trpc-source", "nextjs-react");
+              return headers;
+            },
+            transformer: superjson,
+            url: getUrl(),
+          }),
+        ],
+      }),
+    []
   );
 
   return (

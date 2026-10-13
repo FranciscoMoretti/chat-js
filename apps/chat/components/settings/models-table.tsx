@@ -92,10 +92,8 @@ export const ModelsTable = ({
     return enabled;
   }, [allModels, preferences]);
 
-  // Capture the initial enabled-first ordering for this table's lifetime.
-
-  // oxlint-disable-next-line react/hook-use-state -- models-table.browser proves initial ordering survives preference updates and resets only on remount; this intentionally immutable mounted snapshot needs no setter.
-  const [initialSort] = useState<readonly AppModelId[]>(() => {
+  // Keep existing rows in place when preferences change, including during saves.
+  const [modelOrder, setModelOrder] = useState<readonly AppModelId[]>(() => {
     const enabledSet = new Set(
       enabledModels.map((model: { readonly id: AppModelId }) => model.id)
     );
@@ -108,19 +106,36 @@ export const ModelsTable = ({
         .map((model: { readonly id: AppModelId }) => model.id),
     ];
   });
-  const sortedModels = useMemo(() => {
-    const modelMap = new Map(
-      allModels.map(
-        (model: ReadonlyNativeSurface<(typeof allModels)[number]>) => [
-          model.id,
-          model,
-        ]
-      )
-    );
-    return initialSort
-      .map((id) => modelMap.get(id))
-      .filter((model) => model !== undefined);
-  }, [allModels, initialSort]);
+  const modelMap = useMemo(
+    () =>
+      new Map(
+        allModels.map(
+          (model: ReadonlyNativeSurface<(typeof allModels)[number]>) => [
+            model.id,
+            model,
+          ]
+        )
+      ),
+    [allModels]
+  );
+  const orderedIds = new Set(modelOrder);
+  const addedModels = allModels.filter((model) => !orderedIds.has(model.id));
+  if (addedModels.length > 0 || modelOrder.some((id) => !modelMap.has(id))) {
+    // Reconcile a refreshed catalog before children render. This guarded state
+    // update removes unavailable models and appends new ones without moving
+    // the surviving rows or mutating a ref during render.
+    setModelOrder([
+      ...modelOrder.filter((id) => modelMap.has(id)),
+      ...addedModels.map((model) => model.id),
+    ]);
+  }
+  const sortedModels = useMemo(
+    () =>
+      modelOrder
+        .map((id) => modelMap.get(id))
+        .filter((model) => model !== undefined),
+    [modelMap, modelOrder]
+  );
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
