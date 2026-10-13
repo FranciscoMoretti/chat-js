@@ -3,7 +3,6 @@ import fs, {
   mkdtemp,
   readFile,
   readdir,
-  rm,
   writeFile,
 } from "node:fs/promises";
 import type { ReadonlyInput } from "../../cli/src/helpers/readonly-input";
@@ -40,6 +39,7 @@ const NO_FORMATTING_ERRORS = 0;
 const URL_PATH_PREFIX_WIDTH = 1;
 const NO_ROLLBACK_FAILURES = 0;
 const NO_FILE_CHANGES = 0;
+const DEMO_STAGING_CONCURRENCY = 4;
 const CLI_ARGUMENTS_OFFSET = 2;
 
 const registryRoot = path.resolve(import.meta.dir, "..");
@@ -286,6 +286,7 @@ const replaceDemoFiles = async (
   updates: readonly DemoWrite[]
 ): Promise<void> => {
   const staged: {
+    order: number;
     target: string;
     directory: string;
     exists: boolean;
@@ -294,17 +295,37 @@ const replaceDemoFiles = async (
   }[] = [];
   let retainBackups = false;
   try {
-    for (const update of updates) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Stage all outputs before replacing any destination.
-      await mkdir(path.dirname(update.target), { recursive: true });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Temporary files must share the destination filesystem.
-      const directory = await mkdtemp(
-        path.join(path.dirname(update.target), ".demo-sync-")
+    for (
+      let offset = 0;
+      offset < updates.length;
+      offset += DEMO_STAGING_CONCURRENCY
+    ) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound staging to four files and drain every allocated write before rollback/cleanup can begin.
+      const batch = await Promise.allSettled(
+        updates
+          .slice(offset, offset + DEMO_STAGING_CONCURRENCY)
+          .map(async (update, index) => {
+            await fs.mkdir(path.dirname(update.target), { recursive: true });
+            const directory = await fs.mkdtemp(
+              path.join(path.dirname(update.target), ".demo-sync-")
+            );
+            staged.push({
+              ...update,
+              backedUp: false,
+              directory,
+              installed: false,
+              order: offset + index,
+            });
+            await fs.writeFile(path.join(directory, "next"), update.content);
+          })
       );
-      staged.push({ ...update, backedUp: false, directory, installed: false });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete each staged file before advancing to the next replacement.
-      await writeFile(path.join(directory, "next"), update.content);
+      for (const result of batch) {
+        if (result.status === "rejected") {
+          throw result.reason;
+        }
+      }
     }
+    staged.sort((left, right) => left.order - right.order);
     for (const update of staged) {
       if (update.exists) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Keep originals for rollback until all replacements succeed.
@@ -321,7 +342,7 @@ const replaceDemoFiles = async (
       try {
         if (update.installed) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Restore replacements in reverse commit order.
-          await rm(update.target);
+          await fs.rm(update.target);
         }
         if (update.backedUp) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Restore each original sequentially before rolling back the preceding committed file.
@@ -347,7 +368,7 @@ const replaceDemoFiles = async (
     if (!retainBackups) {
       await Promise.all(
         staged.map(async (update: Readonly<(typeof staged)[number]>) => {
-          await rm(update.directory, { force: true, recursive: true });
+          await fs.rm(update.directory, { force: true, recursive: true });
         })
       );
     }

@@ -31,6 +31,7 @@ const FIRST_CHARACTER_INDEX = 0;
 const TOOL_NAME_PREFIX_LENGTH = 51;
 const TOOL_NAME_HASH_LENGTH = 12;
 const CONNECTOR_DISCOVERY_TIMEOUT_MS = 10_000;
+const CONNECTOR_DISCOVERY_CONCURRENCY = 2;
 const MCP_APPROVAL_TIMEOUT_MS = 30_000;
 const MAXIMUM_VALIDATION_ERRORS = 3;
 type ValidatedMcpTool<NativeTool> = NativeTool extends Tool
@@ -153,8 +154,15 @@ const withConnector = async <T>(
     closing ??= client.close();
     await closing;
   };
+  const closeAfterAbort = async (): Promise<void> => {
+    try {
+      await close();
+    } catch {
+      // The scope's finally awaits the same close and reports its failure.
+    }
+  };
   const cancel = (): void => {
-    void close();
+    void closeAfterAbort();
   };
   signal.addEventListener("abort", cancel, { once: true });
   try {
@@ -211,7 +219,12 @@ const discoverEveMcpTools = async (
     connectorId: string;
     remoteName: string;
   })[] = [];
-  for (const connector of connectors) {
+  const enabledConnectors = connectors.filter((connector) => connector.enabled);
+  for (
+    let offset = 0;
+    offset < enabledConnectors.length;
+    offset += CONNECTOR_DISCOVERY_CONCURRENCY
+  ) {
     if (
       signal.aborted &&
       signal.reason instanceof DOMException &&
@@ -220,59 +233,74 @@ const discoverEveMcpTools = async (
       break;
     }
     signal.throwIfAborted();
-    if (!connector.enabled) {
-      continue;
-    }
-    const connectorSignal = AbortSignal.any([
-      signal,
-      AbortSignal.timeout(CONNECTOR_DISCOVERY_TIMEOUT_MS),
-    ]);
-    try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
-      await withConnector(
-        assertConnector(connector, ownerId),
-        connectorSignal,
-        async (tools): Promise<void> => {
-          for (const [remoteName, tool] of Object.entries(tools)) {
-            connectorSignal.throwIfAborted();
-            try {
-              // MCP output and approval policies are adapted explicitly below.
-              const { toModelOutput: _outputAdapter, ...definition } = tool;
-              // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
-              const description = await describeMcpTool(definition);
-              connectorSignal.throwIfAborted();
-              descriptions.push({
-                ...description,
-                connectorId: connector.id,
-                name: modelToolName(
-                  createToolId(
-                    connector.nameId,
-                    remoteName,
-                    connector.userId === null
-                  )
-                ),
-                remoteName,
-              });
-            } catch {
-              connectorSignal.throwIfAborted();
-              log.warn(
-                { connectorId: connector.id, remoteName },
-                "Unsupported MCP tool schema"
-              );
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep at most two live connector scopes and await every close before admitting another batch or returning cancellation.
+    const batch = await Promise.allSettled(
+      enabledConnectors
+        .slice(offset, offset + CONNECTOR_DISCOVERY_CONCURRENCY)
+        .map(async (connector) => {
+          const connectorDescriptions: typeof descriptions = [];
+          const connectorSignal = AbortSignal.any([
+            signal,
+            AbortSignal.timeout(CONNECTOR_DISCOVERY_TIMEOUT_MS),
+          ]);
+          try {
+            await withConnector(
+              assertConnector(connector, ownerId),
+              connectorSignal,
+              async (tools): Promise<void> => {
+                for (const [remoteName, tool] of Object.entries(tools)) {
+                  connectorSignal.throwIfAborted();
+                  try {
+                    // MCP output and approval policies are adapted explicitly below.
+                    const { toModelOutput: _outputAdapter, ...definition } =
+                      tool;
+                    // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
+                    const description = await describeMcpTool(definition);
+                    connectorSignal.throwIfAborted();
+                    connectorDescriptions.push({
+                      ...description,
+                      connectorId: connector.id,
+                      name: modelToolName(
+                        createToolId(
+                          connector.nameId,
+                          remoteName,
+                          connector.userId === null
+                        )
+                      ),
+                      remoteName,
+                    });
+                  } catch {
+                    connectorSignal.throwIfAborted();
+                    log.warn(
+                      { connectorId: connector.id, remoteName },
+                      "Unsupported MCP tool schema"
+                    );
+                  }
+                }
+              }
+            );
+          } catch {
+            if (
+              signal.aborted &&
+              signal.reason instanceof DOMException &&
+              signal.reason.name === "TimeoutError"
+            ) {
+              return connectorDescriptions;
             }
+            signal.throwIfAborted();
+            log.warn(
+              { connectorId: connector.id },
+              "MCP discovery unavailable"
+            );
           }
-        }
-      );
-    } catch {
-      if (
-        signal.aborted &&
-        signal.reason instanceof DOMException &&
-        signal.reason.name === "TimeoutError"
-      ) {
-        break;
+          return connectorDescriptions;
+        })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
       }
-      signal.throwIfAborted();
-      log.warn({ connectorId: connector.id }, "MCP discovery unavailable");
+      descriptions.push(...result.value);
     }
   }
   return descriptions;

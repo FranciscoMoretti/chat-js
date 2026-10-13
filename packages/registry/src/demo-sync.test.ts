@@ -1,4 +1,5 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
+import { rejects } from "node:assert/strict";
 import fs, {
   mkdir,
   mkdtemp,
@@ -205,6 +206,150 @@ test.each(["source", "baseline"])(
     await syncDemo({ ...options, check: true });
   }
 );
+
+test.each(["mkdir", "mkdtemp", "writeFile"])(
+  "failed staging %s drains allocated writes before cleanup and preserves destinations",
+  async (failure) => {
+    const options = await fixture();
+    const previous = await readFile(options.baseline, "utf-8");
+    options.expected.set("implementation.ts", "// updated canonical\n");
+    for (const file of ["a.ts", "b.ts", "c.ts"]) {
+      options.expected.set(file, "// new canonical\n");
+    }
+    const originalWrite = fs.writeFile;
+    const originalRemove = fs.rm;
+    const gate = Promise.withResolvers<boolean>();
+    const admitted = Promise.withResolvers<boolean>();
+    let failed = false;
+    let heldWrites = 0;
+    const inject = (operation: string): void => {
+      if (!failed && failure === operation) {
+        failed = true;
+        throw new Error("Injected staging failure");
+      }
+    };
+    const createParent = spyOn(fs, "mkdir");
+    const allocate = spyOn(fs, "mkdtemp");
+    if (failure === "mkdir") {
+      createParent.mockRejectedValueOnce(new Error("Injected staging failure"));
+    }
+    if (failure === "mkdtemp") {
+      allocate.mockRejectedValueOnce(new Error("Injected staging failure"));
+    }
+    const write = spyOn(fs, "writeFile").mockImplementation(
+      async (...args: Parameters<typeof fs.writeFile>) => {
+        inject("writeFile");
+        heldWrites += 1;
+        if (heldWrites === 3) {
+          admitted.resolve(true);
+        }
+        await gate.promise;
+        await originalWrite(...args);
+      }
+    );
+    const remove = spyOn(fs, "rm").mockImplementation(
+      async (...args: Parameters<typeof fs.rm>) => {
+        await originalRemove(...args);
+      }
+    );
+    const rename = spyOn(fs, "rename");
+    const syncing = syncDemo(options);
+    const rejected = rejects(syncing, /Injected staging failure/u);
+    try {
+      await admitted.promise;
+      expect(heldWrites).toBe(3);
+      expect(rename).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
+      gate.resolve(true);
+      await rejected;
+      expect(await readFile(options.baseline, "utf-8")).toBe(previous);
+      expect(
+        await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+      ).toBe("// canonical\nexport type Result = string;\n");
+      const entries = await fs.readdir(options.root);
+      expect(
+        entries.filter(
+          (file) =>
+            file.startsWith(".demo-sync-") ||
+            ["a.ts", "b.ts", "c.ts"].includes(file)
+        )
+      ).toEqual([]);
+    } finally {
+      gate.resolve(true);
+      createParent.mockRestore();
+      allocate.mockRestore();
+      write.mockRestore();
+      remove.mockRestore();
+      rename.mockRestore();
+      await rejected;
+    }
+  }
+);
+
+test("staging is bounded and commits source order with the baseline last", async () => {
+  const options = await fixture();
+  const files = ["a.ts", "b.ts", "c.ts", "implementation.ts"];
+  for (const file of files) {
+    options.expected.set(file, "// updated canonical\n");
+  }
+  const gates = Array.from({ length: 5 }, () =>
+    Promise.withResolvers<boolean>()
+  );
+  const firstBatch = Promise.withResolvers<boolean>();
+  const lastBatch = Promise.withResolvers<boolean>();
+  const originalWrite = fs.writeFile;
+  const originalRename = fs.rename;
+  let writes = 0;
+  const committed: string[] = [];
+  const write = spyOn(fs, "writeFile").mockImplementation(
+    async (...args: Parameters<typeof fs.writeFile>) => {
+      const index = writes;
+      writes += 1;
+      if (writes === 4) {
+        firstBatch.resolve(true);
+      }
+      if (writes === 5) {
+        lastBatch.resolve(true);
+      }
+      await gates[index].promise;
+      await originalWrite(...args);
+    }
+  );
+  const rename = spyOn(fs, "rename").mockImplementation(
+    async (...args: Parameters<typeof fs.rename>) => {
+      if (path.basename(String(args[0])) === "next") {
+        committed.push(String(args[1]));
+      }
+      await originalRename(...args);
+    }
+  );
+  const syncing = syncDemo(options);
+  try {
+    await firstBatch.promise;
+    for (const gate of gates.slice(1, 4).toReversed()) {
+      gate.resolve(true);
+    }
+    await Promise.resolve();
+    expect(writes).toBe(4);
+    expect(committed).toEqual([]);
+    gates[0].resolve(true);
+    await lastBatch.promise;
+    expect(committed).toEqual([]);
+    gates[4].resolve(true);
+    await syncing;
+    expect(committed).toEqual([
+      ...files.map((file) => path.join(options.root, file)),
+      options.baseline,
+    ]);
+  } finally {
+    for (const gate of gates) {
+      gate.resolve(true);
+    }
+    await syncing;
+    write.mockRestore();
+    rename.mockRestore();
+  }
+});
 test("a symlinked baseline is rejected before source or external target writes", async () => {
   const options = await fixture();
   const external = path.join(options.root, "external.json");

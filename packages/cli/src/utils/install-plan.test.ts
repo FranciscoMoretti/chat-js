@@ -1,6 +1,6 @@
 import { rejects } from "node:assert/strict";
 import { parseJsonObject } from "#cli/helpers/json-object";
-import { afterEach, expect, mock, test } from "bun:test";
+import { afterEach, expect, mock, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
 import path from "node:path";
@@ -15,6 +15,7 @@ import { installPlan, recordInstalledSource } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
+import * as installationFiles from "./installation-files";
 
 const roots: string[] = [];
 afterEach(async (): Promise<void> => {
@@ -77,6 +78,52 @@ const fixture = async (): Promise<string> => {
   await scaffoldFromTemplate(root);
   return root;
 };
+
+test("receipt hashing bounds live buffers, drains failures and never writes a partial receipt", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-hash-batch-"));
+  roots.push(root);
+  const targets = Array.from({ length: 5 }, (_, index) => `${index}.ts`);
+  const gates = targets.map(() => Promise.withResolvers<Buffer>());
+  const admitted = Promise.withResolvers<boolean>();
+  const originalRead = installationFiles.optionalFile;
+  let reads = 0;
+  const read = spyOn(installationFiles, "optionalFile").mockImplementation(
+    async (file) => {
+      const index = targets.indexOf(path.basename(file));
+      if (index === -1) {
+        return await originalRead(file);
+      }
+      reads += 1;
+      if (reads === 4) {
+        admitted.resolve(true);
+      }
+      return await gates[index].promise;
+    }
+  );
+  const recording = recordInstalledSource(root, targets);
+  const rejected = rejects(recording, /first source/u);
+  let settled = false;
+  void recording.catch(() => {
+    settled = true;
+  });
+  try {
+    await admitted.promise;
+    gates[1].reject(new Error("second source"));
+    gates[0].reject(new Error("first source"));
+    await Promise.resolve();
+    expect(reads).toBe(4);
+    expect(settled).toBe(false);
+    gates[2].resolve(Buffer.from("third"));
+    gates[3].resolve(Buffer.from("fourth"));
+    await rejected;
+    expect(reads).toBe(4);
+    expect(
+      await Bun.file(path.join(root, ".chatjs/installed-source.json")).exists()
+    ).toBe(false);
+  } finally {
+    read.mockRestore();
+  }
+});
 
 test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();

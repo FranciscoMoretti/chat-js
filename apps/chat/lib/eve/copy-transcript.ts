@@ -658,17 +658,26 @@ const materializeEveCopyTranscript = async (
     loadDestinationFile,
     base.origin
   );
-  for (const message of copied.messages) {
-    for (const part of message.parts) {
-      if (part.type === "file") {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Materialization mutates the detached transcript and caches metadata per destination key; finish one part before revisiting the same file or rewriting later parts.
-        await materializeFile(part);
-      } else if (
-        part.type === "text" ||
-        part.type === "reasoning" ||
-        (part.type === "dynamic-tool" && DOCUMENT_TOOLS.has(part.toolName))
-      ) {
-        rewriteDocumentPart(part, allocations);
+  const parts = copied.messages.flatMap((message) => message.parts);
+  const metadataConcurrency = 4;
+  for (let offset = 0; offset < parts.length; offset += metadataConcurrency) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound destination metadata loads to four; drain each batch and report failures in transcript order.
+    const batch = await Promise.allSettled(
+      parts.slice(offset, offset + metadataConcurrency).map(async (part) => {
+        if (part.type === "file") {
+          await materializeFile(part);
+        } else if (
+          part.type === "text" ||
+          part.type === "reasoning" ||
+          (part.type === "dynamic-tool" && DOCUMENT_TOOLS.has(part.toolName))
+        ) {
+          rewriteDocumentPart(part, allocations);
+        }
+      })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
       }
     }
   }

@@ -27,6 +27,7 @@ const DATA_URL_SEPARATOR_LENGTH = 1;
 const BASE64_CHARACTERS_PER_QUARTET = 4;
 const BASE64_BYTES_PER_QUARTET = 3;
 const HISTORY_READ_TIMEOUT_MS = 15_000;
+const ATTACHMENT_PREFLIGHT_CONCURRENCY = 4;
 
 const parseContentType = (
   value: string
@@ -166,32 +167,54 @@ export const restoreMessageAttachments = async (
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(HISTORY_READ_TIMEOUT_MS) });
   const message = replayHistoricalUserMessage(snapshot, input);
-  const files: HistoricalAttachment[] = [];
-  for (const part of message.parts) {
-    if (part.type === "file") {
-      const { contentType, name, url } = describeHistoricalAttachment(part);
-      if (url.startsWith(`data:${contentType};base64,`)) {
-        inlineAttachment(url, contentType);
-        files.push({
-          contentType,
-          name,
-          read: () => inlineAttachment(url, contentType),
-        });
-      } else {
-        const key = storedHistoricalAttachmentKey(url);
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
-        const access = await canReadEveFile(key, ownerId);
-        if (!access.allowed) {
-          throw new Error("This attachment is unavailable for editing.");
+  // Capture trusted descriptors before ownership/HEAD waits can yield to history mutations.
+  const files = message.parts.flatMap(
+    (part): (HistoricalAttachment & { key: string | null })[] => {
+      if (part.type === "file") {
+        const { contentType, name, url } = describeHistoricalAttachment(part);
+        if (url.startsWith(`data:${contentType};base64,`)) {
+          inlineAttachment(url, contentType);
+          return [
+            {
+              contentType,
+              key: null,
+              name,
+              read: () => inlineAttachment(url, contentType),
+            },
+          ];
         }
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate original-part ownership before admitting descriptors, then reserve, copy, and digest one file's bytes before starting the next; restore tests cover validation before writes.
-        const metadata = await getFileMetadata(key);
-        validateAttachment(metadata, contentType);
-        files.push({
-          contentType,
-          name,
-          read: async () => await downloadFile(key),
-        });
+        const key = storedHistoricalAttachmentKey(url);
+        return [
+          { contentType, key, name, read: async () => await downloadFile(key) },
+        ];
+      }
+      return [];
+    }
+  );
+  for (
+    let offset = 0;
+    offset < files.length;
+    offset += ATTACHMENT_PREFLIGHT_CONCURRENCY
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound ownership/HEAD scopes to four and drain all admitted reads before any download or upload.
+    const batch = await Promise.allSettled(
+      files
+        .slice(offset, offset + ATTACHMENT_PREFLIGHT_CONCURRENCY)
+        .map(async ({ key, contentType }) => {
+          if (key === null) {
+            return;
+          }
+          const access = await canReadEveFile(key, ownerId);
+          if (!access.allowed) {
+            throw new Error("This attachment is unavailable for editing.");
+          }
+          const metadata = await getFileMetadata(key);
+          validateAttachment(metadata, contentType);
+        })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
       }
     }
   }

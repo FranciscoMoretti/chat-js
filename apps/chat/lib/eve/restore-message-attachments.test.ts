@@ -349,56 +349,124 @@ it("initializes the reducer before reading original snapshot events", async () =
   expect(mocks.replayOrder).toEqual(["factory", "initial", "events"]);
 });
 
-it.each(["next-part", "first-copy"])(
-  "reads original stored history before queued %s mutations",
-  async (target) => {
-    const second = {
-      filename: "second.png",
-      mediaType: "image/png",
-      type: "file",
-      url: "data:image/png;base64,AQID",
-    };
-    const body = new Blob(["abc"], { type: "image/png" });
-    const metadata: Awaited<ReturnType<typeof getFileMetadata>> = {
-      arrayBuffer: async () => await body.arrayBuffer(),
-      blob: vi.fn<() => Promise<Blob>>().mockResolvedValue(body),
-      key: "abcdefghijklmnopqrstuvwx.png",
-      name: "first.png",
-      get size(): number {
-        queueMicrotask(() => {
-          if (target === "next-part") {
-            second.url = "invalid-after-metadata";
-          } else {
-            mocks.download.mockRejectedValue(new Error("late download"));
-          }
-        });
-        return body.size;
-      },
-      stream: () => body.stream(),
-      text: async () => await body.text(),
-      type: body.type,
-    };
-    mocks.metadata.mockResolvedValue(metadata);
-    mocks.messages = [
-      {
-        id: "message",
-        parts: [
-          {
-            filename: "first.png",
-            mediaType: "image/png",
-            type: "file",
-            url: "/api/files/abcdefghijklmnopqrstuvwx.png",
-          },
-          second,
-        ],
-        role: "user",
-      },
-    ];
-    const attachments = await restoreMessageAttachments("owner", input);
-    expect(attachments.map((attachment) => attachment.name)).toEqual([
-      "first.png",
-      "second.png",
-    ]);
-    expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
+it("reads original stored history before queued next-part mutations", async () => {
+  const second = {
+    filename: "second.png",
+    mediaType: "image/png",
+    type: "file",
+    url: "data:image/png;base64,AQID",
+  };
+  const body = new Blob(["abc"], { type: "image/png" });
+  const metadata: Awaited<ReturnType<typeof getFileMetadata>> = {
+    arrayBuffer: async () => await body.arrayBuffer(),
+    blob: vi.fn<() => Promise<Blob>>().mockResolvedValue(body),
+    key: "abcdefghijklmnopqrstuvwx.png",
+    name: "first.png",
+    get size(): number {
+      queueMicrotask(() => {
+        second.url = "invalid-after-metadata";
+      });
+      return body.size;
+    },
+    stream: () => body.stream(),
+    text: async () => await body.text(),
+    type: body.type,
+  };
+  mocks.metadata.mockResolvedValue(metadata);
+  mocks.messages = [
+    {
+      id: "message",
+      parts: [
+        {
+          filename: "first.png",
+          mediaType: "image/png",
+          type: "file",
+          url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+        },
+        second,
+      ],
+      role: "user",
+    },
+  ];
+  const attachments = await restoreMessageAttachments("owner", input);
+  expect(attachments.map((attachment) => attachment.name)).toEqual([
+    "first.png",
+    "second.png",
+  ]);
+  expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
+});
+
+it("captures every original descriptor before bounded ownership checks and preserves copy order", async () => {
+  const keys = Array.from(
+    { length: 5 },
+    (_, index) => `${String.fromCodePoint(97 + index).repeat(24)}.png`
+  );
+  const parts = keys.map((key, index) => ({
+    filename: `${index}.png`,
+    mediaType: "image/png",
+    type: "file",
+    url: `/api/files/${key}`,
+  }));
+  mocks.messages[0].parts = parts;
+  const gates = keys.map(() => Promise.withResolvers<{ allowed: boolean }>());
+  mocks.access.mockImplementation(
+    async (key: string) => await gates[keys.indexOf(key)].promise
+  );
+  const restoring = restoreMessageAttachments("owner", input);
+  await vi.waitFor(() => {
+    expect(mocks.access).toHaveBeenCalledTimes(4);
+  });
+  parts[4].url = "https://untrusted.example/changed.png";
+  for (const gate of gates.slice(0, 3)) {
+    gate.resolve({ allowed: true });
   }
-);
+  await Promise.resolve();
+  expect(mocks.access).toHaveBeenCalledTimes(4);
+  expect(mocks.reserve).not.toHaveBeenCalled();
+  gates[3].resolve({ allowed: true });
+  await vi.waitFor(() => {
+    expect(mocks.access).toHaveBeenCalledTimes(5);
+  });
+  expect(mocks.access).toHaveBeenLastCalledWith(keys[4], "owner");
+  expect(mocks.download).not.toHaveBeenCalled();
+  gates[4].resolve({ allowed: true });
+  const restored = await restoring;
+  expect(restored.map((attachment) => attachment.name)).toEqual(
+    parts.map((part) => part.filename)
+  );
+  expect(
+    mocks.download.mock.calls.map(([key]: readonly unknown[]) => key)
+  ).toEqual(keys);
+});
+
+it("drains admitted preflights after ownership failure without reading that key or uploading", async () => {
+  const keys = ["a".repeat(24), "b".repeat(24)].map((key) => `${key}.png`);
+  mocks.messages[0].parts = keys.map((key) => ({
+    mediaType: "image/png",
+    type: "file",
+    url: `/api/files/${key}`,
+  }));
+  const metadata = Promise.withResolvers<{ size: number; type: string }>();
+  mocks.access.mockImplementation(
+    async (key: string) =>
+      await Promise.resolve({
+        allowed: key === keys[1],
+      })
+  );
+  mocks.metadata.mockReturnValue(metadata.promise);
+  const restoring = restoreMessageAttachments("owner", input);
+  const rejected = expect(restoring).rejects.toThrow("unavailable for editing");
+  let settled = false;
+  void restoring.catch(() => {
+    settled = true;
+  });
+  await vi.waitFor(() => {
+    expect(mocks.metadata).toHaveBeenCalledOnce();
+  });
+  expect(mocks.metadata).toHaveBeenCalledWith(keys[1]);
+  expect(settled).toBe(false);
+  metadata.resolve({ size: 3, type: "image/png" });
+  await rejected;
+  expect(mocks.reserve).not.toHaveBeenCalled();
+  expect(mocks.download).not.toHaveBeenCalled();
+});

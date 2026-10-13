@@ -31,6 +31,7 @@ const NO_INFERRED_DESTINATIONS = 0;
 const NO_REPLACEMENTS = 0;
 const NO_RESTORATION_ERRORS = 0;
 const RECEIPT_INDENTATION_SPACES = 2;
+const SOURCE_READ_CONCURRENCY = 4;
 const receiptFile = ".chatjs/installed-source.json";
 const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
@@ -65,6 +66,38 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ),
 ];
 
+const sourceHashes = async (
+  cwd: string,
+  targets: readonly string[],
+  validate?: (target: string, digest: string | null) => void
+): Promise<(readonly [string, string | null])[]> => {
+  const hashes: (readonly [string, string | null])[] = [];
+  for (
+    let offset = 0;
+    offset < targets.length;
+    offset += SOURCE_READ_CONCURRENCY
+  ) {
+    // oxlint-disable-next-line no-await-in-loop -- Bound live file buffers to four; drain each batch before reporting its first source-order read error.
+    const batch = await Promise.allSettled(
+      targets
+        .slice(offset, offset + SOURCE_READ_CONCURRENCY)
+        .map(async (target) => {
+          const content = await optionalFile(path.join(cwd, target));
+          const digest = content ? hash(content) : null;
+          validate?.(target, digest);
+          return [target, digest] as const;
+        })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
+      hashes.push(result.value);
+    }
+  }
+  return hashes;
+};
+
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
  * @param {string} cwd Project containing the receipt and installed source files.
@@ -76,11 +109,9 @@ const recordInstalledSource = async (
 ): Promise<void> => {
   const receipt = await readReceipt(cwd);
   await preflight(cwd, targets);
-  for (const target of targets) {
-    // oxlint-disable-next-line no-await-in-loop -- Hash each installed file without keeping all source in memory.
-    const content = await optionalFile(path.join(cwd, target));
-    if (content) {
-      receipt[target] = hash(content);
+  for (const [target, digest] of await sourceHashes(cwd, targets)) {
+    if (digest !== null) {
+      receipt[target] = digest;
     }
   }
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
@@ -194,15 +225,13 @@ const installPlan = async (
       ? [...targets, ...retired.flat()]
       : [];
   if (!(options.fresh === true) && !(options.overwrite === true)) {
-    for (const target of protectedFiles) {
-      // oxlint-disable-next-line no-await-in-loop -- Read one user-edited file buffer at a time and reject the first modified target before mkdir/installItems; replacement tests assert no writes on conflict.
-      const content = await optionalFile(path.join(cwd, target));
-      if (content && receipt[target] !== hash(content)) {
+    await sourceHashes(cwd, protectedFiles, (target, digest) => {
+      if (digest !== null && receipt[target] !== digest) {
         throw new Error(
           `${target} is modified or has no installed-source baseline. Review it and pass --overwrite to authorize replacing it. No source was installed.`
         );
       }
-    }
+    });
   }
   const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { readonly from: string; readonly to: string }[] = [];

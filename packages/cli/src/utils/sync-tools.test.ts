@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { requireJsonObject } from "#cli/helpers/json-object";
 import { toolDefinitionSchema } from "../../../registry/metadata";
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, spyOn, test } from "bun:test";
 import {
   mkdir,
   mkdtemp,
@@ -15,6 +15,7 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 
 import { syncTools } from "./sync-tools";
+import * as installationFiles from "./installation-files";
 
 const generatedRegistryRules: readonly string[] = [
   "import/no-duplicates",
@@ -107,6 +108,71 @@ const install = async (
     "export const WordCountRenderer = () => null;"
   );
 };
+test("definition reads are bounded and registration waits for every admitted directory", async () => {
+  const root = await project();
+  const ids = ["tool-a", "tool-b", "tool-c", "tool-d", "tool-e"];
+  await Promise.all(
+    ids.map(async (id, index) => {
+      await install(root, id, `tool${index}`);
+    })
+  );
+  const target = path.join(root, "tools/chatjs/tools.ts");
+  const before = await readFile(target, "utf-8");
+  const gates = ids.map(() => Promise.withResolvers<boolean>());
+  const firstBatch = Promise.withResolvers<boolean>();
+  const finalBatch = Promise.withResolvers<boolean>();
+  const originalRead = installationFiles.optionalFile;
+  let reads = 0;
+  const read = spyOn(installationFiles, "optionalFile").mockImplementation(
+    async (file) => {
+      const index =
+        path.basename(file) === "chatjs.json"
+          ? ids.indexOf(path.basename(path.dirname(file)))
+          : -1;
+      if (index !== -1) {
+        const gate = gates[reads];
+        reads += 1;
+        if (reads === 4) {
+          firstBatch.resolve(true);
+        }
+        if (reads === 5) {
+          finalBatch.resolve(true);
+        }
+        await gate.promise;
+      }
+      return await originalRead(file);
+    }
+  );
+  const syncing = syncTools(root);
+  try {
+    await Promise.race([firstBatch.promise, syncing]);
+    expect(reads).toBe(4);
+    for (const gate of gates.slice(0, 3)) {
+      gate.resolve(true);
+    }
+    await Promise.resolve();
+    expect(reads).toBe(4);
+    expect(await readFile(target, "utf-8")).toBe(before);
+    gates[3].resolve(true);
+    await finalBatch.promise;
+    expect(await readFile(target, "utf-8")).toBe(before);
+    gates[4].resolve(true);
+    await syncing;
+    const generatedTools = await readFile(target, "utf-8");
+    expect(ids.map((id) => generatedTools.indexOf(`./${id}/tool`))).toEqual(
+      ids
+        .map((id) => generatedTools.indexOf(`./${id}/tool`))
+        .toSorted((left, right) => left - right)
+    );
+  } finally {
+    for (const gate of gates) {
+      gate.resolve(true);
+    }
+    await syncing;
+    read.mockRestore();
+  }
+});
+
 test("generated tool and renderer composition passes native rules without unused exceptions", async (): Promise<void> => {
   const root = await project();
   await lintGeneratedRegistryComposition(root);

@@ -383,6 +383,99 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
 
+it("bounds metadata reads and drains a failed batch before reporting transcript-order errors", async () => {
+  const sources = Array.from(
+    { length: 5 },
+    (_, index) => `${String.fromCodePoint(97 + index).repeat(24)}.png`
+  );
+  const destinations = sources.map(
+    (_, index) => `${String.fromCodePoint(107 + index).repeat(24)}.png`
+  );
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: sources.map((key) => ({
+          mediaType: "image/png",
+          type: "file" as const,
+          url: `/api/files/${key}`,
+        })),
+      },
+    ])
+  );
+  const pending = Array.from({ length: 4 }, () =>
+    Promise.withResolvers<Pick<Blob, "type" | "size">>()
+  );
+  const load = vi.fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>(
+    async (key) => {
+      const index = destinations.indexOf(key);
+      return await pending[index].promise;
+    }
+  );
+  const copying = materializeEveCopyTranscript(
+    prepared.seed,
+    {
+      ...allocations,
+      files: new Map(sources.map((key, index) => [key, destinations[index]])),
+    },
+    load,
+    "https://chatjs.example"
+  );
+  const rejected = expect(copying).rejects.toThrow("first attachment");
+  let settled = false;
+  void copying.catch(() => {
+    settled = true;
+  });
+  expect(load).toHaveBeenCalledTimes(4);
+  pending[1].reject(new Error("second attachment"));
+  pending[0].reject(new Error("first attachment"));
+  await Promise.resolve();
+  expect(settled).toBe(false);
+  expect(load).toHaveBeenCalledTimes(4);
+  pending[2].resolve({ size: 3, type: "image/png" });
+  pending[3].resolve({ size: 3, type: "image/png" });
+  await rejected;
+  expect(load).toHaveBeenCalledTimes(4);
+  expect(prepared.seed.messages[0].parts).toMatchObject(
+    sources.map((key) => ({ url: `/api/files/${key}` }))
+  );
+});
+
+it("shares pending metadata for duplicate destination attachments", async () => {
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: Array.from({ length: 6 }, () => ({
+          mediaType: "image/png",
+          type: "file" as const,
+          url: sourceUrl,
+        })),
+      },
+    ])
+  );
+  const pending = Promise.withResolvers<Pick<Blob, "type" | "size">>();
+  const load = vi.fn(async () => await pending.promise);
+  const copying = materializeEveCopyTranscript(
+    prepared.seed,
+    allocations,
+    load,
+    "https://chatjs.example"
+  );
+  expect(load).toHaveBeenCalledOnce();
+  pending.resolve({ size: 3, type: "image/png" });
+  const copied = await copying;
+  expect(load).toHaveBeenCalledOnce();
+  expect(copied.messages[0].parts).toMatchObject(
+    Array.from({ length: 6 }, () => ({
+      size: 3,
+      url: `https://chatjs.example${copiedUrl}`,
+    }))
+  );
+});
+
 it("externalizes six distinct inline images through durable destination allocations", async () => {
   const prepared = prepareEveCopyTranscript(
     history([

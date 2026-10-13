@@ -132,6 +132,71 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
+it("bounds live discovery scopes and folds descriptions in connector order", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second", nameId: "second" },
+    { ...connector, id: "third", nameId: "third" },
+  ]);
+  const first = Promise.withResolvers<Record<string, typeof definition>>();
+  const second = Promise.withResolvers<Record<string, typeof definition>>();
+  mocks.tools
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(second.promise)
+    .mockResolvedValueOnce({ echo: definition });
+  const discovery = discoverEveMcpTools("owner", context.abortSignal);
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  second.resolve({ echo: definition });
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  first.resolve({ echo: definition });
+  const descriptions = await discovery;
+  expect(descriptions.map((item) => item.connectorId)).toEqual([
+    "connector",
+    "second",
+    "third",
+  ]);
+  expect(mocks.close).toHaveBeenCalledTimes(3);
+});
+
+it("drains every admitted connector close on cancellation without opening later scopes", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second" },
+    { ...connector, id: "third" },
+  ]);
+  mocks.tools.mockReturnValue(
+    Promise.withResolvers<Record<string, typeof definition>>().promise
+  );
+  const closing = Promise.withResolvers<null>();
+  mocks.close.mockImplementation(async () => {
+    await closing.promise;
+  });
+  const controller = new AbortController();
+  const discovery = discoverEveMcpTools("owner", controller.signal);
+  const rejected = expect(discovery).rejects.toThrow("cancel discovery");
+  let settled = false;
+  void discovery.catch(() => {
+    settled = true;
+  });
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  controller.abort(new Error("cancel discovery"));
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledTimes(2);
+  });
+  expect(settled).toBe(false);
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  closing.resolve(null);
+  await rejected;
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+});
+
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
   async (
