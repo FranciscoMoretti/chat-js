@@ -11,10 +11,16 @@ import {
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "..");
+const checkoutEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))
+);
 let stopHookActive = false;
 
 const git = (...args: string[]): Buffer => {
-  const result = Bun.spawnSync(["git", ...args], { cwd: root });
+  const result = Bun.spawnSync(["git", ...args], {
+    cwd: root,
+    env: checkoutEnv,
+  });
   if (result.exitCode !== 0) {
     throw new Error(result.stderr.toString());
   }
@@ -109,11 +115,13 @@ const run = async (): Promise<void> => {
   }
   const lint = Bun.spawnSync(["bun", "run", "lint"], {
     cwd: root,
+    env: checkoutEnv,
     stdout: 2,
     stderr: "inherit",
   });
   const types = Bun.spawnSync(["bun", "run", "test:types"], {
     cwd: root,
+    env: checkoutEnv,
     stdout: 2,
     stderr: "inherit",
   });

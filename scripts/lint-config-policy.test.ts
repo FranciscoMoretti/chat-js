@@ -88,13 +88,14 @@ const writeHookFixture = async (temporary: string): Promise<void> => {
 const runAgentHook = async (
   temporary: string,
   mode: "edit" | "start" | "check",
-  payload: unknown
+  payload: unknown,
+  env = fixtureEnv
 ): Promise<{ exitCode: number; output: string; errors: string }> => {
   const child = Bun.spawn(
     ["bash", path.join(temporary, "scripts/ai-post-codegen.sh"), mode],
     {
       cwd: path.join(temporary, "scripts"),
-      env: fixtureEnv,
+      env,
       stdin: new Blob([JSON.stringify(payload)]),
       stdout: "pipe",
       stderr: "pipe",
@@ -305,8 +306,20 @@ test.each([null, "lint", "test:types"])(
       });
       expect(embedded.exitCode).toBe(0);
       const payload = { session_id: "check-fixture" };
-      const started = await runAgentHook(temporary, "start", payload);
+      const foreignGitEnv = {
+        ...fixtureEnv,
+        GIT_DIR: path.join(nested, ".git"),
+        GIT_WORK_TREE: nested,
+        GIT_INDEX_FILE: path.join(nested, ".git", "index"),
+      };
+      const started = await runAgentHook(
+        temporary,
+        "start",
+        payload,
+        foreignGitEnv
+      );
       expect(started.exitCode).toBe(0);
+      expect(started.output).toBe("{}");
       const discussion = await runAgentHook(temporary, "check", payload);
       expect(discussion.output).toBe("{}");
       expect(discussion.errors).toBe("");
@@ -323,7 +336,12 @@ test.each([null, "lint", "test:types"])(
       });
       expect(otherSession.exitCode).toBe(2);
       expect(otherSession.errors).toContain("no prompt-start snapshot");
-      const result = await runAgentHook(temporary, "check", payload);
+      const result = await runAgentHook(
+        temporary,
+        "check",
+        payload,
+        foreignGitEnv
+      );
       expect(result.exitCode, result.errors).toBe(
         failingScript === null ? 0 : 2
       );
