@@ -1,4 +1,5 @@
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+import { codeExecutionOutputSchema } from "@/lib/eve/code-executor";
 import { z } from "zod";
 
 const codeExecutionInput = z.object({
@@ -14,12 +15,11 @@ const codeExecutionInput = z.object({
   title: z.string().describe("The title of the code snippet."),
 });
 
-const codeExecutionResult = z.object({
+const codeExecutionResult = codeExecutionOutputSchema.extend({
   chart: z.union([
     z.string(),
     z.object({ base64: z.string(), format: z.string() }),
     z.record(z.string(), z.json()),
   ]),
-  message: z.string(),
 });
 export { codeExecutionInput, codeExecutionResult };

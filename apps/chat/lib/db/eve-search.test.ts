@@ -10,6 +10,10 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
+const mocks = vi.hoisted(() => ({
+  execute:
+    vi.fn<(query: ReadonlyNativeSurface<SQL>) => Promise<readonly unknown[]>>(),
+}));
 vi.mock(
   "./client",
   (): {
@@ -21,12 +25,13 @@ vi.mock(
     };
   } => {
     const database = drizzle(postgres);
+    mocks.execute.mockImplementation(async (query) => {
+      const result = await database.execute(query);
+      return result.rows;
+    });
     return {
       db: {
-        execute: async (query: ReadonlyNativeSurface<SQL>) => {
-          const result = await database.execute(query);
-          return result.rows;
-        },
+        execute: mocks.execute,
         transaction: database.transaction.bind(database),
       },
     };
@@ -83,6 +88,24 @@ beforeAll(async () => {
 }, DATABASE_SETUP_TIMEOUT_MS);
 afterAll(async () => {
   await postgres.close();
+});
+
+it("rejects malformed database rows before returning search results or cursors", async () => {
+  mocks.execute.mockResolvedValueOnce([
+    {
+      conversationId: branch,
+      excerpt: "Try saffron in the rice.",
+      highlightQuery: "'saffron'",
+      highlightWords: {},
+      id: chat,
+      rank: "invalid",
+      title: "Weekend notes",
+      updatedAt: "2026-10-13T00:00:00.000000Z",
+    },
+  ]);
+  await expect(
+    searchEveConversations("alice", { search: "saffron" })
+  ).rejects.toThrow("rank");
 });
 
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {

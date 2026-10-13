@@ -3,20 +3,15 @@ import type { SearchResultItem } from "../research-updates-schema";
 import { deduplicateByDomainAndUrl } from "./search-utils";
 import { generateUUID } from "@/lib/utils";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
-type SearchQuery = {
+interface SearchQuery {
   readonly maxResults: number;
   readonly query: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type MultiQuerySearchResult = Awaited<
   ReturnType<typeof createSearchTasks>[number]
 >;
 
-type MultiQuerySearchResponse = Awaited<
-  ReturnType<typeof multiQueryWebSearchStep>
->;
 type SearchProvider = (
   query: SearchQuery,
   index: number
@@ -55,7 +50,7 @@ const createSearchTasks = (
   queries.map(async (query, index) => {
     const results = await search(query, index);
     return {
-      query,
+      query: { maxResults: query.maxResults, query: query.query },
       results: deduplicateByDomainAndUrl(results).map((result) => ({
         content: result.content,
         title: result.title,
@@ -145,4 +140,3 @@ const multiQueryWebSearchStep = async ({
   }
 };
 export { multiQueryWebSearchStep };
-export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };

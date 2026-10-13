@@ -1,6 +1,7 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import { and, eq, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import type { EveSearchText } from "@/lib/eve/search-text";
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
@@ -109,20 +110,17 @@ const indexEveSearchText = async (
   }
 };
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
- */
-type EveSearchResult = {
-  id: string;
-  conversationId: string;
-  title: string;
-  excerpt: string;
-  updatedAt: string;
-  rank: number;
-  highlightQuery: string;
-  highlightWords: Record<string, string>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+const eveSearchResult = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  title: z.string(),
+  excerpt: z.string(),
+  updatedAt: z.string(),
+  rank: z.number(),
+  highlightQuery: z.string(),
+  highlightWords: z.record(z.string(), z.string()),
+});
+type EveSearchResult = z.infer<typeof eveSearchResult>;
 
 // Modify only PostgreSQL's normalized final positive operand, never raw query syntax.
 // The leading boundary excludes !'negated' terms; closing groups remain intact.
@@ -212,7 +210,7 @@ const searchEveConversations = async (
   const prefixLastWord =
     finalUnquotedWord.test(query) &&
     query.split('"').length % QUOTE_PAIR_SIZE === UNQUOTED_SEGMENT_REMAINDER;
-  const items = await db.execute<EveSearchResult>(sql`
+  const rows = await db.execute(sql`
     with parsed as (select websearch_to_tsquery('simple', ${query}) as terms),
     query as (
       select case when ${prefixLastWord}
@@ -270,6 +268,7 @@ const searchEveConversations = async (
     from headlines
     order by rank desc, "updatedAt" desc, id
   `);
+  const items = z.array(eveSearchResult).parse(rows);
   const page = items
     .slice(FIRST_INDEX, SEARCH_PAGE_SIZE)
     .map(

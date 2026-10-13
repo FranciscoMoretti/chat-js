@@ -1,4 +1,5 @@
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+import { codeExecutionOutputSchema } from "@/lib/eve/code-executor";
 import { z } from "zod";
 
 const codeExecutionInput = z.object({
@@ -16,8 +17,7 @@ const codeExecutionInput = z.object({
 
 const encodedChart = z.object({ base64: z.string(), format: z.string() });
 const chartRecord = z.record(z.string(), z.json());
-const codeExecutionResult = z.object({
+const codeExecutionResult = codeExecutionOutputSchema.extend({
   chart: z.union([z.string(), encodedChart, chartRecord]),
-  message: z.string(),
 });
 export { codeExecutionInput, codeExecutionResult };
