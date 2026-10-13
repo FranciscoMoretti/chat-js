@@ -68,6 +68,23 @@ export default defineConfig({
   test: {
     browser: {
       commands: {
+        faviconAssets: async ({
+          page,
+        }: {
+          readonly page: Page;
+        }): Promise<void> => {
+          await page.route(
+            /^https:\/\/(?:favicon\.example\.test|www\.google\.com)\//u,
+            async (route): Promise<void> => {
+              await route.fulfill({
+                body: route.request().url().endsWith("/broken.svg")
+                  ? "Invalid image"
+                  : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" rx="3" fill="#2563eb"/></svg>',
+                contentType: "image/svg+xml",
+              });
+            }
+          );
+        },
         modelAssets: async ({
           page,
         }: {

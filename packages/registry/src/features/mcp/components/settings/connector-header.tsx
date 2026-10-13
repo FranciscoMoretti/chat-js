@@ -25,10 +25,11 @@ export const ConnectorHeader = ({
     <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
       <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
         {faviconUrl ? (
-          <>
-            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-            <Globe className="text-muted-foreground hidden size-5" />
-          </>
+          <Favicon
+            className="size-5 rounded-sm"
+            fallback={<Globe className="text-muted-foreground size-5" />}
+            url={faviconUrl}
+          />
         ) : (
           <Globe className="text-muted-foreground size-5" />
         )}

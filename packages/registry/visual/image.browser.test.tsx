@@ -85,7 +85,7 @@ test("image tool loading, success, and unavailable states", async () => {
           url: blobUrl,
         }}
       />
-      <Favicon url={imageUrl} srcSet={`${imageUrl} 2x`} width="100%" />
+      <Favicon url={imageUrl} />
     </>
   );
   try {

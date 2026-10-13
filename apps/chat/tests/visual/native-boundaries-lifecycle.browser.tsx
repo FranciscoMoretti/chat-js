@@ -2,7 +2,6 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { PromptInputButton } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Favicon } from "@/components/favicon";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { createDomHarness } from "@/components/test-dom-harness";
 import "@/tests/visual/sandbox.css";
@@ -80,37 +79,6 @@ test("button sizing counts opaque empty slots and nested arrays without flatteni
         'button[aria-label="Fragment"]'
       )?.dataset.size
     ).toBe("icon-sm");
-  } finally {
-    act(() => {
-      fixture?.unmount();
-    });
-  }
-});
-
-test("favicon forwards native image attributes and reveals its adjacent fallback on error", () => {
-  let fixture: ReturnType<typeof createDomHarness> | undefined;
-  act(() => {
-    fixture = createDomHarness(
-      <>
-        <Favicon
-          url="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-          width="24"
-          height="18"
-          referrerPolicy="no-referrer"
-        />
-        <span className="hidden">Fallback</span>
-      </>
-    );
-  });
-  try {
-    const image = fixture?.container.querySelector("img");
-    expect(image?.getAttribute("width")).toBe("24");
-    expect(image?.getAttribute("referrerpolicy")).toBe("no-referrer");
-    act(() => {
-      image?.dispatchEvent(new Event("error"));
-    });
-    expect(image?.style.display).toBe("none");
-    expect(image?.nextElementSibling?.classList.contains("hidden")).toBe(false);
   } finally {
     act(() => {
       fixture?.unmount();

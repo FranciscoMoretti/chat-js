@@ -1,27 +1,54 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
 import type React from "react";
 
 import { cn } from "@/lib/utils";
 
-export const Favicon = ({
+const FaviconImage = ({
   url,
+  alt,
   className,
-  ...props
+  fallback = null,
+  style,
+  referrerPolicy,
 }: {
   readonly url: string;
+  readonly alt?: string;
   readonly className?: string;
-} & React.ImgHTMLAttributes<HTMLImageElement>): React.JSX.Element => (
-  // oxlint-disable-next-line next/no-img-element -- Public ImgHTMLAttributes include string dimensions and arbitrary srcSet; native-boundaries browser test checks forwarding and the adjacent fallback error contract.
-  <img
-    className={cn("h-4 w-4", className)}
-    height={16}
-    src={url}
-    width={16}
-    {...props}
-    alt={`Favicon for ${url}`}
-    onError={(event) => {
-      const target = event.currentTarget;
-      target.style.display = "none";
-      target.nextElementSibling?.classList.remove("hidden");
-    }}
-  />
+  readonly fallback?: React.ReactNode;
+  readonly style?: React.CSSProperties;
+  readonly referrerPolicy?: React.HTMLAttributeReferrerPolicy;
+}): React.ReactNode => {
+  const [failed, setFailed] = useState(false);
+
+  if (url === "" || failed) {
+    return fallback;
+  }
+
+  return (
+    <Image
+      alt={alt ?? `Favicon for ${url}`}
+      className={cn("h-4 w-4", className)}
+      height={16}
+      loading="eager"
+      onError={() => {
+        setFailed(true);
+      }}
+      referrerPolicy={referrerPolicy}
+      src={url}
+      style={style}
+      // Favicons are tiny and can come from arbitrary search-result domains.
+      unoptimized
+      width={16}
+    />
+  );
+};
+
+export const Favicon = ({
+  url,
+  ...props
+}: React.ComponentProps<typeof FaviconImage>): React.JSX.Element => (
+  <FaviconImage key={url} url={url} {...props} />
 );

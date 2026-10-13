@@ -128,10 +128,11 @@ export const McpConnectDialog = ({
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
               {faviconUrl ? (
-                <>
-                  <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-                  <Globe className="text-muted-foreground hidden size-5" />
-                </>
+                <Favicon
+                  className="size-5 rounded-sm"
+                  fallback={<Globe className="text-muted-foreground size-5" />}
+                  url={faviconUrl}
+                />
               ) : (
                 <Globe className="text-muted-foreground size-5" />
               )}
