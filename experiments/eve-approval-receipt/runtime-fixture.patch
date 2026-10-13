@@ -1,596 +1,285 @@
-diff --git a/runtime-proof.mjs b/runtime-proof.mjs
+diff --git a/runtime-contracts.test.ts b/runtime-contracts.test.ts
 new file mode 100644
 --- /dev/null
-+++ b/runtime-proof.mjs
-@@ -0,0 +1,519 @@
-+import assert from "node:assert/strict";
-+import { spawn } from "node:child_process";
++++ b/runtime-contracts.test.ts
+@@ -0,0 +1,56 @@
++import { describe, expect, it } from "bun:test";
++
 +import {
-+  cp,
-+  mkdtemp,
-+  readFile,
-+  rm,
-+  symlink,
-+  writeFile,
-+} from "node:fs/promises";
-+import { tmpdir } from "node:os";
++  consumeInterrupted,
++  entrySchema,
++  receiptOf,
++} from "./runtime-contracts.ts";
++
++const evidence = {
++  connector: "original",
++  messages: "[]",
++  sessionId: "session",
++  callId: "call",
++  pid: 1,
++  input: { label: "HELLO:original", amount: 2, mode: "safe" },
++  caller: { principalId: "owner" },
++  receipt: {
++    requestId: "approval",
++    responder: {
++      principalId: "owner",
++      authenticator: "fixture",
++      issuer: "trusted",
++      principalType: "user",
++    },
++  },
++};
++
++describe("runtime proof evidence boundaries", () => {
++  it("retains issuer and principal type so replay comparison cannot hide identity changes", () => {
++    const entry = entrySchema.parse(evidence);
++    const changed = entrySchema.parse({
++      ...evidence,
++      receipt: {
++        ...evidence.receipt,
++        responder: { ...evidence.receipt.responder, issuer: "foreign" },
++      },
++    });
++    expect(receiptOf(entry)).toEqual(evidence.receipt);
++    expect(receiptOf(entry)).not.toEqual(receiptOf(changed));
++  });
++  it("rejects malformed execution evidence instead of accepting a weak assertion", () => {
++    expect(() =>
++      entrySchema.parse({
++        ...evidence,
++        input: { ...evidence.input, amount: "2" },
++      })
++    ).toThrow();
++    expect(() => entrySchema.parse({ ...evidence, pid: undefined })).toThrow();
++  });
++  it("handles an interrupted stream without waiting for completion before the crash barrier", async () => {
++    const { promise, reject } = Promise.withResolvers<unknown>();
++    const consumed = consumeInterrupted(promise);
++    reject(new Error("fixture disconnected"));
++    await consumed;
++  });
++});
+diff --git a/runtime-contracts.ts b/runtime-contracts.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-contracts.ts
+@@ -0,0 +1,186 @@
++import { readFile } from "node:fs/promises";
 +import path from "node:path";
 +import { pathToFileURL } from "node:url";
 +
-+const [dependencies, mode] = process.argv.slice(2);
-+assert.ok(dependencies && ["stock", "patched"].includes(mode));
-+const { Client } = await import(
-+  pathToFileURL(
-+    path.join(dependencies, "node_modules/eve/dist/src/client/index.js")
-+  )
-+);
-+const externalRuntime = globalThis.laneBRuntime;
-+const app =
-+  externalRuntime?.directory ??
-+  (await mkdtemp(path.join(tmpdir(), "lane-b-workflow-")));
-+if (!externalRuntime) {
-+  await cp(new URL("./runtime-fixture", import.meta.url), app, {
-+    recursive: true,
-+  });
-+  await symlink(
-+    path.join(dependencies, "node_modules"),
-+    path.join(app, "node_modules")
-+  );
-+  await writeFile(
-+    path.join(app, "package.json"),
-+    JSON.stringify({
-+      type: "module",
-+      dependencies: { eve: "0.71.3", ai: "7.0.106" },
-+    })
-+  );
-+}
-+const file = (name) => path.join(app, name);
-+const put = (name, value) => writeFile(file(name), value);
-+const rows = async (name) => {
++import type { Client } from "eve/client";
++import { z } from "zod";
++
++export const receiptSchema = z.looseObject({
++  requestId: z.string(),
++  responder: z.looseObject({
++    principalId: z.string(),
++    authenticator: z.string(),
++  }),
++});
++export const entrySchema = z.looseObject({
++  connector: z.string(),
++  messages: z.string(),
++  sessionId: z.string(),
++  input: z.looseObject({
++    label: z.string(),
++    amount: z.number(),
++    mode: z.string(),
++  }),
++  receipt: receiptSchema.optional(),
++  caller: z.looseObject({ principalId: z.string() }),
++  pid: z.number().int().positive(),
++  callId: z.string(),
++});
++export type Entry = z.infer<typeof entrySchema>;
++export const schemas = {
++  "entries.jsonl": entrySchema,
++  "effects.jsonl": entrySchema,
++  "requests.jsonl": z.object({
++    connector: z.string(),
++    messages: z.string(),
++    sessionId: z.string(),
++    callId: z.string(),
++    input: z.unknown(),
++    pid: z.number().int().positive(),
++  }),
++  "responses.jsonl": z.object({
++    pid: z.number().int().positive(),
++    decision: z.string(),
++  }),
++  "discovery.jsonl": z.object({ messages: z.string(), sessionId: z.string() }),
++  "projections.jsonl": z.object({
++    connector: z.string(),
++    messages: z.string(),
++    output: entrySchema,
++  }),
++  "invoke-effects.jsonl": z.unknown(),
++};
++export const isMissingFile = (error: unknown) =>
++  error instanceof Error && "code" in error && error.code === "ENOENT";
++export const readRows = async <T extends z.core.$ZodType>(
++  directory: string,
++  name: string,
++  schema: T
++): Promise<z.output<T>[]> => {
 +  try {
-+    return (await readFile(file(name), "utf8"))
++    const content = await readFile(path.join(directory, name), "utf-8");
++    return content
 +      .trim()
 +      .split("\n")
 +      .filter(Boolean)
-+      .map(JSON.parse);
-+  } catch (e) {
-+    if (e.code === "ENOENT") {
++      .map((line) => {
++        const value: unknown = JSON.parse(line);
++        return z.parse(schema, value);
++      });
++  } catch (error) {
++    if (isMissingFile(error)) {
 +      return [];
 +    }
-+    throw e;
++    throw error;
 +  }
 +};
-+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-+async function until(check, label, timeout = 60_000) {
-+  const start = Date.now();
-+  while (Date.now() - start < timeout) {
-+    const value = await check();
-+    if (value) {
-+      return value;
-+    }
-+    await delay(100);
++export const last = <T>(values: readonly T[]): T => {
++  const value = values.at(-1);
++  if (value === undefined) {
++    throw new Error("Expected nonempty proof evidence");
 +  }
-+  throw new Error("Timed out: " + label);
-+}
-+let worker,
-+  url,
-+  logs = "";
-+async function start(resume = false) {
-+  if (externalRuntime) {
-+    await externalRuntime.start();
-+    url = externalRuntime.url;
-+    return;
-+  }
-+  logs = "";
-+  worker = spawn(
-+    process.execPath,
-+    [
-+      path.join(dependencies, "node_modules/eve/bin/eve.js"),
-+      "dev",
-+      "--no-ui",
-+      "--host",
-+      "127.0.0.1",
-+      "--port",
-+      "0",
-+      "--no-default-extensions",
-+      ...(resume ? ["--resume"] : []),
-+    ],
-+    {
-+      cwd: app,
-+      env: {
-+        PATH:
-+          path.dirname(process.execPath) + ":/opt/homebrew/bin:/usr/bin:/bin",
-+        HOME: app,
-+        NODE_ENV: "development",
-+        EVE_MOCK_AUTHORED_MODELS: "0",
-+        WORKFLOW_INLINE_OWNERSHIP_LEASE_SECONDS: "1",
-+        DOCKER_HOST: "unix://" + file("no-docker.sock"),
-+      },
-+      stdio: ["ignore", "pipe", "pipe"],
-+    }
-+  );
-+  worker.stdout.on("data", (b) => (logs += b));
-+  worker.stderr.on("data", (b) => (logs += b));
-+  url = await until(
-+    () => logs.match(/http:\/\/127\.0\.0\.1:\d+/)?.[0],
-+    "startup"
-+  );
-+}
-+async function stop(crash = false, serverPid) {
-+  if (externalRuntime) {
-+    await externalRuntime.crash(
-+      crash && globalThis.laneBAbruptCrash ? serverPid : undefined
-+    );
-+    return;
-+  }
-+  if (!worker || worker.exitCode !== null || worker.signalCode !== null) {
-+    return;
-+  }
-+  const stopped = new Promise((resolve) => worker.once("exit", resolve));
-+  worker.kill(crash ? "SIGKILL" : "SIGTERM");
-+  const stopping = worker;
-+  const timer = setTimeout(() => stopping.kill("SIGKILL"), 10_000);
-+  await stopped;
-+  clearTimeout(timer);
-+  if (crash) {
-+    await until(async () => {
-+      try {
-+        await readFile(file(".eve/dev-server-state.v1.json"));
-+        return false;
-+      } catch (e) {
-+        return e.code === "ENOENT";
-+      }
-+    }, "dev ownership release");
-+  }
-+}
-+async function create() {
-+  return await new Client({ host: url }).sessions.create({ message: "hello" });
-+}
-+async function required() {
-+  await put("policy.txt", "required");
-+  const made = await create();
-+  const waiting = await made.response.result();
-+  assert.equal(waiting.inputRequests.length, 1);
-+  return { made, waiting };
-+}
-+function checkEntry(entry) {
-+  assert.equal(entry.caller.principalId, "owner");
-+  assert.equal(entry.connector, "original");
-+  assert.deepEqual(entry.input, {
-+    label: "HELLO:original",
-+    amount: 2,
-+    mode: "safe",
-+  });
-+  if (mode === "patched") {
-+    assert.equal(entry.receipt.responder.principalId, "owner");
-+  } else {
-+    assert.equal(entry.receipt, undefined);
-+  }
-+}
-+const watchdog = setTimeout(
-+  () => {
-+    worker?.kill("SIGKILL");
-+    console.error("Runtime proof timeout:", app);
-+    if (externalRuntime) {
-+      void externalRuntime.crash().finally(() => process.exit(1));
-+    } else {
-+      process.exit(1);
-+    }
-+  },
-+  externalRuntime ? 300_000 : 180_000
-+);
-+const results = [];
-+let entry;
-+try {
-+  await put("owner.txt", "owner");
-+  await put("enabled.txt", "true");
-+  await put("connector.txt", "original");
-+  await put("suffix.txt", ":original");
-+  await put("policy.txt", "flip");
-+  await start();
++  return value;
++};
++export const receiptOf = (entry: Entry) => receiptSchema.parse(entry.receipt);
 +
-+  if (!globalThis.laneBRestartOnly) {
-+    async function invoke(name) {
-+      const response = await fetch(url + "/proof/invoke", {
-+        method: "POST",
-+        headers: { "content-type": "application/json" },
-+        body: JSON.stringify({ name }),
-+      });
-+      assert.equal(response.status, 200);
-+      return await response.json();
-+    }
-+    await put("policy.txt", "required");
-+    assert.equal((await invoke("static-gate")).status, "approval-required");
-+    await put("policy.txt", "flip");
-+    const outOfTurn = await invoke("static-gate");
-+    assert.equal(outOfTurn.status, "completed");
-+    assert.equal(outOfTurn.output.blocked, true);
-+    assert.equal(outOfTurn.output.caller.principalId, "owner");
-+    assert.equal((await rows("invoke-effects.jsonl")).length, 0);
-+    assert.equal((await invoke("conditional")).status, "failed");
-+    results.push(
-+      "invokeTool: required approval blocks, policy flip has no receipt, dynamic name is unavailable"
-+    );
-+    await put("policy.txt", "flip");
-+    const flipped = await create();
-+    await flipped.response.result();
-+    assert.equal((await rows("effects.jsonl")).length, 0);
-+    assert.equal((await rows("entries.jsonl")).at(-1).receipt, undefined);
-+    assert.equal(
-+      (await rows("entries.jsonl")).at(-1).caller.principalId,
-+      "owner"
-+    );
-+    results.push("policy flip: owner caller without consent blocked");
-+    const { made, waiting } = await required();
-+    const requestPid = (await rows("requests.jsonl")).at(-1).pid;
-+    await stop(true, requestPid);
-+    await start(true);
-+    const restored = new Client({ host: url }).sessions.attach(
-+      made.session.state.sessionId,
-+      {
-+        streamIndex: made.session.state.streamIndex,
-+      }
-+    );
-+    await (
-+      await restored.respond(
-+        waiting.inputRequests.map((request) => ({
-+          requestId: request.requestId,
-+          optionId: "approve",
-+        }))
-+      )
-+    ).result();
-+    entry = (await rows("entries.jsonl")).at(-1);
-+    assert.notEqual(entry.pid, requestPid);
-+    checkEntry(entry);
-+    assert.equal(
-+      (await rows("effects.jsonl")).length,
-+      mode === "patched" ? 1 : 0
-+    );
-+    results.push(
-+      "actual Workflow restart before response: original dynamic closure and transformed input retained"
-+    );
++// This trusted package boundary accepts only the pinned released SDKs used by
++// the proof. The constructor's static type comes from the pinned 0.71.3 client;
++// runtime identity and its callable shape are checked before constructing it.
++export const loadClient = async (nodeModules: string) => {
++  const raw: unknown = JSON.parse(
++    await readFile(path.join(nodeModules, "eve/package.json"), "utf-8")
++  );
++  z.union([
++    z.object({ name: z.literal("eve"), version: z.literal("0.71.3") }),
++    z.object({
++      name: z.literal("@chat-js/eve"),
++      version: z.literal("0.61.0-chatjs.0"),
++    }),
++  ]).parse(raw);
++  const loaded: unknown = await import(
++    pathToFileURL(path.join(nodeModules, "eve/dist/src/client/index.js")).href
++  );
++  const clientModule = z
++    .object({
++      Client: z.custom<typeof Client>(
++        (value: unknown) => typeof value === "function"
++      ),
++    })
++    .parse(loaded);
++  return clientModule.Client;
++};
 +
-+    const originalRequest = (await rows("requests.jsonl")).find(
-+      (row) => row.sessionId === entry.sessionId && row.callId === entry.callId
-+    );
-+    if (mode === "patched") {
-+      assert.equal(entry.messages, originalRequest.messages);
-+    } else {
-+      assert.notEqual(entry.messages, originalRequest.messages);
-+    }
-+    assert.ok(
-+      (await rows("discovery.jsonl")).some(
-+        (row) =>
-+          row.sessionId === entry.sessionId &&
-+          row.messages !== originalRequest.messages
-+      )
-+    );
-+    results.push(
-+      "captured history change: original approved closure retained only in patched mode"
-+    );
-+    const changed = await required();
-+    await stop(true, (await rows("requests.jsonl")).at(-1).pid);
-+    await put("connector.txt", "replacement");
-+    await put("suffix.txt", ":replacement");
-+    await start(true);
-+    const changedSession = new Client({ host: url }).sessions.attach(
-+      changed.made.session.state.sessionId,
-+      { streamIndex: changed.made.session.state.streamIndex }
-+    );
-+    await (
-+      await changedSession.respond(
-+        changed.waiting.inputRequests.map((request) => ({
-+          requestId: request.requestId,
-+          optionId: "approve",
-+        }))
-+      )
-+    ).result();
-+    const changedEntry = (await rows("entries.jsonl")).at(-1);
-+    if (mode === "patched") {
-+      checkEntry(changedEntry);
-+    } else {
-+      assert.equal(changedEntry.connector, "replacement");
-+      assert.equal(changedEntry.receipt, undefined);
-+    }
-+    assert.equal(
-+      (await rows("effects.jsonl")).length,
-+      mode === "patched" ? 2 : 0
-+    );
-+    results.push(
-+      "step discovery replacement cannot inherit consent: original bound connector executes only in patched mode"
-+    );
-+    const projection = (await rows("projections.jsonl")).find(
-+      (row) =>
-+        row.output.callId === changedEntry.callId &&
-+        row.output.sessionId === changedEntry.sessionId
-+    );
-+    assert.equal(
-+      projection.connector,
-+      mode === "patched" ? "original" : "replacement"
-+    );
-+    if (mode === "patched") {
-+      assert.equal(projection.messages, changedEntry.messages);
-+    }
-+    const nextWaiting = await (await changedSession.send("next")).result();
-+    assert.equal(nextWaiting.inputRequests.length, 1);
-+    assert.equal(
-+      (await rows("effects.jsonl")).length,
-+      mode === "patched" ? 2 : 0
-+    );
-+    await (
-+      await changedSession.respond(
-+        nextWaiting.inputRequests.map((request) => ({
-+          requestId: request.requestId,
-+          optionId: "approve",
-+        }))
-+      )
-+    ).result();
-+    const nextEntry = (await rows("entries.jsonl")).at(-1);
-+    assert.equal(nextEntry.connector, "replacement");
-+    assert.deepEqual(nextEntry.input, {
-+      label: "NEXT:replacement",
-+      amount: 2,
-+      mode: "safe",
-+    });
-+    assert.notEqual(nextEntry.callId, changedEntry.callId);
-+    if (mode === "patched") {
-+      assert.equal(
-+        nextEntry.receipt.requestId,
-+        nextWaiting.inputRequests[0].requestId
-+      );
-+    }
-+    assert.equal(
-+      (await rows("effects.jsonl")).length,
-+      mode === "patched" ? 3 : 0
-+    );
-+    results.push(
-+      "new call uses refreshed connector/schema and requires separate consent; resumed output keeps original projection"
-+    );
-+    // A new session starts with original values again. Crash after the runtime
-+    // supplied the settled receipt but before the fixture remote effect begins.
-+    await put("connector.txt", "original");
-+    await put("suffix.txt", ":original");
-+    for (const [name, revoked, restored] of [
-+      ["owner.txt", "other", "owner"],
-+      ["enabled.txt", "false", "true"],
-+    ]) {
-+      const revokedCall = await required();
-+      await put(name, revoked);
-+      await (
-+        await revokedCall.made.session.respond(
-+          revokedCall.waiting.inputRequests.map((request) => ({
-+            requestId: request.requestId,
-+            optionId: "approve",
-+          }))
-+        )
-+      ).result();
-+      assert.equal(
-+        (await rows("effects.jsonl")).length,
-+        mode === "patched" ? 3 : 0
-+      );
-+      await put(name, restored);
-+    }
-+    results.push(
-+      "live owner and enabled checks block effects despite valid prior consent"
-+    );
-+    const cancelled = await required();
-+    await (
-+      await cancelled.made.session.respond(
-+        cancelled.waiting.inputRequests.map((request) => ({
-+          requestId: request.requestId,
-+          optionId: "cancel",
-+        }))
-+      )
-+    ).result();
-+    assert.equal(
-+      (await rows("effects.jsonl")).length,
-+      mode === "patched" ? 3 : 0
-+    );
-+    results.push("owner cancellation: zero new effects");
-+  }
-+  const priorEffects = (await rows("effects.jsonl")).length;
-+  const beforeCandidate = await required();
-+  const responseCount = (await rows("responses.jsonl")).length;
-+  const entryCount = (await rows("entries.jsonl")).length;
-+  await put("pause-response", "1");
-+  const candidateAbort = new AbortController();
-+  const candidateResponse = await beforeCandidate.made.session.respond(
-+    beforeCandidate.waiting.inputRequests.map((request) => ({
-+      requestId: request.requestId,
-+      optionId: "approve",
-+    })),
-+    { signal: candidateAbort.signal }
-+  );
-+  void candidateResponse.result().catch(() => undefined);
-+  await until(
-+    async () => (await rows("responses.jsonl")).length > responseCount,
-+    "candidate authorizer entry"
-+  );
-+  const candidatePid = (await rows("responses.jsonl")).at(-1).pid;
-+  assert.equal((await rows("entries.jsonl")).length, entryCount);
-+  candidateAbort.abort();
-+  await stop(true, candidatePid);
-+  await rm(file("pause-response"));
-+  await start(true);
-+  await until(
-+    async () => (await rows("entries.jsonl")).length > entryCount,
-+    "candidate settlement after Workflow restart",
-+    externalRuntime ? 15_000 : 60_000
-+  );
-+  const candidateEntry = (await rows("entries.jsonl")).at(-1);
-+  assert.notEqual(candidateEntry.pid, candidatePid);
-+  checkEntry(candidateEntry);
-+  if (mode === "patched") {
-+    assert.equal(
-+      candidateEntry.receipt.requestId,
-+      beforeCandidate.waiting.inputRequests[0].requestId
-+    );
-+  }
-+  await until(
-+    async () =>
-+      mode === "stock" ||
-+      (await rows("effects.jsonl")).length === priorEffects + 1,
-+    "candidate effect"
-+  );
-+  results.push(
-+    "actual Workflow restart after candidate ingestion, before settlement: authorization resumes without resending"
-+  );
-+  const second = await required();
-+  const before = (await rows("entries.jsonl")).length;
-+  await put("pause-before-effect", "1");
-+  const streamAbort = new AbortController();
-+  const response = await second.made.session.respond(
-+    second.waiting.inputRequests.map((request) => ({
-+      requestId: request.requestId,
-+      optionId: "approve",
-+    })),
-+    { signal: streamAbort.signal }
-+  );
-+  void response.result().catch(() => undefined);
-+  await until(
-+    async () => (await rows("entries.jsonl")).length > before,
-+    "executor after settlement"
-+  );
-+  entry = (await rows("entries.jsonl")).at(-1);
-+  checkEntry(entry);
-+  const enteredPid = entry.pid;
-+  const settledReceipt = entry.receipt;
-+  if (mode === "patched") {
-+    assert.equal(
-+      settledReceipt.requestId,
-+      second.waiting.inputRequests[0].requestId
-+    );
-+  }
-+  streamAbort.abort();
-+  await stop(true, enteredPid);
-+  await rm(file("pause-before-effect"));
-+  await start(true);
-+  await until(
-+    async () => {
-+      const all = await rows("entries.jsonl");
-+      return all.length > before + 1 && all.at(-1).pid !== enteredPid;
-+    },
-+    "Workflow replay of interrupted executor",
-+    externalRuntime ? 15_000 : 90_000
-+  );
-+  entry = (await rows("entries.jsonl")).at(-1);
-+  checkEntry(entry);
-+  assert.deepEqual(entry.receipt, settledReceipt);
-+  await until(
-+    async () =>
-+      mode === "stock" ||
-+      (await rows("effects.jsonl")).length === priorEffects + 2,
-+    "effect after replay"
-+  );
-+  assert.equal(
-+    (await rows("effects.jsonl")).length,
-+    mode === "patched" ? priorEffects + 2 : 0
-+  );
-+  results.push(
-+    mode === "patched"
-+      ? "actual Workflow restart after settlement: interrupted callback replay reconstructs exact receipt"
-+      : "actual Workflow restart after settlement: caller remains owner, missing receipt still blocks effect"
-+  );
-+  await writeFile(
-+    file("proof-results.json"),
-+    JSON.stringify(
-+      {
-+        mode,
-+        results,
-+        entries: await rows("entries.jsonl"),
-+        effects: await rows("effects.jsonl"),
-+      },
-+      null,
-+      2
-+    )
-+  );
-+  console.log(JSON.stringify({ mode, results, evidence: app }, null, 2));
-+} catch (error) {
-+  await writeFile(file("failure.log"), logs);
-+  await writeFile(
-+    file("failure.json"),
-+    JSON.stringify(
-+      { error: String(error), stack: error.stack, results },
-+      null,
-+      2
-+    )
-+  );
-+  console.error(error);
-+  console.error("Retained failure evidence:", app);
-+  throw error;
-+} finally {
-+  await stop();
-+  clearTimeout(watchdog);
-+}
-diff --git a/runtime-postgres.ts b/runtime-postgres.ts
-new file mode 100644
---- /dev/null
-+++ b/runtime-postgres.ts
-@@ -0,0 +1,41 @@
-+import { pathToFileURL } from "node:url";
-+import path from "node:path";
-+
-+const [harness, dependencies, handoff] = process.argv.slice(2);
-+if (!harness || !dependencies || !handoff) {
-+  throw new Error(
-+    "Pass D harness, experimental installation, and disposable handoff"
-+  );
-+}
-+const { preparePostgresFixture } = await import(
-+  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
-+);
-+const { createPersistentRuntime } = await import(
-+  pathToFileURL(path.join(harness, "persistent-runtime.ts")).href
-+);
-+const prepared = await preparePostgresFixture({
-+  source: path.join(import.meta.dir, "runtime-fixture"),
-+  nodeModules: path.join(dependencies, "node_modules"),
-+  handoff,
-+  lane: "lane_b",
++const runtimeSchema = z.object({
++  directory: z.string(),
++  url: z.url(),
++  start: z.function({ input: [], output: z.promise(z.void()) }),
++  crash: z.function({
++    input: z.tuple([z.number().int().positive().optional()]),
++    output: z.promise(z.void()),
++  }),
 +});
-+const runtime = await createPersistentRuntime(
-+  prepared.source,
-+  {
-+    nodeModules: prepared.nodeModules,
-+    provenance:
-+      "B preserved callback binding; EVE 0.71.3 fab8ba1424eddfdedd6a177cac21710258da0e81 plus receipt.patch",
-+  },
-+  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
-+);
-+console.log("Postgres fixture:", runtime.directory);
-+globalThis.laneBRuntime = runtime;
-+globalThis.laneBAbruptCrash = true;
-+globalThis.laneBRestartOnly = process.argv.includes("--restart-only");
-+process.argv = [
-+  process.argv[0],
-+  path.join(import.meta.dir, "runtime-proof.mjs"),
-+  dependencies,
-+  "patched",
-+];
-+await import("./runtime-proof.mjs");
++export type ProofRuntime = z.infer<typeof runtimeSchema>;
++const installationSchema = z.object({
++  nodeModules: z.string(),
++  provenance: z.string(),
++  distribution: z.literal("production-fork").optional(),
++});
++export const loadHarness = async (harness: string) => {
++  const preparation: unknown = await import(
++    pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
++  );
++  const lifecycle: unknown = await import(
++    pathToFileURL(path.join(harness, "persistent-runtime.ts")).href
++  );
++  const { preparePostgresFixture } = z
++    .object({
++      preparePostgresFixture: z.function({
++        input: [
++          z.object({
++            source: z.string(),
++            nodeModules: z.string(),
++            handoff: z.string(),
++            lane: z.literal("lane_b"),
++          }),
++        ],
++        output: z.promise(
++          z.object({ source: z.string(), nodeModules: z.string() })
++        ),
++      }),
++    })
++    .parse(preparation);
++  const { createPersistentRuntime } = z
++    .object({
++      createPersistentRuntime: z.function({
++        input: [
++          z.string(),
++          installationSchema,
++          z.object({
++            world: z.literal("postgres"),
++            inlineOwnershipLeaseSeconds: z.literal(1),
++          }),
++        ],
++        output: z.promise(runtimeSchema),
++      }),
++    })
++    .parse(lifecycle);
++  return { preparePostgresFixture, createPersistentRuntime };
++};
++
++// Crash tests start consuming a response before the barrier; the expected
++// abort/disconnect rejection must be handled immediately without awaiting it.
++export const consumeInterrupted = async (result: Promise<unknown>) => {
++  try {
++    await result;
++  } catch {
++    // The scenario verifies durable replay separately.
++  }
++};
++export const exitAfterCleanup = async (cleanup: () => Promise<void>) => {
++  try {
++    await cleanup();
++  } catch (error) {
++    console.error(error);
++  }
++  process.exit(1);
++};
 diff --git a/runtime-old-run.ts b/runtime-old-run.ts
 new file mode 100644
 --- /dev/null
 +++ b/runtime-old-run.ts
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,189 @@
 +import assert from "node:assert/strict";
-+import { readFile, writeFile, unlink, symlink } from "node:fs/promises";
++import { writeFile, unlink, symlink } from "node:fs/promises";
 +import path from "node:path";
-+import { pathToFileURL } from "node:url";
 +
-+const [harness, productionModules, targetModules, handoff] =
-+  process.argv.slice(2);
-+if (!handoff) {
-+  throw new Error(
-+    "Pass D harness, production node_modules, target node_modules, handoff"
-+  );
-+}
-+const { preparePostgresFixture } = await import(
-+  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
-+);
-+const { createPersistentRuntime } = await import(
-+  pathToFileURL(path.join(harness, "persistent-runtime.ts")).href
-+);
++import { z } from "zod";
++import {
++  entrySchema,
++  exitAfterCleanup,
++  last,
++  loadClient,
++  loadHarness,
++  readRows,
++  receiptOf,
++} from "./runtime-contracts.ts";
++
++const [harness, productionModules, targetModules, handoff] = z
++  .tuple([
++    z.string().min(1),
++    z.string().min(1),
++    z.string().min(1),
++    z.string().min(1),
++  ])
++  .parse(process.argv.slice(2));
++const { preparePostgresFixture, createPersistentRuntime } =
++  await loadHarness(harness);
 +const prepared = await preparePostgresFixture({
 +  source: path.join(import.meta.dir, "runtime-fixture"),
 +  nodeModules: productionModules,
@@ -608,34 +297,21 @@ new file mode 100644
 +  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
 +);
 +console.log("Old-run evidence:", runtime.directory);
-+const put = (name, value) =>
-+  writeFile(path.join(runtime.directory, name), value);
-+const rows = async (name) => {
-+  try {
-+    return (await readFile(path.join(runtime.directory, name), "utf8"))
-+      .trim()
-+      .split("\n")
-+      .filter(Boolean)
-+      .map(JSON.parse);
-+  } catch (error) {
-+    if (error.code === "ENOENT") {
-+      return [];
-+    }
-+    throw error;
-+  }
++const put = async (name: string, value: string) => {
++  await writeFile(path.join(runtime.directory, name), value);
 +};
-+const { Client: OldClient } = await import(
-+  pathToFileURL(path.join(productionModules, "eve/dist/src/client/index.js"))
-+    .href
-+);
-+const { Client: NewClient } = await import(
-+  pathToFileURL(path.join(targetModules, "eve/dist/src/client/index.js")).href
-+);
++const rows = async () =>
++  await readRows(runtime.directory, "effects.jsonl", entrySchema);
++const OldClient = await loadClient(productionModules);
++const NewClient = await loadClient(targetModules);
 +let stage = "seed-start";
 +const watchdog = setTimeout(() => {
-+  void runtime.crash().finally(() => process.exit(1));
++  void exitAfterCleanup(async () => {
++    await runtime.crash();
++  });
 +}, 180_000);
 +try {
++  // oxlint-disable eslint/no-await-in-loop -- Seed the independent fixture marker files before starting the runtime.
 +  for (const [name, value] of Object.entries({
 +    "owner.txt": "owner",
 +    "enabled.txt": "true",
@@ -645,6 +321,7 @@ new file mode 100644
 +  })) {
 +    await put(name, value);
 +  }
++  // oxlint-enable eslint/no-await-in-loop
 +  await runtime.start();
 +  const oldClient = new OldClient({ host: runtime.url });
 +  const historical = await oldClient.sessions.create({
@@ -656,8 +333,9 @@ new file mode 100644
 +    signal: AbortSignal.timeout(15_000),
 +  });
 +  assert.ok(snapshot.events.length > 0);
++  const historicalEffects = await rows();
 +  assert.equal(
-+    (await rows("effects.jsonl")).filter(
++    historicalEffects.filter(
 +      (row) => row.sessionId === historical.session.state.sessionId
 +    ).length,
 +    1
@@ -721,18 +399,19 @@ new file mode 100644
 +    { signal: AbortSignal.timeout(45_000) }
 +  );
 +  await response.result();
-+  const effects = (await rows("effects.jsonl")).filter(
++  const allEffects = await rows();
++  const effects = allEffects.filter(
 +    (row) =>
 +      row.sessionId === historical.session.state.sessionId ||
 +      row.sessionId === pendingState.sessionId
 +  );
 +  assert.equal(effects.length, 2);
 +  assert.equal(
-+    effects.at(-1).receipt.requestId,
-+    waiting.inputRequests[0].requestId
++    receiptOf(last(effects)).requestId,
++    last(waiting.inputRequests).requestId
 +  );
-+  assert.equal(effects.at(-1).connector, "original");
-+  assert.deepEqual(effects.at(-1).input, {
++  assert.equal(last(effects).connector, "original");
++  assert.deepEqual(last(effects).input, {
 +    label: "HELLO:original",
 +    amount: 2,
 +    mode: "safe",
@@ -750,7 +429,12 @@ new file mode 100644
 +  await put(
 +    "old-run-results.json",
 +    JSON.stringify(
-+      { status: "failed", stage, error: String(error), stack: error.stack },
++      {
++        status: "failed",
++        stage,
++        error: String(error),
++        stack: error instanceof Error ? error.stack : String(error),
++      },
 +      null,
 +      2
 +    )
@@ -759,6 +443,661 @@ new file mode 100644
 +} finally {
 +  await runtime.crash();
 +  clearTimeout(watchdog);
++}
+diff --git a/runtime-postgres.ts b/runtime-postgres.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-postgres.ts
+@@ -0,0 +1,37 @@
++import path from "node:path";
++import { z } from "zod";
++import { loadHarness } from "./runtime-contracts.ts";
++import { runProof } from "./runtime-scenarios.ts";
++
++const [harness, dependencies, handoff, restart] = z
++  .tuple([
++    z.string().min(1),
++    z.string().min(1),
++    z.string().min(1),
++    z.literal("--restart-only").optional(),
++  ])
++  .parse(process.argv.slice(2));
++const { preparePostgresFixture, createPersistentRuntime } =
++  await loadHarness(harness);
++const prepared = await preparePostgresFixture({
++  source: path.join(import.meta.dir, "runtime-fixture"),
++  nodeModules: path.join(dependencies, "node_modules"),
++  handoff,
++  lane: "lane_b",
++});
++const runtime = await createPersistentRuntime(
++  prepared.source,
++  {
++    nodeModules: prepared.nodeModules,
++    provenance:
++      "B preserved callback binding; EVE 0.71.3 fab8ba1424eddfdedd6a177cac21710258da0e81 plus receipt.patch",
++  },
++  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
++);
++console.log("Postgres fixture:", runtime.directory);
++await runProof({
++  dependencies,
++  mode: "patched",
++  runtime,
++  restartOnly: restart !== undefined,
++});
+diff --git a/runtime-proof.ts b/runtime-proof.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-proof.ts
+@@ -0,0 +1,7 @@
++import { z } from "zod";
++import { runProof } from "./runtime-scenarios.ts";
++
++const [dependencies, mode] = z
++  .tuple([z.string().min(1), z.enum(["stock", "patched"])])
++  .parse(process.argv.slice(2));
++await runProof({ dependencies, mode });
+diff --git a/runtime-scenarios.ts b/runtime-scenarios.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-scenarios.ts
+@@ -0,0 +1,578 @@
++import type { MessageResponse } from "eve/client";
++import assert from "node:assert/strict";
++import { spawn } from "node:child_process";
++import {
++  cp,
++  mkdtemp,
++  readFile,
++  rm,
++  symlink,
++  writeFile,
++} from "node:fs/promises";
++import { tmpdir } from "node:os";
++import path from "node:path";
++
++import { once } from "node:events";
++import { setTimeout as delay } from "node:timers/promises";
++import type { ChildProcessByStdio } from "node:child_process";
++import type { Readable } from "node:stream";
++import { z } from "zod";
++import {
++  consumeInterrupted,
++  exitAfterCleanup,
++  isMissingFile,
++  last,
++  loadClient,
++  readRows,
++  receiptOf,
++  schemas,
++} from "./runtime-contracts.ts";
++import type { Entry, ProofRuntime } from "./runtime-contracts.ts";
++
++const settle = async (response: Promise<MessageResponse>) => {
++  const ready = await response;
++  return await ready.result();
++};
++
++const until = async (
++  check: () => boolean | Promise<boolean>,
++  label: string,
++  timeout = 60_000
++) => {
++  const start = Date.now();
++  // oxlint-disable eslint/no-await-in-loop -- Poll evidence serially; overlapping polls can observe a later barrier before an earlier one.
++  while (Date.now() - start < timeout) {
++    const value = await check();
++    if (value) {
++      return value;
++    }
++    await delay(100);
++  }
++  // oxlint-enable eslint/no-await-in-loop
++  throw new Error(`Timed out: ${label}`);
++};
++
++export const runProof = async ({
++  dependencies,
++  mode,
++  runtime: externalRuntime,
++  restartOnly = false,
++}: {
++  dependencies: string;
++  mode: "stock" | "patched";
++  runtime?: ProofRuntime;
++  restartOnly?: boolean;
++}) => {
++  const Client = await loadClient(path.join(dependencies, "node_modules"));
++  const app =
++    externalRuntime?.directory ??
++    (await mkdtemp(path.join(tmpdir(), "lane-b-workflow-")));
++  if (!externalRuntime) {
++    await cp(new URL("runtime-fixture", import.meta.url), app, {
++      recursive: true,
++    });
++    await symlink(
++      path.join(dependencies, "node_modules"),
++      path.join(app, "node_modules")
++    );
++    await writeFile(
++      path.join(app, "package.json"),
++      JSON.stringify({
++        type: "module",
++        dependencies: { eve: "0.71.3", ai: "7.0.106" },
++      })
++    );
++  }
++  const file = (name: string) => path.join(app, name);
++  const put = async (name: string, value: string) => {
++    await writeFile(file(name), value);
++  };
++  const rows = async <T extends z.core.$ZodType>(name: string, schema: T) =>
++    await readRows(app, name, schema);
++  const count = async (name: keyof typeof schemas) => {
++    const values = await readRows(app, name, schemas[name]);
++    return values.length;
++  };
++  const latest = async <T extends z.core.$ZodType>(name: string, schema: T) => {
++    const values = await readRows(app, name, schema);
++    return last(values);
++  };
++  const latestPid = async (name: "requests.jsonl" | "responses.jsonl") => {
++    const values = await readRows(app, name, schemas[name]);
++    return z.object({ pid: z.number().int().positive() }).parse(last(values))
++      .pid;
++  };
++  let worker: ChildProcessByStdio<null, Readable, Readable> | undefined;
++  let url = "";
++  let logs = "";
++  const start = async (resume = false) => {
++    if (externalRuntime) {
++      await externalRuntime.start();
++      ({ url } = externalRuntime);
++      return;
++    }
++    logs = "";
++    worker = spawn(
++      process.execPath,
++      [
++        path.join(dependencies, "node_modules/eve/bin/eve.js"),
++        "dev",
++        "--no-ui",
++        "--host",
++        "127.0.0.1",
++        "--port",
++        "0",
++        "--no-default-extensions",
++        ...(resume ? ["--resume"] : []),
++      ],
++      {
++        cwd: app,
++        env: {
++          PATH: `${path.dirname(process.execPath)}:/opt/homebrew/bin:/usr/bin:/bin`,
++          HOME: app,
++          NODE_ENV: "development",
++          EVE_MOCK_AUTHORED_MODELS: "0",
++          WORKFLOW_INLINE_OWNERSHIP_LEASE_SECONDS: "1",
++          DOCKER_HOST: `unix://${file("no-docker.sock")}`,
++        },
++        stdio: ["ignore", "pipe", "pipe"],
++      }
++    );
++    worker.stdout.setEncoding("utf-8");
++    worker.stdout.on("data", (chunk: string) => {
++      logs += chunk;
++    });
++    worker.stderr.setEncoding("utf-8");
++    worker.stderr.on("data", (chunk: string) => {
++      logs += chunk;
++    });
++    const addressPattern = /http:\/\/127\.0\.0\.1:\d+/u;
++    await until(() => addressPattern.test(logs), "startup");
++    url = z.url().parse(addressPattern.exec(logs)?.[0]);
++  };
++  const stop = async (crash = false, serverPid?: number) => {
++    if (externalRuntime) {
++      await externalRuntime.crash(crash ? serverPid : undefined);
++      return;
++    }
++    if (!worker || worker.exitCode !== null || worker.signalCode !== null) {
++      return;
++    }
++    const stopped = once(worker, "exit");
++    worker.kill(crash ? "SIGKILL" : "SIGTERM");
++    const stopping = worker;
++    const timer = setTimeout(() => {
++      stopping.kill("SIGKILL");
++    }, 10_000);
++    await stopped;
++    clearTimeout(timer);
++    if (crash) {
++      await until(async () => {
++        try {
++          await readFile(file(".eve/dev-server-state.v1.json"));
++          return false;
++        } catch (error) {
++          return isMissingFile(error);
++        }
++      }, "dev ownership release");
++    }
++  };
++  const create = async () =>
++    await new Client({ host: url }).sessions.create({ message: "hello" });
++  const required = async () => {
++    await put("policy.txt", "required");
++    const made = await create();
++    const waiting = await made.response.result();
++    assert.equal(waiting.inputRequests.length, 1);
++    return { made, waiting };
++  };
++  const checkEntry = (entry: Entry) => {
++    assert.equal(entry.caller.principalId, "owner");
++    assert.equal(entry.connector, "original");
++    assert.deepEqual(entry.input, {
++      label: "HELLO:original",
++      amount: 2,
++      mode: "safe",
++    });
++    if (mode === "patched") {
++      assert.equal(receiptOf(entry).responder.principalId, "owner");
++    } else {
++      assert.equal(entry.receipt, undefined);
++    }
++  };
++  const watchdog = setTimeout(
++    () => {
++      worker?.kill("SIGKILL");
++      console.error("Runtime proof timeout:", app);
++      if (externalRuntime) {
++        void exitAfterCleanup(async () => {
++          await externalRuntime.crash();
++        });
++      } else {
++        process.exit(1);
++      }
++    },
++    externalRuntime ? 300_000 : 180_000
++  );
++  const results: string[] = [];
++  let entry: Entry;
++  const runPolicyCases = async () => {
++    const invoke = async (name: string) => {
++      const response = await fetch(`${url}/proof/invoke`, {
++        method: "POST",
++        headers: { "content-type": "application/json" },
++        body: JSON.stringify({ name }),
++      });
++      assert.equal(response.status, 200);
++      const body: unknown = await response.json();
++      return z
++        .object({
++          status: z.string(),
++          output: z
++            .object({
++              blocked: z.boolean(),
++              caller: z.object({ principalId: z.string() }),
++            })
++            .optional(),
++        })
++        .parse(body);
++    };
++    await put("policy.txt", "required");
++    const observed0 = await invoke("static-gate");
++    assert.equal(observed0.status, "approval-required");
++    await put("policy.txt", "flip");
++    const outOfTurn = await invoke("static-gate");
++    assert.equal(outOfTurn.status, "completed");
++    assert.ok(outOfTurn.output);
++    assert.equal(outOfTurn.output.blocked, true);
++    assert.equal(outOfTurn.output.caller.principalId, "owner");
++    assert.equal(await count("invoke-effects.jsonl"), 0);
++    const observed1 = await invoke("conditional");
++    assert.equal(observed1.status, "failed");
++    results.push(
++      "invokeTool: required approval blocks, policy flip has no receipt, dynamic name is unavailable"
++    );
++    await put("policy.txt", "flip");
++    const flipped = await create();
++    await flipped.response.result();
++    assert.equal(await count("effects.jsonl"), 0);
++    const flippedEntry = await latest(
++      "entries.jsonl",
++      schemas["entries.jsonl"]
++    );
++    assert.equal(flippedEntry.receipt, undefined);
++    assert.equal(flippedEntry.caller.principalId, "owner");
++    results.push("policy flip: owner caller without consent blocked");
++    const { made, waiting } = await required();
++    const requestPid = await latestPid("requests.jsonl");
++    await stop(true, requestPid);
++    await start(true);
++    const restored = new Client({ host: url }).sessions.attach(
++      made.session.state.sessionId,
++      {
++        streamIndex: made.session.state.streamIndex,
++      }
++    );
++    await settle(
++      restored.respond(
++        waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    );
++    entry = await latest("entries.jsonl", schemas["entries.jsonl"]);
++    assert.notEqual(entry.pid, requestPid);
++    checkEntry(entry);
++    assert.equal(await count("effects.jsonl"), mode === "patched" ? 1 : 0);
++    results.push(
++      "actual Workflow restart before response: original dynamic closure and transformed input retained"
++    );
++
++    const observed2 = await rows("requests.jsonl", schemas["requests.jsonl"]);
++    const originalRequest = observed2.find(
++      (row) => row.sessionId === entry.sessionId && row.callId === entry.callId
++    );
++    assert.ok(originalRequest);
++    if (mode === "patched") {
++      assert.equal(entry.messages, originalRequest.messages);
++    } else {
++      assert.notEqual(entry.messages, originalRequest.messages);
++    }
++    const observed3 = await rows("discovery.jsonl", schemas["discovery.jsonl"]);
++    assert.ok(
++      observed3.some(
++        (row) =>
++          row.sessionId === entry.sessionId &&
++          row.messages !== originalRequest.messages
++      )
++    );
++    results.push(
++      "captured history change: original approved closure retained only in patched mode"
++    );
++    const changed = await required();
++    await stop(true, await latestPid("requests.jsonl"));
++    await put("connector.txt", "replacement");
++    await put("suffix.txt", ":replacement");
++    await start(true);
++    const changedSession = new Client({ host: url }).sessions.attach(
++      changed.made.session.state.sessionId,
++      { streamIndex: changed.made.session.state.streamIndex }
++    );
++    await settle(
++      changedSession.respond(
++        changed.waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    );
++    const changedEntry = await latest(
++      "entries.jsonl",
++      schemas["entries.jsonl"]
++    );
++    if (mode === "patched") {
++      checkEntry(changedEntry);
++    } else {
++      assert.equal(changedEntry.connector, "replacement");
++      assert.equal(changedEntry.receipt, undefined);
++    }
++    assert.equal(await count("effects.jsonl"), mode === "patched" ? 2 : 0);
++    results.push(
++      "step discovery replacement cannot inherit consent: original bound connector executes only in patched mode"
++    );
++    const observed4 = await rows(
++      "projections.jsonl",
++      schemas["projections.jsonl"]
++    );
++    const projection = observed4.find(
++      (row) =>
++        row.output.callId === changedEntry.callId &&
++        row.output.sessionId === changedEntry.sessionId
++    );
++    assert.ok(projection);
++    assert.equal(
++      projection.connector,
++      mode === "patched" ? "original" : "replacement"
++    );
++    if (mode === "patched") {
++      assert.equal(projection.messages, changedEntry.messages);
++    }
++    const nextWaiting = await settle(changedSession.send("next"));
++    assert.equal(nextWaiting.inputRequests.length, 1);
++    assert.equal(await count("effects.jsonl"), mode === "patched" ? 2 : 0);
++    await settle(
++      changedSession.respond(
++        nextWaiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    );
++    const nextEntry = await latest("entries.jsonl", schemas["entries.jsonl"]);
++    assert.equal(nextEntry.connector, "replacement");
++    assert.deepEqual(nextEntry.input, {
++      label: "NEXT:replacement",
++      amount: 2,
++      mode: "safe",
++    });
++    assert.notEqual(nextEntry.callId, changedEntry.callId);
++    if (mode === "patched") {
++      assert.equal(
++        receiptOf(nextEntry).requestId,
++        last(nextWaiting.inputRequests).requestId
++      );
++    }
++    assert.equal(await count("effects.jsonl"), mode === "patched" ? 3 : 0);
++    results.push(
++      "new call uses refreshed connector/schema and requires separate consent; resumed output keeps original projection"
++    );
++    // A new session starts with original values again. Crash after the runtime
++    // supplied the settled receipt but before the fixture remote effect begins.
++    await put("connector.txt", "original");
++    await put("suffix.txt", ":original");
++    // oxlint-disable eslint/no-await-in-loop -- Each revocation scenario must settle and restore policy before the next scenario starts.
++    for (const [name, revoked, restoredValue] of [
++      ["owner.txt", "other", "owner"],
++      ["enabled.txt", "false", "true"],
++    ]) {
++      const revokedCall = await required();
++      await put(name, revoked);
++      await settle(
++        revokedCall.made.session.respond(
++          revokedCall.waiting.inputRequests.map((request) => ({
++            requestId: request.requestId,
++            optionId: "approve",
++          }))
++        )
++      );
++      assert.equal(await count("effects.jsonl"), mode === "patched" ? 3 : 0);
++      await put(name, restoredValue);
++    }
++    // oxlint-enable eslint/no-await-in-loop
++    results.push(
++      "live owner and enabled checks block effects despite valid prior consent"
++    );
++    const cancelled = await required();
++    await settle(
++      cancelled.made.session.respond(
++        cancelled.waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "cancel",
++        }))
++      )
++    );
++    assert.equal(await count("effects.jsonl"), mode === "patched" ? 3 : 0);
++    results.push("owner cancellation: zero new effects");
++  };
++  try {
++    await put("owner.txt", "owner");
++    await put("enabled.txt", "true");
++    await put("connector.txt", "original");
++    await put("suffix.txt", ":original");
++    await put("policy.txt", "flip");
++    await start();
++
++    if (!restartOnly) {
++      await runPolicyCases();
++    }
++    const priorEffects = await count("effects.jsonl");
++    const beforeCandidate = await required();
++    const responseCount = await count("responses.jsonl");
++    const entryCount = await count("entries.jsonl");
++    await put("pause-response", "1");
++    const candidateAbort = new AbortController();
++    const candidateResponse = await beforeCandidate.made.session.respond(
++      beforeCandidate.waiting.inputRequests.map((request) => ({
++        requestId: request.requestId,
++        optionId: "approve",
++      })),
++      { signal: candidateAbort.signal }
++    );
++    void consumeInterrupted(candidateResponse.result());
++    await until(
++      async () => (await count("responses.jsonl")) > responseCount,
++      "candidate authorizer entry"
++    );
++    const candidatePid = await latestPid("responses.jsonl");
++    assert.equal(await count("entries.jsonl"), entryCount);
++    candidateAbort.abort();
++    await stop(true, candidatePid);
++    await rm(file("pause-response"));
++    await start(true);
++    await until(
++      async () => (await count("entries.jsonl")) > entryCount,
++      "candidate settlement after Workflow restart",
++      externalRuntime ? 15_000 : 60_000
++    );
++    const candidateEntry = await latest(
++      "entries.jsonl",
++      schemas["entries.jsonl"]
++    );
++    assert.notEqual(candidateEntry.pid, candidatePid);
++    checkEntry(candidateEntry);
++    if (mode === "patched") {
++      assert.equal(
++        receiptOf(candidateEntry).requestId,
++        last(beforeCandidate.waiting.inputRequests).requestId
++      );
++    }
++    await until(
++      async () =>
++        mode === "stock" || (await count("effects.jsonl")) === priorEffects + 1,
++      "candidate effect"
++    );
++    results.push(
++      "actual Workflow restart after candidate ingestion, before settlement: authorization resumes without resending"
++    );
++    const second = await required();
++    const before = await count("entries.jsonl");
++    await put("pause-before-effect", "1");
++    const streamAbort = new AbortController();
++    const response = await second.made.session.respond(
++      second.waiting.inputRequests.map((request) => ({
++        requestId: request.requestId,
++        optionId: "approve",
++      })),
++      { signal: streamAbort.signal }
++    );
++    void consumeInterrupted(response.result());
++    await until(
++      async () => (await count("entries.jsonl")) > before,
++      "executor after settlement"
++    );
++    entry = await latest("entries.jsonl", schemas["entries.jsonl"]);
++    checkEntry(entry);
++    const enteredPid = entry.pid;
++    const settledReceipt = entry.receipt;
++    if (mode === "patched") {
++      assert.equal(
++        receiptOf(entry).requestId,
++        last(second.waiting.inputRequests).requestId
++      );
++    }
++    streamAbort.abort();
++    await stop(true, enteredPid);
++    await rm(file("pause-before-effect"));
++    await start(true);
++    await until(
++      async () => {
++        const all = await rows("entries.jsonl", schemas["entries.jsonl"]);
++        return all.length > before + 1 && last(all).pid !== enteredPid;
++      },
++      "Workflow replay of interrupted executor",
++      externalRuntime ? 15_000 : 90_000
++    );
++    entry = await latest("entries.jsonl", schemas["entries.jsonl"]);
++    checkEntry(entry);
++    assert.deepEqual(entry.receipt, settledReceipt);
++    await until(
++      async () =>
++        mode === "stock" || (await count("effects.jsonl")) === priorEffects + 2,
++      "effect after replay"
++    );
++    assert.equal(
++      await count("effects.jsonl"),
++      mode === "patched" ? priorEffects + 2 : 0
++    );
++    results.push(
++      mode === "patched"
++        ? "actual Workflow restart after settlement: interrupted callback replay reconstructs exact receipt"
++        : "actual Workflow restart after settlement: caller remains owner, missing receipt still blocks effect"
++    );
++    await writeFile(
++      file("proof-results.json"),
++      JSON.stringify(
++        {
++          mode,
++          results,
++          entries: await rows("entries.jsonl", schemas["entries.jsonl"]),
++          effects: await rows("effects.jsonl", schemas["effects.jsonl"]),
++        },
++        null,
++        2
++      )
++    );
++    console.log(JSON.stringify({ mode, results, evidence: app }, null, 2));
++  } catch (error) {
++    await writeFile(file("failure.log"), logs);
++    await writeFile(
++      file("failure.json"),
++      JSON.stringify(
++        {
++          error: String(error),
++          stack: error instanceof Error ? error.stack : String(error),
++          results,
++        },
++        null,
++        2
++      )
++    );
++    console.error(error);
++    console.error("Retained failure evidence:", app);
++    throw error;
++  } finally {
++    await stop();
++    clearTimeout(watchdog);
++  }
++};
+diff --git a/tsconfig.proof.json b/tsconfig.proof.json
+new file mode 100644
+--- /dev/null
++++ b/tsconfig.proof.json
+@@ -0,0 +1,13 @@
++{
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "NodeNext",
++    "moduleResolution": "NodeNext",
++    "strict": true,
++    "noEmit": true,
++    "skipLibCheck": true,
++    "allowImportingTsExtensions": true,
++    "types": ["node", "bun"]
++  },
++  "include": ["runtime*.ts", "runtime-fixture/**/*.ts"]
 +}
 diff --git a/runtime-fixture/agent/agent.ts b/runtime-fixture/agent/agent.ts
 new file mode 100644
@@ -804,13 +1143,16 @@ diff --git a/runtime-fixture/agent/channels/invoke.ts b/runtime-fixture/agent/ch
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/channels/invoke.ts
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,27 @@
 +import { defineChannel, POST } from "eve/channels";
++
++import { z } from "zod";
 +
 +export default defineChannel({
 +  routes: [
 +    POST("/proof/invoke", async (request, { invokeTool }) => {
-+      const { name } = await request.json();
++      const body: unknown = await request.json();
++      const { name } = z.object({ name: z.string() }).parse(body);
 +      return Response.json(
 +        await invokeTool(
 +          name,
@@ -839,7 +1181,7 @@ diff --git a/runtime-fixture/agent/tools/mcp.ts b/runtime-fixture/agent/tools/mc
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/tools/mcp.ts
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,127 @@
 +import {
 +  appendFileSync,
 +  existsSync,
@@ -858,10 +1200,10 @@ new file mode 100644
 +      const messages = JSON.stringify(context.messages);
 +      appendFileSync(
 +        "discovery.jsonl",
-+        JSON.stringify({ messages, sessionId: context.session.id }) + "\n"
++        `${JSON.stringify({ messages, sessionId: context.session.id })}\n`
 +      );
-+      const connector = readFileSync("connector.txt", "utf8");
-+      const suffix = readFileSync("suffix.txt", "utf8");
++      const connector = readFileSync("connector.txt", "utf-8");
++      const suffix = readFileSync("suffix.txt", "utf-8");
 +      return {
 +        conditional: defineTool({
 +          description: "Fixture MCP effect",
@@ -875,23 +1217,23 @@ new file mode 100644
 +          toModelOutput(output) {
 +            appendFileSync(
 +              "projections.jsonl",
-+              JSON.stringify({ connector, messages, output }) + "\n"
++              `${JSON.stringify({ connector, messages, output })}\n`
 +            );
 +            return { type: "text", value: JSON.stringify(output) };
 +          },
 +          approval: {
 +            request(ctx) {
-+              const policy = readFileSync("policy.txt", "utf8");
++              const policy = readFileSync("policy.txt", "utf-8");
 +              appendFileSync(
 +                "requests.jsonl",
-+                JSON.stringify({
++                `${JSON.stringify({
 +                  connector,
 +                  messages,
 +                  sessionId: ctx.session.id,
 +                  callId: ctx.callId,
 +                  input: ctx.toolInput,
 +                  pid: process.pid,
-+                }) + "\n"
++                })}\n`
 +              );
 +              if (policy === "flip") {
 +                writeFileSync("policy.txt", "required");
@@ -902,26 +1244,32 @@ new file mode 100644
 +            async response({ response }) {
 +              appendFileSync(
 +                "responses.jsonl",
-+                JSON.stringify({
++                `${JSON.stringify({
 +                  pid: process.pid,
 +                  decision: response.decision,
-+                }) + "\n"
++                })}\n`
 +              );
++              // oxlint-disable eslint/no-await-in-loop -- This process-local barrier must remain closed until the controller releases it.
 +              while (existsSync("pause-response")) {
 +                await setTimeout(50);
 +              }
++              // oxlint-enable eslint/no-await-in-loop
 +              return response.principal.principalId === "owner"
 +                ? { status: "allowed" }
 +                : { status: "rejected", reason: "owner only" };
 +            },
 +          },
 +          async execute(input, ctx) {
-+            const receipt = ("approval" in ctx ? ctx.approval : undefined) as
-+              | {
-+                  requestId: string;
-+                  responder: { principalId: string; authenticator: string };
-+                }
-+              | undefined;
++            const receipt = z
++              .looseObject({
++                requestId: z.string(),
++                responder: z.looseObject({
++                  principalId: z.string(),
++                  authenticator: z.string(),
++                }),
++              })
++              .optional()
++              .parse("approval" in ctx ? ctx.approval : undefined);
 +            const evidence = {
 +              connector,
 +              messages,
@@ -932,26 +1280,28 @@ new file mode 100644
 +              pid: process.pid,
 +              callId: ctx.callId,
 +            };
-+            appendFileSync("entries.jsonl", JSON.stringify(evidence) + "\n");
++            appendFileSync("entries.jsonl", `${JSON.stringify(evidence)}\n`);
++            // oxlint-disable eslint/no-await-in-loop -- Preserve the executor-entry barrier before any effect.
 +            while (existsSync("pause-before-effect")) {
 +              await setTimeout(50);
 +            }
++            // oxlint-enable eslint/no-await-in-loop
 +            ctx.abortSignal.throwIfAborted();
 +            if (
-+              readFileSync("owner.txt", "utf8") !==
++              readFileSync("owner.txt", "utf-8") !==
 +                ctx.session.auth.initiator?.principalId ||
-+              readFileSync("enabled.txt", "utf8") !== "true"
++              readFileSync("enabled.txt", "utf-8") !== "true"
 +            ) {
 +              return { blocked: "current connector unavailable", ...evidence };
 +            }
 +            if (
-+              readFileSync("policy.txt", "utf8") === "required" &&
++              readFileSync("policy.txt", "utf-8") === "required" &&
 +              (receipt?.responder.principalId !== "owner" ||
 +                receipt.responder.authenticator !== "retirement-fixture")
 +            ) {
 +              return { blocked: "missing exact consent", ...evidence };
 +            }
-+            appendFileSync("effects.jsonl", JSON.stringify(evidence) + "\n");
++            appendFileSync("effects.jsonl", `${JSON.stringify(evidence)}\n`);
 +            return { effect: true, ...evidence };
 +          },
 +        }),
@@ -963,7 +1313,7 @@ diff --git a/runtime-fixture/agent/tools/static-gate.ts b/runtime-fixture/agent/
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/tools/static-gate.ts
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,42 @@
 +import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 +
 +import { defineTool } from "eve/tools";
@@ -975,7 +1325,7 @@ new file mode 100644
 +  inputSchema: z.object({ label: z.string() }),
 +  approval: {
 +    request() {
-+      const policy = readFileSync("policy.txt", "utf8");
++      const policy = readFileSync("policy.txt", "utf-8");
 +      if (policy === "flip") {
 +        writeFileSync("policy.txt", "required");
 +        return "not-applicable";
@@ -985,20 +1335,24 @@ new file mode 100644
 +  },
 +  execute(input, ctx) {
 +    ctx.abortSignal.throwIfAborted();
-+    const receipt = ("approval" in ctx ? ctx.approval : undefined) as
-+      | {
-+          requestId: string;
-+          responder: { principalId: string; authenticator: string };
-+        }
-+      | undefined;
++    const receipt = z
++      .looseObject({
++        requestId: z.string(),
++        responder: z.looseObject({
++          principalId: z.string(),
++          authenticator: z.string(),
++        }),
++      })
++      .optional()
++      .parse("approval" in ctx ? ctx.approval : undefined);
 +    if (
-+      readFileSync("policy.txt", "utf8") === "required" &&
++      readFileSync("policy.txt", "utf-8") === "required" &&
 +      (receipt?.responder.principalId !== "owner" ||
 +        receipt.responder.authenticator !== "retirement-fixture")
 +    ) {
 +      return { blocked: true, caller: ctx.session.auth.current };
 +    }
-+    appendFileSync("invoke-effects.jsonl", JSON.stringify(input) + "\n");
++    appendFileSync("invoke-effects.jsonl", `${JSON.stringify(input)}\n`);
 +    return { effect: true };
 +  },
 +});

@@ -4,6 +4,8 @@ Final baseline: **published EVE 0.71.3**, source `fab8ba1424eddfdedd6a177cac2171
 
 Worktree: `/Users/fran/.codex/worktrees/5509/chat-js`, branch `codex/eve-mcp-receipt-proof`. The earlier `135c8a8f1` commit contains the provisional 0.71.2 experiment. This revision supersedes its final-baseline and missing-runtime-proof limitations.
 
+The [13 October typed migration and final validation](TYPED-VALIDATION-2026-10-13.md) supersede the earlier blocked maintenance audit. All B-authored materialized files and added upstream lines now pass the current type-aware lint policy. PG crash recovery and old-run replay remain separate runtime blockers.
+
 ## Reproduce the published-runtime proof
 
 Use Lane D's frozen harness manifest and lockfile read-only. The runner copies both into a fresh temporary package, installs with Bun, and starts the real EVE CLI with bundled Workflow local-world storage and compiled authored tools. It first tests the stock published package, then applies the experimental source patch to an isolated package copy and repeats the same scenarios.
@@ -17,7 +19,7 @@ EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node \
 
 Omit the final argument to clone upstream instead of the available read-only source repository. Both paths check out the exact source SHA. The runner requires Node 24.20.0. No shared manifest, lockfile, parent checkout, production adapter, provider credentials or remote service is modified.
 
-`runtime-fixture.patch` contains the standalone Node scenario runner and EVE fixture. These are external-runtime fixtures, materialized in the isolated package rather than installed as ChatJS application modules. The launcher retains storage, entry/effect evidence and `proof-results.json` in the printed temporary directory. It allows 180 seconds per mode and stops workers on failure. Auth is fixture-owned; the effect is an append-only disposable file. Approval settlement, HTTP ingress, tool compilation, dynamic callback restoration, AI SDK execution and Workflow storage/recovery are real.
+`runtime-fixture.patch` contains the typed Node scenario runner, typed Postgres/old-run controllers, shared validated evidence contracts, three boundary tests, and EVE fixture. The launcher type-checks these files and runs the boundary tests before starting scenarios. Node 24 executes `runtime-proof.ts` using native type stripping. These are external-runtime fixtures, materialized in the isolated package rather than installed as ChatJS application modules. The launcher retains storage, entry/effect evidence and `proof-results.json` in the printed temporary directory. It allows 180 seconds per mode and stops workers on failure. Auth is fixture-owned; the effect is an append-only disposable file. Approval settlement, HTTP ingress, tool compilation, dynamic callback restoration, AI SDK execution and Workflow storage/recovery are real.
 
 The patched mode replaces only four isolated published distribution modules with transpiled source: receipt projection, auth wrapper, tool loop, and tool dispatch. Atomic file replacement avoids modifying package-manager hardlinks. This is an experimental package, **not** an upstream release. Other published modules and bundled Workflow stay unchanged.
 

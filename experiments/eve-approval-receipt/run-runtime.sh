@@ -12,7 +12,9 @@ runtime_root="$(mktemp -d "${TMPDIR:-/tmp}/lane-b-released.XXXXXX")"
 cp "$shared_harness/package.json" "$shared_harness/bun.lock" "$runtime_root/"
 bun install --cwd "$runtime_root" --frozen-lockfile
 (cd "$runtime_root" && git apply "$proof_dir/runtime-fixture.patch")
-"$node_binary" "$runtime_root/runtime-proof.mjs" "$runtime_root" stock
+bun run --cwd "$runtime_root" tsc -p tsconfig.proof.json
+bun test "$runtime_root/runtime-contracts.test.ts"
+"$node_binary" "$runtime_root/runtime-proof.ts" "$runtime_root" stock
 git clone --no-hardlinks "$source_repo" "$runtime_root/source"
 git -C "$runtime_root/source" checkout --detach fab8ba1424eddfdedd6a177cac21710258da0e81
 git -C "$runtime_root/source" apply "$proof_dir/receipt.patch"
@@ -28,5 +30,5 @@ for(const name of ["context/tool-approval-receipts","execution/tool-auth","harne
  await Bun.write(`${target}.lane-b`,compiler.transformSync(source));
  await rename(`${target}.lane-b`,target);
 }' "$runtime_root"
-"$node_binary" "$runtime_root/runtime-proof.mjs" "$runtime_root" patched
+"$node_binary" "$runtime_root/runtime-proof.ts" "$runtime_root" patched
 printf 'Isolated published-package experiment: %s\n' "$runtime_root"

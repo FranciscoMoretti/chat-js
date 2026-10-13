@@ -1,6 +1,8 @@
 # B maintenance — 13 October 2026
 
-**Not ready for the requested all-new-code lint compliance.** Repository checks pass, but materialized experimental payloads still have substantive lint findings. This maintenance preserves the completed receipt/callback experiments and records the remaining work without adding lint exclusions or claiming the patch contents are covered by repository lint.
+**Historical checkpoint, superseded by [the completed typed migration](TYPED-VALIDATION-2026-10-13.md).** The parent subsequently authorized and received the bounded migration described below.
+
+**Status at commit `9432c91697afdee45a0bd98e70b9a81b85d6a601`: not ready for the requested all-new-code lint compliance.** Repository checks pass, but materialized experimental payloads still have substantive lint findings. This maintenance preserves the completed receipt/callback experiments and records the remaining work without adding lint exclusions or claiming the patch contents are covered by repository lint.
 
 ## Main update and scoped cleanup
 

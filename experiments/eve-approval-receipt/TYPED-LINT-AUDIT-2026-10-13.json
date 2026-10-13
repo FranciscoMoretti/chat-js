@@ -1,0 +1,26 @@
+{
+  "status": "complete for B-authored payload compliance; runtime blockers retained",
+  "baselineMain": "d612af7c128a3d962455f8c4574ae5a69ce2d99e",
+  "upstreamSource": "fab8ba1424eddfdedd6a177cac21710258da0e81",
+  "runtime": {
+    "diagnostics": [],
+    "number_of_files": 11,
+    "number_of_rules": 602,
+    "threads_count": 18,
+    "start_time": 0.138837209
+  },
+  "authoredUpstreamFiles": {
+    "diagnostics": [],
+    "number_of_files": 4,
+    "number_of_rules": 602,
+    "threads_count": 18,
+    "start_time": 0.373527708
+  },
+  "modifiedUpstream": {
+    "baselineDiagnostics": 339,
+    "patchedDiagnostics": 336,
+    "diagnosticsOnAddedLines": 0,
+    "remainingAttribution": "inherited upstream source; no broad exclusions"
+  },
+  "historicalAudit": "LINT-AUDIT-2026-10-13.json"
+}

@@ -1,109 +1,140 @@
 diff --git a/packages/eve/src/harness/counterexample.lane-b.integration.test.ts b/packages/eve/src/harness/counterexample.lane-b.integration.test.ts
 new file mode 100644
-index 0000000..4090ace
+index 0000000..628b7cd
 --- /dev/null
 +++ b/packages/eve/src/harness/counterexample.lane-b.integration.test.ts
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,105 @@
 +import { jsonSchema } from "ai";
 +import { MockLanguageModelV4 } from "ai/test";
 +import { expect, it, vi } from "vitest";
-+import { createApprovalContext, usage } from "#internal/testing/approval-resume.js";
++import {
++  createApprovalContext,
++  usage,
++} from "#internal/testing/approval-resume.js";
 +import { contextStorage } from "#context/container.js";
 +import { createToolLoopHarness } from "#harness/tool-loop.js";
 +import { createToolExecuteWithAuth } from "#execution/tool-auth.js";
 +import type { HarnessSession } from "#harness/types.js";
-+vi.mock("#runtime/attributes/emit.js", () => ({ setEveAttributes: vi.fn(async () => {}) }));
++
++vi.mock("#runtime/attributes/emit.js", () => ({
++  setEveAttributes: vi.fn(async () => {}),
++}));
 +const call = {
 +  type: "tool-call" as const,
 +  toolCallId: "call-1",
 +  toolName: "mcp",
 +  input: JSON.stringify({ value: 1 }),
 +};
-+function model() {
++const model = () => {
 +  let count = 0;
 +  return new MockLanguageModelV4({
 +    provider: "eve-integration-mock",
 +    modelId: "receipt",
-+    doGenerate: async () => ({
-+      content: count++ === 0 ? [call] : [{ type: "text" as const, text: "done" }],
-+      finishReason: { raw: undefined, unified: count === 1 ? "tool-calls" : "stop" },
-+      usage,
-+      warnings: [],
-+    }),
-+  });
-+}
-+function session(): HarnessSession {
-+  return {
-+    sessionId: "generate-approval-resume-session",
-+    continuationToken: "http:receipt",
-+    agent: {
-+      modelReference: { id: "receipt" },
-+      system: "test",
-+      tools: [{ name: "mcp", description: "test", inputSchema: { type: "object" } }],
-+    },
-+    history: [{ kind: "user", role: "user", content: "act" }],
-+    compaction: { recentWindowSize: 10, threshold: 100000 },
-+  };
-+}
-+it.each([false, true])("false-to-true request/effect policy flip, final gate=%s", async (gate) => {
-+  let requireApproval = false;
-+  const effect = vi.fn();
-+  const policy = vi.fn(() => {
-+    const decision = requireApproval ? "user-approval" : "not-applicable";
-+    requireApproval = true;
-+    return decision;
-+  });
-+  const execute = createToolExecuteWithAuth({
-+    scope: "mcp",
-+    execute: async (_input, ctx) => {
-+      ctx.abortSignal.throwIfAborted();
-+      if (gate && requireApproval && !(ctx as any).approval)
-+        throw new Error("missing exact consent");
-+      effect();
-+      return "ok";
-+    },
-+  });
-+  const runtime = createToolLoopHarness({
-+    resolveModel: async () => modelInstance,
-+    tools: new Map([
-+      [
-+        "mcp",
-+        {
-+          name: "mcp",
-+          description: "test",
-+          inputSchema: jsonSchema({ type: "object" }),
-+          approval: policy,
-+          execute,
++    // oxlint-disable-next-line eslint/require-await -- The SDK generator contract is asynchronous; this mock completes without external IO.
++    doGenerate: async () => {
++      count += 1;
++      return {
++        content:
++          count === 1 ? [call] : [{ type: "text" as const, text: "done" }],
++        finishReason: {
++          raw: undefined,
++          unified: count === 1 ? "tool-calls" : "stop",
 +        },
-+      ],
-+    ]),
++        usage,
++        warnings: [],
++      };
++    },
 +  });
-+  const modelInstance = model();
-+  await contextStorage.run(createApprovalContext(), () => runtime(session()));
-+  expect(policy).toHaveBeenCalled();
-+  expect(effect).toHaveBeenCalledTimes(gate ? 0 : 1);
++};
++const session = (): HarnessSession => ({
++  sessionId: "generate-approval-resume-session",
++  continuationToken: "http:receipt",
++  agent: {
++    modelReference: { id: "receipt" },
++    system: "test",
++    tools: [
++      { name: "mcp", description: "test", inputSchema: { type: "object" } },
++    ],
++  },
++  history: [{ kind: "user", role: "user", content: "act" }],
++  compaction: { recentWindowSize: 10, threshold: 100_000 },
 +});
++it.each([false, true])(
++  "false-to-true request/effect policy flip, final gate=%s",
++  async (gate) => {
++    let requireApproval = false;
++    const effect = vi.fn();
++    const policy = vi.fn(() => {
++      const decision = requireApproval ? "user-approval" : "not-applicable";
++      requireApproval = true;
++      return decision;
++    });
++    const execute = createToolExecuteWithAuth({
++      scope: "mcp",
++      execute: (_input, ctx) => {
++        ctx.abortSignal.throwIfAborted();
++        if (
++          gate &&
++          requireApproval &&
++          !("approval" in ctx && ctx.approval !== undefined)
++        ) {
++          throw new Error("missing exact consent");
++        }
++        effect();
++        return "ok";
++      },
++    });
++    const modelInstance = model();
++    const runtime = createToolLoopHarness({
++      // oxlint-disable-next-line eslint/require-await -- The harness requires an asynchronous model resolver even for this in-memory fixture.
++      resolveModel: async () => modelInstance,
++      tools: new Map([
++        [
++          "mcp",
++          {
++            name: "mcp",
++            description: "test",
++            inputSchema: jsonSchema({ type: "object" }),
++            approval: policy,
++            execute,
++          },
++        ],
++      ]),
++    });
++    await contextStorage.run(
++      createApprovalContext(),
++      async () => await runtime(session())
++    );
++    expect(policy).toHaveBeenCalled();
++    expect(effect).toHaveBeenCalledTimes(gate ? 0 : 1);
++  }
++);
 diff --git a/packages/eve/vitest.lane-b.config.ts b/packages/eve/vitest.lane-b.config.ts
 new file mode 100644
-index 0000000..8e405ee
+index 0000000..632a8e8
 --- /dev/null
 +++ b/packages/eve/vitest.lane-b.config.ts
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,23 @@
 +import { defineConfig } from "vitest/config";
++
 +export default defineConfig({
 +  resolve: {
 +    alias: [
 +      {
-+        find: /^#compiled\/(.+)\.js$/,
-+        replacement: new URL("./.generated/compiled/$1.js", import.meta.url).pathname,
++        find: /^#compiled\/(?<modulePath>.+)\.js$/u,
++        replacement: new URL(".generated/compiled/$1.js", import.meta.url)
++          .pathname,
 +      },
-+      { find: /^#(.+)\.js$/, replacement: new URL("./src/$1.ts", import.meta.url).pathname },
++      {
++        find: /^#(?<modulePath>.+)\.js$/u,
++        replacement: new URL("src/$1.ts", import.meta.url).pathname,
++      },
 +    ],
 +  },
 +  test: {
 +    environment: "node",
 +    include: ["src/**/*.lane-b.integration.test.ts"],
 +    setupFiles: ["./test/setup/mock-ai-gateway.ts"],
-+    testTimeout: 30000,
++    testTimeout: 30_000,
 +  },
 +});
