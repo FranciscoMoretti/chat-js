@@ -19,6 +19,7 @@ test.each([
       "lib/db/mcp-oauth-lock.test.ts",
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
+      "lib/eve/tool-usage.test.ts",
       "tests/native-research-runtime.ts",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "tests/fixtures/eve-oauth-mcp-server.test.ts",

@@ -49,6 +49,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
+  "lib/eve/tool-usage.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
