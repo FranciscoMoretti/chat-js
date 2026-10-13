@@ -13,6 +13,9 @@ import { tmpdir } from "node:os";
 const root = path.resolve(import.meta.dir, "..");
 const childDeadlineMs = 10_000;
 const testDeadlineMs = 30_000;
+const fixtureEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))
+);
 const presetNames = ["core", "react", "next", "tanstack"] as const;
 const toolFiles = [
   "agent/tools/deepResearch.ts",
@@ -91,6 +94,7 @@ const runAgentHook = async (
     ["bash", path.join(temporary, "scripts/ai-post-codegen.sh"), mode],
     {
       cwd: path.join(temporary, "scripts"),
+      env: fixtureEnv,
       stdin: new Blob([JSON.stringify(payload)]),
       stdout: "pipe",
       stderr: "pipe",
@@ -271,7 +275,10 @@ test.each([null, "lint", "test:types"])(
           },
         })
       );
-      const initialize = Bun.spawnSync(["git", "init"], { cwd: temporary });
+      const initialize = Bun.spawnSync(["git", "init"], {
+        cwd: temporary,
+        env: fixtureEnv,
+      });
       expect(initialize.exitCode).toBe(0);
       const commit = Bun.spawnSync(
         [
@@ -287,9 +294,16 @@ test.each([null, "lint", "test:types"])(
           "-m",
           "fixture",
         ],
-        { cwd: temporary }
+        { cwd: temporary, env: fixtureEnv }
       );
       expect(commit.exitCode).toBe(0);
+      const nested = path.join(temporary, "embedded");
+      await mkdir(nested);
+      const embedded = Bun.spawnSync(["git", "init"], {
+        cwd: nested,
+        env: fixtureEnv,
+      });
+      expect(embedded.exitCode).toBe(0);
       const payload = { session_id: "check-fixture" };
       const started = await runAgentHook(temporary, "start", payload);
       expect(started.exitCode).toBe(0);
@@ -345,6 +359,7 @@ test.each([null, "lint", "test:types"])(
       if (failingScript === null) {
         const staged = Bun.spawnSync(["git", "add", "--", "changed.ts"], {
           cwd: temporary,
+          env: fixtureEnv,
         });
         expect(staged.exitCode).toBe(0);
         const committed = Bun.spawnSync(
@@ -360,7 +375,7 @@ test.each([null, "lint", "test:types"])(
             "-m",
             "change",
           ],
-          { cwd: temporary }
+          { cwd: temporary, env: fixtureEnv }
         );
         expect(committed.exitCode).toBe(0);
         const afterCommit = await runAgentHook(temporary, "check", payload);

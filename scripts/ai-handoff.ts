@@ -34,11 +34,12 @@ const fingerprint = (): string => {
     hash.update(file);
     hash.update("\0");
     const target = path.join(root, file);
-    hash.update(
-      lstatSync(target).isSymbolicLink()
-        ? readlinkSync(target)
-        : readFileSync(target)
-    );
+    const stat = lstatSync(target);
+    if (stat.isSymbolicLink()) {
+      hash.update(readlinkSync(target));
+    } else if (stat.isFile()) {
+      hash.update(readFileSync(target));
+    }
     hash.update("\0");
   }
   return hash.digest("hex");
