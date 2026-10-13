@@ -72,7 +72,10 @@ const run = async (): Promise<void> => {
   const current = fingerprint();
   if (process.argv[2] === "start") {
     mkdirSync(directory, { recursive: true });
-    writeFileSync(statePath, current);
+    // Steering and question replies can submit another prompt before Stop.
+    if (!existsSync(statePath)) {
+      writeFileSync(statePath, current);
+    }
     output();
     return;
   }

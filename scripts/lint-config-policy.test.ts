@@ -300,6 +300,8 @@ test.each([null, "lint", "test:types"])(
         path.join(temporary, "changed.ts"),
         "export const changed = true;\n"
       );
+      const steered = await runAgentHook(temporary, "start", payload);
+      expect(steered.exitCode).toBe(0);
       const otherSession = await runAgentHook(temporary, "check", {
         session_id: "different-session",
       });
