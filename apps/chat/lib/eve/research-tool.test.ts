@@ -110,7 +110,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
 
 it("bounds adaptive decisions even when the supervisor never finishes", async () => {
   agent.mockImplementation(
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
+    // oxlint-disable-next-line typescript/promise-function-async -- This Promise-only agent fixture keeps supervisor decisions unfinished while returning valid writer/researcher outputs; a constant result loses role validation, and eslint/require-await rejects an immediate async factory.
     (name: string): ReturnType<WorkflowToolContext["agent"]> => {
       if (name === "researchPlanner") {
         return Promise.resolve<
@@ -167,17 +167,20 @@ it("returns clarification without starting research or saving a document", async
 
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
   const cancellation = new Error("Cancelled");
+  const research =
+    Promise.withResolvers<Awaited<ReturnType<WorkflowToolContext["agent"]>>>();
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
-    // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-    .mockImplementationOnce(() => {
-      controller.abort(cancellation);
-      return Promise.reject(cancellation);
-    });
-  await expect(Array.fromAsync(executeEveResearch({}, context))).rejects.toBe(
-    cancellation
-  );
+    .mockReturnValueOnce(research.promise);
+  const outputs = Array.fromAsync(executeEveResearch({}, context));
+  await vi.waitFor(() => {
+    expect(agent).toHaveBeenCalledTimes(3);
+  });
+  controller.abort(cancellation);
+  const rejected = expect(outputs).rejects.toBe(cancellation);
+  research.reject(cancellation);
+  await rejected;
   expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });

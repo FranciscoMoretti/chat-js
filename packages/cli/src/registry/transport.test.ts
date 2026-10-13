@@ -5,20 +5,23 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { withRegistryTransport } from "./transport";
 
-test("registry policy rejects insecure fetch synchronously inside an operation", async () => {
-  const complete = new Error("operation complete");
+test("registry policy rejects insecure fetch before sending a request and restores host fetch", () => {
+  const original = globalThis.fetch;
+  const nativeFetch = Object.assign(mock<typeof fetch>(), {
+    preconnect: original.preconnect,
+  });
+  globalThis.fetch = nativeFetch;
   try {
-    await withRegistryTransport((): never => {
-      expect(() => {
-        void fetch("http://example.com/insecure.json");
-      }).toThrow("HTTPS");
-      throw complete;
-    });
-  } catch (error) {
-    expect(error).toBe(complete);
-    return;
+    expect(
+      withRegistryTransport(
+        async () => await fetch("http://example.com/insecure.json")
+      )
+    ).rejects.toThrow("HTTPS");
+    expect(nativeFetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).toBe(nativeFetch);
+  } finally {
+    globalThis.fetch = original;
   }
-  throw new Error("Expected the operation completion marker");
 });
 
 test("shadcn transitive registry requests retain transport policy and restore host fetch", async () => {

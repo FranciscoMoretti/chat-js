@@ -133,7 +133,7 @@ beforeEach(() => {
   mocks.files.clear();
   mocks.native.clear();
   mocks.remove.mockImplementation(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture removes the requested keys from the in-memory inventory; eslint/require-await rejects an immediate async callback with no storage I/O. */
     (urls: readonly string[]) => {
       for (const url of urls) {
         const key = keyFromFileUrl(url);
@@ -146,7 +146,7 @@ beforeEach(() => {
     /* oxlint-enable typescript/promise-function-async */
   );
   mocks.download.mockImplementation(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture looks up each requested Blob and rejects missing keys; a static result loses key validation, and eslint/require-await rejects an immediate async callback. */
     (key: string) => {
       const file = mocks.files.get(key);
       if (!file) {
@@ -157,7 +157,7 @@ beforeEach(() => {
     /* oxlint-enable typescript/promise-function-async */
   );
   mocks.upload.mockImplementation(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture records each uploaded key and Blob for replay/cleanup checks; eslint/require-await rejects an immediate async callback with no storage I/O. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.resolve();
@@ -409,7 +409,7 @@ test("unrelated private file references are denied before any bytes or destinati
 test("uncertain storage writes retry persisted keys without taking another snapshot or making a second copy", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture records the write before rejecting its lost reply, exercising uncertain persistence; eslint/require-await rejects an immediate async callback. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Lost storage reply"));
@@ -499,7 +499,7 @@ test("concurrent requests converge on the persisted allocation and one native co
 test("revocation before acceptance purges only the rejected destination and keeps a replay tombstone", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture persists the interrupted preparation before rejecting, so revocation must purge it; eslint/require-await rejects an immediate async callback. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));
@@ -536,7 +536,7 @@ test("revocation before acceptance purges only the rejected destination and keep
 test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture persists interrupted preparation before rejecting, supplying the object for lost-cleanup recovery; eslint/require-await rejects an immediate async callback. */
     (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));

@@ -129,7 +129,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   expect(remove).not.toHaveBeenCalled();
   await writeFile(child.path, JSON.stringify(child.record));
   let childRemoved = false;
-  // oxlint-disable-next-line typescript/promise-function-async -- Fixture validation throws synchronously before returning its promise; retain that ordering and direct settlement.
+  // oxlint-disable-next-line typescript/promise-function-async -- This provider fixture enforces completed VM deletion and child-before-parent snapshot deletion on each call; its Promise-only success has no work to await under eslint/require-await.
   remove.mockImplementation((name: string) => {
     if (mocks.destroySandbox.mock.calls.length !== 2) {
       throw new Error("All family VMs must be removed first");

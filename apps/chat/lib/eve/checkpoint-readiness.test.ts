@@ -50,7 +50,7 @@ it("does not accept an unrelated source receipt or a generic not found", async (
 });
 it("times out without allocating or changing the requested checkpoint", async () => {
   vi.useFakeTimers();
-  // oxlint-disable-next-line typescript/promise-function-async -- Each poll needs a fresh Response body; the settled fixture has no work to await.
+  // oxlint-disable-next-line typescript/promise-function-async -- Every checkpoint poll consumes a fresh Response body, so a static resolved Response cannot be reused; the Promise-only request fixture has no work to await under eslint/require-await.
   request.mockImplementation(() =>
     Promise.resolve(
       Response.json({ code: "checkpoint_not_ready" }, { status: 404 })

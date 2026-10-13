@@ -109,23 +109,21 @@ const harness = ({
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
-          // oxlint-disable-next-line typescript/promise-function-async -- Failure cases below exercise a driver throwing synchronously during close; runMaintainerBuild must still retain the original migration failure.
+          // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only driver fixture records cleanup and injects failures that must not mask migration errors; its immediate close has no work to await under eslint/require-await.
           close: (): Promise<void> => {
             step("close");
             return Promise.resolve();
           },
-          // oxlint-disable-next-line typescript/promise-function-async -- failAt injects synchronous driver failures at SELECT/lock steps, which the phase-redaction tests exercise.
-          execute: (query: string): Promise<void> => {
+          execute: async (query: string): Promise<void> => {
             step(query);
 
             if (query === lockQuery) {
-              return lockWait;
+              await lockWait;
             }
-            return Promise.resolve();
           },
         };
       },
-      // oxlint-disable-next-line typescript/promise-function-async -- The migration/build failure cases exercise synchronous subprocess-launch failures as well as async driver work.
+      // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only subprocess fixture records command/env and injects phase failures without launching a process; eslint/require-await rejects an immediate async callback.
       run: (
         command: "db:migrate" | "build",
         env: Readonly<NodeJS.ProcessEnv>

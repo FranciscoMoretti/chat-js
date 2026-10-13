@@ -111,13 +111,13 @@ describe("file storage", () => {
 });
 
 vi.mock("./db/file-storage-keys", () => ({
-  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
+  // oxlint-disable-next-line typescript/promise-function-async -- This DB fixture maps each requested storage-key batch to IDs; its Promise-only API and synchronous mapping conflict with eslint/require-await.
   fileIdsForStorageKeys: vi.fn((keys: readonly string[]) =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     )
   ),
-  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
+  // oxlint-disable-next-line typescript/promise-function-async -- This DB fixture derives a storage key per file ID; its Promise-only API has no work to await under eslint/require-await.
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));

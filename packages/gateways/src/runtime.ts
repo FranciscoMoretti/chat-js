@@ -48,11 +48,10 @@ class GatewayRuntime {
     this.env = options.env ?? process.env;
     this.fetch =
       options.fetch ??
-      /* oxlint-disable typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly parameter conversion or async adoption changes that boundary. */
-      ((
+      (async (
         ...args: Parameters<typeof globalThis.fetch>
-      ): ReturnType<typeof globalThis.fetch> => globalThis.fetch(...args));
-    /* oxlint-enable typescript/promise-function-async */
+      ): ReturnType<typeof globalThis.fetch> =>
+        await globalThis.fetch(...args));
     this.getFallbackModels = options.getFallbackModels ?? ((): never[] => []);
     this.log = options.logger ?? silentLogger;
   }

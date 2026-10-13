@@ -22,7 +22,7 @@ export const installedToolAvailabilityMiddleware = (
   );
   return {
     specificationVersion: "v4",
-    // oxlint-disable-next-line typescript/promise-function-async -- Filtering is synchronous before Promise.resolve; async would turn filter/getter throws into rejections and has no real work to await.
+    // oxlint-disable-next-line typescript/promise-function-async -- AI SDK transformParams requires PromiseLike params, but filtering available tools is synchronous; eslint/require-await rejects an immediate async result. No I/O is needed here.
     transformParams: ({ params }) =>
       Promise.resolve({
         ...params,

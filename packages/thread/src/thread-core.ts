@@ -721,14 +721,12 @@ abstract class ThreadCore<
     }
     await Promise.resolve();
   }
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
-  public stopRunForMessage(messageId: string): Promise<void> {
+  public async stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
 
     if (run) {
-      return this.stopRun(run.id);
+      await this.stopRun(run.id);
     }
-    return Promise.resolve();
   }
 
   public getRun(runId: string): ThreadRun | undefined {

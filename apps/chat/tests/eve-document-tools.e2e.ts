@@ -168,7 +168,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(page.getByTestId("artifact")).toContainText("Version 1 of 1");
   await page.evaluate(() => {
     navigator.clipboard.writeText =
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+      /* oxlint-disable typescript/promise-function-async -- The browser clipboard API rejects on permission denial; this rejection fixture has no real clipboard work to await, and eslint/require-await rejects an immediate async failure. */
       () => Promise.reject(new Error("Clipboard denied for test"));
     /* oxlint-enable typescript/promise-function-async */
   });

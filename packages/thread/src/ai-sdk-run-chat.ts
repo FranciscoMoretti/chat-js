@@ -179,12 +179,11 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           })
         );
       },
-      // oxlint-disable-next-line typescript/promise-function-async -- Custom ChatTransport.sendMessages may throw before returning a promise. Direct forwarding lets SDK makeRequest invoke the public onError callback synchronously during Thread.regenerate; async+await defers that observable callback.
-      sendMessages: (
+      sendMessages: async (
         options
       ): ReturnType<ChatTransport<TMessage>["sendMessages"]> => {
         state.resumePrefix = NO_VALUE;
-        return host.transport.sendMessages({
+        return await host.transport.sendMessages({
           ...options,
           messageId:
             spec.messageId === NO_VALUE && options.trigger === "submit-message"

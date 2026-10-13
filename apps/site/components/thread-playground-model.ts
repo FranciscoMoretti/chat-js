@@ -159,9 +159,9 @@ const delay = async (
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
 const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
-  // oxlint-disable-next-line typescript/promise-function-async -- The demo has no reconnectable backend stream; this no-work transport result has no asynchronous operation to await.
+  // oxlint-disable-next-line typescript/promise-function-async -- The SDK requires a Promise for the absent reconnect stream; this local demo has no work to await, and eslint/require-await rejects an immediate async result.
   reconnectToStream: () => Promise.resolve(null),
-  // oxlint-disable-next-line typescript/promise-function-async -- Stream construction and its initial enqueues happen synchronously; awaiting token production here would postpone returning the streaming body.
+  // oxlint-disable-next-line typescript/promise-function-async -- The SDK requires a Promise of the newly constructed stream; awaiting its token producer would buffer the response instead of streaming, while an immediate async factory violates eslint/require-await.
   sendMessages: ({ abortSignal, body, messages }: PlaygroundTransportInput) => {
     const requestBody: StreamBody | undefined = body;
     const responseLabel = requestBody?.responseLabel ?? "Assistant";

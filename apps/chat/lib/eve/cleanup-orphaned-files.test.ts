@@ -24,10 +24,6 @@ const old = new Date("2025-12-31");
 const key = "abcdefghijklmnopqrstuvwx.png";
 beforeEach(() => {
   vi.resetAllMocks();
-  // oxlint-disable-next-line typescript/promise-function-async -- The result depends on each call's keys; the mock returns an immediately settled mapped value.
-  mocks.prepare.mockImplementation((keys: readonly string[]) =>
-    Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
-  );
 });
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
@@ -70,16 +66,23 @@ test("a failed batch retains its deletion fence without starving subsequent batc
       yield { pathname: fileKey, uploadedAt: old };
     }
   });
+  mocks.prepare
+    .mockResolvedValueOnce(
+      keys.slice(0, 100).map((fileKey) => ({ key: fileKey, ownerId: "owner" }))
+    )
+    .mockResolvedValueOnce([{ key: keys[100], ownerId: "owner" }]);
   mocks.remove
     .mockRejectedValueOnce(new Error("partial storage failure"))
     .mockResolvedValue();
   await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
 
-  expect(
-    mocks.prepare.mock.calls.map(
-      ([fileKeys]: Readonly<(typeof mocks.prepare.mock.calls)[number]>) =>
-        fileKeys.length
-    )
-  ).toEqual([100, 1]);
+  expect(mocks.prepare.mock.calls).toEqual([
+    [keys.slice(0, 100), cutoff],
+    [keys.slice(100), cutoff],
+  ]);
+  expect(mocks.remove.mock.calls).toEqual([
+    [keys.slice(0, 100).map((fileKey) => `/api/files/${fileKey}`)],
+    [[`/api/files/${keys[100]}`]],
+  ]);
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });

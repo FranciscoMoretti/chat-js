@@ -27,7 +27,7 @@ let restoredContent: string | undefined;
 const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      /* oxlint-disable typescript/promise-function-async -- This immediate fixture returns a settled promise without asynchronous work; an async wrapper conflicts with require-await. */
+      /* oxlint-disable typescript/promise-function-async -- TRPC requires Promise-returning fetch; this in-memory fixture validates routes/revisions and returns fresh response bodies without I/O. An immediate async callback violates eslint/require-await. */
       fetch(
         input: string | URL | Request,
         init: { readonly body?: unknown } | undefined

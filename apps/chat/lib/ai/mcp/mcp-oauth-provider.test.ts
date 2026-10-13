@@ -74,7 +74,7 @@ beforeEach(() => {
     },
     updatedAt: new Date(0),
   };
-  // oxlint-disable-next-line typescript/promise-function-async -- Read current mutable fixture state on each call; no asynchronous work exists to await.
+  // oxlint-disable-next-line typescript/promise-function-async -- The async DB read fixture must observe stored after each credential write; a static resolved value becomes stale, and eslint/require-await rejects this immediate async reader.
   mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.setClientInfo.mockImplementation(
     ({
