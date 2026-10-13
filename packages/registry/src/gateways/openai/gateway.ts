@@ -1,12 +1,8 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
-  StrictLiterals,
 } from "@chat-js/gateways/provider-types";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";
@@ -19,12 +15,7 @@ import type { ImageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
-type OpenaiLanguageModelId = StrictLiterals<
-  ExtractModelIdFromProvider<typeof createOpenAI>
->;
-type OpenaiImageModelId = StrictLiterals<
-  ExtractImageModelIdFromProvider<typeof createOpenAI>
->;
+type OpenaiImageModelId = ExtractImageModelIdFromProvider<typeof createOpenAI>;
 
 const providerModelSchema = z.object({
   created: z.number().nullish(),
@@ -77,8 +68,7 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
 
 class OpenAIGateway
   extends GatewayRuntime
-  implements
-    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
+  implements GatewayProvider<"openai">
 {
   public readonly type = "openai" as const;
 
@@ -102,11 +92,7 @@ class OpenAIGateway
     return provider.image(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENAI_API_KEY;

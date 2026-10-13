@@ -1,4 +1,4 @@
-import { applyDefaults, defineConfig } from "./config-schema";
+import { aiConfigSchema, applyDefaults, defineConfig } from "./config-schema";
 
 import { expect, test } from "vitest";
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
@@ -47,4 +47,26 @@ test("readonly config inputs preserve selections without changing the source", (
     enabled: true,
   });
   expect(input.ai.tools.followupSuggestions).toEqual({ enabled: true });
+});
+
+test.each(["image", "video"])(
+  "rejects empty %s model IDs at the configuration boundary",
+  (kind) => {
+    const config = applyDefaults(defineConfig({}));
+    const invalid = {
+      ...config.ai,
+      tools: { ...config.ai.tools, [kind]: { default: "" } },
+    };
+    expect(aiConfigSchema.safeParse(invalid).success).toBe(false);
+  }
+);
+
+test("rejects empty workflow model IDs at the configuration boundary", () => {
+  const config = applyDefaults(defineConfig({}));
+  expect(
+    aiConfigSchema.safeParse({
+      ...config.ai,
+      workflows: { ...config.ai.workflows, chat: "" },
+    }).success
+  ).toBe(false);
 });

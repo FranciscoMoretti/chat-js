@@ -5,7 +5,12 @@ import type {
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
 
-import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
+import {
+  gatewayCapabilities,
+  gatewayModelDefaults,
+  gatewayType,
+} from "./ai/gateway-model-defaults";
+import { isNonEmptyString } from "./is-non-empty-string";
 
 import type { ToolName } from "./ai/types";
 import { z } from "zod";
@@ -20,22 +25,19 @@ const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();
 const gatewayModelId = <Gateway extends GatewayType>(): z.ZodCustom<
   GatewayModelIdMap[Gateway],
   GatewayModelIdMap[Gateway]
-> => z.custom<GatewayModelIdMap[Gateway]>((value) => typeof value === "string");
+> => z.custom<GatewayModelIdMap[Gateway]>(isNonEmptyString);
 
 const gatewayImageModelId = <Gateway extends GatewayType>(): z.ZodCustom<
   GatewayImageModelIdMap[Gateway],
   GatewayImageModelIdMap[Gateway]
-> =>
-  z.custom<GatewayImageModelIdMap[Gateway]>(
-    (value) => typeof value === "string"
-  );
+> => z.custom<GatewayImageModelIdMap[Gateway]>(isNonEmptyString);
 
 const gatewayVideoModelId = <Gateway extends GatewayType>(): z.ZodCustom<
   GatewayVideoModelIdMap[Gateway],
   GatewayVideoModelIdMap[Gateway]
 > =>
   z.custom<GatewayVideoModelIdMap[Gateway]>(
-    (value) => typeof value === "string"
+    (value) => gatewayCapabilities.video && isNonEmptyString(value)
   );
 
 const MINIMUM_RESEARCH_COUNT = 1;

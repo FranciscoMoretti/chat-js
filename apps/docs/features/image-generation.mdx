@@ -152,13 +152,13 @@ The tool uses different generation paths based on model type:
 
 **Image model** (`generateImage` from AI SDK):
 
-- Uses standalone image models via `getImageModel()`
+- Uses standalone image models via the tool model provider's `createImageModel()`
 - Supports edit mode with image buffers as input
 - Returns base64-encoded images
 
 **Multimodal** (`generateText` with image output):
 
-- Uses language models via `getMultimodalImageModel()`
+- Uses language models via the tool model provider's `createLanguageModel()`
 - Passes images as URL references in message content
 - Requires `responseModalities: ["TEXT", "IMAGE"]` for Google models
 - Extracts generated image from response files

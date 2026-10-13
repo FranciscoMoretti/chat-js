@@ -12,7 +12,6 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
-import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 
 import { createGateway } from "@ai-sdk/gateway";
 import type { gateway } from "@ai-sdk/gateway";
@@ -24,21 +23,12 @@ type VercelImageModelId = Parameters<
 type VercelVideoModelId = Parameters<
   (typeof gateway)["videoModel"]
 >[typeof MODEL_ID_PARAMETER_INDEX];
-type VercelLanguageModelId = StrictLiterals<
-  Parameters<(typeof gateway)["languageModel"]>[typeof MODEL_ID_PARAMETER_INDEX]
->;
 
 const EMPTY_MODEL_TYPE_COUNT = 0;
 
 class VercelGateway
   extends GatewayRuntime
-  implements
-    GatewayProvider<
-      "vercel",
-      VercelLanguageModelId,
-      VercelImageModelId,
-      VercelVideoModelId
-    >
+  implements GatewayProvider<"vercel">
 {
   public readonly type = "vercel" as const;
 

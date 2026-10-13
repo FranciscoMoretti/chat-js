@@ -38,7 +38,7 @@ export const SignupForm = ({
   );
   const { callbackURL, onRedirectToUrl, signInOptions } =
     buildSocialAuthRequest(query, globalThis.location?.origin);
-  const loginHref = { pathname: "/login" as const, query };
+  const loginHref = `/login?${new URLSearchParams(query)}` as const;
 
   return (
     <div className="flex flex-col gap-6" {...props}>

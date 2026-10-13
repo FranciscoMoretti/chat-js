@@ -42,8 +42,8 @@ const resolveImageModel = async (
     return selected;
   }
   const defaultId = config.ai.tools.image.default;
-  if (typeof defaultId !== "string" || defaultId === "") {
-    throw new Error(
+  if (typeof defaultId !== "string") {
+    throw new TypeError(
       "Set ai.tools.image.default to an image model supported by your gateway."
     );
   }

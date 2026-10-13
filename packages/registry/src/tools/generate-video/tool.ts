@@ -62,8 +62,8 @@ const resolveVideoModel = async (
     }
   }
   const modelId = config.ai.tools.video.default;
-  if (!(typeof modelId === "string" && modelId !== "")) {
-    throw new Error(
+  if (typeof modelId !== "string") {
+    throw new TypeError(
       "Set ai.tools.video.default to a video model supported by your gateway."
     );
   }

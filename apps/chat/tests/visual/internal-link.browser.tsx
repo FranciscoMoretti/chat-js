@@ -1,5 +1,7 @@
 import React, { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
+import { page } from "vitest/browser";
+import { takeSnapshot } from "@uiverify/vitest";
 
 import { InternalLink } from "@/components/internal-link";
 import { createDomHarness } from "@/components/test-dom-harness";
@@ -26,7 +28,7 @@ test.each([
   { eventType: "click", options: { shiftKey: true } },
   { eventType: "auxclick", options: { button: 1 } },
 ])(
-  "Electron $eventType $options routes the rendered URL object href",
+  "Electron $eventType $options routes the typed href despite DOM mutations",
   ({ eventType, options }) => {
     navigation.electron = true;
     const onNavigate = vi.fn<() => void>();
@@ -36,7 +38,7 @@ test.each([
     act(() => {
       fixture = createDomHarness(
         <InternalLink
-          href={{ pathname: "/settings", query: { view: "models" } }}
+          href="/settings?view=models#selected"
           onNavigate={onNavigate}
           onClick={onClick}
           onAuxClick={onAuxClick}
@@ -50,11 +52,13 @@ test.each([
     });
     try {
       const anchor = fixture?.container.querySelector("a");
-      expect(anchor?.getAttribute("href")).toBe("/settings?view=models");
+      expect(anchor?.getAttribute("href")).toBe(
+        "/settings?view=models#selected"
+      );
       expect(anchor?.getAttribute("title")).toBe("Settings");
       expect(anchor?.getAttribute("aria-label")).toBe("Open settings");
       expect(anchor?.tabIndex).toBe(-1);
-      // Electron follows the live anchor, even if a consumer changed it after render.
+      // DOM mutations cannot override the route supplied by the caller.
       anchor?.setAttribute("href", "/settings?view=models#edited");
       const event = new MouseEvent(eventType, {
         bubbles: true,
@@ -66,7 +70,7 @@ test.each([
       });
       expect(event.defaultPrevented).toBe(true);
       expect(navigation.push).toHaveBeenCalledExactlyOnceWith(
-        "/settings?view=models#edited"
+        "/settings?view=models#selected"
       );
       expect(onNavigate).toHaveBeenCalledOnce();
       expect(
@@ -129,3 +133,26 @@ test.each([
     }
   }
 );
+
+test("internal route strings render query, hash and dynamic links", async () => {
+  let fixture: ReturnType<typeof createDomHarness> | undefined;
+  act(() => {
+    fixture = createDomHarness(
+      <nav aria-label="Internal links">
+        <InternalLink href="/">Home</InternalLink>{" "}
+        <InternalLink href="/settings?view=models#selected">
+          Settings
+        </InternalLink>{" "}
+        <InternalLink href="/chat/fixture-thread">Chat</InternalLink>
+      </nav>
+    );
+  });
+  try {
+    await expect
+      .element(page.getByRole("navigation", { name: "Internal links" }))
+      .toBeVisible();
+    await takeSnapshot("internal-routes");
+  } finally {
+    act(() => fixture?.unmount());
+  }
+});

@@ -1,7 +1,10 @@
 import type { generatedForGateway, models } from "@/lib/ai/models.generated";
 import type { Gateway } from "@/lib/ai/gateway";
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
-import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+import type {
+  ConfigMediaModelId,
+  StrictLiterals,
+} from "@chat-js/gateways/provider-types";
 import type { gatewayType } from "@/lib/ai/gateway-model-defaults";
 
 type InstalledGateway = InstanceType<typeof Gateway>;
@@ -10,20 +13,7 @@ type GatewayType = typeof gatewayType;
 
 const MODEL_ID_PARAMETER_INDEX = 0;
 
-// Derive the installed adapter's parameter types before applying its selected
-// gateway type. Unsupported factories keep never, and provider-specific IDs
-// remain narrow even when the reference gateway currently accepts strings.
-type InstalledProviderContract<
-  Provider extends GatewayProviderBase<string, never, never, never>,
-  SelectedType extends string,
-> = GatewayProviderBase<
-  SelectedType,
-  Parameters<Provider["createLanguageModel"]>[typeof MODEL_ID_PARAMETER_INDEX],
-  Parameters<Provider["createImageModel"]>[typeof MODEL_ID_PARAMETER_INDEX],
-  Parameters<Provider["createVideoModel"]>[typeof MODEL_ID_PARAMETER_INDEX]
->;
-
-type GatewayProvider = InstalledProviderContract<InstalledGateway, GatewayType>;
+type GatewayProvider = GatewayProviderBase<GatewayType>;
 
 // Runtime SDK factories accept new provider IDs. Configuration keeps curated
 // literal suggestions where the SDK supplies them; open adapters keep strings.
@@ -62,9 +52,7 @@ type MultimodalImageModel =
 
 type GatewayImageModelIdMap = {
   [SelectedGateway in GatewayType]:
-    | Parameters<
-        InstalledGateway["createImageModel"]
-      >[typeof MODEL_ID_PARAMETER_INDEX]
+    | ConfigMediaModelId<InstalledGateway["createImageModel"]>
     | (SelectedGateway extends typeof generatedForGateway
         ? MultimodalImageModel
         : never);
@@ -72,9 +60,7 @@ type GatewayImageModelIdMap = {
 
 type GatewayVideoModelIdMap = Record<
   GatewayType,
-  Parameters<
-    InstalledGateway["createVideoModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX]
+  ConfigMediaModelId<InstalledGateway["createVideoModel"]>
 >;
 export type {
   GatewayImageModelIdMap,
@@ -82,5 +68,4 @@ export type {
   GatewayProvider,
   GatewayType,
   GatewayVideoModelIdMap,
-  InstalledGateway,
 };

@@ -19,32 +19,19 @@ type GatewayInstance =
   | InstanceType<typeof OpenRouterGateway>
   | InstanceType<typeof VercelGateway>;
 
-const callUnsupportedModel = (
-  method: (modelId: never) => unknown,
-  receiver: object
-): null => {
-  const result: unknown = Reflect.apply(method, receiver, [
-    "unsupported-model",
-  ]);
-  // Only null is both object-typed and falsy; reject every actual model value.
-  if (typeof result !== "object" || result) {
-    throw new Error("Unsupported media factory returned a model");
-  }
-  return result;
-};
 const adapters: readonly Readonly<{
   name: keyof typeof gatewayMetadata;
   create: (options: AdapterOptions) => GatewayInstance;
   env: Readonly<Record<string, string>>;
   createImageModel: (
     options: AdapterOptions
-  ) => ReturnType<GatewayInstance["createImageModel"]>;
+  ) => ReturnType<NonNullable<GatewayInstance["createImageModel"]>> | null;
   createLanguageModel: (
     options: AdapterOptions
   ) => ReturnType<GatewayInstance["createLanguageModel"]>;
   createVideoModel: (
     options: AdapterOptions
-  ) => ReturnType<GatewayInstance["createVideoModel"]>;
+  ) => ReturnType<NonNullable<GatewayInstance["createVideoModel"]>> | null;
   image: boolean;
   video: boolean;
 }>[] = [
@@ -67,13 +54,7 @@ const adapters: readonly Readonly<{
       new OpenAIGateway(options).createImageModel("dall-e-3"),
     createLanguageModel: (options) =>
       new OpenAIGateway(options).createLanguageModel("gpt-5-mini"),
-    createVideoModel: (options) => {
-      const gateway = new OpenAIGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) => new OpenAIGateway(options).createVideoModel,
     env: { OPENAI_API_KEY: "test" },
     image: true,
     name: "openai",
@@ -81,22 +62,12 @@ const adapters: readonly Readonly<{
   },
   {
     create: (options) => new OpenRouterGateway(options),
-    createImageModel: (options) => {
-      const gateway = new OpenRouterGateway(options);
-      return callUnsupportedModel(
-        gateway.createImageModel.bind(gateway),
-        gateway
-      );
-    },
+    createImageModel: (options) =>
+      new OpenRouterGateway(options).createImageModel,
     createLanguageModel: (options) =>
       new OpenRouterGateway(options).createLanguageModel("openai/gpt-5-mini"),
-    createVideoModel: (options) => {
-      const gateway = new OpenRouterGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) =>
+      new OpenRouterGateway(options).createVideoModel,
     env: { OPENROUTER_API_KEY: "test" },
     image: false,
     name: "openrouter",
@@ -110,13 +81,8 @@ const adapters: readonly Readonly<{
       ),
     createLanguageModel: (options) =>
       new OpenAICompatibleGateway(options).createLanguageModel("custom-model"),
-    createVideoModel: (options) => {
-      const gateway = new OpenAICompatibleGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) =>
+      new OpenAICompatibleGateway(options).createVideoModel,
     env: { OPENAI_COMPATIBLE_BASE_URL: "https://example.test/v1" },
     image: true,
     name: "openai-compatible",
@@ -128,13 +94,7 @@ const adapters: readonly Readonly<{
       new LiteLLMGateway(options).createImageModel("custom-image-model"),
     createLanguageModel: (options) =>
       new LiteLLMGateway(options).createLanguageModel("custom-model"),
-    createVideoModel: (options) => {
-      const gateway = new LiteLLMGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) => new LiteLLMGateway(options).createVideoModel,
     env: { LITELLM_BASE_URL: "https://example.test" },
     image: true,
     name: "litellm",
@@ -143,9 +103,11 @@ const adapters: readonly Readonly<{
 ];
 
 describe.each(adapters)("$name gateway contract", (adapter) => {
-  it("creates AI SDK v4 models and reports unsupported media as null", () => {
+  it("creates AI SDK v4 models and exposes unsupported factories as null", () => {
     const gateway = adapter.create({ env: adapter.env });
     expect(gateway.type).toBe(adapter.name);
+    expect(gateway.createImageModel !== null).toBe(adapter.image);
+    expect(gateway.createVideoModel !== null).toBe(adapter.video);
     expect(adapter.video).toBe(gatewayMetadata[adapter.name].supportsVideo);
     const { dependency, version } = gatewayMetadata[adapter.name];
     expect(gatewayPackage.devDependencies[dependency]).toBe(version);

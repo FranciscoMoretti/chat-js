@@ -1,7 +1,4 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
@@ -63,7 +60,7 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
 
 class OpenAICompatibleGateway
   extends GatewayRuntime
-  implements GatewayProvider<"openai-compatible", string, string, never>
+  implements GatewayProvider<"openai-compatible">
 {
   public readonly type = "openai-compatible" as const;
 
@@ -90,11 +87,7 @@ class OpenAICompatibleGateway
     return provider.imageModel(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENAI_COMPATIBLE_API_KEY;

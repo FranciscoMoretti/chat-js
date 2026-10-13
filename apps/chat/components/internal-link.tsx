@@ -9,7 +9,6 @@ import Link from "next/link";
 import React from "react";
 
 import type { Route } from "next";
-import type { UrlObject } from "node:url";
 
 import { isElectronRenderer } from "@/lib/electron-auth";
 
@@ -20,9 +19,9 @@ const AUXILIARY_MOUSE_BUTTON = 1;
 
 type InternalLinkProps<T extends string> = Omit<
   ReactComponentProps<typeof Link>,
-  "href"
+  "href" | "as"
 > & {
-  href: Route<T> | UrlObject;
+  href: Route<T>;
   onNavigate?: () => void;
 };
 
@@ -36,17 +35,9 @@ export const InternalLink = <T extends string>({
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
-  const navigate = (
-    event: Readonly<{
-      currentTarget: Readonly<Pick<HTMLAnchorElement, "getAttribute">>;
-    }>
-  ): void => {
+  const navigate = (): void => {
     onNavigate?.();
-    const targetHref = event.currentTarget.getAttribute("href");
-    if (typeof targetHref === "string" && targetHref !== "") {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Electron modified/auxiliary clicks route the actual rendered anchor href, including URL objects and caller changes to the DOM.
-      router.push(targetHref as Route);
-    }
+    router.push(href);
   };
 
   const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
@@ -58,7 +49,7 @@ export const InternalLink = <T extends string>({
 
     if (isElectron && (event.metaKey || event.ctrlKey || event.shiftKey)) {
       event.preventDefault();
-      navigate(event);
+      navigate();
       return;
     }
 
@@ -81,7 +72,7 @@ export const InternalLink = <T extends string>({
     }
 
     event.preventDefault();
-    navigate(event);
+    navigate();
   };
 
   return (

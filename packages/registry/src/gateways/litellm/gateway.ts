@@ -1,7 +1,4 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
@@ -54,7 +51,7 @@ const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
 
 class LiteLLMGateway
   extends GatewayRuntime
-  implements GatewayProvider<"litellm", string, string, never>
+  implements GatewayProvider<"litellm">
 {
   public readonly type = "litellm" as const;
 
@@ -81,11 +78,7 @@ class LiteLLMGateway
     return provider.imageModel(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.LITELLM_API_KEY;

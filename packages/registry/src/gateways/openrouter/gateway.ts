@@ -1,13 +1,9 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
-import type { ImageModel } from "ai";
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
@@ -142,7 +138,7 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
 
 class OpenRouterGateway
   extends GatewayRuntime
-  implements GatewayProvider<"openrouter", string, never, never>
+  implements GatewayProvider<"openrouter">
 {
   public readonly type = "openrouter" as const;
 
@@ -159,19 +155,10 @@ class OpenRouterGateway
     return provider.chat(modelId);
   }
 
-  // The gateway interface requires an image factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; OpenRouter has no dedicated image factory, so null lets the caller select multimodal generation.
-  public createImageModel(_modelId: never): ImageModel | null {
-    // OpenRouter routes image generation through multimodal language models.
-    // Return null to signal callers should use createLanguageModel instead.
-    return null;
-  }
+  // OpenRouter generates images through multimodal language models.
+  public readonly createImageModel = null;
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance slot; unsupported video is represented by null, so this factory must remain callable on provider instances.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENROUTER_API_KEY;

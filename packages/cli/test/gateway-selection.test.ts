@@ -942,6 +942,8 @@ assert.equal(await files.exists("test.txt"), false);
 import { getActiveGateway } from "./lib/ai/active-gateway";
 // Live provider catalogs may expose IDs newer than the SDK literal suggestions.
 getActiveGateway().createLanguageModel("new/model-from-live-catalog");
+getActiveGateway().createImageModel?.("new/image-from-live-catalog");
+getActiveGateway().createVideoModel?.("new/video-from-live-catalog");
 // @ts-expect-error An uninstalled gateway must not typecheck.
 defineConfig({ ai: { gateway: "${other}" } });
 ${
@@ -987,6 +989,8 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
       `import { Gateway } from "./lib/ai/gateway";
 import assert from "node:assert/strict";
 assert.equal(new Gateway().type, "${gateway}");
+assert.equal(new Gateway().createVideoModel === null, ${gateway !== "vercel"});
+assert.equal(new Gateway().createImageModel === null, ${gateway === "openrouter"});
 `
     );
     await run(cwd, ["bunx", "--no-install", "tsx", "probe.ts"]);
@@ -1023,11 +1027,14 @@ assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, workflows: { ...applyDefaults(config).ai.workflows, chat: "" } }).success, false);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { default: "" } } }).success, false);
 ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { default: "unsupported" } } }).success, false);`
 }
 
 `
