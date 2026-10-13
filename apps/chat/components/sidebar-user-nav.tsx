@@ -9,13 +9,19 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
 
+import type { JSX as ReactJSX } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
+
 import { InternalLink } from "@/components/internal-link";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,15 +38,22 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/use-credits";
+
 import authClient from "@/lib/auth-client";
-/* oxlint-disable import/max-dependencies -- @/lib/electron-auth import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { isElectronRenderer } from "@/lib/electron-auth";
-/* oxlint-enable import/max-dependencies */
+
 import { cn } from "@/lib/utils";
+import { isElectronRenderer } from "@/lib/electron-auth";
+
+import { signOutAndNavigate } from "@/lib/sign-out";
+
 import { useSession } from "@/providers/session-provider";
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return -- SidebarUserNav: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including user.image); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+
+const USER_INITIALS_LENGTH = 2;
+const CREDIT_UNITS_PER_DOLLAR = 100;
+const CREDIT_DISPLAY_DECIMAL_PLACES = 2;
 
 export const SidebarUserNav = (): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
@@ -73,7 +86,11 @@ export const SidebarUserNav = (): ReactJSX.Element => {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton onClick={() => router.push("/login")}>
+          <SidebarMenuButton
+            onClick={() => {
+              router.push("/login");
+            }}
+          >
             <LogIn className="size-4" />
             <span>Sign in</span>
           </SidebarMenuButton>
@@ -83,9 +100,12 @@ export const SidebarUserNav = (): ReactJSX.Element => {
   }
 
   const displayName = user.name || user.email || "User";
-  const userInitials = displayName.slice(0, 2).toUpperCase();
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-  const avatarImageSrc = user.image || `https://avatar.vercel.sh/${user.email}`;
+  const userInitials = displayName.slice(0, USER_INITIALS_LENGTH).toUpperCase();
+  const { image: userImage } = user;
+  const avatarImageSrc =
+    typeof userImage === "string" && userImage !== ""
+      ? userImage
+      : `https://avatar.vercel.sh/${user.email}`;
 
   return (
     <SidebarMenu>
@@ -122,7 +142,9 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 </span>
                 <span className="flex items-center gap-1 truncate text-xs">
                   <DollarSign className="size-3" />
-                  {((credits ?? 0) / 100).toFixed(2)}
+                  {((credits ?? 0) / CREDIT_UNITS_PER_DOLLAR).toFixed(
+                    CREDIT_DISPLAY_DECIMAL_PLACES
+                  )}
                 </span>
               </div>
               <ChevronsUpDown
@@ -161,9 +183,9 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 </InternalLink>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() =>
-                  setTheme(resolvedTheme === "light" ? "dark" : "light")
-                }
+                onClick={() => {
+                  setTheme(resolvedTheme === "light" ? "dark" : "light");
+                }}
               >
                 {resolvedTheme === "light" ? (
                   <Moon className="mr-2 size-4" />
@@ -175,21 +197,53 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Sign-out coordinates Electron session synchronization and navigation; changing failure handling requires authentication lifecycle review.
-              onClick={async () => {
-                if (
-                  isElectronRenderer() &&
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  typeof window.signOut === "function"
-                ) {
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  await window.signOut();
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  await window.electronAPI?.syncAuthSession?.();
-                } else {
-                  await authClient.signOut();
-                }
-                globalThis.location.href = "/";
+              onClick={() => {
+                startEventAction(async () => {
+                  if (
+                    isElectronRenderer() &&
+                    typeof window.signOut === "function"
+                  ) {
+                    const nativeSignOut = window.signOut.bind(window);
+                    await signOutAndNavigate({
+                      navigate: () => {
+                        globalThis.location.href = "/";
+                      },
+                      onFailure: () => {
+                        toast.error("Unable to sign out. Try again.");
+                      },
+                      onSyncFailure: (error) => {
+                        console.error(
+                          "Failed to refresh the signed-out Electron session",
+                          error
+                        );
+                      },
+                      signOut: nativeSignOut,
+                      syncSession: async () => {
+                        await window.electronAPI?.syncAuthSession?.();
+                      },
+                    });
+                  } else {
+                    await signOutAndNavigate({
+                      navigate: () => {
+                        globalThis.location.href = "/";
+                      },
+                      onFailure: () => {
+                        toast.error("Unable to sign out. Try again.");
+                      },
+                      onSyncFailure: (error) => {
+                        console.error(
+                          "Failed to refresh the signed-out session",
+                          error
+                        );
+                      },
+                      signOut: async () => {
+                        await authClient.signOut({
+                          fetchOptions: { throw: true },
+                        });
+                      },
+                    });
+                  }
+                });
               }}
             >
               <LogOut className="mr-2 size-4" />
@@ -201,4 +255,3 @@ export const SidebarUserNav = (): ReactJSX.Element => {
     </SidebarMenu>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return */

@@ -1,8 +1,7 @@
-import type { UIMessage } from "ai";
-
+import type { ThreadState, ThreadStateSnapshot } from "./types";
 import { MessageTree } from "./message-tree";
 import type { SnapshotInput } from "./message-tree-readers";
-import type { ThreadState, ThreadStateSnapshot } from "./types";
+import type { UIMessage } from "ai";
 
 const NO_THREAD_ERROR = globalThis.undefined;
 

@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/file-storage-keys"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
 import { readFile } from "node:fs/promises";
 
 import { eq, sql } from "drizzle-orm";
@@ -15,18 +11,9 @@ import {
 } from "../lib/db/file-storage-keys";
 import { eveStoredFile, user } from "../lib/db/schema";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("file identity survives changing its private storage location") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("file identity survives changing its private storage location") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("file identity survives changing its private storage location", async () => {
   const owner = crypto.randomUUID();
   const fileId = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
@@ -58,12 +45,7 @@ test("file identity survives changing its private storage location", async () =>
     await db.delete(user).where(eq(user.id, owner));
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("document migration backfills owned attachments and retention from existing cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("document migration backfills owned attachments and retention from existing cont accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("document migration backfills owned attachments and retention from existing content", async () => {
   const migration = await readFile(
     new URL("../lib/db/migrations/0003_ambitious_oracle.sql", import.meta.url),
@@ -90,10 +72,11 @@ test("document migration backfills owned attachments and retention from existing
     await tx.execute(
       sql`INSERT INTO "EveDocumentRevision" VALUES ('with-files', 'chat', 'owner', ${content}), ('empty', 'chat', 'owner', 'No attachments')`
     );
+    /* oxlint-disable eslint/no-await-in-loop -- Migration statements share a transaction and depend on earlier schema statements. */
     for (const statement of migration.split("--> statement-breakpoint")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Run migration statements in their declared order.
       await tx.execute(sql.raw(statement));
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     const revisions = await tx.execute(
       sql`SELECT "id", "fileIds" FROM "EveDocumentRevision" ORDER BY "id"`
     );
@@ -107,4 +90,3 @@ test("document migration backfills owned attachments and retention from existing
     expect([...references]).toEqual([{ key: image }, { key: video }]);
   });
 });
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */

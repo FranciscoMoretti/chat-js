@@ -1,15 +1,13 @@
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
-import type { z } from "zod";
-
-import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
-import { sharedEveMessages } from "@/lib/eve/shared-messages";
-
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { researchAvailable } from "./availability";
 import { getDeepResearchConfig } from "./configuration";
 import { researchReport } from "./schemas";
+import { sharedEveMessages } from "@/lib/eve/shared-messages";
+import type { z } from "zod";
 
 type Context = Readonly<
   Omit<WorkflowToolContext, "abortSignal"> & {
@@ -22,7 +20,7 @@ type MessageView = Readonly<{
   role: string;
 }>;
 
-// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires top-level async function declarations so this durable prepareResearch step keeps its stable name and replay boundary.
+// oxlint-disable-next-line eslint/func-style -- EVE 0.61 authored-workflow-directives rejects const-bound steps; record the owned transcript, config, and clock once for replay.
 async function prepareResearch(context: Context): Promise<{
   config: ReturnType<typeof getDeepResearchConfig>;
   date: string;
@@ -67,16 +65,18 @@ async function prepareResearch(context: Context): Promise<{
     timestamp: Date.now(),
   };
 }
-
-// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires a top-level async function declaration for the durable saveResearchReport step.
+// oxlint-disable-next-line eslint/func-style -- EVE 0.61 authored-workflow-directives rejects const-bound steps; persist the document write and its completion clock together for replay.
 async function saveResearchReport(
   context: Context,
   report: Readonly<z.infer<typeof researchReport>>
-): Promise<z.infer<typeof eveDocumentWriteResult>> {
+): Promise<{
+  document: z.infer<typeof eveDocumentWriteResult>;
+  completedAt: number;
+}> {
   "use step";
   context.abortSignal.throwIfAborted();
   const content = researchReport.parse(report);
-  return eveDocumentWriteResult.parse(
+  const document = eveDocumentWriteResult.parse(
     await executeEveDocumentTool(
       "createTextDocument",
       {
@@ -86,12 +86,7 @@ async function saveResearchReport(
       context
     )
   );
+  // Record completion with the saved document so replay never reads a new clock.
+  return { document, completedAt: Date.now() };
 }
-
-// oxlint-disable-next-line eslint/func-style, eslint/require-await -- EVE requires this clock read to remain a named async durable step; a synchronous or arrow function is rejected by its directive compiler.
-async function researchCompletionTime(): Promise<number> {
-  "use step";
-  return Date.now();
-}
-
-export { prepareResearch, saveResearchReport, researchCompletionTime };
+export { prepareResearch, saveResearchReport };

@@ -1,18 +1,18 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The CodeExecutor implements native mutable EVE context and usage accounting interfaces. */
-/* oxlint-disable import/max-dependencies -- The installed tool explicitly composes native execution, usage, authorization and provider cleanup contracts. */
-import { defineTool } from "eve/tools";
-
-import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-import { env } from "@/lib/env";
-import type { CodeExecutor } from "@/lib/eve/code-executor";
-import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import { createModuleLogger } from "@/lib/logger";
-
-import { executeInDaytona } from "./execution";
-import { createDaytonaProvider } from "./sandbox";
+import type {
+  CodeExecutionContext,
+  CodeExecutor,
+} from "@/lib/eve/code-executor";
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { defineTool } from "eve/tools";
+import { env } from "@/lib/env";
+import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
+import { createModuleLogger } from "@/lib/logger";
+import { createDaytonaProvider } from "./sandbox";
+import { executeInDaytona } from "./execution";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 
 const EXECUTION_TIMEOUT_MS = 300_000;
 const EXECUTION_COST_USD = 0.05;
@@ -29,7 +29,10 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
   return providerCache.current;
 };
 
-const executeCode: CodeExecutor = async (input, context) =>
+const executeCode: CodeExecutor = async (
+  input,
+  context: ReadonlyNativeSurface<CodeExecutionContext>
+) =>
   await executeWithToolUsage(context, async (usage) => {
     usage.addCostUsd(NO_COST_USD);
     const signal = AbortSignal.any([
@@ -59,7 +62,6 @@ const executeCode: CodeExecutor = async (input, context) =>
       return usage.fail();
     }
   });
-
 const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description:

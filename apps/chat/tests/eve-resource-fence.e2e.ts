@@ -1,8 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "@/lib/eve/lifecycle/postgres/eve-session-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -13,7 +8,6 @@ import {
 import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
 
 import { env } from "../lib/env";
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Resource fence acceptance requires local Postgres.");
@@ -23,9 +17,6 @@ const rejectedWriteCode = /^(?<code>40001|55000)$/u;
 const runIds: string[] = [];
 const streamIds: string[] = [];
 await installEvePostgresResourceFence(query);
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
@@ -41,29 +32,23 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable no-magic-numbers */
 
-async function run(status = "completed"): Promise<string> {
+const run = async (status = "completed"): Promise<string> => {
   const id = crypto.randomUUID();
   runIds.push(id);
   await query`insert into workflow.workflow_runs (id, name, deployment_id, status)
     values (${id}, 'fence-fixture', 'fence-fixture', ${status})`;
   return id;
-}
-async function stream(
+};
+const stream = async (
   runId: string | null,
   id = crypto.randomUUID()
-): Promise<string> {
+): Promise<string> => {
   streamIds.push(id);
   await query`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("payload")}, false)`;
   return id;
-}
-
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): test("fence survives payload deletion and blocks replay, descendants, and every provi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("fence survives payload deletion and blocks replay, descendants, and every provi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+};
 test("fence survives payload deletion and blocks replay, descendants, and every provider payload table", async () => {
   const id = await run();
   const streamId = await stream(id);
@@ -88,31 +73,31 @@ test("fence survives payload deletion and blocks replay, descendants, and every 
     query`insert into workflow.workflow_hooks (hook_id, run_id, token, owner_id, project_id, environment) values (${crypto.randomUUID()}, ${id}, 'late', 'fixture', 'fixture', 'test')`,
     query`insert into workflow.workflow_waits (wait_id, run_id, status) values (${crypto.randomUUID()}, ${id}, 'completed')`,
   ];
-  for (const write of rejected) {
-    await expect(write).rejects.toMatchObject({ code: "55000" });
-  }
+  await Promise.all(
+    rejected.map(async (write) => {
+      await expect(write).rejects.toMatchObject({ code: "55000" });
+    })
+  );
   await expect(stream(null, streamId)).rejects.toMatchObject({ code: "55000" });
   await expect(stream(id)).rejects.toMatchObject({ code: "55000" });
-  for (const attribute of [
-    "$parentRunId",
-    "$rootRunId",
-    "$eve.parent",
-    "$eve.root",
-  ]) {
-    const child = crypto.randomUUID();
-    runIds.push(child);
-    await expect(query`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
+  await Promise.all(
+    ["$parentRunId", "$rootRunId", "$eve.parent", "$eve.root"].map(
+      async (attribute) => {
+        const child = crypto.randomUUID();
+        runIds.push(child);
+        await expect(query`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'late-child', 'fixture', 'pending', ${query.json({ [attribute]: id })})`).rejects.toMatchObject(
-      { code: "55000" }
-    );
-  }
+          { code: "55000" }
+        );
+      }
+    )
+  );
   const unrelated = await run();
   await stream(unrelated);
   expect(
     await query`select id from workflow.workflow_runs where id = ${id}`
   ).toEqual([]);
 });
-/* oxlint-enable max-statements, unicorn/no-null */
 
 test("active runs and ambiguous streams roll back the entire fence", async () => {
   const active = await run("running");
@@ -131,19 +116,13 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
   ).rejects.toThrow("Stream ownership");
   await stream(terminal, shared);
 });
-
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("fencing waits for admitted writers to commit before rejecting later writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("fencing waits for admitted writers to commit before rejecting later writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("fencing waits for admitted writers to commit before rejecting later writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
   const id = await run();
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin(async (tx) => {
     await tx`update workflow.workflow_runs set output = '{"admitted":true}'::jsonb where id = ${id}`;
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
   });
   await entered.promise;
@@ -165,7 +144,7 @@ test("fencing waits for admitted writers to commit before rejecting later writes
       })
       .toBe(true);
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await writer;
     await fencing;
     await fencer.end();
@@ -175,46 +154,36 @@ test("fencing waits for admitted writers to commit before rejecting later writes
     await query`select output from workflow.workflow_runs where id = ${id}`;
   expect(row.output).toEqual({ admitted: true });
 });
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("a repeatable-read snapshot from before the fence cannot restore payloads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("a repeatable-read snapshot from before the fence cannot restore payloads") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("a repeatable-read snapshot from before the fence cannot restore payloads") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("a repeatable-read snapshot from before the fence cannot restore payloads", async () => {
   const id = await run();
   const streamId = crypto.randomUUID();
   streamIds.push(streamId);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin("isolation level repeatable read", async (tx) => {
     await tx`select resource from workflow.eve_resource_fences where resource = ${`run:${id}`}`;
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${streamId}, ${id}, ${Buffer.from("late")}, false)`;
   });
-  const rejected = expect(writer).rejects.toMatchObject({
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Vitest asymmetric matchers intentionally stand in for values in the expected error shape.
-    code: expect.stringMatching(rejectedWriteCode),
-  });
+  const rejected = expect(writer).rejects.toHaveProperty(
+    "code",
+    expect.stringMatching(rejectedWriteCode)
+  );
   try {
     await entered.promise;
     await fenceEvePostgresResources(query, { runIds: [id], streamIds: [] });
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await rejected;
   }
   expect(
     await query`select id from workflow.workflow_stream_chunks where stream_id = ${streamId}`
   ).toEqual([]);
 });
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("session fencing rolls back for an active child and succeeds after retirement") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("session fencing rolls back for an active child and succeeds after retirement", async () => {
   const root = await run();
   const child = await run("running");
@@ -230,13 +199,7 @@ test("session fencing rolls back for an active child and succeeds after retireme
   expect(await fenceEvePostgresSession(query, root)).toEqual(result);
   await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
 });
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("session fencing re-inventories a collector child committed while its fence wait keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("session fencing re-inventories a collector child committed while its fence wait uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("session fencing re-inventories a collector child committed while its fence wait accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("session fencing re-inventories a collector child committed while its fence waits", async () => {
   const collector = await run();
   const root = await run();
@@ -245,14 +208,14 @@ test("session fencing re-inventories a collector child committed while its fence
   const childStream = crypto.randomUUID();
   runIds.push(child);
   streamIds.push(childStream);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writer = query.begin(async (tx) => {
     await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${childStream}, ${child}, ${Buffer.from("admitted")}, false)`;
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
   });
   await entered.promise;
@@ -272,7 +235,7 @@ test("session fencing re-inventories a collector child committed while its fence
         })
         .toBe(true);
     } finally {
-      release.resolve(undefined);
+      release.resolve();
       await writer;
     }
     const result = await fencing;
@@ -286,4 +249,3 @@ test("session fencing re-inventories a collector child committed while its fence
     await fencer.end();
   }
 });
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */

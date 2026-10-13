@@ -1,30 +1,35 @@
 "use client";
 
-import type { DynamicToolUIPart } from "ai";
-import React from "react";
-import type { ReactNode } from "react";
-
-import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
 import {
   Tool,
   ToolContent,
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
+import type { DynamicToolUIPart } from "ai";
+
+import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
+
+import React from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 import { parseToolId } from "@/lib/ai/mcp-name-id";
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolResult = ({
   part,
   icon,
   defaultOpen = false,
 }: {
-  part: Pick<DynamicToolUIPart, "toolName" | "title" | "state" | "input"> & {
-    output?: unknown;
-    errorText?: string;
+  readonly part: Pick<
+    DynamicToolUIPart,
+    "toolName" | "title" | "state" | "input"
+  > & {
+    readonly output?: unknown;
+    readonly errorText?: string;
   };
-  icon?: ReactNode;
-  defaultOpen?: boolean;
+  readonly icon?: ReadonlyReactNode;
+  readonly defaultOpen?: boolean;
 }): React.JSX.Element => {
   const parsed = parseToolId(part.toolName);
   return (
@@ -45,4 +50,3 @@ export const McpToolResult = ({
     </Tool>
   );
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

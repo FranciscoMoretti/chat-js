@@ -1,22 +1,15 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection"; "../lib/db/workflow-backend"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- */
 import evePackage from "eve/package.json";
 import postgres from "postgres";
 
-import { databaseConnection } from "../lib/db/connection";
-import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
+import { databaseConnection } from "@/lib/db/connection";
+import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
 import {
   assertEvePostgresRuntimeCompatibility,
   resolveEveStepVersion,
-} from "../lib/db/workflow-runtime-compatibility";
-import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "@/lib/db/workflow-runtime-compatibility";
+import { resolveWorkflowDatabaseUrl } from "@/lib/eve/environment";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 const checkPostgresRuntime = async (): Promise<void> => {
   const workflowSettings = databaseConnection(
     {
@@ -57,12 +50,6 @@ const check = async (): Promise<void> => {
     await connection.end();
   }
 };
-/* oxlint-enable node/no-process-env */
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
- * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await check(); } catch (error's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.
 void (async () => {
   try {
     await check();
@@ -71,4 +58,3 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, typescript/explicit-function-return-type */

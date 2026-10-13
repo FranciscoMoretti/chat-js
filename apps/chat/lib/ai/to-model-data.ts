@@ -2,11 +2,33 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): toModelData uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): toModelData accepts model: AiGatewayModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const toModelData = (model: AiGatewayModel): ModelData => {
+type ReadonlyAiGatewayPricing = Readonly<
+  Omit<
+    AiGatewayModel["pricing"],
+    "input_cache_read_tiers" | "input_tiers" | "output_tiers"
+  >
+> & {
+  readonly input_cache_read_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_cache_read_tiers"]>[number]
+  >[];
+  readonly input_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_tiers"]>[number]
+  >[];
+  readonly output_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["output_tiers"]>[number]
+  >[];
+};
+
+export type ReadonlyAiGatewayModel = Readonly<
+  Omit<AiGatewayModel, "pricing" | "tags"> & {
+    readonly pricing: ReadonlyAiGatewayPricing;
+    readonly tags?: readonly string[];
+  }
+>;
+
+export const toModelData = (
+  model: Readonly<ReadonlyAiGatewayModel>
+): ModelData => {
   const tags = model.tags ?? [];
   // A missing positive tag does not establish that a language model rejects tools.
   const toolCall = tags.includes("tool-use") ? true : undefined;
@@ -39,4 +61,3 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     type: model.type,
   };
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, node/no-process-env -- The integration test reads only the explicit disposable database handoff and local migration files. */
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
@@ -6,11 +5,6 @@ import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
-/* oxlint-disable no-undefined -- An absent explicit handoff must fail closed. */
-/* oxlint-disable max-statements, max-lines-per-function -- Fixture setup and concurrency cases keep their transaction lifecycle in one readable scope. */
-/* oxlint-disable typescript/explicit-function-return-type -- Drizzle infers fixture row and transaction return types from the actual application schema. */
-/* oxlint-disable eslint/no-await-in-loop -- Cleanup must respect foreign-key order before disposing the next owner. */
-/* oxlint-disable eslint/no-magic-numbers -- Expected row/effect counts are the assertions of these transaction tests. */
 import { removeEveDocumentFromConversation } from "@/lib/db/eve-documents";
 import {
   eveChat,
@@ -143,6 +137,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   database.injection.enabled = false;
+  /* oxlint-disable eslint/no-await-in-loop -- Cleanup deletes child rows before their parents to respect actual foreign keys. */
   for (const ownerId of owners) {
     await database.db
       .delete(eveDocumentHead)
@@ -156,6 +151,7 @@ afterAll(async () => {
     await database.db.delete(eveChat).where(eq(eveChat.ownerId, ownerId));
     await database.db.delete(user).where(eq(user.id, ownerId));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await Promise.all([database.client.end(), database.control.end()]);
 });
 
@@ -250,7 +246,6 @@ test.each(["abort", "new-head"])(
     });
     const locked = Promise.withResolvers<boolean>();
     const release = Promise.withResolvers<boolean>();
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- postgres.js owns the callable transaction interface.
     const holder = database.control.begin(async (transaction) => {
       await transaction`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`;
       locked.resolve(true);
@@ -261,16 +256,15 @@ test.each(["abort", "new-head"])(
     });
     await locked.promise;
     const cancellation = new AbortController();
-    /* oxlint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- Attach rejection handling before waiting on the lock so cancellation cannot produce an unhandled rejection. */
     const operation = removeEveDocumentFromConversation(
       input,
       scope,
       cancellation.signal
     ).then(
       () => "unexpected-success",
+      // oxlint-disable-next-line promise/prefer-await-to-callbacks -- Attach rejection handling immediately while the concurrent operation waits for the test-controlled lock.
       (error: unknown) => error
     );
-    /* oxlint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
     try {
       await expect
         .poll(async () => {

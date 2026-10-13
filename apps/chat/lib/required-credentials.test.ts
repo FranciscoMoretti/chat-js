@@ -1,14 +1,10 @@
-import { expect, test } from "vitest";
-
 import {
   MissingCredentialsError,
   requireCredentials,
 } from "./required-credentials";
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("reports missing groups explicitly without exposing supplied secrets") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("reports missing groups explicitly without exposing supplied secrets") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+import { assert, expect, test } from "vitest";
+
 test("reports missing groups explicitly without exposing supplied secrets", () => {
   try {
     requireCredentials(
@@ -32,41 +28,42 @@ test("reports missing groups explicitly without exposing supplied secrets", () =
     expect(error.message).not.toContain("private-value");
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("supports alternative credentials, combined groups, and Vercel runtime auth") uses C; D as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("supports alternative credentials, combined groups, and Vercel runtime auth", () => {
-  expect(() =>
+  expect(() => {
     requireCredentials(
       "feature",
       [
         { options: [["A", "B"], ["TOKEN"]] },
-        { allOf: [{ options: [["C"]] }, { options: [["D"]] }], options: [] },
+        {
+          allOf: [
+            { options: [["CREDENTIAL_C"]] },
+            { options: [["CREDENTIAL_D"]] },
+          ],
+          options: [],
+        },
         { options: [["VERCEL_TOKEN"]], runtimeAuth: "vercel-oidc" },
       ],
-      { C: "set", D: "set", NODE_ENV: "test", TOKEN: "set", VERCEL: "1" }
-    )
-  ).not.toThrow();
-  expect(() =>
-    requireCredentials("feature", [], { NODE_ENV: "test" })
-  ).not.toThrow();
-  expect(() =>
+      {
+        CREDENTIAL_C: "set",
+        CREDENTIAL_D: "set",
+        NODE_ENV: "test",
+        TOKEN: "set",
+        VERCEL: "1",
+      }
+    );
+  }).not.toThrow();
+  expect(() => {
+    requireCredentials("feature", [], { NODE_ENV: "test" });
+  }).not.toThrow();
+  expect(() => {
     requireCredentials("feature", [{ options: [["TOKEN"]] }], {
       NODE_ENV: "test",
       TOKEN: "",
-    })
-  ).toThrow(MissingCredentialsError);
+    });
+  }).toThrow(MissingCredentialsError);
 });
-/* oxlint-enable id-length */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers --
- * init-declarations (#507): test("reports only unsatisfied subgroups recursively, even without descriptions") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("reports only unsatisfied subgroups recursively, even without descriptions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("reports only unsatisfied subgroups recursively, even without descriptions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("reports only unsatisfied subgroups recursively, even without descriptions") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("reports only unsatisfied subgroups recursively, even without descriptions", () => {
   const requirements = [
     {
@@ -105,8 +102,8 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
     }
     failure = error;
   }
-  expect(failure).toBeDefined();
-  expect(failure?.requirements).toEqual([
+  assert.isDefined(failure);
+  expect(failure.requirements).toEqual([
     {
       allOf: [
         {
@@ -122,24 +119,23 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
       options: [],
     },
   ]);
-  expect(failure?.message).toContain("MISSING_KEY");
-  expect(failure?.message).toContain(
+  expect(failure.message).toContain("MISSING_KEY");
+  expect(failure.message).toContain(
     "ALTERNATIVE_A or ALTERNATIVE_B + ALTERNATIVE_C"
   );
-  expect(failure?.message).not.toMatch(
+  expect(failure.message).not.toMatch(
     /SATISFIED|VERCEL_TOKEN|supplied-secret|nested-secret/u
   );
-  expect(JSON.stringify(failure?.requirements)).not.toMatch(
+  expect(JSON.stringify(failure.requirements)).not.toMatch(
     /supplied-secret|nested-secret/u
   );
-  expect(requirements[0]?.allOf).toHaveLength(2);
-  expect(() =>
+  expect(requirements[0].allOf).toHaveLength(2);
+  expect(() => {
     requireCredentials("grouped-feature", requirements, {
       ...env,
       ALTERNATIVE_A: "token",
       MISSING_KEY: "key",
       NODE_ENV: "test",
-    })
-  ).not.toThrow();
+    });
+  }).not.toThrow();
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers */

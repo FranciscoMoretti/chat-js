@@ -19,9 +19,8 @@ import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Button } from "@/components/ui/button";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Label } from "@/components/ui/label";
-/* oxlint-enable import/max-dependencies */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -29,8 +28,6 @@ import { useTRPC } from "@/trpc/react";
 
 const HTTP_STATUS_REGEX = /HTTP (?<status>\d{3})/u;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatMcpError = (message: string): string => {
   const httpMatch = HTTP_STATUS_REGEX.exec(message);
   if (httpMatch) {
@@ -57,22 +54,16 @@ const formatMcpError = (message: string): string => {
   }
   return message;
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DetailsSection = ({
   title,
   icon,
   items,
 }: {
-  title: string;
-  icon: React.ReactNode;
-  items: { name: string; key: string }[];
-}) => {
+  readonly title: string;
+  readonly icon: ReadonlyNativeSurface<React.ReactNode>;
+  readonly items: readonly { readonly name: string; readonly key: string }[];
+}): React.JSX.Element => {
   const count = items.length;
 
   return (
@@ -101,22 +92,7 @@ const DetailsSection = ({
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop -- This prop derives its entries from the current render; memoization would add an unproven identity contract. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DiscoveryContent = ({
   isLoading,
   showConnectButton,
@@ -128,20 +104,23 @@ const DiscoveryContent = ({
   showDiscovery,
   discovery,
 }: {
-  isLoading: boolean;
-  showConnectButton: boolean;
-  onConnect: () => void;
-  isIncompatible: boolean;
-  connectionError?: string;
-  discoveryError: { message: string } | null;
-  needsOAuth: boolean;
-  showDiscovery: boolean;
-  discovery: {
-    tools: { name: string }[];
-    resources: { name: string; uri: string }[];
-    prompts: { name: string }[];
+  readonly isLoading: boolean;
+  readonly showConnectButton: boolean;
+  readonly onConnect: () => void;
+  readonly isIncompatible: boolean;
+  readonly connectionError?: string;
+  readonly discoveryError: { readonly message: string } | null;
+  readonly needsOAuth: boolean;
+  readonly showDiscovery: boolean;
+  readonly discovery: {
+    readonly tools: readonly { readonly name: string }[];
+    readonly resources: readonly {
+      readonly name: string;
+      readonly uri: string;
+    }[];
+    readonly prompts: readonly { readonly name: string }[];
   } | null;
-}) => {
+}): React.JSX.Element | null => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -224,32 +203,12 @@ const DiscoveryContent = ({
 
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-enable react-perf/jsx-no-new-array-as-prop */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
+export const McpDetailsPage = ({
+  connectorId,
+}: {
+  readonly connectorId: string;
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -269,7 +228,8 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   const connector = useMemo(
     () =>
       connectors?.find(
-        (candidateConnector): boolean => candidateConnector.id === connectorId
+        (candidateConnector: { readonly id: string }): boolean =>
+          candidateConnector.id === connectorId
       ) ?? null,
     [connectors, connectorId]
   );
@@ -279,9 +239,9 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _newData,
-        context: { prev: typeof connectors } | undefined
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update connector");
@@ -289,16 +249,26 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
+            }
+            return old.map(
+              (
+                candidateConnector: ReadonlyNativeSurface<
+                  NonNullable<typeof connectors>[number]
+                >
+              ) => {
+                if (candidateConnector.id === newData.id) {
+                  return { ...candidateConnector, enabled: newData.enabled };
+                }
+                return candidateConnector;
+              }
+            );
           }
-          return old.map((candidateConnector) =>
-            candidateConnector.id === newData.id
-              ? { ...candidateConnector, enabled: newData.enabled }
-              : candidateConnector
-          );
-        });
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -306,7 +276,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
   const { mutate: updateApproval, isPending: isUpdatingApproval } = useMutation(
     trpc.mcp.update.mutationOptions({
       onError: (): void => {
@@ -317,13 +286,12 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _data,
-        context: { prev: typeof connectors } | undefined
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to uninstall connector");
@@ -331,14 +299,18 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
+            }
+            return old.filter(
+              (candidateConnector: { readonly id: string }): boolean =>
+                candidateConnector.id !== data.id
+            );
           }
-          return old.filter(
-            (candidateConnector): boolean => candidateConnector.id !== data.id
-          );
-        });
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -353,7 +325,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
   const {
     data: discovery,
     isLoading: isLoadingDiscovery,
@@ -575,31 +546,20 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         isIncompatible={isIncompatible}
         isLoading={isLoadingDiscovery}
         needsOAuth={needsOAuth}
-        onConnect={(): void => setConnectOpen(true)}
+        onConnect={(): void => {
+          setConnectOpen(true);
+        }}
         showConnectButton={showConnectButton}
         showDiscovery={showDiscovery}
       />
 
       <McpConnectDialog
         connector={connector}
-        onClose={(): void => setConnectOpen(false)}
+        onClose={(): void => {
+          setConnectOpen(false);
+        }}
         open={connectOpen}
       />
     </SettingsPageContent>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

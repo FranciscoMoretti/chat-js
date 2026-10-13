@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules -- Fixture effects and controls live only in the disposable local worker directory. */
 import { appendFile, readFile } from "node:fs/promises";
 
 import { z } from "zod";
@@ -25,5 +24,3 @@ const record = async (kind: string, detail: unknown): Promise<void> => {
 };
 
 export { readControl, record };
-
-/* oxlint-enable import/no-nodejs-modules */

@@ -1,19 +1,16 @@
-import type { Metadata } from "next";
-import React from "react";
-
+import { siteConfig, siteLinks } from "@/lib/site-config";
 import { Faq } from "@/components/faq";
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
 import { Hero } from "@/components/hero";
 import { LogoCloud } from "@/components/logo-cloud";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Platforms } from "@/components/platforms";
-/* oxlint-disable import/max-dependencies -- the @/components/tech-stack import: The desktop main process coordinates window, auth, filesystem and IPC lifecycles; hiding imports would not separate those responsibilities. */
+import React from "react";
 import { TechStack } from "@/components/tech-stack";
-/* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
-import { siteConfig, siteLinks } from "@/lib/site-config";
 
 const metadata: Metadata = {
   alternates: {
@@ -84,9 +81,5 @@ const HomePage = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default HomePage;
-/* oxlint-enable import/no-default-export */

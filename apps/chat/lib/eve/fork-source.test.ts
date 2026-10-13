@@ -7,13 +7,6 @@ import {
   readCreation,
 } from "./pending-create";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null --
- * max-lines-per-function (#510): describe("fork ancestry and recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("fork ancestry and recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("fork ancestry and recovery") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep describe("fork ancestry and recovery")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): describe("fork ancestry and recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("fork ancestry and recovery", () => {
   const branches = [
     { forkTurnId: null, id: "root", parentConversationId: null },
@@ -72,13 +65,7 @@ describe("fork ancestry and recovery", () => {
     expect(readCreation(storage, "owner")).toEqual(fresh);
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, unicorn/no-null --
- * max-statements (#512): it("isolates project creation recovery from ordinary chats, other projects, and other keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep it("isolates project creation recovery from ordinary chats, other projects, and other's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): it("isolates project creation recovery from ordinary chats, other projects, and other preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("isolates project creation recovery from ordinary chats, other projects, and other owners", () => {
   const values = new Map<string, string>();
   const storage = {
@@ -111,11 +98,7 @@ it("isolates project creation recovery from ordinary chats, other projects, and 
   expect(readCreation(storage, "owner", scope)).toBeUndefined();
   expect(readCreation(storage, "owner")).toEqual(ordinary);
 });
-/* oxlint-enable max-statements, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("keeps imported boundaries local to the retained seed in every descendant") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("keeps imported boundaries local to the retained seed in every descendant", () => {
   const branches = [
     { forkTurnId: null, id: "copy", parentConversationId: null },
@@ -138,7 +121,6 @@ it("keeps imported boundaries local to the retained seed in every descendant", (
     resolveForkSource("missing", "seed_message_2", branches)
   ).toThrow("unavailable");
 });
-/* oxlint-enable unicorn/no-null */
 
 it("enables only durable user-message boundaries", () => {
   expect(eveUserForkBoundary({ id: "seed_message_2", role: "user" })).toBe(

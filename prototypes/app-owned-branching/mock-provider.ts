@@ -1,30 +1,26 @@
-import type { Sql } from "postgres";
+import type { SnapshotProvider, SqlConnection, SqlQueries } from "./model";
 
-import type { SnapshotProvider } from "./model";
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- mockProvider: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/strict-boolean-expressions -- mockProvider: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /**
  * Simulate the provider contract with deterministic database-backed snapshots.
- * @param sql - Connection used to persist mock VM and snapshot state.
- * @returns A replay-safe snapshot provider for the branching prototype.
+ * @param {SqlConnection} sql - Connection used to persist mock VM and snapshot state.
+ * @returns {SnapshotProvider} A replay-safe snapshot provider for the branching prototype.
  */
-export const mockProvider = (sql: Sql): SnapshotProvider => ({
+export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
   async capture(key, sandbox) {
-    await sql.begin(async (tx) => {
+    await sql.begin(async (tx: SqlQueries) => {
       const [vm] = await tx<
         { files: Record<string, string>; stopped: boolean }[]
       >`select * from provider_vm where id=${sandbox} for update`;
       const [existing] = await tx<
         { source: string }[]
       >`select source from provider_snapshot where id=${key}`;
-      if (existing) {
+      if (existing !== undefined) {
         if (existing.source !== sandbox) {
           throw new Error("snapshot key conflict");
         }
         return;
       }
-      if (!vm || vm.stopped) {
+      if (vm === undefined || vm.stopped) {
         throw new Error("VM unavailable");
       }
       await tx`insert into provider_snapshot (id,source,files) values (${key},${sandbox},${tx.json(vm.files)})`;
@@ -32,16 +28,14 @@ export const mockProvider = (sql: Sql): SnapshotProvider => ({
     });
   },
   async restore(key, sandbox) {
-    await sql.begin(async (tx) => {
+    await sql.begin(async (tx: SqlQueries) => {
       const [snapshot] = await tx<
         { files: Record<string, string> }[]
       >`select files from provider_snapshot where id=${key}`;
-      if (!snapshot) {
+      if (snapshot === undefined) {
         throw new Error("snapshot absent");
       }
       await tx`insert into provider_vm (id,files) values (${sandbox},${tx.json(snapshot.files)}) on conflict do nothing`;
     });
   },
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

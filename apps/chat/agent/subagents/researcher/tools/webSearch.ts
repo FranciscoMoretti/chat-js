@@ -4,35 +4,53 @@ import { defineDynamic } from "eve/tools";
 import { providers } from "@/tools/chatjs/providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
+const INITIAL_SEARCH_ROUND = 0;
+const SEARCH_ROUND_INCREMENT = 1;
 
-// oxlint-disable-next-line eslint/no-magic-numbers -- A new research run starts with zero completed search rounds.
-const researchSteps = defineState<number>("chatjs.research-steps", () => 0);
+type ResearchSearchContext = Readonly<{
+  session: Readonly<{
+    auth: Readonly<{
+      initiator: Readonly<{
+        attributes: Readonly<Record<string, string | readonly string[]>>;
+      }> | null;
+    }>;
+  }>;
+}>;
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const researchSteps = defineState<number>(
+  "chatjs.research-steps",
+  () => INITIAL_SEARCH_ROUND
+);
+
+const requireResearchSearch =
+  (): (typeof providers)[keyof typeof providers] => {
+    const providerEntry = Object.entries(providers).find(
+      ([name]: Readonly<[string, unknown]>) => name === "webSearch"
+    );
+    const [, search] = providerEntry ?? [];
+    if (!search) {
+      throw new Error("Deep research requires an installed webSearch tool.");
+    }
+    return search;
+  };
+
 export default defineDynamic({
   events: {
-    "step.started": (_event, context) => {
-      if (context.session.auth.initiator?.attributes.chatjsGuest === "true") {
+    "step.started": (_event, context: ResearchSearchContext) => {
+      const owner = context.session.auth.initiator;
+      if (owner && owner.attributes.chatjsGuest === "true") {
         throw new Error("Research search is unavailable.");
       }
-      const search = Object.entries(providers).find(
-        ([name]) => name === "webSearch"
-        // oxlint-disable-next-line eslint/no-magic-numbers -- Object.entries stores the provider value at tuple index one.
-      )?.[1];
-      if (!search) {
-        throw new Error("Deep research requires an installed webSearch tool.");
-      }
+      const search = requireResearchSearch();
       // The old SDK researcher allowed twenty model steps. Reserve the last
       // response for findings, without enabling another search round.
       const searchRounds = researchSteps.get();
-      // oxlint-disable-next-line eslint/no-magic-numbers -- Each started search round increments the counter by one.
-      researchSteps.update((count) => count + 1);
-      return searchRounds >= MAX_RESEARCH_SEARCH_ROUNDS ? null : search;
+      researchSteps.update((count) => count + SEARCH_ROUND_INCREMENT);
+
+      if (searchRounds >= MAX_RESEARCH_SEARCH_ROUNDS) {
+        return null;
+      }
+      return search;
     },
   },
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable import/no-default-export */

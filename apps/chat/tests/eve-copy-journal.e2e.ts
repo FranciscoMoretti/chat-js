@@ -1,15 +1,10 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-dispatch"; "../lib/db/eve-copy-journal"; "../lib/db/eve-copy-resources"; "../lib/db/eve-deletion" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "../lib/db/client";
 import {
@@ -45,7 +40,6 @@ import { env } from "../lib/env";
 import type { EveCopyPlan } from "../lib/eve/copy-journal-contract";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const invalidSeedError = /Too small|byte limit/u;
@@ -61,6 +55,7 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Delete copy files and checkpoint entries before their headers, documents and conversation parents. */
   for (const table of [
     eveConversationCopyFile,
     eveConversationCopy,
@@ -74,26 +69,14 @@ afterAll(async () => {
   ]) {
     await db.delete(table).where(inArray(table.ownerId, owners));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(user).where(inArray(user.id, owners));
 });
 const bytes = Buffer.from("public fixture");
 const sha256 = createHash("sha256").update(bytes).digest("hex");
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): key uses 18 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const key = (): string => randomBytes(18).toString("base64url");
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fixture uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): fixture accepts _file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): fixture preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): fixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-async function fixture() {
+const fixture = async () => {
   const sourceId = crypto.randomUUID();
   const sourceSessionId = crypto.randomUUID();
   const sourceKey = key();
@@ -196,12 +179,12 @@ async function fixture() {
   };
   const saved = await reserveEveCopyOperation(ownerId, input);
   const storage = {
-    readSourceFile: vi.fn(() =>
-      Promise.resolve(new Blob([bytes], { type: "image/png" }))
-    ),
-    writeDestinationFile: vi.fn((_key: string, _file: Blob) =>
-      Promise.resolve()
-    ),
+    readSourceFile: vi
+      .fn()
+      .mockResolvedValue(new Blob([bytes], { type: "image/png" })),
+    writeDestinationFile: vi
+      .fn<(_key: string, _file: Readonly<Blob>) => Promise<void>>()
+      .mockResolvedValue(),
   };
   return {
     documentId,
@@ -215,14 +198,23 @@ async function fixture() {
     storage,
     targetKey,
   };
-}
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): prepare accepts f: Awaited<ReturnType<typeof fixture>>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-async function prepare(
-  ctx: Awaited<ReturnType<typeof fixture>>
-): Promise<void> {
+};
+
+const prepare = async (
+  ctx: Readonly<{
+    saved: Readonly<{ conversation: Readonly<{ id: string }> }>;
+    targetKey: string;
+    storage: Readonly<{
+      readSourceFile: (
+        key: string
+      ) => Promise<Pick<Blob, "type" | "arrayBuffer">>;
+      writeDestinationFile: (
+        key: string,
+        file: Readonly<Blob>
+      ) => Promise<void>;
+    }>;
+  }>
+): Promise<void> => {
   await writeEveCopyFile(
     ownerId,
     ctx.saved.conversation.id,
@@ -230,23 +222,22 @@ async function prepare(
     ctx.storage
   );
   await writeEveCopyDocuments(ownerId, ctx.saved.conversation.id);
-}
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+};
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * max-statements (#512): test("reserves one immutable root and destination resources before writes, rejecting  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("reserves one immutable root and destination resources before writes, rejecting  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("reserves one immutable root and destination resources before writes, rejecting  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("reserves one immutable root and destination resources before writes, rejecting  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("reserves one immutable root and destination resources before writes, rejecting changed intent and cross-kind replay", async () => {
   const ctx = await fixture();
   const replay = await Promise.all(
-    Array.from({ length: 3 }, () => reserveEveCopyOperation(ownerId, ctx.input))
+    Array.from(
+      { length: 3 },
+      async () => await reserveEveCopyOperation(ownerId, ctx.input)
+    )
   );
-  expect(replay.map((row) => row.conversation.id)).toEqual(
-    Array.from({ length: 3 }, () => ctx.saved.conversation.id)
-  );
+  expect(
+    replay.map(
+      (row: Readonly<{ conversation: Readonly<{ id: string }> }>) =>
+        row.conversation.id
+    )
+  ).toEqual(Array.from({ length: 3 }, () => ctx.saved.conversation.id));
   expect(ctx.saved.conversation).toMatchObject({
     creationKind: "copy",
     parentConversationId: null,
@@ -268,7 +259,9 @@ test("reserves one immutable root and destination resources before writes, rejec
       },
     })
   ).rejects.toThrow();
-  const create = vi.fn(() => Promise.resolve("wrong namespace"));
+  const create = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue("wrong namespace");
   await expect(
     createEveConversation(
       ownerId,
@@ -279,8 +272,11 @@ test("reserves one immutable root and destination resources before writes, rejec
   ).rejects.toThrow();
   expect(create).not.toHaveBeenCalled();
   const messageOperation = crypto.randomUUID();
-  await createEveConversation(ownerId, messageOperation, "Normal", () =>
-    Promise.resolve(crypto.randomUUID())
+  await createEveConversation(
+    ownerId,
+    messageOperation,
+    "Normal",
+    createEveTestSession
   );
   await expect(
     reserveEveCopyOperation(ownerId, {
@@ -289,18 +285,15 @@ test("reserves one immutable root and destination resources before writes, rejec
     })
   ).rejects.toThrow("ordinary message");
 });
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): test("cannot accept or expose a native seed before file and document receipts commit" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): test("cannot accept or expose a native seed before file and document receipts commit" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("cannot accept or expose a native seed before file and document receipts commit", async () => {
   const ctx = await fixture();
   const { id } = ctx.saved.conversation;
   await expect(acceptEveCopy(ownerId, id)).rejects.toThrow("documents");
   await expect(resolveAcceptedEveCopySeed(ownerId, id)).rejects.toThrow();
-  const create = vi.fn(() => Promise.resolve("not allowed"));
+  const create = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue("not allowed");
   await expect(dispatchEveCopy(ownerId, id, create)).rejects.toThrow();
   expect(create).not.toHaveBeenCalled();
   await writeEveCopyDocuments(ownerId, id);
@@ -320,12 +313,7 @@ test("cannot accept or expose a native seed before file and document receipts co
   const unplanned = await getEveCopyOperation(ownerId, ctx.input.operationId);
   expect(unplanned?.copy.plan).toBeNull();
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): test("an uncertain file write retries the same allocated key and records completion o uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("an uncertain file write retries the same allocated key and records completion o accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("an uncertain file write retries the same allocated key and records completion once", async () => {
   const ctx = await fixture();
   ctx.storage.writeDestinationFile.mockRejectedValueOnce(
@@ -359,16 +347,12 @@ test("an uncertain file write retries the same allocated key and records complet
     ctx.storage
   );
   expect(
-    ctx.storage.writeDestinationFile.mock.calls.map((call) => call[0])
+    ctx.storage.writeDestinationFile.mock.calls.map(
+      (call: ReadonlyNativeSurface<readonly [string, Blob]>) => call[0]
+    )
   ).toEqual([ctx.targetKey, ctx.targetKey]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, typescript/promise-function-async, unicorn/no-null --
- * max-statements (#512): test("accepted copies recover after source revocation and a lost native reply, then d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): test("accepted copies recover after source revocation and a lost native reply, then d preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("accepted copies recover after source revocation and a lost native reply, then d preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("accepted copies recover after source revocation and a lost native reply, then discard temporary transcript data", async () => {
   const ctx = await fixture();
   await prepare(ctx);
@@ -378,34 +362,35 @@ test("accepted copies recover after source revocation and a lost native reply, t
     .set({ state: "deleting", visibility: "private" })
     .where(eq(eveConversation.id, ctx.sourceId));
   const nativeId = crypto.randomUUID();
-  const operations: string[] = [];
+  const lostReply = vi
+    .fn<(operation: string) => Promise<string>>()
+    .mockRejectedValue(new Error("Lost native response"));
   await expect(
-    dispatchEveCopy(ownerId, ctx.saved.conversation.id, (operation) => {
-      operations.push(operation);
-      return Promise.reject(new Error("Lost native response"));
-    })
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, lostReply)
   ).rejects.toThrow("Lost native");
   const uncertain = await getEveCopyOperation(ownerId, ctx.input.operationId);
   expect(uncertain?.conversation.state).toBe("uncertain");
   expect(
     await resolveAcceptedEveCopySeed(ownerId, ctx.saved.conversation.id)
   ).toEqual(ctx.input.plan.seed);
+  const recoveredReply = vi
+    .fn<(operation: string) => Promise<string>>()
+    .mockResolvedValue(nativeId);
   const bound = await dispatchEveCopy(
     ownerId,
     ctx.saved.conversation.id,
-    (operation) => {
-      operations.push(operation);
-      return Promise.resolve(nativeId);
-    }
+    recoveredReply
   );
-  const noDispatch = vi.fn(() => Promise.resolve("duplicate"));
+  const noDispatch = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue("duplicate");
   expect(
     await dispatchEveCopy(ownerId, ctx.saved.conversation.id, noDispatch)
   ).toEqual(bound);
   expect(noDispatch).not.toHaveBeenCalled();
-  expect(operations).toEqual([
-    ctx.saved.conversation.id,
-    ctx.saved.conversation.id,
+  expect([...lostReply.mock.calls, ...recoveredReply.mock.calls]).toEqual([
+    [ctx.saved.conversation.id],
+    [ctx.saved.conversation.id],
   ]);
   const journal = await getEveCopyOperation(ownerId, ctx.input.operationId);
   expect(journal?.copy).toMatchObject({
@@ -417,12 +402,7 @@ test("accepted copies recover after source revocation and a lost native reply, t
     rejectUnacceptedEveCopy(ownerId, ctx.saved.conversation.id)
   ).rejects.toThrow("Accepted copies");
 });
-/* oxlint-enable max-statements, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): test("revocation before acceptance prevents dispatch and permits a never-dispatched c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): test("revocation before acceptance prevents dispatch and permits a never-dispatched c preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("revocation before acceptance prevents dispatch and permits a never-dispatched cleanup", async () => {
   const ctx = await fixture();
   await prepare(ctx);
@@ -445,8 +425,10 @@ test("revocation before acceptance prevents dispatch and permits a never-dispatc
     )
   ).rejects.toThrow("unavailable");
   await expect(
-    dispatchEveCopy(ownerId, ctx.saved.conversation.id, () =>
-      Promise.resolve("forbidden")
+    dispatchEveCopy(
+      ownerId,
+      ctx.saved.conversation.id,
+      vi.fn<() => Promise<string>>().mockResolvedValue("forbidden")
     )
   ).rejects.toThrow();
   await purgeEveFamilyDocuments(ownerId, ctx.saved.conversation.chatId);
@@ -471,11 +453,7 @@ test("revocation before acceptance prevents dispatch and permits a never-dispatc
   });
   await expect(reserveEveCopyOperation(ownerId, ctx.input)).rejects.toThrow();
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a copy", async () => {
   const ctx = await fixture();
   const { id } = ctx.saved.conversation;
@@ -493,54 +471,57 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
     "not found"
   );
   await expect(
-    dispatchEveCopy(sourceOwnerId, id, () => Promise.resolve("forbidden"))
+    dispatchEveCopy(
+      sourceOwnerId,
+      id,
+      vi.fn<() => Promise<string>>().mockResolvedValue("forbidden")
+    )
   ).rejects.toThrow("not found");
   expect(ctx.storage.writeDestinationFile).not.toHaveBeenCalled();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("invalid native seeds or document boundaries never reserve resources") uses 8, 1024, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("invalid native seeds or document boundaries never reserve resources", async () => {
-  for (const seed of [
-    { attachments: "channel", messages: [] },
-    { attachments: "channel", messages: [{ parts: [], role: "user" }] },
-    {
-      attachments: "channel",
-      messages: [
+  await Promise.all(
+    (
+      [
+        { attachments: "channel", messages: [] },
+        { attachments: "channel", messages: [{ parts: [], role: "user" }] },
         {
-          parts: [{ type: "text", text: "x".repeat(8 * 1024 * 1024) }],
-          role: "user",
+          attachments: "channel",
+          messages: [
+            {
+              parts: [{ type: "text", text: "x".repeat(8 * 1024 * 1024) }],
+              role: "user",
+            },
+          ],
         },
-      ],
-    },
-  ] satisfies EveCopyPlan["seed"][]) {
-    const operationId = crypto.randomUUID();
-    await expect(
-      reserveEveCopyOperation(ownerId, {
-        modelId: "google/gemini-2.5-flash-lite",
-        operationId,
-        plan: {
-          documentCheckpoints: [{ messageIndex: 0, heads: [] }],
-          documents: [],
-          files: [],
-          seed,
-          sourceHeads: [],
-        },
-        projectionHash: sha256,
-        sourceConversationId: crypto.randomUUID(),
-        sourceOwnerId,
-        sourceSessionId: crypto.randomUUID(),
-        title: "Invalid seed",
-      })
-    ).rejects.toThrow(
-      seed.messages.length > 0 ? invalidSeedError : invalidBoundaryError
-    );
-    expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
-  }
+      ] satisfies EveCopyPlan["seed"][]
+    ).map(async (seed) => {
+      const operationId = crypto.randomUUID();
+      await expect(
+        reserveEveCopyOperation(ownerId, {
+          modelId: "google/gemini-2.5-flash-lite",
+          operationId,
+          plan: {
+            documentCheckpoints: [{ messageIndex: 0, heads: [] }],
+            documents: [],
+            files: [],
+            seed,
+            sourceHeads: [],
+          },
+          projectionHash: sha256,
+          sourceConversationId: crypto.randomUUID(),
+          sourceOwnerId,
+          sourceSessionId: crypto.randomUUID(),
+          title: "Invalid seed",
+        })
+      ).rejects.toThrow(
+        seed.messages.length > 0 ? invalidSeedError : invalidBoundaryError
+      );
+      expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
+    })
+  );
 });
-/* oxlint-enable no-magic-numbers */
 
 test("document changes before acceptance leave the copy rejectable", async () => {
   const ctx = await fixture();
@@ -569,21 +550,15 @@ test("document changes before acceptance leave the copy rejectable", async () =>
   ).resolves.toMatchObject({ neverDispatched: true });
 });
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
- * max-statements (#512): test("concurrent accepted retries dispatch once and return the same binding") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("concurrent accepted retries dispatch once and return the same binding") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("concurrent accepted retries dispatch once and return the same binding") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): test("concurrent accepted retries dispatch once and return the same binding") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent accepted retries dispatch once and return the same binding", async () => {
   const ctx = await fixture();
   await prepare(ctx);
   await acceptEveCopy(ownerId, ctx.saved.conversation.id);
-  const started = Promise.withResolvers<undefined>();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
   const finish = Promise.withResolvers<string>();
-  const create = vi.fn(() => {
-    started.resolve(undefined);
-    return finish.promise;
+  const create = vi.fn(async () => {
+    started.resolve();
+    return await finish.promise;
   });
   const first = dispatchEveCopy(ownerId, ctx.saved.conversation.id, create);
   await started.promise;
@@ -600,7 +575,6 @@ test("concurrent accepted retries dispatch once and return the same binding", as
   ).toEqual(bound);
   expect(create).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
 test("commits an empty imported document boundary together with copied resources", async () => {
   const ctx = await fixture();
@@ -634,5 +608,3 @@ test("commits an empty imported document boundary together with copied resources
       )
   ).toEqual([]);
 });
-
-/* oxlint-disable max-lines -- #509: This eve-copy-journal.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

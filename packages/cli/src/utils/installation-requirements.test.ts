@@ -1,27 +1,26 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import {
-  toolDefinitionSchema,
   featureDefinitionSchema,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- Use the existing package-local registry contract and test fixture in the standalone CLI layout.
+  toolDefinitionSchema,
 } from "../../../registry/metadata";
-// oxlint-disable-next-line import/no-relative-parent-imports -- Use the existing package-local registry contract and test fixture in the standalone CLI layout.
+
 import { externalGatewayFixture } from "../../test/external-gateway";
 import { validateProviderRequirements } from "./installation-requirements";
 
 const roots: string[] = [];
 afterEach(async () => {
   await Promise.all(
-    // oxlint-disable-next-line eslint/no-magic-numbers -- These local values specify JSON indentation, source offsets or bounded test fixtures.
     roots.splice(0).map(async (root) => {
       await rm(root, { force: true, recursive: true });
     })
   );
 });
-
 const media = (
   kind: "image" | "video"
 ): ReturnType<typeof toolDefinitionSchema.parse> =>
@@ -40,34 +39,51 @@ test("legacy built-in descriptors retain mandatory media and storage requirement
   delete video.requiresGateway;
   delete video.requiresStorage;
   gateway.capabilities.video = false;
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
-  await expect(
+
+  await rejects(
     validateProviderRequirements(tmpdir(), {
       features: [],
       gateway,
       storage: "s3",
       tools: [video],
-    })
-  ).rejects.toThrow("supporting video");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
-  await expect(
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("supporting video");
+      return true;
+    }
+  );
+
+  await rejects(
     validateProviderRequirements(tmpdir(), {
       features: [],
       gateway,
       storage: "memory",
       tools: [video],
-    })
-  ).rejects.toThrow("persistent storage");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
-  await expect(
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("persistent storage");
+      return true;
+    }
+  );
+
+  await rejects(
     validateProviderRequirements(tmpdir(), {
       features: [{ id: "attachment-uploads" }],
       storage: "memory",
       tools: [],
-    })
-  ).rejects.toThrow("persistent storage");
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("persistent storage");
+      return true;
+    }
+  );
 });
-
 test.each(["image", "video"] as const)(
   "rejects %s without gateway capability or model, including external gateways",
   async (kind) => {
@@ -79,21 +95,32 @@ test.each(["image", "video"] as const)(
       tools: [media(kind)],
     };
     gateway.capabilities[kind] = false;
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-    await expect(
-      validateProviderRequirements(tmpdir(), target)
-    ).rejects.toThrow(`supporting ${kind}`);
+
+    await rejects(
+      validateProviderRequirements(tmpdir(), target),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow(`supporting ${kind}`);
+        return true;
+      }
+    );
     gateway.capabilities[kind] = true;
     gateway.defaults.tools[kind] = {};
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-    await expect(
-      validateProviderRequirements(tmpdir(), target)
-    ).rejects.toThrow("default model");
+
+    await rejects(
+      validateProviderRequirements(tmpdir(), target),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("default model");
+        return true;
+      }
+    );
     gateway.defaults.tools[kind] = { default: "model" };
     await validateProviderRequirements(tmpdir(), target);
   }
 );
-
 test("uploads and media reject memory storage, while a minimal installation accepts it", async () => {
   const uploads = featureDefinitionSchema.parse({
     contractVersion: 1,
@@ -101,30 +128,40 @@ test("uploads and media reject memory storage, while a minimal installation acce
     kind: "feature",
     requiresStorage: true,
   });
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-  await expect(
+
+  await rejects(
     validateProviderRequirements(tmpdir(), {
       features: [uploads],
       storage: "memory",
       tools: [],
-    })
-  ).rejects.toThrow("requires persistent storage");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-  await expect(
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("requires persistent storage");
+      return true;
+    }
+  );
+
+  await rejects(
     validateProviderRequirements(tmpdir(), {
       features: [],
       storage: "memory",
       tools: [media("image")],
-    })
-  ).rejects.toThrow("requires persistent storage");
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("requires persistent storage");
+      return true;
+    }
+  );
   await validateProviderRequirements(tmpdir(), {
     features: [],
     storage: "memory",
     tools: [],
   });
 });
-
-// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 test("add validates installed provider literals without executing user source", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-requirements-"));
   roots.push(cwd);
@@ -142,16 +179,34 @@ test("add validates installed provider literals without executing user source", 
     features: [],
     tools: [media("image")],
   });
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-  await expect(
-    validateProviderRequirements(cwd, { features: [], tools: [media("video")] })
-  ).rejects.toThrow("supporting video");
+
+  await rejects(
+    validateProviderRequirements(cwd, {
+      features: [],
+      tools: [media("video")],
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("supporting video");
+      return true;
+    }
+  );
   await writeFile(
     file,
     source.replace("image: true", "image: computeCapability()")
   );
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
-  await expect(
-    validateProviderRequirements(cwd, { features: [], tools: [media("image")] })
-  ).rejects.toThrow("literal values");
+
+  await rejects(
+    validateProviderRequirements(cwd, {
+      features: [],
+      tools: [media("image")],
+    }),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("literal values");
+      return true;
+    }
+  );
 });

@@ -17,29 +17,26 @@ import { Button } from "@/components/ui/button";
 import { useRenameProject } from "@/hooks/use-projects";
 import type { listEveConversations } from "@/lib/db/eve-queries";
 import type { Project } from "@/lib/db/schema";
-/* oxlint-disable import/max-dependencies -- @/lib/project-icons import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
-/* oxlint-enable import/max-dependencies */
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
 import { EveHistoryList } from "./eve-history-list";
 import { NewEveConversation } from "./new-eve-conversation";
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveProjectHome: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveProjectHome = ({
   ownerId,
   initialProject,
   initialPage,
 }: {
-  ownerId: string;
-  initialProject: Project;
-  initialPage: Awaited<ReturnType<typeof listEveConversations>>;
+  readonly ownerId: string;
+  readonly initialProject: Project;
+  readonly initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
   const cache = useQueryClient();
@@ -54,13 +51,19 @@ export const EveProjectHome = ({
     trpc.eve.list.infiniteQueryOptions(
       { ownerScope: ownerId, projectId: initialProject.id, search: "" },
       {
-        getNextPageParam: (page) => page.nextCursor,
+        getNextPageParam: (page: {
+          readonly nextCursor: {
+            readonly id: string;
+            readonly isPinned: boolean;
+            readonly updatedAt: string;
+          } | null;
+        }) => page.nextCursor,
         initialData: { pageParams: [null], pages: [initialPage] },
       }
     )
   );
   const shouldCenter = history.data.pages.every(
-    (page) => page.items.length === 0
+    (page: Readonly<{ items: readonly unknown[] }>) => page.items.length === 0
   );
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
@@ -156,7 +159,9 @@ export const EveProjectHome = ({
             }
             isPending={save.isPending}
             onOpenChange={setInstructionsOpen}
-            onSave={() => save.mutate({ id: current.id, instructions })}
+            onSave={() => {
+              save.mutate({ id: current.id, instructions });
+            }}
             onValueChange={setInstructions}
             open={instructionsOpen}
             projectName={current.name}
@@ -186,4 +191,3 @@ export const EveProjectHome = ({
     </section>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

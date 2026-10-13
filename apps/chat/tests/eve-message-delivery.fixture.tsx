@@ -1,13 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/use-eve-message-delivery"; "../lib/eve/message-delivery" dependency within this package instead of introducing an alias or barrel API. */
 import type { MessageStreamEvent } from "eve/client";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
 import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): event preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
 const event = (
   operationId: string,
   sessionId = "fixture-session"
@@ -30,14 +27,7 @@ const event = (
   meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
   type: "message.received",
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react/jsx-max-depth (#548): Fixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/prefer-readonly-parameter-types (#565): Fixture accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): Fixture intentionally keeps the existing falsy-value behavior of delivery.pending?.operationId; operationId; delivery.pending.rejection; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const Fixture = (): React.JSX.Element => {
   const delivery = useEveMessageDelivery("fixture-session");
   const [draft, setDraft] = useState("");
@@ -50,7 +40,11 @@ const Fixture = (): React.JSX.Element => {
         <textarea
           aria-label="Message"
           className="min-h-24 w-full rounded-md border p-3"
-          onChange={(change) => setDraft(change.currentTarget.value)}
+          onChange={(change: {
+            readonly currentTarget: { readonly value: string };
+          }) => {
+            setDraft(change.currentTarget.value);
+          }}
           value={draft}
         />
       </label>
@@ -70,32 +64,42 @@ const Fixture = (): React.JSX.Element => {
           Send
         </button>
         <button
-          onClick={() =>
-            delivery.accept(event("00000000-0000-4000-8000-000000000002"))
-          }
+          onClick={() => {
+            delivery.accept(event("00000000-0000-4000-8000-000000000002"));
+          }}
           type="button"
         >
           Acknowledge another operation
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             delivery.accept(
               event(
                 delivery.pending?.operationId ??
                   "00000000-0000-4000-8000-000000000002",
                 "foreign-session"
               )
-            )
-          }
+            );
+          }}
           type="button"
         >
           Acknowledge foreign session
         </button>
         <button
-          disabled={!delivery.pending?.operationId}
+          disabled={
+            delivery.pending === undefined ||
+            delivery.pending === null ||
+            delivery.pending.operationId === undefined ||
+            delivery.pending.operationId === null ||
+            delivery.pending.operationId === ""
+          }
           onClick={() => {
             const operationId = delivery.pending?.operationId;
-            if (operationId) {
+            if (
+              operationId !== undefined &&
+              operationId !== null &&
+              operationId !== ""
+            ) {
               delivery.accept(event(operationId));
             }
           }}
@@ -137,11 +141,13 @@ const Fixture = (): React.JSX.Element => {
             >
               {delivery.pending.operationId}
             </span>
-            {delivery.pending.rejection && (
-              <span className="block">
-                Rejected: {delivery.pending.rejection}
-              </span>
-            )}
+            {delivery.pending.rejection !== undefined &&
+              delivery.pending.rejection !== null &&
+              delivery.pending.rejection !== "" && (
+                <span className="block">
+                  Rejected: {delivery.pending.rejection}
+                </span>
+              )}
           </div>
         ) : (
           "No pending message"
@@ -150,7 +156,6 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
 
 const root = document.querySelector("#root");
 if (!root) {

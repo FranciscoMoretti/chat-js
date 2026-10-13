@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { ShareButton, ShareDialogView } from "@/components/share-button";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- EveShareDialogContent: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const EveShareDialogContent = ({
   chatId,
@@ -37,9 +36,6 @@ const EveShareDialogContent = ({
     </>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- EveShareButton: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const EveShareButton = ({
   chatId,
@@ -55,5 +51,4 @@ const EveShareButton = ({
     )}
   />
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */
 export { EveShareButton, EveShareDialogContent };

@@ -1,3 +1,4 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import postgres from "postgres";
 
 import { databaseConnection } from "@/lib/db/connection";
@@ -17,17 +18,6 @@ const lockPool = postgres(connectionConfig.url, {
   prepare: false,
 });
 
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...parameters: readonly never[]
-) => unknown
-  ? Value
-  : Value extends object
-    ? {
-        readonly [Property in keyof Value]: ReadonlyNativeSurface<
-          Value[Property]
-        >;
-      }
-    : Value;
 const cancelInactiveQuery = (): void => {
   // No advisory-lock query is waiting to be cancelled.
 };
@@ -66,7 +56,9 @@ const createRefreshCancellation = (
     waitFor: <Query extends Readonly<{ cancel: () => void }>>(
       query: Query
     ): Query => {
-      cancelQuery = (): void => query.cancel();
+      cancelQuery = (): void => {
+        query.cancel();
+      };
       return query;
     },
   };
@@ -100,12 +92,11 @@ const createLockedRefresh =
     options.cancellation.markStarted();
     return { value: await options.run() };
   };
-
 /** Bound refresh lock waiters separately from the app pool used by the refresh callback.
- * @param connectorId - Connector whose refresh is serialized.
- * @param run - Refresh operation performed after acquiring the database lock.
- * @param signal - Cancellation observed while waiting and before returning the result.
- * @returns The refresh operation result after lock acquisition.
+ * @param {string} connectorId - Connector whose refresh is serialized.
+ * @param {() => Promise<Result>} run - Refresh operation performed after acquiring the database lock.
+ * @param {ReadonlyNativeSurface<AbortSignal> | undefined} signal - Cancellation observed while waiting and before returning the result.
+ * @returns {Promise<Result>} The refresh operation result after lock acquisition.
  */
 export const withMcpOAuthRefreshLock = async <Result>(
   connectorId: string,

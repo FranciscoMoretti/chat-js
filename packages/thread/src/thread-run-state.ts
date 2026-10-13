@@ -1,5 +1,4 @@
 import type { ChatState, ChatStatus, UIMessage } from "ai";
-
 import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 
 const CURRENT_RESPONSE_OFFSET = 1;
@@ -99,7 +98,10 @@ class ThreadRunState<
 
   private withResumePrefix(message: TMessage): TMessage {
     const prefix = this.resumePrefix;
-    if (prefix?.id === message.id) {
+    if (!prefix) {
+      return message;
+    }
+    if (prefix.id === message.id) {
       // Seed the SDK's response object once, so later tool/approval updates
       // operate on the same restored parts instead of a separate projection.
       message.parts = [...prefix.parts, ...message.parts];

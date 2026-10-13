@@ -5,7 +5,6 @@ import type {
 
 import { cn } from "@/lib/utils";
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React input props, including native object refs. Deep readonly ref.current fails the input JSX receiver; preserving scalar string & {} aliases in type/autoComplete/role/style still triggers this rule.
 const Input = ({
   className,
   type,

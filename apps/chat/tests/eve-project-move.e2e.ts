@@ -1,32 +1,22 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
 import { assertEveTestDatabase } from "./eve-test-database";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 test.use({ actionTimeout: 20_000 });
 const screenshotStyle =
   'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }';
+const projectsRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
+  url.pathname.includes("project.list");
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
- * max-lines-per-function (#510): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("moves native conversations from sidebar and project rows with recoverable failu uses 180_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("moves native conversations from sidebar and project rows with recoverable failu accepts { page, }; testInfo; route; url: URL; url; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("moves native conversations from sidebar and project rows with recoverable failu preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("moves native conversations from sidebar and project rows with recoverable failures", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Move target fixture" } },
@@ -55,16 +45,9 @@ test("moves native conversations from sidebar and project rows with recoverable 
       "move-fixture-ok",
       { timeout: 90_000 }
     );
-    const projectsRoute = (url: URL): boolean =>
-      url.pathname.includes("project.list");
-    let releaseProjects: () => void = (): void => {
-      /* The gate is not ready to release before the route is intercepted. */
-    };
-    const projectsGate = new Promise<void>((resolve) => {
-      releaseProjects = resolve;
-    });
+    const projectsGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(projectsRoute, async (route) => {
-      await projectsGate;
+      await projectsGate.promise;
       await route.fulfill({
         body: "{}",
         contentType: "application/json",
@@ -94,7 +77,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-loading.png"),
       style: screenshotStyle,
     });
-    releaseProjects();
+    projectsGate.resolve();
     await expect(dialog.getByRole("alert")).toContainText(
       "Could not load projects."
     );
@@ -111,12 +94,13 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await dialog.getByRole("combobox").selectOption(projectId);
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await dialog.getByRole("button", { exact: true, name: "Move" }).click();
@@ -129,16 +113,11 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-save-error.png"),
       style: screenshotStyle,
     });
-    let releaseMove: () => void = (): void => {
-      /* The gate is not ready to release before the route is intercepted. */
-    };
-    const moveGate = new Promise<void>((resolve) => {
-      releaseMove = resolve;
-    });
+    const moveGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
       async (route) => {
-        await moveGate;
+        await moveGate.promise;
         await route.continue();
       },
       { times: 1 }
@@ -152,7 +131,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-pending.png"),
       style: screenshotStyle,
     });
-    releaseMove();
+    moveGate.resolve();
     await expect(dialog).not.toBeVisible();
     await expect(
       page.locator(`a[href="/project/${projectId}/chat/${id}"]`)
@@ -187,4 +166,3 @@ test("moves native conversations from sidebar and project rows with recoverable 
     expect(removed.ok(), await removed.text()).toBe(true);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */

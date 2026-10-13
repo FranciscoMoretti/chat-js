@@ -1,10 +1,10 @@
-import { expect, test } from "vitest";
-
 import {
   authEnvRequirements,
   formatRequirementDescription,
   getMissingRequirement,
 } from "./config-requirements";
+
+import { expect, test } from "vitest";
 import type { EnvRequirement } from "./config-requirements";
 
 const sandbox: EnvRequirement = {

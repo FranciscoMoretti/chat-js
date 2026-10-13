@@ -89,10 +89,4 @@ const createEveLifecycleProvider = (options: {
 };
 
 export { createEveLifecycleProvider };
-export type {
-  LifecycleResources,
-  LifecycleInventory,
-  SupportedLifecycleProvider,
-  UnsupportedLifecycleProvider,
-  LifecycleProvider,
-};
+export type { LifecycleInventory, SupportedLifecycleProvider };

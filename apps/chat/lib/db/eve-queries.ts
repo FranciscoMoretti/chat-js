@@ -1,4 +1,3 @@
-// oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
 import {
   and,
   desc,
@@ -23,13 +22,29 @@ import {
   eveResponseGroup,
   project,
 } from "@/lib/db/schema";
+import { CreationConflictError } from "./creation-conflict-error";
+import { CreationProjectNotFoundError } from "./creation-project-not-found-error";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
+
+const FIRST_PARAMETER_INDEX = 0;
+const FIRST_RESULT_INDEX = 0;
+const SINGLE_MATCH_LIMIT = 1;
+const CHAT_PAGE_SIZE = 50;
+const NEXT_PAGE_LOOKAHEAD = 1;
+const LAST_RESULT_OFFSET = -1;
+const EMPTY_REFERENCE_COUNT = 0;
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+const isNonemptyString = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
 
 type ConversationRow = typeof eveConversation.$inferSelect;
 type ChatRow = typeof eveChat.$inferSelect;
@@ -76,13 +91,10 @@ const visibleConversation = inArray(eveConversation.state, [
   "uncertain",
 ]);
 
-/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): getBoundEveConversationForSession uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | null> => {
   const rows = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -93,27 +105,21 @@ const getBoundEveConversationForSession = async (
         eq(eveConversation.state, "bound")
       )
     )
-    .limit(1);
-  return rows[0];
+    .limit(SINGLE_MATCH_LIMIT);
+  return rows[FIRST_RESULT_INDEX] ?? null;
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts identity: Readonly<{ reservationId: string } | { sessionId: string }>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
- * @param identity Exact reservation or native session whose durable mapping is inspected.
- * @returns The durable identity and state, including tombstones, from the existing row lookup.
+ * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
+ * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
-): Promise<
-  Pick<
-    ConversationRow,
-    "creationKind" | "id" | "ownerId" | "sessionId" | "state"
-  >
-> => {
+): Promise<Pick<
+  ConversationRow,
+  "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+> | null> => {
   const [row] = await db
     .select({
       creationKind: eveConversation.creationKind,
@@ -128,24 +134,13 @@ const readEveSessionMapping = async (
         ? eq(eveConversation.id, identity.reservationId)
         : eq(eveConversation.sessionId, identity.sessionId)
     );
-  return row;
+  return row ?? null;
 };
-
 const ownsEveSession = async (
   ownerId: string,
   sessionId: string
 ): Promise<boolean> =>
   Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
-
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
-max-lines-per-function (#510): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): listEveConversations uses 51, 0, 50, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): listEveConversations uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): listEveConversations intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): listEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const listEveConversations = async (
   ownerId: string,
   input?: EveHistoryInput
@@ -202,9 +197,10 @@ const listEveConversations = async (
         )
       )
     : undefined;
-  const matchesProject = projectId
-    ? eq(eveChatProject.projectId, projectId)
-    : isNull(eveChatProject.projectId);
+  const matchesProject =
+    typeof projectId === "string" && projectId !== ""
+      ? eq(eveChatProject.projectId, projectId)
+      : isNull(eveChatProject.projectId);
   const escapedSearch = search.replaceAll(/[\\%_]/gu, String.raw`\$&`);
   const rows = await db
     .select({
@@ -235,27 +231,21 @@ const listEveConversations = async (
       )
     )
     .orderBy(desc(eveChat.isPinned), desc(eveChat.updatedAt), desc(eveChat.id))
-    .limit(51);
-  const page = rows.slice(0, 50);
-  const last = page.at(-1);
+    .limit(CHAT_PAGE_SIZE + NEXT_PAGE_LOOKAHEAD);
+  const page = rows.slice(FIRST_RESULT_INDEX, CHAT_PAGE_SIZE);
+  const last = page.at(LAST_RESULT_OFFSET);
   return {
     items: page,
     nextCursor:
-      rows.length > 50 && last
+      rows.length > CHAT_PAGE_SIZE && last
         ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
         : null,
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): getEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): getEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): getEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const getEveConversation = async (
   ownerId: string,
   id: string
-): Promise<ConversationDetails | undefined> => {
+): Promise<ConversationDetails | null> => {
   const [row] = await db
     .select({
       chat: {
@@ -282,32 +272,26 @@ const getEveConversation = async (
         visibleConversation
       )
     )
-    .limit(1);
-  return row
-    ? {
-        ...row.conversation,
-        chatId: row.chat.id,
-        id: row.conversation.id,
-        isPinned: row.chat.isPinned,
-        title: row.chat.title,
-        titleStatus: row.chat.titleStatus,
-        updatedAt: row.chat.updatedAt,
-      }
-    : undefined;
+    .limit(SINGLE_MATCH_LIMIT);
+  if (!hasQueryRow(row)) {
+    return null;
+  }
+  return {
+    ...row.conversation,
+    chatId: row.chat.id,
+    id: row.conversation.id,
+    isPinned: row.chat.isPinned,
+    title: row.chat.title,
+    titleStatus: row.chat.titleStatus,
+    updatedAt: row.chat.updatedAt,
+  };
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-max-statements (#512): getEveChatPageConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): getEveChatPageConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): getEveChatPageConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): getEveChatPageConversation intentionally keeps the existing falsy-value behavior of logical; logical.activeConversationId; member; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Resolve either a logical chat route or an exact private session route.
- * @param ownerId Owner used to scope both exact and logical route lookups.
- * @param routeId Exact conversation or logical chat route to resolve.
- * @returns The visible owned conversation, preferring the logical active member, or no result.
+ * @param {string} ownerId Owner used to scope both exact and logical route lookups.
+ * @param {string} routeId Exact conversation or logical chat route to resolve.
+ * @returns {ReturnType<typeof getEveConversation>} The visible owned conversation, preferring the logical active member, or no result.
  */
 const getEveChatPageConversation = async (
   ownerId: string,
@@ -321,12 +305,11 @@ const getEveChatPageConversation = async (
     .select({ activeConversationId: eveChat.activeConversationId })
     .from(eveChat)
     .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
-    .limit(1);
-  if (!logical) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveChatPageConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-    return;
+    .limit(SINGLE_MATCH_LIMIT);
+  if (!hasQueryRow(logical)) {
+    return null;
   }
-  if (logical.activeConversationId) {
+  if (isNonemptyString(logical.activeConversationId)) {
     const active = await getEveConversation(
       ownerId,
       logical.activeConversationId
@@ -350,15 +333,13 @@ const getEveChatPageConversation = async (
       eveConversation.createdAt,
       eveConversation.id
     )
-    .limit(1);
-  return member ? await getEveConversation(ownerId, member.id) : undefined;
+    .limit(SINGLE_MATCH_LIMIT);
+  if (hasQueryRow(member)) {
+    return await getEveConversation(ownerId, member.id);
+  }
+  return null;
 };
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): getEveChatIdentity uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/max-nested-calls (#568): getEveChatIdentity keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const getEveChatIdentity = async (
   ownerId: string,
   routeId: string
@@ -400,26 +381,9 @@ const getEveChatIdentity = async (
         or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId))
       )
     )
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
   return identity;
 };
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
-class CreationConflictError extends Error {
-  public readonly code: "creation_conflict" | "creation_in_progress";
-  public constructor(
-    message?: string,
-    options?: Readonly<
-      ErrorOptions & {
-        code?: "creation_conflict" | "creation_in_progress";
-      }
-    >
-  ) {
-    super(message, options);
-    this.code = options?.code ?? "creation_conflict";
-    this.name = "CreationConflictError";
-  }
-}
-
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
 ): void => {
@@ -430,23 +394,19 @@ const assertCreationAvailable = (
   }
 };
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-undefined (#519): boundConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): boundConversation accepts row: typeof eveConversation.$inferSelect | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): boundConversation intentionally keeps the existing falsy-value behavior of row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const boundConversation = (
-  row: typeof eveConversation.$inferSelect | undefined
-): BoundConversation | undefined =>
-  row?.state === "bound" && row.sessionId
-    ? { id: row.id, sessionId: row.sessionId }
-    : undefined;
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+  row: Readonly<Pick<ConversationRow, "id" | "state" | "sessionId">> | undefined
+): BoundConversation | undefined => {
+  if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
+    return { id: row.id, sessionId: row.sessionId };
+  }
+  return undefined;
+};
 
 const getEveCreation = async (
   ownerId: string,
   operationId: string
-): Promise<ConversationRow> => {
+): Promise<ConversationRow | undefined> => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -459,20 +419,8 @@ const getEveCreation = async (
   return row;
 };
 
-class CreationProjectNotFoundError extends Error {
-  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
-    super(message, options);
-    this.name = "CreationProjectNotFoundError";
-  }
-}
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): assertResponseGroupCandidateAvailable accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): assertResponseGroupCandidateAvailable intentionally keeps the existing falsy-value behavior of deletedGroup; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const assertResponseGroupCandidateAvailable = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Readonly<Pick<CreationTransaction, "select">>,
   ownerId: string,
   operationId: string
 ): Promise<void> => {
@@ -486,40 +434,31 @@ const assertResponseGroupCandidateAvailable = async (
         sql`${operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
       )
     )
-    .limit(1);
-  if (deletedGroup) {
+    .limit(SINGLE_MATCH_LIMIT);
+  if (hasQueryRow(deletedGroup)) {
     throw new CreationConflictError("This response group has been deleted.");
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): assertGuestCreationAdmission uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): assertGuestCreationAdmission accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): assertGuestCreationAdmission intentionally keeps the existing falsy-value behavior of reservationId; guest; quota; creation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const assertGuestCreationAdmission = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Readonly<Pick<CreationTransaction, "select">>,
   ownerId: string,
   operationId: string,
   reservationId?: string
 ): Promise<void> => {
-  if (!reservationId) {
+  if (typeof reservationId !== "string" || reservationId === "") {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
       .from(eveGuest)
       .where(eq(eveGuest.ownerId, ownerId));
-    if (guest) {
+    if (hasQueryRow(guest)) {
       throw new CreationConflictError(
         "Guest creation requires a quota reservation."
       );
     }
     return;
   }
-  if (reservationId) {
+  if (typeof reservationId === "string" && reservationId !== "") {
     const [quota] = await tx
       .select({
         id: eveGuestMessage.reservationId,
@@ -534,7 +473,7 @@ const assertGuestCreationAdmission = async (
           inArray(eveGuestMessage.state, ["reserved", "committed"])
         )
       );
-    if (!quota) {
+    if (!hasQueryRow(quota)) {
       throw new CreationConflictError(
         "Guest admission has changed. Retry the saved request."
       );
@@ -549,7 +488,7 @@ const assertGuestCreationAdmission = async (
             eq(eveConversation.operationId, operationId)
           )
         );
-      if (!creation) {
+      if (!hasQueryRow(creation)) {
         throw new CreationConflictError(
           "Committed guest admission has no creation journal."
         );
@@ -557,16 +496,9 @@ const assertGuestCreationAdmission = async (
     }
   }
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-params (#511): assignCreationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): assignCreationProject uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): assignCreationProject accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): assignCreationProject intentionally keeps the existing falsy-value behavior of target; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const assignCreationProject = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Readonly<Pick<CreationTransaction, "select" | "insert">>,
   chatId: string,
   ownerId: string,
   projectId: string
@@ -576,7 +508,7 @@ const assignCreationProject = async (
     .from(project)
     .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
     .for("key share");
-  if (!target) {
+  if (!hasQueryRow(target)) {
     throw new CreationProjectNotFoundError("Project not found.");
   }
   await tx
@@ -584,25 +516,58 @@ const assignCreationProject = async (
     .values({ chatId, ownerId, projectId: target.id })
     .onConflictDoNothing();
 };
-/* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): reserveEveConversation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): reserveEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): reserveEveConversation accepts value: Omit<typeof eveConversation.$inferInsert, "chatId">; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reserveEveConversation intentionally keeps the existing falsy-value behavior of existingReservation; source?.sessionId; source; createdChat; existingChat; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+const resolveCreationChat = async (
+  tx: CreationTransactionView,
+  value: ReadonlyNativeSurface<
+    Omit<typeof eveConversation.$inferInsert, "chatId">
+  >,
+  fork?: EveForkInput
+): Promise<{ chatId: string; source: ConversationRow | undefined }> => {
+  const [source] = fork
+    ? await tx
+        .select()
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.id, fork.conversationId),
+            eq(eveConversation.ownerId, value.ownerId),
+            eq(eveConversation.state, "bound")
+          )
+        )
+    : [];
+  if (fork && !isNonemptyString(source?.sessionId)) {
+    throw new CreationConflictError(
+      "The source conversation is not available for editing."
+    );
+  }
+  const [initialGroup] = hasQueryRow(source)
+    ? []
+    : await tx
+        .select({ id: eveResponseGroup.id })
+        .from(eveResponseGroup)
+        .where(
+          and(
+            eq(eveResponseGroup.ownerId, value.ownerId),
+            eq(eveResponseGroup.deleted, false),
+            isNull(eveResponseGroup.sourceConversationId),
+            sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+          )
+        )
+        .limit(SINGLE_MATCH_LIMIT);
+  const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+  return { chatId, source };
+};
+
 const reserveEveConversation = async (
-  value: Omit<typeof eveConversation.$inferInsert, "chatId">,
+  value: ReadonlyNativeSurface<
+    Omit<typeof eveConversation.$inferInsert, "chatId">
+  >,
   initialTitle: string,
   fork?: EveForkInput,
   guestReservationId?: string
 ): Promise<ConversationRow[]> =>
-  // oxlint-disable-next-line eslint/complexity -- Reservation keeps identity, admission, project, and fork writes in one transaction.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: CreationTransactionView) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
@@ -627,53 +592,22 @@ const reserveEveConversation = async (
           eq(eveConversation.operationId, value.operationId)
         )
       )
-      .limit(1);
-    if (existingReservation) {
+      .limit(SINGLE_MATCH_LIMIT);
+    if (hasQueryRow(existingReservation)) {
       return [];
     }
-    const [source] = fork
-      ? await tx
-          .select()
-          .from(eveConversation)
-          .where(
-            and(
-              eq(eveConversation.id, fork.conversationId),
-              eq(eveConversation.ownerId, value.ownerId),
-              eq(eveConversation.state, "bound")
-            )
-          )
-      : [];
-    if (fork && !source?.sessionId) {
-      throw new CreationConflictError(
-        "The source conversation is not available for editing."
-      );
-    }
-    const [initialGroup] = source
-      ? []
-      : await tx
-          .select({ id: eveResponseGroup.id })
-          .from(eveResponseGroup)
-          .where(
-            and(
-              eq(eveResponseGroup.ownerId, value.ownerId),
-              eq(eveResponseGroup.deleted, false),
-              isNull(eveResponseGroup.sourceConversationId),
-              sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
-            )
-          )
-          .limit(1);
-    const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+    const { chatId, source } = await resolveCreationChat(tx, value, fork);
     const [createdChat] = await tx
       .insert(eveChat)
       .values({ id: chatId, ownerId: value.ownerId, title: initialTitle })
       .onConflictDoNothing()
       .returning({ id: eveChat.id });
-    if (!createdChat) {
+    if (!hasQueryRow(createdChat)) {
       const [existingChat] = await tx
         .select({ id: eveChat.id })
         .from(eveChat)
         .where(and(eq(eveChat.id, chatId), eq(eveChat.ownerId, value.ownerId)));
-      if (!existingChat) {
+      if (!hasQueryRow(existingChat)) {
         throw new CreationConflictError(
           "Conversation identity is unavailable."
         );
@@ -689,14 +623,15 @@ const reserveEveConversation = async (
         forkMessageId: fork?.beforeMessageId,
         forkTurnId: fork?.beforeTurnId,
         parentConversationId: fork?.conversationId,
-        rootConversationId: source
-          ? (source.rootConversationId ?? source.id)
-          : undefined,
+        rootConversationId:
+          source === undefined
+            ? undefined
+            : (source.rootConversationId ?? source.id),
       })
       .onConflictDoNothing()
       .returning();
     const [created] = rows;
-    if (createdChat && value.initialProjectId) {
+    if (hasQueryRow(createdChat) && isNonemptyString(value.initialProjectId)) {
       await assignCreationProject(
         tx,
         chatId,
@@ -704,7 +639,7 @@ const reserveEveConversation = async (
         value.initialProjectId
       );
     }
-    if (created && source) {
+    if (hasQueryRow(created) && source !== undefined) {
       // Retain inherited files conservatively; native history owns turn contents.
       const references = await tx
         .select({ key: eveFileReference.key })
@@ -715,7 +650,7 @@ const reserveEveConversation = async (
             eq(eveFileReference.ownerId, value.ownerId)
           )
         );
-      if (references.length > 0) {
+      if (references.length > EMPTY_REFERENCE_COUNT) {
         await tx.insert(eveFileReference).values(
           references.map(({ key }) => ({
             conversationId: created.id,
@@ -727,105 +662,99 @@ const reserveEveConversation = async (
     }
     return rows;
   });
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): beginEveConversationDeletion accepts tx; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): beginEveConversationDeletion intentionally keeps the existing falsy-value behavior of source; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/**
+ * Fences every conversation in the selected logical chat for deletion.
+ * The returned session IDs can then be retired before physical purge.
+ * @param {string} ownerId Owner of the selected conversation or chat.
+ * @param {string} id Conversation or logical chat ID used to find the family.
+ * @returns {Promise<{ conversations: Array<Pick<ConversationRow, "id" | "sessionId">>; rootId: string } | null>} The chat root and fenced conversation IDs, or null when no owned record matches.
+ * @throws {CreationConflictError} when creation recovery is still in progress.
  */
-/** Fence one conversation family; retirement and physical purge must finish separately. */
 const beginEveConversationDeletion = async (
   ownerId: string,
   id: string
-): Promise<
-  | {
-      conversations: Pick<ConversationRow, "id" | "sessionId">[];
-      rootId: string;
-    }
-  | undefined
-> =>
-  await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [source] = await tx
-      .select({ chatId: eveChat.id })
-      .from(eveChat)
-      .leftJoin(
-        eveConversation,
-        and(
-          eq(eveConversation.chatId, eveChat.id),
-          eq(eveConversation.ownerId, eveChat.ownerId),
-          eq(eveConversation.id, id)
-        )
-      )
-      .where(
-        and(
-          eq(eveChat.ownerId, ownerId),
-          or(eq(eveChat.id, id), eq(eveConversation.id, id))
-        )
-      );
-    if (!source) {
-      return;
-    }
-    const familyCondition = and(
-      eq(eveConversation.ownerId, ownerId),
-      eq(eveConversation.chatId, source.chatId)
-    );
-    const family = await tx
-      .select()
-      .from(eveConversation)
-      .where(familyCondition)
-      .orderBy(eveConversation.id);
-    if (
-      family.some(
-        (row) => row.state === "creating" || row.state === "uncertain"
-      )
-    ) {
-      throw new CreationConflictError(
-        "Finish recovering conversation creation before deleting this conversation."
-      );
-    }
-    await tombstoneEveResponseGroups(tx, ownerId, family);
-    // Document writers hold this same lock through their commit. Once the fence
-    // commits, later writers fail their bound-conversation check.
-    for (const row of family) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+): Promise<{
+  conversations: Pick<ConversationRow, "id" | "sessionId">[];
+  rootId: string;
+} | null> =>
+  await db.transaction(
+    async (
+      tx: CreationTransactionView
+    ): ReturnType<typeof beginEveConversationDeletion> => {
       await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );
-    }
-    const conversations = await tx
-      .update(eveConversation)
-      .set({ state: "deleting", visibility: "private" })
-      .where(
-        and(
-          familyCondition,
-          inArray(eveConversation.state, ["bound", "deleting"])
+      const [source] = await tx
+        .select({ chatId: eveChat.id })
+        .from(eveChat)
+        .leftJoin(
+          eveConversation,
+          and(
+            eq(eveConversation.chatId, eveChat.id),
+            eq(eveConversation.ownerId, eveChat.ownerId),
+            eq(eveConversation.id, id)
+          )
         )
-      )
-      .returning({
-        id: eveConversation.id,
-        sessionId: eveConversation.sessionId,
-      });
-    // oxlint-disable-next-line typescript/consistent-return -- #580: beginEveConversationDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-    return {
-      conversations: conversations.toSorted((left, right) =>
-        left.id.localeCompare(right.id)
-      ),
-      rootId: source.chatId,
-    };
-  });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+        .where(
+          and(
+            eq(eveChat.ownerId, ownerId),
+            or(eq(eveChat.id, id), eq(eveConversation.id, id))
+          )
+        );
+      if (!hasQueryRow(source)) {
+        return null;
+      }
+      const familyCondition = and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.chatId, source.chatId)
+      );
+      const family = await tx
+        .select()
+        .from(eveConversation)
+        .where(familyCondition)
+        .orderBy(eveConversation.id);
+      if (
+        family.some(
+          (row: Readonly<Pick<ConversationRow, "state">>) =>
+            row.state === "creating" || row.state === "uncertain"
+        )
+      ) {
+        throw new CreationConflictError(
+          "Finish recovering conversation creation before deleting this conversation."
+        );
+      }
+      await tombstoneEveResponseGroups(tx, ownerId, family);
+      // Document writers hold this same lock through their commit. Once the fence
+      // commits, later writers fail their bound-conversation check.
+      for (const row of family) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Family deletion must acquire each eve-document advisory lock before changing bound rows to deleting; document writers hold these locks through commit.
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
+        );
+      }
+      const conversations = await tx
+        .update(eveConversation)
+        .set({ state: "deleting", visibility: "private" })
+        .where(
+          and(
+            familyCondition,
+            inArray(eveConversation.state, ["bound", "deleting"])
+          )
+        )
+        .returning({
+          id: eveConversation.id,
+          sessionId: eveConversation.sessionId,
+        });
+      return {
+        conversations: conversations.toSorted((left, right) =>
+          left.id.localeCompare(right.id)
+        ),
+        rootId: source.chatId,
+      };
+    }
+  );
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): matchesEveFork preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const matchesEveFork = (
   existing: Pick<
     typeof eveConversation.$inferSelect,
@@ -843,24 +772,16 @@ const matchesEveFork = (
   existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
   existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
   existing.forkKind === forkKind;
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): CreationTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type CreationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
- * max-lines-per-function (#510): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): bindConversationSession accepts tx: CreationTransaction; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): bindConversationSession intentionally keeps the existing falsy-value behavior of sessionBinding; bound?.sessionId; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): bindConversationSession preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+type CreationTransaction = Parameters<
+  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
+>[typeof FIRST_PARAMETER_INDEX];
+type CreationTransactionView = Readonly<
+  Pick<CreationTransaction, "select" | "execute" | "insert" | "update">
+>;
+
 const bindConversationSession = async (
-  tx: CreationTransaction,
+  tx: CreationTransactionView,
   ownerId: string,
   reservationId: string,
   sessionId: string
@@ -872,7 +793,7 @@ const bindConversationSession = async (
     .select({ id: eveConversation.id })
     .from(eveConversation)
     .where(eq(eveConversation.sessionId, sessionId));
-  if (sessionBinding && sessionBinding.id !== reservationId) {
+  if (hasQueryRow(sessionBinding) && sessionBinding.id !== reservationId) {
     throw new EveSessionMappingError("binding_conflict");
   }
   const [bound] = await tx
@@ -895,12 +816,12 @@ const bindConversationSession = async (
       )
     )
     .returning();
-  if (!bound?.sessionId) {
+  if (!isNonemptyString(bound?.sessionId)) {
     const [existing] = await tx
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, reservationId));
-    if (!existing) {
+    if (!hasQueryRow(existing)) {
       throw new EveSessionMappingError("identity_missing");
     }
     if (existing.ownerId !== ownerId) {
@@ -920,24 +841,55 @@ const bindConversationSession = async (
     .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
   return { id: bound.id, sessionId: bound.sessionId };
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): createEveConversation accepts { initialModelId, initialRequest, initialContentHash, initialTitle = message, fo; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): createEveConversation intentionally keeps the existing falsy-value behavior of initialProjectId; reservation; existing; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): createEveConversation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+const assertMatchingMessageCreation = (
+  existing: ConversationRow | undefined,
+  message: string,
+  initialModelId: string | undefined,
+  initialContentHash: string | undefined,
+  initialProjectId: string | undefined,
+  fork: ReadonlyNativeSurface<EveForkInput> | undefined,
+  forkKind: typeof eveConversation.$inferInsert.forkKind
+): ConversationRow => {
+  if (
+    existing === undefined ||
+    existing.creationKind !== "message" ||
+    existing.firstMessage !== message ||
+    existing.initialModelId !== (initialModelId ?? null) ||
+    existing.initialContentHash !== (initialContentHash ?? null) ||
+    existing.initialProjectId !== (initialProjectId ?? null) ||
+    !matchesEveFork(existing, fork, forkKind ?? null)
+  ) {
+    throw new CreationConflictError(
+      "This operation already has a different message, attachments, model, tool selection, project, or source turn."
+    );
+  }
+  return existing;
+};
+
+/**
+ * Reserves a conversation under the owner’s operation ID and binds it to a native session.
+ * The reserved conversation ID is passed to the native creator as its idempotency key.
+ * @param {string} ownerId Owner creating the conversation.
+ * @param {string} operationId Stable owner-scoped operation ID used to find or reuse the conversation reservation.
+ * @param {string} message First user message and default conversation title.
+ * @param {(id: string) => string | Promise<string>} create Native-session creator called with the reserved conversation ID as native idempotency key; its result is awaited before binding.
+ * @param {string} [initialModelId] Initial model to use for the conversation.
+ * @param {unknown} [initialRequest] Initial request metadata persisted with the conversation.
+ * @param {string} [initialContentHash] Hash used to identify the initial content.
+ * @param {string} [initialTitle] Initial title; defaults to the first message.
+ * @param {EveForkInput} [fork] Source conversation and checkpoint information for a fork.
+ * @param {typeof eveConversation.$inferInsert.forkKind} [forkKind] Fork type for the new conversation.
+ * @param {string[]} [fileKeys] File keys attached to the initial message.
+ * @param {string} [initialProjectId] Project to associate with a new non-fork conversation.
+ * @param {string} [guestReservationId] Existing guest reservation to consume.
+ * @returns {Promise<BoundConversation>} The bound conversation after native session creation succeeds.
  */
-/** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
-// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
-  create: (id: string) => Promise<string>,
+  create: (id: string) => string | Promise<string>,
   {
     initialModelId,
     initialRequest,
@@ -948,7 +900,7 @@ const createEveConversation = async (
     fileKeys = [],
     initialProjectId,
     guestReservationId,
-  }: {
+  }: ReadonlyNativeSurface<{
     initialRequest?: unknown;
     initialModelId?: string;
     initialContentHash?: string;
@@ -958,14 +910,14 @@ const createEveConversation = async (
     fileKeys?: string[];
     initialProjectId?: string;
     guestReservationId?: string;
-  } = {}
+  }> = {}
 ): Promise<BoundConversation> => {
   if (forkKind && !fork) {
     throw new CreationConflictError(
       "Fork intent requires a source conversation."
     );
   }
-  if (fork && initialProjectId) {
+  if (fork && typeof initialProjectId === "string" && initialProjectId !== "") {
     throw new CreationConflictError(
       "Forks inherit their source conversation project."
     );
@@ -985,7 +937,7 @@ const createEveConversation = async (
     fork,
     guestReservationId
   );
-  if (!reservation) {
+  if (!hasQueryRow(reservation)) {
     const [existing] = await db
       .select()
       .from(eveConversation)
@@ -995,27 +947,23 @@ const createEveConversation = async (
           eq(eveConversation.operationId, operationId)
         )
       );
-    if (existing) {
+    if (hasQueryRow(existing)) {
       assertCreationAvailable(existing.state);
     }
-    if (
-      !existing ||
-      existing.creationKind !== "message" ||
-      existing.firstMessage !== message ||
-      existing.initialModelId !== (initialModelId ?? null) ||
-      existing.initialContentHash !== (initialContentHash ?? null) ||
-      existing.initialProjectId !== (initialProjectId ?? null) ||
-      !matchesEveFork(existing, fork, forkKind ?? null)
-    ) {
-      throw new CreationConflictError(
-        "This operation already has a different message, attachments, model, tool selection, project, or source turn."
-      );
-    }
-    const binding = boundConversation(existing);
+    const matching = assertMatchingMessageCreation(
+      existing,
+      message,
+      initialModelId,
+      initialContentHash,
+      initialProjectId,
+      fork,
+      forkKind
+    );
+    const binding = boundConversation(matching);
     if (binding) {
       return binding;
     }
-    reservation = existing;
+    reservation = matching;
   }
   try {
     // This idempotent initialization commits before dispatch and acquires its own
@@ -1024,7 +972,7 @@ const createEveConversation = async (
       await initializeEveForkDocuments(ownerId, reservation.id);
     }
     await referenceEveFiles(ownerId, reservation.id, fileKeys);
-    return await db.transaction(async (tx) => {
+    return await db.transaction(async (tx: CreationTransactionView) => {
       // The reservation is already committed so native hooks can find it.
       // Transaction locks release on worker death; creating rows need no manual repair.
       const [lock] = await tx.execute<{
@@ -1048,7 +996,7 @@ const createEveConversation = async (
       }
       if (
         !(
-          current &&
+          hasQueryRow(current) &&
           current.creationKind === "message" &&
           (current.state === "creating" || current.state === "uncertain")
         )
@@ -1081,7 +1029,6 @@ const createEveConversation = async (
     throw error;
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const listEveOwnerBindings = async (
   ownerId: string
@@ -1101,11 +1048,6 @@ const listEveOwnerBindings = async (
         ne(eveConversation.state, "deleted")
       )
     );
-
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-undefined (#519): updateEveConversationMetadata uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): updateEveConversationMetadata accepts updates: { title?: string; isPinned?: boolean; visibility?: "private" | "public"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): updateEveConversationMetadata intentionally keeps the existing falsy-value behavior of updates.title; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const updateEveConversationMetadata = async (
   ownerId: string,
   id: string,
@@ -1114,7 +1056,7 @@ const updateEveConversationMetadata = async (
     isPinned?: boolean;
     visibility?: "private" | "public";
   }>
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | undefined> => {
   if (updates.visibility !== undefined) {
     const [conversation] = await db
       .update(eveConversation)
@@ -1129,7 +1071,10 @@ const updateEveConversationMetadata = async (
       .returning({ id: eveConversation.id });
     return conversation;
   }
-  const titleStatus = updates.title ? "manual" : undefined;
+  let titleStatus: "manual" | undefined = undefined;
+  if (isNonemptyString(updates.title)) {
+    titleStatus = "manual";
+  }
   const [row] = await db
     .update(eveChat)
     .set({
@@ -1152,10 +1097,7 @@ const updateEveConversationMetadata = async (
     .returning({ id: eveChat.id });
   return row;
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): isEveRootTitlePending uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const isEveRootTitlePending = async (
   ownerId: string,
   conversationId: string,
@@ -1179,13 +1121,10 @@ const isEveRootTitlePending = async (
         eq(eveChat.titleStatus, "pending")
       )
     )
-    .limit(1);
+    .limit(SINGLE_MATCH_LIMIT);
   return Boolean(row);
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-params -- max-params (#511): replaceEveRootFallbackTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const replaceEveRootFallbackTitle = async (
   ownerId: string,
   conversationId: string,
@@ -1209,7 +1148,6 @@ const replaceEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
-/* oxlint-enable max-params */
 
 const settleEveRootFallbackTitle = async (
   ownerId: string,
@@ -1233,13 +1171,10 @@ const settleEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
-  at: Date
+  at: ReadonlyNativeSurface<Date>
 ): Promise<void> => {
   await db
     .update(eveChat)
@@ -1256,12 +1191,7 @@ const recordEveConversationActivity = async (
       )
     );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): getPublicEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): getPublicEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const getPublicEveConversation = async (
   id: string
 ): Promise<(ConversationRow & Pick<ChatRow, "title">) | undefined> => {
@@ -1282,10 +1212,12 @@ const getPublicEveConversation = async (
         eq(eveConversation.state, "bound")
       )
     )
-    .limit(1);
-  return row ? { ...row.conversation, title: row.chat.title } : undefined;
+    .limit(SINGLE_MATCH_LIMIT);
+  if (hasQueryRow(row)) {
+    return { ...row.conversation, title: row.chat.title };
+  }
+  return undefined;
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 const listEveConversationBranches = async (
   ownerId: string,
@@ -1296,7 +1228,7 @@ const listEveConversationBranches = async (
     conversationId
   );
   if (!conversation) {
-    return;
+    return undefined;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const branches = await db
@@ -1334,22 +1266,19 @@ const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
 
-/* oxlint-disable no-magic-numbers --no-magic-numbers (#517): getDeletingEveConversationForSession uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 /**
  * Internal cleanup only; does not grant browser or conversation access.
- * @param ownerId Owner whose deleting session mapping is inspected.
- * @param sessionId Native session being removed by internal cleanup.
- * @returns The deleting conversation identity from the existing row lookup.
+ * @param {string} ownerId Owner whose deleting session mapping is inspected.
+ * @param {string} sessionId Native session being removed by internal cleanup.
+ * @returns {Promise<Pick<ConversationRow, "id"> | null>} The deleting conversation identity, or null when no owned deleting mapping exists.
  */
 const getDeletingEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id">> => {
+): Promise<Pick<ConversationRow, "id"> | null> => {
   const [row] = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -1360,20 +1289,17 @@ const getDeletingEveConversationForSession = async (
         eq(eveConversation.state, "deleting")
       )
     )
-    .limit(1);
-  return row;
+    .limit(SINGLE_MATCH_LIMIT);
+  return row ?? null;
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --unicorn/max-nested-calls (#568): getEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): getEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const getEveConversationProject = async (
   ownerId: string,
   routeId: string
-): Promise<
-  Pick<typeof project.$inferSelect, "id" | "instructions" | "name">
-> => {
+): Promise<Pick<
+  typeof project.$inferSelect,
+  "id" | "instructions" | "name"
+> | null> => {
   const [assigned] = await db
     .select({
       id: project.id,
@@ -1411,14 +1337,11 @@ const getEveConversationProject = async (
     );
   return assigned ?? null;
 };
-/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable unicorn/max-nested-calls --unicorn/max-nested-calls (#568): listPendingEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Only interrupted message commands are replayable here; copies and deletion have separate journals.
- * @param ownerId Owner whose creating and uncertain message commands need recovery.
- * @returns Durable message reservations eligible for replay; copies and deletion are excluded.
+ * @param {string} ownerId Owner whose creating and uncertain message commands need recovery.
+ * @returns {Promise<ConversationRow[]>} Durable message reservations eligible for replay; copies and deletion are excluded.
  */
 const listPendingEveCreations = async (
   ownerId: string
@@ -1436,36 +1359,28 @@ const listPendingEveCreations = async (
         )
       )
     );
-/* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): bindAcceptedEveConversation accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): bindAcceptedEveConversation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Caller must verify a native operation receipt for this reservation and exact session.
- * @param ownerId Owner whose reservation is bound under its transaction lock.
- * @param reservationId Durable reservation whose accepted native operation has been verified.
- * @param sessionId Exact native session named by the verified operation receipt.
- * @returns The reservation and session identities after transactional binding.
+ * @param {string} ownerId Owner whose reservation is bound under its transaction lock.
+ * @param {string} reservationId Durable reservation whose accepted native operation has been verified.
+ * @param {string} sessionId Exact native session named by the verified operation receipt.
+ * @returns {Promise<BoundConversation>} The reservation and session identities after transactional binding.
  */
 const bindAcceptedEveConversation = async (
   ownerId: string,
   reservationId: string,
   sessionId: string
 ): Promise<BoundConversation> =>
-  await db.transaction((tx) =>
-    bindConversationSession(tx, ownerId, reservationId, sessionId)
+  await db.transaction(
+    async (tx: CreationTransactionView) =>
+      await bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines -- #509: This eve-queries.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
- */
 export {
   beginEveConversationDeletion,
   bindAcceptedEveConversation,
   createEveConversation,
-  CreationConflictError,
-  CreationProjectNotFoundError,
   getBoundEveConversationForSession,
   getDeletingEveConversationForSession,
   getEveChatIdentity,
@@ -1486,3 +1401,5 @@ export {
   settleEveRootFallbackTitle,
   updateEveConversationMetadata,
 };
+export { CreationConflictError } from "./creation-conflict-error";
+export { CreationProjectNotFoundError } from "./creation-project-not-found-error";

@@ -1,5 +1,17 @@
 # Lane D integrated validation
 
+## Maintenance, 13 October 2026 — in progress
+
+Merged main `d612af7c128a3d962455f8c4574ae5a69ce2d99e` while preserving the integrated `861a64265` history and earlier evidence. Imported only A-owned maintenance from `c515ad453`, C-owned maintenance from `0b67b1fd4`, and B's safe maintenance delta `9432c9169`. B's typed experimental-payload migration is still pending; passing repository checks do not establish whole-task completion.
+
+The current lint contract is [the Ultracite defaults policy](lint-policy.md). The old suppression baseline and lane exception ledgers are removed. D removed obsolete directives, retained narrow serial-polling/retirement and Graphile API exceptions, and refreshed the adapter preparer's source hash. Its materialized script passes lint and types with narrow exact-installation import exceptions. The production EVE dependency and package-version set are unchanged; root Graphile 0.16.6 remains a development dependency. Registry output was regenerated from integrated canonical source, preserving A's private deletion executor.
+
+Current integrated validation: `bun lint` including docs/demo parity; all seven `bun test:types` tasks; 116 focused application tests; 61 preview/environment/lint-policy tests; isolated A, C, runtime, and recovery-experiment type checks; and one browser delivery test pass. Pending, rejected, and restored-draft captures were inspected. C reports 13 PostgreSQL checks on its identical imported files and stopped its owned cluster. No historical crash/recovery baseline was rerun for comment/style changes. Logs: `/tmp/e70d-oct13-{integrated-lint,integrated-types,integrated-unit,integrated-copy-unit,d-tests,integrated-browser}.log`; captures: `apps/chat/.eve/oct13-delivery-captures/`.
+
+B's interim [maintenance report](../experiments/eve-approval-receipt/MAINTENANCE-2026-10-13.md) records the outstanding authored-payload audit; its follow-up will supersede that status. No publication, deployment, live session retirement, or production dependency migration is included.
+
+## Historical validation, 7 October 2026
+
 Validated 7 October 2026 in `codex/eve-retirement-baseline-d`. A, B and C's final authorized artifacts are integrated locally. Production remains on `npm:@chat-js/eve@0.61.0-chatjs.0`; the receipt and metadata/creation lookup seams remain. Nothing was published or deployed.
 
 ## Integrated changes

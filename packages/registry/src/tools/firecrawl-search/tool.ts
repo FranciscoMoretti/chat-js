@@ -1,18 +1,16 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import { defineTool } from "eve/tools";
 import { env } from "@/lib/env";
-import { executeWithResearchProgress } from "@/lib/eve/research-progress";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { createModuleLogger } from "@/lib/logger";
+import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
-
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { webSearchInput } from "./schemas";
+import type { z } from "zod";
 
 const FIRECRAWL_COST_CENTS = 5;
 const CENTS_PER_USD = 100;
@@ -57,7 +55,6 @@ const searchFirecrawl = async ({
     })
   );
 };
-
 export const webSearch = defineTool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
 

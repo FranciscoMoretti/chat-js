@@ -1,11 +1,11 @@
-/* oxlint-disable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): assertEveTestDatabase's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-boolean-expressions (#610): assertEveTestDatabase intentionally keeps the existing falsy-value behavior of isolated; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/**
+ * Allows local PostgreSQL test targets and validates explicit opt-in for remote targets.
+ * Remote use requires the configured isolated URL to match the target URL.
+ * @param {string} databaseUrl Database URL the test suite will use.
+ * @returns {void} Completes when the target passes the safety checks.
+ * @throws {Error} When a remote target lacks opt-in or does not match the isolated URL.
  */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/** Remote acceptance tests require both an explicit opt-in and an isolated target. */
-export function assertEveTestDatabase(databaseUrl: string): void {
+export const assertEveTestDatabase = (databaseUrl: string): void => {
   const url = new URL(databaseUrl);
   if (
     ["postgres:", "postgresql:"].includes(url.protocol) &&
@@ -16,7 +16,9 @@ export function assertEveTestDatabase(databaseUrl: string): void {
   const isolated = process.env.EVE_TEST_DATABASE_URL;
   if (
     process.env.EVE_ALLOW_REMOTE_DATABASE_TESTS !== "true" ||
-    !isolated ||
+    isolated === undefined ||
+    isolated === null ||
+    isolated === "" ||
     !["postgres:", "postgresql:"].includes(url.protocol) ||
     new URL(isolated).href !== url.href
   ) {
@@ -24,5 +26,4 @@ export function assertEveTestDatabase(databaseUrl: string): void {
       "Eve tests require local PostgreSQL. Remote tests require EVE_ALLOW_REMOTE_DATABASE_TESTS=true and a matching isolated EVE_TEST_DATABASE_URL."
     );
   }
-}
-/* oxlint-enable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions */
+};

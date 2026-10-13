@@ -1,8 +1,7 @@
+import { describe, expect, it } from "vitest";
+import { authSessionOptions } from "./auth-session-options";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it } from "vitest";
-
-import { authSessionOptions } from "./auth-session-options";
 
 const local = {
   baseUrl: "http://localhost:3000",
@@ -43,9 +42,6 @@ describe("development auth isolation", () => {
   });
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep makeApp's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const makeApp = (baseUrl: string, databaseUrl: string) => {
   const data = { account: [], session: [], user: [], verification: [] };
   const auth = betterAuth({
@@ -58,14 +54,9 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
   });
   return { auth, data };
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): signup uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): signup accepts auth: ReturnType<typeof makeApp>["auth"]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 const signup = async (
-  auth: ReturnType<typeof makeApp>["auth"],
+  auth: Readonly<Pick<ReturnType<typeof makeApp>["auth"], "handler">>,
   origin: string,
   name: string
 ): Promise<string> => {
@@ -86,11 +77,7 @@ const signup = async (
     .map((cookie) => cookie.split(";")[0])
     .join("; ");
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): it("two local apps sharing a browser cookie jar retain separate users") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("two local apps sharing a browser cookie jar retain separate users", async () => {
   const first = makeApp(local.baseUrl, local.databaseUrl);
   const secondUrl = "http://localhost:3010";
@@ -117,4 +104,3 @@ it("two local apps sharing a browser cookie jar retain separate users", async ()
     user: { name: "second" },
   });
 });
-/* oxlint-enable max-statements */

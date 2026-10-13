@@ -1,9 +1,9 @@
-import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
+import { execFile } from "node:child_process";
 import { homedir } from "node:os";
 import nodePath from "node:path";
-import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 
 const SERVICE_ID_LENGTH = 12;
@@ -21,13 +21,11 @@ const NODE_VERSION_COMMAND = [
   String.raw`process.execPath + '\n' + process.versions.node`,
 ];
 const NODE_VERSION_COMMAND_OUTPUT = "utf-8";
-const execFileAsync: (
-  file: string,
-  args: readonly string[],
-  options: Readonly<{ encoding: "utf-8" }>
-) => Promise<{ stdout: string; stderr: string }> =
-  // oxlint-disable-next-line typescript/strict-void-return -- `promisify(execFile)` exposes stdout/stderr while retaining the direct executable invocation.
-  promisify(execFile);
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+const execFileAsync = promisifyExecFile(execFile);
 
 interface ServiceOperations {
   readonly run: (file: string, args: readonly string[]) => Promise<string>;
@@ -43,8 +41,9 @@ interface ServiceOperations {
 }
 
 const nativeOperations: ServiceOperations = {
-  // oxlint-disable-next-line eslint/no-console -- These are operator-facing CLI status and lifecycle messages.
-  log: (message) => console.info(message),
+  log: (message) => {
+    console.info(message);
+  },
   mkdir: async (path) => {
     await mkdir(path, { recursive: true });
   },
@@ -57,12 +56,13 @@ const nativeOperations: ServiceOperations = {
     });
     return result.stdout;
   },
-  wait: async (milliseconds) => await delay(milliseconds),
+  wait: async (milliseconds) => {
+    await delay(milliseconds);
+  },
   writeFile: async (path, data, mode) => {
     await writeFile(path, data, { mode });
   },
 };
-
 const xml = (value: string): string =>
   value
     .replaceAll("&", "&amp;")
@@ -99,7 +99,6 @@ const launchctl = async (
   operations: ServiceOperations,
   ...args: readonly string[]
 ): Promise<string> => await operations.run("launchctl", args);
-
 const stopService = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -133,7 +132,6 @@ const stopService = async (
   }
   throw new Error("Service is still stopping; retry shortly.");
 };
-
 const createPlist = (
   context: ServiceContext,
   node: string
@@ -155,7 +153,7 @@ const checkNodeVersion = async (
 ): Promise<string> => {
   const output = await operations.run("node", NODE_VERSION_COMMAND);
   const [node, version] = output.trim().split("\n");
-  const major = Number(version?.split(".")[MAJOR_VERSION_SEGMENT_INDEX]);
+  const major = Number((version ?? "").split(".")[MAJOR_VERSION_SEGMENT_INDEX]);
   if (!node || !Number.isInteger(major) || major < MIN_NODE_MAJOR_VERSION) {
     throw new Error(
       `ChatJS with Eve requires Node.js >=24; the current shell resolves ${version ?? "an unknown version"}. Select Node 24 or newer on PATH and retry. The existing service has not been changed.`
@@ -163,7 +161,6 @@ const checkNodeVersion = async (
   }
   return node;
 };
-
 const startService = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -181,7 +178,6 @@ const startService = async (
   await launchctl(operations, "bootstrap", context.target, context.plist);
   operations.log(`Started ${context.label}. Logs: ${context.logs}`);
 };
-
 const stopAction = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -190,7 +186,6 @@ const stopAction = async (
   await operations.removeFile(context.plist);
   operations.log("Stopped this worktree's managed runtime.");
 };
-
 const showStatus = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -204,7 +199,6 @@ const showStatus = async (
   }
   operations.log(`Logs: ${context.logs}`);
 };
-
 const runDevService = async (
   action: string,
   operations: ServiceOperations = nativeOperations,
@@ -224,7 +218,6 @@ const runDevService = async (
     throw new Error("Use start, stop or status.");
   }
 };
-
 if (import.meta.main) {
   const action = process.argv[COMMAND_ARGUMENT_INDEX] ?? "status";
   await runDevService(action);

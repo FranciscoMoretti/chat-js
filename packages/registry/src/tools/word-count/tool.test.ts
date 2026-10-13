@@ -21,7 +21,6 @@ test("word count source handles empty text and whitespace without phantom words"
     getToken: unexpected,
     requireAuth: unexpected,
     session: {
-      // oxlint-disable-next-line unicorn/no-null -- Eve SessionAuth uses null for both absent current and initiating authentication; undefined or an invented authenticated context would change this anonymous-tool fixture.
       auth: { current: null, initiator: null },
       id: "test",
       turn: { id: "turn", sequence: 0 },

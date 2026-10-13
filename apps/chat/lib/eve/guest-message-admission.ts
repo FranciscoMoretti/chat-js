@@ -1,36 +1,33 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
-import { createHash } from "node:crypto";
-
-import { z } from "zod";
-
-import type { UiToolName } from "@/lib/ai/types";
 import {
   commitEveGuestMessage,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
 } from "@/lib/db/eve-guests";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-
-import { rejectEveCommand } from "./command-rejection";
-import { guestRequestIpHash } from "./guest-admission";
-import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
-/* oxlint-enable import/no-nodejs-modules */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { UiToolName } from "@/lib/ai/types";
+import { createHash } from "node:crypto";
+import { rejectEveCommand } from "./command-rejection";
+import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
+import { guestRequestIpHash } from "./guest-admission";
+import { z } from "zod";
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Only the first reservation may dispatch: eve's session POST has no replay key. */
+const HTTP_BAD_REQUEST = 400;
+const HTTP_FORBIDDEN = 403;
+const HTTP_CONFLICT = 409;
+const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_UNAVAILABLE = 503;
+
+/**
+ * Only the first reservation may dispatch: eve's session POST has no replay key.
+ *
+ * @param {ReadonlyNativeSurface<Request>} request Request carrying the operation UUID and guest IP headers.
+ * @param {string} ownerId Guest owner whose quota and operation reservation are checked.
+ * @param {string} sessionId Session included in the reservation payload hash.
+ * @param {{ readonly message: ReadonlyEveMessageInput; readonly modelId?: string; readonly selectedTool?: UiToolName; }} input Message, model and selected tool included in the reservation payload hash.
+ * @returns {Promise<Response | { operationId: string; reservationId: string }>} The newly acquired reservation identities, or an HTTP rejection/recovery response; storage failures reject.
+ */
 const admitGuestMessage = async (
   request: ReadonlyNativeSurface<Request>,
   ownerId: string,
@@ -40,12 +37,24 @@ const admitGuestMessage = async (
     readonly modelId?: string;
     readonly selectedTool?: UiToolName;
   }
-) => {
+): Promise<
+  | Response
+  | {
+      operationId: string;
+      reservationId: Extract<
+        Awaited<ReturnType<typeof reserveEveGuestMessage>>,
+        { status: "reserved" }
+      >["reservationId"];
+    }
+> => {
   const operationId = z
     .uuid()
     .safeParse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
   if (!operationId.success) {
-    return rejectEveCommand("A message operation ID is required.", 400);
+    return rejectEveCommand(
+      "A message operation ID is required.",
+      HTTP_BAD_REQUEST
+    );
   }
   if (
     !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
@@ -56,21 +65,27 @@ const admitGuestMessage = async (
         (tool) => tool === input.selectedTool
       ))
   ) {
-    return rejectEveCommand("Sign in to use this model or tool.", 403);
+    return rejectEveCommand(
+      "Sign in to use this model or tool.",
+      HTTP_FORBIDDEN
+    );
   }
   let ipHash: string;
   try {
     ipHash = guestRequestIpHash(request);
   } catch {
-    return rejectEveCommand("Guest admission is unavailable.", 503);
+    return rejectEveCommand(
+      "Guest admission is unavailable.",
+      HTTP_UNAVAILABLE
+    );
   }
   const result = await reserveEveGuestMessage({
-    ownerId,
+    ipHash,
     operationId: operationId.data,
+    ownerId,
     requestHash: createHash("sha256")
       .update(JSON.stringify({ kind: "message", sessionId, ...input }))
       .digest("hex"),
-    ipHash,
     requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
     requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
   });
@@ -84,21 +99,18 @@ const admitGuestMessage = async (
     // This is deliberately not chatjs_command_rejected: the original may have run.
     return Response.json(
       {
+        code: "chatjs_message_operation_exists",
         error:
           "This message operation already exists. Reconnect before sending again.",
-        code: "chatjs_message_operation_exists",
       },
-      { status: 409 }
+      { status: HTTP_CONFLICT }
     );
   }
   return rejectEveCommand(
     "Guest message limit reached. Sign in to continue.",
-    429
+    HTTP_TOO_MANY_REQUESTS
   );
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const settleGuestMessage = async (
   response: ReadonlyNativeSurface<Response>,
   ownerId: string,
@@ -117,7 +129,7 @@ const settleGuestMessage = async (
   }
   // Native dispatch explicitly reports a session that never admitted the command.
   const inactive =
-    response.status === 409 &&
+    response.status === HTTP_CONFLICT &&
     z.object({ code: z.literal("session_not_active") }).safeParse(
       await response
         .clone()
@@ -132,5 +144,4 @@ const settleGuestMessage = async (
     );
   }
 };
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 export { admitGuestMessage, settleGuestMessage };

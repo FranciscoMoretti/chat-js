@@ -26,97 +26,101 @@ const MANY_FAILED_STARTS = 100;
 
 test("brief failed probes during compilation do not interrupt active requests", () => {
   expect(
-    shouldRestartAfterReadinessFailures(
-      SEVERAL_PROBES,
-      BRIEF_FAILURE_WINDOW_MS,
-      true
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: SEVERAL_PROBES,
+      hasBeenReady: true,
+      unreadyForMs: BRIEF_FAILURE_WINDOW_MS,
+    })
   ).toBe(false);
   expect(
-    shouldRestartAfterReadinessFailures(
-      MANY_PROBES,
-      JUST_BEFORE_READY_GRACE_MS,
-      true
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: MANY_PROBES,
+      hasBeenReady: true,
+      unreadyForMs: JUST_BEFORE_READY_GRACE_MS,
+    })
   ).toBe(false);
 });
 
 test("sustained failure still recovers the runtime after multiple observations", () => {
   expect(
-    shouldRestartAfterReadinessFailures(MANY_PROBES, READY_GRACE_MS, true)
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: MANY_PROBES,
+      hasBeenReady: true,
+      unreadyForMs: READY_GRACE_MS,
+    })
   ).toBe(true);
   expect(
-    shouldRestartAfterReadinessFailures(
-      FEW_PROBES,
-      LONG_ACTIVE_REQUEST_WINDOW_MS,
-      true
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: FEW_PROBES,
+      hasBeenReady: true,
+      unreadyForMs: LONG_ACTIVE_REQUEST_WINDOW_MS,
+    })
   ).toBe(false);
   expect(
-    shouldRestartAfterReadinessFailures(
-      MINIMUM_PROBES,
-      LONG_ACTIVE_REQUEST_WINDOW_MS,
-      true
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: MINIMUM_PROBES,
+      hasBeenReady: true,
+      unreadyForMs: LONG_ACTIVE_REQUEST_WINDOW_MS,
+    })
   ).toBe(false);
 });
 
 test("cold startup receives its full compilation grace period", () => {
   expect(
-    shouldRestartAfterReadinessFailures(
-      COLD_START_PROBES,
-      JUST_BEFORE_COLD_START_GRACE_MS,
-      false
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: COLD_START_PROBES,
+      hasBeenReady: false,
+      unreadyForMs: JUST_BEFORE_COLD_START_GRACE_MS,
+    })
   ).toBe(false);
   expect(
-    shouldRestartAfterReadinessFailures(
-      COLD_START_PROBES,
-      COLD_START_GRACE_MS,
-      false
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: COLD_START_PROBES,
+      hasBeenReady: false,
+      unreadyForMs: COLD_START_GRACE_MS,
+    })
   ).toBe(true);
 });
 
 test("repeated cold-start failures get a bounded longer chance to finish compilation", () => {
   expect(
-    shouldRestartAfterReadinessFailures(
-      EXTENDED_COLD_START_PROBES,
-      COLD_START_GRACE_MS,
-      false,
-      FIRST_FAILED_START
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: EXTENDED_COLD_START_PROBES,
+      failedStartups: FIRST_FAILED_START,
+      hasBeenReady: false,
+      unreadyForMs: COLD_START_GRACE_MS,
+    })
   ).toBe(false);
   expect(
-    shouldRestartAfterReadinessFailures(
-      LONG_COLD_START_PROBES,
-      EXTENDED_COLD_START_GRACE_MS,
-      false,
-      FIRST_FAILED_START
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: LONG_COLD_START_PROBES,
+      failedStartups: FIRST_FAILED_START,
+      hasBeenReady: false,
+      unreadyForMs: EXTENDED_COLD_START_GRACE_MS,
+    })
   ).toBe(true);
   expect(
-    shouldRestartAfterReadinessFailures(
-      LATE_COLD_START_PROBES,
-      JUST_BEFORE_EXTENDED_GRACE_LIMIT_MS,
-      false,
-      SECOND_FAILED_START
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: LATE_COLD_START_PROBES,
+      failedStartups: SECOND_FAILED_START,
+      hasBeenReady: false,
+      unreadyForMs: JUST_BEFORE_EXTENDED_GRACE_LIMIT_MS,
+    })
   ).toBe(false);
   expect(
-    shouldRestartAfterReadinessFailures(
-      LATE_COLD_START_PROBES,
-      EXTENDED_GRACE_LIMIT_MS,
-      false,
-      MANY_FAILED_STARTS
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: LATE_COLD_START_PROBES,
+      failedStartups: MANY_FAILED_STARTS,
+      hasBeenReady: false,
+      unreadyForMs: EXTENDED_GRACE_LIMIT_MS,
+    })
   ).toBe(true);
   expect(
-    shouldRestartAfterReadinessFailures(
-      REPEATED_PROBES,
-      READY_GRACE_MS,
-      true,
-      MANY_FAILED_STARTS
-    )
+    shouldRestartAfterReadinessFailures({
+      consecutiveFailures: REPEATED_PROBES,
+      failedStartups: MANY_FAILED_STARTS,
+      hasBeenReady: true,
+      unreadyForMs: READY_GRACE_MS,
+    })
   ).toBe(true);
 });

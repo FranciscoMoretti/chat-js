@@ -1,12 +1,12 @@
 import type { EveMessage } from "eve/client";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { LogicalChat, logicalChatBusy } from "./logical-chat";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
+import { LogicalChat, logicalChatBusy } from "./logical-chat";
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
-/* oxlint-disable max-params --
- * max-params (#511): message keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const message = (
   id: string,
   role: EveMessage["role"],
@@ -18,14 +18,10 @@ const message = (
   parts: [{ text, type: "text" }],
   role,
 });
-/* oxlint-enable max-params */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): branch accepts extra: Partial<LogicalBranch> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): branch preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const branch = (
   id: string,
-  extra: Partial<LogicalBranch> = {}
+
+  extra: ReadonlyNativeSurface<Partial<LogicalBranch>> = {}
 ): LogicalBranch => ({
   createdAt: "2026-09-20T10:00:00Z",
   forkTurnId: null,
@@ -36,31 +32,30 @@ const branch = (
   sessionId: `session-${id}`,
   ...extra,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-undefined (#519): agent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): agent accepts messages: EveMessage[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): agent preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const agent = (
-  messages: EveMessage[],
+  messages: readonly Readonly<
+    Omit<EveMessage, "parts"> & {
+      readonly parts: readonly ReadonlyEveMessagePart[];
+    }
+  >[],
   status: NativeChatAgent["status"] = "ready"
-): NativeChatAgent => ({
-  cancel: () => Promise.reject(new Error("unused")),
+): Parameters<LogicalChat["observe"]>[1] => ({
+  cancel: vi
+    .fn<NativeChatAgent["cancel"]>()
+    .mockRejectedValue(new Error("unused")),
   data: { messages },
   error: undefined,
   events: [],
-  prewarm: (): Promise<void> => Promise.resolve(),
+  prewarm: vi.fn<NativeChatAgent["prewarm"]>().mockResolvedValue(),
   reset: (): void => {
     // This test runtime has no resettable external state.
   },
-  respond: (): Promise<void> => Promise.resolve(),
-  resume: (): Promise<void> => Promise.resolve(),
-  send: (): Promise<void> => Promise.resolve(),
+  respond: vi.fn<NativeChatAgent["respond"]>().mockResolvedValue(),
+  resume: vi.fn<NativeChatAgent["resume"]>().mockResolvedValue(),
+  send: vi.fn<NativeChatAgent["send"]>().mockResolvedValue(),
   session: undefined,
   status,
 });
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 const prefix = [
   message("u1", "user", "turn_0"),
   message("turn_0:assistant", "assistant", "turn_0"),
@@ -70,11 +65,6 @@ const original = [
   message("u2", "user", "turn_1"),
   message("turn_1:assistant", "assistant", "turn_1"),
 ];
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): describe("logical chat over native sessions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("logical chat over native sessions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("logical chat over native sessions") uses 2, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 describe("logical chat over native sessions", () => {
   it("reconstructs retry aliases and edit siblings independently of replay order", () => {
     const chat = new LogicalChat("chat", "root");
@@ -235,7 +225,6 @@ describe("logical chat over native sessions", () => {
     expect(chat.getSnapshot().paths.has("retry")).toBe(false);
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 it("keeps a selected retry pending until its assistant binds", () => {
   const chat = new LogicalChat("chat", "root");
@@ -297,9 +286,6 @@ it("navigation revokes a delayed pending response without affecting its native o
   expect(chat.getSnapshot().agents.get("retry")?.status).toBe("streaming");
 });
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("isolates command locks, failures and cancellation generations per execution") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("isolates command locks, failures and cancellation generations per execution", () => {
   const chat = new LogicalChat("chat", "root");
   expect(chat.commands.claim("root")).toBe(true);
@@ -314,11 +300,7 @@ it("isolates command locks, failures and cancellation generations per execution"
   expect(chat.commands.get("other").cancellation).toBe(0);
   expect(chat.commands.get("other").pending).toBe(true);
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("registration before the URL transition does not revoke initial follow") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("registration before the URL transition does not revoke initial follow", () => {
   const chat = new LogicalChat("chat", "root");
   chat.setBranches([branch("root")]);
@@ -330,11 +312,6 @@ it("registration before the URL transition does not revoke initial follow", () =
     chat.logicalId("root", "turn_0:assistant")
   );
 });
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This logical-chat.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
-
-// oxlint-disable-next-line max-statements, no-magic-numbers -- Reproduce the observed native replay shape and assert one logical node with both native aliases.
 it("aliases repeated received events through their scoped submission identity", () => {
   const chat = new LogicalChat("chat", "root");
   chat.setBranches([branch("root")]);

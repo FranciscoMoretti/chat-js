@@ -1,26 +1,29 @@
+import type { DataUIPart, UIMessage, UIMessageChunk } from "ai";
+import {
+  MemoryThreadState,
+  createThreadStateSnapshot,
+} from "#thread-source/thread-state";
 import { describe, expect, test } from "bun:test";
 
-import type { UIMessage } from "ai";
-
-import { getMessageText } from "#thread-source/message-utils";
-import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-import { Thread } from "#thread-source/thread";
-import {
-  createThreadStateSnapshot,
-  MemoryThreadState,
-} from "#thread-source/thread-state";
-import type { ThreadState } from "#thread-source/types";
-
-import { RecordingThreadState } from "./support/recording-thread-state";
-import { StateBackedThread } from "./support/state-backed-thread";
 import { ControlledTransport } from "./support/thread-controlled-transport";
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import { RecordingThreadState } from "./support/recording-thread-state";
 import { ResumeTransport } from "./support/thread-resume-transport";
+import { StateBackedThread } from "./support/state-backed-thread";
+import { Thread } from "#thread-source/thread";
+import type { ThreadState } from "#thread-source/types";
+import { getMessageText } from "#thread-source/message-utils";
 
-const user = (id: string): UIMessage => ({
+const textMessage = (id: string, role: UIMessage["role"]): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
-  role: "user",
+  role,
 });
+
+const user = (id: string): UIMessage => textMessage(id, "user");
+
+const assistantMessage = (id: string): UIMessage =>
+  textMessage(id, "assistant");
 
 const assistantWithTool = (id: string): UIMessage => ({
   id,
@@ -46,7 +49,53 @@ const requireMessage = <TMessage extends ReadonlyMessageValue<UIMessage>>(
   return message;
 };
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+const requireFinishedMessages = (
+  messages: readonly ReadonlyMessageValue<UIMessage>[] | undefined
+): readonly ReadonlyMessageValue<UIMessage>[] => {
+  if (messages === globalThis.undefined) {
+    throw new Error("Expected onFinish to receive messages");
+  }
+  return messages;
+};
+
+type MaybeReconnectOptions = ResumeTransport["lastReconnectOptions"];
+type ReconnectOptions = NonNullable<MaybeReconnectOptions>;
+
+const requireReconnectOptions = (
+  options: MaybeReconnectOptions
+): ReconnectOptions => {
+  if (options === globalThis.undefined) {
+    throw new Error("Expected reconnect options to be recorded");
+  }
+  return options;
+};
+
+type TestRequest = Readonly<{
+  abortSignal: Readonly<Pick<AbortSignal, "aborted">> | undefined;
+  options: ControlledTransport["requests"][number]["options"];
+}>;
+
+const requireRequest = (
+  requests: readonly TestRequest[],
+  requestIndex: number
+): TestRequest => {
+  const request = requests[requestIndex];
+  if (request === globalThis.undefined) {
+    throw new Error(`Expected transport request ${requestIndex} to exist`);
+  }
+  return request;
+};
+
+const requireAbortSignal = (
+  request: TestRequest
+): Readonly<Pick<AbortSignal, "aborted">> => {
+  const { abortSignal } = request;
+  if (abortSignal === globalThis.undefined) {
+    throw new Error("Expected transport request to include an abort signal");
+  }
+  return abortSignal;
+};
+
 const waitFor = async (
   predicate: () => boolean,
   attemptsRemaining = 500
@@ -60,15 +109,7 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 describe("Thread", (): void => {
   test("creates a complete initial snapshot for custom state adapters", (): void => {
     const snapshot = createThreadStateSnapshot({
@@ -81,7 +122,7 @@ describe("Thread", (): void => {
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1"]);
-    expect(snapshot.messagesById["user-1"]?.id).toBe("user-1");
+    expect(requireMessage(snapshot.messagesById["user-1"]).id).toBe("user-1");
     expect(snapshot.parentById["user-1"]).toBeNull();
     expect(snapshot.rootIds).toEqual(["user-1"]);
     expect(snapshot.runs).toEqual([]);
@@ -159,7 +200,6 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-1");
   });
-
   test("keeps a submitted response out of the tree until streaming starts", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -175,24 +215,27 @@ describe("Thread", (): void => {
         .getSnapshot()
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["user-1"]);
-    expect(run.getSnapshot()?.status).toBe("submitted");
+    expect(run.getSnapshot()).toMatchObject({ status: "submitted" });
     transport.emitText(0, "server-assistant", "claimed");
     await run.finished;
     expect(run.id).toBe(runId);
     expect(
       getMessageText(requireMessage(chat.getMessage("server-assistant")))
     ).toBe("claimed");
-    const snapshotMessage = chat
+    const snapshotNode = chat
       .getSnapshot()
       .nodes.find(
         ({
           message,
         }: Readonly<{ message: Readonly<Pick<UIMessage, "id">> }>): boolean =>
           message.id === "server-assistant"
-      )?.message;
+      );
+    if (snapshotNode === globalThis.undefined) {
+      throw new Error("Expected the streamed message in the snapshot");
+    }
+    const snapshotMessage = snapshotNode.message;
     expect(getMessageText(requireMessage(snapshotMessage))).toBe("claimed");
   });
-
   test("uses AI SDK's client response ID when the stream omits one", async (): Promise<void> => {
     const generatedIds = ["run-1", "client-response"];
     const transport = new ControlledTransport();
@@ -215,9 +258,10 @@ describe("Thread", (): void => {
     await run.finished;
 
     expect(run.id).toBe("run-1");
-    expect(chat.getMessage("client-response")?.id).toBe("client-response");
+    expect(requireMessage(chat.getMessage("client-response")).id).toBe(
+      "client-response"
+    );
   });
-
   test("attaches streamed output without requiring a user parent", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -232,11 +276,9 @@ describe("Thread", (): void => {
 
     transport.emitText(0, "response-1", "complete");
     await run.finished;
-
-    expect(chat.getMessage("context-1")?.role).toBe("system");
-    expect(chat.getParent("response-1")?.id).toBe("context-1");
+    expect(requireMessage(chat.getMessage("context-1")).role).toBe("system");
+    expect(requireMessage(chat.getParent("response-1")).id).toBe("context-1");
   });
-
   test("rejects a bare run from an assistant before transport", (): void => {
     const transport = new ControlledTransport();
     const parent: UIMessage = {
@@ -264,15 +306,18 @@ describe("Thread", (): void => {
       role: "assistant",
     });
     await waitFor((): boolean => transport.requests.length === 1);
-
-    expect(transport.requests[0]?.options.trigger).toBe("submit-message");
-    expect(transport.requests[0]?.options.messageId).toBeUndefined();
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "submit-message"
+    );
     expect(
-      transport.requests[0]?.options.messages.map(
+      requireRequest(transport.requests, 0).options.messageId
+    ).toBeUndefined();
+    expect(
+      requireRequest(transport.requests, 0).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1", "assistant-input"]);
-    expect(chat.getParent("assistant-input")?.id).toBe("user-1");
+    expect(requireMessage(chat.getParent("assistant-input")).id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("assistant-input");
 
     transport.emitText(0, "assistant-input", "continued");
@@ -287,13 +332,9 @@ describe("Thread", (): void => {
       getMessageText(requireMessage(chat.getMessage("assistant-input")))
     ).toBe("prebuilt responsecontinued");
   });
-
   test("continues the selected assistant without creating a sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistant = {
-      ...user("assistant-1"),
-      role: "assistant" as const,
-    };
+    const assistant = assistantMessage("assistant-1");
     const chat = new Thread({
       messages: [user("user-1"), assistant],
       transport,
@@ -301,9 +342,12 @@ describe("Thread", (): void => {
 
     const sending = chat.sendMessage();
     await waitFor((): boolean => transport.requests.length === 1);
-
-    expect(transport.requests[0]?.options.trigger).toBe("submit-message");
-    expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "submit-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      "assistant-1"
+    );
     transport.emitText(0, "assistant-1", " continued");
     await sending;
 
@@ -316,21 +360,21 @@ describe("Thread", (): void => {
       "assistant-1 continued"
     );
   });
-
   test("keeps hidden branches when reconciling the selected path", (): void => {
     const chat = new Thread({
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
     });
     chat.addMessage(user("user-2"), "assistant-1");
-    chat.addMessage({ ...user("assistant-2"), role: "assistant" }, "user-2");
+    chat.addMessage(assistantMessage("assistant-2"), "user-2");
 
     chat.setMessages([
       user("user-1"),
-      { ...user("assistant-1"), role: "assistant" },
+      assistantMessage("assistant-1"),
       user("user-3"),
     ]);
-
-    expect(chat.getMessage("assistant-2")?.id).toBe("assistant-2");
+    expect(requireMessage(chat.getMessage("assistant-2")).id).toBe(
+      "assistant-2"
+    );
     expect(
       chat
         .getSnapshot()
@@ -347,11 +391,11 @@ describe("Thread", (): void => {
     chat.setMessages([user("user-1")]);
     transport.emitText(0, "assistant-1", "primary");
     await primary.finished;
-
-    expect(chat.getMessage("assistant-1")?.id).toBe("assistant-1");
+    expect(requireMessage(chat.getMessage("assistant-1")).id).toBe(
+      "assistant-1"
+    );
     expect(chat.getSnapshot().cursorId).toBe("user-1");
   });
-
   test("reports the completed run path to onFinish after navigation", async (): Promise<void> => {
     const transport = new ControlledTransport();
     let finishedMessages:
@@ -376,12 +420,11 @@ describe("Thread", (): void => {
     await run.finished;
 
     expect(
-      finishedMessages?.map(
+      requireFinishedMessages(finishedMessages).map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1", "assistant-1"]);
   });
-
   test("rejects concurrency before adding another user message", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -399,7 +442,6 @@ describe("Thread", (): void => {
     ).rejects.toThrow("max active runs");
     expect(chat.getMessage("user-2")).toBeUndefined();
   });
-
   test("rejects assistant continuation without creating a phantom run", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -409,7 +451,7 @@ describe("Thread", (): void => {
         nodes: [
           { message: user("user-active"), parentId: null },
           {
-            message: { ...user("assistant-ready"), role: "assistant" },
+            message: assistantMessage("assistant-ready"),
             parentId: null,
           },
         ],
@@ -422,7 +464,7 @@ describe("Thread", (): void => {
     const runCount = chat.getSnapshot().runs.length;
 
     expect(
-      chat.sendMessage(undefined, {
+      chat.sendMessage(globalThis.undefined, {
         tree: { follow: false, from: "assistant-ready" },
       })
     ).rejects.toThrow("max active runs");
@@ -432,7 +474,6 @@ describe("Thread", (): void => {
     transport.finish(0);
     await active.finished;
   });
-
   test("stopping one run does not abort another", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -445,13 +486,16 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 2);
 
     await first.stop();
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeFalse();
     expect(chat.getChildren("user-1")).toEqual([]);
     transport.emitText(1, "assistant-2", "complete");
     await second.finished;
   });
-
   test("selects and follows a pending run before its response exists", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ messages: [user("user-1")], transport });
@@ -478,19 +522,22 @@ describe("Thread", (): void => {
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["user-1", "assistant-2"]);
     await chat.stop();
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeTrue();
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeFalse();
 
     transport.finish(0);
     await Promise.all([first.finished, second.finished]);
   });
-
   test("rejects selecting an unknown run", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
-    expect((): void => chat.setActiveRun("missing")).toThrow(
-      "Unknown run missing"
-    );
+    expect((): void => {
+      chat.setActiveRun("missing");
+    }).toThrow("Unknown run missing");
   });
 
   test("preserves the selected run when its target path is missing", async (): Promise<void> => {
@@ -502,15 +549,19 @@ describe("Thread", (): void => {
     chat.setActiveRun(first.id);
     chat.removeMessage("user-1");
 
-    expect((): void => chat.setActiveRun(second.id)).toThrow();
+    expect((): void => {
+      chat.setActiveRun(second.id);
+    }).toThrow();
     await chat.stop();
-
-    expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
-    expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 0)).aborted
+    ).toBeTrue();
+    expect(
+      requireAbortSignal(requireRequest(transport.requests, 1)).aborted
+    ).toBeFalse();
     transport.finish(1);
     await Promise.all([first.finished, second.finished]);
   });
-
   test("keeps creation order after an earlier run fails without a message", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -532,7 +583,6 @@ describe("Thread", (): void => {
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-2", "assistant-3"]);
   });
-
   test("preserves an error when resume finds no stream", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -540,18 +590,21 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 1);
     transport.fail(0, new Error("failed"));
     await run.finished;
-    const error = run.getSnapshot()?.error;
+    const snapshot = run.getSnapshot();
+    if (snapshot === globalThis.undefined) {
+      throw new Error("Expected run snapshot to exist");
+    }
+    const { error } = snapshot;
 
     await chat.resumeRun(run.id);
 
     expect(run.getSnapshot()).toMatchObject({ error, status: "error" });
     chat.clearError();
     expect(run.getSnapshot()).toMatchObject({
-      error: undefined,
+      error: globalThis.undefined,
       status: "ready",
     });
   });
-
   test("run handles expose the current resumed request", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -566,16 +619,15 @@ describe("Thread", (): void => {
 
     expect(run.finished).not.toBe(initialFinished);
     let finished = false;
-    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- Observe completion without awaiting or adding a value so the pending resumed request remains testable.
-    void run.finished.then((): void => {
+    const markFinished = (): void => {
       finished = true;
-    });
+    };
+    void run.finished.then(markFinished);
     await Bun.sleep(0);
     expect(finished).toBeFalse();
     reconnect.close();
     await Promise.all([resumed, run.finished]);
   });
-
   test("refreshes the canonical message path before resuming", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -606,7 +658,6 @@ describe("Thread", (): void => {
       "edited resumed"
     );
   });
-
   test("replays a v7 resume from start without duplicating canonical content", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -642,7 +693,6 @@ describe("Thread", (): void => {
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
   });
-
   test("keeps canonical identity and metadata when a replay start omits them", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -670,7 +720,50 @@ describe("Thread", (): void => {
     expect(message.metadata).toEqual({ model: "saved" });
     expect(chat.getChildren("user-1")).toHaveLength(1);
   });
+  test("forwards resume data identity and nested provider metadata", async (): Promise<void> => {
+    const transport = new ControlledTransport();
+    const received: unknown[] = [];
+    const providerMetadata = { provider: { tokens: ["one", { value: 2 }] } };
+    const metadata = { model: "incoming", nested: ["retained"] };
+    const dataChunk: UIMessageChunk = {
+      data: providerMetadata,
+      transient: true,
+      type: "data-reference",
+    };
+    const chat = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          metadata: { model: "saved" },
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
+        },
+      ],
+      onData: (part: Readonly<DataUIPart<Record<string, unknown>>>): void => {
+        received.push(part);
+      },
+      transport,
+    });
+    const reconnect = transport.prepareReconnect();
+    const resumed = chat.resumeStream();
+    reconnect.enqueue({ messageMetadata: metadata, type: "start" });
+    reconnect.enqueue(dataChunk);
+    reconnect.enqueue({ id: "text", providerMetadata, type: "text-start" });
+    reconnect.enqueue({ delta: "replayed", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
+    reconnect.close();
+    await resumed;
 
+    const message = requireMessage(chat.getMessage("assistant-1"));
+    expect(received).toHaveLength(1);
+    expect(received[0]).toBe(dataChunk);
+    expect(message.metadata).toEqual(metadata);
+    expect(message.parts).toEqual([
+      { providerMetadata, state: "done", text: "replayed", type: "text" },
+    ]);
+    expect(chat.getChildren("user-1")).toHaveLength(1);
+  });
   test("updates restored tools after a continuation without duplicating the prefix", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -707,21 +800,19 @@ describe("Thread", (): void => {
     });
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
-    expect(
-      message.parts.filter(
-        (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
-          part.type === "dynamic-tool"
-      )
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-    ).toEqual([
-      expect.objectContaining({
+    const toolParts = message.parts.filter(
+      (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
+        part.type === "dynamic-tool"
+    );
+    expect(toolParts).toHaveLength(1);
+    expect(toolParts).toMatchObject([
+      {
         output: "found",
         state: "output-available",
         toolCallId: "restored-tool",
-      }),
+      },
     ]);
   });
-
   test("aggregate status ignores historical run errors", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -730,7 +821,7 @@ describe("Thread", (): void => {
     transport.fail(0, new Error("failed"));
     await failed.finished;
     expect(chat.getSnapshot().treeStatus).toBe("ready");
-    expect(failed.getSnapshot()?.status).toBe("error");
+    expect(failed.getSnapshot()).toMatchObject({ status: "error" });
 
     const successful = await chat.startRun({ from: "user-1" });
     await waitFor((): boolean => transport.requests.length === 2);
@@ -740,9 +831,8 @@ describe("Thread", (): void => {
 
     expect(chat.getSnapshot().status).toBe("ready");
     expect(chat.getSnapshot().treeStatus).toBe("ready");
-    expect(failed.getSnapshot()?.status).toBe("error");
+    expect(failed.getSnapshot()).toMatchObject({ status: "error" });
   });
-
   test("unexpected application errors reject the run promise", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const state = new RecordingThreadState([]);
@@ -763,7 +853,6 @@ describe("Thread", (): void => {
     expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
     unsubscribe();
   });
-
   test("regenerates an assistant as a sibling response", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -776,10 +865,14 @@ describe("Thread", (): void => {
 
     const regeneration = chat.regenerate({ messageId: "assistant-1" });
     await waitFor((): boolean => transport.requests.length === 2);
-    expect(transport.requests[1]?.options.trigger).toBe("regenerate-message");
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    expect(requireRequest(transport.requests, 1).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 1).options.messageId).toBe(
+      "assistant-1"
+    );
     expect(
-      transport.requests[1]?.options.messages.map(
+      requireRequest(transport.requests, 1).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual(["user-1"]);
@@ -793,19 +886,22 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
-
   test("regenerates a root assistant as a root sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      messages: [{ ...user("assistant-1"), role: "assistant" }],
+      messages: [assistantMessage("assistant-1")],
       transport,
     });
 
     const regeneration = chat.regenerate({ messageId: "assistant-1" });
     await waitFor((): boolean => transport.requests.length === 1);
-    expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
-    expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
-    expect(transport.requests[0]?.options.messages).toEqual([]);
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      "assistant-1"
+    );
+    expect(requireRequest(transport.requests, 0).options.messages).toEqual([]);
 
     transport.emitText(0, "assistant-2", "second");
     await regeneration;
@@ -817,11 +913,10 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
-
   test("does not follow regeneration after navigating to another branch", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
     chat.addMessage(user("other-root"), null);
@@ -831,8 +926,7 @@ describe("Thread", (): void => {
     chat.setCursor("other-root");
     transport.emitText(0, "assistant-2", "second");
     await regeneration;
-
-    expect(chat.getParent("assistant-2")?.id).toBe("user-1");
+    expect(requireMessage(chat.getParent("assistant-2")).id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("other-root");
     expect(
       chat
@@ -840,11 +934,10 @@ describe("Thread", (): void => {
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["other-root"]);
   });
-
   test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
 
@@ -857,14 +950,8 @@ describe("Thread", (): void => {
 
   test("regenerates an assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistantParent = {
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       messages: [assistantParent, assistantChild],
       transport,
@@ -872,10 +959,14 @@ describe("Thread", (): void => {
 
     const regeneration = chat.regenerate({ messageId: assistantChild.id });
     await waitFor((): boolean => transport.requests.length === 1);
-    expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
-    expect(transport.requests[0]?.options.messageId).toBe(assistantChild.id);
+    expect(requireRequest(transport.requests, 0).options.trigger).toBe(
+      "regenerate-message"
+    );
+    expect(requireRequest(transport.requests, 0).options.messageId).toBe(
+      assistantChild.id
+    );
     expect(
-      transport.requests[0]?.options.messages.map(
+      requireRequest(transport.requests, 0).options.messages.map(
         ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
       )
     ).toEqual([assistantParent.id]);
@@ -892,16 +983,9 @@ describe("Thread", (): void => {
     expect(chat.getMessage(assistantChild.id)).toEqual(assistantChild);
     expect(chat.getSnapshot().cursorId).toBe("assistant-replacement");
   });
-
   test("restores assistant-to-assistant edges as tree data", (): void => {
-    const assistantParent = {
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       initialTree: {
         cursorId: assistantChild.id,
@@ -912,8 +996,9 @@ describe("Thread", (): void => {
         version: 1,
       },
     });
-
-    expect(chat.getParent(assistantChild.id)?.id).toBe(assistantParent.id);
+    expect(requireMessage(chat.getParent(assistantChild.id)).id).toBe(
+      assistantParent.id
+    );
     expect(
       chat
         .getSnapshot()
@@ -954,11 +1039,20 @@ describe("Thread", (): void => {
         type: "tool-approval-request",
       });
     }
-    await waitFor(
-      (): boolean =>
-        chat.getMessage("assistant-a")?.parts.length === 1 &&
-        chat.getMessage("assistant-b")?.parts.length === 1
-    );
+    await waitFor((): boolean => {
+      const firstMessage = chat.getMessage("assistant-a");
+      if (
+        firstMessage === globalThis.undefined ||
+        firstMessage.parts.length !== 1
+      ) {
+        return false;
+      }
+      const secondMessage = chat.getMessage("assistant-b");
+      return (
+        secondMessage !== globalThis.undefined &&
+        secondMessage.parts.length === 1
+      );
+    });
     transport.finish(0);
     transport.finish(1);
     await Promise.all([runA.finished, runB.finished]);
@@ -973,27 +1067,29 @@ describe("Thread", (): void => {
       id: "approval-b",
     });
 
-    expect(chat.getMessage("assistant-a")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({ output: "A only", toolCallId: "tool-a" })
+    const firstParts = requireMessage(chat.getMessage("assistant-a")).parts;
+    const secondParts = requireMessage(chat.getMessage("assistant-b")).parts;
+    const firstTool = firstParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-a"
     );
-    expect(chat.getMessage("assistant-b")?.parts).not.toContainEqual(
-      expect.objectContaining({ output: "A only" })
+    expect(firstTool).toMatchObject({ output: "A only", toolCallId: "tool-a" });
+    expect(
+      secondParts.some(
+        (part: Readonly<{ type: string; output?: unknown }>): boolean =>
+          part.output === "A only"
+      )
+    ).toBe(false);
+    const secondTool = secondParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-b"
     );
-    expect(chat.getMessage("assistant-b")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-b",
-        }),
-        state: "approval-responded",
-        toolCallId: "tool-b",
-      })
-    );
+    expect(secondTool).toMatchObject({
+      approval: { approved: true, id: "approval-b" },
+      state: "approval-responded",
+      toolCallId: "tool-b",
+    });
   });
-
   test("reconstructs tool and approval ownership after restoring a tree", async (): Promise<void> => {
     const source = new Thread();
     source.addMessage(user("user-1"), null);
@@ -1028,20 +1124,18 @@ describe("Thread", (): void => {
       toolCallId: "tool-1",
     });
 
-    expect(restored.getMessage("assistant-1")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-1",
-        }),
-        output: "restored output",
-        toolCallId: "tool-1",
-      })
+    const restoredTool = requireMessage(
+      restored.getMessage("assistant-1")
+    ).parts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-1"
     );
+    expect(restoredTool).toMatchObject({
+      approval: { approved: true, id: "approval-1" },
+      output: "restored output",
+      toolCallId: "tool-1",
+    });
   });
-
   test("rejects missing restored tool and approval ownership", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
@@ -1113,7 +1207,6 @@ describe("Thread", (): void => {
     transport.finish(1);
     await active.finished;
   });
-
   test("enforces the per-message concurrency limit before resuming", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -1137,7 +1230,6 @@ describe("Thread", (): void => {
     transport.finish(1);
     await active.finished;
   });
-
   test("resumes a restored assistant through its reconstructed run", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1153,9 +1245,10 @@ describe("Thread", (): void => {
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
       "resumed"
     );
-    expect(transport.lastReconnectOptions?.body).toBeUndefined();
+    expect(
+      requireReconnectOptions(transport.lastReconnectOptions).body
+    ).toBeUndefined();
   });
-
   test("resumes a restored root assistant", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1182,7 +1275,6 @@ describe("Thread", (): void => {
       getMessageText(requireMessage(chat.getMessage("assistant-root")))
     ).toBe("resumed");
   });
-
   test("resumes a restored assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1221,12 +1313,3 @@ describe("Thread", (): void => {
     ).toBe("resumed");
   });
 });
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

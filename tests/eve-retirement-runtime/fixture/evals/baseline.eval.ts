@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules -- This native runtime proof uses Node assertions, outside application/browser code. */
 import assert from "node:assert/strict";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { Client } from "eve/client";
 import { defineEval } from "eve/evals";
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, no-magic-numbers -- Keep the ordered runtime scenario together; EVE owns the mutable evaluation/event types, and zero is the empty-receipt boundary. */
-// oxlint-disable-next-line import/no-default-export -- EVE discovers evaluations through their default exports.
 export default defineEval({
   description:
     "Real create/send/tool execution and durable replay on the pinned release",
@@ -36,4 +32,3 @@ export default defineEval({
     assert.deepEqual(replay.events, snapshot.events);
   },
 });
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, no-magic-numbers */

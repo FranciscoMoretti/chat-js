@@ -1,5 +1,5 @@
-import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
+import type { MessageStreamEvent } from "eve/client";
 
 import { eveCopyBoundaries } from "./copy-boundaries";
 

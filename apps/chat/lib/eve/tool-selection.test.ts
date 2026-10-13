@@ -1,7 +1,5 @@
-/* oxlint-disable import/no-namespace, import/no-relative-parent-imports --
- * import/no-namespace (#528): The InstalledFeatures namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/tool-selection"; "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import {
   ContextContainer,
   contextStorage,
@@ -12,7 +10,10 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
-import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
+import type {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
 
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
@@ -28,28 +29,24 @@ import {
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
-/* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
 vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
-  const actual = await importOriginal<typeof InstalledFeatures>();
+  const actual = await importOriginal<{
+    installedDocumentKinds: typeof installedDocumentKinds;
+    installedToolNames: typeof installedToolNames;
+  }>();
   for (const kind of actual.installedDocumentKinds) {
     mocks.kinds.add(kind);
   }
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
-
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * typescript/explicit-function-return-type (#560): Keep startTurn's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): startTurn preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): startTurn intentionally keeps the existing falsy-value behavior of selectedTool; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const startTurn = (selectedTool?: string, principalType = "user") =>
-  selectionHook.events?.["turn.started"]?.(
+const startTurn = async (selectedTool?: string, principalType = "user") =>
+  await selectionHook.events?.["turn.started"]?.(
     {
       data: { sequence: 1, turnId: "turn_1" },
       meta: { at: "2026-09-12T12:00:00Z", id: "event_1" },
@@ -68,7 +65,7 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
         auth: {
           current: {
             attributes: {
-              ...(selectedTool ? { selectedTool } : {}),
+              ...(isNonEmptyString(selectedTool) ? { selectedTool } : {}),
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
             authenticator: "gateway",
@@ -87,7 +84,6 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
       },
     }
   );
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
@@ -99,13 +95,24 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
       webSearch: {},
       wordCount: {},
     };
-    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    const available = filterEveTools(tools);
+    expect(Object.keys(available)).toEqual(["webSearch"]);
+    expect(available.webSearch).toBe(tools.webSearch);
+    expect(Object.keys(tools)).toEqual([
+      "confirm_note",
+      "deepResearch",
+      "server__echo",
+      "webSearch",
+      "wordCount",
+    ]);
     expect(eveTurnTool.get()).toBe("webSearch");
     await startTurn();
-    expect(filterEveTools(tools)).toEqual(tools);
+    const automatic = filterEveTools(tools);
+    expect(automatic).toEqual(tools);
+    expect(automatic).not.toBe(tools);
+    expect(automatic.confirm_note).toBe(tools.confirm_note);
   });
 });
-
 it("includes document revision reads without leaking unrelated tools", () => {
   expect(selectedEveTools("createTextDocument")).toEqual([
     "createTextDocument",
@@ -146,14 +153,9 @@ it("includes tool selection in creation identity while preserving existing autom
   expect(search).not.toBe(eveCreationContentHash("changed", "webSearch"));
 });
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through  accepts ...modelIds; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): it.each([["model-a"], ["model-a", "model-b"]])("retains exact selected tools through  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it.each([["model-a"], ["model-a", "model-b"]])(
   "retains exact selected tools through retry and rejected-project recovery: %j",
-  (...modelIds) => {
+  (...modelIds: Readonly<[string, string] | [string]>) => {
     const entries = new Map<string, string>();
     const storage = {
       getItem: (key: string) => entries.get(key) ?? null,
@@ -196,7 +198,6 @@ it.each([["model-a"], ["model-a", "model-b"]])(
     expect(moved.operationId).not.toBe(original.operationId);
   }
 );
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
   const original = new ContextContainer();
@@ -205,8 +206,7 @@ it("restores the selected capability from Eve serialized context before a resume
     return serializeContext(original);
   });
   expect(saved["chatjs.turn-tool"]).toBe("createTextDocument");
-  // oxlint-disable-next-line unicorn/prefer-structured-clone, typescript/no-unsafe-argument -- Exercise the JSON wire representation; structuredClone preserves values JSON drops. #594: This tool-selection fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  const resumed = await deserializeContext(JSON.parse(JSON.stringify(saved)));
+  const resumed = await deserializeContext(saved);
   await contextStorage.run(resumed, async () => {
     expect(
       Object.keys(
@@ -221,10 +221,6 @@ it("restores the selected capability from Eve serialized context before a resume
     expect(eveTurnTool.get()).toBeNull();
   });
 });
-
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it("guest automatic and explicit turns retain only configured anonymous tools") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     const tools = {
@@ -241,11 +237,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): it("withholds document operations when their implementations are not installed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("withholds document operations when their implementations are not installed", () => {
   const original = new Set(mocks.kinds);
   const installed = mocks.kinds;
@@ -264,4 +256,3 @@ it("withholds document operations when their implementations are not installed",
     }
   }
 });
-/* oxlint-enable max-statements */

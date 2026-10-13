@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
 
 afterEach((): void => {
   vi.unstubAllEnvs();
@@ -57,7 +55,6 @@ const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
     },
   ]);
 };
-
 const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/");
   vi.stubEnv("LITELLM_API_KEY", "");
@@ -72,9 +69,11 @@ const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
       "Content-Type": "application/json",
     },
   });
-  expect(new Headers(init?.headers).has("Authorization")).toBe(false);
+  if (!init) {
+    throw new Error("Expected model request options");
+  }
+  expect(new Headers(init.headers).has("Authorization")).toBe(false);
 };
-
 const preservesConfiguredVersionPrefix = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/v1");
   vi.stubEnv("LITELLM_API_KEY", "sk-test");
@@ -85,7 +84,6 @@ const preservesConfiguredVersionPrefix = async (): Promise<void> => {
   const [[url]] = fetchMock.mock.calls;
   expect(url).toBe("http://localhost:4000/v1/models");
 };
-
 describe("LiteLLMGateway", (): void => {
   it(
     "fetches models from the LiteLLM /v1/models endpoint",

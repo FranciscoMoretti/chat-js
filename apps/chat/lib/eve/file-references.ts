@@ -1,6 +1,5 @@
-import { keyFromFileUrl } from "@/lib/file-url";
-
 import type { EveMessageInput } from "./message-input";
+import { keyFromFileUrl } from "@/lib/file-url";
 
 export const eveMessageFileKeys = (
   message:

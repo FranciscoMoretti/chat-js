@@ -1,22 +1,29 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
-import React, { useState } from "react";
-
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
+import React, { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import type { JSX as ReactJSX } from "react";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Spinner } from "@/components/ui/spinner";
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- LintControlsVisualFixture: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+
+const INITIAL_ACTION_COUNT = 0;
+const ACTION_INCREMENT = 1;
 
 export const LintControlsVisualFixture = (): ReactJSX.Element => {
-  const [actions, setActions] = useState(0);
+  const [actions, setActions] = useState(INITIAL_ACTION_COUNT);
   const [inline, setInline] = useState(true);
+  const incrementActions = useCallback(() => {
+    setActions((count) => count + ACTION_INCREMENT);
+  }, []);
+  const changeShimmerElement = useCallback(() => {
+    setInline((value) => !value);
+  }, []);
 
   return (
     <main
@@ -31,7 +38,7 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
         />
         <InputGroupAddon align="block-end">
           <span>Focus message</span>
-          <InputGroupButton onClick={() => setActions((count) => count + 1)}>
+          <InputGroupButton onClick={incrementActions}>
             Attachment action
           </InputGroupButton>
         </InputGroupAddon>
@@ -41,10 +48,9 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
         <Spinner aria-label="Saving" />
         <Shimmer as={inline ? "span" : "p"}>Thinking...</Shimmer>
       </div>
-      <Button onClick={() => setInline((value) => !value)} type="button">
+      <Button onClick={changeShimmerElement} type="button">
         Change shimmer element
       </Button>
     </main>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

@@ -1,10 +1,3 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-guests"; "../lib/db/eve-queries"; "../lib/db/eve-response-groups" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -37,31 +30,25 @@ import {
 } from "../lib/eve/guest-credential";
 import { eveResponseGroupCandidates } from "../lib/eve/response-group-candidates";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
- * no-undefined (#519): findEveGuest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep findEveGuest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): findEveGuest intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-async function findEveGuest(tokenHash: string) {
+const findEveGuest = async (
+  tokenHash: string
+): Promise<typeof eveGuest.$inferSelect | undefined> => {
   const [row] = await db
     .select()
     .from(eveGuest)
     .where(eq(eveGuest.tokenHash, tokenHash));
-  return row && row.expiresAt > new Date() ? row : undefined;
-}
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+  if (row !== undefined && row.expiresAt > new Date()) {
+    return row;
+  }
+  return undefined;
+};
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): guest uses 10, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep guest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-async function guest(messageLimit = 10) {
+const guest = async (messageLimit = 10) => {
   const credential = createEveGuestCredential();
   const row = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
@@ -70,13 +57,9 @@ async function guest(messageLimit = 10) {
   });
   owners.push(row.ownerId);
   return row;
-}
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
+};
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-function request(ownerId: string) {
+const request = (ownerId: string) => {
   const ipHash = createEveGuestCredential().tokenHash;
   ips.push(ipHash);
   return {
@@ -87,12 +70,8 @@ function request(ownerId: string) {
     requestsPerMinute: 100,
     requestsPerMonth: 100,
   };
-}
-/* oxlint-enable typescript/explicit-function-return-type */
+};
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (owners.length > 0) {
     await db.delete(eveUsage).where(inArray(eveUsage.ownerId, owners));
@@ -105,11 +84,7 @@ afterAll(async () => {
     await db.delete(eveGuestRate).where(inArray(eveGuestRate.ipHash, ips));
   }
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("guest identity is server-owned, expires and grants no BetterAuth session or sig uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("guest identity is server-owned, expires and grants no BetterAuth session or signup credits", async () => {
   const row = await guest();
   const guestIdentity = await findEveGuest(row.tokenHash);
@@ -132,18 +107,12 @@ test("guest identity is server-owned, expires and grants no BetterAuth session o
     status: "unavailable",
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent replay reserves once and rejects changed request content") uses 1, 7, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent replay reserves once and rejects changed request content") accepts rate; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent replay reserves once and rejects changed request content") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent replay reserves once and rejects changed request content", async () => {
   const row = await guest();
   const input = request(row.ownerId);
   const attempts = await Promise.all(
-    Array.from({ length: 8 }, () => reserveEveGuestMessage(input))
+    Array.from({ length: 8 }, async () => await reserveEveGuestMessage(input))
   );
   expect(
     attempts.filter((result) => result.status === "reserved")
@@ -157,7 +126,9 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     .select()
     .from(eveGuestRate)
     .where(eq(eveGuestRate.ipHash, input.ipHash));
-  expect(rates.map((rate) => rate.requests)).toEqual([1, 1]);
+  expect(
+    rates.map((rate: { readonly requests: number }) => rate.requests)
+  ).toEqual([1, 1]);
   expect(
     await reserveEveGuestMessage({
       ...input,
@@ -165,18 +136,18 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     })
   ).toEqual({ status: "conflict" });
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("distinct concurrent sends cannot overspend the guest balance") uses 1, 5, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("distinct concurrent sends cannot overspend the guest balance") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("distinct concurrent sends cannot overspend the guest balance", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
   const results = await Promise.all(
-    Array.from({ length: 6 }, () =>
-      reserveEveGuestMessage({ ...input, operationId: crypto.randomUUID() })
+    Array.from(
+      { length: 6 },
+      async () =>
+        await reserveEveGuestMessage({
+          ...input,
+          operationId: crypto.randomUUID(),
+        })
     )
   );
   expect(results.filter((result) => result.status === "reserved")).toHaveLength(
@@ -188,12 +159,7 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
   expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): test("IP quotas survive cookie replacement and rejected limits spend no guest balance uses 10, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("IP quotas survive cookie replacement and rejected limits spend no guest balance accepts rate; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("IP quotas survive cookie replacement and rejected limits spend no guest balance", async () => {
   const first = await guest();
   const second = await guest();
@@ -213,9 +179,12 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
     .select()
     .from(eveGuestRate)
     .where(eq(eveGuestRate.ipHash, input.ipHash));
-  expect(ipQuotaRowsAfterLimit.map((rate) => rate.requests)).toEqual([1, 1]);
+  expect(
+    ipQuotaRowsAfterLimit.map(
+      (rate: { readonly requests: number }) => rate.requests
+    )
+  ).toEqual([1, 1]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("simultaneous guests share one IP admission limit", async () => {
   const first = await guest();
@@ -235,12 +204,6 @@ test("simultaneous guests share one IP admission limit", async () => {
   ]);
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" uses 1, 10, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry", async () => {
   const row = await guest();
   const other = await guest();
@@ -257,12 +220,14 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   ).toBe(false);
   const releases = await Promise.all(
-    Array.from({ length: 6 }, () =>
-      releaseEveGuestMessage(
-        row.ownerId,
-        input.operationId,
-        first.reservationId
-      )
+    Array.from(
+      { length: 6 },
+      async () =>
+        await releaseEveGuestMessage(
+          row.ownerId,
+          input.operationId,
+          first.reservationId
+        )
     )
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
@@ -297,11 +262,7 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
   expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("committing and releasing the same attempt are mutually exclusive") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("committing and releasing the same attempt are mutually exclusive", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -319,12 +280,7 @@ test("committing and releasing the same attempt are mutually exclusive", async (
     results[0] ? 0 : 1
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("guest provider accounting survives expiry and replay without creating monetary  uses 0, 1, 0.002 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("guest provider accounting survives expiry and replay without creating monetary  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("guest provider accounting survives expiry and replay without creating monetary credit", async () => {
   const row = await guest();
   await db
@@ -339,8 +295,9 @@ test("guest provider accounting survives expiry and replay without creating mone
   };
   expect(await recordEveUsage(evidence)).toBe(false);
   await Promise.all(
-    Array.from({ length: 6 }, () =>
-      recordEveUsage({ ...evidence, costUsd: 0.002 })
+    Array.from(
+      { length: 6 },
+      async () => await recordEveUsage({ ...evidence, costUsd: 0.002 })
     )
   );
   const rows = await db
@@ -354,13 +311,7 @@ test("guest provider accounting survives expiry and replay without creating mone
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-statements (#512): test("first admission creates one guest and reserves once across different IPs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("first admission creates one guest and reserves once across different IPs") uses 60_000, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("first admission creates one guest and reserves once across different IPs") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("first admission creates one guest and reserves once across different IPs", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -372,9 +323,9 @@ test("first admission creates one guest and reserves once across different IPs",
     tokenHash: credential.tokenHash,
   };
   const attempts = await Promise.all(
-    Array.from({ length: 6 }, () => {
+    Array.from({ length: 6 }, async () => {
       const other = request(ownerId);
-      return reserveEveGuestMessage(
+      return await reserveEveGuestMessage(
         { ...input, ipHash: other.ipHash },
         bootstrap
       );
@@ -395,13 +346,10 @@ test("first admission creates one guest and reserves once across different IPs",
     await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("denied first admission creates no account or quota rows") uses 0, 100, 60_000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test("denied first admission creates no account or quota rows", async () => {
-  for (const denial of ["rate", "balance"] as const) {
+test.each(["rate", "balance"])(
+  "denied first admission for %s creates no account or quota rows",
+  async (denial) => {
     const credential = createEveGuestCredential();
     const ownerId = eveGuestOwnerId(credential.tokenHash);
     owners.push(ownerId);
@@ -431,13 +379,8 @@ test("denied first admission creates no account or quota rows", async () => {
         .where(eq(eveGuestRate.ipHash, input.ipHash))
     ).toEqual([]);
   }
-});
-/* oxlint-enable no-magic-numbers */
+);
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): test("bootstrap cannot replace an expired identity or reset its balance") uses 1, 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): test("bootstrap cannot replace an expired identity or reset its balance") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("bootstrap cannot replace an expired identity or reset its balance", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -465,11 +408,7 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("comparison admission rolls back a fresh account when any candidate exceeds quot uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("comparison admission rolls back a fresh account when any candidate exceeds quota", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -498,13 +437,7 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("failed mixed replay/new comparison leaves prior admission intact and rolls back keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("failed mixed replay/new comparison leaves prior admission intact and rolls back uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("failed mixed replay/new comparison leaves prior admission intact and rolls back accepts bucket; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("failed mixed replay/new comparison leaves prior admission intact and rolls back new debits", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
@@ -531,39 +464,76 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     .select()
     .from(eveGuestRate)
     .where(eq(eveGuestRate.ipHash, first.ipHash));
-  expect(ipQuotaRowsAfterRollback.map((bucket) => bucket.requests)).toEqual([
-    1, 1,
-  ]);
+  expect(
+    ipQuotaRowsAfterRollback.map(
+      (bucket: { readonly requests: number }) => bucket.requests
+    )
+  ).toEqual([1, 1]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-statements (#512): test("concurrent comparison retries debit each distinct candidate exactly once") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("concurrent comparison retries debit each distinct candidate exactly once") uses 2, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent comparison retries debit each distinct candidate exactly once") accepts entry; result; bucket; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent comparison retries debit each distinct candidate exactly once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
   const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
   const results = await Promise.all(
-    Array.from({ length: 4 }, () => reserveEveGuestMessages(inputs))
+    Array.from({ length: 4 }, async () => await reserveEveGuestMessages(inputs))
   );
   for (const result of results) {
     expect(result.status).toBe("admitted");
     if (result.status !== "admitted") {
       throw new Error("Comparison admission failed.");
     }
-    expect(result.reservations.map((entry) => entry.operationId)).toEqual(
-      inputs.map((entry) => entry.operationId)
+    expect(
+      result.reservations.map(
+        (
+          entry: Readonly<{
+            operationId: string;
+            reservationId: string;
+            status: "reserved" | "replay";
+          }>
+        ) => entry.operationId
+      )
+    ).toEqual(
+      inputs.map(
+        (
+          entry: Readonly<{
+            ipHash: string;
+            operationId: string;
+            ownerId: string;
+            requestHash: string;
+            requestsPerMinute: number;
+            requestsPerMonth: number;
+          }>
+        ) => entry.operationId
+      )
     );
   }
   expect(
     results.filter(
-      (result) =>
+      (
+        result:
+          | Readonly<{
+              status: "admitted";
+              reservations: readonly Readonly<{
+                operationId: string;
+                reservationId: string;
+                status: "reserved" | "replay";
+              }>[];
+            }>
+          | Readonly<{
+              status: Exclude<(typeof results)[number]["status"], "admitted">;
+            }>
+      ) =>
         result.status === "admitted" &&
-        result.reservations.every((entry) => entry.status === "reserved")
+        result.reservations.every(
+          (
+            entry: Readonly<{
+              operationId: string;
+              reservationId: string;
+              status: "reserved" | "replay";
+            }>
+          ) => entry.status === "reserved"
+        )
     )
   ).toHaveLength(1);
   const guestAfterConcurrentComparison = await findEveGuest(row.tokenHash);
@@ -572,15 +542,13 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     .select()
     .from(eveGuestRate)
     .where(eq(eveGuestRate.ipHash, first.ipHash));
-  expect(ipQuotaRowsAfterComparison.map((bucket) => bucket.requests)).toEqual([
-    2, 2,
-  ]);
+  expect(
+    ipQuotaRowsAfterComparison.map(
+      (bucket: { readonly requests: number }) => bucket.requests
+    )
+  ).toEqual([2, 2]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("comparison rate limits roll back all candidates and reject duplicate operation  uses 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
   const row = await guest(10);
   const first = { ...request(row.ownerId), requestsPerMinute: 1 };
@@ -608,14 +576,7 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
     ])
   ).rejects.toThrow("unique operations");
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
- * no-magic-numbers (#517): test("comparison persistence failure rolls back guest identity and every quota reserv uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("comparison persistence failure rolls back guest identity and every quota reserv accepts candidate; tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("comparison persistence failure rolls back guest identity and every quota reserv preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("comparison persistence failure rolls back guest identity and every quota reserv keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("comparison persistence failure rolls back guest identity and every quota reservation", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
@@ -633,17 +594,19 @@ test("comparison persistence failure rolls back guest identity and every quota r
   );
   await expect(
     reserveEveGuestMessages(
-      // oxlint-disable-next-line oxc/no-map-spread -- #541: Each guest candidate needs a distinct reservation fixture while preserving the shared first reservation.
-      candidates.map((candidate) => ({
-        ...first,
-        operationId: candidate.operationId,
-      })),
+      candidates.map(
+        (candidate: Readonly<{ modelId: string; operationId: string }>) => ({
+          ...first,
+          operationId: candidate.operationId,
+        })
+      ),
       {
         expiresAt: new Date(Date.now() + 60_000),
         messageLimit: 2,
         tokenHash: credential.tokenHash,
       },
-      (tx) => reserveEveResponseGroupInTransaction(tx, ownerId, input)
+      async (tx) =>
+        await reserveEveResponseGroupInTransaction(tx, ownerId, input)
     )
   ).rejects.toThrow("Source conversation not found");
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual([]);
@@ -660,12 +623,7 @@ test("comparison persistence failure rolls back guest identity and every quota r
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("refunded guest creation cannot dispatch late, while a new admission can recover keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refunded guest creation cannot dispatch late, while a new admission can recover uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("refunded guest creation cannot dispatch late, while a new admission can recover", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -680,7 +638,9 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
       original.reservationId
     )
   ).toBe(true);
-  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  const dispatch = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(`native-${input.operationId}`);
   await expect(
     createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
       guestReservationId: original.reservationId,
@@ -713,21 +673,19 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
   expect(guestAfterCreationRefund?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("creation claims and refunds serialize without a free native dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("creation claims and refunds serialize without a free native dispatch") uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test("creation claims and refunds serialize without a free native dispatch", async () => {
-  for (let index = 0; index < 4; index += 1) {
+test.each([0, 1, 2, 3])(
+  "creation claims and refunds serialize without a free native dispatch (attempt %i)",
+  async () => {
     const row = await guest(1);
     const input = request(row.ownerId);
     const quota = await reserveEveGuestMessage(input);
     if (quota.status !== "reserved") {
       throw new Error("Missing admission");
     }
-    const dispatch = vi.fn(async () => `native-race-${input.operationId}`);
+    const dispatch = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValue(`native-race-${input.operationId}`);
     const [creation, refund] = await Promise.allSettled([
       createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
         guestReservationId: quota.reservationId,
@@ -754,12 +712,8 @@ test("creation claims and refunds serialize without a free native dispatch", asy
       expect(guestAfterCreationWins?.remainingMessages).toBe(0);
     }
   }
-});
-/* oxlint-enable max-statements, no-magic-numbers */
+);
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("committed quota without a creation journal cannot authorize a new dispatch") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -772,7 +726,9 @@ test("committed quota without a creation journal cannot authorize a new dispatch
     input.operationId,
     quota.reservationId
   );
-  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  const dispatch = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(`native-${input.operationId}`);
   await expect(
     createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
       guestReservationId: quota.reservationId,
@@ -780,6 +736,3 @@ test("committed quota without a creation journal cannot authorize a new dispatch
   ).rejects.toThrow("Committed guest admission has no creation journal");
   expect(dispatch).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This eve-guests.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

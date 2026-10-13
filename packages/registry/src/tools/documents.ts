@@ -1,9 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
-
-// oxlint-disable-next-line import/no-relative-parent-imports -- This registry catalog reads its package-root metadata schema; the inherited @/ alias targets app code rather than packages/registry/metadata.ts.
-import { toolDefinitionSchema } from "../../metadata";
-// oxlint-disable-next-line import/no-relative-parent-imports -- Document bundle versions come from this registry package's package.json; the inherited @/ alias points into apps/chat and would select a different package contract.
 import registryPackage from "../../package.json";
+import { toolDefinitionSchema } from "../../metadata";
 
 const documentFiles = (
   id: string,

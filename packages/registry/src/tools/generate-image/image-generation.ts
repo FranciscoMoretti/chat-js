@@ -1,27 +1,38 @@
 import { generateImage, generateText } from "ai";
 import type { FileUIPart } from "ai";
-import type { z } from "zod";
-
+import type { FileUploader } from "@/lib/file-storage";
+import type { ImageModelSelection } from "./image-model";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import type { createEveToolCost } from "@/lib/eve/tool-cost";
-import type { FileUploader } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
-
 import { collectEditImages } from "./image-input";
-import type { ImageModelSelection } from "./image-model";
 import type { generateImageResult } from "./schemas";
+import type { z } from "zod";
 
 const log = createModuleLogger("ai.tools.generate-image");
 const EMPTY_IMAGE_BYTES = 0;
 const GENERATED_IMAGE_COUNT = 1;
 const NO_GENERATED_IMAGES = 0;
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNativeSurface<Value[Key]> }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 type ImageStoreFile = (
   filename: string,
   body: ReadonlyNativeSurface<Buffer>,
@@ -113,15 +124,17 @@ const runGenerateImageTraditional = async (
     "generateImage: provider response received"
   );
   const buffer = Buffer.from(firstImage.base64, "base64");
-  const timestamp = Date.now();
-  const filename = `generated-image-${timestamp}.png`;
+  const filename = `generated-image-${Date.now()}.png`;
   // Provider usage remains billable if the subsequent storage upload fails.
-  options.costAccumulator?.addImageCost(
-    modelId,
-    res.images.length,
-    res.usage ?? {},
-    "generateImage-traditional"
-  );
+  const { costAccumulator } = options;
+  if (costAccumulator) {
+    costAccumulator.addImageCost(
+      modelId,
+      res.images.length,
+      res.usage ?? {},
+      "generateImage-traditional"
+    );
+  }
   return await storeImage(
     options,
     { buffer, filename, mediaType: "image/png" },
@@ -223,12 +236,15 @@ const runGenerateImageMultimodal = async (
     model: options.modelProvider.createLanguageModel(selection.modelId),
     providerOptions: multimodalProviderOptions(selection.modelId),
   });
-  options.costAccumulator?.addLLMCost(
-    selection.usageModelId,
-    res.usage,
-    "generateImage-multimodal"
-  );
-  const imageFile = res.files?.find(
+  const { costAccumulator } = options;
+  if (costAccumulator) {
+    costAccumulator.addLLMCost(
+      selection.usageModelId,
+      res.usage,
+      "generateImage-multimodal"
+    );
+  }
+  const imageFile = (res.files ?? []).find(
     (file: Readonly<{ mediaType: string }>): boolean =>
       file.mediaType.startsWith("image/")
   );

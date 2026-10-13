@@ -1,8 +1,8 @@
-import userConfig from "@/chat.config";
+import type { AiConfig, Config } from "./config-schema";
 
 import type { ActiveGatewayType } from "./ai/app-model-id";
 import { applyDefaults } from "./config-schema";
-import type { AiConfig, Config } from "./config-schema";
+import userConfig from "@/chat.config";
 
 type ActiveAiConfig = Extract<AiConfig, { gateway: ActiveGatewayType }>;
 

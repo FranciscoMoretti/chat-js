@@ -1,7 +1,3 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { eq } from "drizzle-orm";
@@ -25,17 +21,13 @@ import { executePythonInSandbox } from "../tools/chatjs/_shared/code-execution/p
 import {
   cleanupSandbox,
   createSandbox,
+  getSandboxImage,
   resolveSandboxAuth,
 } from "../tools/chatjs/vercel-code-execution/execution-sandbox";
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { testToolContext } from "./helpers/eve-tool-context";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): for (const language of ["javascript", "python"] as cons keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const language of ["javascript", "python"] as cons uses 120_000, 30_000, 15_000, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 for (const language of ["javascript", "python"] as const) {
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
     test.setTimeout(120_000);
@@ -47,7 +39,7 @@ for (const language of ["javascript", "python"] as const) {
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
-      language === "javascript" ? "node22" : "python3.13",
+      getSandboxImage(language),
       AbortSignal.timeout(30_000),
       name,
       auth
@@ -88,17 +80,7 @@ for (const language of ["javascript", "python"] as const) {
     ).toBe(true);
   });
 }
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): test("native sandbox ownership is durably released after real provider cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native sandbox ownership is durably released after real provider cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native sandbox ownership is durably released after real provider cleanup") uses 120_000, 60_000, 1, 0, 15_000, 404, 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("native sandbox ownership is durably released after real provider cleanup") accepts resource; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("native sandbox ownership is durably released after real provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("native sandbox ownership is durably released after real provider cleanup") intentionally keeps the existing falsy-value behavior of tool.execute; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test("native sandbox ownership is durably released after real provider cleanup") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("native sandbox ownership is durably released after real provider cleanup", async () => {
   test.setTimeout(120_000);
   assertEveTestDatabase(env.DATABASE_URL);
@@ -112,14 +94,14 @@ test("native sandbox ownership is durably released after real provider cleanup",
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
-    () => Promise.resolve(crypto.randomUUID())
+    () => crypto.randomUUID()
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");
   }
   try {
     const tool = codeExecution;
-    if (!tool.execute) {
+    if (tool.execute === undefined) {
       throw new Error("Missing code executor");
     }
     const result = await tool.execute(
@@ -177,7 +159,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
       resolveSandboxAuth()
     );
     const orphan = await createSandbox(
-      "node22",
+      getSandboxImage("javascript"),
       AbortSignal.timeout(30_000),
       orphanName,
       resolveSandboxAuth()
@@ -197,7 +179,12 @@ test("native sandbox ownership is durably released after real provider cleanup",
       .from(eveCodeSandbox)
       .where(eq(eveCodeSandbox.ownerId, ownerId));
     // Preserve ownership evidence if allocation or cleanup had an uncertain outcome.
-    if (resources.every((resource) => resource.state === "deleted")) {
+    if (
+      resources.every(
+        (resource: { readonly state: "deleted" | "unresolved" }) =>
+          resource.state === "deleted"
+      )
+    ) {
       await db
         .delete(eveCodeSandbox)
         .where(eq(eveCodeSandbox.ownerId, ownerId));
@@ -208,4 +195,3 @@ test("native sandbox ownership is durably released after real provider cleanup",
     }
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

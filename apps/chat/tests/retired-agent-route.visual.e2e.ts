@@ -1,12 +1,11 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Playwright owns the mutable page fixture. */
 test("retired agent links render the unmatched-route page", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   await page.emulateMedia({ colorScheme: "light" });
   const response = await page.goto("/agent?conversation=retired-conversation");
-  // oxlint-disable-next-line eslint/no-magic-numbers -- Assert the HTTP not-found contract.
   expect(response?.status()).toBe(404);
   await expect(page).toHaveURL(/\/agent\?conversation=retired-conversation$/u);
   await expect(
@@ -19,4 +18,3 @@ test("retired agent links render the unmatched-route page", async ({
     path: testInfo.outputPath("retired-agent-route.png"),
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

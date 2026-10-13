@@ -1,20 +1,70 @@
-import { expect, it } from "bun:test";
+import { expect, it, spyOn } from "bun:test";
+import * as clack from "@clack/prompts";
 
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { externalGatewayFixture } from "../../test/external-gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-import { collectEnvChecklist } from "./env-checklist";
 import {
   promptAssistantTools,
+  promptAuth,
   promptCoreFeatures,
-  promptObservability,
   promptDocumentTypes,
+  promptObservability,
 } from "./prompts";
+import { collectEnvChecklist } from "./env-checklist";
+import { externalGatewayFixture } from "../../test/external-gateway";
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+  DOCUMENT_TYPE_KEYS,
+} from "../types";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+it("returns complete selections from interactive prompts in catalog order", async () => {
+  const multiselect = spyOn(clack, "multiselect")
+    .mockResolvedValueOnce(["github"])
+    .mockResolvedValueOnce(["parallelResponses", "documents"])
+    .mockResolvedValueOnce(["sheet"])
+    .mockResolvedValueOnce(["deepResearch"]);
+
+  try {
+    const auth = await promptAuth(false);
+    expect(auth).toEqual({ github: true, google: false, vercel: false });
+    expect(Object.keys(auth)).toEqual([...AUTH_PROVIDERS]);
+
+    const definition = externalGatewayFixture().root.meta.chatjs;
+    const features = await promptCoreFeatures(false, definition, true);
+    expect(features).toEqual({
+      attachments: false,
+      documents: true,
+      followupSuggestions: false,
+      mcp: true,
+      parallelResponses: true,
+    });
+    expect(Object.keys(features)).toEqual([...CORE_FEATURE_KEYS]);
+
+    const documents = await promptDocumentTypes(false, true);
+    expect(documents).toEqual({ code: false, sheet: true, text: false });
+    expect(Object.keys(documents)).toEqual([...DOCUMENT_TYPE_KEYS]);
+
+    const { builtInTools, installableTools } = await promptAssistantTools(
+      [],
+      false,
+      definition
+    );
+    expect(builtInTools).toEqual({
+      codeExecution: false,
+      deepResearch: true,
+      imageGeneration: false,
+      urlRetrieval: false,
+      videoGeneration: false,
+      webSearch: true,
+    });
+    expect(Object.keys(builtInTools)).toEqual([...BUILT_IN_TOOL_KEYS]);
+    expect(installableTools).toEqual([]);
+  } finally {
+    multiselect.mockRestore();
+  }
+});
+
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.envRequirements = [
@@ -43,17 +93,17 @@ it("uses external defaults and every environment group with --yes", async () => 
     ...input,
     gatewayRequirements: definition.envRequirements,
   });
-  expect(entries.map((entry) => entry.vars)).toEqual(
-    // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-    expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"])
+  const variables = entries.map(
+    (entry: { readonly vars: string }) => entry.vars
   );
+  for (const required of ["FIRST", "SECOND", "ALTERNATE"]) {
+    expect(variables).toContain(required);
+  }
   expect(() => collectEnvChecklist(input)).not.toThrow();
   expect(() =>
     collectEnvChecklist({ ...input, gatewayRequirements: [] })
   ).not.toThrow();
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-statements */
 
 it("rejects a default for media the gateway cannot support", () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
@@ -72,6 +122,13 @@ it("defaults media tool installation selections to false with --yes", async () =
   expect(builtInTools.videoGeneration).toBe(false);
 });
 
+it("disables every document type when documents are not installed", async () => {
+  expect(await promptDocumentTypes(true, false)).toEqual({
+    code: false,
+    sheet: false,
+    text: false,
+  });
+});
 it.each([true, false])(
   "honors an explicit MCP installation choice with --yes: %s",
   async (mcp) => {

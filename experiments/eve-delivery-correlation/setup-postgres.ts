@@ -1,6 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- Prepare isolated copies of the shared controller and its dependency overlay.
 import { cp, mkdir, symlink } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- Resolve explicit local harness inputs.
 import path from "node:path";
 
 const controllerCommit = "49385ae69";

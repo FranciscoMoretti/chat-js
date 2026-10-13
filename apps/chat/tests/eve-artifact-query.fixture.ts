@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../trpc/routers/_app" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -9,7 +5,6 @@ import { SuperJSON } from "superjson";
 import { z } from "zod";
 
 import type { AppRouter } from "../trpc/routers/_app";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const conversationId = "00000000-0000-4000-8000-000000000010";
 
@@ -27,24 +22,16 @@ const queryClient = new QueryClient({
 
 const olderId = "00000000-0000-4000-8000-000000000005";
 const restoredId = "00000000-0000-4000-8000-000000000006";
-/* oxlint-disable init-declarations --
- * init-declarations (#507): restoredContent assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let restoredContent: string | undefined;
-/* oxlint-enable init-declarations */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): trpcClient uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
-no-undefined (#519): trpcClient uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): trpcClient accepts input; init; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): trpcClient preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
-typescript/strict-boolean-expressions (#610): trpcClient intentionally keeps the existing falsy-value behavior of request.revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): trpcClient preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
+
 const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      fetch(input, init): Promise<Response> {
+      /* oxlint-disable typescript/promise-function-async -- TRPC requires Promise-returning fetch; this in-memory fixture validates routes/revisions and returns fresh response bodies without I/O. An immediate async callback violates eslint/require-await. */
+      fetch(
+        input: string | URL | Request,
+        init: { readonly body?: unknown } | undefined
+      ): Promise<Response> {
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
           if (typeof init?.body !== "string") {
@@ -103,7 +90,9 @@ const trpcClient = createTRPCClient<AppRouter>({
                   ? restoredId
                   : latestId);
               if (
-                request.revisionId &&
+                request.revisionId !== undefined &&
+                request.revisionId !== null &&
+                request.revisionId !== "" &&
                 ![latestId, olderId, restoredId].includes(request.revisionId)
               ) {
                 throw new Error("Wrong revision selected");
@@ -169,10 +158,11 @@ const trpcClient = createTRPCClient<AppRouter>({
           )
         );
       },
+      /* oxlint-enable typescript/promise-function-async */
       transformer: SuperJSON,
       url: "http://fixture.invalid/api/trpc",
     }),
   ],
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+
 export { conversationId, existingId, queryClient, trpcClient };

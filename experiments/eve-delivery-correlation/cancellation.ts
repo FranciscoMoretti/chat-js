@@ -1,12 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, no-console, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member --
- * import/no-nodejs-modules: This isolated runtime proof owns Node assertions and local fixture paths.
- * import/no-relative-parent-imports: The proof imports only the copied shared controller in its ignored runtime area.
- * no-console: Emit sanitized test-only runtime evidence for the local proof log.
- * no-magic-numbers: HTTP statuses, input argument positions and expected receipt counts are protocol assertions.
- * no-undefined: The bounded polling helper uses undefined for evidence not yet available.
- * typescript/prefer-readonly-parameter-types: Native EVE callbacks retain their SDK event types without mutating events.
- * unicorn/no-await-expression-member: Parse the completed test HTTP response at the evidence observation point.
- */
 import assert from "node:assert/strict";
 import path from "node:path";
 
@@ -86,5 +77,3 @@ try {
 } finally {
   await driver.crash();
 }
-
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, no-console, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member */

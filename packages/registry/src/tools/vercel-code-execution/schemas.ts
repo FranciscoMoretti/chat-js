@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+import { z } from "zod";
 
 const codeExecutionInput = z.object({
   code: z
@@ -18,7 +17,7 @@ const codeExecutionInput = z.object({
 const encodedChart = z.object({ base64: z.string(), format: z.string() });
 const chartRecord = z.record(z.string(), z.json());
 const codeExecutionResult = z.object({
-  chart: z.union([z.string(), encodedChart, chartRecord]),
   message: z.string(),
+  chart: z.union([z.string(), encodedChart, chartRecord]),
 });
 export { codeExecutionInput, codeExecutionResult };

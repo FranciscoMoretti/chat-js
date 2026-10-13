@@ -1,26 +1,31 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
+import { env } from "@/lib/env";
+import { createModuleLogger } from "@/lib/logger";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import { retrievedInput } from "./schemas";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { z } from "zod";
 
-import { env } from "@/lib/env";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import { createModuleLogger } from "@/lib/logger";
-
-import { retrievedInput } from "./schemas";
+type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
+type RetrieveUrlContext = Readonly<{
+  abortSignal: Readonly<AbortSignal>;
+}>;
+type RetrieveUrlUsage = Readonly<{
+  addCostUsd: (cost: number) => void;
+  markUnknown: () => void;
+}>;
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
+const UNBILLED_TOOL_COST_USD = 0;
 const log = createModuleLogger("tools/retrieve-url");
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const app = hasNonEmptyValue(env.FIRECRAWL_API_KEY)
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const parseUrl = (url: string): URL | null => {
   try {
     const parsed = new URL(url);
@@ -32,18 +37,10 @@ const parseUrl = (url: string): URL | null => {
     return null;
   }
 };
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
+  `${url.origin}${url.pathname}`;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
   description: `Fetch structured information from a single URL via Firecrawl.
 
@@ -52,9 +49,9 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  execute: ({ url }, context) =>
-    executeWithToolUsage(context, async (usage) => {
-      usage.addCostUsd(0);
+  execute: async ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
+    await executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
+      usage.addCostUsd(UNBILLED_TOOL_COST_USD);
       try {
         if (!app) {
           return {
@@ -107,26 +104,37 @@ Avoid:
             schema,
           });
 
-          if (extractResult.success && extractResult.data) {
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            title ||= extractResult.data.title;
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            description ||= extractResult.data.description;
-            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-            extractedContent ||= extractResult.data.content;
+          if (
+            extractResult.success &&
+            extractResult.data !== undefined &&
+            extractResult.data !== null
+          ) {
+            const extracted = schema
+              .extend({
+                content: schema.shape.content.catch(""),
+                description: schema.shape.description.catch(""),
+                title: schema.shape.title.catch(""),
+              })
+              .safeParse(extractResult.data);
+            if (extracted.success) {
+              title = hasNonEmptyValue(title) ? title : extracted.data.title;
+              description = hasNonEmptyValue(description)
+                ? description
+                : extracted.data.description;
+              extractedContent = hasNonEmptyValue(extractedContent)
+                ? extractedContent
+                : extracted.data.content;
+            }
           }
         }
 
         return {
           results: [
             {
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              content: extractedContent || "",
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              description: description || "",
+              content: extractedContent ?? "",
+              description: description ?? "",
               language: metadata.language,
-              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-              title: title || "Untitled",
+              title: hasNonEmptyValue(title) ? title : "Untitled",
               url: redactedUrl,
             },
           ],
@@ -146,6 +154,3 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

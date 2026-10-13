@@ -1,44 +1,34 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
+import { getStorageEnvironmentRequirements } from "./environment";
 import { readFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
-
-import { getProvider, PROVIDER_NAMES } from "files-sdk/providers";
+import { storageDefinitionSchema } from "../../metadata";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { storageDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-import { getStorageEnvironmentRequirements } from "./environment";
+const sdkPackageSchema = z.object({
+  peerDependencies: z.record(z.string(), z.string()),
+  version: z.string(),
+});
+const sdkPackagePath = new URL(
+  "../package.json",
+  import.meta.resolve("files-sdk")
+);
+const sdkPackageContents = readFileSync(sdkPackagePath, "utf-8");
+const sdkPackage = sdkPackageSchema.parse(JSON.parse(sdkPackageContents));
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-const sdkPackage = z
-  .object({
-    peerDependencies: z.record(z.string(), z.string()),
-    version: z.string(),
-  })
-  .parse(
-    JSON.parse(
-      readFileSync(
-        path.join(
-          path.dirname(fileURLToPath(import.meta.resolve("files-sdk"))),
-          "../package.json"
-        ),
-        "utf-8"
-      )
-    )
-  );
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable node/no-sync */
+const getOptionalEnvironmentKeys = (
+  variables: readonly Readonly<{ key: string }>[] | undefined
+): string[] => {
+  if (!variables) {
+    return [];
+  }
+  return variables.map(({ key }: Readonly<{ key: string }>) => key) ?? [];
+};
 
 const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+type StorageEnvironmentRequirementReader = Readonly<{
+  description: string;
+  options: readonly (readonly Readonly<{ key: string }>[])[];
+}>;
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
 ).map((id) => {
@@ -70,7 +60,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         configKeys: provider.env.config ?? [],
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
-          (requirement) => ({
+          (requirement: StorageEnvironmentRequirementReader) => ({
             description: requirement.description,
             options: requirement.options.map((option) =>
               option.map(({ key }) => key)
@@ -79,7 +69,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
-        optionalEnv: provider.env.optional?.map(({ key }) => key) ?? [],
+        optionalEnv: getOptionalEnvironmentKeys(provider.env.optional),
       }),
     },
     name: `${id}-storage`,
@@ -87,4 +77,3 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     type: "registry:item" as const,
   };
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

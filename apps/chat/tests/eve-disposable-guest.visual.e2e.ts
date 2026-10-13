@@ -1,26 +1,20 @@
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("disposable guest presentation uses stable desktop and mobile baselines") accepts { page, }; route; image: HTMLImageElement; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("disposable guest presentation uses stable desktop and mobile baselines") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("disposable guest presentation uses stable desktop and mobile baselines", async ({
   page,
 }) => {
-  await page.route("**/react-scan/**", (route) =>
-    route.fulfill({ body: "", contentType: "text/javascript" })
-  );
-  await page.route("**/api/eve-guest", (route) =>
-    route.fulfill({ json: { error: "Unavailable" }, status: 502 })
-  );
-  await page.route("https://models.dev/logos/openai.svg", (route) =>
-    route.fulfill({
+  await page.route("**/react-scan/**", async (route) => {
+    await route.fulfill({ body: "", contentType: "text/javascript" });
+  });
+  await page.route("**/api/eve-guest", async (route) => {
+    await route.fulfill({ json: { error: "Unavailable" }, status: 502 });
+  });
+  await page.route("https://models.dev/logos/openai.svg", async (route) => {
+    await route.fulfill({
       contentType: "image/svg+xml",
       path: "tests/fixtures/models/openai.svg",
-    })
-  );
+    });
+  });
   await page.goto("/visual-fixtures/disposable-guest");
   await page.addStyleTag({
     content:
@@ -33,9 +27,11 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
   ).toBeVisible();
   await fixture
     .getByRole("img", { name: "openai logo" })
-    .evaluate(async (image: HTMLImageElement) => {
-      await image.decode();
-    });
+    .evaluate<unknown, HTMLImageElement>(
+      async (image: Readonly<Pick<HTMLImageElement, "decode">>) => {
+        await image.decode();
+      }
+    );
   await expect(fixture).toHaveScreenshot("guest-welcome.png");
   await fixture.getByRole("button", { name: /Guest fixture model/u }).click();
   await expect(
@@ -65,4 +61,3 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
   await expect(fixture.getByRole("heading")).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-welcome-mobile.png");
 });
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

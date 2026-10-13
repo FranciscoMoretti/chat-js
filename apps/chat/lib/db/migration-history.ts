@@ -1,6 +1,8 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 interface MigrationIdentity {
-  createdAt: number;
-  hash: string;
+  readonly createdAt: number;
+  readonly hash: string;
 }
 
 /** Tables from the EVE-only baseline plus every retired ChatJS table. */
@@ -49,22 +51,22 @@ const KNOWN_CHATJS_TABLE_NAMES = [
   "Vote",
 ] as const;
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-magic-numbers (#517): getMigrationHistoryProblem uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): getMigrationHistoryProblem accepts { applied, available, hasChatJsTables, }: { applied: MigrationIdentity[]; available:; recorded; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): getMigrationHistoryProblem preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const NO_RECORDED_MIGRATIONS = 0;
+
 const getMigrationHistoryProblem = ({
   applied,
   available,
   hasChatJsTables,
-}: {
-  applied: MigrationIdentity[];
-  available: MigrationIdentity[];
-  hasChatJsTables: boolean;
-}): string | null => {
-  if (applied.length === 0) {
-    return hasChatJsTables
-      ? "This database contains ChatJS tables but no EVE baseline migration record."
-      : null;
+}: ReadonlyNativeSurface<{
+  readonly applied: MigrationIdentity[];
+  readonly available: MigrationIdentity[];
+  readonly hasChatJsTables: boolean;
+}>): string | null => {
+  if (applied.length === NO_RECORDED_MIGRATIONS) {
+    if (hasChatJsTables) {
+      return "This database contains ChatJS tables but no EVE baseline migration record.";
+    }
+    return null;
   }
 
   if (applied.length > available.length) {
@@ -72,14 +74,15 @@ const getMigrationHistoryProblem = ({
   }
 
   const matchesAvailablePrefix = applied.every(
-    (recorded, index) =>
+    (recorded: MigrationIdentity, index) =>
       recorded.hash === available[index]?.hash &&
       recorded.createdAt === available[index]?.createdAt
   );
-  return matchesAvailablePrefix
-    ? null
-    : "This database uses a migration history from before the EVE-only baseline.";
+
+  if (matchesAvailablePrefix) {
+    return null;
+  }
+  return "This database uses a migration history from before the EVE-only baseline.";
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES };
 export type { MigrationIdentity };

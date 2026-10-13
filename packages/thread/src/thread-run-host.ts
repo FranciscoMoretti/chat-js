@@ -1,5 +1,4 @@
 import type { ChatTransport, UIMessage } from "ai";
-
 import type { ThreadRunHost } from "./ai-sdk-run-chat";
 
 type RunHostSource<TMessage extends UIMessage> = Pick<
@@ -42,7 +41,6 @@ class ThreadRunHostAdapter<
   public readonly writeRunMessage: ThreadRunHost<TMessage>["writeRunMessage"];
 
   public constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This live source retains native SDK schema instances and receives callback/transport setter writes; recursive readonly schemas cannot satisfy their original SDK contract.
     source: RunHostSource<TMessage>,
     operations: RunHostOperations<TMessage>
   ) {

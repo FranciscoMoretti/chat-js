@@ -1,8 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
-
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
 import { codeExecution } from "./tool";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),
@@ -12,37 +10,65 @@ const mocks = vi.hoisted(() => ({
   python: vi.fn(),
   resolveAuth: vi.fn(),
 }));
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./execution-sandbox") accepts error: Error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+
 vi.mock("./execution-sandbox", () => ({
   cleanupSandbox: mocks.cleanup,
   codeSandboxCleanupCapability: { createCleanupSession: vi.fn() },
   createSandbox: mocks.create,
-  getErrorMessage: (error: Error): string => error.message,
-  getSandboxRuntime: (language: string): string => language,
+  getErrorMessage: (error: Readonly<Error>): string => error.message,
+  getSandboxImage: (language: string): string => language,
   resolveSandboxAuth: mocks.resolveAuth,
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 vi.mock("@/tools/chatjs/_shared/code-execution/python", () => ({
   executePythonInSandbox: mocks.python,
 }));
 vi.mock("@/tools/chatjs/_shared/code-execution/javascript", () => ({
   executeJavaScriptInSandbox: mocks.javascript,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/logger",
+  (): {
+    createModuleLogger: () => {
+      debug: () => void;
+      error: () => void;
+      info: () => void;
+    };
+  } => ({
+    createModuleLogger: (): {
+      debug: () => void;
+      error: () => void;
+      info: () => void;
+    } => ({
+      debug: vi.fn<() => void>(),
+      error: vi.fn<() => void>(),
+      info: vi.fn<() => void>(),
+    }),
+  })
+);
 
 vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
   eveCodeSandboxOwnership: mocks.ownership,
 }));
 
 const sandbox = { id: "isolated-sandbox", name: "owned-sandbox" };
+const executorCases = [
+  {
+    language: "python",
+    unused: mocks.javascript,
+    used: mocks.python,
+  },
+  {
+    language: "javascript",
+    unused: mocks.python,
+    used: mocks.javascript,
+  },
+] as const satisfies readonly {
+  language: "python" | "javascript";
+  used: typeof mocks.python;
+  unused: typeof mocks.javascript;
+}[];
+
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.ownership.mockReturnValue({
@@ -59,12 +85,17 @@ beforeEach(() => {
     token: "token",
   });
 });
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
-it.each(["python", "javascript"] as const)(
-  "dispatches %s to the sandbox and cleans up",
-  async (language) => {
+it.each(executorCases)(
+  "dispatches $language to the sandbox and cleans up",
+  async ({
+    language,
+    used,
+    unused,
+  }: {
+    readonly language: "python" | "javascript";
+    readonly used: unknown;
+    readonly unused: unknown;
+  }) => {
     const result = await codeExecution.execute?.(
       { code: "source", language, title: "Calculate" },
       testToolContext()
@@ -79,9 +110,7 @@ it.each(["python", "javascript"] as const)(
       undefined,
       expect.objectContaining({ projectId: "project" })
     );
-    const executor = language === "python" ? mocks.python : mocks.javascript;
-    const unused = language === "python" ? mocks.javascript : mocks.python;
-    expect(executor).toHaveBeenCalledWith(
+    expect(used).toHaveBeenCalledWith(
       expect.objectContaining({ code: "source", sandbox })
     );
     expect(unused).not.toHaveBeenCalled();
@@ -92,7 +121,6 @@ it.each(["python", "javascript"] as const)(
     );
   }
 );
-/* oxlint-enable no-undefined */
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
   const result = await codeExecution.execute?.(
@@ -112,16 +140,11 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
     expect.any(String)
   );
 });
-
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): it("reserves a named sandbox and releases ownership after provider cleanup") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): it("reserves a named sandbox and releases ownership after provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("reserves a named sandbox and releases ownership after provider cleanup", async () => {
   const sandboxOwnership = {
-    created: vi.fn(() => Promise.resolve()),
-    release: vi.fn(() => Promise.resolve()),
-    reserve: vi.fn(() => Promise.resolve(sandbox.name)),
+    created: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    release: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    reserve: vi.fn<() => Promise<string>>().mockResolvedValue(sandbox.name),
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   const abortSignal = new AbortController().signal;
@@ -144,20 +167,14 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
     sandboxOwnership.release.mock.invocationCallOrder[0]
   );
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-undefined, typescript/promise-function-async --
- * max-statements (#512): it("cancelling execution starts sandbox cleanup and observes its completion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): it("cancelling execution starts sandbox cleanup and observes its completion") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): it("cancelling execution starts sandbox cleanup and observes its completion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("cancelling execution starts sandbox cleanup and observes its completion", async () => {
   const execution = Promise.withResolvers<never>();
-  const cleanup = Promise.withResolvers<undefined>();
+  const cleanup: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.javascript.mockReturnValue(execution.promise);
-  mocks.cleanup.mockImplementation(() => {
+  mocks.cleanup.mockImplementation(async () => {
     execution.reject(new Error("Sandbox stopped"));
-    return cleanup.promise;
+    await cleanup.promise;
   });
   const controller = new AbortController();
   const result = codeExecution.execute?.(
@@ -168,23 +185,25 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
     },
     testToolContext({ abortSignal: controller.signal })
   );
-  await vi.waitFor(() => expect(mocks.javascript).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.javascript).toHaveBeenCalledOnce();
+  });
   controller.abort();
-  await vi.waitFor(() => expect(mocks.cleanup).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.cleanup).toHaveBeenCalledOnce();
+  });
 
-  cleanup.resolve(undefined);
+  cleanup.resolve();
   await expect(result).rejects.toBe(controller.signal.reason);
 });
-/* oxlint-enable max-statements, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("retains ownership when creation outcome is unknown") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("retains ownership when creation outcome is unknown", async () => {
   const sandboxOwnership = {
-    created: vi.fn(() => Promise.resolve()),
-    release: vi.fn(() => Promise.resolve()),
-    reserve: vi.fn(() => Promise.resolve("reserved-sandbox")),
+    created: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    release: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    reserve: vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValue("reserved-sandbox"),
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   mocks.create.mockRejectedValueOnce(new Error("lost create response"));
@@ -194,14 +213,13 @@ it("retains ownership when creation outcome is unknown", async () => {
       { code: "source", language: "python", title: "Calculate" },
       testToolContext({ callId: "lost" })
     )
-  ).resolves.toMatchObject({
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    output: { message: expect.stringContaining("lost create") },
-  });
+  ).resolves.toHaveProperty(
+    "output.message",
+    expect.stringContaining("lost create")
+  );
   expect(sandboxOwnership.created).not.toHaveBeenCalled();
   expect(sandboxOwnership.release).not.toHaveBeenCalled();
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("retains the completed execution charge when its result is invalid", async () => {
   mocks.python.mockResolvedValue({ chart: 42, message: "4" });
@@ -209,9 +227,11 @@ it("retains the completed execution charge when its result is invalid", async ()
     { code: "source", language: "python", title: "Calculate" },
     testToolContext()
   );
+  expect(result).toHaveProperty(
+    "output.message",
+    expect.stringContaining("Sandbox execution failed")
+  );
   expect(result).toMatchObject({
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    output: { message: expect.stringContaining("Sandbox execution failed") },
     usage: { costUsd: 0.05 },
   });
   expect(mocks.cleanup).toHaveBeenCalledOnce();

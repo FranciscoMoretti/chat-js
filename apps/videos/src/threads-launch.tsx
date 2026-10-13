@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AbsoluteFill,
   Sequence,
@@ -9,14 +8,15 @@ import {
 import { Logo } from "./shared/brand";
 import { Caption, ClickPulse, Pointer } from "./shared/presentation";
 import {
+  DURATION,
   beats,
   cursorAt,
-  DURATION,
   ease,
   presentationAt,
   stateAt,
 } from "./story";
 import type { LaunchScript, ReplyState, StoryState } from "./story";
+import React from "react";
 
 import "./styles.css";
 
@@ -29,19 +29,14 @@ const Author = (): React.JSX.Element => (
   </>
 );
 
-/* oxlint-disable react/no-multi-comp -- Status: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- Status: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Status: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Status = ({
   state,
   t,
   background = false,
 }: {
-  state: ReplyState;
-  t: number;
-  background?: boolean;
+  readonly state: ReplyState;
+  readonly t: number;
+  readonly background?: boolean;
 }): React.JSX.Element | string => {
   if (state === "streaming") {
     return (
@@ -51,14 +46,12 @@ const Status = ({
       </>
     );
   }
-  return state === "stopped" ? "■ Stopped" : "✓ Complete";
+  if (state === "stopped") {
+    return "■ Stopped";
+  }
+  return "✓ Complete";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ActionIcon: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const ActionIcon = ({
   name,
 }: {
@@ -88,11 +81,7 @@ const ActionIcon = ({
     </svg>
   );
 };
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- VersionActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- VersionActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
-/* oxlint-disable unicorn/no-null -- VersionActions: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const VersionActions = ({
   count,
   index,
@@ -101,33 +90,30 @@ const VersionActions = ({
   readonly count: number;
   readonly index: number;
   readonly actionTime: number;
-}): React.JSX.Element | null =>
-  count > 1 ? (
-    <>
-      <span
-        className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
-        style={{ opacity: index === 1 ? 0.3 : 1 }}
-      >
-        <ActionIcon name="previous" />
-      </span>
-      <span className="versionCount">
-        {index} / {count}
-      </span>
-      <span
-        className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
-        style={{ opacity: index === count ? 0.3 : 1 }}
-      >
-        <ActionIcon name="next" />
-      </span>
-    </>
-  ) : null;
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- MessageActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- MessageActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
+}): React.JSX.Element | null => {
+  if (count > 1) {
+    return (
+      <>
+        <span
+          className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
+          style={{ opacity: index === 1 ? 0.3 : 1 }}
+        >
+          <ActionIcon name="previous" />
+        </span>
+        <span className="versionCount">
+          {index} / {count}
+        </span>
+        <span
+          className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
+          style={{ opacity: index === count ? 0.3 : 1 }}
+        >
+          <ActionIcon name="next" />
+        </span>
+      </>
+    );
+  }
+  return null;
+};
 
 const MessageActions = ({
   user = false,
@@ -174,10 +160,6 @@ const MessageActions = ({
   </div>
 );
 
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable eslint/id-length -- getPromptText: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- getPromptText: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const getPromptText = (s: StoryState, content: LaunchScript): string => {
   if (s.editing) {
     return s.editText;
@@ -187,34 +169,25 @@ const getPromptText = (s: StoryState, content: LaunchScript): string => {
   }
   return content.prompt;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- getReplyDescription: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- getReplyDescription: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   if (s.states[id] === "streaming") {
     return `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`;
   }
-  return id === "city" ? "Original answer" : "Alternative answer";
+  if (id === "city") {
+    return "Original answer";
+  }
+  return "Alternative answer";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable react/no-multi-comp -- PromptMessage: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- PromptMessage: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- PromptMessage: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptMessage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const PromptMessage = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div className="user">
     <div className="role">You</div>
@@ -241,29 +214,15 @@ const PromptMessage = ({
     )}
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- Chat: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- Chat: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- Chat: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- Chat: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- Chat: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Chat: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Chat = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div
     className={`chat ${s.following ? "following" : ""}`}
@@ -277,7 +236,12 @@ const Chat = ({
     </div>
     <div className="messages">
       <PromptMessage s={s} t={t} content={content} />
-      <div className="assistant" style={{ opacity: s.editing ? 0.25 : 1 }}>
+      <div
+        className="assistant"
+        style={{
+          opacity: s.editing ? 0.25 : 1,
+        }}
+      >
         <div className="author">
           <Author />
           {!s.following && (
@@ -337,29 +301,15 @@ const Chat = ({
     </div>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ConversationTree: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- ConversationTree: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- ConversationTree: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ConversationTree: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- ConversationTree: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ConversationTree: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ConversationTree = ({
   s,
   t,
   content,
 }: {
-  s: StoryState;
-  t: number;
-  content: LaunchScript;
+  readonly s: StoryState;
+  readonly t: number;
+  readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div className="map" style={{ opacity: s.reveal }}>
     <div className="maptitle">YOUR CONVERSATION</div>
@@ -500,27 +450,11 @@ const ConversationTree = ({
     )}
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ThreadsLaunch: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- ThreadsLaunch: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- ThreadsLaunch: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable react/jsx-props-no-spreading -- ThreadsLaunch: The wrapper forwards its typed native/library prop contract; enumerating props would narrow that interface. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ThreadsLaunch: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- ThreadsLaunch: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsLaunch: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
-/* oxlint-disable typescript/strict-boolean-expressions -- ThreadsLaunch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const ThreadsLaunch = ({
   content,
 }: {
-  content: LaunchScript;
+  readonly content: LaunchScript;
 }): React.JSX.Element => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -545,12 +479,14 @@ export const ThreadsLaunch = ({
           { at: 32.8, x: 249, y: 572 },
           { at: 41.9, x: 964, y: 522 },
           { at: 44.5, x: 962, y: 555 },
-        ].map(({ at, x, y }) => (
-          <ClickPulse key={at} age={t - at} x={x} y={y} />
-        ))}
+        ].map(
+          ({ at, x, y }: Readonly<{ at: number; x: number; y: number }>) => (
+            <ClickPulse key={at} age={t - at} x={x} y={y} />
+          )
+        )}
         {cursor && <Pointer {...cursor} />}
       </div>
-      {presentation.caption && (
+      {presentation.caption !== null && presentation.caption.length > 0 && (
         <Caption opacity={presentation.opacity}>{presentation.caption}</Caption>
       )}
 
@@ -589,15 +525,3 @@ export const ThreadsLaunch = ({
     </AbsoluteFill>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable react/jsx-props-no-spreading */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable max-lines -- ThreadsLaunch: The timeline and scene specification are maintained together to keep frame transitions and rendering synchronized. */

@@ -8,7 +8,9 @@ export const useMediaQuery = (query: string): boolean => {
       const mediaQueryList = globalThis.matchMedia(query);
       mediaQueryList.addEventListener("change", onStoreChange);
 
-      return () => mediaQueryList.removeEventListener("change", onStoreChange);
+      return () => {
+        mediaQueryList.removeEventListener("change", onStoreChange);
+      };
     },
     [query]
   );

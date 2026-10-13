@@ -1,9 +1,6 @@
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
@@ -12,4 +9,3 @@ export default defineConfig({
     server: { deps: { inline: ["files-sdk"] } },
   },
 });
-/* oxlint-enable import/no-default-export */

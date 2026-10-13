@@ -1,22 +1,20 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
 import { ChevronDownIcon, WrenchIcon } from "lucide-react";
 import React from "react";
-import type { ReactNode } from "react";
-
+import type { ToolUIPart } from "ai";
 import { getStatusBadge } from "@/components/ai-elements/tool";
 import { CollapsibleTrigger } from "@/components/ui/collapsible";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 
 interface McpToolHeaderProps {
-  title?: string;
-  type: ToolUIPart["type"];
-  state: ToolUIPart["state"];
-  className?: string;
-  icon?: ReactNode;
+  readonly title?: string;
+  readonly type: ToolUIPart["type"];
+  readonly state: ToolUIPart["state"];
+  readonly className?: string;
+  readonly icon?: ReadonlyReactNode;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- McpToolHeader: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolHeader = ({
   className,
@@ -43,4 +41,3 @@ export const McpToolHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

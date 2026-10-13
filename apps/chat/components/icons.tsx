@@ -1,8 +1,9 @@
 import React from "react";
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth -- GitIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
+
+const DEFAULT_ICON_SIZE = 16;
 
 const GitIcon = ({
-  size = 16,
+  size = DEFAULT_ICON_SIZE,
 }: {
   readonly size?: number;
 }): React.JSX.Element => (
@@ -27,12 +28,9 @@ const GitIcon = ({
     </defs>
   </svg>
 );
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth */
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- SummarizeIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
 
 const SummarizeIcon = ({
-  size = 16,
+  size = DEFAULT_ICON_SIZE,
 }: {
   readonly size?: number;
 }): React.JSX.Element => (
@@ -52,5 +50,4 @@ const SummarizeIcon = ({
     />
   </svg>
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 export { GitIcon, SummarizeIcon };

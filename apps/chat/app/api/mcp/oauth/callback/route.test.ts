@@ -4,9 +4,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/mcp/oauth/callback/route";
 import { MissingCredentialsError } from "@/lib/required-credentials";
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): mocks preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+const HTTP_STATUS = {
+  temporaryRedirect: 307,
+};
+
 const mocks = vi.hoisted(() => {
   const params: {
     code: string | null;
@@ -28,7 +29,6 @@ const mocks = vi.hoisted(() => {
     requireCredentials: vi.fn(),
   };
 });
-/* oxlint-enable unicorn/no-null */
 vi.mock("@/features/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
@@ -44,24 +44,16 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getMcpConnectorById: vi.fn(),
   getSessionByState: mocks.getSession,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn(), info: vi.fn() }),
+  createModuleLogger: (): {
+    error: (...arguments_: readonly unknown[]) => unknown;
+    info: (...arguments_: readonly unknown[]) => unknown;
+  } => ({ error: vi.fn(), info: vi.fn() }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/nuqs/mcp-search-params.server")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/nuqs/mcp-search-params.server", () => ({
-  loadMcpOAuthCallbackSearchParams: () => mocks.params,
+  loadMcpOAuthCallbackSearchParams: (): typeof mocks.params => mocks.params,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.params = {
@@ -71,11 +63,7 @@ beforeEach(() => {
     state: "state",
   };
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("redirects an OAuth callback with an explicit setup error before accessing connect uses 307 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
     throw new MissingCredentialsError("mcp", [
@@ -87,7 +75,7 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
       "https://chat.example.test/api/mcp/oauth/callback?code=code&state=state"
     )
   );
-  expect(response.status).toBe(307);
+  expect(response.status).toBe(HTTP_STATUS.temporaryRedirect);
   const location = new URL(response.headers.get("location") ?? "");
   expect(location.pathname).toBe("/settings/connectors");
   expect(location.searchParams.get("error")).toBe(
@@ -95,12 +83,7 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
   );
   expect(mocks.getSession).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): it("provider cancellation deletes only pending state and returns a safe connector-sco keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): it("provider cancellation deletes only pending state and returns a safe connector-sco preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("provider cancellation deletes only pending state and returns a safe connector-scoped message", async () => {
   mocks.params = {
     code: null,
@@ -126,13 +109,7 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
-/* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * no-undefined (#519): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ accepts session; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it.each([
   undefined,
   {
@@ -142,7 +119,16 @@ it.each([
   },
 ])(
   "provider errors do not delete an authenticated or unmatched session: %j",
-  async (session) => {
+  async (
+    session: Readonly<
+      | {
+          mcpConnectorId: string;
+          state: string;
+          readonly tokens: { readonly access_token: string };
+        }
+      | undefined
+    >
+  ) => {
     mocks.params = {
       code: null,
       error: "access_denied",
@@ -164,12 +150,7 @@ it.each([
     expect(mocks.invalidate).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-undefined, unicorn/no-null --
- * no-undefined (#519): it("an attempt completed between lookup and deletion retains its client") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): it("an attempt completed between lookup and deletion retains its client") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("an attempt completed between lookup and deletion retains its client", async () => {
   mocks.params = {
     code: null,
@@ -182,7 +163,7 @@ it("an attempt completed between lookup and deletion retains its client", async 
     state: "state",
     tokens: null,
   });
-  mocks.deleteSession.mockResolvedValue(undefined);
+  mocks.deleteSession.mockResolvedValue(null);
   await GET(
     new NextRequest(
       "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
@@ -191,4 +172,3 @@ it("an attempt completed between lookup and deletion retains its client", async 
   expect(mocks.removeClient).not.toHaveBeenCalled();
   expect(mocks.invalidate).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined, unicorn/no-null */

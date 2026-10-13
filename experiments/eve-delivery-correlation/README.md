@@ -59,8 +59,8 @@ The queued non-materialization check holds the first model turn at a file barrie
 - `bun test:types`: passed, all 7 monorepo tasks from Turbo cache; isolated experimental files are not covered by that result.
 - Explicit `tsc --noEmit -p experiments/eve-delivery-correlation/tsconfig.json`: passed. It includes launchers, module probes and compiled HTTP fixtures; experimental fields are schema-validated against the released SDK.
 - Targeted `oxlint experiments/eve-delivery-correlation`: passed. No unsafe-type waivers. Required EVE default exports, Node/process boundaries, ordered tests and SDK callbacks have statement-scoped reasons.
-- `lint-exception-additions.json`: 46 rule/directive records, no missing reasons, exported with `snapshotExceptions` for D. The shared baseline/config remains untouched. `bun lint` stops at these not-yet-integrated budget additions; D owns reviewing and merging them.
-- Running `ultracite check .` independently of the budget gate reaches only seven errors in unchanged `scripts/vercel-preview-build.ts:127–137`, matching D’s baseline attribution. No new Lane C lint errors remain.
+- Historical Oct 7 validation used an exception-budget snapshot. Main later removed that mechanism; the obsolete snapshots were removed during Oct 13 maintenance.
+- Historical Oct 7 standalone lint reported seven pre-existing preview-build errors. Oct 13 maintenance passes the current full `bun lint`, including canonical demo parity. See `docs/eve-submission-journal.md` for current checks.
 - Remaining gates: upstream supported contract/release, production immutable submission and annotation storage, old-history/copy migration, in-flight restart/Postgres proof, terminal cancellation disposition and independent creation allocation recovery.
 
 No user decision is needed now. Retain the existing fork seam. Lane D can integrate these reviewable proofs and the reviewed exception-budget additions independently of upstream acceptance. This lane does not alter D’s shared harness.

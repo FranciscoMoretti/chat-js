@@ -1,16 +1,10 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
-import type * as AI from "ai";
 import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
-
-import { toolResultSchema } from "@/lib/eve/tool-result";
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { generateImageResult } from "./schemas";
 import { generateImageTool } from "./tool";
-/* oxlint-enable import/no-namespace */
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
   catalog: vi.fn(),
@@ -22,49 +16,44 @@ const mocks = vi.hoisted(() => ({
   text: vi.fn(),
   upload: vi.fn(),
 }));
-vi.mock("ai", async (original) => ({
-  ...(await original<typeof AI>()),
+vi.mock(import("ai"), async (original) => ({
+  ...(await original()),
   generateImage: mocks.image,
   generateText: mocks.text,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
-    createImageModel: () => new MockImageModelV3(),
-    createLanguageModel: (id: string) => {
+    createImageModel: (): MockImageModelV3 => new MockImageModelV3(),
+    createLanguageModel: (id: string): MockLanguageModelV3 => {
       mocks.languageModel(id);
       return new MockLanguageModelV3();
     },
     getModelDefinition: mocks.definition,
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/generated-files")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/eve/generated-files", () => ({
-  eveGeneratedFileUploader: () => mocks.upload,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/eve/generated-files",
+  (): { eveGeneratedFileUploader: () => typeof mocks.upload } => ({
+    eveGeneratedFileUploader: () => mocks.upload,
+  })
+);
 vi.mock("@/lib/eve/tool-image-context", () => ({
   eveToolImageContext: { get: mocks.images },
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/ai/active-gateway", () => ({
-  getActiveGateway: () => ({ fetchModels: mocks.catalog }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/to-model-data")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/ai/to-model-data", () => ({
-  toModelData: (value: unknown) => value,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/ai/active-gateway",
+  (): { getActiveGateway: () => { fetchModels: typeof mocks.catalog } } => ({
+    getActiveGateway: (): { fetchModels: typeof mocks.catalog } => ({
+      fetchModels: mocks.catalog,
+    }),
+  })
+);
+vi.mock(
+  "@/lib/ai/to-model-data",
+  (): { toModelData: (value: unknown) => unknown } => ({
+    toModelData: (value: unknown) => value,
+  })
+);
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { image: { default: "test-image" } } },
@@ -76,18 +65,14 @@ vi.mock("@/lib/url", () => ({
   getBaseUrl: (): string => "https://example.com",
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep execute's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): execute accepts context = testToolContext(); deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const execute = async (context = testToolContext()) =>
+const execute = async (
+  context: ReadonlyNativeSurface<
+    ReturnType<typeof testToolContext>
+  > = testToolContext()
+): Promise<ReturnType<typeof toolResultSchema.parse>> =>
   toolResultSchema.parse(
     await generateImageTool.execute({ prompt: "Blue sky" }, context)
   );
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.catalog.mockResolvedValue([
@@ -105,10 +90,6 @@ beforeEach(() => {
   });
   mocks.images.mockReturnValue({ attachments: [], lastGeneratedImage: null });
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses native image context for editing and persists provider cost") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("uses native image context for editing and persists provider cost", async () => {
   mocks.images.mockReturnValue({
     attachments: [
@@ -124,30 +105,28 @@ it("uses native image context for editing and persists provider cost", async () 
     },
   });
   const result = await execute();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.image.mock.calls[0][0].prompt).toEqual({
-    images: [Buffer.from("previous"), Buffer.from("attachment")],
-    text: "Blue sky",
-  });
+  expect(mocks.image).toHaveBeenCalledOnce();
+  expect(mocks.image).toHaveBeenCalledWith(
+    expect.objectContaining({
+      prompt: {
+        images: [Buffer.from("previous"), Buffer.from("attachment")],
+        text: "Blue sky",
+      },
+    })
+  );
   expect(result).toMatchObject({
     output: { imageUrl: "/api/files/generated" },
     status: "success",
     usage: { costUsd: 0.04 },
   });
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("generates from a prompt without edit images") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("generates from a prompt without edit images", async () => {
   await execute();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.image.mock.calls[0][0].prompt).toBe("Blue sky");
+  expect(mocks.image).toHaveBeenCalledOnce();
+  expect(mocks.image).toHaveBeenCalledWith(
+    expect.objectContaining({ prompt: "Blue sky" })
+  );
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("retains provider cost if authorized storage fails") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("retains provider cost if authorized storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Private storage details"));
   expect(await execute()).toMatchObject({
@@ -156,35 +135,37 @@ it("retains provider cost if authorized storage fails", async () => {
     usage: { costUsd: 0.04 },
   });
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/prefer-readonly-parameter-types (#565): it("forwards cancellation to EVE") accepts { abortSignal }: { abortSignal: AbortSignal }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): it("forwards cancellation to EVE") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("forwards cancellation to EVE", async () => {
   const controller = new AbortController();
   mocks.image.mockImplementation(
-    ({ abortSignal }: { abortSignal: AbortSignal }) => {
+    async ({
+      abortSignal,
+    }: {
+      readonly abortSignal: Readonly<
+        Pick<AbortSignal, "addEventListener" | "reason">
+      >;
+    }) => {
       const pending = Promise.withResolvers<never>();
       abortSignal.addEventListener(
         "abort",
-        () => pending.reject(abortSignal.reason),
+        () => {
+          pending.reject(abortSignal.reason);
+        },
         { once: true }
       );
-      return pending.promise;
+      return await pending.promise;
     }
   );
   const result = execute(testToolContext({ abortSignal: controller.signal }));
-  await vi.waitFor(() => expect(mocks.image).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.image).toHaveBeenCalledOnce();
+  });
   controller.abort();
   await expect(result).rejects.toBe(controller.signal.reason);
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses the selected native model and accounts nested model tokens") uses 0.000011 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("uses the selected native model and accounts nested model tokens", async () => {
+  const expectedTokenCostUsd = 0.000011;
   mocks.definition.mockResolvedValue({
     apiModelId: "google/image",
     id: "selected",
@@ -206,10 +187,9 @@ it("uses the selected native model and accounts nested model tokens", async () =
     session: { ...context.session, auth: { current, initiator: current } },
   });
   expect(mocks.languageModel).toHaveBeenCalledWith("google/image");
-  expect(result.usage.costUsd).toBeCloseTo(0.000011);
+  expect(result.usage.costUsd).toBeCloseTo(expectedTokenCostUsd);
   expect(mocks.image).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 it.each([
   "http://127.0.0.1/private",
   "https://attacker.example/image.png",

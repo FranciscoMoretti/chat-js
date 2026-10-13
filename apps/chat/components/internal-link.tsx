@@ -1,52 +1,55 @@
 "use client";
 
-import type { Route } from "next";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type {
   ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-  MouseEvent as ReactMouseEvent,
   MouseEventHandler as ReactMouseEventHandler,
 } from "react";
 
+import Link from "next/link";
+import React from "react";
+
+import type { Route } from "next";
+
 import { isElectronRenderer } from "@/lib/electron-auth";
 
-type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
-  href: string | Exclude<ReactComponentProps<typeof Link>["href"], string>;
+import { useRouter } from "next/navigation";
+
+const PRIMARY_MOUSE_BUTTON = 0;
+const AUXILIARY_MOUSE_BUTTON = 1;
+
+type InternalLinkProps<T extends string> = Omit<
+  ReactComponentProps<typeof Link>,
+  "href" | "as"
+> & {
+  href: Route<T>;
   onNavigate?: () => void;
 };
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- InternalLink: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent<HTMLAnchorElement>). */
 
-export const InternalLink = ({
+export const InternalLink = <T extends string>({
   onAuxClick,
   onClick,
   onNavigate,
   href,
   ...props
-}: InternalLinkProps): ReactJSX.Element => {
+}: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
-  const navigate = (event: ReactMouseEvent<HTMLAnchorElement>): void => {
+  const navigate = (): void => {
     onNavigate?.();
-    const targetHref = event.currentTarget.getAttribute("href");
-    if (typeof targetHref === "string" && targetHref !== "") {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This wrapper accepts dynamic application URLs beyond Next generated literal routes; narrowing its public href contract requires a navigation API decision.
-      router.push(targetHref as Route);
-    }
+    router.push(href);
   };
 
   const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 0) {
+    if (event.defaultPrevented || event.button !== PRIMARY_MOUSE_BUTTON) {
       return;
     }
 
     if (isElectron && (event.metaKey || event.ctrlKey || event.shiftKey)) {
       event.preventDefault();
-      navigate(event);
+      navigate();
       return;
     }
 
@@ -60,23 +63,24 @@ export const InternalLink = ({
   const handleAuxClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onAuxClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 1 || !isElectron) {
+    if (
+      event.defaultPrevented ||
+      event.button !== AUXILIARY_MOUSE_BUTTON ||
+      !isElectron
+    ) {
       return;
     }
 
     event.preventDefault();
-    navigate(event);
+    navigate();
   };
 
   return (
     <Link
       {...props}
-
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This wrapper accepts dynamic application URLs beyond Next generated literal routes; narrowing its public href contract requires a navigation API decision.
-      href={href as Route}
+      href={href}
       onAuxClick={handleAuxClick}
       onClick={handleClick}
     />
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

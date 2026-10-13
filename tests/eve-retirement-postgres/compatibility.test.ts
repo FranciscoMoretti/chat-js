@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports -- This PostgreSQL fixture verifies the application preflight against a disposable real schema. */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -10,9 +9,7 @@ import {
   assertEvePostgresRuntimeCompatibility,
   resolveEveStepVersion,
 } from "../../apps/chat/lib/db/workflow-runtime-compatibility";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-// oxlint-disable-next-line node/no-process-env -- Explicit disposable handoff is the only accepted database configuration for this fixture.
 const handoffPath = z.string().parse(process.env.EVE_RETIREMENT_POSTGRES_FILE);
 const handoff = z
   .object({ databases: z.object({ lane_d: z.url() }), root: z.string() })

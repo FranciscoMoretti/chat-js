@@ -4,51 +4,52 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./client";
 import { userCredit } from "./schema";
 
+const NO_CREDITS = 0;
+const FIRST_CREDIT_ROW_INDEX = 0;
+const SINGLE_CREDIT_ROW_LIMIT = 1;
+
 const ensureUserCreditRow = async (userId: string): Promise<void> => {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();
 };
-
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers -- jsdoc/require-param (#534): getCredits's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getCredits's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): getCredits uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Get user's current credit balance (in cents).
+ * @param {string} userId - User whose balance is read; a missing credit row is created with the database defaults.
+ * @returns {Promise<number>} Stored balance in cents, or zero if the retry still has no balance; database failures reject.
  */
 const getCredits = async (userId: string): Promise<number> => {
   let rows = await db
     .select({ credits: userCredit.credits })
     .from(userCredit)
     .where(eq(userCredit.userId, userId))
-    .limit(1);
+    .limit(SINGLE_CREDIT_ROW_LIMIT);
 
-  if (rows.length === 0) {
+  if (rows.length === NO_CREDITS) {
     await ensureUserCreditRow(userId);
     rows = await db
       .select({ credits: userCredit.credits })
       .from(userCredit)
       .where(eq(userCredit.userId, userId))
-      .limit(1);
+      .limit(SINGLE_CREDIT_ROW_LIMIT);
   }
 
-  return rows[0]?.credits ?? 0;
+  return rows[FIRST_CREDIT_ROW_INDEX]?.credits ?? NO_CREDITS;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers -- jsdoc/require-param (#534): canSpend's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): canSpend's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): canSpend uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Check if user has positive credits (can spend).
+ * @param {string} userId - User whose current balance is read, creating a missing credit row as needed.
+ * @returns {Promise<boolean>} Whether the balance is strictly positive; this check does not reserve credits or test a requested amount.
  */
 const canSpend = async (userId: string): Promise<boolean> => {
   const credits = await getCredits(userId);
-  return credits > 0;
+  return credits > NO_CREDITS;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param -- jsdoc/require-param (#534): deductCredits's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /**
- * Deduct credits from user. Allows going slightly negative for in-progress operations.
+ * Subtract credits without enforcing a minimum balance, allowing in-progress operations to finish.
+ * @param {string} userId - User whose credit row is created if missing and then debited.
+ * @param {number} amount - Amount in cents to subtract; this helper does not require a positive amount or sufficient balance.
+ * @returns {Promise<void>} Resolves after the balance update; database failures reject.
  */
 const deductCredits = async (userId: string, amount: number): Promise<void> => {
   await ensureUserCreditRow(userId);
@@ -59,5 +60,4 @@ const deductCredits = async (userId: string, amount: number): Promise<void> => {
     })
     .where(eq(userCredit.userId, userId));
 };
-/* oxlint-enable jsdoc/require-param */
 export { canSpend, deductCredits, getCredits };

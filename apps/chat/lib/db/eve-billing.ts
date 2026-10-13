@@ -1,12 +1,11 @@
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
+import { databaseConnection } from "./connection";
+import { db } from "./client";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { env } from "@/lib/env";
 import postgres from "postgres";
 
-import { env } from "@/lib/env";
-import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
-
-import { db } from "./client";
-import { databaseConnection } from "./connection";
 import {
   eveConversation,
   eveGuest,
@@ -15,16 +14,15 @@ import {
   userCredit,
 } from "./schema";
 
-const FIRST_PARAMETER_INDEX = 0;
-const NO_CHARGED_CENTS = 0;
+const ZERO_CENTS = 0;
 const MINIMUM_COST_USD = 0;
 const COST_DECIMAL_PLACES = 12;
 const MINIMUM_USAGE_STREAM_INDEX = 0;
 const SINGLE_USAGE_MATCH_LIMIT = 1;
 
-type UsageTransaction = Parameters<
-  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
->[typeof FIRST_PARAMETER_INDEX];
+type UsageTransaction = Readonly<
+  Pick<typeof db, "select" | "insert" | "update">
+>;
 
 const hasConflictingCost = (
   stored: string | null,
@@ -32,16 +30,13 @@ const hasConflictingCost = (
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): debitTurnUsage accepts tx: UsageTransaction; input: { ownerId: string; sessionId: string; turnId: string; eventId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const debitTurnUsage = async (
   tx: UsageTransaction,
   input: {
-    ownerId: string;
-    sessionId: string;
-    turnId: string;
-    eventId: string;
+    readonly ownerId: string;
+    readonly sessionId: string;
+    readonly turnId: string;
+    readonly eventId: string;
   }
 ): Promise<void> => {
   // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
@@ -58,9 +53,8 @@ const debitTurnUsage = async (
         eq(eveUsage.ownerId, input.ownerId)
       )
     );
-  const delta =
-    (totals?.due ?? NO_CHARGED_CENTS) - (totals?.paid ?? NO_CHARGED_CENTS);
-  if (delta > NO_CHARGED_CENTS) {
+  const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
+  if (delta > ZERO_CENTS) {
     await tx
       .update(userCredit)
       .set({ credits: sql`${userCredit.credits} - ${delta}` })
@@ -71,33 +65,25 @@ const debitTurnUsage = async (
       .where(eq(eveUsage.eventId, input.eventId));
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): recordEveUsage accepts input: { eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * A replay can arrive concurrently with the hook. Both use the same durable event ID.
- * @param input Native usage event identity and optional provider cost evidence.
- * @param input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
- * @param input.sessionId Native session whose turn cost is recorded.
- * @param input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param input.ownerId Owner whose credit or guest quota identity scopes the record.
- * @param input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
- * @param input.generationId Optional provider generation identifier used for later reconciliation.
- * @returns Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
+ * @param {{ eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd?: number; generationId?: string; }} input Native usage event identity and optional provider cost evidence.
+ * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
+ * @param {string} input.sessionId Native session whose turn cost is recorded.
+ * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
+ * @param {string} input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
+ * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
+ * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
  */
 const recordEveUsage = async (input: {
-  eventId: string;
-  sessionId: string;
-  turnId: string;
-  ownerId: string;
-  costUsd?: number;
-  generationId?: string;
+  readonly eventId: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly ownerId: string;
+  readonly costUsd?: number;
+  readonly generationId?: string;
 }): Promise<boolean> => {
   if (
     !input.eventId ||
@@ -120,7 +106,8 @@ const recordEveUsage = async (input: {
         isNotNull(eveUsage.costUsd)
       )
     );
-  if (settled) {
+  const hasSettledUsage = Boolean(settled);
+  if (hasSettledUsage) {
     const incoming =
       input.costUsd === undefined
         ? null
@@ -130,13 +117,14 @@ const recordEveUsage = async (input: {
     }
     return true;
   }
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: UsageTransaction) => {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
       .from(eveGuest)
       .where(eq(eveGuest.ownerId, input.ownerId))
       .for("update");
-    if (!guest) {
+    const isGuest = Boolean(guest);
+    if (!isGuest) {
       await tx
         .insert(userCredit)
         .values({ userId: input.ownerId })
@@ -155,7 +143,8 @@ const recordEveUsage = async (input: {
       .select()
       .from(eveUsage)
       .where(eq(eveUsage.eventId, input.eventId));
-    if (existing) {
+    const hasExistingUsage = Boolean(existing);
+    if (hasExistingUsage) {
       if (
         existing.ownerId !== input.ownerId ||
         existing.sessionId !== input.sessionId ||
@@ -179,28 +168,25 @@ const recordEveUsage = async (input: {
     }
     // Guest admission spends message quota. Keep provider costs without granting
     // signup credit or mixing monetary debits into that separate allowance.
-    if (!guest) {
+    if (!isGuest) {
       await debitTurnUsage(tx, input);
     }
     const recordedCost = costUsd ?? existing?.costUsd;
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * This cursor is billing progress, never a second copy of the transcript.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose durable billing cursor is read.
- * @returns The current ingestion stream index; missing owned bindings throw.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose durable billing cursor is read.
+ * @returns {Promise<number>} The current ingestion stream index; missing owned bindings throw.
  */
 const getEveUsageCursor = async (
   ownerId: string,
   sessionId: string
 ): Promise<number> => {
-  const [row] = await db
+  const rows = await db
     .select({ streamIndex: eveConversation.usageStreamIndex })
     .from(eveConversation)
     .where(
@@ -210,20 +196,18 @@ const getEveUsageCursor = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
+  const [row] = rows;
   return row.streamIndex;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Advance only after durable ingestion; concurrent older readers cannot rewind it.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose billing cursor advances.
- * @param streamIndex Nonnegative safe ingestion index committed after durable usage recording.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose billing cursor advances.
+ * @param {number} streamIndex Nonnegative safe ingestion index committed after durable usage recording.
  */
 const advanceEveUsageCursor = async (
   ownerId: string,
@@ -236,7 +220,7 @@ const advanceEveUsageCursor = async (
   ) {
     throw new Error("Invalid Eve usage cursor.");
   }
-  const [row] = await db
+  const rows = await db
     .update(eveConversation)
     .set({
       usageStreamIndex: sql`greatest(${eveConversation.usageStreamIndex}, ${streamIndex})`,
@@ -249,25 +233,22 @@ const advanceEveUsageCursor = async (
       )
     )
     .returning({ id: eveConversation.id });
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): withManagedUsageReconciliation accepts unpricedSessions: Set<string>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
- * @param ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
- * @param reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
+ * @param {string} ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
+ * @param {(sweepDue: boolean, unpricedSessions: Readonly<ReadonlySet<string>>) => Promise<void>} reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
  */
 const withManagedUsageReconciliation = async (
   ownerId: string,
-  reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
+  reconcile: (
+    sweepDue: boolean,
+    unpricedSessions: Readonly<ReadonlySet<string>>
+  ) => Promise<void>
 ): Promise<void> => {
   // Recovery queries use the app pool. Holding its only connection here would
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
@@ -278,7 +259,11 @@ const withManagedUsageReconciliation = async (
     prepare: false,
   });
   try {
-    await drizzle(connection).transaction(async (tx) => {
+    const usageDb = drizzle(connection);
+    type UsageLockTransaction = Readonly<
+      Pick<typeof usageDb, "select" | "selectDistinct" | "execute" | "update">
+    >;
+    await usageDb.transaction(async (tx: UsageLockTransaction) => {
       await tx.execute(sql`select set_config('lock_timeout', '5s', true)`);
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
@@ -289,7 +274,8 @@ const withManagedUsageReconciliation = async (
         })
         .from(user)
         .where(eq(user.id, ownerId));
-      if (!owner) {
+      const hasOwner = Boolean(owner);
+      if (!hasOwner) {
         throw new Error("Usage reconciliation requires a registered owner.");
       }
       const unpricedSessions = await tx
@@ -306,7 +292,8 @@ const withManagedUsageReconciliation = async (
         .from(eveUsage)
         .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
         .limit(SINGLE_USAGE_MATCH_LIMIT);
-      if (unpriced) {
+      const hasUnpricedUsage = Boolean(unpriced);
+      if (hasUnpricedUsage) {
         throw new Error(
           "Completed usage needs provider cost reconciliation before starting more work."
         );
@@ -320,7 +307,8 @@ const withManagedUsageReconciliation = async (
       }
     });
   } catch (error) {
-    const cause = error instanceof Error && error.cause ? error.cause : error;
+    const cause =
+      error instanceof Error && Boolean(error.cause) ? error.cause : error;
     if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
       throw new EveUsageReconciliationBusyError();
     }
@@ -329,7 +317,6 @@ const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export {
   advanceEveUsageCursor,
   getEveUsageCursor,

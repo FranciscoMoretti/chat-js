@@ -1,7 +1,3 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- EVE owns the evaluation and event contexts; the fixture only reads their native types. */
-/* oxlint-disable eslint/no-await-in-loop -- Each changed-state scenario follows an earlier approval request and verifies the shared effect journal before proceeding. */
-/* oxlint-disable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function -- Keep the ordered authority checks and expected effect counts together in this bounded scenario. */
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports -- The native evaluation reads only disposable effect records and its generated mode. */
 import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 
@@ -33,7 +29,6 @@ const deletionCount = async (): Promise<number> => {
   const recorded = await effects();
   return recorded.filter((effect) => effect.kind === "delete").length;
 };
-// oxlint-disable-next-line import/no-default-export -- EVE discovers this fixture through its default export.
 export default defineEval({
   description:
     "Actual ChatJS installed registry/resolver and document request/scope/execution",
@@ -100,6 +95,7 @@ export default defineEval({
     if (mode !== "native-candidate") {
       return;
     }
+    /* oxlint-disable eslint/no-await-in-loop -- Foreign approval and cancellation attempts must settle before the owner response on the same session. */
     for (const change of ["revision", "owner"]) {
       const changed = await evaluation.session();
       await changed.send("Delete document");
@@ -129,6 +125,7 @@ export default defineEval({
         )
       );
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     const cancelled = await evaluation.session();
     await cancelled.send("Delete document");
     await cancelled.respondAll("cancel");
@@ -138,11 +135,3 @@ export default defineEval({
     );
   },
 });
-
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
-
-/* oxlint-enable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function */
-
-/* oxlint-enable eslint/no-await-in-loop */
-
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

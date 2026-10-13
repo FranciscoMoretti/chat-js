@@ -1,13 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { randomUUID } from "node:crypto";
-
-import { and, eq, sql } from "drizzle-orm";
-import { z } from "zod";
-
-import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
+import { and, eq, or, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
 
 import { db } from "./client";
 import {
@@ -17,7 +12,8 @@ import {
   eveGuestRate,
   user,
 } from "./schema";
-/* oxlint-enable import/no-nodejs-modules */
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
 
 const MIN_OWNER_ID_LENGTH = 1;
 const MINUTE_WINDOW_SECONDS = 60;
@@ -31,10 +27,15 @@ type GuestTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
 
+type GuestWriteTransaction = Readonly<
+  Pick<GuestTransaction, "select" | "execute" | "insert" | "update">
+>;
+
 interface GuestRateWindow {
   seconds: number;
   startsAt: Date;
 }
+type GuestRatePeriods = ReadonlyNativeSurface<ReturnType<typeof windows>>;
 type GuestAdmissionStatus = "unavailable" | "exhausted" | "rate-limited";
 type GuestAdmissionFailure = {
   [Status in GuestAdmissionStatus]: Readonly<{
@@ -86,14 +87,13 @@ const windows = (now: ReadonlyNativeSurface<Date>): GuestRateWindow[] =>
     ),
   }));
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const createEveGuest = async (input: {
-  tokenHash: string;
-  messageLimit: number;
-  expiresAt: Date;
-}): Promise<typeof eveGuest.$inferSelect> => {
+const createEveGuest = async (
+  input: ReadonlyNativeSurface<{
+    tokenHash: string;
+    messageLimit: number;
+    expiresAt: Date;
+  }>
+): Promise<typeof eveGuest.$inferSelect> => {
   hash.parse(input.tokenHash);
   z.number().int().nonnegative().parse(input.messageLimit);
   if (
@@ -102,7 +102,7 @@ const createEveGuest = async (input: {
   ) {
     throw new Error("Guest expiry must be in the future.");
   }
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: GuestWriteTransaction) => {
     const ownerId = eveGuestOwnerId(input.tokenHash);
     await tx.insert(user).values({
       email: `${ownerId}@guest.invalid`,
@@ -116,17 +116,14 @@ const createEveGuest = async (input: {
     return guest;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string
-): Promise<
-  Pick<
-    typeof eveGuestMessage.$inferSelect,
-    "requestHash" | "reservationId" | "state"
-  >
-> => {
+): Promise<Pick<
+  typeof eveGuestMessage.$inferSelect,
+  "requestHash" | "reservationId" | "state"
+> | null> => {
   const [message] = await db
     .select({
       requestHash: eveGuestMessage.requestHash,
@@ -140,9 +137,8 @@ const readExistingEveGuestMessage = async (
         eq(eveGuestMessage.operationId, operationId)
       )
     );
-  return message;
+  return message ?? null;
 };
-
 interface GuestBootstrap {
   tokenHash: string;
   messageLimit: number;
@@ -168,66 +164,63 @@ const validateReservation = (
   }
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): rateAvailable accepts tx: GuestTransaction; input: { ipHash: string; requestsPerMinute: number; requestsPerMonth: number; }; periods: ReturnType<typeof windows>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const rateAvailable = async (
-  tx: GuestTransaction,
-  input: {
+  tx: Readonly<Pick<GuestTransaction, "select">>,
+  input: ReadonlyNativeSurface<{
     ipHash: string;
     requestsPerMinute: number;
     requestsPerMonth: number;
-  },
-  periods: ReturnType<typeof windows>
+  }>,
+  periods: GuestRatePeriods
 ): Promise<boolean> => {
-  for (const period of periods) {
+  const buckets = await tx
+    .select()
+    .from(eveGuestRate)
+    .where(
+      and(
+        eq(eveGuestRate.ipHash, input.ipHash),
+        or(
+          ...periods.map((period) =>
+            and(
+              eq(eveGuestRate.windowSeconds, period.seconds),
+              eq(eveGuestRate.startsAt, period.startsAt)
+            )
+          )
+        )
+      )
+    );
+  return periods.every((period) => {
     const limit =
       period.seconds === MINUTE_WINDOW_SECONDS
         ? input.requestsPerMinute
         : input.requestsPerMonth;
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-    const [bucket] = await tx
-      .select()
-      .from(eveGuestRate)
-      .where(
-        and(
-          eq(eveGuestRate.ipHash, input.ipHash),
-          eq(eveGuestRate.windowSeconds, period.seconds),
-          eq(eveGuestRate.startsAt, period.startsAt)
-        )
-      );
-    if ((bucket?.requests ?? EMPTY_QUOTA) >= limit) {
-      return false;
-    }
-  }
-  return true;
+    const bucket = buckets.find(
+      (row) =>
+        row.windowSeconds === period.seconds &&
+        row.startsAt.getTime() === period.startsAt.getTime()
+    );
+    return (bucket?.requests ?? EMPTY_QUOTA) < limit;
+  });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-params (#511): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): admissionGuest accepts tx: GuestTransaction; bootstrap: | { tokenHash: string; messageLimit: number; expiresAt: Date;; now: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): admissionGuest intentionally keeps the existing falsy-value behavior of guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const admissionGuest = async (
-  tx: GuestTransaction,
-  input: z.infer<typeof reservation>,
+  tx: GuestWriteTransaction,
+  input: ReadonlyNativeSurface<GuestReservationInput>,
   bootstrap:
-    | {
+    | ReadonlyNativeSurface<{
         tokenHash: string;
         messageLimit: number;
         expiresAt: Date;
-      }
+      }>
     | undefined,
-  now: Date
+  now: ReadonlyNativeSurface<Date>
 ): Promise<GuestAdmissionResult> => {
   let [guest] = await tx
     .select()
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, input.ownerId))
     .for("update");
-  if (!guest && bootstrap) {
+  if (!hasQueryRow(guest) && bootstrap) {
     if (bootstrap.expiresAt <= now) {
       return { status: "unavailable" } as const;
     }
@@ -251,23 +244,16 @@ const admissionGuest = async (
       })
       .returning();
   }
-  if (!guest || guest.expiresAt <= now) {
+  if (!hasQueryRow(guest) || guest.expiresAt <= now) {
     return { status: "unavailable" } as const;
   }
   return { guest, status: "ready" } as const;
 };
-/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): reserveMessage accepts tx: GuestTransaction; bootstrap?: GuestBootstrap; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reserveMessage intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const reserveMessage = async (
-  tx: GuestTransaction,
-  input: GuestReservationInput,
-  bootstrap?: GuestBootstrap
+  tx: GuestWriteTransaction,
+  input: ReadonlyNativeSurface<GuestReservationInput>,
+  bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
 ): Promise<GuestReservationResult> => {
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
@@ -287,10 +273,10 @@ const reserveMessage = async (
     eq(eveGuestMessage.operationId, input.operationId)
   );
   const [existing] = await tx.select().from(eveGuestMessage).where(identity);
-  if (existing && existing.requestHash !== input.requestHash) {
+  if (hasQueryRow(existing) && existing.requestHash !== input.requestHash) {
     return { status: "conflict" } as const;
   }
-  if (existing && existing.state !== "released") {
+  if (hasQueryRow(existing) && existing.state !== "released") {
     return {
       reservationId: existing.reservationId,
       status: "replay",
@@ -303,25 +289,24 @@ const reserveMessage = async (
   if (!(await rateAvailable(tx, input, periods))) {
     return { status: "rate-limited" } as const;
   }
-  for (const period of periods) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-    await tx
-      .insert(eveGuestRate)
-      .values({
+  await tx
+    .insert(eveGuestRate)
+    .values(
+      periods.map((period) => ({
         ipHash: input.ipHash,
         requests: SINGLE_REQUEST,
         startsAt: period.startsAt,
         windowSeconds: period.seconds,
-      })
-      .onConflictDoUpdate({
-        set: { requests: sql`${eveGuestRate.requests} + 1` },
-        target: [
-          eveGuestRate.ipHash,
-          eveGuestRate.windowSeconds,
-          eveGuestRate.startsAt,
-        ],
-      });
-  }
+      }))
+    )
+    .onConflictDoUpdate({
+      set: { requests: sql`${eveGuestRate.requests} + 1` },
+      target: [
+        eveGuestRate.ipHash,
+        eveGuestRate.windowSeconds,
+        eveGuestRate.startsAt,
+      ],
+    });
   await tx
     .update(eveGuest)
     .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
@@ -349,26 +334,23 @@ const reserveMessage = async (
     });
   return { reservationId, status: "reserved" } as const;
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessage accepts bootstrap?: GuestBootstrap; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): reserveEveGuestMessage preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Reserve before native admission. Ambiguous admission keeps its reservation.
- * @param input Validated owner, operation, request digest and address quota policy to reserve.
- * @param bootstrap Optional first-guest identity and expiry, created only when admission succeeds.
- * @returns The new or replayed reservation, or the exact identity/quota admission rejection.
+ * @param {GuestReservationInput} input Validated owner, operation, request digest and address quota policy to reserve.
+ * @param {GuestBootstrap | undefined} bootstrap Optional first-guest identity and expiry, created only when admission succeeds.
+ * @returns {Promise<GuestReservationResult>} The new or replayed reservation, or the exact identity/quota admission rejection.
  */
 const reserveEveGuestMessage = async (
-  input: GuestReservationInput,
-  bootstrap?: GuestBootstrap
+  input: ReadonlyNativeSurface<GuestReservationInput>,
+  bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
 ): Promise<GuestReservationResult> => {
   validateReservation(input, bootstrap);
-  return await db.transaction((tx) => reserveMessage(tx, input, bootstrap));
+  return await db.transaction(
+    async (tx: GuestWriteTransaction) =>
+      await reserveMessage(tx, input, bootstrap)
+  );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 type GuestReservationFailure = Exclude<
   GuestReservationResult,
@@ -383,26 +365,20 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
-/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-moving it below executable initialization can obscure ordering and API ownership.
-max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: GuestTransaction; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Comparisons admit every candidate or none, including first-guest account creation.
- * @param inputs Candidate operations sharing one owner, address and quota policy.
- * @param bootstrap Optional first-guest identity admitted atomically with all candidates.
- * @param persistAdmission Optional transaction callback storing comparison intent after every reservation succeeds.
- * @returns All reservations and the callback result on atomic admission, or the rejecting candidate status after rollback.
+ * @param {readonly ReadonlyNativeSurface<GuestReservationInput>[]} inputs Candidate operations sharing one owner, address and quota policy.
+ * @param {ReadonlyNativeSurface<GuestBootstrap> | undefined} bootstrap Optional first-guest identity admitted atomically with all candidates.
+ * @param {((tx: GuestTransaction) => Promise<Admission>) | undefined} persistAdmission Optional transaction callback storing comparison intent after every reservation succeeds.
+ * @returns {Promise<GuestBatchResult<T>>} All reservations and the callback result on atomic admission, or the rejecting candidate status after rollback.
  */
-const reserveEveGuestMessages = async <T = undefined>(
-  inputs: GuestReservationInput[],
-  bootstrap?: GuestBootstrap,
-  persistAdmission?: (tx: GuestTransaction) => Promise<T>
-): Promise<GuestBatchResult<T>> => {
+const reserveEveGuestMessages = async <Admission = undefined>(
+  inputs: readonly ReadonlyNativeSurface<GuestReservationInput>[],
+  bootstrap?: ReadonlyNativeSurface<GuestBootstrap>,
+  persistAdmission?: (tx: GuestTransaction) => Promise<Admission>
+): Promise<GuestBatchResult<Admission>> => {
   const [first] = inputs;
-  if (!first) {
+  if (typeof first !== "object" || first === null) {
     throw new Error("Guest admission requires at least one operation.");
   }
   const operations = new Set<string>();
@@ -422,14 +398,14 @@ const reserveEveGuestMessages = async <T = undefined>(
     operations.add(input.operationId.toLowerCase());
   }
   try {
-    return await db.transaction(async (tx) => {
+    return await db.transaction(async (tx: GuestTransaction) => {
       const reservations: {
         operationId: string;
         reservationId: string;
         status: "reserved" | "replay";
       }[] = [];
       for (const input of inputs) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Each candidate consumes the shared guest balance and IP windows in this transaction; stop at the first rejection before reserving another candidate.
         const result = await reserveMessage(tx, input, bootstrap);
         if (result.status !== "reserved" && result.status !== "replay") {
           throw new GuestBatchRejectedError(result);
@@ -446,7 +422,6 @@ const reserveEveGuestMessages = async <T = undefined>(
     throw error;
   }
 };
-/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const commitEveGuestMessage = async (
   ownerId: string,
@@ -467,28 +442,20 @@ const commitEveGuestMessage = async (
     .returning();
   return Boolean(row);
 };
-
-/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): releaseMessage accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): releaseMessage intentionally keeps the existing falsy-value behavior of observed; creation; released; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const releaseMessage = async (
   ownerId: string,
   operationId: string,
   reservationId: string,
   requireUncreated: boolean
 ): Promise<boolean> =>
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: GuestWriteTransaction) => {
     const identity = and(
       eq(eveGuestMessage.ownerId, ownerId),
       eq(eveGuestMessage.operationId, operationId),
       eq(eveGuestMessage.reservationId, reservationId)
     );
     const [observed] = await tx.select().from(eveGuestMessage).where(identity);
-    if (!observed || observed.state !== "reserved") {
+    if (!hasQueryRow(observed) || observed.state !== "reserved") {
       return false;
     }
     await tx.execute(
@@ -512,7 +479,7 @@ const releaseMessage = async (
             eq(eveConversation.operationId, operationId)
           )
         );
-      if (creation) {
+      if (hasQueryRow(creation)) {
         return false;
       }
     }
@@ -528,36 +495,38 @@ const releaseMessage = async (
         )
       )
       .returning();
-    if (!released) {
+    if (!hasQueryRow(released)) {
       return false;
     }
     await tx
       .update(eveGuest)
       .set({ remainingMessages: sql`${eveGuest.remainingMessages} + 1` })
       .where(eq(eveGuest.ownerId, ownerId));
-    for (const period of windows(released.reservedAt)) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
-      await tx
-        .update(eveGuestRate)
-        .set({ requests: sql`${eveGuestRate.requests} - 1` })
-        .where(
-          and(
-            eq(eveGuestRate.ipHash, released.ipHash),
-            eq(eveGuestRate.windowSeconds, period.seconds),
-            eq(eveGuestRate.startsAt, period.startsAt)
+    await tx
+      .update(eveGuestRate)
+      .set({ requests: sql`${eveGuestRate.requests} - 1` })
+      .where(
+        and(
+          eq(eveGuestRate.ipHash, released.ipHash),
+          or(
+            ...windows(released.reservedAt).map((period) =>
+              and(
+                eq(eveGuestRate.windowSeconds, period.seconds),
+                eq(eveGuestRate.startsAt, period.startsAt)
+              )
+            )
           )
-        );
-    }
+        )
+      );
     return true;
   });
-/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /**
  * Only a proven unaccepted request can be refunded; never use this on a timeout.
- * @param ownerId Owner whose exact reservation can be refunded.
- * @param operationId Operation proved unaccepted by native admission.
- * @param reservationId Exact reservation receipt to fence stale refunds.
- * @returns Whether the matching reserved message was released and its quota refunded.
+ * @param {string} ownerId Owner whose exact reservation can be refunded.
+ * @param {string} operationId Operation proved unaccepted by native admission.
+ * @param {string} reservationId Exact reservation receipt to fence stale refunds.
+ * @returns {Promise<boolean>} Whether the matching reserved message was released and its quota refunded.
  */
 const releaseEveGuestMessage = async (
   ownerId: string,
@@ -565,13 +534,12 @@ const releaseEveGuestMessage = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, false);
-
 /**
  * Serialize proof of no creation with the same family lock used before native dispatch.
- * @param ownerId Owner whose guest and conversation family locks fence the refund.
- * @param operationId Operation whose conversation creation must still be absent.
- * @param reservationId Exact reservation receipt to fence stale refunds.
- * @returns Whether no creation existed and the matching reservation was atomically released.
+ * @param {string} ownerId Owner whose guest and conversation family locks fence the refund.
+ * @param {string} operationId Operation whose conversation creation must still be absent.
+ * @param {string} reservationId Exact reservation receipt to fence stale refunds.
+ * @returns {Promise<boolean>} Whether no creation existed and the matching reservation was atomically released.
  */
 const releaseEveGuestCreation = async (
   ownerId: string,
@@ -579,24 +547,20 @@ const releaseEveGuestCreation = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, true);
-
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
- * @param ownerId Durable guest owner identity inspected by cleanup or policy.
- * @returns The stored expiry, including expired identities, from the existing row lookup.
+ * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
+ * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | null>} The stored expiry, including expired identities, or null when no guest identity exists.
  */
 const readEveGuestOwner = async (
   ownerId: string
-): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt">> => {
+): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | null> => {
   const [guest] = await db
     .select({ expiresAt: eveGuest.expiresAt })
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, ownerId));
-  return guest;
+  return guest ?? null;
 };
-
-/* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
- */
 export {
   commitEveGuestMessage,
   createEveGuest,

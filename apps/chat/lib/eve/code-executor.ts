@@ -1,6 +1,9 @@
 import type { ToolContext } from "eve/tools";
+import { z } from "zod";
 
-import type { ToolOutput, ToolResult } from "./tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import type { ToolResult } from "./tool-result";
 
 type CodeExecutionInput = Readonly<{
   code: string;
@@ -13,19 +16,17 @@ type CodeExecutionContext = Pick<
   "abortSignal" | "callId" | "session"
 >;
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): CodeExecutionOutput preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type CodeExecutionOutput = { chart: ToolOutput; message: string };
-/* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): CodeExecutor accepts context: CodeExecutionContext; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/** Providers specialize chart formats while sharing the durable output envelope. */
+const codeExecutionOutputSchema = z.object({
+  chart: z.json(),
+  message: z.string(),
+});
+type CodeExecutionOutput = z.infer<typeof codeExecutionOutputSchema>;
+
 /** Executes exact source and owns its single usage receipt under the invoking tool call. */
 type CodeExecutor = (
   input: CodeExecutionInput,
-  context: CodeExecutionContext
+  context: ReadonlyNativeSurface<CodeExecutionContext>
 ) => Promise<ToolResult<CodeExecutionOutput>>;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-export type {
-  CodeExecutionContext,
-  CodeExecutionInput,
-  CodeExecutionOutput,
-  CodeExecutor,
-};
+
+export type { CodeExecutionContext, CodeExecutionInput, CodeExecutor };

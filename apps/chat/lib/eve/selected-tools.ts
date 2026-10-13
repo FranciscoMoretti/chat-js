@@ -9,23 +9,22 @@ const canvasTools: UiToolName[] = [
   "editSheetDocument",
 ];
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null --
- * jsdoc/require-param (#534): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * unicorn/no-null (#570): selectedEveTools preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+/** Canvas editing needs Eve's read operation to obtain the current revision.
+ * @param {UiToolName | null} selectedTool User-selected tool, or null when no explicit tool restriction is requested.
+ * @returns {string[] | null} Selected execution names; canvas tools share their editing family and document operations also include readDocument. Null preserves unrestricted selection.
  */
-/** Canvas editing needs Eve's read operation to obtain the current revision. */
 export const selectedEveTools = (
   selectedTool: UiToolName | null
 ): string[] | null => {
   if (!selectedTool) {
     return null;
   }
-  const names = canvasTools.includes(selectedTool)
-    ? canvasTools
-    : [selectedTool];
-  return names.some((name) => name.endsWith("Document"))
-    ? [...names, "readDocument"]
-    : names;
+
+  if (canvasTools.includes(selectedTool)) {
+    return [...canvasTools, "readDocument"];
+  }
+  if (selectedTool.endsWith("Document")) {
+    return [selectedTool, "readDocument"];
+  }
+  return [selectedTool];
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null */

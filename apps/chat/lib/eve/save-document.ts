@@ -1,39 +1,63 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents"; "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client } from "eve/client";
-import type { z } from "zod";
-
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
-} from "../db/eve-documents";
-import { getEveConversation } from "../db/eve-queries";
-import { getEveConnectionOptions } from "./connection-options";
-import { eveManualDocumentInput } from "./document-contracts";
-import { documentHistoryTurns } from "./document-history";
+} from "@/lib/db/eve-documents";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { assertEveConfigured } from "./server";
-/* oxlint-enable import/no-relative-parent-imports */
+import { documentHistoryTurns } from "./document-history";
+import { eveManualDocumentInput } from "./document-contracts";
+import { getEveConnectionOptions } from "./connection-options";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import type { z } from "zod";
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-statements (#512): saveManualEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): saveManualEveDocument uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): saveManualEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep saveManualEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep saveManualEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): saveManualEveDocument accepts value: z.input<typeof eveManualDocumentInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): saveManualEveDocument intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): saveManualEveDocument preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const saveManualEveDocument = async (
+const documentSnapshotTimeoutMs = 15_000;
+
+type SavedDocumentReceipt = Pick<
+  Awaited<ReturnType<typeof saveEveDocumentRevision>>,
+  "content" | "createdAt" | "documentId" | "id" | "kind" | "title"
+>;
+
+const savedDocumentReceipt = (
+  saved: ReadonlyNativeSurface<SavedDocumentReceipt>
+): SavedDocumentReceipt => ({
+  content: saved.content,
+  createdAt: saved.createdAt,
+  documentId: saved.documentId,
+  id: saved.id,
+  kind: saved.kind,
+  title: saved.title,
+});
+
+type BoundManualConversation = ReadonlyNativeSurface<
+  NonNullable<Awaited<ReturnType<typeof getEveConversation>>>
+> & { readonly sessionId: string; readonly state: "bound" };
+
+interface ManualDocumentContext {
+  readonly conversation: BoundManualConversation;
+  readonly previous: NonNullable<
+    Awaited<ReturnType<typeof getEveDocumentRevision>>
+  >;
+}
+
+const isBoundManualConversation = (
+  conversation: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof getEveConversation>>
+  >
+): conversation is BoundManualConversation =>
+  !(
+    !conversation ||
+    (conversation.sessionId ?? "") === "" ||
+    conversation.state !== "bound"
+  );
+
+const resolveManualDocumentContext = async (
   ownerId: string,
-  value: z.input<typeof eveManualDocumentInput>
-) => {
-  const input = eveManualDocumentInput.parse(value);
+  input: ReadonlyNativeSurface<z.output<typeof eveManualDocumentInput>>
+): Promise<ManualDocumentContext> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
-  if (!(conversation?.sessionId && conversation.state === "bound")) {
+  if (!isBoundManualConversation(conversation)) {
     throw new Error("Conversation not found.");
   }
   const previous = await getEveDocumentRevision(
@@ -45,11 +69,23 @@ export const saveManualEveDocument = async (
   if (!(previous && installedDocumentKinds.has(previous.kind))) {
     throw new Error("Document not found.");
   }
+  return { conversation, previous };
+};
+
+export const saveManualEveDocument = async (
+  ownerId: string,
+  value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
+): Promise<SavedDocumentReceipt> => {
+  const input = eveManualDocumentInput.parse(value);
+  const { conversation, previous } = await resolveManualDocumentContext(
+    ownerId,
+    input
+  );
   assertEveConfigured();
   const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(documentSnapshotTimeoutMs) });
   const turns = documentHistoryTurns(snapshot.events);
   const saved = await saveEveDocumentRevision(
     {
@@ -63,13 +99,5 @@ export const saveManualEveDocument = async (
     undefined,
     turns
   );
-  return {
-    content: saved.content,
-    createdAt: saved.createdAt,
-    documentId: saved.documentId,
-    id: saved.id,
-    kind: saved.kind,
-    title: saved.title,
-  };
+  return savedDocumentReceipt(saved);
 };
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

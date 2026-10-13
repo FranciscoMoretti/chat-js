@@ -1,13 +1,13 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
-
-import { MakerDeb } from "@electron-forge/maker-deb";
+import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerDMG } from "@electron-forge/maker-dmg";
+import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
-import type { ForgeConfig } from "@electron-forge/shared-types";
+import path from "node:path";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 
 interface Branding {
   appName: string;
@@ -17,34 +17,27 @@ interface Branding {
   orgEmail?: string;
 }
 
-// oxlint-disable-next-line unicorn/prefer-module -- Electron Forge loads this configuration through its CommonJS TypeScript loader.
-const appRoot = __dirname;
+const SUCCESS_EXIT_CODE = 0;
+
+const appRoot = import.meta.dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
-/* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runBunScript: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runBunScript = (
   script: string,
-  env: Partial<NodeJS.ProcessEnv> = {}
+  env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
     env: { ...process.env, ...env },
     stdio: "inherit",
   });
 
-  if (result.status !== 0) {
+  if (result.status !== SUCCESS_EXIT_CODE) {
     throw new Error(
       `bun run ${script} failed with exit code ${result.status ?? "unknown"}`
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
 
 const ensurePrebuild = (): void => {
   if (prebuildComplete) {
@@ -55,8 +48,23 @@ const ensurePrebuild = (): void => {
   prebuildComplete = true;
 };
 
-/* oxlint-disable node/no-sync -- loadBranding: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable eslint/no-undefined -- loadBranding: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
+const runBunScriptAsync = async (
+  script: string,
+  env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
+): Promise<void> => {
+  const child = spawn("bun", ["run", script], {
+    env: { ...process.env, ...env },
+    stdio: "inherit",
+  });
+  const exit: readonly unknown[] = await once(child, "close");
+  const [status] = exit;
+  if (status !== SUCCESS_EXIT_CODE) {
+    throw new Error(
+      `bun run ${script} failed with exit code ${typeof status === "number" ? status : "unknown"}`
+    );
+  }
+};
+
 const loadBranding = (): Branding => {
   ensurePrebuild();
 
@@ -101,28 +109,24 @@ const loadBranding = (): Branding => {
         : undefined,
   };
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable eslint/max-lines-per-function -- createForgeConfig: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable typescript/strict-boolean-expressions -- createForgeConfig: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
 
   return {
     hooks: {
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       generateAssets: async () => {
-        ensurePrebuild();
+        if (!prebuildComplete) {
+          await runBunScriptAsync("prebuild");
+          prebuildComplete = true;
+        }
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       prePackage: async () => {
-        runBunScript("build", { NODE_ENV: "production" });
+        await runBunScriptAsync("build", { NODE_ENV: "production" });
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       preStart: async () => {
-        runBunScript("build", { NODE_ENV: "development" });
+        await runBunScriptAsync("build", { NODE_ENV: "development" });
       },
     },
     makers: [
@@ -150,7 +154,10 @@ const createForgeConfig = (): ForgeConfig => {
             homepage: branding.appUrl,
             icon: "./build/icon.png",
             maintainer:
-              orgName && orgEmail
+              typeof orgName === "string" &&
+              orgName !== "" &&
+              typeof orgEmail === "string" &&
+              orgEmail !== ""
                 ? `${orgName} <${orgEmail}>`
                 : (orgName ?? orgEmail ?? appName),
           },
@@ -194,11 +201,7 @@ const createForgeConfig = (): ForgeConfig => {
     },
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/max-lines-per-function */
 
 const config = createForgeConfig();
 
-/* oxlint-disable import/no-default-export -- forge.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default config;
-/* oxlint-enable import/no-default-export */

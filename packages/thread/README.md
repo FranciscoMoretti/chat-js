@@ -2,7 +2,7 @@
 
 Build branching AI SDK conversations without mounting one `useChat` hook per branch.
 
-`useThread` preserves the `useChat` interface for the selected path and adds a `tree` namespace for navigation, sibling responses, concurrent runs, and run-specific cancellation.
+`useThread` exposes the current `useChat` helpers for the selected path and adds a `tree` namespace for navigation, sibling responses, concurrent runs, and run-specific cancellation. Use `addToolOutput` to provide client tool results. The deprecated `addToolResult` alias is not exposed.
 
 ## Package Layers
 

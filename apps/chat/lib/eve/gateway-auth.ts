@@ -1,7 +1,5 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
- * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This server/tooling module requires import { timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
@@ -23,7 +21,6 @@ import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
@@ -35,66 +32,59 @@ const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const authorizeDeletionRequest = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string,
   path: string
 ): Promise<boolean> => {
   const sessionId = parseDeletionSessionRequest(path, request.method);
-  if (!sessionId) {
+  if (sessionId === null) {
     return false;
   }
   const rootSessionId = request.headers.get("x-chatjs-deletion-root");
-  if (!rootSessionId) {
+  if (rootSessionId === null || rootSessionId === "") {
     return Boolean(
       await getDeletingEveConversationForSession(owner, sessionId)
     );
   }
-  if (
-    !(
-      path.endsWith("/sandbox-identity") &&
-      request.method === "GET" &&
-      resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
-      env.WORKFLOW_POSTGRES_URL &&
-      (await getDeletingEveConversationForSession(owner, rootSessionId))
-    )
-  ) {
-    return false;
-  }
-  return await isFencedEveDescendant(
-    env.WORKFLOW_POSTGRES_URL,
-    rootSessionId,
-    sessionId
+  const workflowPostgresUrl = env.WORKFLOW_POSTGRES_URL;
+  return (
+    path.endsWith("/sandbox-identity") &&
+    request.method === "GET" &&
+    resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
+    typeof workflowPostgresUrl === "string" &&
+    workflowPostgresUrl !== "" &&
+    (await getDeletingEveConversationForSession(owner, rootSessionId)) !==
+      null &&
+    (await isFencedEveDescendant(workflowPostgresUrl, rootSessionId, sessionId))
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): gatewaySessionPolicy uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep gatewaySessionPolicy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): gatewaySessionPolicy intentionally keeps the existing falsy-value behavior of compactionSession; ordinaryCheckpoint; checkpointSession; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const gatewaySessionPolicy = (path: string, method: string) => {
-  const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
-  if (compactionSession) {
+const gatewaySessionPolicy = (
+  path: string,
+  method: string
+): ReturnType<typeof parseSessionRequest> | { sessionId: string } => {
+  const compactionSession =
+    method === "POST" && (compactionPath.exec(path) ?? [])[1];
+  if (typeof compactionSession === "string" && compactionSession.length > 0) {
     return { sessionId: compactionSession };
   }
   const ordinaryCheckpoint =
     (method === "GET" || method === "POST") &&
-    checkpointLookupPath.exec(path)?.[1];
+    (checkpointLookupPath.exec(path) ?? [])[1];
   const namedCheckpoint =
-    method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
-  return checkpointSession
-    ? { sessionId: checkpointSession }
-    : parseSessionRequest(path, method);
-};
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+    method === "GET" && (namedCheckpointLookupPath.exec(path) ?? [])[1];
+  const checkpointSession =
+    typeof ordinaryCheckpoint === "string" && ordinaryCheckpoint.length > 0
+      ? ordinaryCheckpoint
+      : namedCheckpoint;
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null -- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+  if (typeof checkpointSession === "string" && checkpointSession.length > 0) {
+    return { sessionId: checkpointSession };
+  }
+  return parseSessionRequest(path, method);
+};
+
 const readCreationReservation = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
@@ -114,7 +104,7 @@ const readCreationReservation = async (
     reservationId: command.data.operationId,
   });
   if (
-    !reservation ||
+    reservation === null ||
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
     reservation.state === "deleted" ||
@@ -124,19 +114,13 @@ const readCreationReservation = async (
   }
   return reservation.id;
 };
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): readGatewayAttributes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep readGatewayAttributes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): readGatewayAttributes intentionally keeps the existing falsy-value behavior of modelId; reservationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): readGatewayAttributes preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readGatewayAttributes = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
-) => {
+): Promise<Record<string, string> | null> => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     await loadEveModelDefinition(modelId);
   }
   const toolHeader = request.headers.get("x-chatjs-tool");
@@ -150,7 +134,7 @@ const readGatewayAttributes = async (
   if (selectedTool.data) {
     attributes.selectedTool = selectedTool.data;
   }
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     attributes.modelId = modelId;
   }
   if (
@@ -158,7 +142,7 @@ const readGatewayAttributes = async (
     request.method === "POST"
   ) {
     const reservationId = await readCreationReservation(request, owner);
-    if (!reservationId) {
+    if (!isNonEmptyString(reservationId)) {
       return null;
     }
     // Derive this from the authenticated command and durable reservation, never a header.
@@ -166,7 +150,6 @@ const readGatewayAttributes = async (
   }
   return attributes;
 };
-/* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const guestAttributesAllowed = (
   expiresAt: ReadonlyNativeSurface<Date>,
@@ -184,9 +167,6 @@ const guestAttributesAllowed = (
       (tool) => tool === attributes.selectedTool
     ));
 
-/* oxlint-disable max-params --
- * max-params (#511): ownsGatewaySession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const ownsGatewaySession = async (
   owner: string,
   sessionId: string,
@@ -202,17 +182,17 @@ const ownsGatewaySession = async (
   }
   return Boolean(await getEveSubagent(owner, sessionId));
 };
-/* oxlint-enable max-params */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): authenticateEveGateway intentionally keeps the existing falsy-value behavior of owner; guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): authenticateEveGateway preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const authenticateEveGateway = async (
   request: ReadonlyNativeSurface<Request>
-) => {
+): Promise<{
+  attributes: Record<string, string>;
+  authenticator: string;
+  issuer: string;
+  principalId: string;
+  principalType: string;
+  subject: string;
+} | null> => {
   if (!env.EVE_GATEWAY_SECRET) {
     return null;
   }
@@ -222,7 +202,7 @@ export const authenticateEveGateway = async (
     return null;
   }
   const owner = request.headers.get("x-chatjs-owner");
-  if (!owner) {
+  if (!isNonEmptyString(owner)) {
     return null;
   }
   const path = new URL(request.url).pathname;
@@ -257,7 +237,7 @@ export const authenticateEveGateway = async (
   }
   const guest = await readEveGuestOwner(owner);
   if (
-    guest &&
+    guest !== null &&
     request.headers.get("x-chatjs-deletion") !== "1" &&
     !guestAttributesAllowed(
       guest.expiresAt,
@@ -267,7 +247,7 @@ export const authenticateEveGateway = async (
   ) {
     return null;
   }
-  if (guest) {
+  if (guest !== null) {
     attributes.chatjsGuest = "true";
   }
   return {
@@ -279,4 +259,3 @@ export const authenticateEveGateway = async (
     subject: owner,
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

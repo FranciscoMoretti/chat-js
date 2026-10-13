@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { preflight } from "./preflight";
+
 import { readProviderId, readProviderLiteral } from "./provider-config";
 
 type MediaKind = "image" | "video";
@@ -32,7 +33,10 @@ const requiredMedia = (tool: MediaConsumer): readonly MediaKind[] => {
   if (tool.id === "generate-image") {
     return ["image"];
   }
-  return tool.id === "generate-video" ? ["video"] : [];
+  if (tool.id === "generate-video") {
+    return ["video"];
+  }
+  return [];
 };
 
 const requiresStorage = (item: StorageConsumer): boolean =>
@@ -57,7 +61,6 @@ const validateStorage = async (
     );
   }
 };
-
 const installedMediaGateway = async (cwd: string): Promise<MediaGateway> => {
   const file = "lib/ai/gateway-model-defaults.ts";
   await preflight(cwd, [file]);
@@ -72,7 +75,6 @@ const installedMediaGateway = async (cwd: string): Promise<MediaGateway> => {
     defaults: mediaDefaultsSchema.parse(defaults),
   };
 };
-
 const validateMedia = (
   tools: readonly MediaConsumer[],
   gateway: MediaGateway
@@ -114,7 +116,6 @@ const validateProviderRequirements = async (
     validateMedia(mediaConsumers, gateway);
   }
 };
-
 const validateCodeExecutionRequirements = (
   definition: Readonly<{
     slot?: string;

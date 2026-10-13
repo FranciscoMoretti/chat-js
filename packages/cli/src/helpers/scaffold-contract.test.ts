@@ -26,7 +26,6 @@ const buildConfigFor = (gateway: Gateway): string =>
     withElectron: false,
   });
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 describe("scaffold contracts", () => {
   it("builds valid configs without tool presence switches for every gateway", () => {
     for (const gateway of GATEWAYS) {
@@ -55,4 +54,3 @@ describe("scaffold contracts", () => {
     expect(litellm).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
-/* oxlint-enable eslint/max-statements */

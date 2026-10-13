@@ -1,39 +1,39 @@
-import {
-  convertFileListToFileUIParts,
-  DefaultChatTransport,
-  generateId,
-} from "ai";
 import type {
   AbstractChat,
   ChatInit,
   ChatStatus,
   ChatTransport,
-  UIMessage,
   UIDataTypes,
+  UIMessage,
   UITools,
 } from "ai";
-
-import { ThreadRunChat } from "./ai-sdk-run-chat";
+import {
+  DefaultChatTransport,
+  convertFileListToFileUIParts,
+  generateId,
+} from "ai";
+import type {
+  MessageTreeSnapshot,
+  ThreadConcurrency,
+  ThreadRun,
+  ThreadRunHandle,
+  ThreadStartRunOptions,
+  ThreadState,
+  ThreadStateSnapshot,
+  TreeSendOptions,
+} from "./types";
 import type {
   RequestReader,
   ThreadRunHost,
   ThreadRunSpec,
 } from "./ai-sdk-run-chat";
 import { MessageTree } from "./message-tree";
-import type { SnapshotInput } from "./message-tree-readers";
-import { RunRegistry } from "./run-registry";
 import type { RunRecord } from "./run-registry";
+import { RunRegistry } from "./run-registry";
+import type { SnapshotInput } from "./message-tree-readers";
+import { ThreadRunChat } from "./ai-sdk-run-chat";
 import { ThreadRunHostAdapter } from "./thread-run-host";
-import type {
-  MessageTreeSnapshot,
-  ThreadConcurrency,
-  ThreadRunHandle,
-  ThreadRun,
-  ThreadStartRunOptions,
-  ThreadState,
-  ThreadStateSnapshot,
-  TreeSendOptions,
-} from "./types";
+import { toRunSnapshot } from "./run-snapshots";
 
 const FIRST_PARAMETER_INDEX = 0;
 const SECOND_PARAMETER_INDEX = 1;
@@ -89,37 +89,38 @@ type SendMessageInput<TMessage extends UIMessage> = Parameters<
 const getInputMessageId = (input: {
   readonly id?: string;
   readonly messageId?: string;
-}): string | undefined =>
-  "id" in input ? (input.id ?? input.messageId) : input.messageId;
+}): string | undefined => {
+  if ("id" in input) {
+    return input.id ?? input.messageId;
+  }
+  return input.messageId;
+};
 
-// oxlint-disable-next-line unicorn/no-null -- MessageTree serializes the root parent/cursor as null; root traversal, attachment, and run capacity checks must retain that exact ID sentinel.
 const ROOT_MESSAGE_ID = null;
 
-// oxlint-disable-next-line unicorn/no-null -- RunRegistry.select uses null to clear an explicit run selection before cursor/path replacement; undefined is not its selection contract.
 const NO_SELECTED_RUN = null;
 
-// oxlint-disable-next-line eslint/no-undefined -- Files-only SDK input omits text; skip creating a text part for that exact absent value while retaining empty strings.
-const ABSENT_INPUT_TEXT = undefined;
+// Files-only SDK input omits text; skip creating a text part for that exact absent value while retaining empty strings.
+const ABSENT_INPUT_TEXT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- A tool lookup begins without an owning assistant and returns this absent result when no matching part exists.
-const NO_PART_OWNER = undefined;
+// A tool lookup begins without an owning assistant and returns this absent result when no matching part exists.
+const NO_PART_OWNER = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- A cursor without an assistant, or a non-assistant lookup, has no resumable assistant run; both helpers return this optional result.
-const NO_ASSISTANT_RUN = undefined;
+// A cursor without an assistant, or a non-assistant lookup, has no resumable assistant run; both helpers return this optional result.
+const NO_ASSISTANT_RUN = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- An omitted regeneration messageId selects the cursor; a missing or root cursor has no message to regenerate, continue, or use as run origin. Both optional targets use undefined.
-const ABSENT_MESSAGE_TARGET = undefined;
+// An omitted regeneration messageId selects the cursor; a missing or root cursor has no message to regenerate, continue, or use as run origin. Both optional targets use undefined.
+const ABSENT_MESSAGE_TARGET = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- sendMessage forwards an absent tree.from option as an explicitly omitted run origin; startRun then selects the current cursor.
-const OMITTED_RUN_ORIGIN = undefined;
+// The sendMessage method forwards an absent tree.from option as an explicitly omitted run origin; startRun then selects the current cursor.
+const OMITTED_RUN_ORIGIN = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- Run lookup helpers expose ThreadRun | undefined when the registry has no matching run, preserving the public optional result.
-const NO_RUN_SNAPSHOT = undefined;
+// Run lookup helpers expose ThreadRun | undefined when the registry has no matching run, preserving the public optional result.
+const NO_RUN_SNAPSHOT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
-const NO_RUN_ERROR = undefined;
+// RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
+const NO_RUN_ERROR = globalThis.undefined;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The SDK input supplies mutable parts and metadata to the constructed message without cloning their identity; recursively readonly parts cannot satisfy the SDK message result. */
 const createMessageFromInput = async <
   Metadata,
   Data extends UIDataTypes,
@@ -158,7 +159,6 @@ const createMessageFromInput = async <
     role: input.role ?? "user",
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 abstract class ThreadCore<
   Metadata,
@@ -195,7 +195,6 @@ abstract class ThreadCore<
   readonly #state: ThreadState<UIMessage<Metadata, Data, Tools>>;
 
   protected constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed SDK accepts native schema and transport types; recursively readonly schema metadata cannot satisfy ChatInit or the live state host.
     options: Readonly<ThreadCoreOptions<UIMessage<Metadata, Data, Tools>>>
   ) {
     this.id = options.id ?? generateId();
@@ -252,7 +251,6 @@ abstract class ThreadCore<
     this.#state.subscribe(listener);
 
   public addMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree stores the canonical SDK message; readonly nested metadata and parts cannot satisfy its native message contract.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     parentId: string | null
   ): void {
@@ -276,18 +274,12 @@ abstract class ThreadCore<
     const run = this.getOrCreateRunForApproval(response.id);
     await run.chat.addToolApprovalResponse(response);
   };
-
   public addToolOutput: AbstractChat<
     UIMessage<Metadata, Data, Tools>
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK addToolOutput callback is generic in the tool name and native output type; a deeply readonly extracted input fails both its callback assignment and SDK receiver.
   >["addToolOutput"] = async (output): Promise<void> => {
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
-
-  public addToolResult: AbstractChat<
-    UIMessage<Metadata, Data, Tools>
-  >["addToolResult"] = this.addToolOutput;
 
   public getTreeSnapshot(): MessageTreeSnapshot<
     UIMessage<Metadata, Data, Tools>
@@ -339,12 +331,16 @@ abstract class ThreadCore<
 
   public setCursor(messageId: string | null): void {
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setCursor(messageId));
+    this.updateTree((tree): void => {
+      tree.setCursor(messageId);
+    });
   }
 
   public setCursorToParentOf(messageId: string): void {
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setCursorToParentOf(messageId));
+    this.updateTree((tree): void => {
+      tree.setCursorToParentOf(messageId);
+    });
   }
 
   private getMessagePath(
@@ -355,7 +351,6 @@ abstract class ThreadCore<
 
   private writeRunMessage(
     runId: string,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The live SDK response message reaches MessageTree.upsertMessage with its native metadata and parts types.
     message: Readonly<UIMessage<Metadata, Data, Tools>>
   ): void {
     const run = this.#runs.require(runId);
@@ -387,7 +382,6 @@ abstract class ThreadCore<
     });
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Binding writes the existing live run spec messageId; a readonly spec forbids this required mutation before tree insertion.
   private static bindRunResponse({
     tree,
     runId,
@@ -446,36 +440,41 @@ abstract class ThreadCore<
       ),
     };
     this.#runs.select(spec.id);
-    this.updateTree((tree): void => tree.setCursor(target.id));
-    const run = this.startRunRequest(
-      spec,
-      async (chat): Promise<void> =>
-        await chat.regenerateMessage(target.id, options)
-    );
+    this.updateTree((tree): void => {
+      tree.setCursor(target.id);
+    });
+    const run = this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.regenerateMessage(target.id, options);
+    });
     await run.finished;
   };
-
   private getRegenerationTarget(messageId?: string): Readonly<{
     parentMessageId: string | null;
     target: UIMessage<Metadata, Data, Tools>;
   }> {
     const { parentMessageId, target } = this.readTree((tree) => {
-      const cursorTarget =
-        typeof tree.cursorId === "string" && tree.cursorId !== ""
-          ? tree.getMessage(tree.cursorId)
-          : ABSENT_MESSAGE_TARGET;
-      const selectedTarget =
-        messageId === ABSENT_MESSAGE_TARGET || messageId === ROOT_MESSAGE_ID
-          ? cursorTarget
-          : tree.getMessage(messageId);
-      let targetParentMessageId: string | null = ROOT_MESSAGE_ID;
-      if (selectedTarget) {
-        targetParentMessageId =
-          selectedTarget.role === "assistant"
-            ? (tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID)
-            : selectedTarget.id;
+      let selectedTarget: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof tree.cursorId === "string" && tree.cursorId !== "") {
+        selectedTarget = tree.getMessage(tree.cursorId);
       }
-      return { parentMessageId: targetParentMessageId, target: selectedTarget };
+      if (
+        messageId !== ABSENT_MESSAGE_TARGET &&
+        messageId !== ROOT_MESSAGE_ID
+      ) {
+        selectedTarget = tree.getMessage(messageId);
+      }
+      if (!selectedTarget) {
+        return { parentMessageId: ROOT_MESSAGE_ID, target: selectedTarget };
+      }
+      if (selectedTarget.role === "assistant") {
+        return {
+          parentMessageId:
+            tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID,
+          target: selectedTarget,
+        };
+      }
+      return { parentMessageId: selectedTarget.id, target: selectedTarget };
     });
     if (!target) {
       throw new Error(`message ${messageId} not found`);
@@ -484,22 +483,26 @@ abstract class ThreadCore<
   }
 
   public upsertMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage requires canonical SDK metadata and mutable parts types; the outer message is already readonly.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     parentId: string | null
   ): void {
-    this.updateTree((tree): void => tree.upsertMessage(message, parentId));
+    this.updateTree((tree): void => {
+      tree.upsertMessage(message, parentId);
+    });
   }
 
   public removeMessage(messageId: string): void {
-    this.updateTree((tree): void => tree.removeLeaf(messageId));
+    this.updateTree((tree): void => {
+      tree.removeLeaf(messageId);
+    });
   }
 
   private updateRunPath(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.updatePath requires canonical SDK metadata and parts on each message; the containing array is already readonly.
     messages: readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
   ): void {
-    this.updateTree((tree): void => tree.updatePath(messages));
+    this.updateTree((tree): void => {
+      tree.updatePath(messages);
+    });
   }
 
   public resumeStream: AbstractChat<
@@ -512,42 +515,40 @@ abstract class ThreadCore<
     }
     await this.resumeRunRequest(run, options);
   };
-
   public resumeRun = async (
     runId: string,
     options: RequestReader = {}
   ): Promise<void> => {
     await this.resumeRunRequest(this.#runs.require(runId), options);
   };
-
   public restore(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.restore requires nodes containing canonical SDK messages; the snapshot and node containers are already readonly.
     snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
   ): void {
     this.assertCanResetTree();
     this.#runs.clear();
-    this.updateTree((tree): void => tree.restore(snapshot));
+    this.updateTree((tree): void => {
+      tree.restore(snapshot);
+    });
   }
 
   public setMessages(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The setter accepts native canonical messages or the SDK updater; deeply readonly messages cannot satisfy MessageTree.setPath.
     messages:
       | readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
       | ((
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK setter updater receives native canonical messages, including mutable metadata and parts; a readonly callback input breaks existing typed updater callers.
           messages: UIMessage<Metadata, Data, Tools>[]
         ) => UIMessage<Metadata, Data, Tools>[])
   ): void {
-    const nextMessages =
-      typeof messages === "function"
-        ? messages(this.getSnapshot().messages)
-        : messages;
+    let nextMessages = messages;
+    if (typeof nextMessages === "function") {
+      nextMessages = nextMessages(this.getSnapshot().messages);
+    }
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setPath(nextMessages));
+    this.updateTree((tree): void => {
+      tree.setPath(nextMessages);
+    });
   }
 
   public sendMessage = async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed SDK send input includes canonical parts or FileList; deeply readonly input cannot satisfy message construction and SDK forwarding.
     input?: SendMessageInput<UIMessage<Metadata, Data, Tools>>,
     options?: TreeRequestReader
   ): Promise<void> => {
@@ -561,7 +562,7 @@ abstract class ThreadCore<
         typeof cursorId === "string" && cursorId !== ""
           ? this.getMessage(cursorId)
           : ABSENT_MESSAGE_TARGET;
-      if (cursorMessage?.role === "assistant") {
+      if (cursorMessage && cursorMessage.role === "assistant") {
         const run = this.continueAssistant({
           follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
           messageId: cursorMessage.id,
@@ -582,8 +583,6 @@ abstract class ThreadCore<
     });
     await run.finished;
   };
-
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The start input forwards canonical SDK parts and metadata into message construction; a deeply readonly message changes its inferred metadata and fails the SDK input receiver.
   public startRun = async ({
     follow: requestedFollow,
     from,
@@ -621,7 +620,6 @@ abstract class ThreadCore<
       parentMessageId: message.id,
     });
   };
-
   private resolveFollow(
     requestedFollow: boolean | undefined,
     cursorId: string | null
@@ -635,14 +633,16 @@ abstract class ThreadCore<
     originMessage: UIMessage<Metadata, Data, Tools> | undefined;
   }> {
     const { cursorId, originMessage } = this.readTree((tree) => {
-      const originCursorId = from === OMITTED_RUN_ORIGIN ? tree.cursorId : from;
-      return {
-        cursorId: originCursorId,
-        originMessage:
-          typeof originCursorId === "string" && originCursorId !== ""
-            ? tree.getMessage(originCursorId)
-            : ABSENT_MESSAGE_TARGET,
-      };
+      let originCursorId = from;
+      if (originCursorId === OMITTED_RUN_ORIGIN) {
+        originCursorId = tree.cursorId;
+      }
+      let resolvedOriginMessage: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof originCursorId === "string" && originCursorId !== "") {
+        resolvedOriginMessage = tree.getMessage(originCursorId);
+      }
+      return { cursorId: originCursorId, originMessage: resolvedOriginMessage };
     });
     if (typeof cursorId === "string" && cursorId !== "" && !originMessage) {
       throw new Error(`Unknown message ${cursorId}`);
@@ -668,16 +668,16 @@ abstract class ThreadCore<
   }
 
   private attachInputMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage receives the original SDK message and mutable parts array; recursively readonly parts cannot satisfy its canonical stored-message contract.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     cursorId: string | null,
     follow: boolean
   ): void {
     this.updateTree((tree): void => {
       const existingMessage = tree.getMessage(message.id);
-      const attachmentId = existingMessage
-        ? (tree.getParentId(message.id) ?? ROOT_MESSAGE_ID)
-        : cursorId;
+      let attachmentId = cursorId;
+      if (existingMessage) {
+        attachmentId = tree.getParentId(message.id) ?? ROOT_MESSAGE_ID;
+      }
       tree.upsertMessage(message, attachmentId);
       if (follow) {
         tree.setCursor(message.id);
@@ -692,9 +692,9 @@ abstract class ThreadCore<
     }
   };
 
-  public stop = async (): Promise<void> =>
+  public stop = async (): Promise<void> => {
     await (this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve());
-
+  };
   public async stopAll(): Promise<void> {
     await Promise.all(
       this.#runs.getActive().map(
@@ -704,29 +704,44 @@ abstract class ThreadCore<
               Pick<ThreadRunChat<UIMessage<Metadata, Data, Tools>>, "stop">
             >;
           }>
-        ): Promise<void> => await run.chat.stop()
+        ): Promise<void> => {
+          await run.chat.stop();
+        }
       )
     );
   }
-
   public async stopRun(runId: string): Promise<void> {
-    await (this.#runs.get(runId)?.chat.stop() ?? Promise.resolve());
+    const run = this.#runs.get(runId);
+    if (run) {
+      await (run.chat.stop() ?? Promise.resolve());
+      return;
+    }
+    await Promise.resolve();
   }
-
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
-  public stopRunForMessage(messageId: string): Promise<void> {
+  public async stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
-    return run ? this.stopRun(run.id) : Promise.resolve();
+
+    if (run) {
+      await this.stopRun(run.id);
+    }
   }
 
   public getRun(runId: string): ThreadRun | undefined {
     const run = this.#runs.get(runId);
-    return run ? RunRegistry.toSnapshot(run) : NO_RUN_SNAPSHOT;
+
+    if (run) {
+      return toRunSnapshot(run);
+    }
+    return NO_RUN_SNAPSHOT;
   }
 
   public getRunForMessage(messageId: string): ThreadRun | undefined {
     const run = this.#runs.getForMessage(messageId);
-    return run ? RunRegistry.toSnapshot(run) : NO_RUN_SNAPSHOT;
+
+    if (run) {
+      return toRunSnapshot(run);
+    }
+    return NO_RUN_SNAPSHOT;
   }
 
   private setRunError(runId: string, error: Readonly<Error> | undefined): void {
@@ -763,16 +778,15 @@ abstract class ThreadCore<
       ...treeSnapshot,
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
-      error: selectedRun?.error,
+      error: selectedRun && selectedRun.error,
       messages: tree.getPath(),
       runs: runSnapshot.runs,
-      status: selectedRun?.status ?? "ready",
+      status: (selectedRun && selectedRun.status) ?? "ready",
       treeStatus: runSnapshot.status,
     };
   }
 
   private createTree(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree construction requires snapshots of canonical SDK messages; the outer snapshot and nodes are readonly.
     snapshot?: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
   ): MessageTree<UIMessage<Metadata, Data, Tools>> {
     const resolvedSnapshot = snapshot ?? this.#state.getSnapshot();
@@ -786,23 +800,30 @@ abstract class ThreadCore<
       generateMessageId: (): string => this.generateMessageId(),
       getMessagePath: (messageId): UIMessage<Metadata, Data, Tools>[] =>
         this.getMessagePath(messageId),
-      registerToolCall: (runId, toolCallId): void =>
-        this.registerToolCall(runId, toolCallId),
-      removeMessage: (messageId): void => this.removeMessage(messageId),
-      setRunError: (runId, error): void => this.setRunError(runId, error),
-      setRunStatus: (runId, status): void => this.setRunStatus(runId, status),
+      registerToolCall: (runId, toolCallId): void => {
+        this.registerToolCall(runId, toolCallId);
+      },
+      removeMessage: (messageId): void => {
+        this.removeMessage(messageId);
+      },
+      setRunError: (runId, error): void => {
+        this.setRunError(runId, error);
+      },
+      setRunStatus: (runId, status): void => {
+        this.setRunStatus(runId, status);
+      },
       updateRunPath: (
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The host callback forwards canonical SDK messages to MessageTree.updatePath; a deeply readonly parameter also fails the native host callback assignment.
         messages: readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
-      ): void => this.updateRunPath(messages),
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The host callback forwards the canonical SDK response into MessageTree.upsertMessage without changing its parts or metadata types.
-      writeRunMessage: (runId, message): void =>
-        this.writeRunMessage(runId, message),
+      ): void => {
+        this.updateRunPath(messages);
+      },
+      writeRunMessage: (runId, message): void => {
+        this.writeRunMessage(runId, message);
+      },
     });
   }
 
   private publish(): void {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater supplies snapshots with canonical SDK messages to MessageTree construction; readonly nodes alone do not make native parts readonly.
     this.updateState((snapshot) =>
       this.buildSnapshot(this.createTree(snapshot))
     );
@@ -820,7 +841,6 @@ abstract class ThreadCore<
     ) => TResult
   ): TResult {
     const completed: { value: TResult }[] = [];
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater supplies snapshots with canonical SDK messages to MessageTree construction; recursively readonly parts fail that receiver.
     this.updateState((snapshot) => {
       const tree = this.createTree(snapshot);
       const value = updater(tree);
@@ -836,13 +856,11 @@ abstract class ThreadCore<
 
   private updateState(
     updater: (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater callback receives native canonical snapshots; a deeply readonly snapshot callback fails ThreadState.update assignment.
       snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
     ) => ThreadStateSnapshot<UIMessage<Metadata, Data, Tools>>
   ): void {
     let calls = 0;
     this.#state.update(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ThreadState.update supplies native canonical snapshots that are passed to MessageTree construction; outer containers are already readonly.
       (snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>) => {
         calls += UPDATE_CALL_INCREMENT;
         return updater(snapshot);
@@ -910,8 +928,16 @@ abstract class ThreadCore<
     const owner = this.findAssistantOwningPart({
       id: approvalId,
       label: "Tool approval",
-      matches: (part): boolean =>
-        isToolLookupPart(part) && part.approval?.id === approvalId,
+      matches: (part): boolean => {
+        if (!isToolLookupPart(part)) {
+          return false;
+        }
+        const approval = part.approval ?? globalThis.undefined;
+        if (approval === globalThis.undefined) {
+          return approval === approvalId;
+        }
+        return approval.id === approvalId;
+      },
     });
     if (!owner) {
       throw new Error(`No run owns tool approval ${approvalId}`);
@@ -1063,12 +1089,13 @@ abstract class ThreadCore<
     };
     if (follow) {
       this.#runs.select(id);
-      this.updateTree((tree): void => tree.setCursor(parentMessageId));
+      this.updateTree((tree): void => {
+        tree.setCursor(parentMessageId);
+      });
     }
-    return this.startRunRequest(
-      spec,
-      async (chat): Promise<void> => await chat.start(options)
-    );
+    return this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.start(options);
+    });
   }
 
   private startRunRequest(
@@ -1129,7 +1156,9 @@ abstract class ThreadCore<
     }
     if (follow) {
       this.#runs.select(run.spec.id);
-      this.updateTree((tree): void => tree.setCursor(messageId));
+      this.updateTree((tree): void => {
+        tree.setCursor(messageId);
+      });
     }
     run.finished = this.publishWhenFinished(run.chat.start(options));
     this.publish();
@@ -1138,7 +1167,10 @@ abstract class ThreadCore<
 
   private assertCanContinueAssistant(messageId: string): void {
     const existing = this.#runs.getForResponseMessage(messageId);
-    if (existing?.status === "submitted" || existing?.status === "streaming") {
+    if (
+      existing &&
+      (existing.status === "submitted" || existing.status === "streaming")
+    ) {
       throw new Error(
         `Assistant message ${messageId} already has an active run`
       );
@@ -1157,7 +1189,6 @@ abstract class ThreadCore<
     }
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The assistant message is passed to the installed SDK startWithMessage receiver; deeply readonly metadata or parts cannot satisfy its send input.
   private startAssistantMessage({
     follow,
     message,
@@ -1183,11 +1214,9 @@ abstract class ThreadCore<
     if (follow) {
       this.#runs.select(spec.id);
     }
-    return this.startRunRequest(
-      spec,
-      async (chat): Promise<void> =>
-        await chat.startWithMessage(message, options)
-    );
+    return this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.startWithMessage(message, options);
+    });
   }
 
   private createRunHandle(
@@ -1205,7 +1234,9 @@ abstract class ThreadCore<
       },
       getSnapshot: (): ThreadRun | undefined => this.getRun(run.spec.id),
       id: run.spec.id,
-      stop: async (): Promise<void> => await run.chat.stop(),
+      stop: async (): Promise<void> => {
+        await run.chat.stop();
+      },
     };
   }
 
@@ -1218,9 +1249,7 @@ abstract class ThreadCore<
       this.publish();
     }
   }
-
   private async resumeRunRequest(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Resuming writes the new completion promise to the existing run record; readonly finished forbids this required live update.
     run: ResumableRun<UIMessage<Metadata, Data, Tools>>,
     options: RequestReader
   ): Promise<void> {
@@ -1232,8 +1261,6 @@ abstract class ThreadCore<
     await finished;
   }
 }
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 
 export { ThreadCore };
 export type { ThreadCoreOptions };

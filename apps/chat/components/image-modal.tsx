@@ -1,11 +1,13 @@
 "use client";
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
+import Image from "next/image";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogClose,
@@ -13,8 +15,10 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
+
 import { cn } from "@/lib/utils";
+
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 interface ImageModalProps {
   readonly imageName?: string;
@@ -43,8 +47,6 @@ const handleCopyImage = async (
   }
 };
 
-/* oxlint-disable max-statements -- handleDownload: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation. */
-
 const handleDownload = async (
   event: Readonly<Pick<React.MouseEvent, "stopPropagation">>,
   imageUrl: string | undefined
@@ -69,8 +71,6 @@ const handleDownload = async (
     toast.error("Failed to download image");
   }
 };
-/* oxlint-enable max-statements */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract;  */
 
 const ImageActions = ({
   className,
@@ -108,9 +108,6 @@ const ImageActions = ({
     </Button>
   </div>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships;  */
 
 const ImageModal = ({
   isOpen,
@@ -155,15 +152,19 @@ const ImageModal = ({
               <span>Image unavailable</span>
             </output>
           ) : (
-            <>
-              {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
-              <img
+            imageUrl !== "" && (
+              <Image
                 alt={imageName ?? "Expanded image"}
-                className="max-h-[90vh] max-w-[90vw] object-contain"
+                loading="eager"
+                unoptimized
+                className="h-auto max-h-[90vh] w-auto max-w-[90vw] object-contain"
+                // Auto CSS sizing keeps unknown attachment dimensions intrinsic; zero hints reserve no artificial aspect ratio.
+                height={0}
+                width={0}
                 onError={handleImageError}
-                src={imageUrl || undefined}
+                src={imageUrl}
               />
-            </>
+            )
           )}
         </button>
         {showActions && !imageUnavailable && (
@@ -176,5 +177,4 @@ const ImageModal = ({
     </Dialog>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp */
 export { ImageActions, ImageModal };

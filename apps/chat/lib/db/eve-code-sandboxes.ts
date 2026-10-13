@@ -6,9 +6,10 @@ import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
 
 const FIRST_ROW_INDEX = 0;
+const EMPTY_RESULT_COUNT = 0;
 
 type SandboxTransaction = Readonly<
-  Pick<typeof db, "execute" | "insert" | "select">
+  Pick<typeof db, "execute" | "select" | "insert">
 >;
 
 type CodeSandboxForDeletion = Pick<
@@ -17,16 +18,12 @@ type CodeSandboxForDeletion = Pick<
 > &
   Pick<typeof eveConversation.$inferSelect, "sessionId">;
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements --
-max-lines-per-function (#510): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Commit intent before provider I/O; no resource may be allocated by this function.
- * @param ownerId Owner whose conversation family is locked during reservation.
- * @param conversationId Bound conversation that will own the sandbox.
- * @param callId Tool call whose existing allocation must be reconciled before any retry.
- * @param provider Vercel project and team identities used to derive the sandbox name.
- * @returns The durably reserved provider resource name.
+ * @param {string} ownerId Owner whose conversation family is locked during reservation.
+ * @param {string} conversationId Bound conversation that will own the sandbox.
+ * @param {string} callId Tool call whose existing allocation must be reconciled before any retry.
+ * @param {{ readonly teamId: string; readonly projectId: string; }} provider Vercel project and team identities used to derive the sandbox name.
+ * @returns {Promise<string>} The durably reserved provider resource name.
  */
 const reserveEveCodeSandbox = async (
   ownerId: string,
@@ -92,12 +89,11 @@ const reserveEveCodeSandbox = async (
     }
     return inserted.name;
   });
-/* oxlint-enable max-lines-per-function, max-params, max-statements */
 
 /** Internal coordinator only: caller must prove no pending allocation can finish later.
- * @param ownerId Owner whose sandbox allocation may be marked deleted.
- * @param conversationId Conversation that owns the allocation.
- * @param name Reserved provider resource name confirmed deleted by the coordinator.
+ * @param {string} ownerId Owner whose sandbox allocation may be marked deleted.
+ * @param {string} conversationId Conversation that owns the allocation.
+ * @param {string} name Reserved provider resource name confirmed deleted by the coordinator.
  */
 const recordEveCodeSandboxDeletion = async (
   ownerId: string,
@@ -120,11 +116,10 @@ const recordEveCodeSandboxDeletion = async (
     throw new Error("Code sandbox ownership not found.");
   }
 };
-
 /** A successful create reply proves this invocation has finished allocating.
- * @param ownerId Owner whose unresolved allocation may be confirmed.
- * @param conversationId Conversation that owns the allocation.
- * @param name Reserved provider resource name successfully created.
+ * @param {string} ownerId Owner whose unresolved allocation may be confirmed.
+ * @param {string} conversationId Conversation that owns the allocation.
+ * @param {string} name Reserved provider resource name successfully created.
  */
 const confirmEveCodeSandboxCreation = async (
   ownerId: string,
@@ -149,13 +144,6 @@ const confirmEveCodeSandboxCreation = async (
   }
 };
 
-/* oxlint-disable no-magic-numbers --
-no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-/** Internal cleanup inventory; unretired families cannot authorize provider deletion.
- * @param ownerId Owner whose retired conversation family is being purged.
- * @param rootId Logical chat identity whose versions must all be retired.
- * @returns Owned allocations that still require provider deletion or reconciliation.
- */
 const listEveCodeSandboxesForDeletion = async (
   ownerId: string,
   rootId: string
@@ -173,7 +161,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
   if (
-    family.length === 0 ||
+    family.length === EMPTY_RESULT_COUNT ||
     family.some((row) => row.state !== "deleting" && row.state !== "deleted")
   ) {
     throw new Error(
@@ -201,7 +189,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
 };
-/* oxlint-enable no-magic-numbers */
+
 export {
   confirmEveCodeSandboxCreation,
   listEveCodeSandboxesForDeletion,

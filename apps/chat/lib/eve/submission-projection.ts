@@ -1,13 +1,3 @@
-/* oxlint-disable max-lines-per-function, no-await-in-loop, no-magic-numbers, no-undefined, typescript/consistent-return, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
- * max-lines-per-function: Keep the ordered dispatch/receipt or streaming scenario together so its evidence transitions remain reviewable.
- * no-await-in-loop: Persist and project native events in stream order before advancing the reader cursor.
- * no-magic-numbers: Protocol statuses, array positions and deterministic scenario counts are local to this boundary.
- * no-undefined: Undefined represents absent stream evidence or an optional query result; null is a persisted value.
- * typescript/consistent-return: Missing scoped evidence returns no result; valid receipts return the stored projection.
- * typescript/prefer-readonly-parameter-types: The Drizzle, EVE and Web Streams callbacks retain their SDK parameter types; the boundary does not mutate event data.
- * unicorn/max-nested-calls: Validate nested wire metadata at the projection boundary without inventing intermediate domain values.
- * unicorn/no-null: Explicit null represents the stored no-tool selection or an empty HTTP body, not missing evidence.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
@@ -52,7 +42,6 @@ const restoredHistory = z.object({
 });
 
 // Imported/forked history transfers display only. It must never acknowledge a new submission.
-// oxlint-disable-next-line max-statements -- Import ordered seed and restored history annotations without treating inherited operations as new submissions.
 const importEveHistoryAnnotations = async (
   ownerId: string,
   sessionId: string,
@@ -62,6 +51,7 @@ const importEveHistoryAnnotations = async (
   if (seed.success) {
     for (const message of seed.data.data.messages) {
       if (message.role === "user") {
+        // oxlint-disable-next-line no-await-in-loop -- Process native history in order so first receipt identity and stream frame order remain stable.
         await recordEveMessageReceipt({
           legacy: true,
           legacySelection:
@@ -78,9 +68,11 @@ const importEveHistoryAnnotations = async (
   const restored = restoredHistory.safeParse(value);
   if (restored.success) {
     for (const event of restored.data.data.events) {
+      // oxlint-disable-next-line no-await-in-loop -- Process native history in order so first receipt identity and stream frame order remain stable.
       await importEveHistoryAnnotations(ownerId, sessionId, event);
       const prior = receipt.safeParse(event);
       if (prior.success && prior.data.data.kind === undefined) {
+        // oxlint-disable-next-line no-await-in-loop -- Process native history in order so first receipt identity and stream frame order remain stable.
         await recordEveMessageReceipt({
           legacy: true,
           legacySelection:
@@ -105,7 +97,7 @@ const annotationForReceipt = async (
   await importEveHistoryAnnotations(ownerId, sessionId, value);
   const parsed = receipt.safeParse(value);
   if (!parsed.success || parsed.data.data.kind !== undefined) {
-    return;
+    return undefined;
   }
   const old = legacy.safeParse(parsed.data.data.metadata).data?.chatjs;
   const operationIds =
@@ -128,6 +120,7 @@ const projectEveSubmissionEvents = async (
 ): Promise<MessageStreamEvent[]> => {
   const projected: MessageStreamEvent[] = [];
   for (const event of events) {
+    // oxlint-disable-next-line no-await-in-loop -- Process native history in order so first receipt identity and stream frame order remain stable.
     const annotation = await annotationForReceipt(ownerId, sessionId, event);
     projected.push(
       event.type === "message.received" && annotation !== undefined
@@ -163,7 +156,6 @@ const projectEveSubmissionStream = (
   body: ReadableStream<Uint8Array>
 ): ReadableStream<Uint8Array> => {
   let pending = "";
-  // oxlint-disable-next-line max-statements -- Parse and persist each native frame before emitting its projected metadata.
   const projectLine = async (line: string): Promise<string> => {
     if (line.trim() === "") {
       return line;
@@ -227,6 +219,7 @@ const projectEveSubmissionStream = (
           while (newline !== -1) {
             const line = pending.slice(0, newline);
             pending = pending.slice(newline + 1);
+            // oxlint-disable-next-line no-await-in-loop -- Process native history in order so first receipt identity and stream frame order remain stable.
             controller.enqueue(`${await projectLine(line)}\n`);
             newline = pending.indexOf("\n");
           }
@@ -237,5 +230,3 @@ const projectEveSubmissionStream = (
 };
 
 export { projectEveSubmissionEvents, projectEveSubmissionStream };
-
-/* oxlint-enable max-lines-per-function, no-await-in-loop, no-magic-numbers, no-undefined, typescript/consistent-return, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */

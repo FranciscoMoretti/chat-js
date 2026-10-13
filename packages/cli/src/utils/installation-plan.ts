@@ -1,38 +1,35 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { InstallationSelection } from "../../../registry/installation";
-import { installationSelectionSchema } from "../../../registry/installation";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import {
-  featureDefinitionSchema,
-  featureIdSchema,
-  toolDefinitionSchema,
-  storageDefinitionSchema,
-} from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type {
   FeatureDefinition,
   ToolDefinition,
 } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { itemAddress, readItem } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
+
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
+
+import path from "node:path";
+import { readFile } from "node:fs/promises";
+
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
+import { itemAddress, readItem } from "#cli/registry/shadcn";
+
+import type { InstallationSelection } from "../../../registry/installation";
+import { installationSelectionSchema } from "../../../registry/installation";
+
+import {
+  featureDefinitionSchema,
+  featureIdSchema,
+  storageDefinitionSchema,
+  toolDefinitionSchema,
+} from "../../../registry/metadata";
 import {
   registryMetadataKind,
-  validateRequestedKind,
   validateCodeExecutionRequirements,
   validateProviderRequirements,
+  validateRequestedKind,
 } from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
+
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
@@ -45,20 +42,12 @@ type ReadonlyNative<Value> = Value extends (
 
 const EMPTY_DEPENDENCY_COUNT = 0;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * Resolve the complete target installation before any source files are written.
- * @param cwd Project directory used for provider, feature and tool preflight.
- * @param input Requested registry selections validated before dependency resolution.
- * @param options Whether this is a fresh installation and replacements are permitted.
- * @returns Resolved items, validated selections, target changes and registry sources.
+ * @param {string} cwd Project directory used for provider, feature and tool preflight.
+ * @param {ReadonlyNative<InstallationSelection>} input Requested registry selections validated before dependency resolution.
+ * @param {{ readonly fresh?: boolean; readonly replace?: boolean; readonly documents?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
+ * @returns {ReturnType<typeof planInstallation>} Resolved items, validated selections, target changes and registry sources.
  */
 export const planInstallation = async (
   cwd: string,
@@ -76,9 +65,11 @@ export const planInstallation = async (
   const items = new Map<string, ReturnType<typeof readItem>>();
   const features = new Map<string, FeatureDefinition>();
   const providers = new Map<string, string>();
-  // oxlint-disable-next-line eslint/init-declarations -- The optional gateway is assigned only when the selected registry graph contains one.
   let gateway: GatewayDefinition | undefined;
-  const selectProvider = (definition: { kind: string; id: string }): void => {
+  const selectProvider = (definition: {
+    readonly kind: string;
+    readonly id: string;
+  }): void => {
     const previous = providers.get(definition.kind);
     if (
       typeof previous === "string" &&
@@ -146,18 +137,19 @@ export const planInstallation = async (
     }
     await Promise.all(
       (item.registryDependencies ?? []).map(
-        async (dependency): Promise<void> => await visit(dependency)
+        async (dependency): Promise<void> => {
+          await visit(dependency);
+        }
       )
     );
   };
   await Promise.all([
-    ...selection.tools.map(
-      async (source): Promise<void> => await visit(itemAddress(source, "tool"))
-    ),
-    ...selection.features.map(
-      async (source): Promise<void> =>
-        await visit(itemAddress(source, "tool"), "feature")
-    ),
+    ...selection.tools.map(async (source): Promise<void> => {
+      await visit(itemAddress(source, "tool"));
+    }),
+    ...selection.features.map(async (source): Promise<void> => {
+      await visit(itemAddress(source, "tool"), "feature");
+    }),
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
@@ -166,7 +158,7 @@ export const planInstallation = async (
       : []),
   ]);
   const providerChanges = await Promise.all(
-    [...providers].map(async ([kind, next]) => {
+    [...providers].map(async ([kind, next]: readonly [string, string]) => {
       if (kind !== "gateway" && kind !== "storage") {
         throw new Error("Invalid exclusive provider kind.");
       }
@@ -185,34 +177,42 @@ export const planInstallation = async (
       return { kind, next, previous };
     })
   );
-  const replacements = installed.flatMap((previous) => {
-    const next = [...expected.values()].find(
-      (item) =>
-        item.id !== previous.id &&
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-        ((item.slot && item.slot === previous.slot) ||
-          (item.documentKind && item.documentKind === previous.documentKind))
-    );
-    if (!next) {
-      return [];
-    }
-    if (!(options.fresh === true) && !(options.replace === true)) {
-      throw new Error(
-        `Only one ${previous.slot ?? previous.documentKind} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
+  const replacements = installed.flatMap(
+    (previous: ReadonlyNative<ToolDefinition>) => {
+      const next = [...expected.values()].find(
+        (item: ReadonlyNative<ToolDefinition>) =>
+          item.id !== previous.id &&
+          ((typeof item.slot === "string" && item.slot === previous.slot) ||
+            (typeof item.documentKind === "string" &&
+              item.documentKind === previous.documentKind))
       );
+      if (!next) {
+        return [];
+      }
+      if (!(options.fresh === true) && !(options.replace === true)) {
+        throw new Error(
+          `Only one ${previous.slot ?? previous.documentKind} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
+        );
+      }
+      return [{ next, previous }];
     }
-    return [{ next, previous }];
-  });
+  );
   const target = () => [
     ...new Map([
       ...installed
         .filter(
-          (item): boolean =>
+          (item: ReadonlyNative<ToolDefinition>): boolean =>
             !replacements.some(
-              ({ previous }): boolean => previous.id === item.id
+              ({
+                previous,
+              }: ReadonlyNative<{
+                previous: ReadonlyNative<ToolDefinition>;
+              }>): boolean => previous.id === item.id
             )
         )
-        .map((item) => [item.id, item] as const),
+        .map(
+          (item: ReadonlyNative<ToolDefinition>) => [item.id, item] as const
+        ),
       ...expected.entries(),
     ]).values(),
   ];
@@ -223,16 +223,23 @@ export const planInstallation = async (
   ] as const) {
     const definitions = target();
     if (
-      definitions.some((item): boolean => item.requiresTools.includes(slot)) &&
-      !definitions.some((item): boolean => item.slot === slot)
+      definitions.some((item: ReadonlyNative<ToolDefinition>): boolean =>
+        item.requiresTools.includes(slot)
+      ) &&
+      !definitions.some(
+        (item: ReadonlyNative<ToolDefinition>): boolean => item.slot === slot
+      )
     ) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each provider is resolved before validating the final installation.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- visit mutates the expected dependency graph; resolve the first default provider before target() decides whether the next slot is still missing.
       await visit(itemAddress(provider, "tool"));
     }
   }
   if (
     options.documents === false &&
-    target().some((tool) => typeof tool.documentKind === "string")
+    target().some(
+      (tool: ReadonlyNative<ToolDefinition>) =>
+        typeof tool.documentKind === "string"
+    )
   ) {
     throw new Error(
       "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
@@ -276,7 +283,10 @@ export const planInstallation = async (
   const targetFeatures = new Map([
     ...installedFeatures
       .flat()
-      .map((feature) => [feature.id, feature] as const),
+      .map(
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          [feature.id, feature] as const
+      ),
     ...features.entries(),
   ]);
   const featureIds = new Set(targetFeatures.keys());
@@ -298,11 +308,18 @@ export const planInstallation = async (
   });
   return {
     environmentVariables: [
-      ...target().flatMap((tool) => tool.envRequirements),
-      ...[...targetFeatures.values()].flatMap(
-        (feature) => feature.envRequirements ?? []
+      ...target().flatMap(
+        (tool: ReadonlyNative<ToolDefinition>) => tool.envRequirements
       ),
-    ].flatMap((requirement) => requirement.options.flat()),
+      ...[...targetFeatures.values()].flatMap(
+        (feature: ReadonlyNative<FeatureDefinition>) =>
+          feature.envRequirements ?? []
+      ),
+    ].flatMap(
+      (
+        requirement: ReadonlyNative<ToolDefinition["envRequirements"][number]>
+      ) => requirement.options.flat()
+    ),
     expected: [...expected.values()],
     features: [...features.values()],
     items: await Promise.all(items.values()),
@@ -312,11 +329,3 @@ export const planInstallation = async (
     sources: [...items.keys()],
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */

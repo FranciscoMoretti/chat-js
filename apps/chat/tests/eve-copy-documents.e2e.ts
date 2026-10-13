@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-documents"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -20,7 +16,6 @@ import {
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const ownerId = crypto.randomUUID();
@@ -114,6 +109,7 @@ await db.insert(eveDocumentHead).values([
   },
 ]);
 afterAll(async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Delete checkpoint entries before their checkpoint headers to satisfy foreign keys. */
   for (const table of [
     eveImportedDocumentCheckpointEntry,
     eveImportedDocumentCheckpoint,
@@ -122,6 +118,7 @@ afterAll(async () => {
   ]) {
     await db.delete(table).where(eq(table.ownerId, ownerId));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(eveDocumentHead).where(eq(eveDocumentHead.ownerId, ownerId));
   await db
     .delete(eveDocumentRevision)
@@ -136,10 +133,6 @@ const resources = {
   revisionIds: [rootRevision, visibleRevision],
 };
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): test("captures all accessible ancestors without private branches, unrelated documents uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("captures all accessible ancestors without private branches, unrelated documents accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("captures all accessible ancestors without private branches, unrelated documents, or runtime ownership fields", async () => {
   const result = await snapshotPublicEveCopyDocuments(
     conversationId,
@@ -149,14 +142,14 @@ test("captures all accessible ancestors without private branches, unrelated docu
   );
   expect(result.documents).toHaveLength(1);
   expect(result.documents[0].headRevisionId).toBe(visibleRevision);
-  expect(result.documents[0].revisions.map((row) => row.id)).toEqual([
-    rootRevision,
-    visibleRevision,
-  ]);
-  expect(result.documents[0].revisions.map((row) => row.content)).toEqual([
-    "First published version",
-    "Second published version",
-  ]);
+  expect(
+    result.documents[0].revisions.map((row: { readonly id: string }) => row.id)
+  ).toEqual([rootRevision, visibleRevision]);
+  expect(
+    result.documents[0].revisions.map(
+      (row: { readonly content: string }) => row.content
+    )
+  ).toEqual(["First published version", "Second published version"]);
   for (const forbidden of [
     privateRevision,
     hiddenDocumentId,
@@ -168,7 +161,6 @@ test("captures all accessible ancestors without private branches, unrelated docu
     expect(JSON.stringify(result)).not.toContain(forbidden);
   }
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("rejects a referenced private revision or a missing document instead of partially copying", async () => {
   await expect(
@@ -202,7 +194,6 @@ test("rejects a referenced private revision or a missing document instead of par
     )
   ).rejects.toThrow("unavailable");
 });
-
 test("requires publication even for an empty resource manifest", async () => {
   await expect(
     snapshotPublicEveCopyDocuments(
@@ -227,20 +218,15 @@ test("requires publication even for an empty resource manifest", async () => {
     )
   ).toEqual({ checkpoints: [], documents: [] });
 });
-
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): test("observes revocation committed while preparation is waiting on the source row") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("observes revocation committed while preparation is waiting on the source row") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("observes revocation committed while preparation is waiting on the source row", async () => {
-  const updated = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const updated: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const revocation = db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
       .set({ visibility: "private" })
       .where(eq(eveConversation.id, conversationId));
-    updated.resolve(undefined);
+    updated.resolve();
     await release.promise;
   });
   await updated.promise;
@@ -251,7 +237,7 @@ test("observes revocation committed while preparation is waiting on the source r
     []
   );
   const rejected = expect(snapshot).rejects.toThrow("unavailable");
-  release.resolve(undefined);
+  release.resolve();
   await revocation;
   await rejected;
   await db
@@ -259,11 +245,7 @@ test("observes revocation committed while preparation is waiting on the source r
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, conversationId));
 });
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("snapshots native and imported boundaries independently of later document heads" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("snapshots native and imported boundaries independently of later document heads", async () => {
   await db.insert(eveDocumentCheckpoint).values([
     { conversationId, ownerId, turnIndex: 0 },
@@ -308,4 +290,3 @@ test("snapshots native and imported boundaries independently of later document h
     ])
   ).rejects.toThrow("boundary is unavailable");
 });
-/* oxlint-enable no-magic-numbers */

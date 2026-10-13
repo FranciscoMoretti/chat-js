@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { searchQueriesSchema } from "@/tools/platform/search-presentation";
+import { z } from "zod";
 
 const webSearchInput = z.object({
   exclude_domains: z

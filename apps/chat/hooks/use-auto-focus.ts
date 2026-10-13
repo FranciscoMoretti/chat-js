@@ -4,9 +4,8 @@ import type { LexicalEditor } from "lexical";
 import { useEffect } from "react";
 
 const FALLBACK_FOCUS_TIMEOUT_MS = 120;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- isTypingSurface: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including element: Element | null). */
 
-const isTypingSurface = (element: Element | null): boolean =>
+const isTypingSurface = (element: unknown): boolean =>
   (element instanceof HTMLInputElement &&
     !element.readOnly &&
     !element.disabled &&
@@ -15,19 +14,17 @@ const isTypingSurface = (element: Element | null): boolean =>
     !element.readOnly &&
     !element.disabled) ||
   (element instanceof HTMLElement && element.isContentEditable);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- useAutoFocus: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useAutoFocus = ({
   autoFocus,
   editor,
 }: {
-  autoFocus: boolean;
-  editor: LexicalEditor | null;
+  readonly autoFocus: boolean;
+  readonly editor: Readonly<Pick<LexicalEditor, "focus">> | null;
 }): void => {
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!(autoFocus && editor)) {
-      return;
+      return undefined;
     }
 
     let fallbackTimeout: number | null = null;
@@ -39,7 +36,6 @@ export const useAutoFocus = ({
       if (!isUserTypingElsewhere) {
         editor.focus();
         // Minimal fallback for hydration/layout races where focus is stolen.
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Use the browser timer overload because the focus cleanup stores a numeric timeout ID.
         fallbackTimeout = window.setTimeout(() => {
           const currentActive = document.activeElement;
           const canSafelyStealFocus = !isTypingSurface(currentActive);
@@ -51,7 +47,6 @@ export const useAutoFocus = ({
       }
     });
 
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       globalThis.cancelAnimationFrame(raf);
       if (fallbackTimeout !== null) {
@@ -60,4 +55,3 @@ export const useAutoFocus = ({
     };
   }, [autoFocus, editor]);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

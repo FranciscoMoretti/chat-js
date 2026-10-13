@@ -1,9 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { randomBytes } from "node:crypto";; import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/local-sandbox-fence"; "../lib/eve/purge-local-sandbox" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -14,15 +9,7 @@ import { expect, test } from "vitest";
 
 import { fenceLocalEveSandboxMutations } from "../lib/eve/local-sandbox-fence";
 import { purgeLocalEveSandboxes } from "../lib/eve/purge-local-sandbox";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
- * init-declarations (#507): test("family cleanup removes parent and child VMs and snapshots while preserving an u assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("family cleanup removes parent and child VMs and snapshots while preserving an u keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("family cleanup removes parent and child VMs and snapshots while preserving an u keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("family cleanup removes parent and child VMs and snapshots while preserving an u uses 16, 1, 1024, 10_000, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("family cleanup removes parent and child VMs and snapshots while preserving an u uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 // This provider acceptance test touches only newly named local fixture resources.
 test("family cleanup removes parent and child VMs and snapshots while preserving an unrelated snapshot", async () => {
   const suffix = randomBytes(16).toString("hex");
@@ -84,7 +71,8 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       .detached(true)
       .create();
     await childSandbox.stopWithTimeout(10_000);
-    await (await Sandbox.get(childName)).snapshot(childStateSnapshotName);
+    const childHandle = await Sandbox.get(childName);
+    await childHandle.snapshot(childStateSnapshotName);
     await mkdir(childDirectory, { recursive: true });
     await writeFile(
       path.join(childDirectory, "metadata.json"),
@@ -139,53 +127,51 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       },
       { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
-    expect(JSON.parse(await readFile(manifest, "utf-8")).snapshotName).toBe(
-      snapshotName
-    );
+
+    expect(
+      z
+        .looseObject({ snapshotName: z.string() })
+        .parse(JSON.parse(await readFile(manifest, "utf-8"))).snapshotName
+    ).toBe(snapshotName);
   } finally {
-    for (const vm of [sandbox, childSandbox]) {
-      await vm?.destroy().catch((error: unknown) => {
-        if (
-          !(
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "sandboxNotFound"
-          )
-        ) {
-          throw error;
-        }
-      });
-    }
-    for (const snapshot of [
-      childStateSnapshotName,
-      snapshotName,
-      stateSnapshotName,
-      survivorName,
-    ]) {
-      await Snapshot.remove(snapshot).catch((error: unknown) => {
-        if (
-          !(
-            error instanceof Error &&
-            error.message.startsWith("[SnapshotNotFound] snapshot not found:")
-          )
-        ) {
-          throw error;
-        }
-      });
-    }
+    await Promise.all(
+      [sandbox, childSandbox].map(async (vm) => {
+        await vm?.destroy().catch((error: unknown) => {
+          if (
+            !(
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "sandboxNotFound"
+            )
+          ) {
+            throw error;
+          }
+        });
+      })
+    );
+    await Promise.all(
+      [
+        childStateSnapshotName,
+        snapshotName,
+        stateSnapshotName,
+        survivorName,
+      ].map(async (snapshot) => {
+        await Snapshot.remove(snapshot).catch((error: unknown) => {
+          if (
+            !(
+              error instanceof Error &&
+              error.message.startsWith("[SnapshotNotFound] snapshot not found:")
+            )
+          ) {
+            throw error;
+          }
+        });
+      })
+    );
     await rm(root, { force: true, recursive: true });
   }
 }, 120_000);
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
- * init-declarations (#507): test("EVE checkpoint capture records real provider resources for retryable cleanup") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("EVE checkpoint capture records real provider resources for retryable cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("EVE checkpoint capture records real provider resources for retryable cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("EVE checkpoint capture records real provider resources for retryable cleanup") uses 16, 1, 0, 2, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("EVE checkpoint capture records real provider resources for retryable cleanup") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("EVE checkpoint capture records real provider resources for retryable cleanup", async () => {
   const { microsandbox } = await import("eve/sandbox/microsandbox");
   const backend = microsandbox({
@@ -229,8 +215,8 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     if (typeof checkpoint?.snapshotName !== "string") {
       throw new TypeError("EVE did not return a fork snapshot identity.");
     }
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
-    const manifest = JSON.parse(
+
+    const manifest: unknown = JSON.parse(
       await readFile(
         path.join(
           sessionDirectory,
@@ -318,18 +304,24 @@ test("EVE checkpoint capture records real provider resources for retryable clean
       "snapshot not found"
     );
     expect(resources).toHaveLength(2);
-    for (const resource of resources) {
-      for (const name of resource.sandboxNames) {
-        await expect(Sandbox.get(name)).rejects.toMatchObject({
-          code: "sandboxNotFound",
-        });
-      }
-      for (const snapshot of resource.snapshotNames) {
-        await expect(Snapshot.get(snapshot)).rejects.toThrow(
-          "snapshot not found"
+    await Promise.all(
+      resources.map(async (resource) => {
+        await Promise.all(
+          resource.sandboxNames.map(async (name) => {
+            await expect(Sandbox.get(name)).rejects.toMatchObject({
+              code: "sandboxNotFound",
+            });
+          })
         );
-      }
-    }
+        await Promise.all(
+          resource.snapshotNames.map(async (snapshot) => {
+            await expect(Snapshot.get(snapshot)).rejects.toThrow(
+              "snapshot not found"
+            );
+          })
+        );
+      })
+    );
     expect(await purgeLocalEveSandboxes(inputs)).toEqual(resources);
   } finally {
     await child?.shutdown();
@@ -338,6 +330,3 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await rm(appRoot, { force: true, recursive: true });
   }
 }, 60_000);
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
-
-/* oxlint-disable max-lines -- #509: This eve-local-snapshots.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

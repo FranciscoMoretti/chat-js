@@ -1,12 +1,12 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { randomUUID } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+import type { McpOAuthSession } from "@/lib/db/schema";
+import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
@@ -21,8 +21,6 @@ import {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
-import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
-import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");
@@ -77,16 +75,6 @@ const storedClientInformationSchema = z.looseObject({
   tos_uri: oauthUrlSchema.optional(),
 });
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * PostgreSQL-backed OAuth client provider for MCP.
  * Implements the OAuthClientProvider interface from the AI SDK.
@@ -105,21 +93,25 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     oauthClientSecret?: string | null;
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
-    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    onRedirectToAuthorization: (
+      authUrl: ReadonlyNativeSurface<URL>
+    ) => Promise<void>;
     // Optional: adopt existing state (for callback reconciliation)
     state?: string;
   };
   private saveClientInformationPromise: Promise<void> | null = null;
 
   public constructor(config: {
-    mcpConnectorId: string;
-    oauthClientId?: string | null;
-    oauthClientSecret?: string | null;
-    serverUrl: string;
-    clientMetadata: OAuthClientMetadata;
-    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    readonly mcpConnectorId: string;
+    readonly oauthClientId?: string | null;
+    readonly oauthClientSecret?: string | null;
+    readonly serverUrl: string;
+    readonly clientMetadata: OAuthClientMetadata;
+    readonly onRedirectToAuthorization: (
+      authUrl: ReadonlyNativeSurface<URL>
+    ) => Promise<void>;
     // Optional: adopt existing state (for callback reconciliation)
-    state?: string;
+    readonly state?: string;
   }) {
     this.config = config;
   }
@@ -145,7 +137,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.initializationPromise = null;
     }
   }
-
   // If state was provided (e.g., from callback), adopt it
 
   private async doInitializeOAuth(): Promise<void> {
@@ -166,7 +157,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
-    if (authenticated?.serverUrl === this.config.serverUrl) {
+    if (authenticated && authenticated.serverUrl === this.config.serverUrl) {
       this.currentOAuthState = authenticated.state ?? "";
       this.cachedAuthData = authenticated;
       this.initialized = true;
@@ -181,7 +172,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     });
     this.initialized = true;
   }
-
   private static decodeStoredCredentials<Result>(
     schema: Readonly<Pick<z.ZodType<Result>, "safeParse">>,
     value: unknown,
@@ -200,16 +190,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return result.data;
   }
 
-  private async getAuthData() {
+  private async getAuthData(): Promise<McpOAuthSession | undefined> {
     await this.initializeOAuth();
     return this.cachedAuthData;
   }
-
-  private async updateAuthData(data: {
-    tokens?: OAuthTokens | null;
-    clientInfo?: OAuthClientInformationFull | null;
-    codeVerifier?: string | null;
-  }) {
+  private async updateAuthData(
+    data: Parameters<typeof updateSessionByState>[0]["updates"]
+  ): Promise<McpOAuthSession> {
     if (!this.currentOAuthState) {
       throw new Error("OAuth not initialized");
     }
@@ -221,7 +208,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     return this.cachedAuthData;
   }
-
   public get redirectUrl(): string {
     return this.config.clientMetadata.redirect_uris[0];
   }
@@ -250,39 +236,42 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     const clientInfo = McpOAuthClientProvider.decodeStoredCredentials(
       storedClientInformationSchema,
-      authData?.clientInfo,
+      (authData ?? {}).clientInfo,
       "client information"
     );
-    if (clientInfo && authData) {
-      // Security: if redirect URI changed and no tokens yet, invalidate
-      if (
-        !authData.tokens &&
-        clientInfo.redirect_uris[0] !== this.redirectUrl
-      ) {
-        log.warn(
-          {
-            currentRedirectUri: this.redirectUrl,
-            savedRedirectUri: clientInfo.redirect_uris[0],
-            state: authData.state,
-          },
-          "clientInformation: redirect URI mismatch, invalidating session"
-        );
-        // Keep another in-flight authorization's session intact and start a new local state.
-        this.cachedAuthData = undefined;
-        this.cachedAuthorizationUrl = null;
-        this.initialized = false;
-        this.currentOAuthState = "";
-        this.config.state = undefined;
-        await this.initializeOAuth();
-        // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-        return;
-      }
-      return clientInfo;
+    // Security: if redirect URI changed and no tokens yet, invalidate
+    if (
+      clientInfo &&
+      authData &&
+      !authData.tokens &&
+      clientInfo.redirect_uris[0] !== this.redirectUrl
+    ) {
+      log.warn(
+        {
+          currentRedirectUri: this.redirectUrl,
+          savedRedirectUri: clientInfo.redirect_uris[0],
+          state: authData.state,
+        },
+        "clientInformation: redirect URI mismatch, invalidating session"
+      );
+      this.resetRegistration();
+      await this.initializeOAuth();
+      return undefined;
     }
+    return clientInfo;
   }
-
+  // Keep other in-flight sessions intact while resetting this registration in order.
+  private resetRegistration(): void {
+    this.cachedAuthData = undefined;
+    this.cachedAuthorizationUrl = null;
+    this.initialized = false;
+    this.currentOAuthState = "";
+    this.config.state = undefined;
+  }
   public async saveClientInformation(
-    clientCredentials: OAuthClientInformationFull
+    clientCredentials: Parameters<
+      typeof setOAuthClientInfoOnceByState
+    >[0]["clientInfo"]
   ): Promise<void> {
     if (this.saveClientInformationPromise) {
       await this.saveClientInformationPromise;
@@ -291,7 +280,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // Some OAuth servers treat authorization codes as bound to client_id.
 
-    if (this.cachedAuthData?.clientInfo) {
+    if ((this.cachedAuthData ?? {}).clientInfo) {
       return;
     }
     this.saveClientInformationPromise = (async (): Promise<void> => {
@@ -306,27 +295,30 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     })();
     await this.saveClientInformationPromise;
   }
-
   public async tokens(): Promise<OAuthTokens | undefined> {
     const authData = await this.getAuthData();
     return McpOAuthClientProvider.decodeStoredCredentials(
       storedTokensSchema,
-      authData?.tokens,
+      (authData ?? {}).tokens,
       "tokens"
     );
   }
-
-  /** The SDK uses this for transport and OAuth requests, including later 401 refreshes. */
+  /**
+   * Send SDK transport requests and serialize refresh-token rotation under the connector lock.
+   * @param {string | URL | Request} input - Native request source, passed unchanged to Request.
+   * @param {RequestInit} [init] - Native request options, including headers, body and cancellation.
+   * @returns {Promise<Response>} Transport response after any successful token rotation is persisted.
+   */
   public fetch = async (
-    input: string | URL | Request,
+    input: string | ReadonlyNativeSurface<URL | Request>,
     init?: RequestInit
   ): Promise<Response> => {
     const request = new Request(input, init);
     if (
       request.method !== "POST" ||
-      !request.headers
-        .get("content-type")
-        ?.includes("application/x-www-form-urlencoded")
+      !(request.headers.get("content-type") ?? "").includes(
+        "application/x-www-form-urlencoded"
+      )
     ) {
       return await mcpFetch(request);
     }
@@ -336,7 +328,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // Compare the cached fingerprint only; validate the latest credentials under
     // the lock so a stale malformed cache cannot prevent adopting a repaired row.
-    const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
+    const observedAccessToken = ((this.cachedAuthData ?? {}).tokens ?? {})
+      .access_token;
     return await withMcpOAuthRefreshLock(
       this.config.mcpConnectorId,
       async () => {
@@ -346,11 +339,14 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         });
         const latestTokens = McpOAuthClientProvider.decodeStoredCredentials(
           storedTokensSchema,
-          latest?.tokens,
+          (latest ?? {}).tokens,
           "tokens"
         );
+        const refreshToken = (latestTokens ?? {}).refresh_token;
         if (
-          !latestTokens?.refresh_token ||
+          !latestTokens ||
+          typeof refreshToken !== "string" ||
+          refreshToken === "" ||
           !latest ||
           latest.mcpConnectorId !== this.config.mcpConnectorId ||
           latest.serverUrl !== this.config.serverUrl
@@ -393,7 +389,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       request.signal
     );
   };
-
   public async saveTokens(tokens: OAuthTokens): Promise<void> {
     if (this.committedRefreshes > 0) {
       // Refresh was saved while holding the cross-process lock. The SDK's
@@ -410,8 +405,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       tokens,
     });
   }
-
-  public async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
+  public async redirectToAuthorization(
+    authorizationUrl: ReadonlyNativeSurface<URL>
+  ): Promise<void> {
     // If the SDK calls redirect twice, keep the first URL stable.
     authorizationUrl.searchParams.set("state", this.state());
     // Otherwise the UI might open URL #1 while the DB ended up with verifier #2.
@@ -424,7 +420,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     await this.config.onRedirectToAuthorization(authorizationUrl);
   }
-
   public async saveCodeVerifier(pkceVerifier: string): Promise<void> {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
@@ -433,7 +428,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // If we already have a verifier for this session, keep it.
     // but the code_challenge is generated from the FIRST verifier.
-    const existingVerifier = this.cachedAuthData?.codeVerifier;
+    const existingVerifier = (this.cachedAuthData ?? {}).codeVerifier;
 
     if (typeof existingVerifier === "string" && existingVerifier !== "") {
       log.info(
@@ -472,25 +467,28 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     })();
     await this.saveCodeVerifierPromise;
   }
-
   public async codeVerifier(): Promise<string> {
     const authData = await this.getAuthData();
     log.info(
       {
-        hasCodeVerifier: Boolean(authData?.codeVerifier),
+        hasCodeVerifier: Boolean((authData ?? {}).codeVerifier),
         state: this.currentOAuthState,
       },
       "codeVerifier called"
     );
-    if (!authData?.codeVerifier) {
+    if (
+      !authData ||
+      typeof authData.codeVerifier !== "string" ||
+      authData.codeVerifier === ""
+    ) {
       throw new Error("OAuth code verifier not found");
     }
     return authData.codeVerifier;
   }
-
   /**
    * Adopt state from another instance (multi-instance support).
    * Used when the callback needs to reconcile with an existing session.
+   * @param {string} state - Candidate persisted state; absent or foreign-connector rows are ignored.
    */
   public async adoptState(state: string): Promise<void> {
     if (!state) {
@@ -537,7 +535,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     this.cachedAuthData = session;
     this.initialized = true;
   }
-
   public async invalidateCredentials(
     scope: "all" | "client" | "tokens" | "verifier"
   ): Promise<void> {
@@ -566,15 +563,3 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
   }
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

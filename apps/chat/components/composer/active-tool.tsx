@@ -1,14 +1,14 @@
 "use client";
 
 import { CircleAlert, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 import React from "react";
 
-import { Button } from "@/components/ui/button";
 import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
 import { getToolDisplay } from "./tool-display";
-/* oxlint-disable unicorn/no-null --  unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ActiveTool = ({
   selectedTool,
@@ -46,4 +46,3 @@ export const ActiveTool = ({
     </Button>
   );
 };
-/* oxlint-enable unicorn/no-null */

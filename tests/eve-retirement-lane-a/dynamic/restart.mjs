@@ -1,6 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules -- This standalone test controller owns disposable storage and process evidence. */
-/* oxlint-disable eslint/no-magic-numbers, no-undefined -- Expected process/effect counts and absent probe values are explicit restart assertions. */
-/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions, typescript/strict-boolean-expressions -- This controller imports the external pinned runtime helper by CLI path; runtime assertions verify its observable boundary. */
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/strict-boolean-expressions -- This standalone experiment imports pinned runtime internals by filesystem path; the two distributions have no shared static type contract. Runtime assertions validate the boundary. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";

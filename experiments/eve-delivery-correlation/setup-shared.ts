@@ -1,6 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- Copy the unchanged shared controller into this lane's ignored runtime area.
 import { access, cp, mkdir, symlink } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- Resolve caller-supplied local harness paths.
 import path from "node:path";
 
 const controllerCommit = "7a312a5448fb88403897217b3998cd0b775ee5c2";

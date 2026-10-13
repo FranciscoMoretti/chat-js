@@ -1,38 +1,65 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-fence"; "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- */
-import { execFileSync } from "node:child_process";
-
 import { config } from "dotenv";
-import postgres from "postgres";
-
+import { execFileSync } from "node:child_process";
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
-
-import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
+import postgres from "postgres";
 import { resolveEveSetup } from "./eve-setup-config";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+import { resolveWorkflowDatabaseUrl } from "@/lib/eve/environment";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
+
+const SETUP_MODE_ARGUMENT_INDEX = 2;
+const MAXIMUM_SETUP_ARGUMENT_COUNT = 3;
+const READINESS_CONNECTION_TIMEOUT_MILLISECONDS = 30_000;
+const NO_MISSING_TABLES = 0;
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync --
- * max-lines-per-function (#510): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): run emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): run uses 2, 3, 30_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * node/no-process-env (#537): run reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * node/no-sync (#538): run uses execFileSync( process.execPath, [ "-e", 'import("@workflow/world-postgre within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
+/**
+ * Validate the optional setup mode before resolving configuration.
+ * @returns {string | undefined} Supplied mode; absent or empty values retain the default setup path.
  */
-const run = async (): Promise<void> => {
-  const [mode] = process.argv.slice(2);
+const readSetupMode = (): string | undefined => {
+  const [mode] = process.argv.slice(SETUP_MODE_ARGUMENT_INDEX);
   if (
-    process.argv.length > 3 ||
+    process.argv.length > MAXIMUM_SETUP_ARGUMENT_COUNT ||
     (mode && !["--check", "--validate"].includes(mode))
   ) {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
+  return mode;
+};
+
+/**
+ * Run provider migrations in a child because the provider CLI exits its process.
+ * @param {string} databaseUrl Validated PostgreSQL URL for the provider setup.
+ * @returns {void} Completes after the provider command, or propagates its failure.
+ */
+const prepareProviderDatabase = (databaseUrl: string): void => {
+  console.log("Preparing the configured EVE PostgreSQL world...");
+  // The provider CLI exits the process, so isolate it from our lifecycle setup.
+  execFileSync(
+    process.execPath,
+    [
+      "-e",
+      'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
+    ],
+    {
+      env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
+      stdio: "pipe",
+      timeout: 120_000,
+    }
+  );
+};
+
+/**
+ * Resolve the world and execute only the requested synchronous preparation stage.
+ * @returns {{ mode: string | undefined; setup: ReturnType<typeof resolveEveSetup> }} Validated mode and world details for the readiness phase.
+ */
+const prepareEveSetupContext = (): {
+  mode: string | undefined;
+  setup: ReturnType<typeof resolveEveSetup>;
+} => {
+  const mode = readSetupMode();
   const setup = resolveEveSetup(
     resolveWorkflowWorld(),
     resolveWorkflowDatabaseUrl(process.env)
@@ -41,100 +68,124 @@ const run = async (): Promise<void> => {
     console.log(
       "Workflow backend: Vercel (managed). No PostgreSQL workflow setup required."
     );
-    return;
+    return { mode, setup };
   }
-  const { databaseUrl, local } = setup;
   console.log("Workflow backend: PostgreSQL (local/self-hosted).");
-  if (mode === "--validate") {
-    return;
+  if (typeof mode !== "string" || mode === "") {
+    prepareProviderDatabase(setup.databaseUrl);
   }
-  if (!mode) {
-    console.log("Preparing the configured EVE PostgreSQL world...");
-    // The provider CLI exits the process, so isolate it from our lifecycle setup.
-    execFileSync(
-      process.execPath,
-      [
-        "-e",
-        'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
-      ],
-      {
-        env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
-        stdio: "pipe",
-        timeout: 120_000,
-      }
-    );
-  }
+  return { mode, setup };
+};
+
+/**
+ * Open the readiness connection and begin its deadline before the first await.
+ * @param {string} databaseUrl Validated PostgreSQL world URL.
+ * @returns {{ connection: postgres.Sql; deadline: ReturnType<typeof setTimeout> }} Client and timer owned by the caller's finally block.
+ */
+const openReadinessConnection = (
+  databaseUrl: string
+): {
+  connection: postgres.Sql;
+  deadline: ReturnType<typeof setTimeout>;
+} => {
   const connection = postgres(databaseUrl, { connect_timeout: 10, max: 1 });
   const deadline = setTimeout(() => {
     void connection.end({ timeout: 0 });
-  }, 30_000);
-  try {
-    if (!mode && local) {
-      await installEvePostgresResourceFence(connection);
-      await installEvePostgresQueueFence(connection, "workflow_flows");
-    }
-    const required = [
-      "workflow.workflow_runs",
-      "workflow.workflow_events",
-      "workflow.workflow_event_slots",
-      "workflow.workflow_steps",
-      "workflow.workflow_hooks",
-      "workflow.workflow_waits",
-      "workflow.workflow_stream_chunks",
-      "graphile_worker._private_jobs",
-    ];
-    if (local) {
-      required.push(
-        "workflow.eve_resource_fences",
-        "workflow.eve_session_retirements",
-        "workflow.eve_queue_tasks"
-      );
-    }
-    const missing = await connection`
-      select name from unnest(${required}::text[]) as name
-      where to_regclass(name) is null
-    `;
-    if (missing.length > 0) {
-      throw new Error(
-        "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
-      );
-    }
-    console.log("EVE PostgreSQL connection and required tables are ready.");
-    if (!local) {
-      console.log(
-        "Hosted lifecycle/deletion verification remains required; this command checks provider schema readiness only."
-      );
-    }
-  } finally {
-    clearTimeout(deadline);
-    await connection.end({ timeout: 1 });
+  }, READINESS_CONNECTION_TIMEOUT_MILLISECONDS);
+  return { connection, deadline };
+};
+
+/**
+ * Build the provider and optional local lifecycle table manifest in query order.
+ * @param {boolean} local Whether this world owns local lifecycle fences.
+ * @returns {string[]} A fresh ordered table manifest for the readiness query.
+ */
+const requiredEveTables = (local: boolean): string[] => {
+  const required = [
+    "workflow.workflow_runs",
+    "workflow.workflow_events",
+    "workflow.workflow_event_slots",
+    "workflow.workflow_steps",
+    "workflow.workflow_hooks",
+    "workflow.workflow_waits",
+    "workflow.workflow_stream_chunks",
+    "graphile_worker._private_jobs",
+  ];
+  if (local) {
+    required.push(
+      "workflow.eve_resource_fences",
+      "workflow.eve_session_retirements",
+      "workflow.eve_queue_tasks"
+    );
+  }
+  return required;
+};
+
+/**
+ * Reject incomplete schemas and report the supported readiness coverage.
+ * @param {readonly unknown[]} missing Rows identifying requested tables missing from PostgreSQL.
+ * @param {boolean} local Whether local lifecycle tables were included.
+ * @returns {void} Reports readiness, or throws the command's actionable schema error.
+ */
+const reportSchemaReadiness = (
+  missing: readonly unknown[],
+  local: boolean
+): void => {
+  if (missing.length > NO_MISSING_TABLES) {
+    throw new Error(
+      "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
+    );
+  }
+  console.log("EVE PostgreSQL connection and required tables are ready.");
+  if (!local) {
+    console.log(
+      "Hosted lifecycle/deletion verification remains required; this command checks provider schema readiness only."
+    );
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync */
 
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
- * no-console (#514): void (async () => { try { await run(); } catch (error)  emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await run(); } catch (error) 's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
-void (async () => {
+const run = async (): Promise<void> => {
+  const { mode, setup } = prepareEveSetupContext();
+  if (!setup.managed && mode !== "--validate") {
+    const { connection, deadline } = openReadinessConnection(setup.databaseUrl);
+    try {
+      if ((typeof mode !== "string" || mode === "") && setup.local) {
+        await installEvePostgresResourceFence(connection);
+        await installEvePostgresQueueFence(connection, "workflow_flows");
+      }
+      reportSchemaReadiness(
+        await connection`
+          select name from unnest(${requiredEveTables(setup.local)}::text[]) as name
+          where to_regclass(name) is null
+        `,
+        setup.local
+      );
+    } finally {
+      clearTimeout(deadline);
+      await connection.end({ timeout: 1 });
+    }
+  }
+};
+
+void (async (): Promise<void> => {
   try {
     await run();
   } catch (error) {
     // Database/child-process errors can contain connection details. Never print them.
-    const safe =
+    if (
       error instanceof Error &&
       (error.message.startsWith("ChatJS setup") ||
         error.message.startsWith("Set WORKFLOW") ||
         error.message.startsWith("WORKFLOW_POSTGRES_URL must") ||
         error.message.startsWith("Usage:") ||
-        error.message.startsWith("EVE schema"));
-    console.error(
-      safe
-        ? error.message
-        : "EVE setup/check failed. Check WORKFLOW_POSTGRES_URL, database permissions, TLS, and connectivity."
-    );
+        error.message.startsWith("EVE schema"))
+    ) {
+      console.error(error.message);
+    } else {
+      console.error(
+        "EVE setup/check failed. Check WORKFLOW_POSTGRES_URL, database permissions, TLS, and connectivity."
+      );
+    }
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, typescript/explicit-function-return-type */

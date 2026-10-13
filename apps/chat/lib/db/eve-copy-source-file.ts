@@ -4,27 +4,28 @@ import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): readPublicEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readPublicEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep readPublicEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readPublicEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readPublicEveCopyFile accepts source: { id: string; ownerId: string; sessionId: string; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): readPublicEveCopyFile intentionally keeps the existing falsy-value behavior of reference; distinguishing empty, zero, and absent states requires a domain behavior decision.
+type CopySourceTransaction = Readonly<Pick<typeof db, "execute" | "select">>;
+
+const FIRST_ROW_INDEX = 0;
+
+/** Read only active files retained by this exact public source; supplied URLs are not authority.
+ * @param {{ readonly id: string; readonly ownerId: string; readonly sessionId: string }} source Exact public source identity whose owner is locked while its file reference is checked.
+ * @param {string} key Stored file identity that must remain active and referenced by this bound public source.
+ * @param {(key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>} read Storage reader invoked only after the ownership/reference checks succeed.
+ * @returns {Promise<Blob>} A fresh Blob containing the authorized stored bytes and MIME type; rejects when the source reference is unavailable or reading fails.
  */
-/** Read only active files retained by this exact public source; supplied URLs are not authority. */
 export const readPublicEveCopyFile = async (
   source: {
-    id: string;
-    ownerId: string;
-    sessionId: string;
+    readonly id: string;
+    readonly ownerId: string;
+    readonly sessionId: string;
   },
   key: string,
   read: (key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>
-) =>
-  await db.transaction(async (tx) => {
+): Promise<Blob> =>
+  await db.transaction(async (tx: CopySourceTransaction) => {
     await lockEveCopyOwners(tx, [source.ownerId]);
-    const [reference] = await tx
+    const referenceRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveConversation)
       .innerJoin(
@@ -53,10 +54,10 @@ export const readPublicEveCopyFile = async (
         )
       )
       .for("share");
+    const reference = referenceRows.at(FIRST_ROW_INDEX);
     if (!reference) {
       throw new Error("Published copy file is unavailable.");
     }
     const file = await read(reference.key);
     return new Blob([await file.arrayBuffer()], { type: file.type });
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

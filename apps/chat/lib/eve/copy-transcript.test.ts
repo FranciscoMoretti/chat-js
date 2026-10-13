@@ -1,7 +1,5 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
-import { expect, it } from "vitest";
-
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -10,6 +8,8 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
+import { expect, it, vi } from "vitest";
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const copiedFile = "bbbbbbbbbbbbbbbbbbbbbbbb.png";
@@ -25,10 +25,13 @@ const allocations = {
   revisions: new Map([[revisionId, copiedRevision]]),
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): history accepts messages: EveMessage[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const history = (messages: EveMessage[]): MessageStreamEvent[] => [
+const history = (
+  messages: readonly Readonly<
+    Omit<EveMessage, "parts"> & {
+      readonly parts: readonly ReadonlyEveMessagePart[];
+    }
+  >[]
+): MessageStreamEvent[] => [
   {
     data: { messages },
     meta: { at: "2026-09-12T00:00:00Z", id: "seed-event" },
@@ -40,7 +43,6 @@ const history = (messages: EveMessage[]): MessageStreamEvent[] => [
     type: "session.waiting",
   },
 ];
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("prepares exactly the public content without execution, approval or billing identities", () => {
   const events = history([
@@ -118,9 +120,6 @@ it("rewrites nested tool inputs, results, document identities and prose using on
   );
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ { documents: allocations.documents, files: new Map<string, string>(), revis accepts mapping; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   {
     documents: allocations.documents,
@@ -139,7 +138,11 @@ it.each([
   },
 ])(
   "never falls back to a source resource when an allocation is missing",
-  (mapping) => {
+  (mapping: {
+    readonly documents: Readonly<ReadonlyMap<string, string>>;
+    readonly files: Readonly<ReadonlyMap<string, string>>;
+    readonly revisions: Readonly<ReadonlyMap<string, string>>;
+  }) => {
     expect(() =>
       rewriteEveCopyResources(
         { documentId, revisionId, url: sourceUrl },
@@ -149,7 +152,6 @@ it.each([
     ).toThrow("Missing copied");
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("preserves inline attachments and tool error or denial content without approval receipts", () => {
   const result = prepareEveCopyTranscript(
@@ -201,9 +203,6 @@ it("preserves inline attachments and tool error or denial content without approv
   expect(JSON.stringify(result.seed)).not.toContain("private-receipt");
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each<EveMessage["parts"][number]>([ { state: "streaming", text: "Partial", type: " accepts part; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each<EveMessage["parts"][number]>([
   { state: "streaming", text: "Partial", type: "text" },
   {
@@ -230,18 +229,17 @@ it.each<EveMessage["parts"][number]>([
     toolName: "tool",
     type: "dynamic-tool",
   },
-])("refuses incomplete visible parts rather than dropping them", (part) => {
-  expect(() =>
-    prepareEveCopyTranscript(
-      history([{ id: "answer", parts: [part], role: "assistant" }])
-    )
-  ).toThrow(EveCopyNotReadyError);
-});
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+])(
+  "refuses incomplete visible parts rather than dropping them",
+  (part: ReadonlyEveMessagePart) => {
+    expect(() =>
+      prepareEveCopyTranscript(
+        history([{ id: "answer", parts: [part], role: "assistant" }])
+      )
+    ).toThrow(EveCopyNotReadyError);
+  }
+);
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("requires a durable idle boundary, including when a new turn has no assistant text uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("requires a durable idle boundary, including when a new turn has no assistant text yet", () => {
   const events = history([
     {
@@ -262,7 +260,6 @@ it("requires a durable idle boundary, including when a new turn has no assistant
     EveCopyNotReadyError
   );
 });
-/* oxlint-enable no-magic-numbers */
 
 it("canonicalizes file links so a copied private key is never sent to the source hostname", () => {
   const content = `![image](https://old.example${sourceUrl})`;
@@ -302,10 +299,6 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
   );
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
-
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("materializes only allocated destination attachments and remaps case-insensitive n preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("materializes only allocated destination attachments and remaps case-insensitive native document references", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -335,17 +328,18 @@ it("materializes only allocated destination attachments and remaps case-insensit
     ])
   );
   expect(prepared.resources.documentIds).toEqual([documentId]);
-  const reads: string[] = [];
+  const loadDestinationFile = vi
+    .fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>()
+    .mockResolvedValue({ size: 11, type: "image/png" });
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
-    (key) => {
-      reads.push(key);
-      return Promise.resolve({ size: 11, type: "image/png" });
-    },
+    loadDestinationFile,
     "https://chatjs.example"
   );
-  expect(reads).toEqual([copiedFile]);
+  expect(loadDestinationFile.mock.calls.map(([key]) => key)).toEqual([
+    copiedFile,
+  ]);
   expect(JSON.stringify(result)).toContain(
     `https://chatjs.example/api/files/${copiedFile}`
   );
@@ -354,17 +348,12 @@ it("materializes only allocated destination attachments and remaps case-insensit
   expect(JSON.stringify(result)).not.toContain(sourceFile);
   expect(JSON.stringify(prepared.seed)).toContain(sourceFile);
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
   const value = Object.freeze({ nested: Object.freeze({ url: sourceUrl }) });
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): it("keeps attachment bytes out of the seed and reads destination metadata once per fi uses 1, 1024, 0, 6, 2048 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): it("keeps attachment bytes out of the seed and reads destination metadata once per fi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("keeps attachment bytes out of the seed and reads destination metadata once per file", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -379,35 +368,120 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
       },
     ])
   );
-  let reads = 0;
+  const loadDestinationFile = vi
+    .fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>()
+    .mockResolvedValue({ size: 1024 * 1024, type: "image/png" });
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     allocations,
-    () => {
-      reads += 1;
-      return Promise.resolve({ size: 1024 * 1024, type: "image/png" });
-    },
+    loadDestinationFile,
     "https://chatjs.example"
   );
-  expect(reads).toBe(1);
+  expect(loadDestinationFile).toHaveBeenCalledTimes(1);
   expect(result.attachments).toBe("channel");
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): it("externalizes six distinct inline images through durable destination allocations") uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-magic-numbers (#517): it("externalizes six distinct inline images through durable destination allocations") uses 1024, 8, 6, 24, 2048, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("externalizes six distinct inline images through durable destination allocations") accepts file; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): it("externalizes six distinct inline images through durable destination allocations") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+it("bounds metadata reads and drains a failed batch before reporting transcript-order errors", async () => {
+  const sources = Array.from(
+    { length: 5 },
+    (_, index) => `${String.fromCodePoint(97 + index).repeat(24)}.png`
+  );
+  const destinations = sources.map(
+    (_, index) => `${String.fromCodePoint(107 + index).repeat(24)}.png`
+  );
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: sources.map((key) => ({
+          mediaType: "image/png",
+          type: "file" as const,
+          url: `/api/files/${key}`,
+        })),
+      },
+    ])
+  );
+  const pending = Array.from({ length: 4 }, () =>
+    Promise.withResolvers<Pick<Blob, "type" | "size">>()
+  );
+  const load = vi.fn<(key: string) => Promise<Pick<Blob, "type" | "size">>>(
+    async (key) => {
+      const index = destinations.indexOf(key);
+      return await pending[index].promise;
+    }
+  );
+  const copying = materializeEveCopyTranscript(
+    prepared.seed,
+    {
+      ...allocations,
+      files: new Map(sources.map((key, index) => [key, destinations[index]])),
+    },
+    load,
+    "https://chatjs.example"
+  );
+  const rejected = expect(copying).rejects.toThrow("first attachment");
+  let settled = false;
+  void copying.catch(() => {
+    settled = true;
+  });
+  expect(load).toHaveBeenCalledTimes(4);
+  pending[1].reject(new Error("second attachment"));
+  pending[0].reject(new Error("first attachment"));
+  await Promise.resolve();
+  expect(settled).toBe(false);
+  expect(load).toHaveBeenCalledTimes(4);
+  pending[2].resolve({ size: 3, type: "image/png" });
+  pending[3].resolve({ size: 3, type: "image/png" });
+  await rejected;
+  expect(load).toHaveBeenCalledTimes(4);
+  expect(prepared.seed.messages[0].parts).toMatchObject(
+    sources.map((key) => ({ url: `/api/files/${key}` }))
+  );
+});
+
+it("shares pending metadata for duplicate destination attachments", async () => {
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: Array.from({ length: 6 }, () => ({
+          mediaType: "image/png",
+          type: "file" as const,
+          url: sourceUrl,
+        })),
+      },
+    ])
+  );
+  const pending = Promise.withResolvers<Pick<Blob, "type" | "size">>();
+  const load = vi.fn(async () => await pending.promise);
+  const copying = materializeEveCopyTranscript(
+    prepared.seed,
+    allocations,
+    load,
+    "https://chatjs.example"
+  );
+  expect(load).toHaveBeenCalledOnce();
+  pending.resolve({ size: 3, type: "image/png" });
+  const copied = await copying;
+  expect(load).toHaveBeenCalledOnce();
+  expect(copied.messages[0].parts).toMatchObject(
+    Array.from({ length: 6 }, () => ({
+      size: 3,
+      url: `https://chatjs.example${copiedUrl}`,
+    }))
+  );
+});
+
 it("externalizes six distinct inline images through durable destination allocations", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
       {
         id: "user",
-        parts: Array.from({ length: 6 }, (_, index) => ({
+        parts: Array.from({ length: 6 }, (_unusedValue, index) => ({
           mediaType: "image/png",
           type: "file",
           url: `data:image/png;base64,${Buffer.alloc(1024 * 1024, index).toString("base64")}`,
@@ -422,7 +496,7 @@ it("externalizes six distinct inline images through durable destination allocati
   const files = eveCopyInlineAttachments(prepared.seed);
   expect(files).toHaveLength(6);
   const inlineFiles = new Map(
-    files.map((file, index) => [
+    files.map((file: { readonly id: string }, index) => [
       file.id,
       `${String(index).padStart(24, "a")}.png`,
     ])
@@ -430,11 +504,9 @@ it("externalizes six distinct inline images through durable destination allocati
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     { ...allocations, inlineFiles },
-    () =>
-      Promise.resolve({
-        size: 1024 * 1024,
-        type: "image/png",
-      }),
+    vi
+      .fn<() => Promise<{ size: number; type: string }>>()
+      .mockResolvedValue({ size: 1024 * 1024, type: "image/png" }),
     "https://chatjs.example"
   );
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
@@ -443,11 +515,7 @@ it("externalizes six distinct inline images through durable destination allocati
     expect(file.bytes[0]).toBe(index);
   }
 });
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("refuses missing inline allocations and metadata changes before dispatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("refuses missing inline allocations and metadata changes before dispatch", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -469,7 +537,9 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     materializeEveCopyTranscript(
       prepared.seed,
       allocations,
-      () => Promise.resolve({ size: 2, type: "image/png" }),
+      vi
+        .fn<() => Promise<{ size: number; type: string }>>()
+        .mockResolvedValue({ size: 2, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("allocation");
@@ -480,12 +550,13 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
-      () => Promise.resolve({ size: 3, type: "image/png" }),
+      vi
+        .fn<() => Promise<{ size: number; type: string }>>()
+        .mockResolvedValue({ size: 3, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("metadata changed");
 });
-/* oxlint-enable typescript/promise-function-async */
 
 it.each([
   "data:image/png;base64,aGk",
@@ -585,10 +656,6 @@ it.each(["not-a-valid-document-id", documentId])(
     expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
   }
 );
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("retains model provenance in copies of copies without carrying private metadata") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("retains model provenance in copies of copies without carrying private metadata", () => {
   const events = history([
     {
@@ -614,11 +681,7 @@ it("retains model provenance in copies of copies without carrying private metada
   });
   expect(JSON.stringify(copy.seed)).not.toContain("private-result");
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("preserves selected tools in copies without publishing unrelated custom metadata") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("preserves selected tools in copies without publishing unrelated custom metadata", () => {
   const result = prepareEveCopyTranscript(
     history([
@@ -644,12 +707,7 @@ it("preserves selected tools in copies without publishing unrelated custom metad
     role: "user",
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers --
- * max-lines-per-function (#510): it("preserves imported text tool results through the ChatJS shared-copy projection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("preserves imported text tool results through the ChatJS shared-copy projection") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("preserves imported text tool results through the ChatJS shared-copy projection", () => {
   const imported = createSessionHistorySeed([
     { content: "Read the file", role: "user" },
@@ -701,7 +759,6 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
   });
   expect(JSON.stringify(copied.seed)).not.toContain("original");
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
 
 it.each([sourceUrl, `${sourceUrl}?dpl=dpl_test`])(
   "copies file references from %s into canonical paths",
@@ -727,5 +784,3 @@ it("copies explicit file identities alongside their stable URLs", () => {
     imageUrl: copiedUrl,
   });
 });
-
-/* oxlint-disable max-lines -- #509: This copy-transcript.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

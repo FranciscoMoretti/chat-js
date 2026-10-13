@@ -1,11 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop, eslint/no-magic-numbers, import/no-nodejs-modules, node/no-sync, typescript/prefer-readonly-parameter-types, unicorn/prefer-event-target --
- * eslint/no-await-in-loop: Observe ordered runtime evidence and retirement stages without reordering or redispatch.
- * eslint/no-magic-numbers: Bounded proof deadlines, fixture counts and archive permissions are explicit protocol inputs.
- * import/no-nodejs-modules: The disposable proof owns local files and child processes.
- * node/no-sync: Persist the worker ownership registration synchronously before its task begins.
- * typescript/prefer-readonly-parameter-types: The database and runtime SDKs own these mutable parameter types; proofs do not mutate them.
- * unicorn/prefer-event-target: Graphile Worker accepts the Node EventEmitter contract.
- */
 import { EventEmitter } from "node:events";
 import { appendFileSync } from "node:fs";
 import { access, appendFile } from "node:fs/promises";
@@ -20,6 +12,8 @@ const [url, directory, task] = z
   .array(z.string())
   .length(3)
   .parse(process.argv.slice(2));
+// Graphile Worker requires its Node EventEmitter interface for lifecycle evidence.
+// oxlint-disable-next-line unicorn/prefer-event-target
 const events = new EventEmitter();
 events.on("job:start", ({ worker, job }: WorkerEventMap["job:start"]) => {
   appendFileSync(
@@ -47,6 +41,8 @@ const runner = await run({
       const input = z
         .object({ action: z.literal("original"), amount: z.literal(7) })
         .parse(payload);
+      // The external release file is a serial barrier before the original side effect.
+      /* oxlint-disable no-await-in-loop */
       while (
         !(await access(path.join(directory, `${task}.release`)).then(
           () => true,
@@ -55,6 +51,7 @@ const runner = await run({
       ) {
         await delay(50);
       }
+      /* oxlint-enable no-await-in-loop */
       await appendFile(
         path.join(directory, `${task}.effects`),
         `${JSON.stringify(input)}\n`
@@ -63,5 +60,3 @@ const runner = await run({
   },
 });
 await runner.promise;
-
-/* oxlint-enable eslint/no-await-in-loop, eslint/no-magic-numbers, import/no-nodejs-modules, node/no-sync, typescript/prefer-readonly-parameter-types, unicorn/prefer-event-target */

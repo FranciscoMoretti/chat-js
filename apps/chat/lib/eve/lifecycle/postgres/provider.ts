@@ -1,25 +1,21 @@
-import postgres from "postgres";
-
 import type {
   LifecycleInventory,
   SupportedLifecycleProvider,
 } from "@/lib/eve/lifecycle/provider";
-
-import { assertPostgresLifecycleCompatibility } from "./compatibility";
 import {
   prepareEveNativeSessionPurge,
   purgeEveNativeSession,
   retireEveNativeSessions,
 } from "./eve-native-purge";
+import { assertPostgresLifecycleCompatibility } from "./compatibility";
+import postgres from "postgres";
 import { readEvePostgresRunInventory } from "./eve-run-inventory";
 
 const taskIdentifier = "workflow_flows";
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the small provider operations together so the compatibility gate is visible at every entrypoint. */
-export const createPostgresLifecycle = (
-  databaseUrl: string
-): SupportedLifecycleProvider => {
-  const check = async (): Promise<void> => {
+const createCompatibilityCheck =
+  (databaseUrl: string): (() => Promise<void>) =>
+  async (): Promise<void> => {
     const connection = postgres(databaseUrl, { max: 1 });
     try {
       await assertPostgresLifecycleCompatibility(connection);
@@ -27,6 +23,33 @@ export const createPostgresLifecycle = (
       await connection.end();
     }
   };
+
+const createInventoryReader =
+  (databaseUrl: string): ((sessionId: string) => Promise<LifecycleInventory>) =>
+  async (sessionId: string): Promise<LifecycleInventory> => {
+    const connection = postgres(databaseUrl, { max: 1 });
+    try {
+      await assertPostgresLifecycleCompatibility(connection);
+      const inventory = await readEvePostgresRunInventory(
+        connection,
+        sessionId
+      );
+      return {
+        activeRunIds: inventory.activeRunIds,
+        ambiguousStreamIds: inventory.ambiguousStreamIds,
+        missingRunIds: inventory.missingRunIds,
+        runIds: inventory.runs.map((run) => run.id),
+        streamIds: inventory.streamIds,
+      };
+    } finally {
+      await connection.end();
+    }
+  };
+
+export const createPostgresLifecycle = (
+  databaseUrl: string
+): SupportedLifecycleProvider => {
+  const check = createCompatibilityCheck(databaseUrl);
   return {
     capabilities: {
       durableRetirement: true,
@@ -37,25 +60,7 @@ export const createPostgresLifecycle = (
     },
     check,
     contractVersion: "1",
-    inventory: async (sessionId): Promise<LifecycleInventory> => {
-      const connection = postgres(databaseUrl, { max: 1 });
-      try {
-        await assertPostgresLifecycleCompatibility(connection);
-        const inventory = await readEvePostgresRunInventory(
-          connection,
-          sessionId
-        );
-        return {
-          activeRunIds: inventory.activeRunIds,
-          ambiguousStreamIds: inventory.ambiguousStreamIds,
-          missingRunIds: inventory.missingRunIds,
-          runIds: inventory.runs.map((run) => run.id),
-          streamIds: inventory.streamIds,
-        };
-      } finally {
-        await connection.end();
-      }
-    },
+    inventory: createInventoryReader(databaseUrl),
     prepare: async (sessionId, retireAndSettle) => {
       await check();
       return await prepareEveNativeSessionPurge(

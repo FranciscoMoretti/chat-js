@@ -1,16 +1,10 @@
-/* oxlint-disable import/no-nodejs-modules -- The compiled fixture records effects and reads its disposable connector configuration. */
 import { appendFile, readFile } from "node:fs/promises";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { defineDynamic, defineTool } from "eve/tools";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- The fixture shares its barrier helpers inside the isolated app root. */
 import { barrier, mark } from "../../control";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- EVE supplies compiled callback contexts; the fixture reads their SDK-owned mutable types. */
-// oxlint-disable-next-line import/no-default-export -- EVE compiles the dynamic resolver and its captured callbacks from this default export.
 export default defineDynamic({
   events: {
     "step.started": async () => {
@@ -64,5 +58,3 @@ export default defineDynamic({
     },
   },
 });
-
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

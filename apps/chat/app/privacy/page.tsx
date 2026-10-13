@@ -2,14 +2,10 @@ import React from "react";
 
 import { config } from "@/lib/config";
 
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): PrivacyPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * react/jsx-max-depth (#548): PrivacyPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/strict-boolean-expressions (#610): PrivacyPage intentionally keeps the existing falsy-value behavior of config.policies.privacy.lastUpdated; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): PrivacyPage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const PrivacyPage = (): React.JSX.Element => (
   <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
     <h1>{config.policies.privacy.title}</h1>
-    {config.policies.privacy.lastUpdated ? (
+    {(config.policies.privacy.lastUpdated ?? "").length > 0 ? (
       <p>
         <strong>Last updated:</strong> {config.policies.privacy.lastUpdated}
       </p>
@@ -153,8 +149,5 @@ const PrivacyPage = (): React.JSX.Element => (
     </p>
   </main>
 );
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */
 export default PrivacyPage;
-/* oxlint-enable import/no-default-export */

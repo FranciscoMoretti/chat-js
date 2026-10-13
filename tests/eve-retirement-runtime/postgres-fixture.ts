@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules -- This proof preparer owns disposable source and dependency overlays. */
 import {
   cp,
   mkdir,
@@ -10,7 +9,6 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { z } from "zod";
 
 const handoffSchema = z.object({
@@ -19,7 +17,6 @@ const handoffSchema = z.object({
   root: z.string(),
 });
 
-/* oxlint-disable max-statements, max-lines-per-function -- Validate the disposable database and prepare a single isolated fixture with explicit provenance before any process starts. */
 const preparePostgresFixture = async (input: {
   readonly source: string;
   readonly nodeModules: string;
@@ -97,6 +94,4 @@ const preparePostgresFixture = async (input: {
   );
   return { nodeModules, source };
 };
-/* oxlint-enable max-statements, max-lines-per-function */
-
 export { preparePostgresFixture };

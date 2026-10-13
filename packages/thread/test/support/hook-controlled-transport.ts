@@ -5,7 +5,6 @@ import type { ReadonlyDeep } from "./readonly-types";
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
   Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
     Promise,
-    // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
     null
   );
 
@@ -26,14 +25,21 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
           },
         })
       );
-
   public reconnectToStream = reconnectToNoStream;
 
   public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
-    this.requests[requestIndex]?.enqueue(chunk);
+    const controller = this.requests[requestIndex] ?? globalThis.undefined;
+    if (controller === globalThis.undefined) {
+      return;
+    }
+    controller.enqueue(chunk);
   }
 
   public finish(requestIndex: number): void {
-    this.requests[requestIndex]?.close();
+    const controller = this.requests[requestIndex] ?? globalThis.undefined;
+    if (controller === globalThis.undefined) {
+      return;
+    }
+    controller.close();
   }
 }

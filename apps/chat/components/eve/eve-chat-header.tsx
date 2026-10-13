@@ -1,9 +1,11 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Share } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
 import React, { useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
@@ -18,13 +20,11 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-/* oxlint-disable import/max-dependencies -- @/components/ui/dropdown-menu import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable import/max-dependencies */
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -38,7 +38,6 @@ import { useTRPC } from "@/trpc/react";
 import { useEveDeletion } from "./eve-deletion-provider";
 import { EveShareButton, EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
-/* oxlint-disable react/jsx-max-depth -- EveSharedBadge: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 const EveSharedBadge = (): React.JSX.Element => (
   <Tooltip>
@@ -58,20 +57,15 @@ const EveSharedBadge = (): React.JSX.Element => (
     </TooltipContent>
   </Tooltip>
 );
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- projectAppearance: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including project: { icon: string; iconColor: string } | undefined). */
 
 const projectAppearance = (
-  project: { icon: string; iconColor: string } | undefined
+  project: { readonly icon: string; readonly iconColor: string } | undefined
 ) => ({
   color:
     PROJECT_COLORS.find((value) => value.name === project?.iconColor)?.name ??
     "gray",
   icon: PROJECT_ICONS.find((value) => value === project?.icon) ?? "folder",
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveChatHeader: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const EveChatHeader = ({
   chatId,
@@ -91,7 +85,7 @@ const EveChatHeader = ({
   const project = useQuery(
     trpc.project.getById.queryOptions(
       { id: projectId ?? "" },
-      { enabled: Boolean(projectId && session?.user) }
+      { enabled: Boolean(hasText(projectId) && session?.user) }
     )
   );
   const { rename, pin } = useEveMetadataMutations();
@@ -131,7 +125,7 @@ const EveChatHeader = ({
         breadcrumb={
           <Breadcrumb className="ml-2 min-w-0">
             <BreadcrumbList className="flex-nowrap">
-              {projectId && session?.user && (
+              {hasText(projectId) && session?.user && (
                 <>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
@@ -166,22 +160,26 @@ const EveChatHeader = ({
                     <DropdownMenuContent align="end">
                       <ChatMenuItems
                         isPinned={identity.data?.isPinned ?? false}
-                        onRename={() => setDraft(title)}
-                        onTogglePin={() =>
+                        onRename={() => {
+                          setDraft(title);
+                        }}
+                        onTogglePin={() => {
                           pin.mutate({
                             id: chatId,
-                            isPinned: !identity.data?.isPinned,
-                          })
-                        }
-                        onDelete={() =>
+                            isPinned: !(identity.data?.isPinned === true),
+                          });
+                        }}
+                        onDelete={() => {
                           openDeletion({
                             id: chatId,
                             projectId: projectId ?? null,
                             state: "bound",
                             title,
-                          })
-                        }
-                        onShare={() => setSharing(true)}
+                          });
+                        }}
+                        onShare={() => {
+                          setSharing(true);
+                        }}
                         showShare={hasMessages}
                       />
                     </DropdownMenuContent>
@@ -189,14 +187,20 @@ const EveChatHeader = ({
                 ) : (
                   <Input
                     aria-label="Chat title"
-                    // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Rename replaces the title with this input and transfers keyboard focus into it.
                     autoFocus
                     className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
                     maxLength={255}
                     value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
+                    onChange={(event: {
+                      readonly target: { readonly value: string };
+                    }) => {
+                      setDraft(event.target.value);
+                    }}
                     onBlur={save}
-                    onKeyDown={(event) => {
+                    onKeyDown={(event: {
+                      readonly key: string;
+                      readonly preventDefault: () => void;
+                    }) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
                         save();
@@ -223,5 +227,5 @@ const EveChatHeader = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+
 export { EveChatHeader, EveSharedBadge };

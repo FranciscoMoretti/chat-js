@@ -124,7 +124,6 @@ interface ThreadState<TMessage extends UIMessage = UIMessage> {
    */
   update: (
     updater: (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The exported updater permits synchronous mutation of its SDK message arrays and returns that same mutable snapshot; readonly collections reject existing updater operations.
       snapshot: ThreadStateSnapshot<TMessage>
     ) => ThreadStateSnapshot<TMessage>
   ) => void;

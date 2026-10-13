@@ -1,6 +1,6 @@
 import React from "react";
 
-const FAQS = [
+const FAQS: readonly Readonly<{ answer: string; question: string }>[] = [
   {
     answer:
       "ChatJS is an open-source Next.js AI chat app starter that gives you a production-ready foundation with authentication, streaming UI, tool calling, and support for 120+ models.",
@@ -23,8 +23,6 @@ const FAQS = [
   },
 ];
 
-/* oxlint-disable react/jsx-max-depth -- Faq: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Faq: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const Faq = (): React.JSX.Element => (
   <section
     aria-labelledby="faq-heading"
@@ -68,5 +66,3 @@ export const Faq = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */

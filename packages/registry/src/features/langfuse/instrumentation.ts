@@ -1,7 +1,6 @@
 import type { InstrumentationRegistration } from "@/lib/installation-contracts";
-import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
-
 import { getLangfuseEnvironment } from "./credentials";
+import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 export const register: InstrumentationRegistration = async ({
   appPrefix,

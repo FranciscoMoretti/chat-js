@@ -1,28 +1,5 @@
 "use client";
 
-import type { ChatStatus } from "ai";
-import {
-  CornerDownLeftIcon,
-  Loader2Icon,
-  MicIcon,
-  PlusIcon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
-import type {
-  JSX as ReactJSX,
-  ComponentProps,
-  HTMLAttributes,
-  RefObject,
-} from "react";
-import React, {
-  Children,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
 import {
   Command,
   CommandEmpty,
@@ -32,6 +9,20 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import type {
+  ComponentProps,
+  HTMLAttributes,
+  JSX as ReactJSX,
+  RefObject,
+} from "react";
+import {
+  CornerDownLeftIcon,
+  Loader2Icon,
+  MicIcon,
+  PlusIcon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +39,13 @@ import {
   InputGroupAddon,
   InputGroupButton,
 } from "@/components/ui/input-group";
+import React, {
+  Children,
+  useCallback,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   Select,
   SelectContent,
@@ -55,19 +53,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ChatStatus } from "ai";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- PromptInputHoverCard: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+const IMMEDIATE_HOVER_DELAY = 0;
+const SINGLE_BUTTON_CHILD = 1;
+const SPEECH_RESULT_STEP = 1;
+const FIRST_SPEECH_ALTERNATIVE = 0;
 
 const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
+  openDelay = IMMEDIATE_HOVER_DELAY,
+  closeDelay = IMMEDIATE_HOVER_DELAY,
   ...props
 }: PromptInputHoverCardProps): React.JSX.Element => (
   <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PromptInputHoverCardContent = ({
   align = "start",
@@ -75,14 +76,11 @@ const PromptInputHoverCardContent = ({
 }: PromptInputHoverCardContentProps): React.JSX.Element => (
   <HoverCardContent align={align} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /** Presentation only: draft submission and file state belong to the composer. */
 type PromptInputProps = HTMLAttributes<HTMLFormElement> & {
   inputGroupClassName?: string;
 };
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PromptInput = ({
   className,
@@ -96,14 +94,11 @@ const PromptInput = ({
     </InputGroup>
   </form>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputHeaderProps = Omit<
   ComponentProps<typeof InputGroupAddon>,
   "align"
 >;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputHeaderProps). */
 
 const PromptInputHeader = ({
   className,
@@ -115,14 +110,11 @@ const PromptInputHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputFooterProps = Omit<
   ComponentProps<typeof InputGroupAddon>,
   "align"
 >;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputFooterProps). */
 
 const PromptInputFooter = ({
   className,
@@ -134,11 +126,8 @@ const PromptInputFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputToolsProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTools: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputToolsProps). */
 
 const PromptInputTools = ({
   className,
@@ -146,11 +135,8 @@ const PromptInputTools = ({
 }: PromptInputToolsProps): React.JSX.Element => (
   <div className={cn("flex items-center gap-1", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputButtonProps = ComponentProps<typeof InputGroupButton>;
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputButton: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PromptInputButton = ({
   variant = "ghost",
@@ -159,8 +145,9 @@ const PromptInputButton = ({
   ...props
 }: PromptInputButtonProps): React.JSX.Element => {
   const newSize =
-    // oxlint-disable-next-line react/no-react-children -- Preserve React child-count semantics for the public button sizing API.
-    size ?? (Children.count(props.children) > 1 ? "sm" : "icon-sm");
+    size ??
+    // oxlint-disable-next-line react/no-react-children -- Native boundary tests cover null slots, nested arrays and opaque fragments; normalizing children would change this public sizing contract.
+    (Children.count(props.children) > SINGLE_BUTTON_CHILD ? "sm" : "icon-sm");
 
   return (
     <InputGroupButton
@@ -172,19 +159,14 @@ const PromptInputButton = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputActionMenuProps). */
 const PromptInputActionMenu = (
   props: PromptInputActionMenuProps
 ): React.JSX.Element => <DropdownMenu {...props} />;
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PromptInputActionMenuTrigger = ({
   className,
@@ -197,31 +179,26 @@ const PromptInputActionMenuTrigger = ({
     </PromptInputButton>
   </DropdownMenuTrigger>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputActionMenuContentProps = ComponentProps<
   typeof DropdownMenuContent
 >;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuContentProps). */
 const PromptInputActionMenuContent = ({
   className,
   ...props
 }: PromptInputActionMenuContentProps): React.JSX.Element => (
   <DropdownMenuContent align="start" className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputActionMenuItemProps = ComponentProps<typeof DropdownMenuItem>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuItemProps). */
 const PromptInputActionMenuItem = ({
   className,
   ...props
 }: PromptInputActionMenuItemProps): React.JSX.Element => (
   <DropdownMenuItem className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 // Note: Actions that perform side-effects (like opening a file dialog)
 // are provided in opt-in modules (e.g., prompt-input-attachments).
@@ -229,8 +206,6 @@ const PromptInputActionMenuItem = ({
 type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
   status?: ChatStatus;
 };
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSubmit: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PromptInputSubmit = ({
   className,
@@ -263,9 +238,6 @@ const PromptInputSubmit = ({
     </InputGroupButton>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SpeechRecognition: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including this: SpeechRecognition). */
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -273,16 +245,31 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start: () => void;
   stop: () => void;
-  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onstart:
+    | ((
+        this: ReadonlyNativeSurface<SpeechRecognition>,
+        ev: ReadonlyNativeSurface<Event>
+      ) => void)
+    | null;
+  onend:
+    | ((
+        this: ReadonlyNativeSurface<SpeechRecognition>,
+        ev: ReadonlyNativeSurface<Event>
+      ) => void)
+    | null;
   onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
+    | ((
+        this: ReadonlyNativeSurface<SpeechRecognition>,
+        ev: ReadonlyNativeSurface<SpeechRecognitionEvent>
+      ) => void)
     | null;
   onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
+    | ((
+        this: ReadonlyNativeSurface<SpeechRecognition>,
+        ev: ReadonlyNativeSurface<SpeechRecognitionErrorEvent>
+      ) => void)
     | null;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -323,89 +310,117 @@ type PromptInputSpeechButtonProps = ComponentProps<typeof PromptInputButton> & {
   onTranscriptionChange?: (text: string) => void;
 };
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type SpeechResultEvent = Readonly<{
+  resultIndex: number;
+  results: Readonly<
+    ArrayLike<
+      Readonly<{
+        isFinal: boolean;
+        readonly [index: number]: Readonly<{ transcript: string }>;
+      }>
+    >
+  >;
+}>;
 
-const PromptInputSpeechButton = ({
-  className,
-  textareaRef,
-  onTranscriptionChange,
-  ...props
-}: PromptInputSpeechButtonProps): ReactJSX.Element => {
-  const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
-    null
-  );
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+const collectFinalTranscript = (event: SpeechResultEvent): string => {
+  let finalTranscript = "";
 
-  useEffect(() => {
-    if (
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
-      typeof window !== "undefined" &&
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
-      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-    ) {
-      const SpeechRecognition =
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const speechRecognition = new SpeechRecognition();
-
-      speechRecognition.continuous = true;
-      speechRecognition.interimResults = true;
-      speechRecognition.lang = "en-US";
-
-      speechRecognition.onstart = (): void => {
-        setIsListening(true);
-      };
-
-      speechRecognition.onend = (): void => {
-        setIsListening(false);
-      };
-
-      speechRecognition.onresult = (event): void => {
-        let finalTranscript = "";
-
-        for (
-          let index = event.resultIndex;
-          index < event.results.length;
-          index += 1
-        ) {
-          const result = event.results[index];
-          if (result.isFinal) {
-            finalTranscript += result[0]?.transcript ?? "";
-          }
-        }
-
-        if (finalTranscript && textareaRef?.current) {
-          const textarea = textareaRef.current;
-          const currentValue = textarea.value;
-          const newValue =
-            currentValue + (currentValue ? " " : "") + finalTranscript;
-
-          textarea.value = newValue;
-          textarea.dispatchEvent(new Event("input", { bubbles: true }));
-          onTranscriptionChange?.(newValue);
-        }
-      };
-
-      speechRecognition.addEventListener("error", (event) => {
-        console.error("Speech recognition error:", event);
-        setIsListening(false);
-      });
-
-      recognitionRef.current = speechRecognition;
-      // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.
-      setRecognition(speechRecognition);
-    }
-
-    return (): void => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
+  for (
+    let index = event.resultIndex;
+    index < event.results.length;
+    index += SPEECH_RESULT_STEP
+  ) {
+    const result = event.results[index];
+    if (result.isFinal) {
+      const { [FIRST_SPEECH_ALTERNATIVE]: alternative } = result;
+      if (typeof alternative === "object" && alternative !== null) {
+        finalTranscript += alternative.transcript;
       }
-    };
-  }, [textareaRef, onTranscriptionChange]);
+    }
+  }
+  return finalTranscript;
+};
+
+const initializeSpeechRecognition = (
+  SpeechRecognition: new () => SpeechRecognition,
+  onResult: NonNullable<SpeechRecognition["onresult"]>,
+  setIsListening: (listening: boolean) => void
+): SpeechRecognition => {
+  const speechRecognition = new SpeechRecognition();
+
+  speechRecognition.continuous = true;
+  speechRecognition.interimResults = true;
+  speechRecognition.lang = "en-US";
+
+  speechRecognition.onstart = (): void => {
+    setIsListening(true);
+  };
+
+  speechRecognition.onend = (): void => {
+    setIsListening(false);
+  };
+
+  speechRecognition.onresult = onResult;
+
+  speechRecognition.addEventListener("error", (event: unknown) => {
+    console.error("Speech recognition error:", event);
+    setIsListening(false);
+  });
+  return speechRecognition;
+};
+
+const createSpeechRecognitionStore = (
+  onResult: NonNullable<SpeechRecognition["onresult"]>,
+  setIsListening: (listening: boolean) => void
+) => {
+  let recognition: SpeechRecognition | null = null;
+  return {
+    getSnapshot: () => recognition,
+    getServerSnapshot: () => null,
+    subscribe: (notify: () => void) => {
+      if (
+        "window" in globalThis &&
+        ("SpeechRecognition" in globalThis.window ||
+          "webkitSpeechRecognition" in globalThis.window)
+      ) {
+        const Constructor =
+          globalThis.window.SpeechRecognition ??
+          globalThis.window.webkitSpeechRecognition;
+        recognition = initializeSpeechRecognition(
+          Constructor,
+          onResult,
+          setIsListening
+        );
+        notify();
+      }
+      return () => {
+        recognition?.stop();
+        recognition = null;
+      };
+    },
+  };
+};
+
+const useSpeechRecognition = (
+  onResult: NonNullable<SpeechRecognition["onresult"]>
+): Readonly<{
+  isListening: boolean;
+  recognition: SpeechRecognition | null;
+  toggleListening: () => void;
+}> => {
+  const [isListening, setIsListening] = useState(false);
+  const store = useMemo(
+    () => createSpeechRecognitionStore(onResult, setIsListening),
+    [onResult]
+  );
+  const recognition = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
 
   const toggleListening = useCallback(() => {
-    if (!recognition) {
+    if (recognition === null) {
       return;
     }
 
@@ -415,6 +430,39 @@ const PromptInputSpeechButton = ({
       recognition.start();
     }
   }, [recognition, isListening]);
+  return { isListening, recognition, toggleListening };
+};
+
+const PromptInputSpeechButton = ({
+  className,
+  textareaRef,
+  onTranscriptionChange,
+  ...props
+}: PromptInputSpeechButtonProps): ReactJSX.Element => {
+  const onResult = useCallback(
+    (event: SpeechResultEvent): void => {
+      const finalTranscript = collectFinalTranscript(event);
+      if (
+        finalTranscript !== "" &&
+        typeof textareaRef === "object" &&
+        textareaRef.current !== null
+      ) {
+        const textarea = textareaRef.current;
+        const currentValue = textarea.value;
+        const newValue =
+          currentValue + (currentValue === "" ? "" : " ") + finalTranscript;
+
+        textarea.value = newValue;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        if (typeof onTranscriptionChange === "function") {
+          onTranscriptionChange(newValue);
+        }
+      }
+    },
+    [textareaRef, onTranscriptionChange]
+  );
+  const { isListening, recognition, toggleListening } =
+    useSpeechRecognition(onResult);
 
   return (
     <PromptInputButton
@@ -431,20 +479,14 @@ const PromptInputSpeechButton = ({
     </PromptInputButton>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type PromptInputSelectProps = ComponentProps<typeof Select>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelect: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputSelectProps). */
-
 const PromptInputSelect = (
-  props: PromptInputSelectProps
+  props: ReadonlyNativeSurface<PromptInputSelectProps>
 ): React.JSX.Element => <Select {...props} />;
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectTriggerProps). */
 
 const PromptInputSelectTrigger = ({
   className,
@@ -459,11 +501,8 @@ const PromptInputSelectTrigger = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputSelectContentProps = ComponentProps<typeof SelectContent>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectContentProps). */
 
 const PromptInputSelectContent = ({
   className,
@@ -471,11 +510,8 @@ const PromptInputSelectContent = ({
 }: PromptInputSelectContentProps): React.JSX.Element => (
   <SelectContent className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputSelectItemProps = ComponentProps<typeof SelectItem>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectItemProps). */
 
 const PromptInputSelectItem = ({
   className,
@@ -483,11 +519,8 @@ const PromptInputSelectItem = ({
 }: PromptInputSelectItemProps): React.JSX.Element => (
   <SelectItem className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputSelectValueProps = ComponentProps<typeof SelectValue>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectValueProps). */
 
 const PromptInputSelectValue = ({
   className,
@@ -495,24 +528,18 @@ const PromptInputSelectValue = ({
 }: PromptInputSelectValueProps): React.JSX.Element => (
   <SelectValue className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
 type PromptInputHoverCardTriggerProps = ComponentProps<typeof HoverCardTrigger>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputHoverCardTriggerProps). */
-
 const PromptInputHoverCardTrigger = (
   props: PromptInputHoverCardTriggerProps
 ): React.JSX.Element => <HoverCardTrigger {...props} />;
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputHoverCardContentProps = ComponentProps<typeof HoverCardContent>;
 
 type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabsList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabsListProps). */
 
 const PromptInputTabsList = ({
   className,
@@ -520,11 +547,8 @@ const PromptInputTabsList = ({
 }: PromptInputTabsListProps): React.JSX.Element => (
   <div className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputTabProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTab: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabProps). */
 
 const PromptInputTab = ({
   className,
@@ -532,32 +556,26 @@ const PromptInputTab = ({
 }: PromptInputTabProps): React.JSX.Element => (
   <div className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabLabelProps). */
-
 const PromptInputTabLabel = ({
   className,
+  children,
   ...props
 }: PromptInputTabLabelProps): React.JSX.Element => (
-  <>
-    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
-    <h3
-      className={cn(
-        "text-muted-foreground mb-2 px-3 text-xs font-medium",
-        className
-      )}
-      {...props}
-    />
-  </>
+  <h3
+    className={cn(
+      "text-muted-foreground mb-2 px-3 text-xs font-medium",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </h3>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabBodyProps). */
 
 const PromptInputTabBody = ({
   className,
@@ -565,11 +583,8 @@ const PromptInputTabBody = ({
 }: PromptInputTabBodyProps): React.JSX.Element => (
   <div className={cn("space-y-1", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputTabItemProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabItemProps). */
 
 const PromptInputTabItem = ({
   className,
@@ -583,11 +598,8 @@ const PromptInputTabItem = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandProps = ComponentProps<typeof Command>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommand: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandProps). */
 
 const PromptInputCommand = ({
   className,
@@ -595,11 +607,8 @@ const PromptInputCommand = ({
 }: PromptInputCommandProps): React.JSX.Element => (
   <Command className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandInputProps = ComponentProps<typeof CommandInput>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandInputProps). */
 
 const PromptInputCommandInput = ({
   className,
@@ -607,11 +616,8 @@ const PromptInputCommandInput = ({
 }: PromptInputCommandInputProps): React.JSX.Element => (
   <CommandInput className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandListProps = ComponentProps<typeof CommandList>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandListProps). */
 
 const PromptInputCommandList = ({
   className,
@@ -619,11 +625,8 @@ const PromptInputCommandList = ({
 }: PromptInputCommandListProps): React.JSX.Element => (
   <CommandList className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandEmptyProps = ComponentProps<typeof CommandEmpty>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandEmpty: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandEmptyProps). */
 
 const PromptInputCommandEmpty = ({
   className,
@@ -631,11 +634,8 @@ const PromptInputCommandEmpty = ({
 }: PromptInputCommandEmptyProps): React.JSX.Element => (
   <CommandEmpty className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandGroupProps = ComponentProps<typeof CommandGroup>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandGroupProps). */
 
 const PromptInputCommandGroup = ({
   className,
@@ -643,11 +643,8 @@ const PromptInputCommandGroup = ({
 }: PromptInputCommandGroupProps): React.JSX.Element => (
   <CommandGroup className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandItemProps = ComponentProps<typeof CommandItem>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandItemProps). */
 
 const PromptInputCommandItem = ({
   className,
@@ -655,11 +652,8 @@ const PromptInputCommandItem = ({
 }: PromptInputCommandItemProps): React.JSX.Element => (
   <CommandItem className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputCommandSeparatorProps = ComponentProps<typeof CommandSeparator>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandSeparatorProps). */
 
 const PromptInputCommandSeparator = ({
   className,
@@ -667,9 +661,7 @@ const PromptInputCommandSeparator = ({
 }: PromptInputCommandSeparatorProps): React.JSX.Element => (
   <CommandSeparator className={cn(className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines -- prompt-input keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export {
   PromptInput,
   PromptInputActionMenu,

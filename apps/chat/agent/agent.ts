@@ -1,31 +1,19 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/environment"; "../lib/eve/model-selection"; "../lib/eve/tool-availability"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- */
-import { wrapLanguageModel } from "ai";
 import { defineAgent, defineDynamic } from "eve";
+import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
 
-import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { resolveEveModel } from "../lib/eve/model-selection";
 import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-enable import/no-relative-parent-imports */
+import { wrapLanguageModel } from "ai";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): configureWorkflowEnvironment reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 configureWorkflowEnvironment(process.env);
-/* oxlint-enable node/no-process-env */
 
 const selectedModel = defineState<{ modelId?: string }>(
   "chatjs.turn-model",
   () => ({})
 );
 
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
@@ -33,7 +21,12 @@ export default defineAgent({
   experimental: { workflow: { world: resolveWorkflowWorld() } },
   model: defineDynamic({
     events: {
-      "step.started": async (_event, context) => {
+      "step.started": async (
+        _event: unknown,
+        context: Readonly<{
+          session: Parameters<typeof installedToolAvailabilityMiddleware>[0];
+        }>
+      ) => {
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));
@@ -50,4 +43,3 @@ export default defineAgent({
     },
   }),
 });
-/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */

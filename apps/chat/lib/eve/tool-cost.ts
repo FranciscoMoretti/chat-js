@@ -1,14 +1,24 @@
+import type { AiGatewayModel } from "@chat-js/gateways/models";
+
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-import { toModelData } from "@/lib/ai/to-model-data";
 import type { UsageInfo } from "@/lib/credits/cost-accumulator";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { createToolUsage } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
 
-/* oxlint-disable no-magic-numbers, no-undefined --
- * no-magic-numbers (#517): tokenCost uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): tokenCost uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
+// Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
+const pricingForModel = (
+  fetchedModels: readonly {
+    readonly id: string;
+    readonly pricing: ReadonlyNativeSurface<AiGatewayModel["pricing"]>;
+  }[],
+  modelId: string
+): ReadonlyNativeSurface<AiGatewayModel["pricing"]> | undefined =>
+  fetchedModels.find(
+    (model: Readonly<Pick<AiGatewayModel, "id">>) => model.id === modelId
+  )?.pricing;
+
 const tokenCost = (
   tokens: number | undefined,
   price: string | undefined
@@ -28,27 +38,37 @@ const tokenCost = (
   }
   return tokens * rate;
 };
-/* oxlint-enable no-magic-numbers, no-undefined */
+/** Cost adapter with replaceable accounting methods and a deferred dollar total. */
+interface EveToolCost {
+  addAPICost: (name: string, costCents: number) => void;
+  addImageCost: (
+    modelId: string,
+    count: number,
+    usage: Readonly<UsageInfo>,
+    source: string
+  ) => void;
+  addLLMCost: (
+    modelId: string,
+    tokens: Readonly<UsageInfo>,
+    source: string
+  ) => void;
+  totalUsd: ToolUsage["totalUsd"];
+}
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): createEveToolCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): createEveToolCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): createEveToolCost keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): createEveToolCost uses 100, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): createEveToolCost uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep createEveToolCost's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createEveToolCost's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): createEveToolCost accepts usage: ToolUsage = createToolUsage(); _usage: UsageInfo; model; tokens: UsageInfo; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/** Resolve provider usage before sealing a durable receipt; unknown pricing must not become free work.
+ * @param {Readonly<ToolUsage>} usage Accounting session receiving immediate API cost and deferred provider-priced image/token charges.
+ * @returns {EveToolCost} The existing tool cost adapter; totalUsd settles deferred charges and omits totals when reported pricing is incomplete.
  */
-/** Resolve provider usage before sealing a durable receipt; unknown pricing must not become free work. */
-export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
+export const createEveToolCost = (
+  usage: Readonly<ToolUsage> = createToolUsage()
+): EveToolCost => ({
   addAPICost(_name: string, costCents: number): void {
     usage.addCostUsd(costCents / 100);
   },
   addImageCost(
     modelId: string,
     count: number,
-    _usage: UsageInfo,
+    _usage: Readonly<UsageInfo>,
     _source: string
   ): void {
     usage.addDeferredCost(async () => {
@@ -56,17 +76,18 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
         throw new Error("Invalid generated image count.");
       }
       const fetchedModels = await getActiveGateway().fetchModels();
-      const models = fetchedModels.map((model) => toModelData(model));
-      const rate = Number(
-        models.find((model) => model.id === modelId)?.pricing?.image
-      );
+      const rate = Number(pricingForModel(fetchedModels, modelId)?.image);
       if (!Number.isFinite(rate) || rate < 0) {
         throw new Error("Image provider pricing is unavailable.");
       }
       return count * rate;
     });
   },
-  addLLMCost(modelId: string, tokens: UsageInfo, _source: string): void {
+  addLLMCost(
+    modelId: string,
+    tokens: Readonly<UsageInfo>,
+    _source: string
+  ): void {
     usage.addDeferredCost(async () => {
       if (
         tokens.inputTokens === undefined ||
@@ -75,8 +96,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
         throw new Error("Provider usage is unavailable.");
       }
       const fetchedModels = await getActiveGateway().fetchModels();
-      const models = fetchedModels.map((model) => toModelData(model));
-      const pricing = models.find((model) => model.id === modelId)?.pricing;
+      const pricing = pricingForModel(fetchedModels, modelId);
       return (
         tokenCost(tokens.inputTokens, pricing?.input) +
         tokenCost(tokens.outputTokens, pricing?.output)
@@ -85,4 +105,3 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
   },
   totalUsd: usage.totalUsd.bind(usage),
 });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

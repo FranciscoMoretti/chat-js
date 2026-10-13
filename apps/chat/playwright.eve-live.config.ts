@@ -1,10 +1,6 @@
+import config from "./playwright.eve.config";
 import { defineConfig } from "@playwright/test";
 
-import config from "./playwright.eve.config";
-
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
 export default defineConfig({
   ...config,
   testMatch: [
@@ -56,4 +52,3 @@ export default defineConfig({
   ],
   timeout: 120_000,
 });
-/* oxlint-enable import/no-default-export */

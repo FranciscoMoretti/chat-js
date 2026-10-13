@@ -1,28 +1,20 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/deepResearch"; "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/read-document/tool"; "../../tools/chatjs/saved-code-execution/tool"; "../../tools/chatjs/text-documents/tool" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
-
-import type research from "../../agent/tools/deepResearch";
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import type { readDocument } from "../../tools/chatjs/read-document/tool";
-import type { runCodeDocument } from "../../tools/chatjs/saved-code-execution/tool";
-import { createTextDocument } from "../../tools/chatjs/text-documents/tool";
-import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
 import type { NativeToolUI } from "./tool-types";
-/* oxlint-enable import/no-relative-parent-imports */
+import { createTextDocument } from "@/tools/chatjs/text-documents/tool";
+import type { editTextDocument } from "@/tools/chatjs/text-documents/tool";
+import type { readDocument } from "@/tools/chatjs/read-document/tool";
+import type research from "@/agent/tools/deepResearch";
+import type { runCodeDocument } from "@/tools/chatjs/saved-code-execution/tool";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
 }));
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
-/* oxlint-disable id-length --
- * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
+
 vi.mock("./turn-tools", () => ({
-  filterEveTools: <T>(tools: T): Partial<T> => ({ ...tools }),
+  filterEveTools: <Tools>(tools: Tools): Partial<Tools> => ({ ...tools }),
 }));
-/* oxlint-enable id-length */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -62,7 +54,6 @@ test("document output is validated before crossing the native result boundary", 
     )
   ).rejects.toThrow();
 });
-
 test("native workflow outputs retain the report revision and clarification contracts", () => {
   type Research = NativeToolUI<typeof research>;
   expectTypeOf<

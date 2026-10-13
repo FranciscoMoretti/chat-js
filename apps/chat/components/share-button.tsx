@@ -1,8 +1,7 @@
 "use client";
 
 import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
-import type React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,13 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return -- ShareDialogView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const ShareDialogView = ({
   chatId,
@@ -40,6 +39,7 @@ const ShareDialogView = ({
   readonly onClose: () => void;
   readonly setVisibility: (visibility: "private" | "public") => Promise<void>;
 }): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const [step, setStep] = useState<ShareStep>("info");
   const handleShare = async (): Promise<void> => {
     try {
@@ -62,7 +62,6 @@ const ShareDialogView = ({
       );
     }
   };
-
   const handleCopyLink = async (): Promise<void> => {
     const shareUrl = `${globalThis.location.origin}/share/${chatId}`;
     try {
@@ -72,7 +71,6 @@ const ShareDialogView = ({
       toast.error("Unable to copy share link.");
     }
   };
-
   return (
     <>
       {step === "info" && (
@@ -120,8 +118,9 @@ const ShareDialogView = ({
                     className="flex-1"
                     disabled={isPending}
 
-                    // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-                    onClick={handleUnshare}
+                    onClick={() => {
+                      startEventAction(handleUnshare);
+                    }}
                     variant="outline"
                   >
                     {isPending ? (
@@ -139,7 +138,9 @@ const ShareDialogView = ({
                   <Button
                     className="flex-1"
                     disabled={isPending}
-                    onClick={() => setStep("shared")}
+                    onClick={() => {
+                      setStep("shared");
+                    }}
                   >
                     <GlobeIcon size={16} />
                     <span className="ml-2">Get Link</span>
@@ -150,8 +151,9 @@ const ShareDialogView = ({
                   className="w-full"
                   disabled={isPending}
 
-                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-                  onClick={handleShare}
+                  onClick={() => {
+                    startEventAction(handleShare);
+                  }}
                 >
                   {isPending ? (
                     <>
@@ -194,8 +196,9 @@ const ShareDialogView = ({
             <Button
               className="px-3"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-              onClick={handleCopyLink}
+              onClick={() => {
+                startEventAction(handleCopyLink);
+              }}
               size="sm"
               type="submit"
             >
@@ -204,14 +207,21 @@ const ShareDialogView = ({
             </Button>
           </div>
           <div className="flex items-center justify-between pt-2">
-            <Button onClick={() => setStep("info")} size="sm" variant="ghost">
+            <Button
+              onClick={() => {
+                setStep("info");
+              }}
+              size="sm"
+              variant="ghost"
+            >
               ← Back
             </Button>
             <Button
               disabled={isPending}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-              onClick={handleUnshare}
+              onClick={() => {
+                startEventAction(handleUnshare);
+              }}
               size="sm"
               variant="outline"
             >
@@ -233,9 +243,6 @@ const ShareDialogView = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-void-return */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShareDialog: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 // Extracted dialog component that can be controlled externally
 const ShareDialog = ({
@@ -244,10 +251,10 @@ const ShareDialog = ({
   children,
   renderContent,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children?: React.ReactNode;
-  renderContent: (onClose: () => void) => React.ReactNode;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly children?: ReadonlyReactNode;
+  readonly renderContent: (onClose: () => void) => React.ReactNode;
 }): React.JSX.Element => {
   const handleDialogOpenChange = (isOpen: boolean): void => {
     onOpenChange(isOpen);
@@ -257,20 +264,20 @@ const ShareDialog = ({
     <Dialog onOpenChange={handleDialogOpenChange} open={open}>
       {children}
       <DialogContent className="sm:max-w-md">
-        {open && renderContent(() => onOpenChange(false))}
+        {open &&
+          renderContent(() => {
+            onOpenChange(false);
+          })}
       </DialogContent>
     </Dialog>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShareButton: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShareButton = ({
   className,
   renderContent,
 }: {
-  renderContent: (onClose: () => void) => React.ReactNode;
+  readonly renderContent: (onClose: () => void) => React.ReactNode;
 } & React.ComponentProps<typeof Button>): React.JSX.Element => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
@@ -307,5 +314,4 @@ const ShareButton = ({
     </ShareDialog>
   );
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { ShareButton, ShareDialog, ShareDialogView };

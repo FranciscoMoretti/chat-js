@@ -1,3 +1,8 @@
+import type {
+  UseThreadHelpers,
+  UseThreadOptions,
+} from "#thread-source/use-thread";
+import { act, createElement } from "react";
 import {
   afterAll,
   afterEach,
@@ -8,27 +13,18 @@ import {
   test,
 } from "bun:test";
 
-import type { UIMessage } from "ai";
-import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-
-import { getMessageText } from "#thread-source/message-utils";
-import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-import { Thread } from "#thread-source/thread";
-import { MemoryThreadState } from "#thread-source/thread-state";
-import type {
-  UseThreadHelpers,
-  UseThreadOptions,
-} from "#thread-source/use-thread";
-
 import { ControlledTransport } from "./support/hook-controlled-transport";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { createHookDom } from "./support/hook-dom";
+import { MemoryThreadState } from "#thread-source/thread-state";
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
 import { RejectingTransport } from "./support/rejecting-transport";
 import { ResumeTransport } from "./support/resume-transport";
+import type { Root } from "react-dom/client";
 import { StateBackedThread } from "./support/state-backed-thread";
-/* oxlint-enable import/max-dependencies */
+import { Thread } from "#thread-source/thread";
+import type { UIMessage } from "ai";
+import { createHookDom } from "./support/hook-dom";
+import { createRoot } from "react-dom/client";
+import { getMessageText } from "#thread-source/message-utils";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -49,7 +45,6 @@ const commit = async (action: () => void): Promise<void> => {
     await Promise.resolve();
   });
 };
-
 afterEach(async (): Promise<void> => {
   try {
     await commit((): void => {
@@ -70,11 +65,9 @@ afterEach(async (): Promise<void> => {
     globalThis.document.body.replaceChildren();
   }
 });
-
 afterAll(async (): Promise<void> => {
   await dom.close();
 });
-
 const user = (id: string): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
@@ -104,8 +97,6 @@ type HookResultReader = Readonly<
       ReadonlyMessageValue<Pick<UseThreadHelpers["tree"], TreeCollectionKeys>>;
   };
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The harness forwards native SDK options or a supplied AbstractThread identity to useThread; a deep readonly option view fails that actual hook receiver, while callback helpers are readonly readers.
 const HookHarness = ({
   onCommit,
   onRender,
@@ -118,15 +109,15 @@ const HookHarness = ({
   const helpers = useThread(options);
   onRender(helpers);
   return createElement("div", {
-    ref: () => onCommit?.(helpers.setMessages),
+    ref: () => {
+      if (onCommit) {
+        onCommit(helpers.setMessages);
+      }
+    },
   });
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 const renderUseThread = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Initial options are forwarded through React props into the native useThread constructor/controller contract; deeply readonly SDK schemas or private controller views are not assignable.
   initialOptions: Readonly<UseThreadOptions>,
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
 ) => {
@@ -135,7 +126,6 @@ const renderUseThread = async (
   globalThis.document.body.append(container);
   const renderer = createRoot(container);
   roots.add(renderer);
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React renders the original hook options, including native SDK schemas or the supplied controller class; the deep readonly alternative fails useThread receiving those props.
   const render = (options: Readonly<UseThreadOptions>) =>
     createElement(HookHarness, {
       onCommit,
@@ -166,7 +156,6 @@ const renderUseThread = async (
         container.remove();
       }
     },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Updating the renderer forwards original native hook construction options or a supplied controller; deep readonly options fail the same concrete useThread receiver.
     async update(options: Readonly<UseThreadOptions>): Promise<void> {
       await commit((): void => {
         renderer.render(render(options));
@@ -174,10 +163,7 @@ const renderUseThread = async (
     },
   };
 };
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
   attemptsRemaining = 500
@@ -191,7 +177,6 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const trackSubscriptions = (
   thread: Readonly<Pick<Thread, "subscribe">>
@@ -211,11 +196,44 @@ const trackSubscriptions = (
   return listeners;
 };
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("useThread", (): void => {
+  test("applies client tool output through the current SDK helper", async (): Promise<void> => {
+    const thread = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          parts: [
+            {
+              input: {},
+              state: "input-available",
+              toolCallId: "lookup-1",
+              toolName: "lookup",
+              type: "dynamic-tool",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+    const hook = await renderUseThread({ thread });
+    await act(async (): Promise<void> => {
+      await hook.current.addToolOutput({
+        output: "found",
+        tool: "lookup",
+        toolCallId: "lookup-1",
+      });
+    });
+    expect(hook.current.messages.at(-1)?.parts).toMatchObject([
+      {
+        output: "found",
+        state: "output-available",
+        toolCallId: "lookup-1",
+      },
+    ]);
+    await hook.unmount();
+  });
+
   test("observes messages sent through a custom state-backed AbstractThread", async (): Promise<void> => {
     const state = new MemoryThreadState<UIMessage>({
       messages: [user("user-1")],
@@ -273,7 +291,6 @@ describe("useThread", (): void => {
     expect(getMessageText(response)).toBe("reply");
     await hook.unmount();
   });
-
   test("forwards setters called by an initial commit ref", async (): Promise<void> => {
     let isFirstCommit = true;
     const hook = await renderUseThread(
@@ -341,7 +358,6 @@ describe("useThread", (): void => {
     expect(secondTransport.requests).toBe(1);
     await hook.unmount();
   });
-
   test("resubscribes when the supplied thread changes", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
@@ -377,7 +393,6 @@ describe("useThread", (): void => {
     expect(firstListeners.size).toBe(0);
     expect(secondListeners.size).toBe(0);
   });
-
   test("forwards a retained setter to the replacement supplied thread", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
@@ -401,7 +416,6 @@ describe("useThread", (): void => {
     ).toEqual(["user-c"]);
     await hook.unmount();
   });
-
   test("automatically resumes the supplied thread", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const thread = new Thread({
@@ -417,7 +431,6 @@ describe("useThread", (): void => {
     expect(transport.reconnects).toBe(1);
     await hook.unmount();
   });
-
   test("resumes a replacement supplied thread while resume remains enabled", async (): Promise<void> => {
     const firstTransport = new ResumeTransport();
     const secondTransport = new ResumeTransport();
@@ -448,7 +461,6 @@ describe("useThread", (): void => {
     ).toEqual(["user-2", "assistant-2"]);
     await hook.unmount();
   });
-
   test("keeps status immediate while throttling message snapshots", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const hook = await renderUseThread({
@@ -501,7 +513,10 @@ describe("useThread", (): void => {
 
     await act(async (): Promise<void> => {
       transport.finish(0);
-      await run?.finished;
+      if (!run) {
+        throw new TypeError("Expected startRun to return a run");
+      }
+      await run.finished;
     });
     expect(hook.current.status).toBe("ready");
     await hook.unmount();
@@ -553,9 +568,3 @@ describe("useThread", (): void => {
     ).toEqual(["user-b"]);
   });
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

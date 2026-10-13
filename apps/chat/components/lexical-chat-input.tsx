@@ -1,13 +1,7 @@
 "use client";
 
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import {
   $createParagraphNode,
   $createTextNode,
@@ -15,13 +9,16 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ENTER_COMMAND,
 } from "lexical";
-import type { EditorState, LexicalEditor } from "lexical";
+
 import type {
-  JSX as ReactJSX,
   ClipboardEvent,
   KeyboardEvent,
+  JSX as ReactJSX,
   RefObject,
 } from "react";
+
+import type { EditorState, LexicalEditor } from "lexical";
+
 import React, {
   useCallback,
   useEffect,
@@ -29,12 +26,20 @@ import React, {
   useState,
 } from "react";
 
-import { useAutoFocus } from "@/hooks/use-auto-focus";
-/* oxlint-disable import/max-dependencies -- @/lib/utils import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { cn } from "@/lib/utils";
-/* oxlint-enable import/max-dependencies */
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- EnterKeySubmitPlugin: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: globalThis.KeyboardEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+
+import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+
+import { cn } from "@/lib/utils";
+
+import { useAutoFocus } from "@/hooks/use-auto-focus";
+
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 // Plugin to handle Enter key submissions
 const EnterKeySubmitPlugin = ({
@@ -70,8 +75,6 @@ const EnterKeySubmitPlugin = ({
 
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EditorRefPlugin: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including editor: LexicalEditor); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // Plugin to get editor instance for imperative ref
 const EditorRefPlugin = ({
@@ -87,14 +90,12 @@ const EditorRefPlugin = ({
 
   return null;
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 interface LexicalChatInputRef {
   clear: () => void;
   focus: () => void;
   getValue: () => string;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- LexicalChatInputProps: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: globalThis.KeyboardEvent). */
 
 interface LexicalChatInputProps {
   "aria-label"?: string;
@@ -110,7 +111,6 @@ interface LexicalChatInputProps {
   placeholder?: string;
   readOnly?: boolean;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const theme = {
   ltr: "ltr",
@@ -119,13 +119,24 @@ const theme = {
   root: "lexical-root",
   rtl: "rtl",
 };
-/* oxlint-disable no-console, typescript/prefer-readonly-parameter-types -- onError: no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including error: Error). */
 
-const onError = (error: Error): void => {
+const onError = (error: Readonly<Error>): void => {
   console.error("Lexical error:", error);
 };
-/* oxlint-enable no-console, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- LexicalChatInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including editorState: EditorState); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const LEXICAL_INITIAL_CONFIG: InitialConfigType = {
+  // Accept input only after the editor and its change listeners are mounted.
+  editable: false,
+  namespace: "LexicalChatInput",
+  nodes: [],
+  onError,
+  theme,
+};
+
+const CONTENT_EDITABLE_STYLE: React.CSSProperties = {
+  WebkitBoxShadow: "none",
+  boxShadow: "none",
+};
 
 const LexicalChatInput = ({
   initialValue = "",
@@ -142,7 +153,7 @@ const LexicalChatInput = ({
   ref,
   ..._props
 }: LexicalChatInputProps & {
-  ref?: RefObject<LexicalChatInputRef | null>;
+  readonly ref?: RefObject<LexicalChatInputRef | null>;
 }): ReactJSX.Element => {
   const [editor, setEditor] = useState<LexicalEditor | null>(null);
 
@@ -152,17 +163,8 @@ const LexicalChatInput = ({
 
   useAutoFocus({ autoFocus, editor });
 
-  const initialConfig: InitialConfigType = {
-    // Accept input only after the editor and its change listeners are mounted.
-    editable: false,
-    namespace: "LexicalChatInput",
-    nodes: [],
-    onError,
-    theme,
-  };
-
   const handleChange = useCallback(
-    (editorState: EditorState) => {
+    (editorState: Readonly<Pick<EditorState, "read">>) => {
       if (onInputChange) {
         editorState.read(() => {
           const root = $getRoot();
@@ -177,7 +179,7 @@ const LexicalChatInput = ({
   useImperativeHandle(
     ref,
     () => ({
-      clear: () => {
+      clear: (): void => {
         if (editor) {
           editor.update(() => {
             const root = $getRoot();
@@ -185,12 +187,12 @@ const LexicalChatInput = ({
           });
         }
       },
-      focus: () => {
+      focus: (): void => {
         if (editor) {
           editor.focus();
         }
       },
-      getValue: () => {
+      getValue: (): string => {
         if (editor) {
           return editor.getEditorState().read(() => {
             const root = $getRoot();
@@ -230,7 +232,7 @@ const LexicalChatInput = ({
   );
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
+    <LexicalComposer initialConfig={LEXICAL_INITIAL_CONFIG}>
       <div
         className="lexical-editor-container"
         style={{
@@ -253,12 +255,7 @@ const LexicalChatInput = ({
               onKeyDown={onKeyDown}
               onPaste={onPaste}
               spellCheck
-              style={{
-                // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the Firefox-specific focus appearance override until browser rendering verifies its removal.
-                MozBoxShadow: "none",
-                WebkitBoxShadow: "none",
-                boxShadow: "none",
-              }}
+              style={CONTENT_EDITABLE_STYLE}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
@@ -272,7 +269,6 @@ const LexicalChatInput = ({
     </LexicalComposer>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 LexicalChatInput.displayName = "LexicalChatInput";
 export { LexicalChatInput };

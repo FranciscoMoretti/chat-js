@@ -1,21 +1,16 @@
+import type { ConfigMediaModelId } from "./provider-types.ts";
 import type { GatewayProvider } from "./gateway-provider.ts";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
 
-type AnyGatewayProvider = GatewayProvider<string, never, never, never>;
-
-interface VideoDefault<TGateway extends AnyGatewayProvider> {
-  default?: Parameters<
-    TGateway["createVideoModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX];
+interface VideoDefault<TGateway extends GatewayProvider> {
+  default?: ConfigMediaModelId<TGateway["createVideoModel"]>;
 }
 
-interface ImageDefault<TGateway extends AnyGatewayProvider> {
-  default?: Parameters<
-    TGateway["createImageModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX];
+interface ImageDefault<TGateway extends GatewayProvider> {
+  default?: ConfigMediaModelId<TGateway["createImageModel"]>;
 }
-interface GatewayModelDefaults<TGateway extends AnyGatewayProvider> {
+interface GatewayModelDefaults<TGateway extends GatewayProvider> {
   anonymousModels: Parameters<
     TGateway["createLanguageModel"]
   >[typeof MODEL_ID_PARAMETER_INDEX][];

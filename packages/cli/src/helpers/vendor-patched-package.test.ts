@@ -1,14 +1,14 @@
+import { parsePackageJson } from "./package-manifest";
+import { requireJsonObject } from "./json-object";
 import { expect, it } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import nodePath from "node:path";
+import { tmpdir } from "node:os";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it("refuses to distribute a stale installed runtime", async () => {
   const root = await mkdtemp(
     nodePath.join(tmpdir(), "eve-stale-package-test-")
@@ -47,12 +47,7 @@ it("refuses to distribute a stale installed runtime", async () => {
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it.each([
   {
     archiveName: "ai-sdk-mcp-2.0.45.tgz",
@@ -100,12 +95,14 @@ it.each([
         packageName: name,
         patchPath,
       });
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const manifest = JSON.parse(
+      const manifest = parsePackageJson(
         await readFile(nodePath.join(destination, "package.json"), "utf-8")
       );
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies[name]).toBe(`file:vendor/${archiveName}`);
+      const dependencies = requireJsonObject(
+        manifest.dependencies,
+        "dependencies"
+      );
+      expect(dependencies[name]).toBe(`file:vendor/${archiveName}`);
       const archive = nodePath.join(destination, "vendor", archiveName);
       const metadata = execFileSync("tar", [
         "-xOf",
@@ -121,6 +118,3 @@ it.each([
     }
   }
 );
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

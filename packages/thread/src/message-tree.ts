@@ -1,16 +1,15 @@
-import type { UIMessage } from "ai";
-
 import {
-  ROOT_PARENT_ID,
   ABSENT_MESSAGE,
+  ROOT_PARENT_ID,
   assertLeaf,
-  assertParentUnchanged,
   assertParentExistsAndAcyclic,
+  assertParentUnchanged,
   validateMessagePath,
 } from "./message-tree-guards";
-import { readMessageTreeIndexes } from "./message-tree-readers";
 import type { SnapshotInput, TreeStorageReader } from "./message-tree-readers";
 import type { MessageTreeSnapshot } from "./types";
+import type { UIMessage } from "ai";
+import { readMessageTreeIndexes } from "./message-tree-readers";
 
 const EMPTY_CHILD_COUNT = 0;
 const SIBLING_INSERTION_START = 0;
@@ -47,7 +46,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getMessage(messageId: string): TMessage | undefined {
     const message = this.#messagesById.get(messageId);
-    return message ? clone(message) : ABSENT_MESSAGE;
+
+    if (message) {
+      return clone(message);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getParentId(messageId: string): string | null | undefined {
@@ -56,9 +59,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getParent(messageId: string): TMessage | undefined {
     const parentId = this.#parentById.get(messageId);
-    return typeof parentId === "string" && parentId !== ""
-      ? this.getMessage(parentId)
-      : ABSENT_MESSAGE;
+
+    if (typeof parentId === "string" && parentId !== "") {
+      return this.getMessage(parentId);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getChildren(messageId: string | null): TMessage[] {
@@ -213,7 +218,15 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public setPath(messages: readonly Readonly<TMessage>[]): void {
     this.updatePath(messages);
-    this.#cursorId = messages.at(LAST_PATH_INDEX)?.id ?? ROOT_PARENT_ID;
+    const lastMessage = messages.at(LAST_PATH_INDEX);
+    if (
+      lastMessage === ROOT_PARENT_ID ||
+      lastMessage === globalThis.undefined
+    ) {
+      this.#cursorId = ROOT_PARENT_ID;
+      return;
+    }
+    this.#cursorId = lastMessage.id ?? ROOT_PARENT_ID;
   }
 
   public updatePath(messages: readonly Readonly<TMessage>[]): void {

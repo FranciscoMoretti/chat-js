@@ -1,99 +1,112 @@
 "use client";
 
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import type {
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
+  JSX as ReactJSX,
+} from "react";
 import {
-  Root as SelectPrimitiveRoot,
-  Group as SelectPrimitiveGroup,
-  Value as SelectPrimitiveValue,
-  Trigger as SelectPrimitiveTrigger,
-  Icon as SelectPrimitiveIcon,
-  ScrollUpButton as SelectPrimitiveScrollUpButton,
-  ScrollDownButton as SelectPrimitiveScrollDownButton,
   Content as SelectPrimitiveContent,
-  Portal as SelectPrimitivePortal,
-  Viewport as SelectPrimitiveViewport,
-  Label as SelectPrimitiveLabel,
+  Group as SelectPrimitiveGroup,
+  Icon as SelectPrimitiveIcon,
   Item as SelectPrimitiveItem,
   ItemIndicator as SelectPrimitiveItemIndicator,
   ItemText as SelectPrimitiveItemText,
+  Label as SelectPrimitiveLabel,
+  Portal as SelectPrimitivePortal,
+  Root as SelectPrimitiveRoot,
+  ScrollDownButton as SelectPrimitiveScrollDownButton,
+  ScrollUpButton as SelectPrimitiveScrollUpButton,
   Separator as SelectPrimitiveSeparator,
+  Trigger as SelectPrimitiveTrigger,
+  Value as SelectPrimitiveValue,
+  Viewport as SelectPrimitiveViewport,
 } from "@radix-ui/react-select";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-import { forwardRef as reactForwardRef } from "react";
-import type {
-  ComponentRef as ReactComponentRef,
-  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
-  JSX as ReactJSX,
-} from "react";
-
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 const Select = SelectPrimitiveRoot;
 
 const SelectGroup = SelectPrimitiveGroup;
 
 const SelectValue = SelectPrimitiveValue;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectTrigger: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const SelectTrigger = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveTrigger>
->(({ className, children, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveTrigger
-    className={cn(
-      "border-input bg-background ring-offset-background focus:ring-ring data-[placeholder]:text-muted-foreground flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className
-    )}
-    ref={ref}
-    {...props}
-  >
-    {children}
-    <SelectPrimitiveIcon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitiveIcon>
-  </SelectPrimitiveTrigger>
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+>(
+  (
+    { className, children, ...props },
+
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveTrigger
+      className={cn(
+        "border-input bg-background ring-offset-background focus:ring-ring data-[placeholder]:text-muted-foreground flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        className
+      )}
+      ref={ref}
+      {...props}
+    >
+      {children}
+      <SelectPrimitiveIcon asChild>
+        <ChevronDown className="h-4 w-4 opacity-50" />
+      </SelectPrimitiveIcon>
+    </SelectPrimitiveTrigger>
+  )
+);
+
 SelectTrigger.displayName = SelectPrimitiveTrigger.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectScrollUpButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectScrollUpButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollUpButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollUpButton>
->(({ className, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveScrollUpButton
-    className={cn(
-      "flex cursor-default items-center justify-center py-1",
-      className
-    )}
-    ref={ref}
-    {...props}
-  >
-    <ChevronUp className="h-4 w-4" />
-  </SelectPrimitiveScrollUpButton>
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+>(
+  (
+    { className, ...props },
+
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveScrollUpButton
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      ref={ref}
+      {...props}
+    >
+      <ChevronUp className="h-4 w-4" />
+    </SelectPrimitiveScrollUpButton>
+  )
+);
+
 SelectScrollUpButton.displayName = SelectPrimitiveScrollUpButton.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectScrollDownButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectScrollDownButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollDownButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollDownButton>
->(({ className, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveScrollDownButton
-    className={cn(
-      "flex cursor-default items-center justify-center py-1",
-      className
-    )}
-    ref={ref}
-    {...props}
-  >
-    <ChevronDown className="h-4 w-4" />
-  </SelectPrimitiveScrollDownButton>
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+>(
+  (
+    { className, ...props },
+
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveScrollDownButton
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      ref={ref}
+      {...props}
+    >
+      <ChevronDown className="h-4 w-4" />
+    </SelectPrimitiveScrollDownButton>
+  )
+);
+
 SelectScrollDownButton.displayName =
   SelectPrimitiveScrollDownButton.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, position = "popper", ...props }). */
 
 const SelectContent = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveContent>,
@@ -101,6 +114,7 @@ const SelectContent = reactForwardRef<
 >(
   (
     { className, children, position = "popper", ...props },
+
     ref
   ): ReactJSX.Element => (
     <SelectPrimitivePortal>
@@ -130,60 +144,74 @@ const SelectContent = reactForwardRef<
     </SelectPrimitivePortal>
   )
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+
 SelectContent.displayName = SelectPrimitiveContent.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectLabel = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveLabel>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveLabel>
->(({ className, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveLabel
-    className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold", className)}
-    ref={ref}
-    {...props}
-  />
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+>(
+  (
+    { className, ...props },
+
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveLabel
+      className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold", className)}
+      ref={ref}
+      {...props}
+    />
+  )
+);
+
 SelectLabel.displayName = SelectPrimitiveLabel.displayName;
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const SelectItem = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveItem>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveItem>
->(({ className, children, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveItem
-    className={cn(
-      "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    ref={ref}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitiveItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitiveItemIndicator>
-    </span>
+>(
+  (
+    { className, children, ...props },
 
-    <SelectPrimitiveItemText>{children}</SelectPrimitiveItemText>
-  </SelectPrimitiveItem>
-));
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveItem
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        className
+      )}
+      ref={ref}
+      {...props}
+    >
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <SelectPrimitiveItemIndicator>
+          <Check className="h-4 w-4" />
+        </SelectPrimitiveItemIndicator>
+      </span>
+
+      <SelectPrimitiveItemText>{children}</SelectPrimitiveItemText>
+    </SelectPrimitiveItem>
+  )
+);
 SelectItem.displayName = SelectPrimitiveItem.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectSeparator = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveSeparator>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveSeparator>
->(({ className, ...props }, ref): ReactJSX.Element => (
-  <SelectPrimitiveSeparator
-    className={cn("bg-muted -mx-1 my-1 h-px", className)}
-    ref={ref}
-    {...props}
-  />
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+>(
+  (
+    { className, ...props },
+
+    ref
+  ): ReactJSX.Element => (
+    <SelectPrimitiveSeparator
+      className={cn("bg-muted -mx-1 my-1 h-px", className)}
+      ref={ref}
+      {...props}
+    />
+  )
+);
+
 SelectSeparator.displayName = SelectPrimitiveSeparator.displayName;
 
 export {

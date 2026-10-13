@@ -1,10 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -20,14 +15,13 @@ import {
 } from "../lib/db/eve-queries";
 import { assignEveConversationProject } from "../lib/db/queries";
 import {
-  eveConversation,
   eveChatProject,
+  eveConversation,
   project,
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
@@ -63,23 +57,14 @@ afterAll(async () => {
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Project fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): test("assignment, filtered history and removal retain native identity") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): test("assignment, filtered history and removal retain native identity") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
   expect(await assignEveConversationProject(owner, row.id, ownProject)).toEqual(
@@ -90,27 +75,29 @@ test("assignment, filtered history and removal retain native identity", async ()
     instructions: "Owner-only instructions",
     name: "Owner project",
   });
+  const conversationsInProject = await listEveConversations(owner, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(conversationsInProject.items).toEqual([
+    expect.objectContaining({ id: row.id, projectId: ownProject }),
+  ]);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (await listEveConversations(owner, { projectId: ownProject, search: "" }))
-      .items
-  ).toEqual([expect.objectContaining({ id: row.id, projectId: ownProject })]);
-  expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
+    )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
- * unicorn/max-nested-calls (#568): test("both application checks and database constraints reject cross-owner assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("both application checks and database constraints reject cross-owner assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("both application checks and database constraints reject cross-owner assignment", async () => {
   const row = await conversation();
   await assignEveConversationProject(owner, row.id, ownProject);
@@ -122,14 +109,11 @@ test("both application checks and database constraints reject cross-owner assign
   ).toBeNull();
   expect(await assignEveConversationProject(stranger, row.id, null)).toBeNull();
   expect(await getEveConversationProject(stranger, row.id)).toBeNull();
-  expect(
-    (
-      await listEveConversations(stranger, {
-        projectId: ownProject,
-        search: "",
-      })
-    ).items
-  ).toEqual([]);
+  const strangerProjectConversations = await listEveConversations(stranger, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(strangerProjectConversations.items).toEqual([]);
   await expect(
     db
       .update(eveChatProject)
@@ -144,14 +128,10 @@ test("both application checks and database constraints reject cross-owner assign
         )
       )
   ).rejects.toThrow();
-  expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
+  const existingProject = await getEveConversationProject(owner, row.id);
+  expect(existingProject?.id).toBe(ownProject);
 });
-/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): test("deleting a project detaches its Eve conversations without erasing their session accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): test("deleting a project detaches its Eve conversations without erasing their session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("deleting a project detaches its Eve conversations without erasing their sessions", async () => {
   const projectId = crypto.randomUUID();
   await db
@@ -161,25 +141,23 @@ test("deleting a project detaches its Eve conversations without erasing their se
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
+    )
   ).toBe(true);
   expect(
     await assignEveConversationProject(owner, row.id, projectId)
   ).toBeNull();
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
- * no-magic-numbers (#517): test("conversation deletion fences assignment and removes metadata without touching t uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): test("conversation deletion fences assignment and removes metadata without touching t keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("conversation deletion fences assignment and removes metadata without touching t preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("conversation deletion fences assignment and removes metadata without touching the project", async () => {
   const row = await conversation();
   await assignEveConversationProject(owner, row.id, ownProject);
@@ -208,33 +186,25 @@ test("conversation deletion fences assignment and removes metadata without touch
     await db.select().from(project).where(eq(project.id, ownProject))
   ).toHaveLength(1);
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
- * max-statements (#512): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep test("fork paths share their chat project and retry cannot restore an old assignment"'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): test("fork paths share their chat project and retry cannot restore an old assignment" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("fork paths share their chat project and retry cannot restore an old assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("fork paths share their chat project and retry cannot restore an old assignment", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
-  const createFork = () =>
-    createEveConversation(
+  const createFork = async () =>
+    await createEveConversation(
       owner,
       operationId,
       "Fork fixture",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
-  expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
-    ownProject
-  );
+  const forkProject = await getEveConversationProject(owner, fork.id);
+  expect(forkProject?.id).toBe(ownProject);
   await assignEveConversationProject(owner, source.id, null);
-  expect((await createFork()).id).toBe(fork.id);
+  const repeatedFork = await createFork();
+  expect(repeatedFork.id).toBe(fork.id);
   expect(await getEveConversationProject(owner, fork.id)).toBeNull();
   await beginEveConversationDeletion(owner, source.id);
   await completeEveConversationDeletion(owner, source.id);
@@ -253,13 +223,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       )
   ).toEqual([]);
 });
-/* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/promise-function-async (#606): test("an unresolved fork retains its project route for creation recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("an unresolved fork retains its project route for creation recovery") intentionally keeps the existing falsy-value behavior of pending; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test("an unresolved fork retains its project route for creation recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("an unresolved fork retains its project route for creation recovery", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
@@ -269,31 +233,24 @@ test("an unresolved fork retains its project route for creation recovery", async
       owner,
       operationId,
       "Uncertain fork",
-      () => Promise.reject(new Error("Lost creation reply")),
+      vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("Lost creation reply")),
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
   expect(pending?.state).toBe("uncertain");
-  if (!pending) {
+  if (pending === undefined) {
     throw new Error("Missing unresolved fork");
   }
-  expect((await getEveConversationProject(owner, pending.id))?.id).toBe(
-    ownProject
-  );
+  const pendingProject = await getEveConversationProject(owner, pending.id);
+  expect(pendingProject?.id).toBe(ownProject);
   expect(
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();
 });
-/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
- * max-statements (#512): test("project creation binds before dispatch and preserves its initial intent through keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("project creation binds before dispatch and preserves its initial intent through uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("project creation binds before dispatch and preserves its initial intent through uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep test("project creation binds before dispatch and preserves its initial intent through's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): test("project creation binds before dispatch and preserves its initial intent through preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {
   const projectId = crypto.randomUUID();
   await db.insert(project).values({
@@ -310,11 +267,17 @@ test("project creation binds before dispatch and preserves its initial intent th
     });
     return crypto.randomUUID();
   });
-  const create = (requestedProject: string | undefined) =>
-    createEveConversation(owner, operationId, "Project creation", dispatch, {
-      fileKeys: [],
-      initialProjectId: requestedProject,
-    });
+  const create = async (requestedProject?: string) =>
+    await createEveConversation(
+      owner,
+      operationId,
+      "Project creation",
+      dispatch,
+      {
+        fileKeys: [],
+        initialProjectId: requestedProject,
+      }
+    );
   const binding = await create(projectId);
   await assignEveConversationProject(owner, binding.id, ownProject);
   expect(await create(projectId)).toEqual(binding);
@@ -322,27 +285,28 @@ test("project creation binds before dispatch and preserves its initial intent th
     id: ownProject,
   });
   await expect(create(ownProject)).rejects.toThrow("different");
-  await expect(create(undefined)).rejects.toThrow("different");
+  await expect(create()).rejects.toThrow("different");
   await db.delete(project).where(eq(project.id, projectId));
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
-  const dispatch = vi.fn(async () => crypto.randomUUID());
-  for (const projectId of [foreignProject, crypto.randomUUID()]) {
-    const operationId = crypto.randomUUID();
-    await expect(
-      createEveConversation(
-        owner,
-        operationId,
-        "Unauthorized project",
-        dispatch,
-        { fileKeys: [], initialProjectId: projectId }
-      )
-    ).rejects.toThrow("Project not found");
-    expect(await getEveCreation(owner, operationId)).toBeUndefined();
-  }
+  const dispatch = vi.fn(createEveTestSession);
+  await Promise.all(
+    [foreignProject, crypto.randomUUID()].map(async (projectId) => {
+      const operationId = crypto.randomUUID();
+      await expect(
+        createEveConversation(
+          owner,
+          operationId,
+          "Unauthorized project",
+          dispatch,
+          { fileKeys: [], initialProjectId: projectId }
+        )
+      ).rejects.toThrow("Project not found");
+      expect(await getEveCreation(owner, operationId)).toBeUndefined();
+    })
+  );
   expect(dispatch).not.toHaveBeenCalled();
 });

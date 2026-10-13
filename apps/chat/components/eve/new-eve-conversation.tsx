@@ -1,7 +1,18 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { createClientSnapshot } from "@/components/client-snapshot";
+import type { JSX as ReactJSX, SetStateAction } from "react";
 
 import {
   Conversation,
@@ -9,11 +20,11 @@ import {
 } from "@/components/ai-elements/conversation";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { ThinkingMessage } from "@/components/thinking-message";
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import {
@@ -22,20 +33,18 @@ import {
   readCreationRequest,
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
-/* oxlint-disable import/max-dependencies -- ./eve-composer import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 
 import { EveComposer } from "./eve-composer";
-/* oxlint-enable import/max-dependencies */
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useEveRuntime } from "./eve-logical-context";
 import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- NewEveConversation: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: ReturnType<typeof prepareSelectedCreation>); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const NewEveConversation = ({
   ownerId,
@@ -46,60 +55,128 @@ export const NewEveConversation = ({
   readonly projectId?: string;
   readonly onPendingChange?: (pending: boolean) => void;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const openRuntime = useEveRuntime();
-  const scope = useMemo(
-    () =>
-      typeof projectId === "string" && projectId !== ""
-        ? { projectId }
-        : undefined,
-    [projectId]
-  );
+  const scope = useMemo((): { projectId: string } | undefined => {
+    if (typeof projectId === "string" && projectId !== "") {
+      return { projectId };
+    }
+    return undefined;
+  }, [projectId]);
   const selectedModel = useDefaultModel();
   const changeModel = useModelChange();
   const [selection, setSelection] = useState<SelectedModelValue>();
   const files = useEveAttachments();
   const { setAttachments } = files;
-  const [draft, setDraft] = useState("");
-  const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
+  const [cleanupRejected, setCleanupRejected] = useState(false);
   const [projectRejected, setProjectRejected] = useState(false);
-  const [retainedOperationId, setRetainedOperationId] = useState<string>();
+  const store = useMemo(
+    () =>
+      createClientSnapshot<{
+        draft: string;
+        selectedTool: UiToolName | null;
+        retainedOperationId: string | undefined;
+        retainedModelId: string | undefined;
+        retainedModelIds: readonly string[] | undefined;
+        failure: string;
+      }>(
+        {
+          draft: "",
+          selectedTool: null,
+          retainedOperationId: undefined,
+          retainedModelId: undefined,
+          retainedModelIds: undefined,
+          failure: "",
+        },
+        (current) => {
+          try {
+            const pending = readCreationRequest(sessionStorage, ownerId, scope);
+            if (!pending) {
+              return current;
+            }
+            const restored = restoreDraft(pending.message);
+            setAttachments(restored.attachments);
+            return {
+              ...current,
+              draft: restored.text,
+              selectedTool: pending.selectedTool ?? null,
+              retainedOperationId: pending.operationId,
+              retainedModelIds:
+                "modelIds" in pending ? pending.modelIds : undefined,
+              retainedModelId:
+                "modelIds" in pending ? undefined : pending.modelId,
+            };
+          } catch {
+            return {
+              ...current,
+              failure: "The saved draft could not be restored.",
+            };
+          }
+        }
+      ),
+    [ownerId, scope, setAttachments]
+  );
+  const {
+    draft,
+    selectedTool,
+    retainedOperationId,
+    retainedModelId,
+    retainedModelIds,
+    failure,
+  } = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
+  const {
+    setDraft,
+    setSelectedTool,
+    setRetainedOperationId,
+    setRetainedModelId,
+    setRetainedModelIds,
+    setFailure,
+  } = useMemo(
+    () => ({
+      setDraft: (value: string): void => {
+        store.set("draft", value);
+      },
+      setSelectedTool: (value: SetStateAction<UiToolName | null>): void => {
+        store.update((current) => ({
+          ...current,
+          selectedTool:
+            typeof value === "function" ? value(current.selectedTool) : value,
+        }));
+      },
+      setRetainedOperationId: (value: string | undefined): void => {
+        store.set("retainedOperationId", value);
+      },
+      setRetainedModelId: (value: string | undefined): void => {
+        store.set("retainedModelId", value);
+      },
+      setRetainedModelIds: (value: readonly string[] | undefined): void => {
+        store.set("retainedModelIds", value);
+      },
+      setFailure: (value: string): void => {
+        store.set("failure", value);
+      },
+    }),
+    [store]
+  );
   const retained = retainedOperationId !== undefined;
-  const [retainedModelId, setRetainedModelId] = useState<string>();
-  const [retainedModelIds, setRetainedModelIds] = useState<string[]>();
-  const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
   const [optimisticComparison, setOptimisticComparison] =
     useState<
       Extract<
         ReturnType<typeof prepareSelectedCreation>,
-        { modelIds: string[] }
+        { readonly modelIds: readonly string[] }
       >
     >();
   const lock = useRef(false);
   useEffect(() => {
     onPendingChange?.(busy || retained);
   }, [busy, retained, onPendingChange]);
-  useEffect(() => {
-    try {
-      const pending = readCreationRequest(sessionStorage, ownerId, scope);
-      if (pending) {
-        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the recovery composer from its durable request.
-        setRetainedOperationId(pending.operationId);
-        setSelectedTool(pending.selectedTool ?? null);
-        const restored = restoreDraft(pending.message);
-        setDraft(restored.text);
-        setAttachments(restored.attachments);
-        setRetainedModelIds(
-          "modelIds" in pending ? pending.modelIds : undefined
-        );
-        setRetainedModelId("modelIds" in pending ? undefined : pending.modelId);
-      }
-    } catch {
-      setFailure("The saved draft could not be restored.");
-    }
-  }, [ownerId, scope, setAttachments]);
   const retainOperation = (
-    operation: ReturnType<typeof prepareSelectedCreation>
+    operation: ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>
   ): void => {
     setDraft(restoreDraft(operation.message).text);
     setSelectedTool(operation.selectedTool ?? null);
@@ -118,59 +195,87 @@ export const NewEveConversation = ({
     setBusy(true);
     setFailure("");
     let navigating = false;
-    /* oxlint-disable react/todo -- Preserve operation lock cleanup across navigation and errors. */
+
+    await withTaskCleanup(
+      async () => {
+        try {
+          const modelIds = expandSelectedModelValue(selection ?? selectedModel);
+          const operation = prepareSelectedCreation(
+            sessionStorage,
+            ownerId,
+            draftMessage(draft, files.attachments),
+            modelIds,
+            scope,
+            selectedTool ?? undefined
+          );
+          retainOperation(operation);
+          const binding = await resolveCreationRequest(
+            sessionStorage,
+            ownerId,
+            operation,
+            scope
+          );
+          await openRuntime({ ...binding, operation, ownerId });
+          navigating = true;
+        } catch (error) {
+          if (
+            error instanceof CreationRejectedError &&
+            error.projectUnavailable &&
+            hasText(projectId)
+          ) {
+            setProjectRejected(true);
+          } else if (error instanceof CreationRejectedError) {
+            try {
+              finishCreation(sessionStorage, ownerId, scope);
+              setRetainedModelId(undefined);
+              setRetainedModelIds(undefined);
+              setOptimisticComparison(undefined);
+              setRetainedOperationId(undefined);
+            } catch {
+              setCleanupRejected(true);
+              setFailure(
+                "The rejected request could not be cleared. Keep this tab for recovery."
+              );
+              return;
+            }
+          }
+          setFailure(
+            error instanceof Error
+              ? error.message
+              : "Unable to start. Retain this operation before retrying."
+          );
+        }
+      },
+      () => {
+        lock.current = false;
+        if (!navigating) {
+          setBusy(false);
+        }
+      }
+    );
+  };
+  const clearRejected = (): void => {
     try {
-      const modelIds = expandSelectedModelValue(selection ?? selectedModel);
-      const operation = prepareSelectedCreation(
-        sessionStorage,
-        ownerId,
-        draftMessage(draft, files.attachments),
-        modelIds,
-        scope,
-        selectedTool ?? undefined
-      );
-      retainOperation(operation);
-      const binding = await resolveCreationRequest(
-        sessionStorage,
-        ownerId,
-        operation,
-        scope
-      );
-      await openRuntime({ ...binding, operation, ownerId });
-      navigating = true;
-    } catch (error) {
-      if (
-        error instanceof CreationRejectedError &&
-        error.projectUnavailable &&
-        projectId
-      ) {
-        setProjectRejected(true);
-      } else if (error instanceof CreationRejectedError) {
-        finishCreation(sessionStorage, ownerId, scope);
-        setRetainedModelId(undefined);
-        setRetainedModelIds(undefined);
-        setOptimisticComparison(undefined);
-        setRetainedOperationId(undefined);
-      }
+      finishCreation(sessionStorage, ownerId, scope);
+      setRetainedModelId(undefined);
+      setRetainedModelIds(undefined);
+      setOptimisticComparison(undefined);
+      setRetainedOperationId(undefined);
+      setCleanupRejected(false);
+      setFailure("");
+    } catch {
       setFailure(
-        error instanceof Error
-          ? error.message
-          : "Unable to start. Retain this operation before retrying."
+        "The rejected request could not be cleared. Keep this tab for recovery."
       );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required operation lock cleanup in finally.
-    } finally {
-      lock.current = false;
-      if (!navigating) {
-        setBusy(false);
-      }
     }
-    /* oxlint-enable react/todo */
   };
   if (projectRejected || (retained && !busy)) {
     return (
       <EveCreationRecovery
         firstMessage={draft}
-        initiallyRejected={projectRejected}
+        initiallyRejected={projectRejected || cleanupRejected}
+        initialFailure={failure}
+        onClearRejected={cleanupRejected ? clearRejected : undefined}
         operationId={retainedOperationId}
         ownerId={ownerId}
         scope={scope}
@@ -180,7 +285,6 @@ export const NewEveConversation = ({
   const composer = (
     <>
       <EveComposer
-        // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the new-conversation typing workflow; changing initial page focus requires accessibility and UX review.
         autoFocus
         status={busy ? "submitted" : "ready"}
         disabled={busy}
@@ -190,7 +294,7 @@ export const NewEveConversation = ({
           onChange: async (value) => {
             setSelection(value);
             const primary = getPrimarySelectedModelId(value);
-            if (primary) {
+            if (hasText(primary)) {
               await changeModel(primary);
             }
           },
@@ -203,8 +307,12 @@ export const NewEveConversation = ({
           }
         }}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Submission owns creation admission and retained recovery state; the composer delegates that lifecycle.
-        onSubmit={submit}
+        onSubmit={() => {
+          const completion = submit();
+          startEventAction(async () => {
+            await completion;
+          });
+        }}
         onToolChange={setSelectedTool}
         readOnly={retained}
         retainedModelId={retainedModelId}
@@ -234,6 +342,8 @@ export const NewEveConversation = ({
       </div>
     );
   }
-  return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
+  if (hasText(projectId)) {
+    return composer;
+  }
+  return <ChatWelcomeView>{composer}</ChatWelcomeView>;
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */

@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-delete-dialog" dependency within this package instead of introducing an alias or barrel API.
- */
 import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { EveDeleteDialogView } from "../components/eve/eve-delete-dialog";
 import type { EveDeletionPhase } from "../components/eve/eve-delete-dialog";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const phases: EveDeletionPhase[] = [
   "confirm",
@@ -21,9 +17,6 @@ const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop --
- * react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- */
 createRoot(root).render(
   phases.map((phase) => (
     <EveDeleteDialogView
@@ -42,4 +35,3 @@ createRoot(root).render(
     />
   ))
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */

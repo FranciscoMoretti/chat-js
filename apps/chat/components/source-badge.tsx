@@ -1,16 +1,17 @@
 import React from "react";
 
 import { Badge } from "@/components/ui/badge";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
-import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
+import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
 import { Favicon } from "./favicon";
-/* oxlint-disable react/jsx-max-depth -- WebSourceBadge: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
+
+import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
 export const WebSourceBadge = ({
   result,
@@ -42,4 +43,3 @@ export const WebSourceBadge = ({
     </TooltipContent>
   </Tooltip>
 );
-/* oxlint-enable react/jsx-max-depth */

@@ -29,13 +29,12 @@ for (const [name, parse] of [
     expect(parsed.correlationId ?? "").toBe(patched ? "op-a" : "");
   });
 }
-// oxlint-disable-next-line eslint/max-statements -- Keep this bounded runtime fault-injection and verification sequence ordered and visible together.
 test("real session send dispatch and coalescer preserve only supported fields", async () => {
   const commands: Command[] = [];
   const session = createSession(
     "session-a",
     {
-      // oxlint-disable-next-line require-await, typescript/require-await -- The mock preserves the asynchronous dispatcher interface while recording admission in memory.
+      // oxlint-disable-next-line require-await -- Match the asynchronous native dispatcher contract with an in-memory recorder.
       async dispatchSession(input) {
         commands.push(structuredClone(input));
         return {
@@ -48,7 +47,7 @@ test("real session send dispatch and coalescer preserve only supported fields", 
     { channelKind: "http", channelName: "chat" }
   );
   for (const correlationId of ["op-a", "op-b"]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop, unicorn/no-null -- The bounded proof observes ordered runtime state; parallel polling or command dispatch would change the scenario. Explicit null is part of the tested auth and last-selection wire contract; absence has different semantics.
+    // oxlint-disable-next-line no-await-in-loop -- Dispatch in contributor order to verify ordered coalescing.
     await session.send("identical", { auth: null, correlationId });
   }
   expect(commands[number0].command.delivery.deliveryId).not.toBe(
@@ -60,7 +59,7 @@ test("real session send dispatch and coalescer preserve only supported fields", 
   const input = coalesceTurnInputs(inputs[number0], inputs[number1]);
   const events: ReceivedEvent[] = [];
   await emitTurnPreamble(
-    // oxlint-disable-next-line require-await, typescript/require-await -- The mock preserves the asynchronous emitter interface while recording events in memory.
+    // oxlint-disable-next-line require-await -- Native emission awaits its callback; this fixture records the event synchronously.
     async (event) => {
       events.push(event);
     },
@@ -84,7 +83,7 @@ test("coalescing does not inherit control tokens and does not erase preceding us
   const input = coalesceTurnInputs(coalesceTurnInputs(first, control), second);
   const events: ReceivedEvent[] = [];
   await emitTurnPreamble(
-    // oxlint-disable-next-line require-await, typescript/require-await -- The mock preserves the asynchronous emitter interface while recording events in memory.
+    // oxlint-disable-next-line require-await -- Native emission awaits its callback; this fixture records the event synchronously.
     async (event) => {
       events.push(event);
     },
@@ -98,7 +97,7 @@ test("coalescing does not inherit control tokens and does not erase preceding us
   ).toEqual(patched ? ["op-a", "op-b"] : []);
   const controls: ReceivedEvent[] = [];
   await emitTurnPreamble(
-    // oxlint-disable-next-line require-await, typescript/require-await -- The mock preserves the asynchronous emitter interface while recording events in memory.
+    // oxlint-disable-next-line require-await -- Native emission awaits its callback; this fixture records the event synchronously.
     async (event) => {
       controls.push(event);
     },
@@ -110,11 +109,9 @@ test("coalescing does not inherit control tokens and does not erase preceding us
     false
   );
 });
-
-// oxlint-disable-next-line eslint/max-lines-per-function -- Keep this bounded runtime fault-injection and verification sequence ordered and visible together.
 test("ChatJS projection reconciles every ID in trusted owner/session scope and retains final null selection on reload", () => {
   const submissions = submissionSchema.array().parse(
-    // oxlint-disable-next-line unicorn/prefer-structured-clone -- This proof deliberately tests JSON persistence and reload, not an in-memory clone.
+    // oxlint-disable-next-line unicorn/prefer-structured-clone -- Exercise the persisted JSON representation, including explicit null selections.
     JSON.parse(
       JSON.stringify([
         {
@@ -127,7 +124,6 @@ test("ChatJS projection reconciles every ID in trusted owner/session scope and r
         {
           operationId: "op-b",
           ownerId: "owner",
-          // oxlint-disable-next-line unicorn/no-null -- Explicit null is part of the tested auth and last-selection wire contract; absence has different semantics.
           selectedTool: null,
           sessionId: "a",
           status: "uncertain",
@@ -149,7 +145,6 @@ test("ChatJS projection reconciles every ID in trusted owner/session scope and r
         {
           operationId: "queued",
           ownerId: "owner",
-          // oxlint-disable-next-line unicorn/no-null -- Explicit null is part of the tested auth and last-selection wire contract; absence has different semantics.
           selectedTool: null,
           sessionId: "a",
           status: "admitted",
@@ -170,7 +165,6 @@ test("ChatJS projection reconciles every ID in trusted owner/session scope and r
     "uncertain",
     "admitted",
   ]);
-  // oxlint-disable-next-line unicorn/no-null -- Explicit null is part of the tested auth and last-selection wire contract; absence has different semantics.
   expect(projected.annotation).toEqual({ selectedTool: null });
   expect(
     reconcile(submissions, scope, { data: event.data, type: "turn.completed" })

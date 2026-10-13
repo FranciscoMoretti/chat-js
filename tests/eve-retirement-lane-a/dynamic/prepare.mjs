@@ -1,6 +1,3 @@
-/* oxlint-disable eslint/no-magic-numbers, unicorn/no-null -- The launcher uses the CLI argument index, exactly-one-match assertion and JSON indentation/replacer protocol. */
-/* oxlint-disable eslint/no-await-in-loop -- Validate each source before writing its corresponding copy and provenance entry. */
-/* oxlint-disable import/no-nodejs-modules -- The fixture preparer owns disposable source copies and provenance hashing. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -30,26 +27,29 @@ const sources = [
   "lib/eve/image-context.ts",
   "lib/eve/tool-image-context.ts",
   "lib/file-url.ts",
+  "lib/is-non-empty-string.ts",
   "lib/eve/conversation-scope.ts",
   "lib/eve/session-mapping-error.ts",
 ];
 const provenance = [];
+/* oxlint-disable eslint/no-await-in-loop -- Source validation and provenance order are deterministic; each copy follows its validated source. */
 for (const relative of sources) {
   const original = await readFile(path.join(app, relative), "utf-8");
   let content = original;
   if (relative.endsWith("delete-document/tool.ts") && mode !== "unchanged") {
-    const expected = "response: ({ responder, session }) =>";
+    const expected =
+      "response: ({ responder, session }: DeleteDocumentResponseContext) =>";
     assert.equal(content.split(expected).length, 2);
     content = content.replace(
       expected,
-      "response: ({ response: { principal: responder }, session }) =>"
+      "response: ({ response: { principal: responder }, session }: DeleteDocumentResponseContext) =>"
     );
   }
   if (
     relative.endsWith("delete-document/tool.ts") &&
     mode === "native-candidate"
   ) {
-    const expected = `  if (context.approval?.responder.principalId !== scope.ownerId) {\n    throw new Error("Document deletion requires the owner's approval.");\n  }\n`;
+    const expected = `  const { approval } = context;\n  if (!approval || approval.responder.principalId !== scope.ownerId) {\n    throw new Error("Document deletion requires the owner's approval.");\n  }\n`;
     assert.equal(content.split(expected).length, 2);
     content = content.replace(expected, "");
   }
@@ -62,6 +62,7 @@ for (const relative of sources) {
     sha256: createHash("sha256").update(original).digest("hex"),
   });
 }
+/* oxlint-enable eslint/no-await-in-loop */
 // Unselected implementations must not import live providers or app credentials.
 const unrelated = {
   "code-documents/tool.ts": ["createCodeDocument", "editCodeDocument"],
@@ -72,6 +73,7 @@ const unrelated = {
   "text-documents/tool.ts": ["createTextDocument", "editTextDocument"],
   "word-count/tool.ts": ["wordCount"],
 };
+/* oxlint-disable eslint/no-await-in-loop -- Source validation and provenance order are deterministic; each copy follows its validated source. */
 for (const [relative, names] of Object.entries(unrelated)) {
   const file = path.join(fixture, "tools/chatjs", relative);
   await mkdir(path.dirname(file), { recursive: true });
@@ -80,6 +82,7 @@ for (const [relative, names] of Object.entries(unrelated)) {
     `import { unavailable } from "../../../proof/unavailable";\n${names.map((name) => `export const ${name} = unavailable;`).join("\n")}\n`
   );
 }
+/* oxlint-enable eslint/no-await-in-loop */
 await writeFile(
   path.join(fixture, "tools/chatjs/providers.ts"),
   `import { unavailable } from "../../proof/unavailable";\nexport const providers = Object.fromEntries(["codeExecution","generateImage","generateVideo","retrieveUrl","webSearch"].map(name => [name, unavailable]));\n`
@@ -111,9 +114,3 @@ await writeFile(
   })
 );
 process.stdout.write(`${fixture}\n`);
-
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-enable eslint/no-await-in-loop */
-
-/* oxlint-enable eslint/no-magic-numbers, unicorn/no-null */

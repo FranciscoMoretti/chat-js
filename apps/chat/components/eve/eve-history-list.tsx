@@ -1,5 +1,7 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
 import {
   useInfiniteQuery,
   useQuery,
@@ -21,9 +23,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
-/* oxlint-disable import/max-dependencies -- @/lib/eve/optimistic-metadata import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
-/* oxlint-enable import/max-dependencies */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -35,10 +36,14 @@ import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
 const titlePollIntervalMs = 1000;
 const titlePollLimitMs = 30_000;
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- groupLabel: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const groupLabel = (
-  item: Awaited<ReturnType<typeof listEveConversations>>["items"][number]
+  item: Readonly<
+    Pick<
+      Awaited<ReturnType<typeof listEveConversations>>["items"][number],
+      "updatedAt" | "isPinned"
+    >
+  >
 ) => {
   const date = new Date(item.updatedAt);
   if (item.isPinned) {
@@ -58,17 +63,15 @@ const groupLabel = (
   }
   return "Older";
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveHistoryList: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveHistoryList = ({
   initialPage,
   ownerId,
   projectId,
 }: {
-  ownerId: string;
-  projectId?: string;
-  initialPage: Awaited<ReturnType<typeof listEveConversations>>;
+  readonly ownerId: string;
+  readonly projectId?: string;
+  readonly initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
   const { data: session } = useSession();
@@ -84,12 +87,25 @@ export const EveHistoryList = ({
     trpc.eve.list.infiniteQueryOptions(
       { ownerScope: ownerId, projectId: projectId ?? null, search },
       {
-        getNextPageParam: (page) => page.nextCursor,
+        getNextPageParam: (page: {
+          readonly nextCursor: {
+            readonly id: string;
+            readonly isPinned: boolean;
+            readonly updatedAt: string;
+          } | null;
+        }) => page.nextCursor,
         initialData: { pageParams: [null], pages: [initialPage] },
       }
     )
   );
-  const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
+  const conversations =
+    history.data?.pages.flatMap(
+      (
+        page: ReadonlyNativeSurface<
+          Awaited<ReturnType<typeof listEveConversations>>
+        >
+      ) => page.items
+    ) ?? [];
   const pathname = usePathname();
   const route = parseChatIdFromPathname(pathname);
   const routeId = route.id;
@@ -100,11 +116,14 @@ export const EveHistoryList = ({
     )
   );
   const hadPendingTitle = useRef(false);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React requires an initial ref value; undefined represents the uninitialized state.
   const titlePollStartedAt = useRef<number | undefined>(undefined);
   const hasPendingTitle = conversations.some(
-    (conversation) => conversation.titleStatus === "pending"
+    (conversation: {
+      readonly titleStatus: "generated" | "manual" | "pending" | "fallback";
+    }) => conversation.titleStatus === "pending"
   );
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!hasPendingTitle) {
       if (
         hadPendingTitle.current &&
@@ -116,17 +135,15 @@ export const EveHistoryList = ({
       }
       hadPendingTitle.current = false;
       titlePollStartedAt.current = undefined;
-      return;
+      return undefined;
     }
     hadPendingTitle.current = true;
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
-    if (titlePollStartedAt.current === undefined) {
-      titlePollStartedAt.current = Date.now();
-    }
-    const remaining =
-      titlePollLimitMs - (Date.now() - titlePollStartedAt.current);
+
+    const startedAt = titlePollStartedAt.current ?? Date.now();
+    titlePollStartedAt.current = startedAt;
+    const remaining = titlePollLimitMs - (Date.now() - startedAt);
     if (remaining <= 0) {
-      return;
+      return undefined;
     }
     const interval = globalThis.setInterval(() => {
       if (pendingEveMetadataMutations(queryClient) === 0) {
@@ -139,7 +156,7 @@ export const EveHistoryList = ({
         void history.refetch();
       }
     }, remaining);
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       globalThis.clearInterval(interval);
       globalThis.clearTimeout(timeout);
@@ -147,7 +164,7 @@ export const EveHistoryList = ({
   }, [hasPendingTitle, history, queryClient, trpc]);
   // Activity can move a row across a loaded page boundary between requests.
   const seen = new Set<string>();
-  const filtered = conversations.filter((item) => {
+  const filtered = conversations.filter((item: { readonly id: string }) => {
     if (seen.has(item.id)) {
       return false;
     }
@@ -155,7 +172,7 @@ export const EveHistoryList = ({
     return true;
   });
   const { rename, pin } = useEveMetadataMutations();
-  const grouped = projectId
+  const grouped = hasText(projectId)
     ? [{ items: filtered, label: "" }]
     : [
         "Pinned",
@@ -165,52 +182,106 @@ export const EveHistoryList = ({
         "Last 30 days",
         "Older",
       ].map((label) => ({
-        items: filtered.filter((item) => groupLabel(item) === label),
+        items: filtered.filter(
+          (item: ReadonlyNativeSurface<(typeof filtered)[number]>) =>
+            groupLabel(item) === label
+        ),
         label,
       }));
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
-      className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
+      className={
+        hasText(projectId) ? "p-0" : "group-data-[collapsible=icon]:hidden"
+      }
     >
-      {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
+      {!hasText(projectId) && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
       {grouped
-        .filter((group) => group.items.length)
-        .map((group): React.JSX.Element => (
-          <div className="[&:not(:first-child)]:mt-6" key={group.label}>
-            {group.label && (
-              <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
-                {group.label}
-              </div>
-            )}
-            <SidebarMenu>
-              {group.items.map((item, index) => {
-                if (item.state === "deleting") {
-                  return (
-                    <li className="p-2 text-sm" key={item.id}>
-                      <p className="truncate">{item.title}</p>
-                      <Button
-                        onClick={() => openDeletion(item)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Resume deletion
-                      </Button>
-                    </li>
-                  );
-                }
-                if (projectId) {
-                  return (
-                    <li key={item.id}>
-                      {index > 0 && <Separator />}
-                      <ProjectChatItem
+        .filter(
+          (group: Readonly<{ items: readonly unknown[] }>) => group.items.length
+        )
+        .map(
+          (
+            group: ReadonlyNativeSurface<(typeof grouped)[number]>
+          ): React.JSX.Element => (
+            <div className="[&:not(:first-child)]:mt-6" key={group.label}>
+              {group.label && (
+                <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
+                  {group.label}
+                </div>
+              )}
+              <SidebarMenu>
+                {group.items.map(
+                  (
+                    item: ReadonlyNativeSurface<(typeof group.items)[number]>,
+                    index
+                  ) => {
+                    if (item.state === "deleting") {
+                      return (
+                        <li className="p-2 text-sm" key={item.id}>
+                          <p className="truncate">{item.title}</p>
+                          <Button
+                            onClick={() => {
+                              openDeletion(item);
+                            }}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            Resume deletion
+                          </Button>
+                        </li>
+                      );
+                    }
+                    if (hasText(projectId)) {
+                      return (
+                        <li key={item.id}>
+                          {index > 0 && <Separator />}
+                          <ProjectChatItem
+                            chat={item}
+                            onDelete={() => {
+                              openDeletion(item);
+                            }}
+                            onMoveProject={
+                              session?.user && item.state === "bound"
+                                ? () => {
+                                    setMoving(item);
+                                  }
+                                : undefined
+                            }
+                            onRename={async (id, title) => {
+                              await rename.mutateAsync({ id, title });
+                            }}
+                            renderShareContent={(
+                              _chatId,
+                              onClose
+                            ): React.JSX.Element => (
+                              <EveShareDialogContent
+                                chatId={item.conversationId}
+                                onClose={onClose}
+                              />
+                            )}
+                          />
+                        </li>
+                      );
+                    }
+                    return (
+                      <SidebarChatItem
                         chat={item}
-                        onDelete={() => openDeletion(item)}
+                        isActive={selectedIdentity.data?.chatId === item.id}
+                        key={item.id}
+                        onDelete={() => {
+                          openDeletion(item);
+                        }}
                         onMoveProject={
                           session?.user && item.state === "bound"
-                            ? () => setMoving(item)
+                            ? () => {
+                                setMoving(item);
+                              }
                             : undefined
                         }
+                        onPin={(id, isPinned) => {
+                          pin.mutate({ id, isPinned });
+                        }}
                         onRename={async (id, title) => {
                           await rename.mutateAsync({ id, title });
                         }}
@@ -223,41 +294,15 @@ export const EveHistoryList = ({
                             onClose={onClose}
                           />
                         )}
+                        setOpenMobile={setOpenMobile}
                       />
-                    </li>
-                  );
-                }
-                return (
-                  <SidebarChatItem
-                    chat={item}
-                    isActive={selectedIdentity.data?.chatId === item.id}
-                    key={item.id}
-                    onDelete={() => openDeletion(item)}
-                    onMoveProject={
-                      session?.user && item.state === "bound"
-                        ? () => setMoving(item)
-                        : undefined
-                    }
-                    onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
-                    onRename={async (id, title) => {
-                      await rename.mutateAsync({ id, title });
-                    }}
-                    renderShareContent={(
-                      _chatId,
-                      onClose
-                    ): React.JSX.Element => (
-                      <EveShareDialogContent
-                        chatId={item.conversationId}
-                        onClose={onClose}
-                      />
-                    )}
-                    setOpenMobile={setOpenMobile}
-                  />
-                );
-              })}
-            </SidebarMenu>
-          </div>
-        ))}
+                    );
+                  }
+                )}
+              </SidebarMenu>
+            </div>
+          )
+        )}
       {history.isPending && (
         <output className="text-muted-foreground p-2 text-sm">
           Loading conversations…
@@ -268,9 +313,11 @@ export const EveHistoryList = ({
           <p>Could not load conversations.</p>
           <Button
             onClick={() => {
-              void (history.isFetchNextPageError
-                ? history.fetchNextPage()
-                : history.refetch());
+              if (history.isFetchNextPageError) {
+                void history.fetchNextPage();
+              } else {
+                void history.refetch();
+              }
             }}
             size="sm"
             variant="ghost"
@@ -294,7 +341,7 @@ export const EveHistoryList = ({
         </Button>
       )}
       {!(filtered.length > 0 || history.isPending || history.isError) &&
-        (projectId ? (
+        (hasText(projectId) ? (
           <div className="border-border/60 rounded-xl border px-4 py-6">
             <p className="text-foreground text-sm font-medium">
               No chats in this project
@@ -313,12 +360,11 @@ export const EveHistoryList = ({
         <EveMoveProjectDialog
           conversation={moving}
           key={moving.id}
-          onClose={() => setMoving(undefined)}
+          onClose={() => {
+            setMoving(undefined);
+          }}
         />
       )}
     </SidebarGroup>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
-
-/* oxlint-disable max-lines -- eve-history-list keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

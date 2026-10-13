@@ -5,7 +5,6 @@ import type { ReadonlyDeep } from "./readonly-types";
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
   Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
     Promise,
-    // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
     null
   );
 
@@ -29,7 +28,12 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         >[typeof SDK_PARAMETER_INDEX]
       >
     | undefined {
-    return this.requests.at(LAST_REQUEST_INDEX)?.options;
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return globalThis.undefined;
+    }
+    return request.options;
   }
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
@@ -48,20 +52,31 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         },
       })
     );
-
   public reconnectToStream = reconnectToNoStream;
 
   public emit(...chunks: readonly ReadonlyDeep<UIMessageChunk>[]): void {
     for (const chunk of chunks) {
-      this.requests.at(LAST_REQUEST_INDEX)?.controller.enqueue(chunk);
+      const request =
+        this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+      if (request !== globalThis.undefined) {
+        request.controller.enqueue(chunk);
+      }
     }
   }
 
   public finish(): void {
-    this.requests.at(LAST_REQUEST_INDEX)?.controller.close();
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.close();
+    }
   }
 
   public fail(error: Readonly<Error>): void {
-    this.requests.at(LAST_REQUEST_INDEX)?.controller.error(error);
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.error(error);
+    }
   }
 }

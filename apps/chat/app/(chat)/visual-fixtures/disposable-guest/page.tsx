@@ -11,5 +11,4 @@ const Page = (): React.JSX.Element => {
   return <GuestVisualFixture />;
 };
 
-// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component Page.
 export default Page;

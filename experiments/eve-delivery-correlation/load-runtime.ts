@@ -1,4 +1,3 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This isolated runtime proof owns disposable files, process controls and Node assertions.
 import path from "node:path";
 
 import { plugin } from "bun";
@@ -19,13 +18,10 @@ const changed = new Set([
   "protocol/message",
   "internal/message-correlation",
 ]);
-// oxlint-disable-next-line node/no-process-env -- Read only the isolated worker configuration; provider and application credentials are never forwarded.
 const patched = process.env.CORRELATION_PATCHED === "1";
 plugin({
   name: "isolated-eve-correlation",
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
   setup(build) {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
     build.onResolve({ filter: /^#/u }, ({ path: modulePath }) => {
       const key = modulePath.replace(/^#/u, "").replace(/\.js$/u, "");
       return {

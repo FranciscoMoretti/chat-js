@@ -5,7 +5,6 @@ import { listEveConversations } from "@/lib/db/eve-queries";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { EveHistoryList } from "./eve-history-list";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null -- EveHistory: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveHistory = async () => {
   const principal = await resolveEvePrincipal(await headers());
@@ -24,4 +23,3 @@ export const EveHistory = async () => {
     />
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */

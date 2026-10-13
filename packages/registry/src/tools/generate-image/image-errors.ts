@@ -1,4 +1,3 @@
-// oxlint-disable-next-line eslint/no-undefined -- Undefined is the actual missing optional diagnostic property value; preserve explicit name/constructor absence when serializing arbitrary SDK errors.
 const ABSENT_DIAGNOSTIC_VALUE = undefined;
 
 const serializeError = (

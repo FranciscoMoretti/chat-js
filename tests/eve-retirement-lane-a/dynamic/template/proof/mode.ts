@@ -1,3 +1,3 @@
 // Replaced only inside the disposable fixture by prepare.mjs.
-// oxlint-disable-next-line typescript/no-inferrable-types -- The template must type-check every generated mode, not narrow control flow to its placeholder.
+// oxlint-disable-next-line typescript/no-inferrable-types -- The preparer replaces this exported mode; evaluators must type-check all three runtime modes.
 export const mode: string = "unchanged";

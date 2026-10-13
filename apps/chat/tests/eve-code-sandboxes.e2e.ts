@@ -1,8 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -21,7 +18,6 @@ import {
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
@@ -37,22 +33,14 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Sandbox fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();
   const name = await reserveEveCodeSandbox(owner, row.id, "call-1", provider);
@@ -81,7 +69,6 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
     reserveEveCodeSandbox(owner, row.id, "call-2", provider)
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable max-statements */
 
 test("foreign owners cannot reserve or resolve resources, and completed calls cannot reallocate", async () => {
   const row = await conversation();
@@ -97,7 +84,6 @@ test("foreign owners cannot reserve or resolve resources, and completed calls ca
     reserveEveCodeSandbox(owner, row.id, "call", provider)
   ).rejects.toThrow("Reconcile");
 });
-
 test("concurrent allocation and deletion cannot leave an untracked admitted resource", async () => {
   const row = await conversation();
   const [allocation] = await Promise.allSettled([
@@ -118,10 +104,6 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
     ).toEqual([]);
   }
 });
-
-/* oxlint-disable max-statements --
- * max-statements (#512): test("only a retired owned family can inventory confirmed creation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("only a retired owned family can inventory confirmed creation", async () => {
   const row = await conversation();
   const name = await reserveEveCodeSandbox(
@@ -156,4 +138,3 @@ test("only a retired owned family can inventory confirmed creation", async () =>
     confirmEveCodeSandboxCreation(owner, row.id, name)
   ).rejects.toThrow("ownership");
 });
-/* oxlint-enable max-statements */

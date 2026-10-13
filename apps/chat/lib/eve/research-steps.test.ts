@@ -1,8 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { WorkflowToolContext } from "eve/tools";
-import { beforeEach, expect, it, vi } from "vitest";
+import type { executeEveDocumentTool } from "./document-tools";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import {
   prepareResearch,
@@ -10,11 +8,10 @@ import {
 } from "@/tools/chatjs/deep-research/steps";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   research: true,
-  save: vi.fn(),
+  save: vi.fn<typeof executeEveDocumentTool>(),
   selected: vi.fn(),
   snapshot: vi.fn(),
   text: true,
@@ -34,33 +31,18 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
 vi.mock("../../tools/chatjs/providers", () => ({
   providers: mocks.tools,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/deep-research/configuration")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./connection-options")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./connection-options", () => ({
   getEveConnectionOptions: () => ({}),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.save }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./shared-messages")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./shared-messages", () => ({
   sharedEveMessages: () => [
     { parts: [{ text: "Research this", type: "text" }], role: "user" },
@@ -76,7 +58,6 @@ vi.mock("./shared-messages", () => ({
     },
   ],
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 const owner = {
   attributes: {},
   authenticator: "test",
@@ -96,29 +77,25 @@ const context = (): WorkflowToolContext => ({
   agents: {},
   ask: vi.fn(),
 });
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.save.mockReset();
   mocks.selected.mockReturnValue(null);
   mocks.research = true;
   mocks.text = true;
   mocks.tools.webSearch = {};
   mocks.snapshot.mockResolvedValue({ events: [] });
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses the owned native transcript without feeding the live research invocation bac uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("uses the owned native transcript without feeding the live research invocation back into the brief", async () => {
   const prepared = await prepareResearch(context());
   expect(prepared.messages).toContain("Research this");
   expect(prepared.messages).not.toContain("research-call");
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
-/* oxlint-enable no-magic-numbers */
 
 it("rejects absent research and text documents before reading the transcript", async () => {
   mocks.research = false;
@@ -133,7 +110,6 @@ it("rejects absent research and text documents before reading the transcript", a
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
 it("rejects research without an installed search provider", async () => {
   Reflect.deleteProperty(mocks.tools, "webSearch");
   await expect(prepareResearch(context())).rejects.toThrow(
@@ -141,7 +117,6 @@ it("rejects research without an installed search provider", async () => {
   );
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
 it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
@@ -171,7 +146,6 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   ).rejects.toThrow("authenticated owner");
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
 it("does not save after cancellation and retains the root operation identity on success", async () => {
   const ctx = context();
   const abort = new AbortController();
@@ -198,4 +172,46 @@ it("does not save after cancellation and retains the root operation identity on 
     { content: "Content", fileIds: [], title: "Report" },
     ctx
   );
+});
+
+it("the durable save records completion only after the document write resolves", async () => {
+  const write =
+    Promise.withResolvers<Awaited<ReturnType<typeof executeEveDocumentTool>>>();
+  mocks.save.mockReturnValue(write.promise);
+  const now = vi.spyOn(Date, "now").mockReturnValue(100);
+  const ctx = context();
+  const report = { content: "# Evidence", title: "Report" };
+  const pending = saveResearchReport(ctx, report);
+  expect(now).not.toHaveBeenCalled();
+  expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
+    "createTextDocument",
+    { ...report, fileIds: [] },
+    ctx
+  );
+  const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
+    date: "2026-10-13",
+    documentId: crypto.randomUUID(),
+    kind: "text",
+    result: "Saved",
+    revisionId: crypto.randomUUID(),
+    status: "success",
+    title: "Report",
+  };
+  now.mockReturnValue(200);
+  write.resolve(document);
+  expect(await pending).toEqual({ document, completedAt: 200 });
+  expect(now).toHaveBeenCalledOnce();
+});
+
+it("a failed save cannot record successful research completion", async () => {
+  const error = new Error("Storage unavailable");
+  mocks.save.mockRejectedValue(error);
+  const now = vi.spyOn(Date, "now");
+  await expect(
+    saveResearchReport(context(), {
+      content: "Evidence",
+      title: "Report",
+    })
+  ).rejects.toBe(error);
+  expect(now).not.toHaveBeenCalled();
 });

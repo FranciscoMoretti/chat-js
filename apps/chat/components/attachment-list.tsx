@@ -10,32 +10,33 @@ import {
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
 import {
   PromptInputHoverCard,
   PromptInputHoverCardContent,
 } from "@/components/ai-elements/prompt-input";
+
 import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-import { getFileImageProps } from "@/lib/file-url";
-/* oxlint-disable import/max-dependencies -- @/lib/utils import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { cn } from "@/lib/utils";
-/* oxlint-enable import/max-dependencies */
+
+import { getFileImageProps } from "@/lib/file-url";
+
+import { useImageLoadError } from "@/hooks/use-image-load-error";
+
+const HTTP_NOT_FOUND = 404;
 
 const emptyUploadQueue: string[] = [];
 
 interface AttachmentViewData {
-  contentType: string;
-  name: string;
-  url: string;
+  readonly contentType: string;
+  readonly name: string;
+  readonly url: string;
 }
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- AttachmentIcon: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AttachmentIcon = ({
   isImage,
@@ -78,17 +79,15 @@ const AttachmentIcon = ({
 
   return <PaperclipIcon className="text-muted-foreground size-3" />;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 const AttachmentPill = ({
   attachment,
   isUploading,
   onRemove,
 }: {
-  attachment: AttachmentViewData;
-  isUploading: boolean;
-  onRemove?: () => void;
+  readonly attachment: AttachmentViewData;
+  readonly isUploading: boolean;
+  readonly onRemove?: () => void;
 }): ReactJSX.Element => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
@@ -128,7 +127,7 @@ const AttachmentPill = ({
           <Button
             aria-label="Remove attachment"
             className="absolute inset-0 size-5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
-            onClick={(event) => {
+            onClick={(event: { readonly stopPropagation: () => void }) => {
               event.stopPropagation();
               onRemove();
             }}
@@ -145,8 +144,6 @@ const AttachmentPill = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return -- AttachmentItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const AttachmentItem = ({
   attachment,
@@ -155,12 +152,13 @@ const AttachmentItem = ({
   onImageClick,
   variant = "card",
 }: {
-  attachment: AttachmentViewData;
-  isUploading?: boolean;
-  onRemove?: () => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
-  variant?: "card" | "pill";
+  readonly attachment: AttachmentViewData;
+  readonly isUploading?: boolean;
+  readonly onRemove?: () => void;
+  readonly onImageClick?: (imageUrl: string, imageName?: string) => void;
+  readonly variant?: "card" | "pill";
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
@@ -191,7 +189,7 @@ const AttachmentItem = ({
         <button
           aria-label={attachmentLabel}
           className="inline-block cursor-default text-left"
-          onClick={(event) => {
+          onClick={(event: { readonly stopPropagation: () => void }) => {
             event.stopPropagation();
             if (isImage && onImageClick) {
               onImageClick(url, name);
@@ -210,7 +208,7 @@ const AttachmentItem = ({
           <div className="flex gap-1">
             <Button
               className="size-7"
-              onClick={(event) => {
+              onClick={(event: { readonly stopPropagation: () => void }) => {
                 event.stopPropagation();
                 window.open(url, "_blank");
               }}
@@ -223,34 +221,32 @@ const AttachmentItem = ({
             <Button
               className="size-7"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Attachment preview owns asynchronous loading and fallback display; preserve its event cancellation and preview lifecycle.
-              onClick={async (event) => {
-                event.stopPropagation();
-                /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
-                try {
-                  const response = await fetch(url);
-                  if (response.status === 404) {
-                    toast.error("File unavailable");
-                    return;
+              onClick={(event: { readonly stopPropagation: () => void }) => {
+                startEventAction(async () => {
+                  event.stopPropagation();
+
+                  try {
+                    const response = await fetch(url);
+                    if (response.status === HTTP_NOT_FOUND) {
+                      toast.error("File unavailable");
+                      return;
+                    }
+                    if (!response.ok) {
+                      window.open(url, "_blank");
+                      return;
+                    }
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    link.download = name || "file";
+                    link.click();
+                    URL.revokeObjectURL(blobUrl);
+                  } catch {
+                    // Fallback: open in new tab if fetch fails
+                    window.open(url, "_blank");
                   }
-                  if (!response.ok) {
-                    // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
-                    throw new Error(
-                      `File download failed (${response.status})`
-                    );
-                  }
-                  const blob = await response.blob();
-                  const blobUrl = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.href = blobUrl;
-                  link.download = name || "file";
-                  link.click();
-                  URL.revokeObjectURL(blobUrl);
-                } catch {
-                  // Fallback: open in new tab if fetch fails
-                  window.open(url, "_blank");
-                }
-                /* oxlint-enable react/todo */
+                });
               }}
               size="icon"
               title="Download"
@@ -264,9 +260,6 @@ const AttachmentItem = ({
     </PromptInputHoverCard>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
-
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- AttachmentList: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including attachment: AttachmentViewData); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const AttachmentList = ({
   attachments,
@@ -277,13 +270,13 @@ const AttachmentList = ({
   testId = "attachments",
   className,
 }: {
-  attachments: AttachmentViewData[];
-  uploadQueue?: string[];
-  onRemoveAction?: (attachment: AttachmentViewData) => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
-  variant?: "card" | "pill";
-  testId?: string;
-  className?: string;
+  readonly attachments: readonly AttachmentViewData[];
+  readonly uploadQueue?: readonly string[];
+  readonly onRemoveAction?: (attachment: AttachmentViewData) => void;
+  readonly onImageClick?: (imageUrl: string, imageName?: string) => void;
+  readonly variant?: "card" | "pill";
+  readonly testId?: string;
+  readonly className?: string;
 }): ReactJSX.Element | null => {
   if (attachments.length === 0 && uploadQueue.length === 0) {
     return null;
@@ -294,13 +287,17 @@ const AttachmentList = ({
       className={cn("flex flex-row flex-wrap items-end gap-2", className)}
       data-testid={testId}
     >
-      {attachments.map((attachment): React.JSX.Element => (
+      {attachments.map((attachment: AttachmentViewData): React.JSX.Element => (
         <AttachmentItem
           attachment={attachment}
           key={attachment.url}
           onImageClick={onImageClick}
           onRemove={
-            onRemoveAction ? () => onRemoveAction(attachment) : undefined
+            onRemoveAction
+              ? () => {
+                  onRemoveAction(attachment);
+                }
+              : undefined
           }
           variant={variant}
         />
@@ -314,7 +311,6 @@ const AttachmentList = ({
             url: "",
           }}
           isUploading
-          // oxlint-disable-next-line react/no-array-index-key -- The queue is an immutable batch until it is cleared; positions disambiguate same-named files.
           key={`${filename}:${index}`}
           variant={variant}
         />
@@ -322,8 +318,6 @@ const AttachmentList = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines -- attachment-list keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { AttachmentList };
 export type { AttachmentViewData };

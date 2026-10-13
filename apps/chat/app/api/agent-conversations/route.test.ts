@@ -2,9 +2,16 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { POST } from "./route";
 
+const HTTP_STATUS = {
+  badRequest: 400,
+  notFound: 404,
+  ok: 200,
+  serviceUnavailable: 503,
+};
+
 const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
-  after: vi.fn(),
+  after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   persistTitle: vi.fn(),
   principal: vi.fn(),
@@ -34,10 +41,7 @@ const input = {
   operationId: "00000000-0000-4000-8000-000000000001",
 };
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const request = () =>
+const request = (): Request =>
   new Request("http://localhost:3790/api/agent-conversations", {
     body: JSON.stringify(input),
     headers: {
@@ -46,8 +50,6 @@ const request = () =>
     },
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
-
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.principal.mockResolvedValue({
@@ -61,21 +63,18 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("keeps a terminal creation response ambiguous when its refund is refused") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("keeps a terminal creation response ambiguous when its refund is refused", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
       { creationRejected: true, error: "terminal" },
-      { status: 400 }
+      { status: HTTP_STATUS.badRequest }
     )
   );
   mocks.settle.mockResolvedValue(false);
 
   const response = await POST(request());
 
-  expect(response.status).toBe(503);
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(await response.json()).toEqual({
     error: "Creation is unresolved. Retry the saved operation to recover it.",
   });
@@ -86,11 +85,7 @@ test("keeps a terminal creation response ambiguous when its refund is refused", 
     "reservation"
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("preserves authoritative deletion when its committed quota cannot be refunded") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("preserves authoritative deletion when its committed quota cannot be refunded", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
@@ -99,24 +94,20 @@ test("preserves authoritative deletion when its committed quota cannot be refund
         creationRejected: true,
         error: "This conversation has been deleted.",
       },
-      { status: 404 }
+      { status: HTTP_STATUS.notFound }
     )
   );
   mocks.settle.mockResolvedValue(false);
 
   const response = await POST(request());
 
-  expect(response.status).toBe(404);
+  expect(response.status).toBe(HTTP_STATUS.notFound);
   expect(await response.json()).toMatchObject({
     code: "conversation_deleted",
     creationRejected: true,
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("defers root title generation until after the creation response") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("defers root title generation until after the creation response", async () => {
   mocks.create.mockResolvedValue(
     Response.json({
@@ -127,15 +118,14 @@ test("defers root title generation until after the creation response", async () 
 
   const response = await POST(request());
 
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(HTTP_STATUS.ok);
   expect(mocks.persistTitle).not.toHaveBeenCalled();
   expect(mocks.after).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  await mocks.after.mock.calls[0]?.[0]();
+  const [[afterResponseCallback]] = mocks.after.mock.calls;
+  await afterResponseCallback();
   expect(mocks.persistTitle).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
     message: "hello",
     ownerId: "guest",
   });
 });
-/* oxlint-enable no-magic-numbers */

@@ -1,18 +1,14 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-
 import postgres from "postgres";
+import type { TransactionSql } from "postgres";
 import { afterAll, expect, test } from "vitest";
 
 import {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 } from "@/lib/eve/lifecycle/postgres/eve-run-inventory";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { env } from "../lib/env";
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Run inventory acceptance requires local Postgres.");
@@ -20,9 +16,6 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
@@ -32,15 +25,11 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): run accepts attributes: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-async function run(
-  attributes: Record<string, string> = {},
+const run = async (
+  attributes: Readonly<Record<string, string>> = {},
   status = "completed"
-): Promise<string> {
+): Promise<string> => {
   const id = crypto.randomUUID();
   ids.push(id);
   await query`
@@ -49,13 +38,12 @@ async function run(
       ${query.json(attributes)}, ${query.json({ secret: "must not be loaded" })})
   `;
   return id;
-}
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+};
 
-async function stream(
+const stream = async (
   runId: string | null,
   existingId?: string
-): Promise<string> {
+): Promise<string> => {
   const id = existingId ?? crypto.randomUUID();
   streamIds.push(id);
   await query`
@@ -63,12 +51,7 @@ async function stream(
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("private payload")}, false)
   `;
   return id;
-}
-
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("inventories native descendants and collectors without returning payloads or unr keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("inventories native descendants and collectors without returning payloads or unr uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
+};
 test("inventories native descendants and collectors without returning payloads or unrelated runs", async () => {
   const collector = await run();
   const root = await run({ "$eve.activity_collector": collector });
@@ -114,12 +97,7 @@ test("inventories native descendants and collectors without returning payloads o
     await query`select id from workflow.workflow_runs where id = ${root}`
   ).toHaveLength(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): test("reports active work, missing relationships, and streams without exclusive owner keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("reports active work, missing relationships, and streams without exclusive owner preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("reports active work, missing relationships, and streams without exclusive ownership", async () => {
   const missingCollector = crypto.randomUUID();
   const root = await run({ "$eve.activity_collector": missingCollector });
@@ -145,7 +123,6 @@ test("reports active work, missing relationships, and streams without exclusive 
     readEvePostgresRunInventory(query, missingParent)
   ).rejects.toThrow("session run is missing");
 });
-/* oxlint-enable max-statements, unicorn/no-null */
 
 test("cyclic parent metadata terminates without duplicating records", async () => {
   const root = await run();
@@ -157,15 +134,12 @@ test("cyclic parent metadata terminates without duplicating records", async () =
   );
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("retains missing queue-discovered seeds as incomplete ownership") accepts transaction; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("retains missing queue-discovered seeds as incomplete ownership", async () => {
   const root = await run();
   const missing = crypto.randomUUID();
   const inventory = await query.begin(
     "isolation level repeatable read read only",
-    async (transaction) =>
+    async (transaction: ReadonlyNativeSurface<TransactionSql>) =>
       await readEvePostgresRunInventoryInTransaction(transaction, root, [
         missing,
       ])
@@ -173,4 +147,3 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   expect(inventory.missingRunIds).toEqual([missing]);
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

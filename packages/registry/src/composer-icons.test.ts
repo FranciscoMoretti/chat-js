@@ -1,12 +1,6 @@
-import { expect, test } from "bun:test";
-
-/* oxlint-disable import/no-namespace -- Inspect every named Lucide export, including aliases outside lucide.icons, to verify the complete generated catalog. */
 import * as lucide from "lucide-react";
-/* oxlint-enable import/no-namespace */
-
-/* oxlint-disable import/no-relative-parent-imports -- Compare the canonical package-generated catalog; the @/ application alias and ./r-only package exports do not resolve this source module. */
+import { expect, test } from "bun:test";
 import { composerIconNames } from "../composer-icons.generated";
-/* oxlint-enable import/no-relative-parent-imports */
 
 test("generated composer icon catalog matches Lucide exports, including aliases", () => {
   const components = new Set<unknown>(Object.values(lucide.icons));

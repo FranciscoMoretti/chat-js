@@ -1,58 +1,37 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import nodePath from "node:path";
-
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import nodePath from "node:path";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
-/* oxlint-enable import/no-nodejs-modules */
+import { tmpdir } from "node:os";
 
 const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));
 const { remove } = mocks;
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("microsandbox")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): vi.mock("microsandbox") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("microsandbox", () => ({
   Sandbox: {
-    get: () =>
-      Promise.resolve({
-        destroy: mocks.destroySandbox,
-        remove: () =>
-          Promise.reject(
-            Object.assign(new Error("sandbox still running"), {
-              code: "sandboxStillRunning",
-            })
-          ),
-      }),
+    get: vi.fn().mockResolvedValue({
+      destroy: mocks.destroySandbox,
+      remove: vi.fn<() => Promise<never>>().mockRejectedValue(
+        Object.assign(new Error("sandbox still running"), {
+          code: "sandboxStillRunning",
+        })
+      ),
+    }),
   },
   Snapshot: { remove: mocks.remove },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 
 const directories: string[] = [];
 beforeEach(() => {
   remove.mockReset();
   mocks.destroySandbox.mockReset();
 });
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterEach(async () => {
-  for (const directory of directories.splice(0)) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await rm(directory, { force: true, recursive: true });
-  }
+  await Promise.all(
+    directories.splice(0).map(async (directory) => {
+      await rm(directory, { force: true, recursive: true });
+    })
+  );
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type --
- * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fixture uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const fixture = async (letter = "a") => {
   const root = await mkdtemp(nodePath.join(tmpdir(), "eve-snapshot-purge-"));
   directories.push(root);
@@ -87,7 +66,6 @@ const fixture = async (letter = "a") => {
     snapshotName,
   };
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type */
 
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
   const input = await fixture();
@@ -114,26 +92,20 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "runtime library not found" })],
   });
 });
-
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("validates all records before deletion and rejects another session or shared tem keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("validates all records before deletion and rejects another session or shared tem uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test("validates all records before deletion and rejects another session or shared template", async () => {
+test.each([
+  { sessionKey: "other-session" },
+  { optionsHash: 42 },
+  { snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
+])("rejects invalid ownership record %j before deletion", async (invalid) => {
   const input = await fixture();
-  for (const record of [
-    { ...input.record, sessionKey: "other-session" },
-    { ...input.record, optionsHash: 42 },
-    { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await writeFile(input.path, JSON.stringify(record));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
-    expect(remove).not.toHaveBeenCalled();
-    expect(mocks.destroySandbox).not.toHaveBeenCalled();
-  }
-  await writeFile(input.path, JSON.stringify(input.record));
+  await writeFile(input.path, JSON.stringify({ ...input.record, ...invalid }));
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
+  expect(remove).not.toHaveBeenCalled();
+  expect(mocks.destroySandbox).not.toHaveBeenCalled();
+});
+
+test("validates every ownership record before deletion", async () => {
+  const input = await fixture();
   await writeFile(
     nodePath.join(input.sessionDirectory, "fork-checkpoints", "z-invalid.json"),
     "{}"
@@ -142,14 +114,7 @@ test("validates all records before deletion and rejects another session or share
   expect(remove).not.toHaveBeenCalled();
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-statements (#512): test("validates the whole family and removes all VMs before resolving snapshot depend keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("validates the whole family and removes all VMs before resolving snapshot depend uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("validates the whole family and removes all VMs before resolving snapshot depend accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
   const parent = await fixture("a");
   const child = await fixture("b");
@@ -164,6 +129,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   expect(remove).not.toHaveBeenCalled();
   await writeFile(child.path, JSON.stringify(child.record));
   let childRemoved = false;
+  // oxlint-disable-next-line typescript/promise-function-async -- This provider fixture enforces completed VM deletion and child-before-parent snapshot deletion on each call; its Promise-only success has no work to await under eslint/require-await.
   remove.mockImplementation((name: string) => {
     if (mocks.destroySandbox.mock.calls.length !== 2) {
       throw new Error("All family VMs must be removed first");
@@ -175,19 +141,14 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     return Promise.resolve();
   });
   await purgeLocalEveSandboxes([parent, child]);
-  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This purge-local-sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(remove.mock.calls.map(([name]) => name)).toEqual([
+
+  expect(remove.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
     parent.snapshotName,
     child.snapshotName,
     parent.snapshotName,
   ]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("retains resources created before metadata and across replacements") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("retains resources created before metadata and across replacements") uses 32, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -198,18 +159,19 @@ test("retains resources created before metadata and across replacements", async 
     `eve-sbx-ses-${"c".repeat(32)}`,
   ];
   const snapshot = `eve-sbx-state-${"d".repeat(32)}`;
-  for (const name of [...names, snapshot]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await writeFile(
-      nodePath.join(directory, `${name}.json`),
-      JSON.stringify({
-        kind: name === snapshot ? "snapshot" : "sandbox",
-        name,
-        sessionKey: input.sessionKey,
-        version: 1,
-      })
-    );
-  }
+  await Promise.all(
+    [...names, snapshot].map(async (name) => {
+      await writeFile(
+        nodePath.join(directory, `${name}.json`),
+        JSON.stringify({
+          kind: name === snapshot ? "snapshot" : "sandbox",
+          name,
+          sessionKey: input.sessionKey,
+          version: 1,
+        })
+      );
+    })
+  );
   expect(await purgeLocalEveSandboxes([input])).toEqual([
     {
       sandboxNames: names,
@@ -231,13 +193,7 @@ test("retains resources created before metadata and across replacements", async 
   );
   expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("an owned attempt that failed before provider creation can finish cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("an owned attempt that failed before provider creation can finish cleanup") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("an owned attempt that failed before provider creation can finish cleanup") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -257,12 +213,12 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
   await writeFile(ownerPath, JSON.stringify(owner));
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    expect(await purgeLocalEveSandboxes([input])).toEqual([
-      { sandboxNames: [], snapshotNames: [] },
-    ]);
-  }
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
   expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,
@@ -275,4 +231,3 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */

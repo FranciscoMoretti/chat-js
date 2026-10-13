@@ -1,11 +1,14 @@
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import nodePath from "node:path";
 import { promisify } from "node:util";
+import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line typescript/strict-void-return -- Node documents promisify(execFile): execFile immediately returns ChildProcess, and its native custom promisifier owns the stdout/stderr promise and rejection details rather than consuming that immediate return.
-const exec = promisify(execFile);
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+const exec = promisifyExecFile(execFile);
 const SCOPED_PACKAGE_PREFIX = /^@/u;
 const JSON_INDENTATION_SPACES = 2;
 const PACKING_OUTPUT_LIMIT_BYTES = 8_388_608;
@@ -60,9 +63,7 @@ const readVendoringMetadata = async (
   // unrelated template fields remain intact when the selected dependency is pinned.
   return { installed, manifest };
 };
-
 const formattedManifest = (value: unknown): string =>
-  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer preserves every metadata field while its third argument requests deterministic two-space formatting.
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
 
 const tarballName = (packageName: string, version: string): string =>
@@ -98,10 +99,9 @@ const packMaintainedArchive = async (
   );
   return archiveName;
 };
-
 /**
  * Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn.
- * @param input The installed package, maintained patch and template destination.
+ * @param {VendorInput} input The installed package, maintained patch and template destination.
  */
 export const vendorPatchedPackage = async (
   input: VendorInput

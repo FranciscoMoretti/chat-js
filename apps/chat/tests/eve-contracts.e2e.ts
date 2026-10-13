@@ -1,14 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+import { setTimeout as delay } from "node:timers/promises";
+
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
@@ -42,10 +34,10 @@ import { createToolResult } from "../lib/eve/tool-result";
 import { ingestEveUsage } from "../lib/eve/usage";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
@@ -55,13 +47,6 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, owner));
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
- * max-lines-per-function (#510): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("billing replay is atomic, rounds per turn and preserves unknown costs") uses 49, 47 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("billing replay is atomic, rounds per turn and preserves unknown costs") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): test("billing replay is atomic, rounds per turn and preserves unknown costs") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("billing replay is atomic, rounds per turn and preserves unknown costs", async () => {
   await db
     .insert(userCredit)
@@ -76,7 +61,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     sessionId,
     turnId: "turn_0",
   };
-  await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
+  await Promise.all(
+    Array.from({ length: 8 }, async () => await recordEveUsage(entry))
+  );
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
   let [balance] = await db
     .select()
@@ -115,30 +102,27 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   await recordEveUsage(precise);
   await recordEveUsage(precise);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
- * max-statements (#512): test("concurrent retry reserves once and cannot cross owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("concurrent retry reserves once and cannot cross owners") uses 1, 50, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent retry reserves once and cannot cross owners") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent retry reserves once and cannot cross owners") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): test("concurrent retry reserves once and cannot cross owners")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
+
 test("concurrent retry reserves once and cannot cross owners", async () => {
   const operation = crypto.randomUUID();
   let starts = 0;
   const start = async (): Promise<string> => {
     starts += 1;
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await delay(50);
     return `test-${crypto.randomUUID()}`;
   };
   const results = await Promise.allSettled(
-    Array.from({ length: 8 }, () =>
-      createEveConversation(owner, operation, "hello", start)
+    Array.from(
+      { length: 8 },
+      async () => await createEveConversation(owner, operation, "hello", start)
     )
   );
   expect(starts).toBe(1);
   expect(
-    results.filter((result) => result.status === "fulfilled").length
+    results.filter(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "fulfilled"
+    ).length
   ).toBeGreaterThan(0);
   const bound = await createEveConversation(owner, operation, "hello", start);
   await expect(
@@ -153,21 +137,14 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("a lost create reply is recovered through the same native operation") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("a lost create reply is recovered through the same native operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 test("a lost create reply is recovered through the same native operation", async () => {
   const operation = crypto.randomUUID();
-  const dispatched: string[] = [];
   const nativeSession = `test-${crypto.randomUUID()}`;
-  const start = (id: string): Promise<string> => {
-    dispatched.push(id);
-    return dispatched.length === 1
-      ? Promise.reject(new Error("lost reply"))
-      : Promise.resolve(nativeSession);
-  };
+  const start = vi
+    .fn<(id: string) => Promise<string>>()
+    .mockRejectedValueOnce(new Error("lost reply"))
+    .mockResolvedValue(nativeSession);
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
@@ -178,17 +155,13 @@ test("a lost create reply is recovered through the same native operation", async
     start
   );
   expect(recovered.sessionId).toBe(nativeSession);
-  expect(dispatched).toEqual([recovered.id, recovered.id]);
+  expect(start.mock.calls).toEqual([[recovered.id], [recovered.id]]);
   expect(
     await createEveConversation(owner, operation, "uncertain", start)
   ).toEqual(recovered);
-  expect(dispatched).toHaveLength(2);
+  expect(start).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("a stopped creator's reservation can be resumed without changing its identity") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a stopped creator's reservation can be resumed without changing its identity", async () => {
   const operation = crypto.randomUUID();
   const [reservation] = await insertEveConversationFixtures({
@@ -200,25 +173,21 @@ test("a stopped creator's reservation can be resumed without changing its identi
     owner,
     operation,
     "process stopped",
-    (id) => Promise.resolve(`test-${id}`)
+
+    (id) => `test-${id}`
   );
   expect(bound).toEqual({
     id: reservation.id,
     sessionId: `test-${reservation.id}`,
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("activity projection is owner-scoped, monotonic, and independent of metadata edi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("activity projection is owner-scoped, monotonic, and independent of metadata edi uses 60_000, 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("activity projection is owner-scoped, monotonic, and independent of metadata edits", async () => {
   const bound = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "activity",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const before = await getEveConversation(owner, bound.id);
   const activityAt = new Date(Date.now() + 60_000);
@@ -254,20 +223,12 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
   );
   expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("fork reservations retain ancestry and reject changed sources on retry") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("fork reservations retain ancestry and reject changed sources on retry") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("fork reservations retain ancestry and reject changed sources on retry") uses 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("fork reservations retain ancestry and reject changed sources on retry") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("fork reservations retain ancestry and reject changed sources on retry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
   let starts = 0;
-  const start = (): Promise<string> => {
+  const start = (): string => {
     starts += 1;
-    return Promise.resolve(crypto.randomUUID());
+    return crypto.randomUUID();
   };
   const root = await createEveConversation(
     owner,
@@ -314,11 +275,9 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
   expect(family?.rootId).toBe(root.id);
-  expect(family?.branches.map((item) => item.id)).toEqual([
-    root.id,
-    branch.id,
-    nested.id,
-  ]);
+  expect(
+    family?.branches.map((item: Readonly<{ id: string }>) => item.id)
+  ).toEqual([root.id, branch.id, nested.id]);
   expect(
     await listEveConversationBranches("not-owner", nested.id)
   ).toBeUndefined();
@@ -329,17 +288,13 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   ).rejects.toThrow("source conversation");
   expect(starts).toBe(3);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("database constraints reject partial and cross-owner branch ancestry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("database constraints reject partial and cross-owner branch ancestry", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "constraint root",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     insertEveConversationFixtures({
@@ -373,44 +328,39 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test.each(["codeExecution", "webSearch"])("%s receipts debit once per native call and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test.each(["codeExecution", "webSearch"])("%s receipts debit once per native call and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each(["codeExecution", "webSearch"])("%s receipts debit once per native call and uses 0.05, 5, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test.each(["codeExecution", "webSearch"])("%s receipts debit once per native call and preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["codeExecution", "webSearch"])(
   "%s receipts debit once per native call and keep missing cost evidence unresolved",
   async (toolName) => {
     const sessionId = crypto.randomUUID();
     const callId = crypto.randomUUID();
-    const event: MessageStreamEvent = {
+    const result = createToolResult({ message: "42", chart: "" }, 0.05);
+    expect(JSON.stringify(result)).not.toContain('"updates"');
+    const event = {
       data: {
         result: {
           callId,
           kind: "tool-result",
-          // oxlint-disable-next-line typescript/no-unsafe-assignment, unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields. Round-trip the controlled tool-result fixture through JSON to exercise persisted protocol values rather than in-memory undefined fields.
-          output: JSON.parse(
-            JSON.stringify(createToolResult({ message: "42", chart: "" }, 0.05))
-          ),
+
+          output: result,
           toolName,
         },
-        sequence: 0,
         status: "completed",
-        stepIndex: 0,
         turnId: "tool-receipt",
       },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
       type: "action.result",
+    } satisfies Parameters<typeof ingestEveUsage>[2] & {
+      data: { result: { toolName: string } };
     };
     await Promise.all(
-      Array.from({ length: 8 }, () =>
-        ingestEveUsage(owner, sessionId, {
-          ...event,
-          meta: { ...event.meta, id: crypto.randomUUID() },
-        })
+      Array.from(
+        { length: 8 },
+        async () =>
+          await ingestEveUsage(owner, sessionId, {
+            ...event,
+            meta: { ...event.meta, id: crypto.randomUUID() },
+          })
       )
     );
     const [row] = await db
@@ -426,7 +376,7 @@ test.each(["codeExecution", "webSearch"])(
         result: {
           ...event.data.result,
           callId: crypto.randomUUID(),
-          output: "result lost its receipt",
+          output: { ...result, usage: {} },
         },
       },
     };
@@ -444,23 +394,15 @@ test.each(["codeExecution", "webSearch"])(
     expect(unpriced.chargedCents).toBe(0);
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, uses 1, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["deleting", "deleted"] as const)(
   "%s conversations are fenced from access, mutation and creation replay",
   async (state) => {
     const operation = crypto.randomUUID();
     let starts = 0;
-    const start = (): Promise<string> => {
+    const start = (): string => {
       starts += 1;
-      return Promise.resolve(crypto.randomUUID());
+      return crypto.randomUUID();
     };
     const bound = await createEveConversation(
       owner,
@@ -477,7 +419,7 @@ test.each(["deleting", "deleted"] as const)(
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
       .where(eq(eveChat.id, creation?.chatId ?? ""));
-    expect(await getEveConversation(owner, bound.id)).toBeUndefined();
+    expect(await getEveConversation(owner, bound.id)).toBeNull();
     expect(await getPublicEveConversation(bound.id)).toBeUndefined();
     expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
     expect(
@@ -487,10 +429,12 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
     expect(
       await getDeletingEveConversationForSession("other", bound.sessionId)
-    ).toBeUndefined();
+    ).toBeNull();
 
-    const recoveryRow = (await listEveConversations(owner)).items.find(
-      (row) => row.conversationId === bound.id
+    const recoveryConversations = await listEveConversations(owner);
+    const recoveryRow = recoveryConversations.items.find(
+      (row: Readonly<{ conversationId: string }>) =>
+        row.conversationId === bound.id
     );
     // Pending deletion remains discoverable so its owner can resume cleanup.
     // The transcript and native access above remain fenced throughout.
@@ -537,29 +481,23 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): test("deletion fences the entire owned family and is retryable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): test("deletion fences the entire owned family and is retryable") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("deletion fences the entire owned family and is retryable", async () => {
-  const start = (): Promise<string> => Promise.resolve(crypto.randomUUID());
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "delete family",
-    start
+    createEveTestSession
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "child",
-    start,
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
-  expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
+  expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, child.id);
@@ -571,28 +509,21 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
   expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-statements (#512): test("deletion waits for document commits and fences a concurrent fork") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("deletion waits for document commits and fences a concurrent fork") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("deletion waits for document commits and fences a concurrent fork") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("deletion waits for document commits and fences a concurrent fork") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("deletion waits for document commits and fences a concurrent fork", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "concurrent deletion",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
-  const locked = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const locked: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const documentWrite = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
     );
-    locked.resolve(undefined);
+    locked.resolve();
     await release.promise;
   });
   await locked.promise;
@@ -608,7 +539,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       expect(available).toBe(false);
     });
     expect(await getEveConversation(owner, root.id)).toBeDefined();
-    const start = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const start = vi.fn(createEveTestSession);
     const fork = createEveConversation(
       owner,
       crypto.randomUUID(),
@@ -617,35 +548,31 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
     await rejected;
     expect(start).not.toHaveBeenCalled();
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
   }
 });
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("unresolved creation prevents a partial family deletion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("unresolved creation prevents a partial family deletion", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "recover first",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     createEveConversation(
       owner,
       crypto.randomUUID(),
       "uncertain child",
-      () => Promise.reject(new Error("offline")),
+      vi.fn<() => Promise<string>>().mockRejectedValue(new Error("offline")),
       { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
@@ -654,18 +581,10 @@ test("unresolved creation prevents a partial family deletion", async () => {
   );
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): test("final application deletion erases family content, preserves accounting and reje keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("final application deletion erases family content, preserves accounting and reje keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("final application deletion erases family content, preserves accounting and reje uses 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/strict-boolean-expressions (#610): test("final application deletion erases family content, preserves accounting and reje intentionally keeps the existing falsy-value behavior of deletedCreation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test("final application deletion erases family content, preserves accounting and reje preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("final application deletion erases family content, preserves accounting and rejects old creation replay", async () => {
   const operation = crypto.randomUUID();
-  const start = vi.fn(async () => crypto.randomUUID());
+  const start = vi.fn(createEveTestSession);
   const root = await createEveConversation(
     owner,
     operation,
@@ -714,26 +633,28 @@ test("final application deletion erases family content, preserves accounting and
   await completeEveConversationDeletion(owner, child.id);
   await completeEveConversationDeletion(owner, root.id);
   await completeEveConversationDeletion(owner, root.id);
-  for (const id of [root.id, child.id]) {
-    const [row] = await db
-      .select()
-      .from(eveConversation)
-      .where(eq(eveConversation.id, id));
-    expect(row).toMatchObject({
-      firstMessage: "",
-      initialContentHash: null,
-      initialModelId: null,
-      initialRequest: null,
-      state: "deleted",
-      visibility: "private",
-    });
-    expect(row.sessionId).toBe(
-      id === root.id ? root.sessionId : child.sessionId
-    );
-    expect(await getEveConversation(owner, id)).toBeUndefined();
-  }
+  await Promise.all(
+    [root.id, child.id].map(async (id) => {
+      const [row] = await db
+        .select()
+        .from(eveConversation)
+        .where(eq(eveConversation.id, id));
+      expect(row).toMatchObject({
+        firstMessage: "",
+        initialContentHash: null,
+        initialModelId: null,
+        initialRequest: null,
+        state: "deleted",
+        visibility: "private",
+      });
+      expect(row.sessionId).toBe(
+        id === root.id ? root.sessionId : child.sessionId
+      );
+      expect(await getEveConversation(owner, id)).toBeNull();
+    })
+  );
   const deletedCreation = await getEveCreation(owner, operation);
-  if (!deletedCreation) {
+  if (deletedCreation === undefined) {
     throw new Error("Missing retained creation tombstone");
   }
   const [deletedChat] = await db
@@ -763,17 +684,13 @@ test("final application deletion erases family content, preserves accounting and
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "creating",
   "uncertain",
   "bound",
 ];
-/* oxlint-disable typescript/promise-function-async, unicorn/no-null --
- * typescript/promise-function-async (#606): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+
 test.each(copyReservationStates)(
   "ordinary creation cannot consume a %s copy reservation",
   async (state) => {
@@ -787,7 +704,7 @@ test.each(copyReservationStates)(
       sessionId,
       state,
     });
-    const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const create = vi.fn(createEveTestSession);
     await expect(
       createEveConversation(owner, operationId, "Same visible title", create)
     ).rejects.toThrow("different");
@@ -800,18 +717,14 @@ test.each(copyReservationStates)(
     });
   }
 );
-/* oxlint-enable typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("copy reservations must be fresh roots and creation kinds are enforced by Postgr preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
   const sourceOperation = crypto.randomUUID();
   const source = await createEveConversation(
     owner,
     sourceOperation,
     "Source",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     insertEveConversationFixtures({
@@ -832,13 +745,7 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     creationKind: "message",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("auxiliary model calls settle once per actual attempt even without a valid annot uses 2, 0, 0.005, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("auxiliary model calls settle once per actual attempt even without a valid annot accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("auxiliary model calls settle once per actual attempt even without a valid annot preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
   const sessionId = crypto.randomUUID();
   const event: MessageStreamEvent = {
@@ -854,18 +761,28 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
     type: "hook.result",
   };
   await Promise.all(
-    Array.from({ length: 4 }, () => ingestEveUsage(owner, sessionId, event))
+    Array.from(
+      { length: 4 },
+      async () => await ingestEveUsage(owner, sessionId, event)
+    )
   );
   const entries = await db
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
   expect(entries).toHaveLength(2);
-  expect(entries.reduce((sum, entry) => sum + Number(entry.costUsd), 0)).toBe(
-    0.005
-  );
-  expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly costUsd: string | null }) =>
+        sum + Number(entry.costUsd),
+      0
+    )
+  ).toBe(0.005);
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly chargedCents: number }) =>
+        sum + entry.chargedCents,
+      0
+    )
+  ).toBe(1);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-contracts.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

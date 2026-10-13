@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import type { LogicalBranch, LogicalChatSnapshot } from "./logical-chat";
@@ -26,9 +28,6 @@ type LogicalResponseSlot = NonNullable<
   selected: boolean;
 };
 
-/* oxlint-disable max-statements --
- * max-statements (#512): belongsToSlot keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const belongsToSlot = (
   branch: ReadonlyNativeSurface<LogicalBranch>,
   candidateId: string,
@@ -49,7 +48,6 @@ const belongsToSlot = (
   }
   return false;
 };
-/* oxlint-enable max-statements */
 
 // This guard retains the existing truthiness gate while exposing its string narrowing.
 const hasSlotAnswer = (answer: string | undefined): answer is string =>
@@ -111,49 +109,60 @@ const selectedSlotAttempt = (
   };
 };
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): logicalResponseSlots accepts snapshot: LogicalChatSnapshot; branch; candidate; attempt; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
- * @param snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
- * @param userId Logical group user-message identity used to locate its admitted response group.
- * @returns Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
+ * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
+ * @param {string} userId Logical group user-message identity used to locate its admitted response group.
+ * @returns {{ groupId: string; slots: LogicalResponseSlot[] } | undefined} Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
  */
 export const logicalResponseSlots = (
-  snapshot: LogicalChatSnapshot,
+  snapshot: ReadonlyNativeSurface<
+    Readonly<
+      Pick<
+        LogicalChatSnapshot,
+        "branches" | "paths" | "conversationId" | "nodes"
+      >
+    >
+  >,
   userId: string
 ): { groupId: string; slots: LogicalResponseSlot[] } | undefined => {
   const groupBranch = snapshot.branches.find(
-    (branch) =>
-      branch.responseGroupId &&
+    (branch: Readonly<Pick<LogicalBranch, "responseGroupId">>) =>
+      isNonEmptyString(branch.responseGroupId) &&
       userId === `group:${branch.responseGroupId}:user`
   );
-  if (!groupBranch?.responseGroupId) {
-    return;
+  if (!isNonEmptyString(groupBranch?.responseGroupId)) {
+    return undefined;
   }
   const groupId = groupBranch.responseGroupId;
   const candidates =
     groupBranch.groupCandidates ??
     snapshot.branches
-      .filter((branch) => branch.responseGroupId === groupId)
-      .map((branch) => ({
-        modelId: branch.initialModelId ?? "Response",
-        operationId: branch.operationId,
-        rejection: undefined,
-      }));
+      .filter(
+        (branch: Readonly<Pick<LogicalBranch, "responseGroupId">>) =>
+          branch.responseGroupId === groupId
+      )
+      .map(
+        (
+          branch: Readonly<
+            Pick<LogicalBranch, "initialModelId" | "operationId">
+          >
+        ) => ({
+          modelId: branch.initialModelId ?? "Response",
+          operationId: branch.operationId,
+          rejection: undefined,
+        })
+      );
   const selectedPath = snapshot.paths.get(snapshot.conversationId) ?? [];
   const read = slotReadAccess(
     () => snapshot.branches,
     (branchId) => snapshot.paths.get(branchId),
     (nodeId) => snapshot.nodes.get(nodeId)
   );
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Derive UI slot metadata without mutating candidates retained by the lineage snapshot.
   const slots = candidates.map((candidate) => {
     const original = snapshot.branches.find(
-      (branch) => branch.operationId === candidate.operationId
+      (branch: Readonly<Pick<LogicalBranch, "operationId">>) =>
+        branch.operationId === candidate.operationId
     );
     const attempts = slotAttempts(read, original, userId);
     const { attempt, selected } = selectedSlotAttempt(
@@ -167,7 +176,5 @@ export const logicalResponseSlots = (
       selected,
     };
   });
-  // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

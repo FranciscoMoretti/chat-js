@@ -1,8 +1,9 @@
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-import gatewayPackage from "@chat-js/gateways/package.json";
-
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
 import { gatewayMetadata } from "./metadata";
+
+import gatewayPackage from "@chat-js/gateways/package.json";
 
 const environment = {
   litellm: [["LITELLM_BASE_URL"]],
@@ -10,6 +11,16 @@ const environment = {
   "openai-compatible": [["OPENAI_COMPATIBLE_BASE_URL"]],
   openrouter: [["OPENROUTER_API_KEY"]],
   vercel: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]],
+};
+
+const schemaDependencies: Readonly<
+  Record<keyof typeof environment, readonly string[]>
+> = {
+  litellm: [],
+  openai: ["zod"],
+  "openai-compatible": ["zod"],
+  openrouter: ["zod"],
+  vercel: [],
 };
 
 const isGatewayType = (id: string): id is keyof typeof environment =>
@@ -33,6 +44,7 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       dependencies: [
         `${gatewayPackage.name}@${gatewayPackage.version}`,
         `${metadata.dependency}@${metadata.version}`,
+        ...schemaDependencies[id],
       ],
       files: [
         {

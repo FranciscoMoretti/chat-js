@@ -1,20 +1,16 @@
 import type { FileUIPart } from "ai";
-
 import { downloadFile } from "@/lib/file-storage";
-import { keyFromFileUrl } from "@/lib/file-url";
 import { getBaseUrl } from "@/lib/url";
+import { keyFromFileUrl } from "@/lib/file-url";
 
 const INLINE_IMAGE =
   /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;
 
 const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   // Inline images do not initiate a network request.
-  const inline = INLINE_IMAGE.exec(value);
-  if (
-    typeof inline?.groups?.base64 === "string" &&
-    inline.groups.base64 !== ""
-  ) {
-    return Buffer.from(inline.groups.base64, "base64");
+  const { groups } = INLINE_IMAGE.exec(value) ?? {};
+  if (groups && typeof groups.base64 === "string" && groups.base64 !== "") {
+    return Buffer.from(groups.base64, "base64");
   }
   const url = new URL(value, getBaseUrl());
   const { origin } = new URL(getBaseUrl());
@@ -33,7 +29,6 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   const file = await downloadFile(key);
   return Buffer.from(await file.arrayBuffer());
 };
-
 const collectEditImages = async ({
   imageParts,
   lastGeneratedImage,
@@ -49,5 +44,4 @@ const collectEditImages = async ({
       async (imagePart) => await fetchImageBuffer(imagePart.url)
     ),
   ]);
-
 export { collectEditImages };

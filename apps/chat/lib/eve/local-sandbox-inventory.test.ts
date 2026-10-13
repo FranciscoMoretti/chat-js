@@ -1,6 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, symlink, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
+import { expect, test } from "vitest";
 import {
   mkdir,
   mkdtemp,
@@ -9,18 +7,10 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import nodePath from "node:path";
-
-import { expect, test } from "vitest";
-
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
-/* oxlint-enable import/no-nodejs-modules */
+import { tmpdir } from "node:os";
 
-/* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): test("local inventory selects exact native owners across versions and reports unknown keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("local inventory selects exact native owners across versions and reports unknown keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("local inventory selects exact native owners across versions and reports unknown resources", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-owner-inventory-")
@@ -37,24 +27,24 @@ test("local inventory selects exact native owners across versions and reports un
       owned: [],
       unattributedDirectories: [],
     });
-    for (const [sessionKey, sessionId] of [
-      ["old-version", "session"],
-      ["new-version", "session"],
-      ["foreign", "session-extra"],
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await mkdir(nodePath.join(directory, sessionKey), { recursive: true });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await writeFile(
-        nodePath.join(directory, sessionKey, "owner.json"),
-        JSON.stringify({
-          backendName: "microsandbox",
-          sessionId,
-          sessionKey,
-          version: 1,
-        })
-      );
-    }
+    await Promise.all(
+      [
+        ["old-version", "session"],
+        ["new-version", "session"],
+        ["foreign", "session-extra"],
+      ].map(async ([sessionKey, sessionId]) => {
+        await mkdir(nodePath.join(directory, sessionKey), { recursive: true });
+        await writeFile(
+          nodePath.join(directory, sessionKey, "owner.json"),
+          JSON.stringify({
+            backendName: "microsandbox",
+            sessionId,
+            sessionKey,
+            version: 1,
+          })
+        );
+      })
+    );
     await mkdir(nodePath.join(directory, "legacy"));
     await mkdir(nodePath.join(directory, "malformed"));
     await writeFile(nodePath.join(directory, "malformed", "owner.json"), "{");
@@ -101,12 +91,7 @@ test("local inventory selects exact native owners across versions and reports un
     await rm(appRoot, { force: true, recursive: true });
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("unowned directories remain unattributed regardless of their names") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("unowned directories remain unattributed regardless of their names") uses 25, 0, -1, 16 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("unowned directories remain unattributed regardless of their names", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-legacy-inventory-")
@@ -127,10 +112,11 @@ test("unowned directories remain unattributed regardless of their names", async 
   const truncated = `${prefix}${target.slice(0, -1)}-__root__`;
   const wrongScope = foreign.replace(scope, "f".repeat(16));
   try {
-    for (const key of [ownedCandidate, foreign, truncated, wrongScope]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-      await mkdir(nodePath.join(directory, key), { recursive: true });
-    }
+    await Promise.all(
+      [ownedCandidate, foreign, truncated, wrongScope].map(async (key) => {
+        await mkdir(nodePath.join(directory, key), { recursive: true });
+      })
+    );
     const result = await readLocalEveSandboxInventory(appRoot, [target]);
     expect(result.owned).toEqual([]);
     expect(result.unattributedDirectories.toSorted()).toEqual(
@@ -150,11 +136,7 @@ test("unowned directories remain unattributed regardless of their names", async 
     await rm(appRoot, { force: true, recursive: true });
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("other backend caches and linked provider roots prevent a complete local invento keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("other backend caches and linked provider roots prevent a complete local inventory", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-provider-inventory-")
@@ -180,4 +162,3 @@ test("other backend caches and linked provider roots prevent a complete local in
     await rm(appRoot, { force: true, recursive: true });
   }
 });
-/* oxlint-enable max-statements */

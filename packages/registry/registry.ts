@@ -1,25 +1,23 @@
-/* oxlint-disable import/max-dependencies -- The registry explicitly composes source-owned provider and feature catalogs at its public assembly boundary. */
-import { registrySchema } from "shadcn/schema";
-import type { RegistryItem } from "shadcn/schema";
-
 import {
-  codeExecutionRuntimeItem,
   codeExecutionItem,
+  codeExecutionRuntimeItem,
   daytonaCodeExecutionItem,
 } from "./code-execution";
-import { toolDefinitionSchema } from "./metadata";
-import registryPackage from "./package.json";
-import { attachmentUploadsItem } from "./src/features/attachment-uploads";
-import { mcpItem } from "./src/features/mcp";
-import { observabilityItems } from "./src/features/observability";
-import { builtInGateways } from "./src/gateways/catalog";
-import { builtInStorage } from "./src/storage/catalog";
 import {
+  codeExecutionUiItem,
   documentItems,
   savedCodeExecutionItem,
-  codeExecutionUiItem,
 } from "./src/tools/documents";
+import type { RegistryItem } from "shadcn/schema";
+import { attachmentUploadsItem } from "./src/features/attachment-uploads";
+import { builtInGateways } from "./src/gateways/catalog";
+import { builtInStorage } from "./src/storage/catalog";
+import { mcpItem } from "./src/features/mcp";
+import { observabilityItems } from "./src/features/observability";
+import registryPackage from "./package.json";
+import { registrySchema } from "shadcn/schema";
 import { researchItem } from "./src/tools/research";
+import { toolDefinitionSchema } from "./metadata";
 
 const toolItems = (
   [

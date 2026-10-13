@@ -1,80 +1,89 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { ImageModel } from "ai";
+
+import { z } from "zod";
 
 const MODEL_OWNER_SEGMENT_INDEX = 0;
 const EMPTY_TAG_COUNT = 0;
 const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
 
-interface OpenRouterModelResponse {
-  architecture: Readonly<{
-    modality?: string;
-    input_modalities?: readonly string[];
-    output_modalities?: readonly string[];
-  }> | null;
-  context_length: number | null;
-  created: number;
-  description: string;
-  id: string;
-  name: string;
-  pricing: Readonly<{
-    prompt?: string;
-    completion?: string;
-    image?: string;
-    web_search?: string;
-    internal_reasoning?: string;
-    input_cache_read?: string;
-    input_cache_write?: string;
-  }> | null;
+const modalitiesSchema = z.array(z.string()).nullish();
+const providerModelSchema = z.object({
+  architecture: z
+    .object({
+      input_modalities: modalitiesSchema,
+      output_modalities: modalitiesSchema,
+    })
+    .nullish(),
+  context_length: z.number().nullish(),
+  created: z.number().nullish(),
+  description: z.string().nullish(),
+  id: z.string(),
+  name: z.string().nullish(),
+  pricing: z
+    .object({
+      completion: z.string().optional(),
+      image: z.string().optional(),
+      input_cache_read: z.string().optional(),
+      input_cache_write: z.string().optional(),
+      prompt: z.string().optional(),
+      web_search: z.string().optional(),
+    })
+    .nullish(),
+  supported_parameters: z.array(z.string()).nullish(),
+  top_provider: z
+    .object({ max_completion_tokens: z.number().nullish() })
+    .nullish(),
+});
+type OpenRouterModelResponse = Omit<
+  z.output<typeof providerModelSchema>,
+  "architecture" | "pricing" | "top_provider" | "supported_parameters"
+> & {
+  architecture?: {
+    readonly input_modalities?: readonly string[] | null;
+    readonly output_modalities?: readonly string[] | null;
+  } | null;
+  pricing?: Readonly<z.output<typeof providerModelSchema>["pricing"]>;
+  top_provider?: Readonly<z.output<typeof providerModelSchema>["top_provider"]>;
   supported_parameters?: readonly string[] | null;
-  top_provider: Readonly<{
-    context_length?: number | null;
-    max_completion_tokens: number | null;
-  }> | null;
-}
+};
+const providerModelListSchema = z.object({
+  data: z.array(z.unknown()),
+});
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
-  const inputMods = model.architecture?.input_modalities ?? ["text"];
-  const outputMods = model.architecture?.output_modalities ?? ["text"];
+  const inputMods = (model.architecture ?? {}).input_modalities ?? ["text"];
+  const outputMods = (model.architecture ?? {}).output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
 
-  const tags: string[] = [];
-  if (inputMods.includes("image")) {
-    tags.push("vision");
-  }
-  if (inputMods.includes("file")) {
-    tags.push("file-input");
-  }
-  if (outputMods.includes("image")) {
-    tags.push("image-generation");
-  }
-  if (
-    supportedParams.includes("reasoning") ||
-    supportedParams.includes("include_reasoning")
-  ) {
-    tags.push("reasoning");
-  }
-  if (supportedParams.includes("tools")) {
-    tags.push("tool-use");
-  }
-  return tags;
+  const capabilities: readonly (readonly [boolean, string])[] = [
+    [inputMods.includes("image"), "vision"],
+    [inputMods.includes("file"), "file-input"],
+    [outputMods.includes("image"), "image-generation"],
+    [
+      supportedParams.includes("reasoning") ||
+        supportedParams.includes("include_reasoning"),
+      "reasoning",
+    ],
+    [supportedParams.includes("tools"), "tool-use"],
+  ];
+  return capabilities.filter(([supported]) => supported).map(([, tag]) => tag);
 };
-/* oxlint-enable eslint/max-statements */
 
+const EMPTY_MODEL_COUNT = 0;
 const UNKNOWN_MODEL_LIMIT = 0;
 const UNKNOWN_MODEL_TIMESTAMP = 0;
 const toAiGatewayModel = (
   model: Readonly<OpenRouterModelResponse>
 ): AiGatewayModel => {
   const tags = deriveTags(model);
-  const outputMods = model.architecture?.output_modalities ?? ["text"];
+  const outputMods = (model.architecture ?? {}).output_modalities ?? ["text"];
 
   let type: "language" | "embedding" | "image" = "language";
   if (!outputMods.includes("text") && outputMods.includes("image")) {
@@ -90,29 +99,46 @@ const toAiGatewayModel = (
     description: model.description ?? "",
     id: model.id,
     max_tokens:
-      model.top_provider?.max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
+      (model.top_provider ?? {}).max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
     name: model.name ?? model.id,
     object: "model",
     owned_by,
     pricing: {
-      image: model.pricing?.image,
-      input: model.pricing?.prompt,
-      input_cache_read: model.pricing?.input_cache_read,
-      input_cache_write: model.pricing?.input_cache_write,
-      output: model.pricing?.completion,
-      web_search: model.pricing?.web_search,
+      image: (model.pricing ?? {}).image,
+      input: (model.pricing ?? {}).prompt,
+      input_cache_read: (model.pricing ?? {}).input_cache_read,
+      input_cache_write: (model.pricing ?? {}).input_cache_write,
+      output: (model.pricing ?? {}).completion,
+      web_search: (model.pricing ?? {}).web_search,
     },
-    // oxlint-disable-next-line eslint/no-undefined -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.
     tags: tags.length > EMPTY_TAG_COUNT ? tags : undefined,
     type,
   };
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+// Validate the wire envelope separately from each model so valid neighbors survive.
+const parseProviderModels = (value: unknown): AiGatewayModel[] => {
+  const body = providerModelListSchema.parse(value);
+  const result = body.data.flatMap((entry): AiGatewayModel[] => {
+    const model = providerModelSchema.safeParse(entry);
+    if (!model.success) {
+      return [];
+    }
+    return [toAiGatewayModel(model.data)];
+  });
+  // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
+  if (
+    body.data.length > EMPTY_MODEL_COUNT &&
+    result.length === EMPTY_MODEL_COUNT
+  ) {
+    throw new Error("Provider catalog contains no valid models.");
+  }
+  return result;
+};
+
 class OpenRouterGateway
   extends GatewayRuntime
-  implements GatewayProvider<"openrouter", string, never, never>
+  implements GatewayProvider<"openrouter">
 {
   public readonly type = "openrouter" as const;
 
@@ -129,19 +155,10 @@ class OpenRouterGateway
     return provider.chat(modelId);
   }
 
-  // The gateway interface requires an image factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
-  public createImageModel(_modelId: never): ImageModel | null {
-    // OpenRouter routes image generation through multimodal language models.
-    // Return null to signal callers should use createLanguageModel instead.
-    return null;
-  }
+  // OpenRouter generates images through multimodal language models.
+  public readonly createImageModel = null;
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENROUTER_API_KEY;
@@ -174,12 +191,7 @@ class OpenRouterGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const body = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ??
-        []) as readonly Readonly<OpenRouterModelResponse>[];
-      const result = models.map((model) => toAiGatewayModel(model));
+      const result = parseProviderModels(await response.json());
 
       this.log.info(
         { modelCount: result.length },
@@ -195,6 +207,4 @@ class OpenRouterGateway
     }
   }
 }
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 export { OpenRouterGateway as Gateway, OpenRouterGateway };

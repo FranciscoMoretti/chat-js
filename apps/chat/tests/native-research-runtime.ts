@@ -1,15 +1,18 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { spawn } from "node:child_process";; import { once } from "node:events";; import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Assemble each fixture before starting the native worker. */
-
 /** Exercise the production workflow in a real EVE worker with deterministic models and storage. */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
+import { fileURLToPath } from "node:url";
 
 const modelSource = (
   responder: string
@@ -17,15 +20,26 @@ const modelSource = (
 import { mockModel } from "eve/evals";
 export default defineAgent({ description: "Research fixture", defaultTools: false, tool: false, modelContextWindowTokens: 128000, model: mockModel(${responder}) });`;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env --
- * max-lines-per-function (#510): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): main emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): main uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-process-env (#537): main reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
+const hasEveBin = (value: unknown): value is { bin: { eve: string } } =>
+  typeof value === "object" &&
+  value !== null &&
+  "bin" in value &&
+  typeof value.bin === "object" &&
+  value.bin !== null &&
+  "eve" in value.bin &&
+  typeof value.bin.eve === "string";
+
 const main = async (): Promise<void> => {
   const app = path.resolve(path.dirname(process.argv[1]), "..");
+  const workspaceNodeModules = path.resolve(app, "../../node_modules");
+  const evePackageJson = fileURLToPath(import.meta.resolve("eve/package.json"));
+  const evePackage: unknown = JSON.parse(
+    await readFile(evePackageJson, "utf-8")
+  );
+  if (!hasEveBin(evePackage)) {
+    throw new Error("The resolved Eve package does not declare its CLI bin.");
+  }
+  const eveBin = path.resolve(path.dirname(evePackageJson), evePackage.bin.eve);
   const fixture = await mkdtemp(path.join(tmpdir(), "chatjs-native-research-"));
   const write = async (name: string, content: string): Promise<void> => {
     const target = path.join(fixture, name);
@@ -33,39 +47,34 @@ const main = async (): Promise<void> => {
     await writeFile(target, content);
   };
   await symlink(
-    path.join(app, "node_modules"),
+    workspaceNodeModules,
     path.join(fixture, "node_modules"),
     "dir"
   );
-  for (const name of [
-    "agent/tools/deepResearch.ts",
-    "agent/hooks/billing.ts",
-    "lib/eve/usage.ts",
-    "agent/subagents/researcher/tools/webSearch.ts",
-    "tools/chatjs/deep-research/workflow.ts",
-    "tools/chatjs/deep-research/schemas.ts",
-    "tools/chatjs/deep-research/search-updates.ts",
-    "tools/platform/research-updates-schema.ts",
-    "lib/eve/tool-result.ts",
-    "lib/eve/document-contracts.ts",
-    "lib/file-url.ts",
-    "lib/eve/tool-model-output.ts",
-    "tools/chatjs/deep-research/prompts.ts",
-  ]) {
-    await mkdir(path.dirname(path.join(fixture, name)), { recursive: true });
-    await cp(path.join(app, name), path.join(fixture, name));
-  }
-  for (const role of [
-    "researchPlanner",
-    "researcher",
-    "researchCompressor",
-    "researchWriter",
-  ]) {
-    await write(
-      `agent/subagents/${role}/hooks/billing.ts`,
-      'export { default } from "../../../hooks/billing";'
-    );
-  }
+  await Promise.all(
+    `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts
+agent/subagents/researcher/tools/webSearch.ts
+ tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
+ tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
+ lib/file-url.ts lib/eve/tool-model-output.ts tools/chatjs/deep-research/prompts.ts`
+      .split(/\s+/u)
+      .map(async (name) => {
+        await mkdir(path.dirname(path.join(fixture, name)), {
+          recursive: true,
+        });
+        await cp(path.join(app, name), path.join(fixture, name));
+      })
+  );
+  await Promise.all(
+    "researchPlanner researcher researchCompressor researchWriter"
+      .split(" ")
+      .map(async (role) => {
+        await write(
+          `agent/subagents/${role}/hooks/billing.ts`,
+          'export { default } from "../../../hooks/billing";'
+        );
+      })
+  );
   const ledger = path.join(fixture, "ledger");
   await write(
     "agent/channels/eve.ts",
@@ -88,7 +97,7 @@ export async function recordEveUsage(row) {
 const directory = ${JSON.stringify(path.join(fixture, "children"))};
 export async function getEveSubagent(owner, session) {
   try { return JSON.parse(await readFile(directory + "/" + session + ".json", "utf8")); }
-  catch (error) { if (error.code === "ENOENT") return; throw error; }
+  catch (error) { if (error.code === "ENOENT") return null; throw error; }
 }
 export async function registerEveSubagent(owner, parent, session, turn) {
   const ancestor = await getEveSubagent(owner, parent);
@@ -138,9 +147,8 @@ export async function prepareResearch() {
 export async function saveResearchReport(ctx, report) {
   "use step";
   ctx.abortSignal.throwIfAborted();
-  return { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" };
+  return { document: { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" }, completedAt: 1 };
 }
-export async function researchCompletionTime() { "use step"; return 1; }
 `
   );
   await write(
@@ -265,7 +273,7 @@ export default [defineEval({ description: "adaptive native research", async test
     [
       "--import",
       "./environment.mjs",
-      path.join(app, "node_modules/eve/bin/eve.js"),
+      eveBin,
       "eval",
       "--strict",
       "--verbose",
@@ -287,14 +295,9 @@ export default [defineEval({ description: "adaptive native research", async test
   }
   await rm(fixture, { force: true, recursive: true });
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env */
-/* oxlint-disable no-console --
- * no-console (#514): try { await main(); } catch (error) { console.error(err emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- */
 try {
   await main();
 } catch (error) {
   console.error(error);
   process.exitCode = 1;
 }
-/* oxlint-enable no-console */

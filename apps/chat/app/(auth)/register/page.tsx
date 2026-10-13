@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import React, { Suspense } from "react";
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
+import type { Metadata } from "next";
 import { SignupForm } from "@/components/signup-form";
 
 const metadata: Metadata = {
@@ -9,10 +9,6 @@ const metadata: Metadata = {
   title: "Create an account",
 };
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth --
- * react-perf/jsx-no-jsx-as-prop (#555): RegisterPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-max-depth (#548): RegisterPage keeps related render components together; extraction changes component, state, and layout boundaries.
- */
 const RegisterPage = (): React.JSX.Element => (
   <div className="container m-auto flex h-dvh w-screen flex-col items-center justify-center px-4">
     <div className="mx-auto w-full sm:w-[480px]">
@@ -29,11 +25,6 @@ const RegisterPage = (): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RegisterPage;
-/* oxlint-enable import/no-default-export */

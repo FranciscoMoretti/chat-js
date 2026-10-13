@@ -1,5 +1,4 @@
 import { ExternalLink } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
 import React, { Suspense } from "react";
 
 import { ModelsSettings } from "@/components/settings/models-settings";
@@ -11,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { preloadQuery } from "@/trpc/preload-query";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
-
-/* oxlint-disable react/jsx-max-depth -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ModelsSettingsHeader = ({
   showRegistryLink = false,
@@ -47,10 +44,8 @@ const ModelsSettingsHeader = ({
     )}
   </SettingsPageHeader>
 );
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-disable react/no-multi-comp -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const ModelsSettingsContent = async (): Promise<ReactJSX.Element> => {
+const ModelsSettingsContent = async (): Promise<React.JSX.Element> => {
   const queryClient = getQueryClient();
 
   // Preloading populates the settings hydration cache and intentionally swallows preload failures.
@@ -67,9 +62,6 @@ const ModelsSettingsContent = async (): Promise<ReactJSX.Element> => {
     </HydrateClient>
   );
 };
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- ModelsSettingsPage: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 const ModelsSettingsPage = (): React.JSX.Element => (
   <Suspense
@@ -87,6 +79,4 @@ const ModelsSettingsPage = (): React.JSX.Element => (
     <ModelsSettingsContent />
   </Suspense>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */
-// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ModelsSettingsPage.
 export default ModelsSettingsPage;

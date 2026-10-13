@@ -1,12 +1,14 @@
 "use client";
 
+import { Compartment, EditorState, Transaction } from "@codemirror/state";
+import React, { memo, useEffect, useRef } from "react";
+import { EditorView } from "@codemirror/view";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ViewUpdate } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-import { Compartment, EditorState, Transaction } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
-import React, { memo, useEffect, useRef } from "react";
 
 interface EditorProps {
   content: string;
@@ -18,8 +20,7 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const getLanguageExtension = (language: string) => {
+const getLanguageExtension = (language: string): ReturnType<typeof python> => {
   switch (language) {
     case "typescript": {
       return javascript({ jsx: false, typescript: true });
@@ -38,28 +39,21 @@ const getLanguageExtension = (language: string) => {
     }
   }
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureCodeEditor = ({
   content,
   onSaveContent,
   isReadonly,
   language = "python",
-}: EditorProps) => {
+}: ReadonlyNativeSurface<EditorProps>): React.JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
   const configuration = useRef(new Compartment());
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!containerRef.current) {
-      return;
+      return undefined;
     }
     const view = new EditorView({
       parent: containerRef.current,
@@ -68,7 +62,6 @@ const PureCodeEditor = ({
       }),
     });
     editorRef.current = view;
-    // oxlint-disable-next-line typescript/consistent-return -- The effect returns a cleanup only when an editor exists; the inactive branch intentionally has no cleanup.
     return (): void => {
       view.destroy();
       editorRef.current = null;
@@ -81,18 +74,24 @@ const PureCodeEditor = ({
         getLanguageExtension(language),
         EditorView.editable.of(!(isReadonly === true)),
         EditorState.readOnly.of(Boolean(isReadonly)),
-        EditorView.updateListener.of((update): void => {
-          if (
-            update.docChanged &&
-            isReadonly !== true &&
-            update.transactions.some(
-              (transaction): boolean =>
-                !transaction.annotation(Transaction.remote)
-            )
-          ) {
-            onSaveContent(update.state.doc.toString(), true);
+        EditorView.updateListener.of(
+          (
+            update: ReadonlyNativeSurface<
+              Pick<ViewUpdate, "docChanged" | "state" | "transactions">
+            >
+          ): void => {
+            if (
+              update.docChanged &&
+              isReadonly !== true &&
+              update.transactions.some(
+                (transaction: ReadonlyNativeSurface<Transaction>): boolean =>
+                  transaction.annotation(Transaction.remote) !== true
+              )
+            ) {
+              onSaveContent(update.state.doc.toString(), true);
+            }
           }
-        }),
+        ),
       ]),
     });
   }, [onSaveContent, isReadonly, language]);
@@ -115,16 +114,11 @@ const PureCodeEditor = ({
     <div className="not-prose relative w-full text-sm" ref={containerRef} />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean => {
+const areEqual = (
+  prevProps: ReadonlyNativeSurface<EditorProps>,
+  nextProps: ReadonlyNativeSurface<EditorProps>
+): boolean => {
   if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
     return false;
   }
@@ -146,7 +140,5 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean => {
 
   return true;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-statements */
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);

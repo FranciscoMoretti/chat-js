@@ -1,11 +1,15 @@
 "use client";
 
-import React from "react";
+import type { AppModelDefinition } from "@/lib/ai/app-models";
 
 import { ModelSelector } from "@/components/model-selector";
-import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
+
+import React from "react";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {
@@ -68,18 +72,23 @@ const alternativeFixtureModels = [
     { reasoning: false, toolCall: true }
   ),
 ];
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- fixtureModels: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model). */
 
 const fixtureModels = [
   primaryFixtureModel,
   ...alternativeFixtureModels.filter(
-    (model, index, models) =>
+    (
+      model: Readonly<Pick<AppModelDefinition, "id">>,
+      index,
+      models: readonly ReadonlyNativeSurface<AppModelDefinition>[]
+    ) =>
       model.id !== primaryFixtureModel.id &&
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ModelToolbarVisualFixture: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
+
+const ignoreModelSelectionChange = (): void => {
+  // This fixture has no selection-change subscription to clean up.
+};
 
 export const ModelToolbarVisualFixture = (): React.JSX.Element => (
   <ChatModelsProvider models={fixtureModels}>
@@ -94,9 +103,7 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
           data.
         </p>
         <ModelSelector
-          onModelSelectionChangeAction={() => {
-            // This capability has no subscription to clean up.
-          }}
+          onModelSelectionChangeAction={ignoreModelSelectionChange}
           selectedModelId={primaryFixtureModel.id}
           selectedModelSelection={primaryFixtureModel.id}
         />
@@ -104,4 +111,3 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
     </main>
   </ChatModelsProvider>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

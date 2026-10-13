@@ -1,11 +1,23 @@
 import type { LanguageModelUsage, ProviderMetadata } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
-
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
+
+interface UsageEvidence {
+  readonly usage: Readonly<
+    Pick<LanguageModelUsage, "inputTokens" | "outputTokens">
+  >;
+  readonly providerMetadata: {
+    readonly gateway: { readonly cost: string; readonly generationId: string };
+  };
+}
 
 const mocks = vi.hoisted(() => ({
   feature: { default: "google/gemini-2.5-flash-lite", enabled: true },
-  generate: vi.fn(),
+  generate: vi.fn<
+    (options: { readonly onStepEnd: (step: UsageEvidence) => void }) => {
+      readonly output: { readonly suggestions: readonly string[] };
+    }
+  >(),
   model: vi.fn(),
 }));
 vi.mock("ai", () => ({
@@ -17,14 +29,14 @@ vi.mock("../config", () => ({
   config: { ai: { tools: { followupSuggestions: mocks.feature } } },
 }));
 
-const evidence: {
-  usage: Partial<LanguageModelUsage>;
-  providerMetadata: ProviderMetadata;
-} = {
+const evidence = {
   providerMetadata: {
     gateway: { cost: "0.00002", generationId: "generation" },
   },
   usage: { inputTokens: 10, outputTokens: 20 },
+} satisfies {
+  usage: Partial<LanguageModelUsage>;
+  providerMetadata: ProviderMetadata;
 };
 const exchange = {
   assistant: "Rain is liquid precipitation.",
@@ -45,15 +57,11 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep it("retains paid usage when structured output cannot be read")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 it("retains paid usage when structured output cannot be read", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
-    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    onStepFinish(evidence);
+  mocks.generate.mockImplementation(({ onStepEnd }) => {
+    onStepEnd(evidence);
     return {
-      get output() {
+      get output(): never {
         throw new Error("Malformed suggestions");
       },
     };
@@ -67,12 +75,10 @@ it("retains paid usage when structured output cannot be read", async () => {
     expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
   );
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 
 it("returns valid suggestions and records the configured auxiliary model", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
-    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    onStepFinish(evidence);
+  mocks.generate.mockImplementation(({ onStepEnd }) => {
+    onStepEnd(evidence);
     return { output: { suggestions } };
   });
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
@@ -81,14 +87,12 @@ it("returns valid suggestions and records the configured auxiliary model", async
   });
   expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
 });
-
 it("records a failed attempt without turning an optional feature error into answer failure", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
     modelCalls: [{ failed: true, modelId: mocks.feature.default }],
   });
 });
-
 it("does not spend when disabled, without an answer, or before model resolution succeeds", async () => {
   mocks.feature.enabled = false;
   expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();

@@ -6,7 +6,6 @@ const COUNT_INCREMENT = 1;
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
   Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
     Promise,
-    // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
     null
   );
 
@@ -18,6 +17,5 @@ export class RejectingTransport implements ChatTransport<UIMessage> {
       this.requests += COUNT_INCREMENT;
       return await Promise.reject(new Error("transport failed"));
     };
-
   public reconnectToStream = reconnectToNoStream;
 }

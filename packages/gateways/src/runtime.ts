@@ -9,11 +9,9 @@ interface GatewayLogger {
 
 interface GatewayOptions {
   env?: Record<string, string | undefined>;
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Exported fetch callbacks must keep the native mutable Request/RequestInit tuple; readonly header tuples are incompatible with existing typeof fetch callbacks. */
   fetch?: (
     ...args: Parameters<typeof globalThis.fetch>
   ) => ReturnType<typeof globalThis.fetch>;
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   getFallbackModels?: (gateway: string) => readonly AiGatewayModel[];
   logger?: GatewayLogger;
 }
@@ -47,15 +45,13 @@ class GatewayRuntime {
   protected readonly log: GatewayLogger;
 
   public constructor(options: GatewayReaderOptions = {}) {
-    // oxlint-disable-next-line node/no-process-env -- Omitted env intentionally reads the live process environment; injected env objects and later environment updates retain their existing behavior.
     this.env = options.env ?? process.env;
     this.fetch =
       options.fetch ??
-      /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly tuple conversion or async adoption changes that boundary. */
-      ((
+      (async (
         ...args: Parameters<typeof globalThis.fetch>
-      ): ReturnType<typeof globalThis.fetch> => globalThis.fetch(...args));
-    /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+      ): ReturnType<typeof globalThis.fetch> =>
+        await globalThis.fetch(...args));
     this.getFallbackModels = options.getFallbackModels ?? ((): never[] => []);
     this.log = options.logger ?? silentLogger;
   }

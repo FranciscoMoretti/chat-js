@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
@@ -15,8 +16,6 @@ const compiled = ts.transpileModule(source, {
   },
 }).outputText;
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
     test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
@@ -25,7 +24,7 @@ for (const runtime of ["nodejs", "edge"]) {
       const failure = new Error("Missing credentials for langfuse");
       const registrations = fail
         ? [
-            (context: unknown) => {
+            (context: unknown): never => {
               received.push(context);
               events.push("optional");
               throw failure;
@@ -55,8 +54,7 @@ for (const runtime of ["nodejs", "edge"]) {
         throw new Error("Missing register export");
       }
       await (fail
-        ? // oxlint-disable-next-line typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-          expect(exports.register()).rejects.toBe(failure)
+        ? rejects(exports.register(), (reason: unknown) => reason === failure)
         : exports.register());
       expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
       expect(events).toEqual([
@@ -66,5 +64,3 @@ for (const runtime of ["nodejs", "edge"]) {
     });
   }
 }
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-statements */

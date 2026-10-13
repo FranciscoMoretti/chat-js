@@ -15,14 +15,17 @@ const getOpenAIProviderOptions = (
   }
   // Vercel IDs include the provider prefix; direct OpenAI IDs do not.
   const modelName = apiModelId.split("/").pop() ?? apiModelId;
-  return {
+  const options: OpenAIResponsesProviderOptions = {
     reasoningSummary: "auto",
-    ...(modelName === "gpt-5" ||
+  };
+  if (
+    modelName === "gpt-5" ||
     modelName === "gpt-5-mini" ||
     modelName === "gpt-5-nano"
-      ? { reasoningEffort: "low" }
-      : {}),
-  };
+  ) {
+    options.reasoningEffort = "low";
+  }
+  return options;
 };
 
 const getModelProviderOptions = (
@@ -39,30 +42,32 @@ const getModelProviderOptions = (
       };
     }
     case "anthropic": {
-      return {
-        anthropic: (model.reasoning
-          ? {
-              thinking: {
-                budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
-                type: "enabled",
-              },
-            }
-          : {}) satisfies AnthropicProviderOptions,
-      };
+      if (model.reasoning) {
+        return {
+          anthropic: {
+            thinking: {
+              budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
+              type: "enabled",
+            },
+          } satisfies AnthropicProviderOptions,
+        };
+      }
+      return { anthropic: {} satisfies AnthropicProviderOptions };
     }
     case "xai": {
       return { xai: {} };
     }
     case "google": {
-      return {
-        google: (model.reasoning
-          ? {
-              thinkingConfig: {
-                thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
-              },
-            }
-          : {}) satisfies GoogleLanguageModelOptions,
-      };
+      if (model.reasoning) {
+        return {
+          google: {
+            thinkingConfig: {
+              thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
+            },
+          } satisfies GoogleLanguageModelOptions,
+        };
+      }
+      return { google: {} satisfies GoogleLanguageModelOptions };
     }
     default: {
       return {};

@@ -13,7 +13,6 @@ const managedRootDirectory = async (cwd: string): Promise<string> => {
   }
   return resolvedCwd;
 };
-
 const assertSafeTarget = (target: string, resolvedCwd: string): void => {
   if (!isSafeTarget(target, resolvedCwd)) {
     throw new Error(`Unsafe ChatJS target: ${target}`);
@@ -22,8 +21,8 @@ const assertSafeTarget = (target: string, resolvedCwd: string): void => {
 
 /**
  * Protect ChatJS-managed outputs before generating integration files.
- * @param cwd Project destination, resolved relative to the current directory.
- * @param targets Managed file paths whose existing parents and leaf must be safe.
+ * @param {string} cwd Project destination, resolved relative to the current directory.
+ * @param {readonly string[]} targets Managed file paths whose existing parents and leaf must be safe.
  */
 export const preflight = async (
   cwd: string,
@@ -50,9 +49,8 @@ export const preflight = async (
       if (
         entry &&
         (entry.isSymbolicLink() ||
-          (index === parts.length - LAST_PART_OFFSET
-            ? !entry.isFile()
-            : !entry.isDirectory()))
+          (index === parts.length - LAST_PART_OFFSET && !entry.isFile()) ||
+          (index !== parts.length - LAST_PART_OFFSET && !entry.isDirectory()))
       ) {
         throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
       }

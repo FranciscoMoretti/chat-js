@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- */
 import {
   ContextContainer,
   contextStorage,
@@ -19,7 +16,6 @@ import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
 import { eveTurnGuest, eveTurnTool } from "./turn-tools";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {
   const tools: { webSearch?: object } = { webSearch: {} };
@@ -32,36 +28,24 @@ const mocks = vi.hoisted(() => {
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): vi.mock("@/tools/chatjs/installed-features") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/installed-features")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
-      return mocks.text ? 1 : 0;
+      if (mocks.text) {
+        return 1;
+      }
+      return 0;
     },
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));
 beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.research = true;
   mocks.text = true;
 });
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
- * max-lines-per-function (#510): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it.each([
   "automatic",
   "selected",
@@ -72,8 +56,8 @@ it.each([
   "guest",
   "anonymous",
   "uninstalled",
-])("offers research only when available: %s", (scenario) =>
-  contextStorage.run(new ContextContainer(), async () => {
+])("offers research only when available: %s", async (scenario) => {
+  await contextStorage.run(new ContextContainer(), async () => {
     if (scenario === "uninstalled") {
       delete mocks.tools.webSearch;
     }
@@ -99,7 +83,7 @@ it.each([
     };
     const { session } = testToolContext();
     const provider = new MockLanguageModelV3({
-      doGenerate: () => Promise.reject(new Error("provider reached")),
+      doGenerate: vi.fn().mockRejectedValue(new Error("provider reached")),
     });
     const definition = tool({ inputSchema: z.object({}) });
     await expect(
@@ -119,15 +103,16 @@ it.each([
         tools: { deepResearch: definition, webSearch: definition },
       })
     ).rejects.toThrow("provider reached");
-    const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
+    const names = provider.doGenerateCalls[0].tools?.map(
+      (entry: { readonly name: string }) => entry.name
+    );
     expect(names).toEqual(
       ["automatic", "selected"].includes(scenario)
         ? ["deepResearch", "webSearch"]
         : ["webSearch"]
     );
-  })
-);
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+  });
+});
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
   const original = new ContextContainer();

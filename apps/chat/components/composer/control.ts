@@ -3,11 +3,11 @@ import type { ComponentType, Dispatch, SetStateAction } from "react";
 import type { UiToolName } from "@/lib/ai/types";
 
 interface ComposerControlProps {
-  disabled?: boolean;
-  selectedModelId: string;
-  selectedTool: UiToolName | null;
-  onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
-  onAttach: (accept: string, capture?: "environment" | "user") => void;
+  readonly disabled?: boolean;
+  readonly selectedModelId: string;
+  readonly selectedTool: UiToolName | null;
+  readonly onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
+  readonly onAttach: (accept: string, capture?: "environment" | "user") => void;
 }
 
 interface ComposerControl {

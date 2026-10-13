@@ -1,8 +1,4 @@
-/* oxlint-disable import/max-dependencies --
-
- * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
-import { z } from "zod";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import {
   CreationConflictError,
@@ -16,22 +12,27 @@ import {
   settleEveSubmission,
   markEveCreationSubmissionDispatch,
 } from "@/lib/db/queries";
-import { createModuleLogger } from "@/lib/logger";
-
-import { waitForEveCheckpoint } from "./checkpoint-readiness";
-import type { createConversationInput, EveForkInput } from "./contracts";
-import { eveConversationTitleFallback } from "./conversation-title";
-import { eveCreationContentHash } from "./creation-content-hash";
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
-import { eveMessageFileKeys } from "./file-references";
+import type { EveForkInput, createConversationInput } from "./contracts";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { UserContent } from "ai";
+import { createModuleLogger } from "@/lib/logger";
+import { eveConversationTitleFallback } from "./conversation-title";
+import { eveCreationContentHash } from "./creation-content-hash";
 import { eveMessageDeliveryMetadata } from "./message-delivery";
+import { eveMessageFileKeys } from "./file-references";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-/* oxlint-enable import/max-dependencies */
+import { waitForEveCheckpoint } from "./checkpoint-readiness";
+import { z } from "zod";
+
+type PreparedContentPart<Part> = {
+  readonly [Field in keyof Part]: Field extends "type" ? Part[Field] : unknown;
+};
 
 const logger = createModuleLogger("eve/creation");
 const OPERATION_LOOKUP_TIMEOUT_MS = 15_000;
@@ -39,41 +40,51 @@ const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
-
- * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
-) => {
+): Promise<
+  | Response
+  | { beforeMessageId: string; sessionId: string }
+  | {
+      checkpointId?: string;
+      beforeTurnId: string | undefined;
+      sessionId: string;
+      beforeMessageId?: undefined;
+    }
+  | undefined
+> => {
   if (!input) {
-    return;
+    return undefined;
   }
   const source = await getEveConversation(ownerId, input.conversationId);
-  if (!source?.sessionId || source.state !== "bound") {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+  if (
+    !source ||
+    typeof source.sessionId !== "string" ||
+    source.sessionId === "" ||
+    source.state !== "bound"
+  ) {
     return Response.json(
       { creationRejected: true, error: "Source conversation not found." },
-      { status: 404 }
+      { status: HTTP_NOT_FOUND }
     );
   }
-  if (input.beforeMessageId) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+
+  if (isNonEmptyString(input.beforeMessageId)) {
     return {
       beforeMessageId: input.beforeMessageId,
       sessionId: source.sessionId,
     };
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
-    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
+
+    ...(isNonEmptyString(input.checkpointId)
+      ? { checkpointId: input.checkpointId }
+      : {}),
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
@@ -98,35 +109,27 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
-
- * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): executeEveConversationCreation accepts input: z.infer<typeof createConversationInput>; initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
- * @param ownerId Owner used to resolve source conversations and reserve the creation.
- * @param input Original creation request reused when an uncertain dispatch is retried.
- * @param guestReservationId Optional admission reservation attached to the created conversation.
- * @param initialPreparedMessage Optional prepared message reused without preparing it again.
- * @returns The bound conversation, or an error response that leaves unresolved creation recoverable.
+ * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
+ * @param {z.infer<typeof createConversationInput>} input Original creation request reused when an uncertain dispatch is retried.
+ * @param {string | undefined} guestReservationId Optional admission reservation attached to the created conversation.
+ * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
+ * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
-/* oxlint-disable unicorn/no-null -- The persisted annotation uses explicit null for no selected tool. */
 export const executeEveConversationCreation = async (
   ownerId: string,
-  input: z.infer<typeof createConversationInput>,
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
   guestReservationId?: string,
-  initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>
+  initialPreparedMessage?:
+    | string
+    | readonly PreparedContentPart<UserContent[number]>[]
 ): Promise<Response> => {
   let preparedMessage = initialPreparedMessage;
   try {
     let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
-    if (!(await getEveCreation(ownerId, input.operationId))) {
+
+    if (!((await getEveCreation(ownerId, input.operationId)) !== undefined)) {
       const resolved = await resolveFork(ownerId, input.fork);
       if (resolved instanceof Response) {
         return resolved;
@@ -179,7 +182,12 @@ export const executeEveConversationCreation = async (
           }
           fork = resolved;
         }
-        if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
+        if (
+          fork &&
+          "beforeTurnId" in fork &&
+          typeof fork.beforeTurnId === "string" &&
+          fork.beforeTurnId !== ""
+        ) {
           await waitForEveCheckpoint(
             ownerId,
             fork.sessionId,
@@ -257,6 +265,3 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-enable unicorn/no-null */

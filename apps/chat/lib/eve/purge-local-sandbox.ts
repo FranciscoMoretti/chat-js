@@ -1,21 +1,19 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { readdir, readFile } from "node:fs/promises";
-import nodePath from "node:path";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import { z } from "zod";
-
+import { readFile, readdir } from "node:fs/promises";
+import type { Snapshot as MicrosandboxSnapshot } from "microsandbox";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
-/* oxlint-enable import/no-nodejs-modules */
+import nodePath from "node:path";
+import { z } from "zod";
 
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const FORK_MANIFEST_VERSION = 1;
 const RESOURCE_RECORD_VERSION = 1;
 const SANDBOX_METADATA_VERSION = 2;
 const EMPTY_RESOURCE_COUNT = 0;
+const SNAPSHOT_REMOVAL_FAILURE =
+  "Recorded sandbox snapshots could not be removed.";
 interface SessionResourceInput {
   readonly sessionDirectory: string;
   readonly sessionKey: string;
@@ -23,21 +21,18 @@ interface SessionResourceInput {
 
 const sandboxNamePattern = /^eve-sbx-ses-[a-f0-9]{32}$/u;
 const stateSnapshotPattern = /^eve-sbx-state-[a-f0-9]{32}$/u;
-
 const manifestSchema = z.strictObject({
   optionsHash: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   sessionKey: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   snapshotName: z.string().regex(/^eve-sbx-fork-[a-f0-9]{32}$/u),
   version: z.literal(FORK_MANIFEST_VERSION),
 });
-
 const resourceSchema = z.strictObject({
   kind: z.enum(["sandbox", "snapshot"]),
   name: z.string(),
   sessionKey: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   version: z.literal(RESOURCE_RECORD_VERSION),
 });
-
 const metadataSchema = z.object({
   optionsHash: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   sandboxName: z.string().regex(sandboxNamePattern),
@@ -45,71 +40,66 @@ const metadataSchema = z.object({
   version: z.literal(SANDBOX_METADATA_VERSION),
 });
 
-/* oxlint-disable max-statements, no-continue, unicorn/max-nested-calls --
- * max-statements (#512): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): readResourceRecords skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * unicorn/max-nested-calls (#568): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+interface SandboxResources {
+  sandboxNames: string[];
+  snapshotNames: string[];
+}
+type ReadonlySandboxResources = ReadonlyNativeSurface<SandboxResources>;
+const parseOwnedResourceRecord = (
+  recordText: string,
+  entry: string,
+  input: SessionResourceInput
+): z.output<typeof resourceSchema> => {
+  const record = resourceSchema.parse(JSON.parse(recordText));
+  const pattern =
+    record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
+  if (
+    record.sessionKey !== input.sessionKey ||
+    entry !== `${record.name}.json` ||
+    !pattern.test(record.name)
+  ) {
+    throw new Error("Sandbox resource ownership is inconsistent.");
+  }
+  return record;
+};
+const readDirectoryEntries = async (directory: string): Promise<string[]> => {
+  try {
+    return await readdir(directory);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+};
 const readResourceRecords = async (
   input: SessionResourceInput
 ): Promise<z.output<typeof resourceSchema>[]> => {
   const resourceDirectory = nodePath.join(input.sessionDirectory, "resources");
-  const resourceEntries = await readdir(resourceDirectory).catch(
-    (error: unknown) => {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "ENOENT"
-      ) {
-        return [];
-      }
-      throw error;
-    }
-  );
+  const resourceEntries = await readDirectoryEntries(resourceDirectory);
   const records: z.infer<typeof resourceSchema>[] = [];
-  // oxlint-disable-next-line typescript/require-array-sort-compare -- #607: Canonical resource names use deterministic default UTF-16 ordering; locale-dependent comparison would change the ordering contract.
-  for (const entry of resourceEntries.toSorted()) {
-    if (entry.endsWith(".tmp")) {
-      continue;
+  for (const entry of resourceEntries.toSorted(
+    (left, right) => Number(left > right) - Number(left < right)
+  )) {
+    if (!entry.endsWith(".tmp")) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read and parse one uncapped resource record per session at a time to bound raw JSON memory; all ownership validation must finish before provider effects.
+      const recordText = await readFile(
+        nodePath.join(resourceDirectory, entry),
+        "utf-8"
+      );
+      records.push(parseOwnedResourceRecord(recordText, entry, input));
     }
-
-    const record = resourceSchema.parse(
-      JSON.parse(
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
-        await readFile(nodePath.join(resourceDirectory, entry), "utf-8")
-      )
-    );
-    const pattern =
-      record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
-    if (
-      record.sessionKey !== input.sessionKey ||
-      entry !== `${record.name}.json` ||
-      !pattern.test(record.name)
-    ) {
-      throw new Error("Sandbox resource ownership is inconsistent.");
-    }
-    records.push(record);
   }
   return records;
 };
-/* oxlint-enable max-statements, no-continue, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * max-lines-per-function (#510): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): readLocalSandboxResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-undefined (#519): readLocalSandboxResources uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): readLocalSandboxResources intentionally keeps the existing falsy-value behavior of metadata?.stateSnapshotName; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-const readLocalSandboxResources = async (
-  input: SessionResourceInput
-): Promise<{ sandboxNames: string[]; snapshotNames: string[] }> => {
-  if (nodePath.basename(input.sessionDirectory) !== input.sessionKey) {
-    throw new Error("Sandbox directory does not match its session key.");
-  }
+const readLocalSandboxMetadata = async (
+  sessionDirectory: string
+): Promise<
+  ReadonlyNativeSurface<z.output<typeof metadataSchema> | undefined>
+> => {
   const metadataText = await readFile(
-    nodePath.join(input.sessionDirectory, "metadata.json"),
+    nodePath.join(sessionDirectory, "metadata.json"),
     "utf-8"
   ).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -117,10 +107,18 @@ const readLocalSandboxResources = async (
     }
     throw error;
   });
-  const metadata =
-    metadataText === undefined
-      ? undefined
-      : metadataSchema.parse(JSON.parse(metadataText));
+  return metadataText === undefined
+    ? undefined
+    : metadataSchema.parse(JSON.parse(metadataText));
+};
+
+const collectLocalSandboxResourceNames = async (
+  input: SessionResourceInput,
+  metadata: ReadonlyNativeSurface<z.output<typeof metadataSchema> | undefined>
+): Promise<{
+  sandboxNames: Set<string>;
+  recordedSnapshots: Set<string>;
+}> => {
   const sandboxNames = new Set<string>(metadata ? [metadata.sandboxName] : []);
   const recordedSnapshots = new Set<string>();
   const recorded = await readResourceRecords(input);
@@ -129,138 +127,158 @@ const readLocalSandboxResources = async (
       record.name
     );
   }
-  const directory = nodePath.join(input.sessionDirectory, "fork-checkpoints");
-  const entries = await readdir(directory).catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  });
-  const snapshots: string[] = metadata?.stateSnapshotName
-    ? [metadata.stateSnapshotName, ...recordedSnapshots]
-    : [...recordedSnapshots];
-  // oxlint-disable-next-line typescript/require-array-sort-compare -- #607: Canonical resource names use deterministic default UTF-16 ordering; locale-dependent comparison would change the ordering contract.
-  for (const entry of entries.toSorted()) {
-    // Atomic-write leftovers precede provider creation and are not published records.
-    if (entry.endsWith(".tmp")) {
-      continue;
-    }
-
-    const record = manifestSchema.parse(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
-      JSON.parse(await readFile(nodePath.join(directory, entry), "utf-8"))
-    );
-    if (
-      entry !== `${record.snapshotName}.json` ||
-      record.sessionKey !== input.sessionKey
-    ) {
-      throw new Error("Fork snapshot ownership is inconsistent.");
-    }
-    snapshots.push(record.snapshotName);
+  return { recordedSnapshots, sandboxNames };
+};
+const isSnapshotNotFound = (error: unknown): boolean =>
+  error instanceof Error &&
+  error.message.startsWith("[SnapshotNotFound] snapshot not found:");
+const assertSnapshotRemovalProgress = (
+  before: number,
+  pending: ReadonlyNativeSurface<Set<string>>,
+  errors: readonly unknown[]
+): void => {
+  if (pending.size === before) {
+    throw new AggregateError(errors, SNAPSHOT_REMOVAL_FAILURE);
   }
-  if (sandboxNames.size === EMPTY_RESOURCE_COUNT) {
-    // The maintained backend publishes owner.json before entering creation and
-    // writes every resource identity before provider I/O. An owner-only directory
-    // can therefore be left by a failed admission/setup without a VM to remove.
-    // Snapshot evidence without a VM record is incomplete, never an empty attempt.
-    const owner = localEveSandboxOwnerSchema.parse(
-      JSON.parse(
-        await readFile(
-          nodePath.join(input.sessionDirectory, "owner.json"),
-          "utf-8"
-        )
-      )
+};
+const removeRecordedSnapshotPass = async (
+  Snapshot: ReadonlyNativeSurface<typeof MicrosandboxSnapshot>,
+  pending: ReadonlyNativeSurface<Set<string>>
+): Promise<void> => {
+  const before = pending.size;
+  const errors: unknown[] = [];
+  for (const snapshot of pending) {
+    try {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Snapshot parent removal depends on earlier child deletions; retain dependency order within each pass and retry blocked parents only after progress.
+      await Snapshot.remove(snapshot, { force: false });
+      pending.delete(snapshot);
+    } catch (error) {
+      if (isSnapshotNotFound(error)) {
+        pending.delete(snapshot);
+      } else {
+        errors.push(error);
+      }
+    }
+  }
+  assertSnapshotRemovalProgress(before, pending, errors);
+};
+
+const readForkCheckpointSnapshotName = async (
+  directory: string,
+  entry: string,
+  input: SessionResourceInput
+): Promise<string> => {
+  const recordText = await readFile(nodePath.join(directory, entry), "utf-8");
+  const record = manifestSchema.parse(JSON.parse(recordText));
+  if (
+    entry !== `${record.snapshotName}.json` ||
+    record.sessionKey !== input.sessionKey
+  ) {
+    throw new Error("Fork snapshot ownership is inconsistent.");
+  }
+  return record.snapshotName;
+};
+
+const readForkCheckpointSnapshotNames = async (
+  input: SessionResourceInput,
+  metadata: ReadonlyNativeSurface<z.output<typeof metadataSchema> | undefined>,
+  recordedSnapshots: ReadonlyNativeSurface<ReadonlySet<string>>
+): Promise<string[]> => {
+  const directory = nodePath.join(input.sessionDirectory, "fork-checkpoints");
+  const entries = await readDirectoryEntries(directory);
+  const snapshots: string[] =
+    metadata && isNonEmptyString(metadata.stateSnapshotName)
+      ? [metadata.stateSnapshotName, ...recordedSnapshots]
+      : [...recordedSnapshots];
+  for (const entry of entries.toSorted(
+    (left, right) => Number(left > right) - Number(left < right)
+  )) {
+    if (!entry.endsWith(".tmp")) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read and parse one uncapped fork manifest per session at a time to bound raw JSON memory; all ownership validation must finish before provider effects.
+      const snapshotName = await readForkCheckpointSnapshotName(
+        directory,
+        entry,
+        input
+      );
+      snapshots.push(snapshotName);
+    }
+  }
+  return snapshots;
+};
+
+const assertEmptySandboxInventoryIsComplete = async (
+  input: SessionResourceInput,
+  sandboxCount: number,
+  snapshotCount: number
+): Promise<void> => {
+  if (sandboxCount === EMPTY_RESOURCE_COUNT) {
+    // Maintained backends write owner.json before creation and every resource identity before provider I/O.
+    const ownerText = await readFile(
+      nodePath.join(input.sessionDirectory, "owner.json"),
+      "utf-8"
     );
+    const owner = localEveSandboxOwnerSchema.parse(JSON.parse(ownerText));
     if (
       owner.writeAheadResources !== true ||
       owner.sessionKey !== input.sessionKey ||
-      snapshots.length > EMPTY_RESOURCE_COUNT
+      snapshotCount > EMPTY_RESOURCE_COUNT
     ) {
       throw new Error("Sandbox resource inventory is incomplete.");
     }
   }
+};
+
+const readLocalSandboxResources = async (
+  input: SessionResourceInput
+): Promise<SandboxResources> => {
+  if (nodePath.basename(input.sessionDirectory) !== input.sessionKey) {
+    throw new Error("Sandbox directory does not match its session key.");
+  }
+  const metadata = await readLocalSandboxMetadata(input.sessionDirectory);
+  const { recordedSnapshots, sandboxNames } =
+    await collectLocalSandboxResourceNames(input, metadata);
+  const snapshots = await readForkCheckpointSnapshotNames(
+    input,
+    metadata,
+    recordedSnapshots
+  );
+  await assertEmptySandboxInventoryIsComplete(
+    input,
+    sandboxNames.size,
+    snapshots.length
+  );
   return {
     sandboxNames: [...sandboxNames],
     snapshotNames: [...new Set(snapshots)],
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): removeRecordedSnapshots keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const removeRecordedSnapshots = async (
   snapshotNames: readonly string[]
 ): Promise<void> => {
   const { Snapshot } = await import("microsandbox");
-  // Snapshot dependencies may not follow family input order. Complete one pass,
-  // then retry blocked parents only if another recorded snapshot was removed.
-  // Never force deletion or enumerate resources outside this inventory.
+  // Retry blocked parents only after the prior pass removes a dependency.
   const pending = new Set(snapshotNames);
   while (pending.size > EMPTY_RESOURCE_COUNT) {
-    const before = pending.size;
-    const errors: unknown[] = [];
-    for (const snapshot of pending) {
-      try {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-        await Snapshot.remove(snapshot, { force: false });
-        pending.delete(snapshot);
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.startsWith("[SnapshotNotFound] snapshot not found:")
-        ) {
-          pending.delete(snapshot);
-        } else {
-          errors.push(error);
-        }
-      }
-    }
-    if (pending.size === before) {
-      throw new AggregateError(
-        errors,
-        "Recorded sandbox snapshots could not be removed."
-      );
-    }
+    // Retry only after a complete dependency pass removes a parent.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each pass changes the pending dependency set; retry blocked parents only after a completed pass removes a child.
+    await removeRecordedSnapshotPass(Snapshot, pending);
   }
 };
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): purgeLocalEveSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): purgeLocalEveSandboxes preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-/**
- * Purges only validated local-provider resources after every supplied family member is retired.
- * @param inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
- * @returns Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
- */
-export const purgeLocalEveSandboxes = async (
-  inputs: readonly SessionResourceInput[]
-): Promise<Awaited<ReturnType<typeof readLocalSandboxResources>>[]> => {
-  // Validate every member before any provider side effect.
-  const resources = await Promise.all(
-    inputs.map((input) => readLocalSandboxResources(input))
-  );
-  if (resources.length === EMPTY_RESOURCE_COUNT) {
-    return resources;
-  }
+const destroyOwnedSandboxes = async (
+  resources: readonly ReadonlySandboxResources[]
+): Promise<void> => {
   const { Sandbox } = await import("microsandbox");
   for (const name of new Set(
-    resources.flatMap(
-      (
-        resource: ReadonlyNativeSurface<
-          Awaited<ReturnType<typeof readLocalSandboxResources>>
-        >
-      ) => resource.sandboxNames
-    )
+    resources.flatMap((resource) => resource.sandboxNames)
   )) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound provider cleanup to one live VM handle at a time; resolve the exact handle before destruction and finish every VM before snapshot removal.
       const sandbox = await Sandbox.get(name);
       // Retirement fences execution but can leave the VM alive. Destroy stops
       // and removes this exact handle, refusing a same-name replacement.
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish destruction of the resolved exact VM before opening another handle; keep provider cleanup bounded to one active VM.
       await sandbox.destroy();
     } catch (error) {
       if (
@@ -274,16 +292,29 @@ export const purgeLocalEveSandboxes = async (
       }
     }
   }
+};
+
+/**
+ * Purges only validated local-provider resources after every supplied family member is retired.
+ * @param {readonly SessionResourceInput[]} inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
+ * @returns {Promise<Awaited<ReturnType<typeof readLocalSandboxResources>>[]>} Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
+ */
+export const purgeLocalEveSandboxes = async (
+  inputs: readonly SessionResourceInput[]
+): Promise<SandboxResources[]> => {
+  // Validate every member before any provider side effect.
+  const resources = await Promise.all(
+    inputs.map(async (input) => await readLocalSandboxResources(input))
+  );
+  if (resources.length === EMPTY_RESOURCE_COUNT) {
+    return resources;
+  }
+  await destroyOwnedSandboxes(resources);
   await removeRecordedSnapshots(
     resources.flatMap(
-      (
-        resource: ReadonlyNativeSurface<
-          Awaited<ReturnType<typeof readLocalSandboxResources>>
-        >
-      ) => resource.snapshotNames
+      (resource: ReadonlySandboxResources) => resource.snapshotNames
     )
   );
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
-/* oxlint-enable max-statements, typescript/promise-function-async */

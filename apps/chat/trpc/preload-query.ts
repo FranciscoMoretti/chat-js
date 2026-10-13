@@ -8,5 +8,4 @@ const preloadQuery = async (
     // Query state retains the error; preloading deliberately resolves without it.
   }
 };
-
 export { preloadQuery };

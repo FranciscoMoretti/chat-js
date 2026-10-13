@@ -1,26 +1,27 @@
 "use client";
 
-import {
-  Root as SliderPrimitiveRoot,
-  Track as SliderPrimitiveTrack,
-  Range as SliderPrimitiveRange,
-  Thumb as SliderPrimitiveThumb,
-} from "@radix-ui/react-slider";
-import { useMemo as useReactMemo } from "react";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import {
+  Range as SliderPrimitiveRange,
+  Root as SliderPrimitiveRoot,
+  Thumb as SliderPrimitiveThumb,
+  Track as SliderPrimitiveTrack,
+} from "@radix-ui/react-slider";
 import { cn } from "@/lib/utils";
-/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+import { useMemo as useReactMemo } from "react";
+
+const DEFAULT_SLIDER_MIN = 0;
+const DEFAULT_SLIDER_MAX = 100;
 
 const Slider = ({
   className,
   defaultValue,
   value,
-  min = 0,
-  max = 100,
+  min = DEFAULT_SLIDER_MIN,
+  max = DEFAULT_SLIDER_MAX,
   ...props
 }: ReactComponentProps<typeof SliderPrimitiveRoot>): ReactJSX.Element => {
   const sliderValues = useReactMemo(() => {
@@ -61,7 +62,7 @@ const Slider = ({
       </SliderPrimitiveTrack>
       {Array.from(
         { length: sliderValues.length },
-        (_, index): ReactJSX.Element => (
+        (unusedValue, index): ReactJSX.Element => (
           <SliderPrimitiveThumb
             className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
             data-slot="slider-thumb"
@@ -72,6 +73,5 @@ const Slider = ({
     </SliderPrimitiveRoot>
   );
 };
-/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 export { Slider };

@@ -1,130 +1,142 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import type { SearchResultItem } from "../research-updates-schema";
+import { deduplicateByDomainAndUrl } from "./search-utils";
 import { generateUUID } from "@/lib/utils";
 
-import { deduplicateByDomainAndUrl } from "./search-utils";
+interface SearchQuery {
+  readonly maxResults: number;
+  readonly query: string;
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type SearchQuery = {
-  maxResults: number;
-  query: string;
+type MultiQuerySearchResult = Awaited<
+  ReturnType<typeof createSearchTasks>[number]
+>;
+
+type SearchProvider = (
+  query: SearchQuery,
+  index: number
+) => Promise<Readonly<Pick<SearchResultItem, "url" | "title" | "content">>[]>;
+
+const writeSearchStatus = ({
+  dataStream,
+  queries,
+  status,
+  toolCallId,
+  updateId,
+}: {
+  readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+  readonly queries: readonly SearchQuery[];
+  readonly status: "running" | "completed";
+  readonly toolCallId: string;
+  readonly updateId: string;
+}): void => {
+  dataStream?.write({
+    data: {
+      queries: queries.map((query) => query.query),
+      status,
+      title: `Executing ${queries.length} searches`,
+      toolCallId,
+      type: "web",
+    },
+    id: updateId,
+    type: "data-researchUpdate",
+  });
 };
-/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type MultiQuerySearchResult = {
-  query: SearchQuery;
-  results: {
-    url: string;
-    title: string;
-    content: string;
-  }[];
+const createSearchTasks = (
+  queries: readonly SearchQuery[],
+  search: SearchProvider
+) =>
+  queries.map(async (query, index) => {
+    const results = await search(query, index);
+    return {
+      query: { maxResults: query.maxResults, query: query.query },
+      results: deduplicateByDomainAndUrl(results).map((result) => ({
+        content: result.content,
+        title: result.title,
+        url: result.url,
+      })),
+    };
+  });
+
+const writeSearchResults = ({
+  dataStream,
+  queries,
+  searchResults,
+  toolCallId,
+  updateId,
+}: {
+  readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+  readonly queries: readonly SearchQuery[];
+  readonly searchResults: readonly Readonly<{
+    results: readonly Readonly<MultiQuerySearchResult["results"][number]>[];
+  }>[];
+  readonly toolCallId: string;
+  readonly updateId: string;
+}): void => {
+  const allResults = deduplicateByDomainAndUrl(
+    searchResults.flatMap((searchResult) => searchResult.results)
+  );
+  dataStream?.write({
+    data: {
+      queries: queries.map((query) => query.query),
+      results: allResults.map((result) => ({
+        content: result.content,
+        title: result.title,
+        url: result.url,
+        source: "web",
+      })),
+      status: "completed",
+      title: `Executing ${queries.length} searches`,
+      toolCallId,
+      type: "web",
+    },
+    id: updateId,
+    type: "data-researchUpdate",
+  });
 };
-/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type MultiQuerySearchResponse = {
-  error?: string;
-  searches: MultiQuerySearchResult[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
-
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; query; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const multiQueryWebSearchStep = async ({
   queries,
   search,
   dataStream,
   toolCallId,
 }: {
-  queries: SearchQuery[];
-  search: (
-    query: SearchQuery,
-    index: number
-  ) => Promise<{ title: string; url: string; content: string }[]>;
-  dataStream?: ToolProgressWriter;
-  toolCallId: string;
-}): Promise<MultiQuerySearchResponse> => {
+  readonly queries: readonly SearchQuery[];
+  readonly search: SearchProvider;
+  readonly dataStream?: Readonly<ToolProgressWriter>;
+  readonly toolCallId: string;
+}) => {
   const updateId = generateUUID();
   try {
-    // Send initial annotation showing all queries being executed
-    dataStream?.write({
-      data: {
-        queries: queries.map((query) => query.query),
-        status: "running",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
+    writeSearchStatus({
+      dataStream,
+      queries,
+      status: "running",
+      toolCallId,
+      updateId,
     });
-
-    // Execute searches in parallel
-    const searchPromises = queries.map(async (query, index) => {
-      const results = await search(query, index);
-
-      return {
-        query,
-        results: deduplicateByDomainAndUrl(results).map((obj) => ({
-          content: obj.content,
-          title: obj.title,
-          url: obj.url,
-        })),
-      };
+    const searchTasks = createSearchTasks(queries, search);
+    const searchResults = await Promise.all(searchTasks);
+    writeSearchResults({
+      dataStream,
+      queries,
+      searchResults,
+      toolCallId,
+      updateId,
     });
-
-    const searchResults = await Promise.all(searchPromises);
-
-    // Send completion annotation with all results
-    const allResults = deduplicateByDomainAndUrl(
-      searchResults.flatMap((searchResult) => searchResult.results)
-    );
-    dataStream?.write({
-      data: {
-        queries: queries.map((query) => query.query),
-        // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
-        results: allResults.map((result) => ({
-          ...result,
-          source: "web",
-        })),
-        status: "completed",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
-    });
-
-    return {
-      searches: searchResults,
-    };
+    return { searches: searchResults };
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-
-    // Send error annotation
-    dataStream?.write({
-      data: {
-        queries: queries.map((query) => query.query),
-        status: "completed",
-        title: `Executing ${queries.length} searches`,
-        toolCallId,
-        type: "web",
-      },
-      id: updateId,
-      type: "data-researchUpdate",
+    writeSearchStatus({
+      dataStream,
+      queries,
+      status: "completed",
+      toolCallId,
+      updateId,
     });
-
-    return {
-      error: errorMessage,
-      searches: [],
-    };
+    return { error: errorMessage, searches: [] };
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 export { multiQueryWebSearchStep };
-export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };

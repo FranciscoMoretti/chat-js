@@ -1,22 +1,58 @@
 "use client";
 
 import { formatDistance } from "date-fns";
-import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import type { JSX as ReactJSX, ReactNode } from "react";
-import React, { useState } from "react";
 
+import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
+import React, { useState, useSyncExternalStore } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
+
+import { Button } from "@/components/ui/button";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
+
 import { ShareDialog } from "@/components/share-button";
-import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions -- ProjectChatItem: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.updatedAt). */
+
+// Share a sampled clock across rows and keep the hydration snapshot deterministic.
+let currentTime: number | null = null;
+const timeListeners = new Set<() => void>();
+let clockInterval: ReturnType<typeof setInterval> | undefined;
+
+const updateCurrentTime = (): void => {
+  currentTime = Date.now();
+  for (const listener of timeListeners) {
+    listener();
+  }
+};
+
+const subscribeToTime = (listener: () => void): (() => void) => {
+  timeListeners.add(listener);
+  if (timeListeners.size === 1) {
+    updateCurrentTime();
+    clockInterval = setInterval(updateCurrentTime, 30_000);
+  }
+  return () => {
+    timeListeners.delete(listener);
+    if (timeListeners.size === 0) {
+      clearInterval(clockInterval);
+      clockInterval = undefined;
+    }
+  };
+};
+
+const getCurrentTime = (): number | null => currentTime;
+const getServerTime = (): null => null;
 
 export const ProjectChatItem = ({
   chat,
@@ -25,30 +61,45 @@ export const ProjectChatItem = ({
   onMoveProject,
   renderShareContent,
 }: {
-  chat: {
-    id: string;
-    title: string;
-    projectId: string | null;
-    updatedAt?: Date | string;
+  readonly chat: {
+    readonly id: string;
+    readonly title: string;
+    readonly projectId: string | null;
+    readonly updatedAt?: ReadonlyNativeSurface<Date> | string;
   };
-  onDelete?: (chatId: string) => void;
-  onMoveProject?: () => void;
-  renderShareContent: (chatId: string, onClose: () => void) => ReactNode;
-  onRename: (chatId: string, title: string) => Promise<void>;
+  readonly onDelete?: (chatId: string) => void;
+  readonly onMoveProject?: () => void;
+  readonly renderShareContent: (
+    chatId: string,
+    onClose: () => void
+  ) => Exclude<ReactNode, Promise<unknown>>;
+  readonly onRename: (chatId: string, title: string) => Promise<void>;
 }): ReactJSX.Element => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const referenceTime = useSyncExternalStore(
+    subscribeToTime,
+    getCurrentTime,
+    getServerTime
+  );
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
 
   const handleRename = async (title: string): Promise<void> => {
     await onRename(chat.id, title);
   };
 
-  const lastMessageText = chat.updatedAt
-    ? formatDistance(new Date(chat.updatedAt), new Date(), {
-        addSuffix: true,
-      })
-    : "";
+  const lastMessageText =
+    referenceTime !== null &&
+    chat.updatedAt !== undefined &&
+    chat.updatedAt !== ""
+      ? formatDistance(
+          new Date(chat.updatedAt),
+          Math.max(referenceTime, new Date(chat.updatedAt).getTime()),
+          {
+            addSuffix: true,
+          }
+        )
+      : "";
 
   return (
     <>
@@ -82,7 +133,9 @@ export const ProjectChatItem = ({
               <DropdownMenuContent align="end" side="bottom">
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={() => setRenameDialogOpen(true)}
+                  onClick={() => {
+                    setRenameDialogOpen(true);
+                  }}
                 >
                   <Pencil size={16} />
                   <span>Rename</span>
@@ -95,12 +148,18 @@ export const ProjectChatItem = ({
                   </DropdownMenuItem>
                 )}
 
-                <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
+                <ShareMenuItem
+                  onShare={() => {
+                    setShareDialogOpen(true);
+                  }}
+                />
 
                 {onDelete && (
                   <DropdownMenuItem
                     className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-                    onSelect={() => onDelete(chat.id)}
+                    onSelect={() => {
+                      onDelete(chat.id);
+                    }}
                   >
                     <Trash2 size={16} />
                     <span>Delete</span>
@@ -131,4 +190,3 @@ export const ProjectChatItem = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

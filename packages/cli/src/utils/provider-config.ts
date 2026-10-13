@@ -1,9 +1,9 @@
-import { readFile } from "node:fs/promises";
+import type { GatewaySelection } from "#cli/registry/gateways";
+
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 
 import ts from "typescript";
-
-import type { GatewaySelection } from "#cli/registry/gateways";
 
 const INITIAL_REFERENCE_COUNT = 0;
 const REFERENCE_INCREMENT = 1;
@@ -34,8 +34,7 @@ const unwrap = (expression: ReadonlyNative<ts.Expression>): ts.Expression => {
 };
 
 // Read generated data without importing or executing application code.
-// oxlint-disable-next-line eslint/max-statements, typescript/prefer-readonly-parameter-types -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-const literalValue = (input: ts.Expression): unknown => {
+const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   const value = unwrap(input);
   if (ts.isStringLiteralLike(value)) {
     return value.text;
@@ -54,19 +53,20 @@ const literalValue = (input: ts.Expression): unknown => {
   }
   if (ts.isObjectLiteralExpression(value)) {
     return Object.fromEntries(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-      value.properties.map((property) => {
-        if (
-          !ts.isPropertyAssignment(property) ||
-          !(
-            ts.isIdentifier(property.name) ||
-            ts.isStringLiteralLike(property.name)
-          )
-        ) {
-          throw new Error("Provider data must use literal properties.");
+      value.properties.map(
+        (property: ReadonlyNative<ts.ObjectLiteralElementLike>) => {
+          if (
+            !ts.isPropertyAssignment(property) ||
+            !(
+              ts.isIdentifier(property.name) ||
+              ts.isStringLiteralLike(property.name)
+            )
+          ) {
+            throw new Error("Provider data must use literal properties.");
+          }
+          return [property.name.text, literalValue(property.initializer)];
         }
-        return [property.name.text, literalValue(property.initializer)];
-      })
+      )
     );
   }
   throw new Error(
@@ -88,20 +88,21 @@ const readProviderLiteral = async (
   );
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .flatMap((statement) => statement.declarationList.declarations)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .find((item) => item.name.getText(parsed) === name);
-  if (!declaration?.initializer) {
+    .flatMap(
+      (statement: ReadonlyNative<ts.VariableStatement>) =>
+        statement.declarationList.declarations
+    )
+    .find(
+      (item: { readonly name: Readonly<Pick<ts.Node, "getText">> }) =>
+        item.name.getText(parsed) === name
+    );
+  if (!declaration || !declaration.initializer) {
     throw new Error(
       `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
     );
   }
   return literalValue(declaration.initializer);
 };
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 // Object properties apply in order. A later spread or computed key can override
 // a named property; only a subsequent explicit assignment makes it safe again.
 const activeProperty = (
@@ -121,22 +122,25 @@ const activeProperty = (
         ts.isStringLiteralLike(property.name)) &&
       property.name.text === name
     ) {
-      selected = ts.isPropertyAssignment(property) ? property : undefined;
+      selected = undefined;
+      if (ts.isPropertyAssignment(property)) {
+        selected = property;
+      }
     }
   }
   return selected;
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const readProviderId = async (
   cwd: string,
   kind: "gateway" | "storage"
 ): Promise<string | undefined> => {
-  const file =
-    kind === "gateway"
-      ? "lib/ai/gateway-model-defaults.ts"
-      : "lib/storage-options.ts";
+  let file = "lib/storage-options.ts";
+  let name = "storageId";
+  if (kind === "gateway") {
+    file = "lib/ai/gateway-model-defaults.ts";
+    name = "gatewayType";
+  }
   const source = await readFile(path.join(cwd, file), "utf-8").catch(
     (error: unknown): string => {
       if (
@@ -155,7 +159,6 @@ const readProviderId = async (
     ts.ScriptTarget.Latest,
     true
   );
-  const name = kind === "gateway" ? "gatewayType" : "storageId";
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
     .flatMap(
@@ -167,27 +170,23 @@ const readProviderId = async (
         item.name.getText(parsed) === name
     );
   if (!source.trim()) {
-    return;
+    return undefined;
   }
-  const value = declaration?.initializer && unwrap(declaration.initializer);
+  const value =
+    declaration && declaration.initializer && unwrap(declaration.initializer);
   if (!value || !ts.isStringLiteralLike(value)) {
     throw new Error(
       `Cannot determine the installed ${kind} in ${file}. Use a literal ${name} before automatic replacement, or integrate the provider manually.`
     );
   }
-  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return value.text;
 };
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Change the discriminator; preserve editable model/parameter selections.
- * @param cwd Project directory containing chat.config.ts.
- * @param selection Gateway whose ID replaces the active discriminator.
- * @returns Updated configuration source without writing the file.
+ * @param {string} cwd Project directory containing chat.config.ts.
+ * @param {ReadonlyNative<GatewaySelection>} selection Gateway whose ID replaces the active discriminator.
+ * @returns {Promise<string>} Updated configuration source without writing the file.
  */
 const gatewayConfigEdit = async (
   cwd: string,
@@ -204,12 +203,14 @@ const gatewayConfigEdit = async (
   const exported = parsed.statements.find(ts.isExportAssignment);
   const declarations = parsed.statements
     .filter(ts.isVariableStatement)
-    // Mutable bindings may no longer refer to their initializer at runtime.
-    .filter(
-      (statement: ReadonlyNative<ts.VariableStatement>): number =>
-        // oxlint-disable-next-line eslint/no-bitwise -- TypeScript represents declaration modifiers as a bitmask.
-        statement.declarationList.flags & ts.NodeFlags.Const
-    )
+    // Follow const and await using bindings; mutable bindings may have changed.
+    .filter((statement: ReadonlyNative<ts.VariableStatement>): boolean => {
+      const keyword = statement.declarationList.getFirstToken(parsed)?.kind;
+      return (
+        keyword === ts.SyntaxKind.ConstKeyword ||
+        keyword === ts.SyntaxKind.AwaitKeyword
+      );
+    })
     .flatMap(
       (statement: ReadonlyNative<ts.VariableStatement>) =>
         statement.declarationList.declarations
@@ -223,8 +224,7 @@ const gatewayConfigEdit = async (
       return value;
     }
     if (seen.has(value.text)) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
     seen.add(value.text);
     // A binding used elsewhere may have its object mutated before configuration.
@@ -238,40 +238,51 @@ const gatewayConfigEdit = async (
     };
     visit(parsed);
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
-    const initializer = declarations.find(
-      (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
-        declaration.name.getText(parsed) === value.text
-    )?.initializer;
-    return initializer === undefined ? undefined : resolve(initializer);
+    const declaration = declarations.find(
+      (candidate: ReadonlyNative<ts.VariableDeclaration>): boolean =>
+        candidate.name.getText(parsed) === value.text
+    );
+    const initializer = declaration && declaration.initializer;
+    if (initializer === undefined) {
+      return undefined;
+    }
+    return resolve(initializer);
   };
-  const expression =
-    exported === undefined ? undefined : resolve(exported.expression);
-  const configArgument =
+  let expression: ts.Expression | undefined = undefined;
+  if (exported !== undefined) {
+    expression = resolve(exported.expression);
+  }
+  let configArgument: ts.Expression | undefined = undefined;
+  if (
     expression !== undefined &&
     ts.isCallExpression(expression) &&
     ts.isIdentifier(expression.expression) &&
     expression.expression.text === "defineConfig"
-      ? expression.arguments[CONFIG_ARGUMENT_INDEX]
-      : undefined;
-  const resolvedConfigArgument =
-    configArgument === undefined ? undefined : resolve(configArgument);
-  const config =
-    expression !== undefined && ts.isCallExpression(expression)
-      ? resolvedConfigArgument
-      : expression;
-  const aiProperty =
-    config !== undefined && ts.isObjectLiteralExpression(config)
-      ? activeProperty(config, "ai")
-      : undefined;
-  const ai =
-    aiProperty === undefined ? undefined : unwrap(aiProperty.initializer);
-  const gateway =
-    ai !== undefined && ts.isObjectLiteralExpression(ai)
-      ? activeProperty(ai, "gateway")
-      : undefined;
+  ) {
+    configArgument = expression.arguments[CONFIG_ARGUMENT_INDEX];
+  }
+  let resolvedConfigArgument: ts.Expression | undefined = undefined;
+  if (configArgument !== undefined) {
+    resolvedConfigArgument = resolve(configArgument);
+  }
+  let config = expression;
+  if (expression !== undefined && ts.isCallExpression(expression)) {
+    config = resolvedConfigArgument;
+  }
+  let aiProperty: ts.PropertyAssignment | undefined = undefined;
+  if (config !== undefined && ts.isObjectLiteralExpression(config)) {
+    aiProperty = activeProperty(config, "ai");
+  }
+  let ai: ts.Expression | undefined = undefined;
+  if (aiProperty !== undefined) {
+    ai = unwrap(aiProperty.initializer);
+  }
+  let gateway: ts.PropertyAssignment | undefined = undefined;
+  if (ai !== undefined && ts.isObjectLiteralExpression(ai)) {
+    gateway = activeProperty(ai, "gateway");
+  }
   if (gateway === undefined) {
     throw new Error(
       "chat.config.ts must have a literal ai.gateway without later spreads or computed keys that could override it to replace the gateway automatically. Integrate the new gateway configuration manually."
@@ -283,7 +294,4 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };

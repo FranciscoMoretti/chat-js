@@ -1,8 +1,5 @@
 "use client";
 
-import { InboxIcon } from "lucide-react";
-import React from "react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +11,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -48,7 +44,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- LayoutPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
+import { Button } from "@/components/ui/button";
+import { InboxIcon } from "lucide-react";
+import React from "react";
 
 export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
@@ -125,4 +123,3 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
     </section>
   </main>
 );
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

@@ -1,5 +1,6 @@
-import { loadFont } from "@remotion/fonts";
 import React from "react";
+import { loadFont } from "@remotion/fonts";
+
 import { Img, staticFile } from "remotion";
 
 void loadFont({

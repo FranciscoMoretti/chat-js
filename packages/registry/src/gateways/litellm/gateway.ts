@@ -1,12 +1,13 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import type { ImageModel } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
 const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
@@ -48,11 +49,9 @@ const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
   type: "language",
 });
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class LiteLLMGateway
   extends GatewayRuntime
-  implements GatewayProvider<"litellm", string, string, never>
+  implements GatewayProvider<"litellm">
 {
   public readonly type = "litellm" as const;
 
@@ -79,11 +78,7 @@ class LiteLLMGateway
     return provider.imageModel(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.LITELLM_API_KEY;
@@ -144,6 +139,4 @@ class LiteLLMGateway
     }
   }
 }
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 export { LiteLLMGateway as Gateway, LiteLLMGateway };

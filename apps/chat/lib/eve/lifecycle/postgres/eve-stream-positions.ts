@@ -1,6 +1,9 @@
+import type { PostgresLifecycleQuery } from "./compatibility";
 import postgres from "postgres";
-import type { Sql } from "postgres";
 import { z } from "zod";
+
+const STREAM_POSITION_BATCH_SIZE = 500;
+const EMPTY_SESSION_COUNT = 0;
 
 const positionRows = z.array(
   z.object({
@@ -9,62 +12,59 @@ const positionRows = z.array(
   })
 );
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): readEvePostgresStreamPositions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readEvePostgresStreamPositions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-statements (#512): readEvePostgresStreamPositions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): readEvePostgresStreamPositions uses 500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep readEvePostgresStreamPositions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readEvePostgresStreamPositions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readEvePostgresStreamPositions accepts connection: Sql; sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): readEvePostgresStreamPositions intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Metadata-only adapter for Eve 0.61.0 and world-postgres 5.0.0-beta.40.
  * Uses the same default stream name and non-EOF chunk count as getReadable /
  * streams.getInfo. Callers must supply only owner-authorized sessions.
  * Missing streams are omitted, never certified as empty or settled.
+ * @param {PostgresLifecycleQuery} connection Existing PostgreSQL connection used for bounded metadata reads.
+ * @param {readonly string[]} sessionIds Owner-authorized native session identities mapped to their default user streams.
+ * @returns {Promise<Map<string, number>>} Positions for existing stream groups, including zero non-EOF chunks; missing streams are omitted.
  */
 const readEvePostgresStreamPositions = async (
-  connection: Sql,
-  sessionIds: string[]
-) => {
+  connection: PostgresLifecycleQuery,
+  sessionIds: readonly string[]
+): Promise<Map<string, number>> => {
   const sessionsByStream = new Map(
     sessionIds.map((id) => [`${id.replace("wrun_", "strm_")}_user`, id])
   );
   const positions = new Map<string, number>();
   const names = [...sessionsByStream.keys()];
-  for (let offset = 0; offset < names.length; offset += 500) {
-    const batch = names.slice(offset, offset + 500);
-
+  for (
+    let offset = 0;
+    offset < names.length;
+    offset += STREAM_POSITION_BATCH_SIZE
+  ) {
     const rows = positionRows.parse(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bounded resources: the adapter opens a max: 1 pool and also accepts transaction connections; run one 500-name statement at a time instead of queuing every inventory batch on that connection.
       await connection`
       select stream_id as "streamId",
         count(*) filter (where eof = false) as length
       from workflow.workflow_stream_chunks
-      where stream_id in ${connection(batch)}
+      where stream_id in ${connection(names.slice(offset, offset + STREAM_POSITION_BATCH_SIZE))}
       group by stream_id
     `
     );
     for (const row of rows) {
       const sessionId = sessionsByStream.get(row.streamId);
-      if (sessionId) {
+      if (typeof sessionId === "string" && sessionId !== "") {
         positions.set(sessionId, row.length);
       }
     }
   }
   return positions;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): getEvePostgresStreamPositions uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep getEvePostgresStreamPositions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEvePostgresStreamPositions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEvePostgresStreamPositions accepts sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/** Open a short-lived connection for owner-authorized native stream metadata.
+ * @param {string} databaseUrl PostgreSQL connection URL for the workflow world.
+ * @param {readonly string[]} sessionIds Native sessions whose default user streams are queried.
+ * @returns {Promise<Map<string, number>>} Persisted positions for existing streams; closes the connection on success or failure.
+ */
 const getEvePostgresStreamPositions = async (
   databaseUrl: string,
-  sessionIds: string[]
-) => {
-  if (sessionIds.length === 0) {
+  sessionIds: readonly string[]
+): Promise<Map<string, number>> => {
+  if (sessionIds.length === EMPTY_SESSION_COUNT) {
     return new Map<string, number>();
   }
   const connection = postgres(databaseUrl, {
@@ -78,5 +78,4 @@ const getEvePostgresStreamPositions = async (
     await connection.end();
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export { getEvePostgresStreamPositions, readEvePostgresStreamPositions };

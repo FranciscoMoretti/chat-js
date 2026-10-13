@@ -1,14 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop, eslint/no-console, eslint/no-magic-numbers, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member, unicorn/no-null --
- * eslint/no-await-in-loop: Observe ordered runtime evidence and retirement stages without reordering or redispatch.
- * eslint/no-console: Emit local proof results and retained evidence locations.
- * eslint/no-magic-numbers: Bounded proof deadlines, fixture counts and archive permissions are explicit protocol inputs.
- * import/no-nodejs-modules: The disposable proof owns local files and child processes.
- * import/no-relative-parent-imports: Exercise the exact shared runtime/provider implementation without adding a production export.
- * typescript/explicit-function-return-type: Infer the isolated proof result from the exact runtime and database implementation.
- * typescript/prefer-readonly-parameter-types: The database and runtime SDKs own these mutable parameter types; proofs do not mutate them.
- * unicorn/no-await-expression-member: Read the asserted evidence directly without maintaining a second mutable snapshot.
- * unicorn/no-null: SQL null and child process exit state are distinct protocol values.
- */
 import assert from "node:assert/strict";
 import { cp, mkdtemp, symlink, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -30,10 +19,8 @@ const handoff = z
     root: z.string(),
   })
   .parse(await Bun.file(handoffFile).json());
-assert.equal(
-  (await Bun.file(path.join(handoff.root, "ownership")).text()).trim(),
-  "chatjs-retirement-disposable-v1"
-);
+const ownership = await Bun.file(path.join(handoff.root, "ownership")).text();
+assert.equal(ownership.trim(), "chatjs-retirement-disposable-v1");
 const url = z.string().parse(handoff.databases.lane_d);
 assert.equal(new URL(url).hostname, "127.0.0.1");
 assert.equal(new URL(url).pathname, "/lane_d");
@@ -75,6 +62,8 @@ const spawn = (task: string) => {
 };
 const waitFile = async (name: string, count = 1) => {
   const deadline = Date.now() + 10_000;
+  // Each evidence read must settle before the next delay and deadline check.
+  /* oxlint-disable no-await-in-loop */
   while (Date.now() < deadline) {
     const contents = await readFile(path.join(directory, name), "utf-8").catch(
       () => ""
@@ -84,6 +73,7 @@ const waitFile = async (name: string, count = 1) => {
     }
     await Bun.sleep(50);
   }
+  /* oxlint-enable no-await-in-loop */
   throw new Error(`Missing ${name}`);
 };
 const startRecord = z.object({
@@ -130,16 +120,17 @@ try {
   await dead.exited;
   const replacement = spawn("dead");
   await Bun.sleep(2500);
+  const deadStarts = await readFile(
+    path.join(directory, "dead.starts"),
+    "utf-8"
+  );
   assert.equal(
-    (await readFile(path.join(directory, "dead.starts"), "utf-8"))
-      .trim()
-      .split("\n").length,
+    deadStarts.trim().split("\n").length,
     1,
     "Fast scans must not unlock recent crashed jobs"
   );
-  const actualScans = (
-    await readFile(path.join(directory, "dead.scans"), "utf-8")
-  )
+  const deadScans = await readFile(path.join(directory, "dead.scans"), "utf-8");
+  const actualScans = deadScans
     .trim()
     .split("\n")
     .filter((pid) => Number(pid) === replacement.pid).length;
@@ -159,17 +150,18 @@ try {
   assert.equal(live.locked_by, slowStart.workerId);
   await assert.rejects(recover(replacement, slowStart.workerId), /live child/u);
   await writeFile(path.join(directory, "dead.release"), "go");
-  assert.deepEqual(JSON.parse((await waitFile("dead.effects")).trim()), input);
+  const deadEffects = await waitFile("dead.effects");
+  assert.deepEqual(JSON.parse(deadEffects.trim()), input);
   slow.kill("SIGCONT");
   await writeFile(path.join(directory, "slow.release"), "go");
-  assert.deepEqual(JSON.parse((await waitFile("slow.effects")).trim()), input);
+  const slowEffects = await waitFile("slow.effects");
+  assert.deepEqual(JSON.parse(slowEffects.trim()), input);
   await Bun.sleep(300);
-  assert.equal(
-    (await readFile(path.join(directory, "dead.effects"), "utf-8"))
-      .trim()
-      .split("\n").length,
-    1
+  const settledEffects = await readFile(
+    path.join(directory, "dead.effects"),
+    "utf-8"
   );
+  assert.equal(settledEffects.trim().split("\n").length, 1);
   const report = {
     actualScans,
     baseline,
@@ -191,14 +183,15 @@ try {
   await writeFile(path.join(directory, "failure.txt"), String(error));
   throw error;
 } finally {
+  // Reap each owned child before proceeding to database utility cleanup.
+  /* oxlint-disable no-await-in-loop */
   for (const child of children) {
     if (child.exitCode === null && child.signalCode === null) {
       child.kill("SIGKILL");
       await child.exited;
     }
   }
+  /* oxlint-enable no-await-in-loop */
   await utilities.release();
   await sql.end();
 }
-
-/* oxlint-enable eslint/no-await-in-loop, eslint/no-console, eslint/no-magic-numbers, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member, unicorn/no-null */

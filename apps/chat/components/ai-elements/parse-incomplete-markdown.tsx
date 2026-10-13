@@ -80,23 +80,28 @@ const completeInlineCode = (value: string): string => {
   return value;
 };
 
+const removeIncompleteLinkOrImage = (text: string): string => {
+  const match = incompleteLinkOrImagePattern.exec(text);
+  const groups = match && match.groups;
+  const marker = groups && groups.marker;
+  if (typeof marker === "string" && marker !== "") {
+    return text.slice(textStartOffset, text.lastIndexOf(marker));
+  }
+  return text;
+};
+
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
- * @param text Streamed Markdown text.
- * @returns Text with unfinished links removed and unmatched delimiters closed.
+ * @param {string} text Streamed Markdown text.
+ * @returns {string} Text with unfinished links removed and unmatched delimiters closed.
  */
 export const parseIncompleteMarkdown = (text: string): string => {
   if (text === "" || typeof text !== "string") {
     return text;
   }
 
-  const incompleteMarker =
-    incompleteLinkOrImagePattern.exec(text)?.groups?.marker;
-  let result =
-    typeof incompleteMarker === "string" && incompleteMarker !== ""
-      ? text.slice(textStartOffset, text.lastIndexOf(incompleteMarker))
-      : text;
+  let result = removeIncompleteLinkOrImage(text);
 
   result = appendClosingMarker({
     closingMarker: "**",

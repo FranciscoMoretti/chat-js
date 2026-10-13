@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
+import type { ConsoleMessage } from "@playwright/test";
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("connector settings hydrate consistently across page boundaries") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("connector settings hydrate consistently across page boundaries") accepts { page, }; testInfo; error; message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("connector settings hydrate consistently across page boundaries", async ({
   page,
 }, testInfo) => {
@@ -13,12 +10,17 @@ test("connector settings hydrate consistently across page boundaries", async ({
       hydrationErrors.push(message);
     }
   };
-  page.on("pageerror", (error) => recordHydrationError(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      recordHydrationError(message.text());
-    }
+  page.on("pageerror", (error: Readonly<Error>) => {
+    recordHydrationError(error.message);
   });
+  page.on(
+    "console",
+    (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
+      if (message.type() === "error") {
+        recordHydrationError(message.text());
+      }
+    }
+  );
 
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.goto("/settings/connectors");
@@ -44,4 +46,3 @@ test("connector settings hydrate consistently across page boundaries", async ({
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(hydrationErrors).toEqual([]);
 });
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */

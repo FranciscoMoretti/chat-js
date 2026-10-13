@@ -9,7 +9,7 @@ const EMPTY_URL_LENGTH = 0;
 
 const resolveAppUrl = (
   environment: Readonly<
-    Pick<NodeJS.ProcessEnv, "ELECTRON_APP_URL" | "NODE_ENV">
+    Partial<Pick<NodeJS.ProcessEnv, "ELECTRON_APP_URL" | "NODE_ENV">>
   >
 ): string => {
   const configuredUrl = environment.ELECTRON_APP_URL;
@@ -19,13 +19,14 @@ const resolveAppUrl = (
   ) {
     return configuredUrl;
   }
-  return environment.NODE_ENV === "production"
-    ? config.appUrl
-    : DEFAULT_DEV_APP_URL;
+
+  if (environment.NODE_ENV === "production") {
+    return config.appUrl;
+  }
+  return DEFAULT_DEV_APP_URL;
 };
 
 // Passing the process environment here preserves lazy NODE_ENV access in the fallback.
-// oxlint-disable-next-line node/no-process-env -- Electron resolves its renderer URL at this process boundary; downstream consumers receive only APP_URL.
 const APP_URL = resolveAppUrl(process.env);
 
 const WINDOW_DEFAULTS = {

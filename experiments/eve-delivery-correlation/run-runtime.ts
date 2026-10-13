@@ -1,12 +1,8 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This isolated runtime proof owns disposable files, process controls and Node assertions.
 import { cp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This isolated runtime proof owns disposable files, process controls and Node assertions.
 import path from "node:path";
 
 const successExitCode = 0;
 const minimumNodeMajor = 24;
-
-// oxlint-disable-next-line node/no-process-env -- Read only the isolated worker configuration; provider and application credentials are never forwarded.
 const node = process.env.EVE_TEST_NODE;
 if (typeof node !== "string" || node === "") {
   throw new Error("Set EVE_TEST_NODE to Node >=24");
@@ -31,7 +27,6 @@ await cp(
 );
 await symlink(
   path.resolve(
-    // oxlint-disable-next-line node/no-process-env -- Read only the isolated worker configuration; provider and application credentials are never forwarded.
     process.env.CORRELATION_PATCHED === "1"
       ? "apps/chat/.eve/lane-c-deps/node_modules"
       : "apps/chat/.eve/lane-c-stock-deps/node_modules"
@@ -48,7 +43,6 @@ await writeFile(
 );
 await writeFile(
   path.resolve(fixture, "evals/expected.ts"),
-  // oxlint-disable-next-line node/no-process-env -- Read only the isolated worker configuration; provider and application credentials are never forwarded.
   `const patched = ${process.env.CORRELATION_PATCHED === "1"};\nexport {patched};\n`
 );
 const worker = Bun.spawn(
@@ -72,7 +66,6 @@ const worker = Bun.spawn(
       EVE_MOCK_AUTHORED_MODELS: "0",
       HOME: fixture,
       NODE_ENV: "development",
-      // oxlint-disable-next-line node/no-process-env -- Read only the isolated worker configuration; provider and application credentials are never forwarded.
       PATH: `${path.dirname(node)}:${process.env.PATH}`,
       TMPDIR: area,
     },

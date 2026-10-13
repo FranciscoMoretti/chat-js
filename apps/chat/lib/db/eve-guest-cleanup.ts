@@ -3,17 +3,17 @@ import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveGuest } from "./schema";
 
-/* oxlint-disable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * jsdoc/require-returns (#535): claimExpiredEveGuestFamilies's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): claimExpiredEveGuestFamilies uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep claimExpiredEveGuestFamilies's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep claimExpiredEveGuestFamilies's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): claimExpiredEveGuestFamilies accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): claimExpiredEveGuestFamilies keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+type GuestCleanupTransaction = Readonly<Pick<typeof db, "select" | "update">>;
+const SINGLE_FAMILY_LIMIT = 1;
+const EMPTY_FAMILY_SIZE = 0;
+
+/** Claim the next fair attempt; the timestamp is a retry cooldown, not an exclusive lease.
+ * @returns {Promise<{ id: string; ownerId: string }[]>} At most one expired guest root identity selected with skip-locked fairness after recording its attempt timestamp; an empty list means no eligible unlocked root was found.
  */
-/** Claim the next fair attempt; the timestamp is a retry cooldown, not an exclusive lease. */
-export const claimExpiredEveGuestFamilies = async () =>
-  await db.transaction(async (tx) => {
+export const claimExpiredEveGuestFamilies = async (): Promise<
+  { id: string; ownerId: string }[]
+> =>
+  await db.transaction(async (tx: GuestCleanupTransaction) => {
     const rows = await tx
       .select({ id: eveConversation.id, ownerId: eveConversation.ownerId })
       .from(eveConversation)
@@ -36,19 +36,18 @@ export const claimExpiredEveGuestFamilies = async () =>
         sql`${eveConversation.guestCleanupAttemptedAt} asc nulls first`,
         eveConversation.id
       )
-      .limit(1)
+      .limit(SINGLE_FAMILY_LIMIT)
       .for("update", { of: eveConversation, skipLocked: true });
-    if (rows.length > 0) {
+    if (rows.length > EMPTY_FAMILY_SIZE) {
       await tx
         .update(eveConversation)
         .set({ guestCleanupAttemptedAt: sql`now()` })
         .where(
           inArray(
             eveConversation.id,
-            rows.map((row) => row.id)
+            rows.map((row: { readonly id: string }) => row.id)
           )
         );
     }
     return rows;
   });
-/* oxlint-enable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

@@ -1,9 +1,10 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import { hasCustomContent } from "@/components/custom-content";
+
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
-
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
@@ -11,11 +12,16 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Progress } from "@/components/ui/progress";
-import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
 import { cn } from "@/lib/utils";
+import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
 
 const PERCENT_MAX = 100;
+const FULL_CIRCLE_MULTIPLIER = 2;
+const COMPLETE_FRACTION = 1;
+const NO_KNOWN_TOKENS = 0;
+const NO_KNOWN_COST = 0;
 const ICON_RADIUS = 10;
 const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
@@ -29,10 +35,8 @@ interface ContextSchema {
   usage?: StoredLanguageModelUsage;
   modelId?: ModelId;
 }
-/* oxlint-disable unicorn/no-null -- ContextContext: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ContextContext = createContext<ContextSchema | null>(null);
-/* oxlint-enable unicorn/no-null */
 
 const useContextValue = (): ContextSchema => {
   const context = useContext(ContextContext);
@@ -46,15 +50,13 @@ const useContextValue = (): ContextSchema => {
 
 type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Context: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
 const Context = ({
   usedTokens,
   maxTokens,
   usage,
   modelId,
   ...props
-}: ContextProps): ReactJSX.Element => {
+}: ReadonlyNativeSurface<ContextProps>): ReactJSX.Element => {
   const contextValue = useMemo(
     () => ({ maxTokens, modelId, usage, usedTokens }),
     [maxTokens, modelId, usage, usedTokens]
@@ -66,15 +68,12 @@ const Context = ({
     </ContextContext.Provider>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- ContextIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 const ContextIcon = (): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
-  const circumference = 2 * Math.PI * ICON_RADIUS;
+  const circumference = FULL_CIRCLE_MULTIPLIER * Math.PI * ICON_RADIUS;
   const usedPercent = usedTokens / maxTokens;
-  const dashOffset = circumference * (1 - usedPercent);
+  const dashOffset = circumference * (COMPLETE_FRACTION - usedPercent);
 
   return (
     <svg
@@ -109,11 +108,8 @@ const ContextIcon = (): React.JSX.Element => {
     </svg>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 type ContextTriggerProps = ComponentProps<typeof Button>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: ContextTriggerProps). */
 
 const ContextTrigger = ({
   children,
@@ -139,11 +135,8 @@ const ContextTrigger = ({
     </HoverCardTrigger>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ContextContentProps = ComponentProps<typeof HoverCardContent>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ContextContentProps). */
 
 const ContextContent = ({
   className,
@@ -154,11 +147,8 @@ const ContextContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ContextContentHeaderProps = ComponentProps<"div">;
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ContextContentHeader = ({
   children,
@@ -196,11 +186,8 @@ const ContextContentHeader = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ContextContentBodyProps = ComponentProps<"div">;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: ContextContentBodyProps). */
 
 const ContextContentBody = ({
   children,
@@ -211,11 +198,8 @@ const ContextContentBody = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ContextContentFooterProps = ComponentProps<"div">;
-
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentFooter: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ContextContentFooter = ({
   children,
@@ -228,15 +212,15 @@ const ContextContentFooter = ({
       ? getUsage({
           modelId,
           usage: {
-            input: usage?.inputTokens ?? 0,
-            output: usage?.outputTokens ?? 0,
+            input: usage?.inputTokens ?? NO_KNOWN_TOKENS,
+            output: usage?.outputTokens ?? NO_KNOWN_TOKENS,
           },
         }).costUSD?.totalUSD
       : undefined;
   const totalCost = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(costUSD ?? 0);
+  }).format(costUSD ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -255,11 +239,12 @@ const ContextContentFooter = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ContextInputUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- TokensWithCost: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including costText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type ContextUsageResult =
+  | Exclude<React.ReactNode, false | undefined>
+  | React.JSX.Element
+  | null;
 
 const TokensWithCost = ({
   tokens,
@@ -274,23 +259,21 @@ const TokensWithCost = ({
       : new Intl.NumberFormat("en-US", {
           notation: "compact",
         }).format(tokens)}
-    {costText ? (
+    {typeof costText === "string" && costText !== "" ? (
       <span className="text-muted-foreground ml-2">• {costText}</span>
     ) : null}
   </span>
 );
-/* oxlint-enable no-undefined, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextInputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextInputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ContextInputUsage = ({
   className,
   children,
   ...props
-}: ContextInputUsageProps) => {
+}: ContextInputUsageProps): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
-  const inputTokens = usage?.inputTokens ?? 0;
+  const inputTokens = usage?.inputTokens ?? NO_KNOWN_TOKENS;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -298,16 +281,17 @@ const ContextInputUsage = ({
     return null;
   }
 
-  const inputCost = modelId
-    ? getUsage({
-        modelId,
-        usage: { input: inputTokens, output: 0 },
-      }).costUSD?.totalUSD
-    : undefined;
+  const inputCost =
+    typeof modelId === "string" && modelId !== ""
+      ? getUsage({
+          modelId,
+          usage: { input: inputTokens, output: NO_KNOWN_TOKENS },
+        }).costUSD?.totalUSD
+      : undefined;
   const inputCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(inputCost ?? 0);
+  }).format(inputCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -319,21 +303,18 @@ const ContextInputUsage = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextOutputUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextOutputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextOutputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ContextOutputUsage = ({
   className,
   children,
   ...props
-}: ContextOutputUsageProps) => {
+}: ContextOutputUsageProps): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
-  const outputTokens = usage?.outputTokens ?? 0;
+  const outputTokens = usage?.outputTokens ?? NO_KNOWN_TOKENS;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -341,16 +322,17 @@ const ContextOutputUsage = ({
     return null;
   }
 
-  const outputCost = modelId
-    ? getUsage({
-        modelId,
-        usage: { input: 0, output: outputTokens },
-      }).costUSD?.totalUSD
-    : undefined;
+  const outputCost =
+    typeof modelId === "string" && modelId !== ""
+      ? getUsage({
+          modelId,
+          usage: { input: NO_KNOWN_TOKENS, output: outputTokens },
+        }).costUSD?.totalUSD
+      : undefined;
   const outputCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(outputCost ?? 0);
+  }).format(outputCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -362,21 +344,18 @@ const ContextOutputUsage = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextReasoningUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextReasoningUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ContextReasoningUsage = ({
   className,
   children,
   ...props
-}: ContextReasoningUsageProps) => {
+}: ContextReasoningUsageProps): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   const { reasoningTokens } = getUsageTokenDetails(usage);
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -384,16 +363,17 @@ const ContextReasoningUsage = ({
     return null;
   }
 
-  const reasoningCost = modelId
-    ? getUsage({
-        modelId,
-        usage: { reasoningTokens },
-      }).costUSD?.totalUSD
-    : undefined;
+  const reasoningCost =
+    typeof modelId === "string" && modelId !== ""
+      ? getUsage({
+          modelId,
+          usage: { reasoningTokens },
+        }).costUSD?.totalUSD
+      : undefined;
   const reasoningCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(reasoningCost ?? 0);
+  }).format(reasoningCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -405,21 +385,18 @@ const ContextReasoningUsage = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type ContextCacheUsageProps = ComponentProps<"div">;
-
-/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextCacheUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextCacheUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ContextCacheUsage = ({
   className,
   children,
   ...props
-}: ContextCacheUsageProps) => {
+}: ContextCacheUsageProps): ContextUsageResult => {
   const { usage, modelId } = useContextValue();
   const cacheTokens = getUsageTokenDetails(usage).cachedInputTokens;
 
-  if (children) {
+  if (hasCustomContent(children)) {
     return children;
   }
 
@@ -427,16 +404,21 @@ const ContextCacheUsage = ({
     return null;
   }
 
-  const cacheCost = modelId
-    ? getUsage({
-        modelId,
-        usage: { cacheReads: cacheTokens, input: 0, output: 0 },
-      }).costUSD?.totalUSD
-    : undefined;
+  const cacheCost =
+    typeof modelId === "string" && modelId !== ""
+      ? getUsage({
+          modelId,
+          usage: {
+            cacheReads: cacheTokens,
+            input: NO_KNOWN_TOKENS,
+            output: NO_KNOWN_TOKENS,
+          },
+        }).costUSD?.totalUSD
+      : undefined;
   const cacheCostText = new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(cacheCost ?? 0);
+  }).format(cacheCost ?? NO_KNOWN_COST);
 
   return (
     <div
@@ -448,9 +430,7 @@ const ContextCacheUsage = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-lines -- context keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export {
   Context,
   ContextCacheUsage,

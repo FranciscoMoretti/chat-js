@@ -1,18 +1,22 @@
 "use client";
 
+import React, { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import type { JSX as ReactJSX } from "react";
-import React, { useCallback, useMemo, useRef } from "react";
+
 import { toast } from "sonner";
 
 import { Table, TableBody } from "@/components/ui/table";
+
 import type { AppModelId } from "@/lib/ai/app-model-id";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useChatModels } from "@/providers/chat-models-provider";
-import { useTRPC } from "@/trpc/react";
-
 import { ModelRow } from "./model-row";
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
+
+import { useTRPC } from "@/trpc/react";
 
 export const ModelsTable = ({
   search,
@@ -34,36 +38,40 @@ export const ModelsTable = ({
   const { mutate: setModelEnabled } = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
       onError: (
-        _err,
-        _newData,
-        context: { prev: typeof preferences } | undefined
+        _err: unknown,
+        _newData: unknown,
+        context: { readonly prev: typeof preferences } | undefined
       ) => {
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update model preference");
       },
       onMutate: (newData) => {
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof preferences) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof preferences>) => {
+            if (!old) {
+              return old;
+            }
+            const idx = old.findIndex(
+              (preference: { readonly modelId: string }) =>
+                preference.modelId === newData.modelId
+            );
+            if (idx !== -1) {
+              return old.with(idx, { ...old[idx], enabled: newData.enabled });
+            }
+            return [
+              ...old,
+              {
+                createdAt: new Date(),
+                enabled: newData.enabled,
+                modelId: newData.modelId,
+                updatedAt: new Date(),
+                userId: "",
+              },
+            ];
           }
-          const idx = old.findIndex(
-            (preference) => preference.modelId === newData.modelId
-          );
-          if (idx !== -1) {
-            return old.with(idx, { ...old[idx], enabled: newData.enabled });
-          }
-          return [
-            ...old,
-            {
-              createdAt: new Date(),
-              enabled: newData.enabled,
-              modelId: newData.modelId,
-              updatedAt: new Date(),
-              userId: "",
-            },
-          ];
-        });
+        );
         return { prev };
       },
       onSuccess: () => {
@@ -84,26 +92,50 @@ export const ModelsTable = ({
     return enabled;
   }, [allModels, preferences]);
 
-  // Stable sort order: computed once on initial load, never changes
-  const initialSortRef = useRef<AppModelId[] | null>(null);
-  const sortedModels = useMemo(() => {
-    if (initialSortRef.current === null) {
-      // First render: enabled models first, then the rest
-      const enabledSet = new Set(enabledModels.map((model) => model.id));
-      const sorted = [
-        ...enabledModels,
-        ...allModels.filter((model) => !enabledSet.has(model.id)),
-      ];
-      initialSortRef.current = sorted.map((model) => model.id);
-      return sorted;
-    }
-    // Subsequent renders: maintain original order
-    const modelMap = new Map(allModels.map((model) => [model.id, model]));
-    // oxlint-disable-next-line react/refs -- Read the stable ordering captured on first render.
-    return initialSortRef.current
-      .map((id) => modelMap.get(id))
-      .filter((model) => model !== undefined);
-  }, [allModels, enabledModels, initialSortRef]);
+  // Keep existing rows in place when preferences change, including during saves.
+  const [modelOrder, setModelOrder] = useState<readonly AppModelId[]>(() => {
+    const enabledSet = new Set(
+      enabledModels.map((model: { readonly id: AppModelId }) => model.id)
+    );
+    return [
+      ...enabledModels.map((model: { readonly id: AppModelId }) => model.id),
+      ...allModels
+        .filter(
+          (model: { readonly id: AppModelId }) => !enabledSet.has(model.id)
+        )
+        .map((model: { readonly id: AppModelId }) => model.id),
+    ];
+  });
+  const modelMap = useMemo(
+    () =>
+      new Map(
+        allModels.map(
+          (model: ReadonlyNativeSurface<(typeof allModels)[number]>) => [
+            model.id,
+            model,
+          ]
+        )
+      ),
+    [allModels]
+  );
+  const orderedIds = new Set(modelOrder);
+  const addedModels = allModels.filter((model) => !orderedIds.has(model.id));
+  if (addedModels.length > 0 || modelOrder.some((id) => !modelMap.has(id))) {
+    // Reconcile a refreshed catalog before children render. This guarded state
+    // update removes unavailable models and appends new ones without moving
+    // the surviving rows or mutating a ref during render.
+    setModelOrder([
+      ...modelOrder.filter((id) => modelMap.has(id)),
+      ...addedModels.map((model) => model.id),
+    ]);
+  }
+  const sortedModels = useMemo(
+    () =>
+      modelOrder
+        .map((id) => modelMap.get(id))
+        .filter((model) => model !== undefined),
+    [modelMap, modelOrder]
+  );
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
@@ -111,7 +143,11 @@ export const ModelsTable = ({
     }
     const query = search.toLowerCase();
     return sortedModels.filter(
-      (model) =>
+      (model: {
+        readonly name: { readonly toLowerCase: () => string };
+        readonly owned_by: { readonly toLowerCase: () => string };
+        readonly id: { readonly toLowerCase: () => string };
+      }) =>
         model.name.toLowerCase().includes(query) ||
         model.owned_by?.toLowerCase().includes(query) ||
         model.id.toLowerCase().includes(query)
@@ -145,14 +181,18 @@ export const ModelsTable = ({
       </p>
       <Table className={className}>
         <TableBody>
-          {filteredModels.map((model): React.JSX.Element => (
-            <ModelRow
-              isEnabled={enabledModelsSet.has(model.id)}
-              key={model.id}
-              model={model}
-              onToggle={handleToggle}
-            />
-          ))}
+          {filteredModels.map(
+            (
+              model: ReadonlyNativeSurface<(typeof allModels)[number]>
+            ): React.JSX.Element => (
+              <ModelRow
+                isEnabled={enabledModelsSet.has(model.id)}
+                key={model.id}
+                model={model}
+                onToggle={handleToggle}
+              />
+            )
+          )}
         </TableBody>
       </Table>
 
@@ -164,4 +204,3 @@ export const ModelsTable = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

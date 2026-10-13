@@ -2,9 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 
 import baseConfig from "./playwright.config";
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
 export default defineConfig({
   ...baseConfig,
   projects: [
@@ -17,4 +14,3 @@ export default defineConfig({
     },
   ],
 });
-/* oxlint-enable import/no-default-export */

@@ -1,3 +1,4 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -9,43 +10,56 @@ import { ConnectorsSettings } from "@/components/settings/connectors-settings";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
-/* oxlint-disable import/max-dependencies -- @/components/settings/settings-page import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
-/* oxlint-enable import/max-dependencies */
 
 import "./sandbox.css";
 
-/* oxlint-disable typescript/explicit-function-return-type -- mocks: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
 const mocks = vi.hoisted(() => {
-  // oxlint-disable-next-line unicorn/consistent-function-scoping -- vi.hoisted must initialize the mock factory before module imports.
-  const query = (name: string) => ({
-    queryKey: () => [name],
-    queryOptions: () => ({ queryKey: [name] }),
-  });
+  const queries = Object.fromEntries(
+    ["checkAuth", "discover", "list", "listConnected", "testConnection"].map(
+      (
+        name
+      ): [
+        string,
+        {
+          queryKey: () => string[];
+          queryOptions: () => { queryKey: string[] };
+        },
+      ] => [
+        name,
+        {
+          queryKey: () => [name],
+          queryOptions: () => ({ queryKey: [name] }),
+        },
+      ]
+    )
+  );
   const mutation = { mutationOptions: () => ({}) };
   return {
     approvalRequired: false,
     cachedData: false,
-    handleClose: vi.fn(),
+    handleClose: vi.fn<() => void>(),
     listError: false,
     mcp: {
+      ...queries,
       authorize: mutation,
-      checkAuth: query("checkAuth"),
       create: mutation,
       delete: mutation,
       disconnect: mutation,
-      discover: query("discover"),
-      list: query("list"),
-      listConnected: query("listConnected"),
-      testConnection: query("testConnection"),
       toggleEnabled: mutation,
       update: mutation,
     },
-    mutate: vi.fn(),
+    mutate: vi.fn<
+      (
+        _input: unknown,
+        callbacks?: {
+          onSuccess: (result: { authorizationUrl: string }) => void;
+        }
+      ) => void
+    >(),
     needsOAuth: false,
     pendingAuthorization: false,
     queryClient: { invalidateQueries: vi.fn() },
@@ -55,7 +69,6 @@ const mocks = vi.hoisted(() => {
     sharedConnector: false,
   };
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(async () => {
   await act(() => toast.dismiss());
@@ -68,8 +81,6 @@ afterEach(async () => {
   vi.clearAllMocks();
   mocks.search = new URLSearchParams();
 });
-
-/* oxlint-disable unicorn/no-null -- connector: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
   enabled: true,
@@ -84,32 +95,24 @@ const connector = {
   url: "https://docs.example.test/mcp",
   userId: "fixture-owner",
 };
-/* oxlint-enable unicorn/no-null */
 vi.mock("@/features/installed", () => ({
   installedFeatures: new Set(["mcp"]),
 }));
-/* oxlint-disable typescript/explicit-function-return-type -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/trpc/react", () => ({ useTRPC: () => ({ mcp: mocks.mcp }) }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("next/navigation", () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => mocks.search,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/nuqs/mcp-search-params", () => ({
   mcpConnectorsSettingsSearchParams: {},
 }));
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 vi.mock("nuqs", () => ({
   useQueryStates: () => [{ connectorId: null, dialog: null }, vi.fn()],
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- mcp-settings.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { queryKey }: { queryKey: string[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({
     isPending: mocks.pendingAuthorization,
@@ -160,8 +163,6 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useQueryClient: () => mocks.queryClient,
 }));
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable max-statements, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const renderPage = async (
   details: boolean,
@@ -190,32 +191,29 @@ const renderPage = async (
     );
   }
   // Render each route's client subtree with the same header/layout, without the server prefetch wrapper.
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-  await act(() =>
-    root.render(
-      <SettingsPage>
-        <SettingsPageHeader>
-          <h2 className="text-lg font-semibold">
-            {details ? "Connector details" : "Connectors & MCP"}
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            {details
-              ? "Tools, resources, and authorization status."
-              : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
-          </p>
-        </SettingsPageHeader>
-        <Toaster position="top-center" theme="dark" />
-        {content}
-      </SettingsPage>
-    )
+
+  await renderRoot(
+    root,
+    <SettingsPage>
+      <SettingsPageHeader>
+        <h2 className="text-lg font-semibold">
+          {details ? "Connector details" : "Connectors & MCP"}
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          {details
+            ? "Tools, resources, and authorization status."
+            : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
+        </p>
+      </SettingsPageHeader>
+      <Toaster position="top-center" theme="dark" />
+      {content}
+    </SettingsPage>
   );
   return async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   };
 };
-/* oxlint-enable max-statements, typescript/strict-void-return */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
   const cleanup = await renderPage(false);
@@ -243,7 +241,6 @@ test("connector list shows custom and shared connectors with their management li
     await cleanup();
   }
 });
-
 test("connector details show discovery, owner controls and the back link", async () => {
   const cleanup = await renderPage(true);
   try {
@@ -259,21 +256,20 @@ test("connector details show discovery, owner controls and the back link", async
     await expect
       .element(page.getByRole("button", { name: "Uninstall" }))
       .toBeEnabled();
-    for (const name of [
-      "search_docs",
-      "read_page",
-      "Documentation",
-      "summarize",
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each discovery section to settle before capture.
-      await expect.element(page.getByText(name, { exact: true })).toBeVisible();
-    }
+    await Promise.all(
+      ["search_docs", "read_page", "Documentation", "summarize"].map(
+        async (name) => {
+          await expect
+            .element(page.getByText(name, { exact: true }))
+            .toBeVisible();
+        }
+      )
+    );
     await takeSnapshot("mcp-connector-details");
   } finally {
     await cleanup();
   }
 });
-
 for (const details of [false, true]) {
   test(`connector ${details ? "details" : "list"} displays missing credentials instead of an empty state`, async () => {
     mocks.listError = true;
@@ -328,29 +324,30 @@ test("expired OAuth discovery offers reconnect instead of a permanent spinner", 
     await cleanup();
   }
 });
-/* oxlint-disable max-statements, typescript/promise-function-async -- mcp-settings.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
   const cleanup = await renderPage(false, true);
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Advanced settings" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Advanced settings" }).click();
+    });
     await expect
       .element(page.getByText("Transport Type", { exact: true }))
       .toBeVisible();
     await expect
       .element(page.getByLabelText("OAuth Client Secret (optional)"))
       .toBeVisible();
-    await act(() => page.getByPlaceholder("Name", { exact: true }).fill("   "));
-    await act(() =>
-      page
+    await act(async () => {
+      await page.getByPlaceholder("Name", { exact: true }).fill("   ");
+    });
+    await act(async () => {
+      await page
         .getByPlaceholder("Remote MCP server URL")
-        .fill("https://docs.example.test/mcp")
-    );
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Add" }).click()
-    );
+        .fill("https://docs.example.test/mcp");
+    });
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Add" }).click();
+    });
     await expect
       .element(page.getByText("Name is required", { exact: true }))
       .toBeVisible();
@@ -359,9 +356,6 @@ test("custom connector advanced settings expose transport and credentials and re
     await cleanup();
   }
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("pending OAuth can be dismissed", async () => {
   mocks.pendingAuthorization = true;
@@ -374,44 +368,41 @@ test("pending OAuth can be dismissed", async () => {
       .element(page.getByRole("dialog"))
       .toHaveStyle({ opacity: "1" });
     await takeSnapshot("mcp-connect-pending-cancellable");
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Cancel" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Cancel" }).click();
+    });
     expect(mocks.handleClose).toHaveBeenCalledOnce();
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("dismissed OAuth ignores a late authorization result", async () => {
   const cleanup = await renderPage(false, false, true);
   try {
-    await act(() =>
-      page
+    await act(async () => {
+      await page
         .getByRole("button", { name: "Continue to Documentation server" })
-        .click()
-    );
+        .click();
+    });
     const [[, callbacks]] = mocks.mutate.mock.calls;
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Cancel" }).click()
-    );
-    await act(() =>
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
+    if (callbacks === undefined) {
+      throw new Error("Missing authorization callbacks");
+    }
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Cancel" }).click();
+    });
+    // Select act's completion overload for this synchronous, undefined-returning callback.
+    await act<undefined>((): undefined => {
       callbacks.onSuccess({
         authorizationUrl: "https://authorization.example.test",
-      })
-    );
+      });
+    });
     expect(globalThis.location.hostname).not.toBe("authorization.example.test");
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- mcp-settings.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { clientId, expectedClientId }); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test.each([
   { clientId: "   ", expectedClientId: undefined },
@@ -421,28 +412,28 @@ test.each([
   async ({ clientId, expectedClientId }) => {
     const cleanup = await renderPage(false, true);
     try {
-      await act(() =>
-        page.getByRole("button", { name: "Advanced settings" }).click()
-      );
-      await act(() =>
-        page.getByLabelText("Name", { exact: true }).fill("Server")
-      );
-      await act(() =>
-        page
+      await act(async () => {
+        await page.getByRole("button", { name: "Advanced settings" }).click();
+      });
+      await act(async () => {
+        await page.getByLabelText("Name", { exact: true }).fill("Server");
+      });
+      await act(async () => {
+        await page
           .getByLabelText("URL", { exact: true })
-          .fill("https://mcp.example.test")
-      );
-      await act(() =>
-        page.getByLabelText("OAuth Client ID (optional)").fill(clientId)
-      );
-      await act(() =>
-        page
+          .fill("https://mcp.example.test");
+      });
+      await act(async () => {
+        await page.getByLabelText("OAuth Client ID (optional)").fill(clientId);
+      });
+      await act(async () => {
+        await page
           .getByLabelText("OAuth Client Secret (optional)")
-          .fill(" secret bytes ")
-      );
-      await act(() =>
-        page.getByRole("button", { exact: true, name: "Add" }).click()
-      );
+          .fill(" secret bytes ");
+      });
+      await act(async () => {
+        await page.getByRole("button", { exact: true, name: "Add" }).click();
+      });
       expect(mocks.mutate).toHaveBeenCalledWith(
         expect.objectContaining({
           oauthClientId: expectedClientId,
@@ -455,7 +446,6 @@ test.each([
     }
   }
 );
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("OAuth callback errors display the safe actionable message", async () => {
   const message =
@@ -480,18 +470,22 @@ test("OAuth callback errors display the safe actionable message", async () => {
   }
 });
 
-/* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 test("invalid authorization links keep the dialog open and display an error", async () => {
   const cleanup = await renderPage(false, false, true);
   try {
-    await act(() =>
-      page
+    await act(async () => {
+      await page
         .getByRole("button", { name: "Continue to Documentation server" })
-        .click()
-    );
+        .click();
+    });
     const [[, callbacks]] = mocks.mutate.mock.calls;
-    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
-    await act(() => callbacks.onSuccess({ authorizationUrl: "not a URL" }));
+    if (callbacks === undefined) {
+      throw new Error("Missing authorization callbacks");
+    }
+
+    await act<undefined>((): undefined => {
+      callbacks.onSuccess({ authorizationUrl: "not a URL" });
+    });
     await expect
       .element(page.getByText("Invalid authorization URL", { exact: true }))
       .toBeVisible();
@@ -510,12 +504,8 @@ test("invalid authorization links keep the dialog open and display an error", as
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- mcp-settings.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 
 for (const state of ["off", "enabled", "saving", "shared"] as const) {
-  // oxlint-disable-next-line max-statements -- Keep each approval state, interaction, capture and cleanup together so the persisted setting is verified as one scenario.
   test(`connection approval setting is ${state}`, async () => {
     Object.assign(mocks, {
       approvalRequired: state !== "off",
@@ -543,3 +533,28 @@ for (const state of ["off", "enabled", "saving", "shared"] as const) {
     }
   });
 }
+
+// A synchronous onValid failure becomes a rejected RHF handleSubmit promise.
+test("custom connector submission reports RHF rejection and retains entered fields", async () => {
+  mocks.mutate.mockImplementationOnce(() => {
+    throw new Error("Connector submission failed");
+  });
+  const cleanup = await renderPage(false, true);
+  try {
+    await page.getByLabelText("Name", { exact: true }).fill("Server");
+    await page
+      .getByLabelText("URL", { exact: true })
+      .fill("https://mcp.example.test");
+    await page.getByRole("button", { exact: true, name: "Add" }).click();
+    await expect
+      .element(page.getByText("Connector submission failed", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByLabelText("Name", { exact: true }))
+      .toHaveValue("Server");
+    expect(mocks.handleClose).not.toHaveBeenCalled();
+    await takeSnapshot("mcp-create-submission-failure");
+  } finally {
+    await cleanup();
+  }
+});

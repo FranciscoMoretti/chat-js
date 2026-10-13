@@ -1,127 +1,14 @@
-import { z } from "zod";
+import { databaseEnvOptions } from "./db/connection";
+
+import { getEveRuntimeEnvOptions } from "./env-runtime-options";
 
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+import { resolveEveEnvironment } from "./eve/environment";
+import { z } from "zod";
 
-import { databaseEnvOptions } from "./db/connection";
-import {
-  isWorkflowTransactionPooler,
-  resolveEveEnvironment,
-} from "./eve/environment";
-import { resolveWorkflowWorld } from "./eve/world-config";
-
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): isPlaywrightTestEnvironmentEnabled reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
 );
-/* oxlint-enable node/no-process-env */
-
-const httpUrl = z.url().refine(
-  (value) => {
-    if (!URL.canParse(value)) {
-      return false;
-    }
-    const { protocol } = new URL(value);
-    return protocol === "http:" || protocol === "https:";
-  },
-  { message: "Must use an http:// or https:// URL" }
-);
-const ipv4Loopback = /^127\.\d+\.\d+\.\d+$/u;
-
-const postgresUrl = z.url().refine(
-  (value) => {
-    if (!URL.canParse(value)) {
-      return false;
-    }
-    const { protocol } = new URL(value);
-    return protocol === "postgres:" || protocol === "postgresql:";
-  },
-  { message: "Must use a postgres:// or postgresql:// URL" }
-);
-
-/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-max-lines-per-function (#510): getEveRuntimeEnvOptions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): getEveRuntimeEnvOptions uses 0, 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-node/no-process-env (#537): getEveRuntimeEnvOptions reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
-typescript/explicit-function-return-type (#560): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEveRuntimeEnvOptions accepts environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const getEveRuntimeEnvOptions = (
-  environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
-) => ({
-  EVE_GATEWAY_SECRET: z
-    .string()
-    .min(32)
-    .describe(
-      "Required independent EVE gateway secret; generate with openssl rand -base64 32"
-    ),
-  EVE_INTERNAL_ORIGIN: httpUrl
-    .refine(
-      (value) => {
-        if (!URL.canParse(value)) {
-          return false;
-        }
-        const { protocol, hostname } = new URL(value);
-        return (
-          protocol === "https:" ||
-          (protocol === "http:" &&
-            (hostname === "localhost" ||
-              hostname === "[::1]" ||
-              ipv4Loopback.test(hostname)))
-        );
-      },
-      {
-        message: "EVE_INTERNAL_ORIGIN must use HTTPS, or HTTP on loopback only",
-      }
-    )
-    .refine(
-      (value) => {
-        if (!URL.canParse(value)) {
-          return false;
-        }
-        const url = new URL(value);
-        return (
-          url.pathname === "/" &&
-          !url.search &&
-          !url.hash &&
-          !url.username &&
-          !url.password
-        );
-      },
-      {
-        message:
-          "EVE_INTERNAL_ORIGIN must be an origin without a path, query, or credentials",
-      }
-    )
-    .describe(
-      "Optional application gateway origin serving /eve/chat/v1; defaults to the current deployment or local app"
-    ),
-  WORKFLOW_POSTGRES_URL:
-    resolveWorkflowWorld(environment) === "vercel"
-      ? z
-          .string()
-          .optional()
-          .describe("Unused on Vercel; local/self-hosted workflows only")
-      : postgresUrl
-          .refine(
-            (value) => {
-              try {
-                return !isWorkflowTransactionPooler(value);
-              } catch {
-                return false;
-              }
-            },
-            {
-              message:
-                "EVE needs a direct or session PostgreSQL connection; set WORKFLOW_POSTGRES_URL to a runtime connection instead of a transaction pooler",
-            }
-          )
-          .describe(
-            "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
-          ),
-});
-/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
@@ -130,20 +17,19 @@ const clientEnvSchema = {
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep playwrightDefault's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const playwrightDefault = (value: unknown, fallback: string) =>
-  isPlaywrightTestEnvironmentEnabled &&
-  (value === null || value === undefined || value === "")
-    ? fallback
-    : value;
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+const playwrightDefault = (value: unknown, fallback: string): unknown => {
+  if (
+    isPlaywrightTestEnvironmentEnabled &&
+    (value === null || value === undefined || value === "")
+  ) {
+    return fallback;
+  }
+  return value;
+};
 
-/* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env -- no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-node/no-process-env (#537): serverEnvSchema reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
+const MIN_NONEMPTY_ENV_VALUE_LENGTH = 1;
+const MCP_ENCRYPTION_KEY_LENGTH = 44;
+
 /**
  * Server environment variable schemas with descriptions.
  *
@@ -180,14 +66,15 @@ const serverEnvSchema = {
     .optional()
     .describe("Google OAuth client secret"),
   AUTH_SECRET: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "playwright-test-auth-secret"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "playwright-test-auth-secret";
+      }
+      return value;
+    }, z.string().min(MIN_NONEMPTY_ENV_VALUE_LENGTH))
     .describe("NextAuth.js secret for signing session tokens"),
   // Optional cleanup cron job secret
   CRON_SECRET: z
@@ -197,14 +84,15 @@ const serverEnvSchema = {
   ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "postgres://postgres:postgres@127.0.0.1:5432/playwright";
+      }
+      return value;
+    }, z.string().min(MIN_NONEMPTY_ENV_VALUE_LENGTH))
     .describe("Postgres connection string"),
   DAYTONA_API_KEY: z.string().optional(),
   DAYTONA_ORGANIZATION_ID: z.string().optional(),
@@ -234,7 +122,7 @@ const serverEnvSchema = {
     .describe("LiteLLM proxy API key (master or virtual key)"),
   LITELLM_BASE_URL: z.url().optional().describe("LiteLLM proxy base URL"),
   MCP_ENCRYPTION_KEY: z
-    .union([z.string().length(44), z.literal("")])
+    .union([z.string().length(MCP_ENCRYPTION_KEY_LENGTH), z.literal("")])
     .optional()
     .describe("Encryption key for MCP server credentials (base64, 44 chars)"),
   NODE_ENV: z
@@ -289,21 +177,16 @@ const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel project ID for sandbox (non-Vercel deployments)"),
-  VERCEL_SANDBOX_RUNTIME: z
+  VERCEL_SANDBOX_IMAGE_JAVASCRIPT: z
     .string()
-    .min(1)
+    .min(MIN_NONEMPTY_ENV_VALUE_LENGTH)
     .optional()
-    .describe("Legacy default Vercel sandbox runtime identifier for Python"),
-  VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: z
+    .describe("Vercel sandbox image reference for JavaScript execution"),
+  VERCEL_SANDBOX_IMAGE_PYTHON: z
     .string()
-    .min(1)
+    .min(MIN_NONEMPTY_ENV_VALUE_LENGTH)
     .optional()
-    .describe("Vercel sandbox runtime identifier for JavaScript execution"),
-  VERCEL_SANDBOX_RUNTIME_PYTHON: z
-    .string()
-    .min(1)
-    .optional()
-    .describe("Vercel sandbox runtime identifier for Python execution"),
+    .describe("Vercel sandbox image reference for Python execution"),
   // Sandbox (for non-Vercel deployments)
   VERCEL_TEAM_ID: z
     .string()
@@ -324,5 +207,5 @@ const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
-/* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env */
-export { clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema };
+export { clientEnvSchema, serverEnvSchema };
+export { getEveRuntimeEnvOptions } from "./env-runtime-options";

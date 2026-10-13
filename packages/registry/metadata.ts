@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { composerIconNames } from "./composer-icons.generated";
+import { z } from "zod";
 
 const CONTRACT_VERSION = 1;
 const REQUIRED_ITEM_COUNT = 1;

@@ -1,63 +1,78 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { auth } from "@/lib/auth";
-import { getEveCreation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
+import { getEveCreation } from "@/lib/db/eve-queries";
 import { eveCopyInput } from "@/lib/eve/copy-input";
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
 
+const MAX_COPY_BODY_BYTES = 2048;
+const COPY_UNAVAILABLE_STATUS = 409;
+const COPY_UNCONFIRMED_STATUS = 503;
+
 const headers = { "cache-control": "no-store" };
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * max-statements (#512): readCopyBody keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): readCopyBody uses 2048 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): readCopyBody accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): readCopyBody preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const readCopyBody = async (request: Request): Promise<unknown> => {
-  const reader = request.body?.getReader();
-  if (!reader) {
+const readCopyBody = async (
+  request: ReadonlyNativeSurface<Pick<Request, "body">>
+): Promise<unknown> => {
+  const body = request.body?.values();
+  if (!body) {
     return null;
   }
   const chunks: Uint8Array[] = [];
   let length = 0;
   try {
-    while (true) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-      const result = await reader.read();
-      if (result.done) {
-        break;
-      }
-      length += result.value.byteLength;
-      if (length > 2048) {
+    // Native iteration releases the reader and cancels on an early return.
+    for await (const chunk of body) {
+      length += chunk.byteLength;
+      if (length > MAX_COPY_BODY_BYTES) {
         return null;
       }
-      chunks.push(result.value);
+      chunks.push(chunk);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
   } catch {
     return null;
-  } finally {
-    try {
-      await reader.cancel();
-    } catch {
-      // Cancellation can reject after the body stream fails.
-    }
-    reader.releaseLock();
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * init-declarations (#507): POST assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): POST uses 409, 503 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): POST uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): POST accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of rejected; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const POST = async (request: Request): Promise<Response> => {
+// Map recovery state without rereading the session, request, or input boundary.
+const copyFailureResponse = (
+  error: unknown,
+  existing:
+    | ReadonlyNativeSurface<Awaited<ReturnType<typeof getEveCreation>>>
+    | undefined
+): Response => {
+  const rejected = Boolean(
+    existing &&
+    (existing.creationKind !== "copy" ||
+      ["deleting", "deleted"].includes(existing.state))
+  );
+  let message = "Saving is unconfirmed. Retry to recover the same copy.";
+  if (error instanceof EveCopyNotReadyError) {
+    ({ message } = error);
+  }
+  if (rejected) {
+    message = "This copy is no longer available.";
+  }
+  return Response.json(
+    {
+      conversationId:
+        existing?.creationKind === "copy" ? existing.id : undefined,
+      error: message,
+      retryable: !rejected,
+    },
+    {
+      headers,
+      status: rejected ? COPY_UNAVAILABLE_STATUS : COPY_UNCONFIRMED_STATUS,
+    }
+  );
+};
+
+export const POST = async (
+  request: ReadonlyNativeSurface<Request>
+): Promise<Response> => {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });
@@ -85,26 +100,6 @@ export const POST = async (request: Request): Promise<Response> => {
     } catch {
       existing = undefined;
     }
-    const rejected =
-      existing &&
-      (existing.creationKind !== "copy" ||
-        ["deleting", "deleted"].includes(existing.state));
-    let message = "Saving is unconfirmed. Retry to recover the same copy.";
-    if (error instanceof EveCopyNotReadyError) {
-      ({ message } = error);
-    }
-    if (rejected) {
-      message = "This copy is no longer available.";
-    }
-    return Response.json(
-      {
-        conversationId:
-          existing?.creationKind === "copy" ? existing.id : undefined,
-        error: message,
-        retryable: !rejected,
-      },
-      { headers, status: rejected ? 409 : 503 }
-    );
+    return copyFailureResponse(error, existing);
   }
 };
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

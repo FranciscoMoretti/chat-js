@@ -1,12 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { GatewaySelection } from "#cli/registry/gateways";
-import { updateEnvironmentExample } from "#cli/utils/environment-example";
-import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
-import { preflight } from "#cli/utils/preflight";
-
 import type { ReadonlyInput } from "./readonly-input";
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+import path from "node:path";
+import { preflight } from "#cli/utils/preflight";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
 
 const JSON_INDENTATION_SPACES = 2;
 const KEYS_EQUAL = 0;
@@ -28,7 +26,10 @@ const sortJsonKeys = (value: unknown): unknown => {
             if (left === right) {
               return KEYS_EQUAL;
             }
-            return left < right ? KEY_BEFORE : KEY_AFTER;
+            if (left < right) {
+              return KEY_BEFORE;
+            }
+            return KEY_AFTER;
           }
         )
         .map(([key, nestedValue]: readonly [string, unknown]) => [
@@ -43,7 +44,6 @@ const sortJsonKeys = (value: unknown): unknown => {
 const serializedDefaults = (
   value: unknown
 ): ReturnType<typeof JSON.stringify> =>
-  // oxlint-disable-next-line unicorn/no-null -- Native null means no JSON replacer while the third argument retains existing sorted, two-space model-default source formatting.
   JSON.stringify(sortJsonKeys(value), null, JSON_INDENTATION_SPACES);
 
 const gatewayEnvVariables = (
@@ -74,8 +74,8 @@ export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definiti
 
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
- * @param destination Project receiving gateway defaults, model snapshot and env keys.
- * @param selection Resolved descriptor with defaults, capabilities and credentials.
+ * @param {string} destination Project receiving gateway defaults, model snapshot and env keys.
+ * @param {ReadonlyInput<GatewaySelection>} selection Resolved descriptor with defaults, capabilities and credentials.
  */
 export const configureGatewayProvider = async (
   destination: string,

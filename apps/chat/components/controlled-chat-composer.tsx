@@ -1,8 +1,6 @@
 "use client";
 
-import type { ChatStatus } from "ai";
-import type { JSX as ReactJSX, ComponentProps, ReactNode } from "react";
-import React from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 
 import {
   PromptInput,
@@ -10,16 +8,24 @@ import {
   PromptInputSubmit,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+
+import type { ChatStatus } from "ai";
+
 import { LexicalChatInput } from "@/components/lexical-chat-input";
+
+import React from "react";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatComposerFooter: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+const MAX_DRAFT_LENGTH = 16_000;
 
 const ChatComposerFooter = ({
   tools,
   actions,
 }: {
-  tools?: ReactNode;
-  actions: ReactNode;
+  readonly tools?: ReadonlyReactNode;
+  readonly actions: ReadonlyReactNode;
 }): React.JSX.Element => (
   <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
     <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
@@ -28,10 +34,25 @@ const ChatComposerFooter = ({
     <div className="flex items-center gap-1">{actions}</div>
   </PromptInputFooter>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ControlledChatComposer: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16_000); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
-/** A controlled composer for runtimes that own their own submission lifecycle. */
+/**
+ * A controlled composer for runtimes that own their own submission lifecycle.
+ *
+ * @param {string} draft Current text controlled by the runtime.
+ * @param {(draft: string) => void} onDraftChange Writes text changes back to the runtime.
+ * @param {() => void} onSubmit Submits the current draft.
+ * @param {boolean} disabled Disables editing and submission.
+ * @param {ChatStatus | undefined} status Runtime-owned status value.
+ * @param {(() => void) | undefined} onStop Cancels the active submission.
+ * @param {boolean | undefined} stopDisabled Runtime-owned stopDisabled value.
+ * @param {boolean | undefined} autoFocus Focuses the input on mount.
+ * @param {ReadonlyReactNode | undefined} tools Tool controls in the footer.
+ * @param {ReadonlyReactNode | undefined} attachments Current attached files.
+ * @param {boolean | undefined} hasAttachments Runtime-owned hasAttachments value.
+ * @param {boolean | undefined} readOnly Runtime-owned readOnly value.
+ * @param {ComponentProps<typeof LexicalChatInput>["onPaste"] | undefined} onPaste Runtime-owned onPaste value.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const ControlledChatComposer = ({
   draft,
   onDraftChange,
@@ -47,26 +68,26 @@ export const ControlledChatComposer = ({
   readOnly = false,
   onPaste,
 }: {
-  attachments?: ReactNode;
-  hasAttachments?: boolean;
-  readOnly?: boolean;
-  onPaste?: ComponentProps<typeof LexicalChatInput>["onPaste"];
-  draft: string;
-  onDraftChange: (draft: string) => void;
-  onSubmit: () => void;
-  disabled: boolean;
-  status?: ChatStatus;
-  onStop?: () => void;
-  stopDisabled?: boolean;
-  autoFocus?: boolean;
-  tools?: ReactNode;
+  readonly attachments?: ReadonlyReactNode;
+  readonly hasAttachments?: boolean;
+  readonly readOnly?: boolean;
+  readonly onPaste?: ComponentProps<typeof LexicalChatInput>["onPaste"];
+  readonly draft: string;
+  readonly onDraftChange: (draft: string) => void;
+  readonly onSubmit: () => void;
+  readonly disabled: boolean;
+  readonly status?: ChatStatus;
+  readonly onStop?: () => void;
+  readonly stopDisabled?: boolean;
+  readonly autoFocus?: boolean;
+  readonly tools?: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const isMobile = useIsMobile();
   const busy = status === "submitted" || status === "streaming";
   const canSend =
     !disabled &&
     (Boolean(draft.trim()) || hasAttachments) &&
-    draft.length <= 16_000;
+    draft.length <= MAX_DRAFT_LENGTH;
   const submit = (): void => {
     if (canSend) {
       onSubmit();
@@ -76,7 +97,7 @@ export const ControlledChatComposer = ({
     <PromptInput
       className="@container relative transition-colors"
       inputGroupClassName="bg-muted dark:bg-muted"
-      onSubmit={(event) => {
+      onSubmit={(event: { readonly preventDefault: () => void }) => {
         event.preventDefault();
         submit();
       }}
@@ -84,12 +105,15 @@ export const ControlledChatComposer = ({
       {attachments}
       <LexicalChatInput
         aria-label="Message"
-        // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: The caller owns initial focus; this shared composer defaults autoFocus to false.
         autoFocus={autoFocus}
         className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
         data-testid="multimodal-input"
         initialValue={draft}
-        onEnterSubmit={(event) => {
+        onEnterSubmit={(
+          event: Readonly<
+            Pick<KeyboardEvent, "isComposing" | "ctrlKey" | "shiftKey">
+          >
+        ) => {
           if (
             event.isComposing ||
             !(isMobile ? event.ctrlKey : !event.shiftKey)
@@ -114,7 +138,7 @@ export const ControlledChatComposer = ({
             aria-label={busy && onStop ? "Stop" : "Send"}
             className="size-8 shrink-0 @[500px]:size-10"
             disabled={busy && onStop ? stopDisabled : !canSend}
-            onClick={(event) => {
+            onClick={(event: { readonly preventDefault: () => void }) => {
               event.preventDefault();
               if (busy && onStop) {
                 onStop();
@@ -127,7 +151,7 @@ export const ControlledChatComposer = ({
         }
         tools={tools}
       />
-      {draft.length > 16_000 && (
+      {draft.length > MAX_DRAFT_LENGTH && (
         <p className="text-destructive px-3 text-sm" role="alert">
           Messages must be at most 16,000 characters.
         </p>
@@ -135,4 +159,3 @@ export const ControlledChatComposer = ({
     </PromptInput>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

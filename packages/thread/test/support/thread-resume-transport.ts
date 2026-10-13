@@ -1,7 +1,7 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-import type { ReadonlyDeep } from "./readonly-types";
 import { ControlledTransport } from "./thread-controlled-transport";
+import type { ReadonlyDeep } from "./readonly-types";
 
 const SDK_PARAMETER_INDEX = 0;
 

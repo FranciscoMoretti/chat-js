@@ -1,13 +1,11 @@
 "use client";
 
-import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Label: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Label = ({
   className,
@@ -22,6 +20,5 @@ const Label = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Label };

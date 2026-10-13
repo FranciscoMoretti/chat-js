@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
@@ -49,7 +49,6 @@ const createFixture = async (
   ]);
   return { destination, packageDir, patchPath, root };
 };
-
 test("retains template and published package metadata while pinning the maintained archive", async () => {
   const fixture = await createFixture();
   try {
@@ -78,7 +77,6 @@ test("retains template and published package metadata while pinning the maintain
     await rm(fixture.root, { force: true, recursive: true });
   }
 });
-
 for (const installed of [
   "[]",
   '{"name":"maintained","version":"different"}',

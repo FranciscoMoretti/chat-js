@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { UiToolName } from "@/lib/ai/types";
-
-import { createConversationInput } from "./contracts";
 import type { EveForkInput, EveForkKind } from "./contracts";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+import type { UiToolName } from "@/lib/ai/types";
+import { createConversationInput } from "./contracts";
 import { eveResponseGroupInput } from "./response-group-input";
+import { z } from "zod";
 
 const SINGLE_MODEL_COUNT = 1;
 const FIRST_MODEL_INDEX = 0;
@@ -21,33 +21,30 @@ type CreationScope =
   | { conversationId: string; projectId?: never }
   | { projectId: string; conversationId?: never };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): keyFor intentionally keeps the existing falsy-value behavior of scope?.conversationId; scope?.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
-  if (scope?.conversationId) {
+
+  if (scope && isNonEmptyString(scope.conversationId)) {
     suffix = `:fork:${scope.conversationId}`;
-  } else if (scope?.projectId) {
+  } else if (scope && isNonEmptyString(scope.projectId)) {
     suffix = `:project:${scope.projectId}`;
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): readCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): readCreationRequest intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
   scope?: Readonly<CreationScope>
 ): z.output<typeof creationRequest> | undefined => {
   const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
-};
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params -- max-params (#511): prepareResponseGroupCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
+  if (stored !== null && stored !== "") {
+    return creationRequest.parse(JSON.parse(stored));
+  }
+  return undefined;
+};
+
 const prepareResponseGroupCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -82,7 +79,6 @@ const prepareResponseGroupCreation = (
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
   return request;
 };
-/* oxlint-enable max-params */
 
 const readCreation = (
   storage: StorageAccess,
@@ -98,7 +94,6 @@ const readCreation = (
   return request;
 };
 
-/* oxlint-disable max-params -- max-params (#511): prepareCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -132,9 +127,7 @@ const prepareCreation = (
   storage.setItem(key, JSON.stringify(pending.data));
   return pending.data;
 };
-/* oxlint-enable max-params */
 
-/* oxlint-disable max-params -- max-params (#511): prepareSelectedCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareSelectedCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -147,25 +140,26 @@ const prepareSelectedCreation = (
   if (saved) {
     return saved;
   }
-  return modelIds.length > SINGLE_MODEL_COUNT
-    ? prepareResponseGroupCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds,
-        scope,
-        selectedTool
-      )
-    : prepareCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds[FIRST_MODEL_INDEX],
-        scope,
-        selectedTool
-      );
+
+  if (modelIds.length > SINGLE_MODEL_COUNT) {
+    return prepareResponseGroupCreation(
+      storage,
+      ownerId,
+      draft,
+      modelIds,
+      scope,
+      selectedTool
+    );
+  }
+  return prepareCreation(
+    storage,
+    ownerId,
+    draft,
+    modelIds[FIRST_MODEL_INDEX],
+    scope,
+    selectedTool
+  );
 };
-/* oxlint-enable max-params */
 
 const finishCreation = (
   storage: StorageAccess,
@@ -175,15 +169,13 @@ const finishCreation = (
   storage.removeItem(keyFor(ownerId, scope));
 };
 
-/* oxlint-disable max-params, no-undefined --max-params (#511): moveRejectedProjectCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.*/
 /**
  * Moves a definitively rejected project request into New Chat under a fresh operation.
- * @param storage Browser storage holding the original project draft and any New Chat draft.
- * @param ownerId Owner whose pending draft namespace must be preserved.
- * @param projectId Project scope containing the rejected request.
- * @param operationId Original operation checked before moving or deleting its stored draft.
- * @returns A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
+ * @param {string} ownerId Owner whose pending draft namespace must be preserved.
+ * @param {string} projectId Project scope containing the rejected request.
+ * @param {string} operationId Original operation checked before moving or deleting its stored draft.
+ * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
  */
 const moveRejectedProjectCreation = (
   storage: StorageAccess,
@@ -222,7 +214,6 @@ const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
-/* oxlint-enable max-params, no-undefined */
 export {
   finishCreation,
   moveRejectedProjectCreation,

@@ -1,12 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, expect, test, vi } from "vitest";
-
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
 import type { CodeExecutor } from "./code-executor";
-/* oxlint-enable import/no-relative-parent-imports */
+import { executeEveCodeDocument } from "@/tools/chatjs/saved-code-execution/execute";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn<CodeExecutor>(),
@@ -19,16 +14,14 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): vi.mock("../../tools/chatjs/code-executor") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../../tools/chatjs/code-executor")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("../../tools/chatjs/code-executor", () => ({
-  get codeExecutor() {
-    return mocks.settings.installed ? mocks.execute : undefined;
+  get codeExecutor(): typeof mocks.execute | undefined {
+    if (mocks.settings.installed) {
+      return mocks.execute;
+    }
+    return undefined;
   },
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {
@@ -78,9 +71,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("executes owned saved source once, exposing only execution context and preservin uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
   const context = testToolContext();
   const results = await Array.fromAsync(
@@ -106,11 +96,7 @@ test("executes owned saved source once, exposing only execution context and pres
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/max-nested-calls --
- * unicorn/max-nested-calls (#568): test.each([ "allowed", "documentInstalled", "installed", "toolInstalled", ] as const) keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test.each([
   "allowed",
   "documentInstalled",
@@ -118,41 +104,28 @@ test.each([
   "toolInstalled",
 ] as const)("enforces the %s gate", async (gate) => {
   mocks.settings[gate] = false;
-  await expect(
-    Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
-  ).rejects.toThrow();
+  const execution = executeEveCodeDocument(input, testToolContext());
+  await expect(Array.fromAsync(execution)).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable no-undefined, unicorn/max-nested-calls --
- * no-undefined (#519): test("never executes a revision outside the resolved conversation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/max-nested-calls (#568): test("never executes a revision outside the resolved conversation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("never executes a revision outside the resolved conversation", async () => {
-  mocks.read.mockResolvedValue(undefined);
-  await expect(
-    Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
-  ).rejects.toThrow("Code document not found");
+  mocks.read.mockResolvedValue(null);
+  const execution = executeEveCodeDocument(input, testToolContext());
+  await expect(Array.fromAsync(execution)).rejects.toThrow(
+    "Code document not found"
+  );
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined, unicorn/max-nested-calls */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
- * unicorn/max-nested-calls (#568): test("cancellation prevents execution and an error receipt is forwarded once") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("cancellation prevents execution and an error receipt is forwarded once") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("cancellation prevents execution and an error receipt is forwarded once", async () => {
   const controller = new AbortController();
   controller.abort();
-  await expect(
-    Array.fromAsync(
-      executeEveCodeDocument(
-        input,
-        testToolContext({ abortSignal: controller.signal })
-      )
-    )
-  ).rejects.toThrow();
+  const execution = executeEveCodeDocument(
+    input,
+    testToolContext({ abortSignal: controller.signal })
+  );
+  await expect(Array.fromAsync(execution)).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
   const receipt = {
     error: "Execution failed",
@@ -163,8 +136,8 @@ test("cancellation prevents execution and an error receipt is forwarded once", a
     version: 1,
   } as const;
   mocks.execute.mockResolvedValue(receipt);
-  expect(
-    await Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
-  ).toEqual([receipt]);
+  const results = await Array.fromAsync(
+    executeEveCodeDocument(input, testToolContext())
+  );
+  expect(results).toEqual([receipt]);
 });
-/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */

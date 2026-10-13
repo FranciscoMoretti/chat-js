@@ -1,7 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
-
-import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
+import { toolDefinitionSchema } from "./metadata";
 
 const codeExecutionRuntimeItem: RegistryItem = {
   files: ["python.ts", "javascript.ts", "types.ts"].map((file) => ({

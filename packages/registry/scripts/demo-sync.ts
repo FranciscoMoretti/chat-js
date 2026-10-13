@@ -1,62 +1,27 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import fs, {
   mkdir,
   mkdtemp,
   readFile,
   readdir,
-  rm,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-
-import { format } from "oxfmt";
-import ultracite from "ultracite/oxfmt";
-import { z } from "zod";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { ReadonlyInput } from "../../cli/src/helpers/readonly-input";
 import { configureGatewayProvider } from "../../cli/src/helpers/gateway-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { configureStorageProvider } from "../../cli/src/helpers/storage-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../../cli/src/registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../../cli/src/registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../../cli/src/registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { planInstallation } from "../../cli/src/utils/installation-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { preflight } from "../../cli/src/utils/preflight";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncFeatures } from "../../cli/src/utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../../cli/src/utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import demoFormatConfig from "../../../apps/chat/oxfmt.config";
 import { demoInstallation } from "../installation";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { format } from "oxfmt";
+import { installItems } from "../../cli/src/registry/shadcn";
+import path from "node:path";
+import { planInstallation } from "../../cli/src/utils/installation-plan";
+import { preflight } from "../../cli/src/utils/preflight";
 import { registry } from "../registry";
-/* oxlint-enable import/no-relative-parent-imports */
+import { resolveGateway } from "../../cli/src/registry/gateways";
+import { resolveStorage } from "../../cli/src/registry/storage";
+import { syncFeatures } from "../../cli/src/utils/sync-features";
+import { syncTools } from "../../cli/src/utils/sync-tools";
+import { tmpdir } from "node:os";
+import { z } from "zod";
 
 // Explicit demo exceptions, scoped to one value/import. Everything else is checked.
 const demoSource = (file: string, source: string): string => {
@@ -70,13 +35,19 @@ const demoSource = (file: string, source: string): string => {
   return source;
 };
 
+const NO_FORMATTING_ERRORS = 0;
+const URL_PATH_PREFIX_WIDTH = 1;
+const NO_ROLLBACK_FAILURES = 0;
+const NO_FILE_CHANGES = 0;
+const DEMO_STAGING_CONCURRENCY = 4;
+const CLI_ARGUMENTS_OFFSET = 2;
+
 const registryRoot = path.resolve(import.meta.dir, "..");
 
 const demoRoot = path.resolve(registryRoot, "../../apps/chat");
 
 const baselinePath = path.join(registryRoot, "demo-baseline.json");
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatted = async (file: string, content: string): Promise<string> => {
   if (
     content.startsWith("// Generated by chat-js sync.") &&
@@ -84,16 +55,14 @@ const formatted = async (file: string, content: string): Promise<string> => {
   ) {
     return content;
   }
-  const result = await format(file, content, ultracite);
-  if (result.errors.length > 0) {
+  const result = await format(file, content, demoFormatConfig);
+  if (result.errors.length > NO_FORMATTING_ERRORS) {
     throw new Error(`Could not format demo source: ${file}`);
   }
   return result.code;
 };
-/* oxlint-enable eslint/no-magic-numbers */
 const digest = (content: string): string =>
-  createHash("sha256").update(content).digest("hex");
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+  new Bun.CryptoHasher("sha256").update(content).digest("hex");
 const optionalRead = async (file: string): Promise<string | null> => {
   try {
     return await readFile(file, "utf-8");
@@ -104,33 +73,29 @@ const optionalRead = async (file: string): Promise<string | null> => {
     throw error;
   }
 };
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const filesBelow = async (
   directory: string,
   prefix = ""
 ): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       const file = path.posix.join(prefix, entry.name);
-      return entry.isDirectory()
-        ? await filesBelow(path.join(directory, entry.name), file)
-        : [file];
+
+      if (entry.isDirectory()) {
+        return await filesBelow(path.join(directory, entry.name), file);
+      }
+      return [file];
     })
   );
   return nested.flat();
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Install canonical sources through the CLI's planner and shadcn transforms. */
+/**
+ * Install canonical sources through the CLI's planner and shadcn transforms.
+ * @returns {Promise<Map<string, string>>} Canonical relative paths and their installed source contents.
+ */
 const generateDemo = async (): Promise<Map<string, string>> => {
   const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-demo-"));
   let stopServer: (() => void) | undefined;
@@ -138,46 +103,64 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     // This source-only registry retains registry dependencies, but omits package
     // installation: the demo already owns its workspace dependency manifest.
     const items = await Promise.all(
-      // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
-      registry.items.map(async (item) => {
-        const files = await Promise.all(
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
-          (item.files ?? []).map(async (file) => ({
-            ...file,
-            content: await readFile(
-              path.join(registryRoot, file.path),
-              "utf-8"
-            ),
-          }))
-        );
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-        const metadata = item.meta?.chatjs;
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-        if (metadata?.kind === "tool" || metadata?.kind === "feature") {
-          const target =
-            // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-            metadata.kind === "tool"
-              ? `~/tools/chatjs/${item.name}/chatjs.json`
-              : `~/features/${item.name}/chatjs.json`;
-          files.push({
-            content: await formatted(target, JSON.stringify(metadata)),
-            path: `${item.name}.json`,
-            target,
-            type: "registry:file",
-          });
+      registry.items.map(
+        async (item: ReadonlyInput<(typeof registry.items)[number]>) => {
+          const files = await Promise.all(
+            (item.files ?? []).map(
+              async (
+                file: ReadonlyInput<
+                  NonNullable<(typeof registry.items)[number]["files"]>[number]
+                >
+              ) => ({
+                ...file,
+                content: await readFile(
+                  path.join(registryRoot, file.path),
+                  "utf-8"
+                ),
+              })
+            )
+          );
+          const itemMeta: unknown = item.meta;
+          const metadata: unknown =
+            typeof itemMeta === "object" &&
+            itemMeta &&
+            "chatjs" in itemMeta &&
+            itemMeta.chatjs;
+          if (
+            typeof metadata === "object" &&
+            metadata &&
+            "kind" in metadata &&
+            (metadata.kind === "tool" || metadata.kind === "feature")
+          ) {
+            const target =
+              metadata.kind === "tool"
+                ? `~/tools/chatjs/${item.name}/chatjs.json`
+                : `~/features/${item.name}/chatjs.json`;
+            files.push({
+              content: await formatted(target, JSON.stringify(metadata)),
+              path: `${item.name}.json`,
+              target,
+              type: "registry:file",
+            });
+          }
+          return { ...item, dependencies: [], devDependencies: [], files };
         }
-        return { ...item, dependencies: [], devDependencies: [], files };
-      })
+      )
     );
     const server = Bun.serve({
-      fetch(request) {
+      fetch(request: Readonly<Pick<Request, "url">>) {
         const name = new URL(request.url).pathname
-          .slice(1)
+          .slice(URL_PATH_PREFIX_WIDTH)
           .replace(/\.json$/u, "");
-        const item = items.find((candidate) => candidate.name === name);
-        return item
-          ? Response.json(item)
-          : new Response("Not found", { status: 404 });
+        const item = items.find(
+          (candidate: ReadonlyInput<(typeof items)[number]>) =>
+            candidate.name === name
+        );
+
+        if (item) {
+          return Response.json(item);
+        }
+        return new Response("Not found", { status: 404 });
       },
       hostname: "127.0.0.1",
       port: 0,
@@ -186,14 +169,21 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     stopServer = (): void => {
       void server.stop(true);
     };
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    const components = JSON.parse(
+    const parsedComponents: unknown = JSON.parse(
       await readFile(path.join(demoRoot, "components.json"), "utf-8")
     );
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- The demo installer edits generated shadcn configuration while preserving its extensible registry metadata.
-    components.registries = {
-      "@chatjs": `http://127.0.0.1:${server.port}/{name}.json`,
-    };
+    if (
+      typeof parsedComponents !== "object" ||
+      parsedComponents === null ||
+      Array.isArray(parsedComponents)
+    ) {
+      throw new Error("Demo components.json must contain an object");
+    }
+    const components = Object.assign(parsedComponents, {
+      registries: {
+        "@chatjs": `http://127.0.0.1:${server.port}/{name}.json`,
+      },
+    });
     await mkdir(path.join(temporary, "app"), { recursive: true });
     await Promise.all([
       writeFile(
@@ -232,9 +222,13 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     await syncTools(temporary, { expected: plan.expected });
     // Composer/settings ordering is application-owned; never initialize or add UI here.
     await syncFeatures(temporary, {
-      expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+      expectedMcp: plan.features.some(
+        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
+          feature.id === "mcp"
+      ),
       expectedUploads: plan.features.some(
-        (feature) => feature.id === "attachment-uploads"
+        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
+          feature.id === "attachment-uploads"
       ),
     });
     // Narrow application-owned exceptions: model catalog is fetched separately;
@@ -268,16 +262,12 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     const output = new Map(copies);
     return output;
   } finally {
-    stopServer?.();
+    if (stopServer) {
+      stopServer();
+    }
     await fs.rm(temporary, { force: true, recursive: true });
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable eslint/max-statements */
 
 const DEMO_BASELINE_VERSION = 1;
 
@@ -286,19 +276,17 @@ const baselineSchema = z.strictObject({
   version: z.literal(DEMO_BASELINE_VERSION),
 });
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Stage every write before replacing files; retain originals until the baseline commits. */
+type DemoWrite = Readonly<{ target: string; content: string; exists: boolean }>;
+
+/**
+ * Stage every write before replacing files; retain originals until the baseline commits.
+ * @param {readonly DemoWrite[]} updates Ordered destination writes, with the baseline committed last.
+ */
 const replaceDemoFiles = async (
-  updates: readonly {
-    readonly target: string;
-    readonly content: string;
-    readonly exists: boolean;
-  }[]
+  updates: readonly DemoWrite[]
 ): Promise<void> => {
   const staged: {
+    order: number;
     target: string;
     directory: string;
     exists: boolean;
@@ -307,17 +295,37 @@ const replaceDemoFiles = async (
   }[] = [];
   let retainBackups = false;
   try {
-    for (const update of updates) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Stage all outputs before replacing any destination.
-      await mkdir(path.dirname(update.target), { recursive: true });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Temporary files must share the destination filesystem.
-      const directory = await mkdtemp(
-        path.join(path.dirname(update.target), ".demo-sync-")
+    for (
+      let offset = 0;
+      offset < updates.length;
+      offset += DEMO_STAGING_CONCURRENCY
+    ) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound staging to four files and drain every allocated write before rollback/cleanup can begin.
+      const batch = await Promise.allSettled(
+        updates
+          .slice(offset, offset + DEMO_STAGING_CONCURRENCY)
+          .map(async (update, index) => {
+            await fs.mkdir(path.dirname(update.target), { recursive: true });
+            const directory = await fs.mkdtemp(
+              path.join(path.dirname(update.target), ".demo-sync-")
+            );
+            staged.push({
+              ...update,
+              backedUp: false,
+              directory,
+              installed: false,
+              order: offset + index,
+            });
+            await fs.writeFile(path.join(directory, "next"), update.content);
+          })
       );
-      staged.push({ ...update, backedUp: false, directory, installed: false });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete each staged file before advancing to the next replacement.
-      await writeFile(path.join(directory, "next"), update.content);
+      for (const result of batch) {
+        if (result.status === "rejected") {
+          throw result.reason;
+        }
+      }
     }
+    staged.sort((left, right) => left.order - right.order);
     for (const update of staged) {
       if (update.exists) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Keep originals for rollback until all replacements succeed.
@@ -334,7 +342,7 @@ const replaceDemoFiles = async (
       try {
         if (update.installed) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Restore replacements in reverse commit order.
-          await rm(update.target);
+          await fs.rm(update.target);
         }
         if (update.backedUp) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Restore each original sequentially before rolling back the preceding committed file.
@@ -347,7 +355,7 @@ const replaceDemoFiles = async (
         failures.push(rollbackError);
       }
     }
-    if (failures.length > 0) {
+    if (failures.length > NO_ROLLBACK_FAILURES) {
       retainBackups = true;
       throw new AggregateError(
         [error, ...failures],
@@ -359,34 +367,27 @@ const replaceDemoFiles = async (
   } finally {
     if (!retainBackups) {
       await Promise.all(
-        // oxlint-disable-next-line typescript/promise-function-async -- Pass the Node rm promise directly to Promise.all without an extra async wrapper.
-        staged.map((update: Readonly<(typeof staged)[number]>) =>
-          rm(update.directory, { force: true, recursive: true })
-        )
+        staged.map(async (update: Readonly<(typeof staged)[number]>) => {
+          await fs.rm(update.directory, { force: true, recursive: true });
+        })
       );
     }
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/** Check all files before writing any: a failed protection check never partially syncs. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The read-only expected map uses standard-library iterator tuple types; syncDemo only reads entries and never changes the caller map.
-const syncDemo = async (options: {
-  readonly root: string;
-  readonly baseline: string;
-  readonly expected: ReadonlyMap<string, string>;
-  readonly check?: boolean;
-  readonly discard?: boolean;
-}): Promise<void> => {
+type DemoSyncOptions = Readonly<{
+  root: string;
+  baseline: string;
+  expected: Pick<ReadonlyMap<string, string>, "get" | "has" | "keys">;
+  check?: boolean;
+  discard?: boolean;
+}>;
+
+/**
+ * Check all files before writing any: a failed protection check never partially syncs.
+ * @param {DemoSyncOptions} options Destination, baseline, canonical source and protection options.
+ */
+const syncDemo = async (options: DemoSyncOptions): Promise<void> => {
   const { root, baseline, expected, check = false, discard = false } = options;
   await preflight(path.dirname(baseline), [path.basename(baseline)]);
   const previous = await optionalRead(baseline);
@@ -394,9 +395,13 @@ const syncDemo = async (options: {
     typeof previous === "string" && previous !== ""
       ? baselineSchema.parse(JSON.parse(previous))
       : null;
-  const files = [
-    ...new Set([...expected.keys(), ...Object.keys(record?.files ?? {})]),
-  ].toSorted();
+  const fileSet = new Set(expected.keys());
+  if (record !== null) {
+    for (const file of Object.keys(record.files ?? {})) {
+      fileSet.add(file);
+    }
+  }
+  const files = [...fileSet].toSorted();
   await preflight(root, files);
   const current = new Map(
     await Promise.all(
@@ -413,17 +418,19 @@ const syncDemo = async (options: {
       return false;
     }
     const hash = content === null ? null : digest(content);
-    return record?.files[file]
-      ? hash !== record.files[file]
-      : content !== null && content !== expected.get(file);
+
+    if (record !== null && record.files[file]) {
+      return hash !== record.files[file];
+    }
+    return content !== null && content !== expected.get(file);
   });
-  if (edited.length > 0 && !discard) {
+  if (edited.length > NO_FILE_CHANGES && !discard) {
     throw new Error(
       `Edited registry-owned demo files:\n${edited.join("\n")}\nMove changes upstream or explicitly regenerate with bun demo:sync --discard.`
     );
   }
   const staleOwnership = files.filter((file) => !expected.has(file));
-  if (staleOwnership.length > 0) {
+  if (staleOwnership.length > NO_FILE_CHANGES) {
     throw new Error(
       `Preset removed owned files; removal is outside demo sync scope:\n${staleOwnership.join("\n")}`
     );
@@ -443,7 +450,7 @@ const syncDemo = async (options: {
   );
   const baselineDrift = previous !== baselineContent;
   if (check) {
-    if (drift.length > 0 || baselineDrift) {
+    if (drift.length > NO_FILE_CHANGES || baselineDrift) {
       throw new Error(
         `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
       );
@@ -459,16 +466,9 @@ const syncDemo = async (options: {
     { content: baselineContent, exists: previous !== null, target: baseline },
   ]);
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 if (import.meta.main) {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(CLI_ARGUMENTS_OFFSET);
   if (
     args.some((arg) => arg !== "--check" && arg !== "--discard") ||
     (args.includes("--check") && args.includes("--discard"))
@@ -484,6 +484,4 @@ if (import.meta.main) {
   });
 }
 
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-/* oxlint-enable eslint/no-magic-numbers */
 export { baselinePath, demoRoot, demoSource, generateDemo, syncDemo };

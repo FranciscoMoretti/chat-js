@@ -1,8 +1,5 @@
 "use client";
 
-import React from "react";
-import type { ComponentProps } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -10,11 +7,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { ComponentProps } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 type ActionsProps = ComponentProps<"div">;
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Actions: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ActionsProps). */
 
 const Actions = ({
   className,
@@ -25,14 +22,11 @@ const Actions = ({
     {children}
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
 };
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Action: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types */
 
 const Action = ({
   tooltip,
@@ -76,6 +70,5 @@ const Action = ({
 
   return button;
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { Action, Actions };
 export type { ActionProps, ActionsProps };

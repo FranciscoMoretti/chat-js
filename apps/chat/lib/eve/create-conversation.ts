@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { retryEveAdmission } from "./admission-retry";
 import { conversationBinding } from "./contracts";
 import type { createConversationInput } from "./contracts";
@@ -14,19 +16,17 @@ class CreationRejectedError extends Error {
   }
 }
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
-max-lines-per-function (#510): requestConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): requestConversation uses 30_000, 503, 400, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): requestConversation accepts operation: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 /** A timeout is ambiguous: callers must retain the operation until it is bound.
- * @param operation Immutable creation intent reused for admission and recovery retries.
- * @returns The conversation and native session identities accepted for this operation.
+ * @param {z.infer<typeof createConversationInput>} operation Immutable creation intent reused for admission and recovery retries.
+ * @returns {Promise<z.infer<typeof conversationBinding>>} The conversation and native session identities accepted for this operation.
  */
 const requestConversation = async (
-  operation: z.infer<typeof createConversationInput>
+  operation: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>
 ): Promise<z.infer<typeof conversationBinding>> => {
   const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), 30_000);
+  const deadline = setTimeout(() => {
+    controller.abort();
+  }, 30_000);
   try {
     return await retryEveAdmission(async () => {
       const response = await fetch("/api/agent-conversations", {
@@ -75,5 +75,4 @@ const requestConversation = async (
     clearTimeout(deadline);
   }
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { CreationRejectedError, requestConversation };

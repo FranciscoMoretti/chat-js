@@ -1,22 +1,17 @@
 #!/usr/bin/env bun
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
-/* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/scaffold-content import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import {
+  normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
-  normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/vendor-patched-package import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
-/* oxlint-enable import/no-relative-parent-imports */
 import { collectSnapshot } from "./sync-template-snapshot";
+import { parseJsonObject } from "../packages/cli/src/helpers/json-object";
+import { parsePackageJson } from "../packages/cli/src/helpers/package-manifest";
+import path from "node:path";
+import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
+import { tmpdir } from "node:os";
+import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 
 const join = (...segments: readonly string[]): string => path.join(...segments);
 const relative = (from: string, to: string): string => path.relative(from, to);
@@ -66,18 +61,12 @@ const TEMPLATE_STRIPPED_IMPORTS = [
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
-/* oxlint-disable eslint/max-statements -- applyTemplateTransforms: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/max-lines-per-function -- applyTemplateTransforms: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable unicorn/no-null -- applyTemplateTransforms: The SDK/wire/OS contract uses null as an explicit absence value. */
-const applyTemplateTransforms = async (destination: string): Promise<void> => {
-  await normalizeScaffoldContent(destination);
-
+const removeTemplateReferences = async (destination: string): Promise<void> => {
   // Delete excluded files
   await Promise.all(
-    TEMPLATE_REMOVED_FILES.map(
-      async (file): Promise<void> =>
-        await rm(join(destination, file), { force: true })
-    )
+    TEMPLATE_REMOVED_FILES.map(async (file): Promise<void> => {
+      await rm(join(destination, file), { force: true });
+    })
   );
 
   // Strip imports that reference removed files
@@ -92,7 +81,9 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     content = content.replaceAll(/\s*<GitHubLink \/>/gu, "");
     await writeFile(headerPath, content);
   }
+};
 
+const rewriteTemplateStyles = async (destination: string): Promise<void> => {
   // Replace monorepo-aware @source paths with single-app path in globals.css
   const globalsCssPath = join(destination, "app", "globals.css");
   let globalsCss = await readFile(globalsCssPath, "utf-8");
@@ -101,7 +92,28 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     '@source "../node_modules/streamdown/dist/*.js";'
   );
   await writeFile(globalsCssPath, globalsCss);
+};
 
+const stampTemplateManifest = async (destination: string): Promise<void> => {
+  const rootPackageJson = parsePackageJson(
+    await readFile(rootPackageJsonPath, "utf-8")
+  );
+  const packageJsonPath = join(destination, "package.json");
+  const packageJson = parseJsonObject(
+    await readFile(packageJsonPath, "utf-8"),
+    "Template package.json"
+  );
+  packageJson.packageManager = rootPackageJson.packageManager;
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
+  );
+};
+
+const applyTemplateTransforms = async (destination: string): Promise<void> => {
+  await normalizeScaffoldContent(destination);
+  await removeTemplateReferences(destination);
+  await rewriteTemplateStyles(destination);
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
@@ -116,25 +128,8 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     ),
   });
 
-  // Stamp the template with the monorepo-controlled Bun version at build time.
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These repository-owned package manifests use the packageManager string contract; retain all unrelated JSON fields.
-  const rootPackageJson = JSON.parse(
-    await readFile(rootPackageJsonPath, "utf-8")
-  ) as { packageManager?: string };
-  const packageJsonPath = join(destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The generated template manifest retains arbitrary package fields while stamping the known packageManager field.
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-    packageManager?: string;
-  };
-  packageJson.packageManager = rootPackageJson.packageManager;
-  await writeFile(
-    packageJsonPath,
-    `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
-  );
+  await stampTemplateManifest(destination);
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const applyElectronTemplateTransforms = async (
   destination: string
@@ -161,7 +156,6 @@ const applyElectronTemplateTransforms = async (
   );
   await writeFile(packageJsonPath, packageJson);
 };
-
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
@@ -171,7 +165,6 @@ const copyElectronTemplate = async (destination: string): Promise<void> => {
   });
   await applyElectronTemplateTransforms(destination);
 };
-
 const copyTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
@@ -180,34 +173,11 @@ const copyTemplate = async (destination: string): Promise<void> => {
   });
   await applyTemplateTransforms(destination);
 };
-
-/* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
-const assertSynced = async (
+const reportSnapshotParity = (
   label: string,
-  actualDir: string,
-  copyFn: (dest: string) => Promise<void>
-): Promise<boolean> => {
-  const templateStats = await stat(actualDir).catch(() => null);
-  if (templateStats?.isDirectory() !== true) {
-    console.error(
-      `${label}: template folder missing. Run \`bun template:sync\`.`
-    );
-    return false;
-  }
-
-  const tempParent = await mkdtemp(join(tmpdir(), "chat-template-"));
-  const tempDir = join(tempParent, label);
-  await copyFn(tempDir);
-
-  const [expectedSnapshot, actualSnapshot] = await Promise.all([
-    collectSnapshot(tempDir),
-    collectSnapshot(actualDir),
-  ]);
-
-  await rm(tempParent, { force: true, recursive: true });
-
+  expectedSnapshot: Readonly<Pick<Map<string, string>, "entries">>,
+  actualSnapshot: Readonly<Pick<Map<string, string>, "entries">>
+): boolean => {
   const expectedEntries = [...expectedSnapshot.entries()].toSorted(
     (
       [leftPath]: readonly [string, string],
@@ -230,11 +200,34 @@ const assertSynced = async (
   console.log(`${label}: template is synced.`);
   return true;
 };
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-console -- sync-template.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
+const assertSynced = async (
+  label: string,
+  actualDir: string,
+  copyFn: (dest: string) => Promise<void>
+): Promise<boolean> => {
+  const templateStats = await stat(actualDir).catch(() => null);
+  if (!templateStats || !templateStats.isDirectory()) {
+    console.error(
+      `${label}: template folder missing. Run \`bun template:sync\`.`
+    );
+    return false;
+  }
+
+  const tempParent = await mkdtemp(join(tmpdir(), "chat-template-"));
+  const tempDir = join(tempParent, label);
+  await copyFn(tempDir);
+
+  const [expectedSnapshot, actualSnapshot] = await Promise.all([
+    collectSnapshot(tempDir),
+    collectSnapshot(actualDir),
+  ]);
+
+  await rm(tempParent, { force: true, recursive: true });
+
+  return reportSnapshotParity(label, expectedSnapshot, actualSnapshot);
+};
+
 if (isCheck) {
   const results = await Promise.all([
     assertSynced("chat-app", templateDir, copyTemplate),
@@ -249,4 +242,3 @@ if (isCheck) {
   await copyElectronTemplate(electronTemplateDir);
   console.log("Synced templates/electron from apps/electron.");
 }
-/* oxlint-enable eslint/no-console */

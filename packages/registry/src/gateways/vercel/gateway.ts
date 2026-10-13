@@ -1,10 +1,7 @@
-import { createGateway } from "@ai-sdk/gateway";
-import type { gateway } from "@ai-sdk/gateway";
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
@@ -12,9 +9,12 @@ import {
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
+
+import { createGateway } from "@ai-sdk/gateway";
+import type { gateway } from "@ai-sdk/gateway";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
 type VercelImageModelId = Parameters<
@@ -23,37 +23,28 @@ type VercelImageModelId = Parameters<
 type VercelVideoModelId = Parameters<
   (typeof gateway)["videoModel"]
 >[typeof MODEL_ID_PARAMETER_INDEX];
-type VercelLanguageModelId = StrictLiterals<
-  Parameters<(typeof gateway)["languageModel"]>[typeof MODEL_ID_PARAMETER_INDEX]
->;
 
 const EMPTY_MODEL_TYPE_COUNT = 0;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 class VercelGateway
   extends GatewayRuntime
-  implements
-    GatewayProvider<
-      "vercel",
-      VercelLanguageModelId,
-      VercelImageModelId,
-      VercelVideoModelId
-    >
+  implements GatewayProvider<"vercel">
 {
   public readonly type = "vercel" as const;
 
-  public createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    modelId: Parameters<
+      (typeof gateway)["languageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX]
+  ): LanguageModelV4 {
     return this.getProvider()(modelId);
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
   public createImageModel(modelId: VercelImageModelId): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
   public createVideoModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
     modelId: VercelVideoModelId
   ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
@@ -68,9 +59,11 @@ class VercelGateway
 
   private getApiKey(): string | undefined {
     const apiKey = this.env.AI_GATEWAY_API_KEY;
-    return typeof apiKey === "string" && apiKey !== ""
-      ? apiKey
-      : this.env.VERCEL_OIDC_TOKEN;
+
+    if (typeof apiKey === "string" && apiKey !== "") {
+      return apiKey;
+    }
+    return this.env.VERCEL_OIDC_TOKEN;
   }
 
   public async fetchModels(): Promise<AiGatewayModel[]> {
@@ -140,6 +133,4 @@ class VercelGateway
     }
   }
 }
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 export { VercelGateway as Gateway, VercelGateway };

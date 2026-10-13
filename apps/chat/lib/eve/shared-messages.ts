@@ -1,20 +1,18 @@
-import { defaultMessageReducer } from "eve/client";
 import type {
+  EveDynamicToolPart,
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
-
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { defaultMessageReducer } from "eve/client";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
 import { responseModelReferences } from "./response-model";
-import { toolOutputSchema, hasEveToolReceipt } from "./tool-result";
-
-// This local view only covers EVE's plain message data; opaque tool values stay unknown.
-type ReadonlyMessageData<Value> = Value extends object
-  ? { readonly [Property in keyof Value]: ReadonlyMessageData<Value[Property]> }
-  : Value;
-
-const EMPTY_OPTION_COUNT = 0;
 
 interface SharedEveMessage {
   id: string;
@@ -38,27 +36,19 @@ const sharedModelId = (
     return "";
   }
   const turnId = message.metadata?.turnId ?? "";
-  return turnId === ""
-    ? (message.metadata?.modelId ?? "")
-    : (models.get(turnId) ?? "");
+  if (turnId === "") {
+    return message.metadata?.modelId ?? "";
+  }
+  return models.get(turnId) ?? "";
 };
 
-/* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): sharedTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): sharedTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Keep visible tool content, never the owner's approval or runtime identities.
- * @param part Native tool state whose display content may be shared.
- * @returns A display part with approval IDs and receipt-only identities removed.
+ * @param {ReadonlyNativeSurface<EveDynamicToolPart>} part Native tool state whose display content may be shared.
+ * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
  */
 const sharedTool = (
-  part: Extract<
-    ReadonlyMessageData<EveMessagePart>,
-    {
-      type: "dynamic-tool";
-    }
-  >
+  part: ReadonlyNativeSurface<EveDynamicToolPart>
 ): EveMessagePart => {
   const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
     {
@@ -138,11 +128,9 @@ const sharedTool = (
     }
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements */
 
-/* oxlint-disable max-statements -- max-statements (#512): sharedEvePart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const sharedEvePart = (
-  part: ReadonlyMessageData<EveMessagePart>
+  part: ReadonlyNativeSurface<ReadonlyEveMessagePart>
 ): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
@@ -164,7 +152,7 @@ const sharedEvePart = (
     const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ text: request.prompt, type: "text" });
-      if (request.options && request.options.length > EMPTY_OPTION_COUNT) {
+      if (request.options && request.options.length > 0) {
         parts.push({
           text: request.options.map((option) => option.label).join(" · "),
           type: "text",
@@ -186,22 +174,18 @@ const sharedEvePart = (
   // Connection challenges can contain owner-only authorization URLs and codes.
   return [{ text: "An account connection was requested.", type: "text" }];
 };
-/* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): sharedEveMessages accepts events: readonly MessageStreamEvent[]; current; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const sharedEveMessages = (
   events: readonly MessageStreamEvent[]
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
-  // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
-  const state = events.reduce(
-    (current, event) => reduceEvent(current, event),
-    reducer.initial()
-  );
+  let state = reducer.initial();
+  for (const event of events) {
+    state = reduceEvent(state, event);
+  }
   const models = responseModelReferences(events);
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate materialized transcript messages without mutating the reducer state.
-  return state.messages.map((message): SharedEveMessage => {
+  return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
       message.role === "user" ? (eveMessageTool(message) ?? "") : "";
@@ -216,5 +200,4 @@ const sharedEveMessages = (
     };
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { sharedEveMessages, sharedEvePart };

@@ -1,11 +1,11 @@
 import { readFile, readdir, stat, writeFile } from "node:fs/promises";
-import path from "node:path";
-
-import { z } from "zod";
 
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+import path from "node:path";
 
 import type { planInstallation } from "./installation-plan";
+
+import { z } from "zod";
 import { preflight } from "./preflight";
 
 const dependencyReceipt = ".chatjs/installed-dependencies.json";
@@ -26,7 +26,6 @@ const readManifest = async (
   const source = await readFile(path.join(cwd, "package.json"), "utf-8");
   return manifestSchema.parse(JSON.parse(source));
 };
-
 const dependencyName = (specifier: string): string =>
   specifier.replace(/(?<!^)@[^/]*$/u, "");
 
@@ -74,8 +73,10 @@ const binaryAssets = new Set([
 const maxSourceBytes = 1_048_576;
 
 // Conservative protection for dependencies used by source outside registry items.
-// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
-const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
+const protectSourceDependencies = async (
+  cwd: string,
+  unused: Set<string>
+): Promise<void> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
     if (
@@ -85,37 +86,38 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
       (entry.isFile() &&
         binaryAssets.has(path.extname(entry.name).toLowerCase()))
     ) {
-      // oxlint-disable-next-line eslint/no-continue -- Skip ignored directories before examining their files.
       continue;
     }
     if (entry.isSymbolicLink()) {
       // Unknown source behind a symlink cannot prove a dependency is unused.
-      return true;
+      unused.clear();
+      return;
     }
     const file = path.join(cwd, entry.name);
     if (entry.isDirectory()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
-      if (await sourceUses(file, name)) {
-        return true;
-      }
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Stop scanning once every candidate is protected by usage or unknown source; later unreadable files must not invalidate that conservative result.
+      await protectSourceDependencies(file, unused);
     } else if (entry.isFile()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Bound memory before reading each user-authored file.
       const metadata = await stat(file);
       if (metadata.size > maxSourceBytes) {
         // Unknown oversized source cannot prove that a dependency is unused.
-        return true;
+        unused.clear();
+        return;
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read only after the size check and release each buffer before the next file; arbitrary user trees must not load every source file at once.
       const content = await readFile(file);
-      if (content.includes(name)) {
-        return true;
+      for (const name of unused) {
+        if (content.includes(name)) {
+          unused.delete(name);
+        }
       }
     }
+    if (unused.size === 0) {
+      return;
+    }
   }
-  return false;
 };
-
-// oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
 export const prepareDependencyUpdate = async (
   cwd: string,
   plan: ReadonlyInput<
@@ -157,7 +159,6 @@ export const prepareDependencyUpdate = async (
       ...(item.devDependencies ?? []),
     ].map((specifier) => dependencyName(specifier));
   }
-  // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
   return async (): Promise<void> => {
     const manifest = await readManifest(cwd);
     const required = new Set(Object.values(receipt.items).flat());
@@ -172,29 +173,33 @@ export const prepareDependencyUpdate = async (
         receipt.owned[name] = version;
       }
     }
+    const candidates = new Map<string, Record<string, string>>();
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;
-      if (
-        !required.has(name) &&
-        group?.[name] === installedVersion &&
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
-        !(await sourceUses(cwd, name))
-      ) {
+      if (!required.has(name) && group && group[name] === installedVersion) {
+        candidates.set(name, group);
+      }
+    }
+    const unused = new Set(candidates.keys());
+    if (unused.size > 0) {
+      await protectSourceDependencies(cwd, unused);
+    }
+    for (const name of unused) {
+      const group = candidates.get(name);
+      if (group) {
         Reflect.deleteProperty(group, name);
         Reflect.deleteProperty(receipt.owned, name);
       }
     }
     await writeFile(
       path.join(cwd, "package.json"),
-      // oxlint-disable-next-line unicorn/no-null, eslint/no-magic-numbers -- JSON.stringify accepts null to select its default replacer while retaining readable indentation. These local values specify JSON indentation, source offsets or bounded test fixtures.
       `${JSON.stringify(manifest, null, 2)}\n`
     );
     await writeFile(
       path.join(cwd, dependencyReceipt),
-      // oxlint-disable-next-line unicorn/no-null, eslint/no-magic-numbers -- JSON.stringify accepts null to select its default replacer while retaining readable indentation. These local values specify JSON indentation, source offsets or bounded test fixtures.
       `${JSON.stringify(receipt, null, 2)}\n`
     );
   };

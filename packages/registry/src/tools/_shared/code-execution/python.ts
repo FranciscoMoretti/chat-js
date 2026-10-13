@@ -1,26 +1,56 @@
 import type {
-  ExecutionSandbox,
   CodeExecutionContext,
   CodeExecutionResult,
+  ExecutionSandbox,
 } from "./types";
+import { z } from "zod";
+
+type PythonExecutionContext = Readonly<{
+  sandbox: Readonly<ExecutionSandbox>;
+  requestId: string;
+  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
+}>;
+
+const pythonExecutionInfoSchema = z.looseObject({
+  error: z
+    .looseObject({
+      name: z.string(),
+      value: z.string(),
+      traceback: z.string(),
+    })
+    .optional(),
+  success: z.boolean().optional(),
+});
+
+type PythonExecutionInfo = z.infer<typeof pythonExecutionInfoSchema>;
+
+interface PythonExecutionOutput {
+  chartData: Record<string, unknown> | null;
+  execInfo: PythonExecutionInfo;
+  outputText: string;
+}
 
 const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const PROCESS_SUCCESS = 0;
+const PACKAGE_NAME_INDEX = 0;
+const EMPTY_PACKAGE_COUNT = 0;
+const LAST_LINE_INDEX = -1;
+const MISSING_CHART_INDEX = -1;
+const CHART_LINE_COUNT = 1;
+const EMPTY_STDERR_LENGTH = 0;
+
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const packageName = (spec: string): string =>
-  spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
-/* oxlint-enable eslint/no-magic-numbers */
+  spec.split(PACKAGE_SPEC_SPLIT_RE)[PACKAGE_NAME_INDEX].toLowerCase();
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const installBasePackages = async (
-  sandbox: ExecutionSandbox,
   basePackages: readonly string[],
-  requestId: string,
-  log: CodeExecutionContext["log"]
+  { sandbox, requestId, log }: PythonExecutionContext
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
@@ -29,7 +59,7 @@ const installBasePackages = async (
     args: ["install", ...basePackages],
     cmd: "pip",
   });
-  if (installStep.exitCode !== 0) {
+  if (installStep.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await installStep.stderr();
     const standardOutput =
       errorOutput.trim() === "" ? await installStep.stdout() : "";
@@ -49,29 +79,11 @@ const installBasePackages = async (
   log.info({ requestId }, "base packages installed");
   return { success: true };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const processExtraPackages = async (
+const pythonPackagePlan = (
   code: string,
-  basePackages: readonly string[],
-  sandbox: ExecutionSandbox,
-  requestId: string,
-  log: CodeExecutionContext["log"]
-): Promise<{
-  codeToRun: string;
-  installResult: {
-    success: boolean;
-    result?: CodeExecutionResult;
-  };
-}> => {
+  basePackages: readonly string[]
+): { codeWithoutPipLines: string; extraPackages: string[] } => {
   const basePackageNames = new Set(
     basePackages.map((basePackageName) => basePackageName.toLowerCase())
   );
@@ -92,8 +104,28 @@ const processExtraPackages = async (
   const codeWithoutPipLines = lines
     .filter((line) => !line.trim().startsWith("!pip install "))
     .join("\n");
+  return { codeWithoutPipLines, extraPackages };
+};
 
-  if (extraPackages.length === 0) {
+interface PythonPackagePreparation {
+  codeToRun: string;
+  installResult: {
+    success: boolean;
+    result?: CodeExecutionResult;
+  };
+}
+
+const processExtraPackages = async (
+  code: string,
+  basePackages: readonly string[],
+  { sandbox, requestId, log }: PythonExecutionContext
+): Promise<PythonPackagePreparation> => {
+  const { codeWithoutPipLines, extraPackages } = pythonPackagePlan(
+    code,
+    basePackages
+  );
+
+  if (extraPackages.length === EMPTY_PACKAGE_COUNT) {
     return { codeToRun: codeWithoutPipLines, installResult: { success: true } };
   }
 
@@ -105,7 +137,7 @@ const processExtraPackages = async (
     args: ["install", ...extraPackages],
     cmd: "pip",
   });
-  if (dynamicInstall.exitCode !== 0) {
+  if (dynamicInstall.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await dynamicInstall.stderr();
     const standardOutput =
       errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
@@ -131,14 +163,7 @@ const processExtraPackages = async (
     installResult: { success: true },
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 const createWrappedCode = (codeToRun: string, chartPath: string): string => `
 import sys
 import json
@@ -190,57 +215,44 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const parseExecutionOutput = async (execResult: {
-  stdout: () => Promise<string>;
-  exitCode: number;
-}): Promise<{
-  outputText: string;
-  chartData: Record<string, unknown> | null;
-  execInfo: {
-    success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  };
-}> => {
+const parseExecutionOutput = async (
+  execResult: Readonly<{
+    stdout: () => Promise<string>;
+    exitCode: number;
+  }>
+): Promise<PythonExecutionOutput> => {
   const stdout = await execResult.stdout();
-  let execInfo: {
-    success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  } = { success: true };
+  let execInfo: PythonExecutionInfo = { success: true };
   let outputText = "";
   let chartData: Record<string, unknown> | null = null;
 
   try {
     const outLines = (stdout ?? "").trim().split("\n");
-    const lastLine = outLines.at(-1);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
-    execInfo = JSON.parse(lastLine ?? "{}");
+    const lastLine = outLines.at(LAST_LINE_INDEX);
+    execInfo = pythonExecutionInfoSchema.parse(JSON.parse(lastLine ?? "{}"));
     outLines.pop();
 
     const chartLineIdx = outLines.findIndex((line) =>
       line.startsWith(CHART_JSON_PREFIX)
     );
-    if (chartLineIdx !== -1) {
+    if (chartLineIdx !== MISSING_CHART_INDEX) {
       const raw = outLines[chartLineIdx].slice(CHART_JSON_PREFIX.length);
       try {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
-        chartData = JSON.parse(raw) as Record<string, unknown>;
+        const value: unknown = JSON.parse(raw);
+        if (isJsonObject(value)) {
+          chartData = value;
+        }
       } catch {
         // Ignore malformed chart JSON from the sandboxed snippet.
       }
-      outLines.splice(chartLineIdx, 1);
+      outLines.splice(chartLineIdx, CHART_LINE_COUNT);
     }
 
     outputText = outLines.join("\n");
   } catch {
     outputText = stdout ?? "";
-    if (execResult.exitCode !== 0) {
+    if (execResult.exitCode !== PROCESS_SUCCESS) {
       execInfo = {
         error: {
           name: "SandboxExecutionError",
@@ -254,27 +266,16 @@ const parseExecutionOutput = async (execResult: {
 
   return { chartData, execInfo, outputText };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
-  sandbox: ExecutionSandbox,
   chartPath: string,
-  requestId: string,
-  log: CodeExecutionContext["log"]
+  { sandbox, requestId, log }: PythonExecutionContext
 ): Promise<{ base64: string; format: string } | undefined> => {
   const chartCheck = await sandbox.runCommand({
     args: ["-f", chartPath],
     cmd: "test",
   });
-  if (chartCheck.exitCode === 0) {
+  if (chartCheck.exitCode === PROCESS_SUCCESS) {
     const base64Command = await sandbox.runCommand({
       args: ["-w", "0", chartPath],
       cmd: "base64",
@@ -283,35 +284,28 @@ const checkForChart = async (
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
+  return undefined;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const buildResponseMessage = ({
   outputText,
   stderr,
   execInfo,
   log,
   requestId,
-}: {
+}: Readonly<{
   outputText: string;
   stderr: string;
-  execInfo: {
-    success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  };
-  log: CodeExecutionContext["log"];
+  execInfo: Readonly<PythonExecutionInfo>;
+  log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
   requestId: string;
-}): string => {
+}>): string => {
   let message = "";
 
   if (outputText) {
     message += `${outputText}\n`;
   }
-  if (stderr && stderr.trim().length > 0) {
+  if (stderr && stderr.trim().length > EMPTY_STDERR_LENGTH) {
     message += `${stderr}\n`;
   }
   if (execInfo.error) {
@@ -321,18 +315,19 @@ const buildResponseMessage = ({
 
   return message;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const executePythonInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> => {
+}: Readonly<
+  Pick<CodeExecutionContext, "code" | "requestId"> & {
+    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "runCommand">>;
+    log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
+  }
+>): Promise<CodeExecutionResult> => {
+  const execution = { log, requestId, sandbox };
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -342,12 +337,7 @@ export const executePythonInSandbox = async ({
   ] as const;
   const chartPath = "/tmp/chart.png";
 
-  const baseInstallResult = await installBasePackages(
-    sandbox,
-    basePackages,
-    requestId,
-    log
-  );
+  const baseInstallResult = await installBasePackages(basePackages, execution);
   if (!baseInstallResult.success) {
     return baseInstallResult.result ?? { chart: "", message: "Unknown error" };
   }
@@ -355,9 +345,7 @@ export const executePythonInSandbox = async ({
   const { codeToRun, installResult } = await processExtraPackages(
     code,
     basePackages,
-    sandbox,
-    requestId,
-    log
+    execution
   );
   if (!installResult.success) {
     return installResult.result ?? { chart: "", message: "Unknown error" };
@@ -385,14 +373,9 @@ export const executePythonInSandbox = async ({
     return { chart: chartData, message: message.trim() };
   }
 
-  const chartOut = await checkForChart(sandbox, chartPath, requestId, log);
+  const chartOut = await checkForChart(chartPath, execution);
   return {
     chart: chartOut ?? "",
     message: message.trim(),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

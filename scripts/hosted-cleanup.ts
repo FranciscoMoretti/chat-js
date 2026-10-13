@@ -42,7 +42,6 @@ const drainCleanup = async (
     await drainCleanup(request, remaining - batchStep);
   }
 };
-
 const runHostedCleanup = async (
   origin: string,
   secret: string
@@ -72,15 +71,12 @@ const runHostedCleanup = async (
     maxBatches
   );
 };
-
 if (import.meta.main) {
   try {
-    /* oxlint-disable node/no-process-env -- Scheduler entrypoint validates its two environment inputs here. */
     await runHostedCleanup(
       process.env.APP_URL ?? "",
       process.env.CRON_SECRET ?? ""
     );
-    /* oxlint-enable node/no-process-env */
   } catch {
     // Never log response payloads, URLs, fetch causes or bearer credentials.
     process.stderr.write(

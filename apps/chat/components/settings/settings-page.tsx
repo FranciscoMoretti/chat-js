@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 const SettingsPage = ({
@@ -22,8 +22,6 @@ const SettingsPage = ({
   </div>
 );
 
-/* oxlint-disable react/no-multi-comp -- SettingsPageHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
-
 const SettingsPageHeader = ({
   children,
   className,
@@ -33,9 +31,6 @@ const SettingsPageHeader = ({
 }): React.JSX.Element => (
   <div className={cn("shrink-0", className)}>{children}</div>
 );
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- SettingsPageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const SettingsPageContent = ({
   children,
@@ -50,9 +45,6 @@ const SettingsPageContent = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- SettingsPageScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const SettingsPageScrollArea = ({
   children,
@@ -63,7 +55,6 @@ const SettingsPageScrollArea = ({
 }): React.JSX.Element => (
   <ScrollArea className={className}>{children}</ScrollArea>
 );
-/* oxlint-enable react/no-multi-comp */
 export {
   SettingsPage,
   SettingsPageContent,

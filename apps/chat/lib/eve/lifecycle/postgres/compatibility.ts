@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { ArrayParameter, Helper, PendingQuery, Row } from "postgres";
 
 // Exact migration boundary of @workflow/world-postgres 5.0.0-beta.40 and
 // graphile-worker 0.16.6. New migrations require native acceptance and review of
@@ -17,9 +17,24 @@ const fencedTables = [
   "workflow_stream_chunks",
 ];
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- postgres.Sql is a callable connection API whose transactions remain mutable. */
+// Only lifecycle string/number values, string-list helpers and native array
+// parameters may be interpolated. Preserve the original callable connection and
+// native query/helper outputs; no fragments, custom parameters or pool state.
+export interface PostgresLifecycleQuery {
+  <Rows extends readonly (object | undefined)[] = Row[]>(
+    template: Readonly<TemplateStringsArray>,
+    ...parameters: readonly (
+      | string
+      | number
+      | Helper<readonly string[], []>
+      | ArrayParameter<string[]>
+    )[]
+  ): PendingQuery<Rows>;
+  (values: readonly string[]): Helper<readonly string[], []>;
+}
+
 export const assertPostgresLifecycleCompatibility = async (
-  connection: Sql
+  connection: PostgresLifecycleQuery
 ): Promise<void> => {
   const [workflow] = await connection`
     select max(created_at)::text as boundary from workflow_drizzle.workflow_migrations

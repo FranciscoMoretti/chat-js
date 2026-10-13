@@ -11,6 +11,7 @@ import {
   Route,
   Workflow,
 } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import type { Metadata } from "next";
 import React from "react";
 
@@ -58,7 +59,15 @@ const compatibility = [
   "ChatTransport",
 ] as const;
 
-const additions = [
+type AdditionIcon = (
+  props: Readonly<Pick<LucideProps, "className">>
+) => React.ReactNode;
+
+const additions: readonly Readonly<{
+  description: string;
+  icon: AdditionIcon;
+  title: string;
+}>[] = [
   {
     description:
       "Select any message and expose its root-to-node path as chat.messages.",
@@ -83,7 +92,7 @@ const additions = [
     icon: Layers3,
     title: "Parallel responses",
   },
-] as const;
+];
 
 const architectureRows = [
   {
@@ -106,12 +115,6 @@ const architectureRows = [
   },
 ] as const;
 
-/* oxlint-disable eslint/max-lines-per-function -- ThreadsPage: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-
-/* oxlint-disable react/jsx-max-depth -- ThreadsPage: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ThreadsPage: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsPage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ThreadsPage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <Navbar />
@@ -355,17 +358,6 @@ const ThreadsPage = (): React.JSX.Element => (
     <Footer />
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/max-lines-per-function */
-
-/* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default ThreadsPage;
-/* oxlint-enable import/no-default-export */

@@ -1,24 +1,55 @@
-import { and, eq, sql } from "drizzle-orm";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+import { and, eq, sql } from "drizzle-orm";
+import { z } from "zod";
+
 import type { EveSearchText } from "@/lib/eve/search-text";
+import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
 import { eveConversation, eveSearchText } from "./schema";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-/* oxlint-enable no-magic-numbers */
+const SEARCH_CHUNK_LENGTH = 8000;
+const SEARCH_WRITE_BATCH_SIZE = 100;
+const SEARCH_PAGE_SIZE = 20;
+const QUOTE_PAIR_SIZE = 2;
+const UNQUOTED_SEGMENT_REMAINDER = 1;
+const FIRST_INDEX = 0;
+const LAST_ITEM_OFFSET = -1;
+const EMPTY_RESULT_COUNT = 0;
 
-/* oxlint-disable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): writeEveSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): writeEveSearchText keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): writeEveSearchText uses 8000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): writeEveSearchText accepts tx: SearchTransaction; entries: readonly EveSearchText[]; entry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Share the binding row lock with deletion so a late backfill cannot resurrect text. */
+type SearchTransaction = Readonly<Pick<typeof db, "select" | "insert">>;
+const splitSearchChunks = (
+  entries: readonly EveSearchText[]
+): EveSearchText[] =>
+  entries.flatMap((entry: EveSearchText) => {
+    const result: EveSearchText[] = [];
+    for (
+      let offset = FIRST_INDEX;
+      offset < entry.text.length;
+      offset += SEARCH_CHUNK_LENGTH
+    ) {
+      result.push({
+        key: `${entry.key}:${offset}`,
+        text: entry.text.slice(
+          offset,
+          offset + SEARCH_CHUNK_LENGTH + MAX_SEARCH_QUERY_LENGTH
+        ),
+      });
+    }
+    return result;
+  });
+
+/**
+ * Writes search chunks only while the owner’s conversation binding is active.
+ * The binding lock serializes the write with deletion, and existing keys are
+ * updated when their indexed text changes.
+ * @param {SearchTransaction} tx Transaction shared with the caller’s conversation update.
+ * @param {string} ownerId Owner whose active conversation is being indexed.
+ * @param {string} conversationId Bound conversation that owns the chunks.
+ * @param {readonly EveSearchText[]} entries Search keys and text chunks to persist.
+ */
 const writeEveSearchText = async (
   tx: SearchTransaction,
   ownerId: string,
@@ -36,29 +67,28 @@ const writeEveSearchText = async (
       )
     )
     .for("update");
-  if (!conversation) {
+  const hasConversation = Boolean(conversation);
+  if (!hasConversation) {
     return;
   }
   // Bound vectors and insert batches even for unusually large pasted messages.
-  const chunks = entries.flatMap((entry) => {
-    const result: EveSearchText[] = [];
-    for (let offset = 0; offset < entry.text.length; offset += 8000) {
-      result.push({
-        key: `${entry.key}:${offset}`,
-        text: entry.text.slice(offset, offset + 8000 + MAX_SEARCH_QUERY_LENGTH),
-      });
-    }
-    return result;
-  });
-  for (let index = 0; index < chunks.length; index += 100) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each insert within the locked transaction.
+  const chunks = splitSearchChunks(entries);
+  for (
+    let index = FIRST_INDEX;
+    index < chunks.length;
+    index += SEARCH_WRITE_BATCH_SIZE
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Insert at most SEARCH_WRITE_BATCH_SIZE rows per query on the locked transaction; search-backfill awaits each committed batch before advancing.
     await tx
       .insert(eveSearchText)
       .values(
         chunks
-          .slice(index, index + 100)
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
-          .map((entry) => ({ ...entry, conversationId, ownerId }))
+          .slice(index, index + SEARCH_WRITE_BATCH_SIZE)
+          .map((entry: EveSearchText) => ({
+            ...entry,
+            conversationId,
+            ownerId,
+          }))
       )
       .onConflictDoUpdate({
         set: { text: sql`excluded.text` },
@@ -67,39 +97,30 @@ const writeEveSearchText = async (
       });
   }
 };
-/* oxlint-enable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): indexEveSearchText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): indexEveSearchText accepts entries: readonly EveSearchText[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): indexEveSearchText preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const indexEveSearchText = async (
   ownerId: string,
   conversationId: string,
   entries: readonly EveSearchText[]
 ): Promise<void> => {
-  if (entries.length > 0) {
-    await db.transaction((tx) =>
-      writeEveSearchText(tx, ownerId, conversationId, entries)
-    );
+  if (entries.length > EMPTY_RESULT_COUNT) {
+    await db.transaction(async (tx: SearchTransaction) => {
+      await writeEveSearchText(tx, ownerId, conversationId, entries);
+    });
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
- */
-type EveSearchResult = {
-  id: string;
-  conversationId: string;
-  title: string;
-  excerpt: string;
-  updatedAt: string;
-  rank: number;
-  highlightQuery: string;
-  highlightWords: Record<string, string>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+const eveSearchResult = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  title: z.string(),
+  excerpt: z.string(),
+  updatedAt: z.string(),
+  rank: z.number(),
+  highlightQuery: z.string(),
+  highlightWords: z.record(z.string(), z.string()),
+});
+type EveSearchResult = z.infer<typeof eveSearchResult>;
 
 // Modify only PostgreSQL's normalized final positive operand, never raw query syntax.
 // The leading boundary excludes !'negated' terms; closing groups remain intact.
@@ -112,32 +133,25 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-statements (#512): highlightSearchExcerpt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): highlightSearchExcerpt skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): highlightSearchExcerpt uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): highlightSearchExcerpt accepts words: Record<string, string>; { prefix, text }; { text }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): highlightSearchExcerpt intentionally keeps the existing falsy-value behavior of token.groups?.term; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const highlightSearchExcerpt = (
   excerpt: string,
   query: string,
-  words: Record<string, string>
+  words: Readonly<Record<string, string>>
 ): string => {
   const terms: { prefix: boolean; text: string }[] = [];
   const groups = [false];
   let negateNext = false;
   for (const token of query.matchAll(queryToken)) {
-    const negated = (groups.at(-1) ?? false) !== negateNext;
-    if (token[0] === "!") {
+    const negated = (groups.at(LAST_ITEM_OFFSET) ?? false) !== negateNext;
+    if (token[FIRST_INDEX] === "!") {
       negateNext = !negateNext;
       continue;
     }
-    if (token[0] === "(") {
+    if (token[FIRST_INDEX] === "(") {
       groups.push(negated);
-    } else if (token[0] === ")") {
+    } else if (token[FIRST_INDEX] === ")") {
       groups.pop();
-    } else if (!negated && token.groups?.term) {
+    } else if (!negated && isNonEmptyString(token.groups?.term)) {
       terms.push({
         prefix: Boolean(token.groups.prefix),
         text: token.groups.term
@@ -150,37 +164,53 @@ const highlightSearchExcerpt = (
   return excerpt.replace(markedWord, (marked, word: string) => {
     const normalized = words[word] ?? word;
     const lengths = terms
-      .filter(({ prefix, text }) =>
-        prefix ? normalized.startsWith(text) : normalized === text
+      .filter(
+        ({ prefix, text }: Readonly<{ prefix: boolean; text: string }>) => {
+          if (prefix) {
+            return normalized.startsWith(text);
+          }
+          return normalized === text;
+        }
       )
-      .map(({ text }) => text.length);
-    const length = Math.max(0, ...lengths);
-    return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
+      .map(
+        ({ text }: Readonly<{ prefix: boolean; text: string }>) => text.length
+      );
+    const length = Math.max(EMPTY_RESULT_COUNT, ...lengths);
+
+    if (length) {
+      return `⟦${word.slice(FIRST_INDEX, length)}⟧${word.slice(length)}`;
+    }
+    return marked;
   });
 };
-/* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): searchEveConversations uses 2, 1, 0, 20, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): searchEveConversations accepts input: { search: string; cursor?: { rank: number; updatedAt: string; id: string } | n; { highlightQuery, highlightWords, ...item }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** One result per logical chat, with the branch containing its strongest match. */
+/**
+ * Searches an owner’s bound conversations and returns one ranked result per chat.
+ * The cursor continues after a result using rank, update time, and chat ID.
+ * @param {string} ownerId Owner whose private conversation and search text rows are queried.
+ * @param {{ search: string; cursor?: { rank: number; updatedAt: string; id: string } | null }} input Search text and optional continuation cursor.
+ * @returns {Promise<{ items: Array<Omit<EveSearchResult, "highlightQuery" | "highlightWords">>; nextCursor: { id: string; rank: number; updatedAt: string } | null }>} A page of highlighted chat results and a cursor when more results exist.
+ */
 const searchEveConversations = async (
   ownerId: string,
   input: {
-    search: string;
-    cursor?: { rank: number; updatedAt: string; id: string } | null;
+    readonly search: string;
+    readonly cursor?: {
+      readonly rank: number;
+      readonly updatedAt: string;
+      readonly id: string;
+    } | null;
   }
-) => {
+): Promise<{
+  items: Omit<EveSearchResult, "highlightQuery" | "highlightWords">[];
+  nextCursor: { id: string; rank: number; updatedAt: string } | null;
+}> => {
   const { cursor } = input;
   const query = input.search.trim();
   const prefixLastWord =
-    finalUnquotedWord.test(query) && query.split('"').length % 2 === 1;
-  const items = await db.execute<EveSearchResult>(sql`
+    finalUnquotedWord.test(query) &&
+    query.split('"').length % QUOTE_PAIR_SIZE === UNQUOTED_SEGMENT_REMAINDER;
+  const rows = await db.execute(sql`
     with parsed as (select websearch_to_tsquery('simple', ${query}) as terms),
     query as (
       select case when ${prefixLastWord}
@@ -238,25 +268,30 @@ const searchEveConversations = async (
     from headlines
     order by rank desc, "updatedAt" desc, id
   `);
+  const items = z.array(eveSearchResult).parse(rows);
   const page = items
-    .slice(0, 20)
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
-    .map(({ highlightQuery, highlightWords, ...item }) => ({
-      ...item,
-      excerpt: highlightSearchExcerpt(
-        item.excerpt,
+    .slice(FIRST_INDEX, SEARCH_PAGE_SIZE)
+    .map(
+      ({
         highlightQuery,
-        highlightWords
-      ),
-    }));
-  const last = page.at(-1);
+        highlightWords,
+        ...item
+      }: ReadonlyNativeSurface<EveSearchResult>) => ({
+        ...item,
+        excerpt: highlightSearchExcerpt(
+          item.excerpt,
+          highlightQuery,
+          highlightWords
+        ),
+      })
+    );
+  const last = page.at(LAST_ITEM_OFFSET);
   return {
     items: page,
     nextCursor:
-      items.length > 20 && last
+      items.length > SEARCH_PAGE_SIZE && last
         ? { id: last.id, rank: last.rank, updatedAt: last.updatedAt }
         : null,
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };

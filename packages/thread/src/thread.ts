@@ -1,10 +1,8 @@
-import type { UIMessage } from "ai";
-
+import type { CanonicalMessage, ThreadInit } from "./types";
 import { AbstractThread } from "./abstract-thread";
 import { MemoryThreadState } from "./thread-state";
-import type { CanonicalMessage, ThreadInit } from "./types";
+import type { UIMessage } from "ai";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadInit carries SDK message arrays and callbacks into AbstractThread and MemoryThreadState; readonly conversion must preserve those constructor contracts. */
 class Thread<
   TMessage extends UIMessage = UIMessage,
 > extends AbstractThread<TMessage> {
@@ -22,12 +20,9 @@ class Thread<
     });
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadInit carries SDK message arrays and callbacks into AbstractThread and MemoryThreadState; readonly conversion must preserve those constructor contracts. */
 const createThread = <TMessage extends UIMessage = UIMessage>(
   options: ThreadInit<TMessage> = {}
 ): Thread<TMessage> => new Thread(options);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Thread, createThread };

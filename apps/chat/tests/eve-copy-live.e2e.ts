@@ -1,12 +1,13 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
+
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
+
 import { z } from "zod";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "../lib/db/client";
 import {
@@ -24,26 +25,31 @@ import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
+type MessageCompletedEventReader =
+  | Readonly<{
+      type: "message.completed";
+      data: Readonly<{
+        message: Extract<
+          MessageStreamEvent,
+          { type: "message.completed" }
+        >["data"]["message"];
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "message.completed">;
+      data?: unknown;
+    }>;
 const modelId = "google/gemini-2.5-flash-lite";
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("saves without generation, recovers after source revocation and reload, and cont uses 1000, 2000, 4000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("saves without generation, recovers after source revocation and reload, and cont uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("saves without generation, recovers after source revocation and reload, and cont accepts { page, browser, }; testInfo; route; event; tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("saves without generation, recovers after source revocation and reload, and cont preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("saves without generation, recovers after source revocation and reload, and cont preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("saves without generation, recovers after source revocation and reload, and continues the native copy", async ({
   page,
   browser,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", { data: { model: modelId } });
@@ -69,9 +75,12 @@ test("saves without generation, recovers after source revocation and reload, and
           .attach(source.sessionId)
           .snapshot();
         return (
-          snapshot.events.some((event) => event.type === "session.waiting") &&
           snapshot.events.some(
-            (event) =>
+            (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+              event.type === "session.waiting"
+          ) &&
+          snapshot.events.some(
+            (event: MessageCompletedEventReader) =>
               event.type === "message.completed" &&
               event.data.message?.trim() === "COPY-ORCHID"
           )
@@ -131,13 +140,13 @@ test("saves without generation, recovers after source revocation and reload, and
   });
   await page.unroute("**/api/agent-conversation-copies");
   const copied = Promise.withResolvers<z.infer<typeof conversationBinding>>();
-  const held = Promise.withResolvers<undefined>();
-  const started = Promise.withResolvers<undefined>();
+  const held: PromiseWithResolvers<void> = Promise.withResolvers();
+  const started: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route("**/api/agent-conversation-copies", async (route) => {
     const input = eveCopyInput.parse(route.request().postDataJSON());
     expect(input.modelId).toBe(modelId);
     expect(input.operationId).not.toBe(rejectedOperation);
-    started.resolve(undefined);
+    started.resolve();
     await held.promise;
     try {
       const response = await route.fetch();
@@ -160,7 +169,7 @@ test("saves without generation, recovers after source revocation and reload, and
       path: testInfo.outputPath("copy-pending.png"),
     });
   } finally {
-    held.resolve(undefined);
+    held.resolve();
   }
   const destination = await copied.promise;
   await expect(save.getByRole("alert")).toBeVisible();
@@ -172,12 +181,15 @@ test("saves without generation, recovers after source revocation and reload, and
   const snapshot = await native.sessions
     .attach(destination.sessionId)
     .snapshot();
-  expect(snapshot.events.some((event) => event.type === "history.seeded")).toBe(
-    true
-  );
   expect(
     snapshot.events.some(
-      (event) =>
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+        event.type === "history.seeded"
+    )
+  ).toBe(true);
+  expect(
+    snapshot.events.some(
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
         event.type === "session.started" ||
         event.type === "turn.started" ||
         event.type === "actions.requested"
@@ -257,7 +269,7 @@ test("saves without generation, recovers after source revocation and reload, and
           .attach(destination.sessionId)
           .snapshot();
         return continued.events.some(
-          (event) =>
+          (event: MessageCompletedEventReader) =>
             event.type === "message.completed" &&
             event.data.message?.trim() === "COPY-ORCHID"
         );
@@ -273,16 +285,7 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * init-declarations (#507): for (const attachment of [ { answer: "red", bytes: Buff assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const attachment of [ { answer: "red", bytes: Buff uses 360_000, 120_000, 1000, 2000, 4000, 1, 0, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): for (const attachment of [ { answer: "red", bytes: Buff accepts { page, }; testInfo; route; event; image; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): for (const attachment of [ { answer: "red", bytes: Buff preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 for (const attachment of [
   {
     answer: "red",
@@ -308,12 +311,15 @@ for (const attachment of [
 ]) {
   test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
     page,
-  }, testInfo) => {
+  }, testInfo: Readonly<{
+    project: Readonly<{ use: Readonly<{ baseURL?: string | undefined }> }>;
+    outputPath: TestInfo["outputPath"];
+  }>) => {
     test.setTimeout(360_000);
     page.setDefaultNavigationTimeout(120_000);
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.request.get("/api/dev-login", {
       maxRedirects: 0,
       timeout: 60_000,
@@ -369,9 +375,12 @@ for (const attachment of [
             .attach(source.sessionId)
             .snapshot();
           return (
-            snapshot.events.some((event) => event.type === "session.waiting") &&
             snapshot.events.some(
-              (event) =>
+              (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+                event.type === "session.waiting"
+            ) &&
+            snapshot.events.some(
+              (event: MessageCompletedEventReader) =>
                 event.type === "message.completed" &&
                 event.data.message?.trim() === "attachment-ready"
             )
@@ -405,19 +414,27 @@ for (const attachment of [
     await expect
       .poll(
         async () => {
-          if (!saved.events.some((event) => event.type === "history.seeded")) {
+          if (
+            !saved.events.some(
+              (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+                event.type === "history.seeded"
+            )
+          ) {
             saved = await native.sessions
               .attach(destination.sessionId)
               .snapshot();
           }
-          return saved.events.some((event) => event.type === "history.seeded");
+          return saved.events.some(
+            (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+              event.type === "history.seeded"
+          );
         },
         { intervals: [1000, 2000, 4000], timeout: 30_000 }
       )
       .toBe(true);
     expect(
       saved.events.some(
-        (event) =>
+        (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
           event.type === "turn.started" || event.type === "actions.requested"
       )
     ).toBe(false);
@@ -457,7 +474,7 @@ for (const attachment of [
             .attach(destination.sessionId)
             .snapshot();
           return continued.events.some(
-            (event) =>
+            (event: MessageCompletedEventReader) =>
               event.type === "message.completed" &&
               event.data.message?.trim().toLowerCase().replaceAll(".", "") ===
                 attachment.answer
@@ -484,38 +501,48 @@ for (const attachment of [
     ).toBeVisible();
     if (attachment.mediaType === "image/png") {
       await expect
-        .poll(() =>
-          editor
-            .getByRole("img", { exact: true, name: attachment.name })
-            .evaluate(
-              (image) =>
-                image instanceof HTMLImageElement &&
-                image.complete &&
-                image.naturalWidth > 0
-            )
+        .poll(
+          async () =>
+            await editor
+              .getByRole("img", { exact: true, name: attachment.name })
+              .evaluate(
+                (
+                  image: Readonly<{
+                    id: string;
+                    complete?: boolean;
+                    naturalWidth?: number;
+                  }>
+                ) =>
+                  image instanceof HTMLImageElement &&
+                  image.complete &&
+                  image.naturalWidth > 0
+              )
         )
         .toBe(true);
     }
     await editor
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill(attachment.question);
-    await editor.evaluate(async (element) => {
-      await document.fonts.ready;
-      await Promise.all(
-        element
-          .getAnimations({ subtree: true })
-          .filter(
-            (animation) =>
-              animation.effect?.getTiming().iterations !==
-              Number.POSITIVE_INFINITY
-          )
-          .map((animation) =>
-            animation.finished.catch(() => {
-              /* Ignore canceled animations while waiting for screenshot stability. */
-            })
-          )
-      );
-    });
+    await editor.evaluate(
+      async (element: Readonly<Pick<Element, "getAnimations">>) => {
+        await document.fonts.ready;
+        await Promise.all(
+          element
+            .getAnimations({ subtree: true })
+            .filter(
+              (animation: ReadonlyNativeSurface<Animation>) =>
+                animation.effect?.getTiming().iterations !==
+                Number.POSITIVE_INFINITY
+            )
+            .map(
+              async (animation: ReadonlyNativeSurface<Animation>) =>
+                await animation.finished.catch(() => {
+                  /* Ignore canceled animations while waiting for screenshot stability. */
+                })
+            )
+        );
+      }
+    );
     await editor.screenshot({
       animations: "allow",
       path: testInfo.outputPath("imported-attachment-edit.png"),
@@ -574,6 +601,3 @@ for (const attachment of [
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-copy-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

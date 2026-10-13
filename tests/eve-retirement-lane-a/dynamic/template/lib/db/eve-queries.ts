@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports -- The disposable mapping substitute shares the fixture control store. */
 import { readControl, record } from "../../proof/store";
 
 const readEveSessionMapping = async ({
@@ -18,5 +17,3 @@ const bindAcceptedEveConversation = (): never => {
 };
 
 export { readEveSessionMapping, bindAcceptedEveConversation };
-
-/* oxlint-enable import/no-relative-parent-imports */

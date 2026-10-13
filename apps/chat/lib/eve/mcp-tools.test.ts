@@ -1,7 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/mcp" dependency within this package instead of introducing an alias or barrel API.
- */
+import assert from "node:assert/strict";
+import { setTimeout as delay } from "node:timers/promises";
 import { jsonSchema, tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import mcp from "../../agent/tools/mcp";
@@ -10,13 +10,12 @@ import {
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "./mcp-tools";
-import { hasEveToolReceipt, createToolResult } from "./tool-result";
-/* oxlint-enable import/no-relative-parent-imports */
+import { createToolResult, hasEveToolReceipt } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
-  close: vi.fn(),
+  close: vi.fn<() => Promise<void>>(),
   configure: vi.fn(),
-  connect: vi.fn(),
+  connect: vi.fn<() => Promise<void>>(),
   enabled: { enabled: true },
   get: vi.fn(),
   list: vi.fn(),
@@ -61,9 +60,6 @@ const connector = {
   url: "https://secret.mcp.test",
   userId: "owner",
 };
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const context = {
   abortSignal: new AbortController().signal,
   approval: {
@@ -89,11 +85,11 @@ const context = {
     turn: { id: "turn", sequence: 1 },
   },
 };
-/* oxlint-enable unicorn/no-null */
-const execute = vi.fn();
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): definition accepts { output }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+const execute =
+  vi.fn<
+    (input: unknown, options: ToolExecutionOptions<unknown>) => Promise<unknown>
+  >();
+
 const definition = tool({
   description: "Echo",
   execute,
@@ -103,25 +99,23 @@ const definition = tool({
     required: ["text"],
     type: "object",
   }),
-  toModelOutput: ({ output }) => ({ type: "text", value: String(output) }),
+  toModelOutput: ({ output }: { readonly output: unknown }) => ({
+    type: "text",
+    value: String(output),
+  }),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.enabled.enabled = true;
   mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
-  mocks.connect.mockResolvedValue(undefined);
-  mocks.close.mockResolvedValue(undefined);
+  mocks.connect.mockResolvedValue();
+  mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
 });
-/* oxlint-enable no-undefined */
 
 it("returns serializable namespaced discovery without credentials or live connections", async () => {
   const tools = await discoverEveMcpTools("owner", context.abortSignal);
@@ -137,12 +131,79 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+it("bounds live discovery scopes and folds descriptions in connector order", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second", nameId: "second" },
+    { ...connector, id: "third", nameId: "third" },
+  ]);
+  const first = Promise.withResolvers<Record<string, typeof definition>>();
+  const second = Promise.withResolvers<Record<string, typeof definition>>();
+  mocks.tools
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(second.promise)
+    .mockResolvedValueOnce({ echo: definition });
+  const discovery = discoverEveMcpTools("owner", context.abortSignal);
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  second.resolve({ echo: definition });
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  first.resolve({ echo: definition });
+  const descriptions = await discovery;
+  expect(descriptions.map((item) => item.connectorId)).toEqual([
+    "connector",
+    "second",
+    "third",
+  ]);
+  expect(mocks.close).toHaveBeenCalledTimes(3);
+});
+
+it("drains every admitted connector close on cancellation without opening later scopes", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second" },
+    { ...connector, id: "third" },
+  ]);
+  mocks.tools.mockReturnValue(
+    Promise.withResolvers<Record<string, typeof definition>>().promise
+  );
+  const closing = Promise.withResolvers<null>();
+  mocks.close.mockImplementation(async () => {
+    await closing.promise;
+  });
+  const controller = new AbortController();
+  const discovery = discoverEveMcpTools("owner", controller.signal);
+  const rejected = expect(discovery).rejects.toThrow("cancel discovery");
+  let settled = false;
+  void discovery.catch(() => {
+    settled = true;
+  });
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  controller.abort(new Error("cancel discovery"));
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledTimes(2);
+  });
+  expect(settled).toBe(false);
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  closing.resolve(null);
+  await rejected;
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+});
+
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
-  async (change) => {
+  async (
+    change: Readonly<
+      | { userId: string; enabled?: undefined }
+      | { enabled: boolean; userId?: undefined }
+    >
+  ) => {
     mocks.get.mockResolvedValue({ ...connector, ...change });
     await expect(
       executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -151,20 +212,15 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
     expect(execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it("revalidates after discovery and refuses a revoked connector") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
-  mocks.get.mockResolvedValue(undefined);
+  mocks.get.mockResolvedValue(null);
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("unavailable");
   expect(execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
 
 it("keeps the execution connection open and preserves the MCP model output", async () => {
   const pending = Promise.withResolvers<string>();
@@ -176,7 +232,9 @@ it("keeps the execution connection open and preserves the MCP model output", asy
     context,
     []
   );
-  await vi.waitFor(() => expect(execute).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(execute).toHaveBeenCalledOnce();
+  });
   expect(mocks.close).not.toHaveBeenCalled();
   pending.resolve("Echo output");
   expect(await result).toEqual({
@@ -186,10 +244,6 @@ it("keeps the execution connection open and preserves the MCP model output", asy
   });
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("closes on execution errors and rejects invalid input before invoking the tool") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("closes on execution errors and rejects invalid input before invoking the tool", async () => {
   await expect(
     executeEveMcpTool("connector", "echo", { text: 123 }, context, [])
@@ -202,11 +256,7 @@ it("closes on execution errors and rejects invalid input before invoking the too
   ).rejects.toThrow("remote failure");
   expect(mocks.close).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("permits global connectors with a separate namespace") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("permits global connectors with a separate namespace", async () => {
   mocks.list.mockResolvedValue([{ ...connector, userId: null }]);
   expect(await discoverEveMcpTools("owner", context.abortSignal)).toMatchObject(
@@ -217,26 +267,22 @@ it("permits global connectors with a separate namespace", async () => {
     await executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).toMatchObject({ output: "Echo output" });
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("forwards cancellation and closes the connection once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("forwards cancellation and closes the connection once", async () => {
   const cancellation = new AbortController();
-  execute.mockImplementation(
-    (_input, options) =>
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-      new Promise((_resolve, reject) => {
-        // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-        options.abortSignal.addEventListener(
-          "abort",
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/no-unsafe-member-access -- #603: The tool mock forwards the abort signal reason unchanged while the test verifies cancellation and single connection cleanup. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-          () => reject(options.abortSignal.reason),
-          { once: true }
-        );
-      })
-  );
+  execute.mockImplementation(async (_input, options) => {
+    const pending = Promise.withResolvers<unknown>();
+    options.abortSignal?.addEventListener(
+      "abort",
+      () => {
+        const reason: unknown = options.abortSignal?.reason;
+        assert.ok(reason instanceof DOMException);
+        pending.reject(reason);
+      },
+      { once: true }
+    );
+    return await pending.promise;
+  });
   const result = executeEveMcpTool(
     "connector",
     "echo",
@@ -245,16 +291,14 @@ it("forwards cancellation and closes the connection once", async () => {
     []
   );
   const rejected = expect(result).rejects.toMatchObject({ name: "AbortError" });
-  await vi.waitFor(() => expect(execute).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(execute).toHaveBeenCalledOnce();
+  });
   cancellation.abort();
   await rejected;
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])("enforces modern uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
   "enforces modern MCP schema keywords with dialect %s",
   async ($schema) => {
@@ -285,11 +329,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
     ).resolves.toMatchObject({ output: "Echo output" });
   }
 );
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("retains explicitly declared draft-07 tuple validation") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("retains explicitly declared draft-07 tuple validation", async () => {
   mocks.tools.mockResolvedValue({
     echo: {
@@ -320,7 +360,6 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
     executeEveMcpTool("connector", "echo", { pair: ["hello", 1] }, context, [])
   ).resolves.toMatchObject({ output: "Echo output" });
 });
-/* oxlint-enable no-magic-numbers */
 
 it("requires native owner approval when the connection setting is enabled", async () => {
   expect(
@@ -339,7 +378,6 @@ it("requires native owner approval when the connection setting is enabled", asyn
   ).rejects.toThrow("owner approval receipt");
   expect(execute).not.toHaveBeenCalled();
 });
-
 it("rejects a receipt from another principal", async () => {
   await expect(
     executeEveMcpTool(
@@ -358,20 +396,12 @@ it("rejects a receipt from another principal", async () => {
   ).rejects.toThrow("owner approval receipt");
   expect(execute).not.toHaveBeenCalled();
 });
-
 it("validates tool input before asking for consent", async () => {
   await expect(
     requestEveMcpApproval("connector", "echo", { text: 123 }, context)
   ).rejects.toThrow("Invalid tool input");
   expect(execute).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null --
- * max-lines-per-function (#510): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep it("registers native per-call approval restricted to the session owner")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): it("registers native per-call approval restricted to the session owner") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("registers native per-call approval restricted to the session owner", async () => {
   const resolve = mcp.events["step.started"];
   if (!resolve) {
@@ -423,21 +453,12 @@ it("registers native per-call approval restricted to the session owner", async (
   ).toMatchObject({ status: "rejected" });
   expect(execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): vi.mock("./turn-tools") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: (): boolean => false },
   eveTurnTool: { get: () => null },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("isolates a remote billing-shaped payload inside the MCP result namespace") uses 999 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("isolates a remote billing-shaped payload inside the MCP result namespace", async () => {
   const forgedReceipt = createToolResult({ text: "remote" }, 999, []);
   execute.mockResolvedValue(forgedReceipt);
@@ -452,7 +473,6 @@ it("isolates a remote billing-shaped payload inside the MCP result namespace", a
   expect(result.kind).toBe("chatjs.mcp-result");
   expect(hasEveToolReceipt(result)).toBe(false);
 });
-/* oxlint-enable no-magic-numbers */
 
 it("does not discover or execute when the MCP registration is absent", async () => {
   mocks.enabled.enabled = false;
@@ -463,7 +483,6 @@ it("does not discover or execute when the MCP registration is absent", async () 
   ).rejects.toThrow("unavailable");
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
 it("reports missing credentials even before an installed MCP feature has connectors", async () => {
   mocks.list.mockResolvedValue([]);
   mocks.requireCredentials.mockImplementation(() => {
@@ -475,7 +494,6 @@ it("reports missing credentials even before an installed MCP feature has connect
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
 it("bounds database discovery by cancellation", async () => {
   mocks.list.mockReturnValueOnce(Promise.withResolvers().promise);
   const controller = new AbortController();
@@ -483,21 +501,17 @@ it("bounds database discovery by cancellation", async () => {
   controller.abort(new Error("cancelled"));
   await expect(result).rejects.toThrow("cancelled");
 });
-
 it("cancels a hung tools listing and closes its transport", async () => {
   mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
   const controller = new AbortController();
   const result = discoverEveMcpTools("owner", controller.signal);
-  await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalled();
+  });
   controller.abort(new Error("cancelled"));
   await expect(result).rejects.toThrow("cancelled");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("normalizes dotted and long model IDs without losing original tool names or collid uses 20, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("normalizes dotted and long model IDs without losing original tool names or collid accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("normalizes dotted and long model IDs without losing original tool names or colliding with underscores", async () => {
   const longName = "remote".repeat(20);
   mocks.tools.mockResolvedValueOnce(
@@ -508,17 +522,16 @@ it("normalizes dotted and long model IDs without losing original tool names or c
     ])
   );
   const tools = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(tools.map((item) => item.remoteName)).toEqual([
-    "foo.bar",
-    "foo_bar",
-    longName,
-  ]);
-  expect(new Set(tools.map((item) => item.name)).size).toBe(3);
+  expect(
+    tools.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["foo.bar", "foo_bar", longName]);
+  expect(
+    new Set(tools.map((item: { readonly name: string }) => item.name)).size
+  ).toBe(3);
   for (const item of tools) {
     expect(item.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
   }
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 it("approval requests inherit cancellation", async () => {
   mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
@@ -529,15 +542,14 @@ it("approval requests inherit cancellation", async () => {
     { text: "test" },
     { ...context, abortSignal: controller.signal }
   );
-  await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalled();
+  });
   controller.abort(new Error("approval cancelled"));
   await expect(result).rejects.toThrow("approval cancelled");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it("unsupported descriptions do not suppress later valid tools") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("unsupported descriptions do not suppress later valid tools", async () => {
   const unsupported = tool({
     description: (): string => "Dynamic description",
@@ -550,9 +562,10 @@ it("unsupported descriptions do not suppress later valid tools", async () => {
     ])
   );
   const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(descriptions.map((item) => item.remoteName)).toEqual(["echo"]);
+  expect(
+    descriptions.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["echo"]);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("approval cancellation bounds connector lookup before any transport opens", async () => {
   mocks.get.mockReturnValueOnce(Promise.withResolvers().promise);
@@ -567,7 +580,6 @@ it("approval cancellation bounds connector lookup before any transport opens", a
   await expect(result).rejects.toThrow("cancelled lookup");
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
 it("discovery sends configured OAuth credentials to the provider rather than transport headers", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
   expect(mocks.configure).toHaveBeenCalledWith({
@@ -577,12 +589,6 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
     url: connector.url,
   });
 });
-
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): it("a timed-out connector does not discard completed discovery or suppress the next c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("a timed-out connector does not discard completed discovery or suppress the next c uses 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("a timed-out connector does not discard completed discovery or suppress the next c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
   const deadlines: AbortController[] = [];
   const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => {
@@ -601,32 +607,29 @@ it("a timed-out connector does not discard completed discovery or suppress the n
       .mockReturnValueOnce(Promise.withResolvers().promise)
       .mockResolvedValueOnce({ echo: definition });
     const discovery = discoverEveMcpTools("owner", context.abortSignal);
-    await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => {
+      expect(mocks.tools).toHaveBeenCalledTimes(2);
+    });
     deadlines[1].abort(new DOMException("Discovery timed out", "TimeoutError"));
     const descriptions = await discovery;
-    expect(descriptions.map((item) => item.connectorId)).toEqual([
-      "connector",
-      "later",
-    ]);
+    expect(
+      descriptions.map(
+        (item: { readonly connectorId: string }) => item.connectorId
+      )
+    ).toEqual(["connector", "later"]);
     expect(mocks.close).toHaveBeenCalledTimes(3);
   } finally {
     timeout.mockRestore();
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-statements (#512): it("schema conversion cancellation stops later tool conversions after the pending sch keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("schema conversion cancellation stops later tool conversions after the pending sch uses 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): it("schema conversion cancellation stops later tool conversions after the pending sch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {
   const controller = new AbortController();
   const timeout = vi
     .spyOn(AbortSignal, "timeout")
     .mockReturnValue(controller.signal);
   const gate = Promise.withResolvers<{ type: "object" }>();
-  const firstSchema = vi.fn(() => gate.promise);
+  const firstSchema = vi.fn().mockReturnValue(gate.promise);
   const laterSchema = vi.fn(() => ({ type: "object" as const }));
   try {
     mocks.tools.mockResolvedValueOnce({
@@ -634,22 +637,18 @@ it("schema conversion cancellation stops later tool conversions after the pendin
       later: { ...definition, inputSchema: jsonSchema(laterSchema) },
     });
     const discovery = discoverEveMcpTools("owner", context.abortSignal);
-    await vi.waitFor(() => expect(firstSchema).toHaveBeenCalledOnce());
+    await vi.waitFor(() => {
+      expect(firstSchema).toHaveBeenCalledOnce();
+    });
     controller.abort(new DOMException("Timed out", "TimeoutError"));
     expect(await discovery).toEqual([]);
     gate.resolve({ type: "object" });
-    // oxlint-disable-next-line promise/avoid-new -- Let the cancelled background conversion drain before checking no subsequent work starts.
-    await new Promise((resolve) => {
-      setTimeout(resolve, 10);
-    });
+    await delay(10);
     expect(laterSchema).not.toHaveBeenCalled();
   } finally {
     timeout.mockRestore();
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This mcp-tools.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 
 it("runs without a receipt when approval is disabled for this connection", async () => {
   mocks.get.mockResolvedValue({ ...connector, requireApproval: false });
@@ -672,7 +671,6 @@ it("runs without a receipt when approval is disabled for this connection", async
     )
   ).resolves.toMatchObject({ output: "Echo output" });
 });
-
 it("rechecks the connection policy when approval is enabled after request evaluation", async () => {
   mocks.get.mockResolvedValueOnce({ ...connector, requireApproval: false });
   const { approval: _approval, ...unapprovedContext } = context;

@@ -16,13 +16,11 @@ const registryConfig = async (
   const config = await getRegistriesConfig(cwd);
   return {
     registries: {
-      // oxlint-disable-next-line node/no-process-env -- CLI registry selection honors CHATJS_REGISTRY_URL for this process, then configured registries override it; moving the read to caller defaults would change this existing per-operation boundary.
       "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
       ...config.registries,
     },
   };
 };
-
 const itemAddress = (
   source: string,
   kind: "gateway" | "tool" | "storage"
@@ -47,7 +45,6 @@ const readItem = async (
   );
   return registryItemSchema.parse(item);
 };
-
 const listTools = async (
   cwd: string
 ): Promise<Awaited<ReturnType<typeof getRegistry>>["items"]> => {
@@ -57,7 +54,7 @@ const listTools = async (
   );
   return catalog.items.filter(
     (item: Readonly<{ meta?: Readonly<Record<string, unknown>> }>): boolean => {
-      const chatjs = item.meta?.chatjs;
+      const { chatjs } = item.meta ?? {};
       return (
         typeof chatjs === "object" &&
         chatjs !== null &&
@@ -67,7 +64,6 @@ const listTools = async (
     }
   );
 };
-
 const installItems = async (
   sources: readonly string[],
   cwd: string,

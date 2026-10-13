@@ -1,12 +1,8 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Evaluation and durable event objects are supplied by EVE; the fixture only reads them. */
-/* oxlint-disable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function -- Keep the ordered owner/foreign approval scenario and zero-effect expectations together. */
-/* oxlint-disable import/no-nodejs-modules -- The native evaluation uses Node assertions. */
 import assert from "node:assert/strict";
 
 import { Client } from "eve/client";
 import { defineEval } from "eve/evals";
 
-// oxlint-disable-next-line import/no-default-export -- EVE discovers the fixture evaluation by default export.
 export default defineEval({
   description:
     "Native owner approval and cancellation through HTTP and durable Workflow",
@@ -72,9 +68,3 @@ export default defineEval({
     );
   },
 });
-
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-enable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function */
-
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

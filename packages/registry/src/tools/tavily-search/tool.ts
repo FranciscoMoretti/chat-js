@@ -1,18 +1,16 @@
+import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { tavily } from "@tavily/core";
 import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { env } from "@/lib/env";
-import { executeWithResearchProgress } from "@/lib/eve/research-progress";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { createModuleLogger } from "@/lib/logger";
+import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
-
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { webSearchInput } from "./schemas";
+import type { z } from "zod";
 
 const TAVILY_COST_CENTS = 5;
 const CENTS_PER_USD = 100;
@@ -57,7 +55,6 @@ const createTavilySearch =
     const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
       query,
       {
-        // oxlint-disable-next-line eslint/no-undefined -- Tavily merges default days=3 before caller options; the own undefined days value overrides that default so general-search JSON omits days.
         days: topic === "news" ? NEWS_LOOKBACK_DAYS : undefined,
         excludeDomains: [...options.excludeDomains],
         includeAnswer: true,
@@ -78,7 +75,6 @@ const createTavilySearch =
       })
     );
   };
-
 export const webSearch = defineTool({
   description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
 

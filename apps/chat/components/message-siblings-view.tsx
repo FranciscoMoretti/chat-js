@@ -1,10 +1,9 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React from "react";
-
 import { Action } from "@/components/ai-elements/actions";
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth -- MessageSiblingsView: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+import React from "react";
 
 export const MessageSiblingsView = ({
   index,
@@ -45,4 +44,3 @@ export const MessageSiblingsView = ({
     )}
   </div>
 );
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth */

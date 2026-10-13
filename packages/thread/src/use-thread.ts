@@ -1,5 +1,8 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
+import type {
+  CanonicalMessage,
+  ThreadInit,
+  ThreadStateSnapshot,
+} from "./types";
 import {
   useCallback,
   useEffect,
@@ -8,28 +11,23 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-
 import type { AbstractThread } from "./abstract-thread";
-import { Thread } from "./thread";
-import { createThreadHelpers } from "./thread-hook-helpers";
-import type { UseThreadHelpers } from "./thread-hook-helpers";
 import { SnapshotStore } from "./thread-snapshot-store";
-import type {
-  CanonicalMessage,
-  ThreadInit,
-  ThreadStateSnapshot,
-} from "./types";
+import { Thread } from "./thread";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseThreadHelpers } from "./thread-hook-helpers";
+import { createThreadHelpers } from "./thread-hook-helpers";
 
 const FIRST_PARAMETER_INDEX = 0;
 
-// oxlint-disable-next-line eslint/no-undefined -- An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
-const OMITTED_HOOK_INPUT = undefined;
+// An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
+const OMITTED_HOOK_INPUT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
-const NO_SUPPLIED_THREAD = undefined;
+// The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
+const NO_SUPPLIED_THREAD = globalThis.undefined;
 
 const useIsomorphicLayoutEffect =
-  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface ThreadHookOptions {
@@ -68,7 +66,6 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     this.#callbacks.onError?.(error);
 
   public readonly onFinish = (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original canonical SDK message/metadata and mutable messages array into the current user callback; deep readonly changes metadata assignability and array mutation rights.
     event: Readonly<
       Parameters<
         NonNullable<ThreadCallbacks<TMessage>["onFinish"]>
@@ -77,7 +74,6 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
   ): void => this.#callbacks.onFinish?.(event);
 
   public readonly onToolCall = async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK static/dynamic tool-call union into the current callback; deep readonly generic tool inputs cannot satisfy its original conditional tool specialization.
     event: Readonly<
       Parameters<
         NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>
@@ -86,9 +82,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
   ): Promise<void> => {
     await this.#callbacks.onToolCall?.(event);
   };
-
   public readonly sendAutomaticallyWhen = async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK auto-send callback receives its original mutable message array; readonly array forwarding rejects existing callback implementations.
     event: Readonly<
       Parameters<
         NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
@@ -96,13 +90,15 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     >
   ): Promise<boolean> =>
     await (this.#callbacks.sendAutomaticallyWhen?.(event) ?? false);
-
   public readonly setMessages = (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK setter accepts mutable message arrays and synchronous updater callbacks that may mutate/return their provided array; readonly collections reject that existing updater contract.
     messages: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["setMessages"]
     >[typeof FIRST_PARAMETER_INDEX]
-  ): void => this.#thread?.setMessages(messages);
+  ): void => {
+    if (this.#thread) {
+      this.#thread.setMessages(messages);
+    }
+  };
 }
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
@@ -179,7 +175,6 @@ const useLatestDispatchers = <TMessage extends UIMessage>(
 };
 
 const createOwnedThread = <TMessage extends UIMessage>(
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Owned options forward original canonical messages and SDK schema instances into the Thread constructor; deep readonly metadata/schema arrays cannot satisfy that receiving contract.
   ownOptions: Readonly<ThreadInit<TMessage>> | undefined,
   dispatchers: DispatcherReader<TMessage>
 ): Thread<TMessage> =>
@@ -192,7 +187,6 @@ const createOwnedThread = <TMessage extends UIMessage>(
     sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
   });
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React state stores the actual supplied AbstractThread class identity and constructs owned controllers from native SDK schemas/messages; a deep readonly class/schema view fails both state and constructor receivers.
 const useSelectedController = <TMessage extends UIMessage>({
   externalThread,
   ownOptions,
@@ -212,13 +206,15 @@ const useSelectedController = <TMessage extends UIMessage>({
   });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
-  const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
+  const [previousThreadId, setPreviousThreadId] = useState(
+    ownOptions && ownOptions.id
+  );
   if (
     previousExternalThread !== externalThread ||
-    previousThreadId !== ownOptions?.id
+    previousThreadId !== (ownOptions && ownOptions.id)
   ) {
     setPreviousExternalThread(externalThread);
-    setPreviousThreadId(ownOptions?.id);
+    setPreviousThreadId(ownOptions && ownOptions.id);
     setThread(externalThread ?? createOwnedThread(ownOptions, dispatchers));
   }
   return thread;
@@ -243,7 +239,6 @@ const useDispatcherCallbacks = <TMessage extends UIMessage>(
 };
 
 const useThreadController = <TMessage extends UIMessage>(
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Controller selection preserves the supplied AbstractThread identity or forwards native SDK schemas/messages into owned construction; deep readonly options fail those receiving contracts.
   options: Readonly<UseThreadOptions<TMessage>>
 ): {
   thread: AbstractThread<TMessage>;
@@ -255,11 +250,11 @@ const useThreadController = <TMessage extends UIMessage>(
     : OMITTED_HOOK_INPUT;
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
-    onData: ownOptions?.onData,
-    onError: ownOptions?.onError,
-    onFinish: ownOptions?.onFinish,
-    onToolCall: ownOptions?.onToolCall,
-    sendAutomaticallyWhen: ownOptions?.sendAutomaticallyWhen,
+    onData: ownOptions && ownOptions.onData,
+    onError: ownOptions && ownOptions.onError,
+    onFinish: ownOptions && ownOptions.onFinish,
+    onToolCall: ownOptions && ownOptions.onToolCall,
+    sendAutomaticallyWhen: ownOptions && ownOptions.sendAutomaticallyWhen,
   };
   const dispatchers = useLatestDispatchers<TMessage>(callbacks);
   const thread = useSelectedController<TMessage>({
@@ -273,7 +268,6 @@ const useThreadController = <TMessage extends UIMessage>(
 };
 
 const useThread = <TMessage extends UIMessage = UIMessage>(
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public hook accepts native SDK construction options or the actual supplied AbstractThread class; forwarding a deep readonly view breaks controller construction and React state identity.
   options: Readonly<UseThreadOptions<TMessage>> = {}
 ): UseThreadHelpers<TMessage> => {
   const { thread, dispatchers } = useThreadController(options);

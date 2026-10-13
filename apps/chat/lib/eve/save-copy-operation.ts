@@ -1,6 +1,3 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "../db/eve-copy-dispatch" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 import { dispatchEveCopy } from "@/lib/db/eve-copy-dispatch";
 import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 import {
@@ -14,11 +11,11 @@ import {
   writeEveCopyDocuments,
   writeEveCopyFile,
 } from "@/lib/db/eve-copy-resources";
-import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
-import { CreationConflictError } from "@/lib/db/eve-queries";
 import { downloadFile, uploadFileAtKey } from "@/lib/file-storage";
-
+import { CreationConflictError } from "@/lib/db/eve-queries";
 import type { EveCopyInput } from "./copy-input";
+
+import { assertEveConfigured } from "./server";
 import { createNativeEveCopy } from "./create-native-copy";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 import {
@@ -26,14 +23,9 @@ import {
   loadEveModelDefinition,
 } from "./model-selection";
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
+import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
 import { readPublicEveCopySource } from "./public-copy-source";
-import { assertEveConfigured } from "./server";
-/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): prepareCopyReservation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): prepareCopyReservation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 const prepareCopyReservation = async (
   ownerId: string,
   input: EveCopyInput,
@@ -57,7 +49,7 @@ const prepareCopyReservation = async (
   const plan = await prepareEveCopyPlan(
     source.projection,
     documents,
-    (key) => readPublicEveCopyFile(source, key, downloadFile),
+    async (key) => await readPublicEveCopyFile(source, key, downloadFile),
     origin
   );
   try {
@@ -78,20 +70,13 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
-/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): saveEveCopyOperation accepts blob; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
- * @param ownerId Owner whose reservation, attachments, and copied conversation are used.
- * @param input Source/model request checked against any previous reservation for this operation.
- * @param origin Origin used to resolve public source resources while preparing the copy plan.
- * @returns The dispatched copy binding after owned files/documents have been accepted.
+ * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
+ * @param {EveCopyInput} input Source/model request checked against any previous reservation for this operation.
+ * @param {string} origin Origin used to resolve public source resources while preparing the copy plan.
+ * @returns {Promise<Awaited<ReturnType<typeof dispatchEveCopy>>>} The dispatched copy binding after owned files/documents have been accepted.
  */
 export const saveEveCopyOperation = async (
   ownerId: string,
@@ -124,7 +109,7 @@ export const saveEveCopyOperation = async (
     }
     try {
       for (const file of saved.copy.plan.files) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Accept each reserved destination file through writeEveCopyFile before reading/uploading another; a failed copy must stop before dispatch and bounds live byte buffers.
         await writeEveCopyFile(ownerId, id, file.key, {
           readSourceFile: downloadFile,
           writeDestinationFile: async (key, blob): Promise<void> => {
@@ -141,8 +126,10 @@ export const saveEveCopyOperation = async (
       throw error;
     }
   }
-  return await dispatchEveCopy(ownerId, id, (operationId) =>
-    createNativeEveCopy(ownerId, operationId, input.modelId)
+  return await dispatchEveCopy(
+    ownerId,
+    id,
+    async (operationId) =>
+      await createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -1,7 +1,8 @@
-import type { MessageStreamEvent } from "eve/client";
+import { setTimeout as delay } from "node:timers/promises";
 import { beforeEach, expect, it, vi } from "vitest";
-
+import type { MessageStreamEvent } from "eve/client";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
+import type { withManagedUsageReconciliation } from "@/lib/db/eve-billing";
 
 const mocks = vi.hoisted(() => ({
   advanceChild: vi.fn(),
@@ -16,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   },
   events: new Map<string, MessageStreamEvent[]>(),
   ingest: vi.fn(),
-  managed: vi.fn(),
+  managed: vi.fn<typeof withManagedUsageReconciliation>(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
@@ -45,14 +46,17 @@ vi.mock("./stream-positions", () => ({
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.ingest }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = {
-      attach: (sessionId: string) => ({
-        async *stream(options: unknown) {
+      attach: (
+        sessionId: string
+      ): {
+        stream: (options: unknown) => AsyncGenerator<MessageStreamEvent, void>;
+      } => ({
+        async *stream(
+          options: unknown
+        ): AsyncGenerator<MessageStreamEvent, void> {
           mocks.streamOptions(options);
           await mocks.read(sessionId);
           yield* mocks.events.get(sessionId) ?? [];
@@ -61,12 +65,7 @@ vi.mock("eve/client", () => ({
     };
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable id-length, no-magic-numbers --
- * id-length (#506): beforeEach uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.events.clear();
@@ -76,68 +75,45 @@ beforeEach(() => {
   mocks.cursor.mockResolvedValue(0);
   mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
-    Array.from({ length: 8 }, (_, index) => ({
+    Array.from({ length: 8 }, (_value, index) => ({
       sessionId: String(index),
       state: "bound",
       usageStreamIndex: 0,
     }))
   );
 });
-/* oxlint-enable id-length, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-statements (#512): it("keeps four reads busy when one conversation is slow") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("keeps four reads busy when one conversation is slow") uses 4, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("keeps four reads busy when one conversation is slow") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it("keeps four reads busy when one conversation is slow") accepts [id]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): it("keeps four reads busy when one conversation is slow") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("keeps four reads busy when one conversation is slow", async () => {
-  const gates = Array.from({ length: 8 }, () =>
-    Promise.withResolvers<undefined>()
+  const gates = Array.from({ length: 8 }, (): PromiseWithResolvers<void> =>
+    Promise.withResolvers()
   );
-  mocks.read.mockImplementation((id) => gates[Number(id)].promise);
+  mocks.read.mockImplementation(async (id) => {
+    await gates[Number(id)].promise;
+  });
   const reconciliation = reconcileEveOwnerUsage("owner");
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
-  gates[1].resolve(undefined);
+  gates[1].resolve();
   await expect.poll(() => mocks.read.mock.calls.length).toBe(5);
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["0", "1", "2", "3", "4"]);
   for (const gate of gates) {
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await reconciliation;
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["0", "1", "2", "3", "4", "5", "6", "7"]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
- * max-statements (#512): it("stops scheduling on failure and waits for in-flight billing reads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("stops scheduling on failure and waits for in-flight billing reads") uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("stops scheduling on failure and waits for in-flight billing reads") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): it("stops scheduling on failure and waits for in-flight billing reads") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("stops scheduling on failure and waits for in-flight billing reads", async () => {
-  const gates = Array.from({ length: 4 }, () =>
-    Promise.withResolvers<undefined>()
+  const gates = Array.from({ length: 4 }, (): PromiseWithResolvers<void> =>
+    Promise.withResolvers()
   );
-  mocks.read.mockImplementation((id) => gates[Number(id)].promise);
+  mocks.read.mockImplementation(async (id) => {
+    await gates[Number(id)].promise;
+  });
   let finished = false;
-  // oxlint-disable-next-line promise/prefer-await-to-then -- Observe settlement without blocking the assertions on still-pending billing reads.
   const reconciliation = reconcileEveOwnerUsage("owner").finally(() => {
     finished = true;
   });
@@ -145,22 +121,15 @@ it("stops scheduling on failure and waits for in-flight billing reads", async ()
   await expect.poll(() => mocks.read.mock.calls.length).toBe(4);
   gates[1].reject(new Error("lost stream"));
   // Let the failed worker observe the rejection before another read completes.
-  // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
+  await delay(0);
   expect(finished).toBe(false);
   for (const gate of gates) {
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await rejection;
   expect(mocks.read).toHaveBeenCalledTimes(4);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("rejects uncertain ownership bindings before reading any stream") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("rejects uncertain ownership bindings before reading any stream", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "owned", state: "bound" },
@@ -172,12 +141,7 @@ it("rejects uncertain ownership bindings before reading any stream", async () =>
   expect(mocks.read).not.toHaveBeenCalled();
   expect(mocks.positions).not.toHaveBeenCalled();
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("skips only streams whose exact position matches the durable billing cursor") uses 10, 11 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("skips only streams whose exact position matches the durable billing cursor") accepts [id]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("skips only streams whose exact position matches the durable billing cursor", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "settled", state: "bound", usageStreamIndex: 10 },
@@ -191,16 +155,11 @@ it("skips only streams whose exact position matches the durable billing cursor",
     ])
   );
   await reconcileEveOwnerUsage("owner");
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
-    "appended",
-    "missing",
-  ]);
+  expect(
+    mocks.read.mock.calls.map(([id]: Readonly<[sessionId: string]>) => id)
+  ).toEqual(["appended", "missing"]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("refuses a stream shorter than its durable billing cursor") uses 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("refuses a stream shorter than its durable billing cursor", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "rewound", state: "bound", usageStreamIndex: 10 },
@@ -211,7 +170,6 @@ it("refuses a stream shorter than its durable billing cursor", async () => {
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
 it("fails closed when authoritative stream positions cannot be read", async () => {
   mocks.positions.mockRejectedValue(new Error("world unavailable"));
@@ -220,7 +178,6 @@ it("fails closed when authoritative stream positions cannot be read", async () =
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
-
 it("finishes interrupted commands before selecting usage streams", async () => {
   mocks.recover.mockImplementation(() => {
     mocks.bindings.mockResolvedValue([
@@ -238,10 +195,6 @@ it("does not admit new work when recovery remains unavailable", async () => {
   );
   expect(mocks.bindings).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("resumes managed reads at the persisted billing cursor without following live work uses 17 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("resumes managed reads at the persisted billing cursor without following live work", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "session", state: "bound", usageStreamIndex: 17 },
@@ -252,29 +205,22 @@ it("resumes managed reads at the persisted billing cursor without following live
     expect.objectContaining({ follow: false, startIndex: 17 })
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("reconciles only the target during a managed owner cooldown, then sweeps when due" uses 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
   mocks.env.VERCEL = "1";
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    reconcile(false, new Set())
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(false, new Set());
+  });
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read.mock.calls).toEqual([["target"]]);
   expect(mocks.bindings).not.toHaveBeenCalled();
   mocks.read.mockClear();
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    reconcile(true, new Set())
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(true, new Set());
+  });
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read).toHaveBeenCalledTimes(8);
 });
-/* oxlint-enable no-magic-numbers */
 
 it("does not bypass managed reconciliation failures", async () => {
   mocks.env.VERCEL = "1";
@@ -283,30 +229,21 @@ it("does not bypass managed reconciliation failures", async () => {
     "Unpriced usage"
   );
 });
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("replays historical unpriced evidence even when its stream cursor already advanced uses 20 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("replays historical unpriced evidence even when its stream cursor already advanced", async () => {
   mocks.env.VERCEL = "1";
   mocks.bindings.mockResolvedValue([
     { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
   ]);
   mocks.cursor.mockResolvedValue(20);
-  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    reconcile(false, new Set(["failed-attempt"]))
-  );
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(false, new Set(["failed-attempt"]));
+  });
   await reconcileEveOwnerUsage("owner", "failed-attempt");
   expect(mocks.streamOptions).toHaveBeenCalledWith(
     expect.objectContaining({ startIndex: 0 })
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("reconciles child tails even when the root cursor is unchanged and preserves origi uses 20, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("reconciles child tails even when the root cursor is unchanged and preserves original event identity", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 20 },
@@ -346,7 +283,6 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
   });
   expect(mocks.advanceChild).toHaveBeenCalledWith("owner", "child", 3);
 });
-/* oxlint-enable no-magic-numbers */
 
 it("blocks admission without advancing child progress when a completed child charge remains unknown", async () => {
   mocks.bindings.mockResolvedValue([
@@ -377,7 +313,6 @@ it("blocks admission without advancing child progress when a completed child cha
   );
   expect(mocks.advanceChild).not.toHaveBeenCalled();
 });
-
 it("settles newly discovered descendants before admitting the next turn", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 0 },
@@ -416,10 +351,6 @@ it("settles newly discovered descendants before admitting the next turn", async 
   await reconcileEveOwnerUsage("owner");
   expect(mocks.read.mock.calls).toEqual([["root"], ["child"], ["grandchild"]]);
 });
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("skips settled research history with one owner-wide child lookup") uses 20, 5, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("skips settled research history with one owner-wide child lookup", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 20 },
@@ -449,11 +380,7 @@ it("skips settled research history with one owner-wide child lookup", async () =
   ]);
   expect(mocks.read).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("rejects a rewound child even when its parent is settled") uses 20, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("rejects a rewound child even when its parent is settled", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 20 },
@@ -477,6 +404,3 @@ it("rejects a rewound child even when its parent is settled", async () => {
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This reconcile-usage.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

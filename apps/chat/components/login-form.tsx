@@ -1,11 +1,11 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
 import React, { Suspense, useSyncExternalStore } from "react";
 
+import type { JSX as ReactJSX } from "react";
+
 import { SocialAuthProviders } from "@/components/auth-providers";
-import { InternalLink } from "@/components/internal-link";
+
 import {
   Card,
   CardContent,
@@ -13,12 +13,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import {
   buildSocialAuthRequest,
   isElectronRenderer,
 } from "@/lib/electron-auth";
+
+import { InternalLink } from "@/components/internal-link";
+
 import { cn } from "@/lib/utils";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- LoginForm: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+import { useSearchParams } from "next/navigation";
 
 export const LoginForm = ({
   className,
@@ -35,7 +39,7 @@ export const LoginForm = ({
   );
   const { callbackURL, onRedirectToUrl, signInOptions } =
     buildSocialAuthRequest(query, globalThis.location?.origin);
-  const registerHref = { pathname: "/register" as const, query };
+  const registerHref = `/register?${new URLSearchParams(query)}` as const;
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -89,4 +93,3 @@ export const LoginForm = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

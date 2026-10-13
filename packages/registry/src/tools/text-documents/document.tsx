@@ -1,28 +1,27 @@
 "use client";
-import dynamic from "next/dynamic";
+import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
 import React from "react";
-
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { DocumentUi } from "@/lib/eve/document-ui";
-
 import { EveDocumentComparison } from "./comparison";
+import dynamic from "next/dynamic";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const Editor = dynamic(
-  // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic expects a loader promise selecting the named editor export; this then maps the module to that component.
-  () => import("./editor").then((editorModule) => editorModule.Editor),
+  async () => {
+    const { Editor: TextEditor } = await import("./editor");
+    return TextEditor;
+  },
   {
     ssr: false,
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const documentUi: DocumentUi = {
-  Body: ({ inline, editorProps, comparison }) => (
+  Body: ({
+    inline,
+    editorProps,
+    comparison,
+  }: ReadonlyNativeSurface<DocumentBodyProps>) => (
     <ScrollArea className="min-h-0 flex-1">
       {comparison ? (
         <EveDocumentComparison {...comparison} />
@@ -40,5 +39,3 @@ export const documentUi: DocumentUi = {
     </ScrollArea>
   ),
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-props-no-spreading */

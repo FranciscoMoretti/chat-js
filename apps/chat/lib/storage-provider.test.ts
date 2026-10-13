@@ -15,8 +15,6 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-/* oxlint-disable eslint/max-statements -- Keep credential, capability and signed-read assertions together for each authentication mode. */
-/* oxlint-disable eslint/no-magic-numbers -- These values assert the credential-scoped five-minute download contract. */
 test.each([
   { token: "server-secret" },
   { oidcToken: "oidc-secret", storeId: "store_fixture" },
@@ -40,7 +38,7 @@ test.each([
       presignedUrl: "https://private.example/signed",
     });
     const adapter = createStorageAdapter(credentials);
-    expect(adapter.signedUrl?.supported).toBe(true);
+    expect(adapter.signedUrl).toHaveProperty("supported", true);
     expect(await adapter.url("chat/objects/object-key")).toBe(
       "https://private.example/signed"
     );
@@ -61,7 +59,6 @@ test.each([
     });
   }
 );
-
 test("the Files SDK honors a caller's shorter expiry and cancellation signal", async () => {
   const { signal } = new AbortController();
   vi.useFakeTimers();
@@ -86,4 +83,3 @@ test("the Files SDK honors a caller's shorter expiry and cancellation signal", a
     })
   );
 });
-/* oxlint-enable eslint/no-magic-numbers */

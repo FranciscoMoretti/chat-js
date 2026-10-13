@@ -3,19 +3,82 @@ import { z } from "zod";
 
 import { keyFromFileUrl } from "@/lib/file-url";
 
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type UserContentPart = Exclude<
+  Extract<ModelMessage, { role: "user" }>["content"],
+  string
+>[number];
+type ToolContentPart = Extract<
+  ModelMessage,
+  { role: "tool" }
+>["content"][number];
+
+interface ImageContextUserMessage extends IgnoredSdkFields<
+  Extract<ModelMessage, { role: "user" }>
+> {
+  readonly role: "user";
+  readonly content:
+    | string
+    | readonly (IgnoredSdkFields<UserContentPart> &
+        (
+          | {
+              readonly type: "file";
+              readonly mediaType: string;
+              readonly data: unknown;
+              readonly filename?: string;
+            }
+          | { readonly type: "text" | "image" }
+        ))[];
+}
+type ImageContextMessage = IgnoredSdkFields<ModelMessage> &
+  (
+    | ImageContextUserMessage
+    | {
+        readonly role: "tool";
+        readonly content: readonly (IgnoredSdkFields<ToolContentPart> &
+          (
+            | {
+                readonly type: "tool-result";
+                readonly toolName: string;
+                readonly toolCallId: string;
+                readonly output: {
+                  readonly type: string;
+                  readonly value?: unknown;
+                } & IgnoredSdkFields<
+                  Extract<ToolContentPart, { type: "tool-result" }>["output"]
+                >;
+              }
+            | { readonly type: "tool-approval-response" }
+          ))[];
+      }
+    | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> }
+  );
+
+/** Preserve the native array check while retaining the readonly content element contract. */
+const isImageContentArray: (
+  content: ImageContextUserMessage["content"]
+) => content is Exclude<ImageContextUserMessage["content"], string> =
+  Array.isArray;
+
 const imageResult = z.object({
   imageUrl: z.string(),
   prompt: z.string().optional(),
 });
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep latestImageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): latestImageAttachments accepts messages: readonly ModelMessage[]; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const latestImageAttachments = (messages: readonly ModelMessage[]) => {
-  const user = messages.findLast((message) => message.role === "user");
+const latestImageAttachments = (
+  messages: readonly ImageContextMessage[]
+): FileUIPart[] => {
+  const user = messages.findLast(
+    (message: {
+      readonly role: ModelMessage["role"];
+    }): message is ImageContextUserMessage => message.role === "user"
+  );
   const attachments: FileUIPart[] = [];
-  if (user && Array.isArray(user.content)) {
+  if (user && isImageContentArray(user.content)) {
     for (const part of user.content) {
       if (
         part.type === "file" &&
@@ -32,23 +95,20 @@ const latestImageAttachments = (messages: readonly ModelMessage[]) => {
       }
     }
   }
+
   return attachments;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): eveImageContext keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): eveImageContext skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/explicit-function-return-type (#560): Keep eveImageContext's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveImageContext's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveImageContext accepts messages: readonly ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveImageContext intentionally keeps the existing falsy-value behavior of keyFromFileUrl(parsed.data.imageUrl); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): eveImageContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+/** Derive image references from the native branch, without another image-history store.
+ * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
+ * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
  */
-/** Derive image references from the native branch, without another image-history store. */
-export const eveImageContext = (messages: readonly ModelMessage[]) => {
+export const eveImageContext = (
+  messages: readonly ImageContextMessage[]
+): {
+  attachments: FileUIPart[];
+  lastGeneratedImage: { imageUrl: string; name: string } | null;
+} => {
   const attachments = latestImageAttachments(messages);
   let lastGeneratedImage: {
     imageUrl: string;
@@ -70,7 +130,7 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
       if (
         parsed.success &&
         parsed.data.imageUrl.startsWith("/api/files/") &&
-        keyFromFileUrl(parsed.data.imageUrl)
+        keyFromFileUrl(parsed.data.imageUrl) !== null
       ) {
         lastGeneratedImage = {
           imageUrl: parsed.data.imageUrl,
@@ -81,4 +141,3 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
   }
   return { attachments, lastGeneratedImage };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

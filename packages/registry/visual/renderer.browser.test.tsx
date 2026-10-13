@@ -1,60 +1,34 @@
-import { takeSnapshot } from "@uiverify/vitest";
-import { getInstanceByDom } from "echarts";
-import React, { act } from "react";
-import { createRoot } from "react-dom/client";
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
+import "../../../apps/chat/app/globals.css";
+import React from "react";
 import { expect, test, vi } from "vitest";
-import type { z } from "zod";
-
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type {
-  weatherInput,
-  weatherResult,
-} from "../src/tools/get-weather/schemas";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type {
   retrievedInput,
   retrievedResult,
 } from "../src/tools/retrieve-url/schemas";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type {
+  weatherInput,
+  weatherResult,
+} from "../src/tools/get-weather/schemas";
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import "../../../apps/chat/app/globals.css";
-/* oxlint-enable import/no-relative-parent-imports */
+import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
+import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { createRoot } from "react-dom/client";
+import { getInstanceByDom } from "echarts";
+import { takeSnapshot } from "@uiverify/vitest";
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
-  () => import("../src/ui/code-execution/interactive-chart-impl")
+  async () => await import("../src/ui/code-execution/interactive-chart-impl")
 );
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 // Focus this capture on chart output, independently of the code editor.
-vi.mock("@/components/sandbox", () => ({ SandboxComposed: () => null }));
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock("@/components/sandbox", () => ({ SandboxComposed: (): null => null }));
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const malformed = [
   { elements: [null], type: "line" },
   { elements: [{ label: "bad", points: "invalid" }], type: "scatter" },
@@ -62,8 +36,6 @@ const malformed = [
   { elements: [{ group: "g", label: "bad", value: "invalid" }], type: "bar" },
   { elements: [], type: "unknown" },
 ];
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
 
 type GetWeatherRendererTool = ToolRendererProps<
   typeof weatherInput,
@@ -74,8 +46,6 @@ type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedResult
 >["tool"];
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T12:00" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -101,8 +71,6 @@ const weather: WeatherAtLocation = {
   timezone_abbreviation: "UTC",
   utc_offset_seconds: 0,
 };
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
 
 const weatherLoadingTool: GetWeatherRendererTool = {
   state: "input-streaming",
@@ -145,13 +113,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 test("chart output validates shapes and fits PNG output", async (): Promise<void> => {
   const container = document.createElement("main");
   document.documentElement.classList.add("dark");
@@ -194,31 +155,29 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     },
   ];
   const outputs = [...malformed, ...valid, png];
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => {
-    root.render(
-      <>
-        {outputs.map((chart, index) => (
-          <section
-            key={JSON.stringify(chart)}
-            data-testid={`output-${index}`}
-            style={index < malformed.length ? { display: "none" } : undefined}
-          >
-            <CodeExecution
-              isReadonly
-              messageId="code-fixture"
-              tool={{
-                input: { code: "", language: "python", title: "Chart" },
-                output: { chart, message: "" },
-                state: "output-available",
-                toolCallId: `fixture-${index}`,
-              }}
-            />
-          </section>
-        ))}
-      </>
-    );
-  });
+  await renderRoot(
+    root,
+    <>
+      {outputs.map((chart: unknown, index) => (
+        <section
+          key={JSON.stringify(chart)}
+          data-testid={`output-${index}`}
+          style={index < malformed.length ? { display: "none" } : undefined}
+        >
+          <CodeExecution
+            isReadonly
+            messageId="code-fixture"
+            tool={{
+              input: { code: "", language: "python", title: "Chart" },
+              output: { chart, message: "" },
+              state: "output-available",
+              toolCallId: `fixture-${index}`,
+            }}
+          />
+        </section>
+      ))}
+    </>
+  );
   for (let index = 0; index < malformed.length; index += 1) {
     expect(
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
@@ -234,7 +193,11 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .poll((): boolean =>
       [...container.querySelectorAll("h3")].every((heading) => {
         const panel = heading.parentElement?.parentElement?.parentElement;
-        return panel && getComputedStyle(panel).opacity === "1";
+        return (
+          panel !== null &&
+          panel !== undefined &&
+          getComputedStyle(panel).opacity === "1"
+        );
       })
     )
     .toBe(true);
@@ -242,8 +205,9 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .poll((): boolean =>
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
-      ].every((element) =>
-        getInstanceByDom(element)?.getZr().animation.isFinished()
+      ].every(
+        (element) =>
+          getInstanceByDom(element)?.getZr().animation.isFinished() === true
       )
     )
     .toBe(true);
@@ -255,57 +219,76 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   expect(img.naturalWidth).toBe(600);
   expect(img.getBoundingClientRect().width).toBeLessThanOrEqual(900);
   await takeSnapshot("validated-chart-output");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => root.unmount());
+  await unmountRoot(root);
   container.remove();
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 test("weather and retrieved URL renderer states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
   document.body.append(container);
   const root = createRoot(container);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => {
-    root.render(
-      <>
-        <GetWeatherRenderer
-          isReadonly
-          messageId="weather-loading"
-          tool={weatherLoadingTool}
-        />
-        <GetWeatherRenderer
-          isReadonly
-          messageId="weather-output"
-          tool={weatherOutputTool}
-        />
+  await renderRoot(
+    root,
+    <>
+      <GetWeatherRenderer
+        isReadonly
+        messageId="weather-loading"
+        tool={weatherLoadingTool}
+      />
+      <GetWeatherRenderer
+        isReadonly
+        messageId="weather-output"
+        tool={weatherOutputTool}
+      />
+      <RetrieveUrlRenderer
+        isReadonly
+        messageId="url-loading"
+        tool={retrieveUrlLoadingTool}
+      />
+      <RetrieveUrlRenderer
+        isReadonly
+        messageId="url-error"
+        tool={retrieveUrlErrorTool}
+      />
+      <section id="url-invalid">
         <RetrieveUrlRenderer
           isReadonly
-          messageId="url-loading"
-          tool={retrieveUrlLoadingTool}
+          messageId="url-invalid"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [{ content: {}, title: false }] },
+            state: "output-available",
+            toolCallId: "invalid",
+          }}
         />
+      </section>
+      <section id="url-empty">
         <RetrieveUrlRenderer
           isReadonly
-          messageId="url-error"
-          tool={retrieveUrlErrorTool}
+          messageId="url-empty"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [] },
+            state: "output-available",
+            toolCallId: "empty",
+          }}
         />
+      </section>
+      <section id="url-output">
         <RetrieveUrlRenderer
           isReadonly
           messageId="url-output"
           tool={retrieveUrlOutputTool}
         />
-      </>
-    );
-  });
+      </section>
+    </>
+  );
+  expect(container.querySelector("#url-invalid")).toHaveProperty(
+    "textContent",
+    expect.stringMatching(/Retrieved Content.*Unknown.*No content available/u)
+  );
   await takeSnapshot("weather-and-retrieved-url-states");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act((): void => root.unmount());
+  await unmountRoot(root);
   container.remove();
 });

@@ -4,7 +4,6 @@ import nativeConfig from "./vitest.eve.config";
 
 // The required provider gate has no worker, browser, model, or cloud credentials.
 // Broader app/database scenarios remain in vitest.eve.config.ts.
-/* oxlint-disable import/no-default-export -- Vitest loads this configuration through its default-export contract. */
 export default defineConfig({
   ...nativeConfig,
   test: {

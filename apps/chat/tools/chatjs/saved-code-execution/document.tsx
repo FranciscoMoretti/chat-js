@@ -1,35 +1,22 @@
 "use client";
-import { Play } from "lucide-react";
-import React from "react";
-
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { config } from "@/lib/config";
-import type { DocumentRunProps } from "@/lib/eve/document-ui";
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
-
-import { latestDocumentRun } from "./document-runs";
+import { Button } from "@/components/ui/button";
+import type { DocumentRunProps } from "@/lib/eve/document-ui";
 import { EveDocumentRunResult } from "./result";
+import { Play } from "lucide-react";
+import React from "react";
+import { config } from "@/lib/config";
 import { documentExecutionLanguage } from "./schemas";
+import { latestDocumentRun } from "./document-runs";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const EveDocumentRun = ({
   documentId,
   revisionId,
@@ -40,13 +27,14 @@ export const EveDocumentRun = ({
   onAction,
   buttonOnly = false,
   resultOnly = false,
-}: DocumentRunProps) => {
+}: DocumentRunProps): React.JSX.Element | null => {
+  const [, startEventAction] = React.useTransition();
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
-    onAction &&
+    onAction !== undefined &&
     installedDocumentKinds.has("code") &&
     installedToolNames.has("runCodeDocument") &&
-    documentExecutionLanguage(title);
+    documentExecutionLanguage(title) !== undefined;
   if (
     kind !== "code" ||
     !(canRun || run) ||
@@ -65,13 +53,15 @@ export const EveDocumentRun = ({
             <Button
               className="hover:bg-accent h-fit px-2 py-1.5 [&_svg]:size-[18px]"
               disabled={disabled}
-              // oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value.
-              onClick={(): Promise<void> =>
-                onAction({
-                  message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
-                  modelId: config.ai.tools.code.edits,
-                })
-              }
+
+              onClick={() => {
+                startEventAction(async () => {
+                  await onAction({
+                    message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
+                    modelId: config.ai.tools.code.edits,
+                  });
+                });
+              }}
               size="sm"
               variant="outline"
             >
@@ -95,14 +85,3 @@ export const EveDocumentRun = ({
     </div>
   );
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/strict-void-return */
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */

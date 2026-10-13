@@ -1,41 +1,38 @@
 "use client";
 
 import {
-  Root as PopoverPrimitiveRoot,
-  Trigger as PopoverPrimitiveTrigger,
+  Anchor as PopoverPrimitiveAnchor,
   Content as PopoverPrimitiveContent,
   Portal as PopoverPrimitivePortal,
-  Anchor as PopoverPrimitiveAnchor,
+  Root as PopoverPrimitiveRoot,
+  Trigger as PopoverPrimitiveTrigger,
 } from "@radix-ui/react-popover";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Popover: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const Popover = ({
-  ...props
-}: ReactComponentProps<typeof PopoverPrimitiveRoot>): ReactJSX.Element => (
-  <PopoverPrimitiveRoot data-slot="popover" {...props} />
-);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+const DEFAULT_SIDE_OFFSET = 4;
 
-const PopoverTrigger = ({
-  ...props
-}: ReactComponentProps<typeof PopoverPrimitiveTrigger>): ReactJSX.Element => (
+const Popover = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof PopoverPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => <PopoverPrimitiveRoot data-slot="popover" {...props} />;
+
+const PopoverTrigger = (
+  props: ReactComponentProps<typeof PopoverPrimitiveTrigger>
+): ReactJSX.Element => (
   <PopoverPrimitiveTrigger data-slot="popover-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PopoverContent = ({
   className,
   align = "center",
-  sideOffset = 4,
+  sideOffset = DEFAULT_SIDE_OFFSET,
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveContent>): ReactJSX.Element => (
   <PopoverPrimitivePortal>
@@ -51,15 +48,11 @@ const PopoverContent = ({
     />
   </PopoverPrimitivePortal>
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverAnchor: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const PopoverAnchor = ({
-  ...props
-}: ReactComponentProps<typeof PopoverPrimitiveAnchor>): ReactJSX.Element => (
+const PopoverAnchor = (
+  props: ReactComponentProps<typeof PopoverPrimitiveAnchor>
+): ReactJSX.Element => (
   <PopoverPrimitiveAnchor data-slot="popover-anchor" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };

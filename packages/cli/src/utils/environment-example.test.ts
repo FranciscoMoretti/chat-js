@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import { updateEnvironmentExample } from "./environment-example";
 
-// oxlint-disable-next-line eslint/max-statements -- Preserve the owned section boundary and verify unrelated user configuration in the same ordered operation.
 test("replacement updates owned credential examples while preserving user entries and real credentials", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-env-example-"));
   const example = path.join(cwd, ".env.example");
@@ -34,8 +34,6 @@ test("replacement updates owned credential examples while preserving user entrie
     await rm(cwd, { force: true, recursive: true });
   }
 });
-
-// oxlint-disable-next-line eslint/max-statements -- Exercise both independent provider replacements and legacy user ownership in one sequence.
 test("independent provider sections retain shared credentials and preserve unmarked legacy entries", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-shared-env-"));
   const file = path.join(cwd, ".env.example");

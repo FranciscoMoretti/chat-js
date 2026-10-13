@@ -1,37 +1,46 @@
 import { Client } from "eve/client";
-
-import { getPublicEveConversation } from "@/lib/db/eve-queries";
-
-import { getEveConnectionOptions } from "./connection-options";
-import { eveCopyBoundaries } from "./copy-boundaries";
-import { prepareEveCopyTranscript } from "./copy-transcript";
 import { assertEveConfigured } from "./server";
 import { projectEveSubmissionEvents } from "./submission-projection";
+import { eveCopyBoundaries } from "./copy-boundaries";
+import { getEveConnectionOptions } from "./connection-options";
+import { getPublicEveConversation } from "@/lib/db/eve-queries";
+import { prepareEveCopyTranscript } from "./copy-transcript";
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): readPublicEveCopySource uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep readPublicEveCopySource's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readPublicEveCopySource's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): readPublicEveCopySource intentionally keeps the existing falsy-value behavior of row?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-/* oxlint-disable max-statements -- Keep snapshot, annotation projection and revocation recheck in order before exposing a copy source. */
-export const readPublicEveCopySource = async (id: string) => {
+const PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS = 15_000;
+const PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH = 100;
+const TITLE_PREVIEW_START = 0;
+
+export const readPublicEveCopySource = async (
+  id: string
+): Promise<{
+  boundaries: ReturnType<typeof eveCopyBoundaries>;
+  id: string;
+  ownerId: string;
+  projection: ReturnType<typeof prepareEveCopyTranscript>;
+  sessionId: string;
+  title: string;
+}> => {
   const row = await getPublicEveConversation(id);
-  if (!row?.sessionId) {
+  if (!row || typeof row.sessionId !== "string" || row.sessionId === "") {
     throw new Error("Shared conversation is unavailable.");
   }
   assertEveConfigured();
   const client = new Client(getEveConnectionOptions(row.ownerId));
   const snapshot = await client.sessions
     .attach(row.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS) });
   const events = await projectEveSubmissionEvents(
     row.ownerId,
     row.sessionId,
     snapshot.events
   );
   const current = await getPublicEveConversation(id);
-  if (current?.sessionId !== row.sessionId || current.ownerId !== row.ownerId) {
+  if (
+    !current ||
+    typeof current.sessionId !== "string" ||
+    current.sessionId !== row.sessionId ||
+    current.ownerId !== row.ownerId
+  ) {
     throw new Error("Shared conversation is unavailable.");
   }
   return {
@@ -40,9 +49,11 @@ export const readPublicEveCopySource = async (id: string) => {
     ownerId: row.ownerId,
     projection: prepareEveCopyTranscript(events),
     sessionId: row.sessionId,
-    title: row.title ?? row.firstMessage.slice(0, 100),
+    title:
+      row.title ??
+      row.firstMessage.slice(
+        TITLE_PREVIEW_START,
+        PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH
+      ),
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
-
-/* oxlint-enable max-statements */

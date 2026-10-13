@@ -50,8 +50,8 @@ const compactTitle = (value: string): string => {
 
 /**
  * A short visible title is available even when the title provider is unavailable.
- * @param message First user message whose text or attachments provide the fallback title.
- * @returns A compact visible title, or the default title when the message has no usable label.
+ * @param {ReadonlyEveMessageInput} message First user message whose text or attachments provide the fallback title.
+ * @returns {string} A compact visible title, or the default title when the message has no usable label.
  */
 const eveConversationTitleFallback = (
   message: ReadonlyEveMessageInput
@@ -62,8 +62,8 @@ const normalizeGeneratedTitle = (title: string): string =>
 
 /**
  * Auxiliary title generation must never prevent a conversation from starting.
- * @param message First user message supplied to the auxiliary title model.
- * @returns A normalized generated title, or its message-derived fallback if generation fails or is empty.
+ * @param {ReadonlyEveMessageInput} message First user message supplied to the auxiliary title model.
+ * @returns {Promise<EveTitleResult>} A normalized generated title, or its message-derived fallback if generation fails or is empty.
  */
 const generateEveConversationTitleResult = async (
   message: ReadonlyEveMessageInput
@@ -87,23 +87,15 @@ Rules (strictly follow all):
       telemetry: { integrations: chatTelemetry, isEnabled: true },
     });
     const title = normalizeGeneratedTitle(text);
-    return title
-      ? { source: "generated", title }
-      : { source: "fallback", title: fallback };
+
+    if (title) {
+      return { source: "generated", title };
+    }
+    return { source: "fallback", title: fallback };
   } catch {
     return { source: "fallback", title: fallback };
   }
 };
-
-/* oxlint-disable max-statements -- max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-/**
- * The conditional update preserves manual titles and every branch's shared root title.
- * @param options Root conversation and its owner's original message used to check title eligibility.
- * @param options.conversationId Conversation whose shared root title is still pending.
- * @param options.message First user message that defines the fallback title and generation prompt.
- * @param options.ownerId Owner used to scope the eligibility check and conditional update.
- * @returns The generation result when eligible; no result when the title is already settled or eligibility cannot be checked.
- */
 const persistGeneratedEveConversationTitle = async ({
   conversationId,
   message,
@@ -118,7 +110,7 @@ const persistGeneratedEveConversationTitle = async ({
     if (
       !(await isEveRootTitlePending(ownerId, conversationId, fallbackTitle))
     ) {
-      return;
+      return undefined;
     }
   } catch (error) {
     log.warn(
@@ -128,7 +120,7 @@ const persistGeneratedEveConversationTitle = async ({
       },
       "Eve title eligibility check failed"
     );
-    return;
+    return undefined;
   }
   const generated = await generateEveConversationTitleResult(message);
   try {
@@ -149,10 +141,8 @@ const persistGeneratedEveConversationTitle = async ({
       "Eve title persistence failed"
     );
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
-/* oxlint-enable max-statements */
 export {
   EVE_TITLE_MAX_LENGTH,
   eveConversationTitleFallback,

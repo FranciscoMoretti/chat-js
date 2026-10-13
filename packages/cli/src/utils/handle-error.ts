@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { highlighter } from "./highlighter";
+
 import { logger } from "./logger";
 
 const failureExitCode = 1;
@@ -24,6 +25,5 @@ export const handleError: (error: unknown) => never = (error) => {
   }
 
   logger.break();
-  // oxlint-disable-next-line unicorn/no-process-exit -- The CLI commands call this never-returning handler after failure; setting exitCode would return and permit subsequent command writes.
   process.exit(failureExitCode);
 };

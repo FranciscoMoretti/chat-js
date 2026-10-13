@@ -1,12 +1,5 @@
 "use client";
 
-import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon } from "lucide-react";
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-
 import {
   Dialog,
   DialogContent,
@@ -14,8 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
+import { Command as CommandPrimitive } from "cmdk";
+import { SearchIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Command: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Command = ({
   className,
@@ -30,8 +28,6 @@ const Command = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandDialog: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandDialog = ({
   title = "Command Palette",
@@ -41,10 +37,10 @@ const CommandDialog = ({
   showCloseButton = true,
   ...props
 }: ReactComponentProps<typeof Dialog> & {
-  title?: string;
-  description?: string;
-  className?: string;
-  showCloseButton?: boolean;
+  readonly title?: string;
+  readonly description?: string;
+  readonly className?: string;
+  readonly showCloseButton?: boolean;
 }): ReactJSX.Element => (
   <Dialog {...props}>
     <DialogHeader className="sr-only">
@@ -61,16 +57,13 @@ const CommandDialog = ({
     </DialogContent>
   </Dialog>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandInput = ({
   className,
   containerClassName,
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Input> & {
-  containerClassName?: string;
+  readonly containerClassName?: string;
 }): ReactJSX.Element => (
   <div
     className={cn("flex items-center gap-2 px-3", containerClassName)}
@@ -87,9 +80,6 @@ const CommandInput = ({
     />
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandList = ({
   className,
@@ -104,9 +94,6 @@ const CommandList = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandEmpty: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandEmpty = ({
   ...props
@@ -117,9 +104,6 @@ const CommandEmpty = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandGroup = ({
   className,
@@ -134,9 +118,6 @@ const CommandGroup = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandSeparator = ({
   className,
@@ -150,9 +131,6 @@ const CommandSeparator = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const CommandItem = ({
   className,
@@ -167,9 +145,6 @@ const CommandItem = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandShortcut: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
 const CommandShortcut = ({
   className,
@@ -184,7 +159,6 @@ const CommandShortcut = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   Command,

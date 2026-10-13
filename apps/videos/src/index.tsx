@@ -1,12 +1,11 @@
-import React from "react";
 import { Composition, registerRoot } from "remotion";
+import { DURATION, FPS, script } from "./story";
 
 import { BrandExample } from "./brand-example";
-import { DURATION, FPS, script } from "./story";
+import React from "react";
+
 import { ThreadsLaunch } from "./threads-launch";
 
-/* oxlint-disable react/only-export-components -- Root: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Root: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 const Root = (): React.JSX.Element => (
   <>
     <Composition
@@ -28,6 +27,4 @@ const Root = (): React.JSX.Element => (
     />
   </>
 );
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/only-export-components */
 registerRoot(Root);

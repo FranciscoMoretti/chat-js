@@ -65,5 +65,5 @@ test("preserves auth insertion order and skips unused requirement-description ge
     (entry: { readonly vars: string }) => entry.vars === "CUSTOM_TOKEN"
   );
   expect(custom).toHaveProperty("oneOfGroup");
-  expect(custom?.oneOfGroup).toBeUndefined();
+  expect(custom && custom.oneOfGroup).toBeUndefined();
 });

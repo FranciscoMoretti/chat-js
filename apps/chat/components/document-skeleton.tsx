@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+import React from "react";
 
 const DocumentSkeleton = ({
   artifactKind: _artifactKind,
@@ -20,8 +19,6 @@ const DocumentSkeleton = ({
   </div>
 );
 
-/* oxlint-disable react/no-multi-comp -- InlineDocumentSkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
-
 const InlineDocumentSkeleton = (): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-4 w-48 animate-pulse rounded-lg" />
@@ -33,5 +30,4 @@ const InlineDocumentSkeleton = (): React.JSX.Element => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
-/* oxlint-enable react/no-multi-comp */
 export { DocumentSkeleton, InlineDocumentSkeleton };

@@ -1,14 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import { inferPackageManager } from "./get-package-manager";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 describe("inferPackageManager", () => {
   it("falls back to the launcher package manager when no lockfile is present", () => {
     const cwd = path.join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
@@ -49,12 +46,7 @@ describe("inferPackageManager", () => {
     }
   });
 });
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
   it(`uses a lockfile when the manifest is unusable: ${manifest}`, () => {
     const cwd = path.join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
@@ -68,4 +60,3 @@ for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
     }
   });
 }
-/* oxlint-enable node/no-sync */

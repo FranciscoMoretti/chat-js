@@ -1,7 +1,40 @@
 import { expect, it } from "bun:test";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { runMaintainerBuild } from "./vercel-preview-build";
+
+it("loads build orchestration before workspace dependencies are installed", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "preview-build-import-"));
+  try {
+    await Promise.all(
+      ["vercel-preview-build.ts", "vercel-preview-environment.ts"].map(
+        async (file) => {
+          await copyFile(
+            new URL(file, import.meta.url),
+            path.join(directory, file)
+          );
+        }
+      )
+    );
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        "--no-install",
+        "--eval",
+        'const { runMaintainerBuild } = await import("./vercel-preview-build.ts"); if (typeof runMaintainerBuild !== "function") throw new Error("Missing build operation");',
+      ],
+      { cwd: directory, stderr: "pipe", stdout: "pipe" }
+    );
+    const error = await new Response(child.stderr).text();
+    expect(error).toBe("");
+    expect(await child.exited).toBe(0);
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
+});
 
 const preview = {
   CHATJS_PREVIEW_NEON_PROJECT_ID: "test",
@@ -31,16 +64,33 @@ const expectRejection = async (
   }
   throw new Error("Expected the operation to reject.");
 };
-
-/* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-const harness = (
-  failAt?: string,
+interface BuildHarness {
+  commands: { command: string; env: NodeJS.ProcessEnv }[];
+  events: string[];
+  operations: {
+    openDatabase: (url: string) => {
+      close: () => Promise<void>;
+      execute: (query: string) => Promise<void>;
+    };
+    run: (
+      command: "db:migrate" | "build",
+      env: Readonly<NodeJS.ProcessEnv>
+    ) => Promise<void>;
+  };
+}
+type BuildConnection = ReturnType<BuildHarness["operations"]["openDatabase"]>;
+interface HarnessOptions {
+  readonly failAt?: string;
+  readonly cleanupFails?: boolean;
+  readonly code?: string;
+  readonly lockWait?: Readonly<Promise<void>>;
+}
+const harness = ({
+  failAt,
   cleanupFails = false,
   code = "53000",
-  lockWait: Readonly<Promise<void>> = Promise.resolve()
-) => {
+  lockWait = Promise.resolve(),
+}: HarnessOptions = {}): BuildHarness => {
   const events: string[] = [];
   const commands: { command: string; env: NodeJS.ProcessEnv }[] = [];
   const step = (name: string): void => {
@@ -55,20 +105,25 @@ const harness = (
     commands,
     events,
     operations: {
-      openDatabase: (url: string) => {
+      openDatabase: (url: string): BuildConnection => {
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
+          // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only driver fixture records cleanup and injects failures that must not mask migration errors; its immediate close has no work to await under eslint/require-await.
           close: (): Promise<void> => {
             step("close");
             return Promise.resolve();
           },
-          execute: (query: string): Promise<void> => {
+          execute: async (query: string): Promise<void> => {
             step(query);
-            return query === lockQuery ? lockWait : Promise.resolve();
+
+            if (query === lockQuery) {
+              await lockWait;
+            }
           },
         };
       },
+      // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only subprocess fixture records command/env and injects phase failures without launching a process; eslint/require-await rejects an immediate async callback.
       run: (
         command: "db:migrate" | "build",
         env: Readonly<NodeJS.ProcessEnv>
@@ -80,9 +135,6 @@ const harness = (
     },
   };
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-params */
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
   const test = harness();
@@ -102,8 +154,6 @@ it("locks before migration, releases before build, and passes direct credentials
   }
   expect(preview.DATABASE_MIGRATION_URL).toBe("postgres://wrong/db");
 });
-
-/* oxlint-disable eslint/no-magic-numbers -- only runs the normal build in %s: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it.each(["production", "development"])(
   "only runs the normal build in %s",
   async (environment): Promise<void> => {
@@ -114,7 +164,6 @@ it.each(["production", "development"])(
     expect(test.commands[0].env).toEqual(source);
   }
 );
-/* oxlint-enable eslint/no-magic-numbers */
 
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
   const test = harness();
@@ -127,7 +176,6 @@ it("rejects invalid configuration before opening a connection or invoking a comm
   );
   expect(test.events).toEqual([]);
 });
-
 it.each([
   ["open", "connection", false],
   ["SELECT 1", "connection", true],
@@ -140,7 +188,7 @@ it.each([
   "reports failure at %s without leaking credentials",
   async (step, phase, closes): Promise<void> => {
     // Also fail cleanup to prove it cannot hide an earlier failure.
-    const test = harness(step, step === "db:migrate");
+    const test = harness({ cleanupFails: step === "db:migrate", failAt: step });
     const failure = await runMaintainerBuild(preview, test.operations).catch(
       (error: unknown) => error
     );
@@ -151,24 +199,21 @@ it.each([
     expect(failure.message).toBe(
       `Maintainer build failed during ${phase} (53000).`
     );
-    expect(failure?.cause).toBeUndefined();
-    expect(failure?.stack).not.toContain("postgres://");
+    expect(failure.cause).toBeUndefined();
+    expect(failure.stack).not.toContain("postgres://");
     expect(test.events.includes("close")).toBe(closes);
     expect(test.events.includes("build")).toBe(step === "build");
   }
 );
-
-/* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
-  const { promise: pending, resolve: acquired } =
-    Promise.withResolvers<undefined>();
-  const test = harness(undefined, false, "53000", pending);
+  const { promise: pending, resolve: acquired }: PromiseWithResolvers<void> =
+    Promise.withResolvers();
+  const test = harness({ lockWait: pending });
   const build = runMaintainerBuild(preview, test.operations);
   await delay(0);
   expect(test.events).toContain(lockQuery);
   expect(test.commands).toEqual([]);
-  acquired(undefined);
+  acquired();
   await build;
   expect(
     test.commands.map(
@@ -179,8 +224,6 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
     )
   ).toEqual(["db:migrate", "build"]);
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
 
 it.each([
   ["ECONNREFUSED", " (ECONNREFUSED)"],
@@ -190,7 +233,7 @@ it.each([
 ])(
   "only includes safe error codes: %s",
   async (code, suffix): Promise<void> => {
-    const test = harness("SELECT 1", false, code);
+    const test = harness({ code, failAt: "SELECT 1" });
     await expectRejection(
       runMaintainerBuild(preview, test.operations),
       `Maintainer build failed during connection${suffix}.`

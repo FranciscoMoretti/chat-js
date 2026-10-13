@@ -1,10 +1,6 @@
 import { z } from "zod";
 
 const candidate = z.object({ modelId: z.string(), operationId: z.uuid() });
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): eveResponseGroupResult uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/max-nested-calls (#568): eveResponseGroupResult keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 export const eveResponseGroupResult = z.object({
   candidates: z.array(
     z.discriminatedUnion("state", [
@@ -24,5 +20,4 @@ export const eveResponseGroupResult = z.object({
   ),
   id: z.uuid(),
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 export type EveResponseGroupResult = z.infer<typeof eveResponseGroupResult>;

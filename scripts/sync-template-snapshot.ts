@@ -1,5 +1,5 @@
+import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const join = (...segments: readonly string[]): string => path.join(...segments);
@@ -9,17 +9,11 @@ const NO_OPERATIONS = 0;
 const MINIMUM_SNAPSHOT_CONCURRENCY = 1;
 const ONE_OPERATION = 1;
 
-/* oxlint-disable typescript/consistent-type-definitions -- SnapshotOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-type SnapshotOptions = {
+interface SnapshotOptions {
   concurrency?: number;
   onActiveOperationsChange?: (activeOperations: number) => void;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable eslint/max-statements -- SnapshotIoLimiter: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/id-length -- SnapshotIoLimiter: The local index/OS/library binding retains its conventional API notation. */
-/* oxlint-disable unicorn/no-null -- SnapshotIoLimiter: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SnapshotIoLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 class SnapshotIoLimiter {
   private activeOperations = NO_OPERATIONS;
   private readonly concurrency: number;
@@ -32,7 +26,7 @@ class SnapshotIoLimiter {
   public constructor({
     concurrency,
     onActiveOperationsChange,
-  }: SnapshotOptions) {
+  }: Readonly<SnapshotOptions>) {
     this.concurrency = concurrency ?? SNAPSHOT_CONCURRENCY;
     if (
       !Number.isInteger(this.concurrency) ||
@@ -43,7 +37,7 @@ class SnapshotIoLimiter {
     this.onActiveOperationsChange = onActiveOperationsChange;
   }
 
-  public async run<T>(operation: () => Promise<T>): Promise<T> {
+  public async run<Result>(operation: () => Promise<Result>): Promise<Result> {
     if (
       this.activeOperations >= this.concurrency ||
       this.reservedOperations > NO_OPERATIONS
@@ -59,35 +53,35 @@ class SnapshotIoLimiter {
     try {
       return await operation();
     } finally {
-      const next = this.queue.shift();
-      if (next) {
-        this.reservedOperations += ONE_OPERATION;
-        this.activeOperations -= ONE_OPERATION;
-        next.resolve(null);
-      } else {
-        this.activeOperations -= ONE_OPERATION;
-        this.onActiveOperationsChange?.(this.activeOperations);
+      this.release();
+    }
+  }
+
+  private release(): void {
+    const next = this.queue.shift();
+    if (next) {
+      this.reservedOperations += ONE_OPERATION;
+      this.activeOperations -= ONE_OPERATION;
+      next.resolve(null);
+    } else {
+      this.activeOperations -= ONE_OPERATION;
+      if (this.onActiveOperationsChange) {
+        this.onActiveOperationsChange(this.activeOperations);
       }
     }
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshotWithLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/promise-function-async -- collectSnapshotWithLimiter: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const collectSnapshotWithLimiter = async (
   dir: string,
   prefix: string,
-  limiter: SnapshotIoLimiter
+  limiter: Readonly<SnapshotIoLimiter>
 ): Promise<Map<string, string>> => {
-  const entries = await limiter.run(() =>
-    readdir(dir, { withFileTypes: true })
+  const entries = await limiter.run(
+    async () => await readdir(dir, { withFileTypes: true })
   );
   const snapshots = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       const absolute = join(dir, entry.name);
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
@@ -96,7 +90,7 @@ const collectSnapshotWithLimiter = async (
       if (!entry.isFile()) {
         return new Map<string, string>();
       }
-      const bytes = await limiter.run(() => readFile(absolute));
+      const bytes = await limiter.run(async () => await readFile(absolute));
       const hash = createHash("sha256").update(bytes).digest("hex");
       return new Map([[rel, hash]]);
     })
@@ -109,18 +103,12 @@ const collectSnapshotWithLimiter = async (
   }
   return output;
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshot: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/promise-function-async -- collectSnapshot: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-const collectSnapshot = (
+const collectSnapshot = async (
   dir: string,
   prefix = "",
-  options: SnapshotOptions = {}
+  options: Readonly<SnapshotOptions> = {}
 ): Promise<Map<string, string>> =>
-  collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+  await collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
 export { collectSnapshot, SNAPSHOT_CONCURRENCY };
 export type { SnapshotOptions };

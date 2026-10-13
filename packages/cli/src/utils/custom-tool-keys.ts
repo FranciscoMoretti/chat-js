@@ -1,11 +1,9 @@
-import { stat } from "node:fs/promises";
+import type { ToolDefinition } from "../../../registry/metadata";
+
 import path from "node:path";
+import { stat } from "node:fs/promises";
 
 import ts from "typescript";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { ToolDefinition } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const EMPTY_COLLECTION_SIZE = 0;
 const HELPER_ARGUMENT_INDEX = 0;
@@ -27,9 +25,6 @@ const customToolsFileExists = async (filename: string): Promise<boolean> => {
     return false;
   }
 };
-
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 export const validateCustomToolKeys = async (
   cwd: string,
   definitions: readonly ReadonlyNative<ToolDefinition>[]
@@ -60,7 +55,7 @@ export const validateCustomToolKeys = async (
       (item: ReadonlyNative<ts.VariableDeclaration>) =>
         ts.isIdentifier(item.name) && item.name.text === "customTools"
     );
-  const initializer = declaration?.initializer;
+  const initializer = declaration && declaration.initializer;
   const usesCoreHelper = source.statements.some(
     (statement: ReadonlyNative<ts.Statement>) =>
       ts.isImportDeclaration(statement) &&
@@ -126,5 +121,3 @@ export const validateCustomToolKeys = async (
     );
   }
 };
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

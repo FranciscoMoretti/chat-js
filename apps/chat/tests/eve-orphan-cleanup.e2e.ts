@@ -1,43 +1,40 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable import/first -- The mocked dependency must be registered before the module under test is loaded. */
-import { eq } from "drizzle-orm";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
+import { eq, inArray } from "drizzle-orm";
+import postgres from "postgres";
 import { expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
+import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
 import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
 import { createEveConversation } from "../lib/db/eve-queries";
 import {
   eveConversation,
+  eveChat,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+import { env } from "../lib/env";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
+// Keep this as the final static import to preserve prior dependency evaluation order.
+// oxfmt-ignore
+import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
 
 const storage = vi.hoisted(() => ({
   fail: false,
   objects: new Map<string, Date>(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../lib/file-storage")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("../lib/file-storage") accepts urls: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): vi.mock("../lib/file-storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+
 vi.mock("../lib/file-storage", () => ({
-  deleteFilesByUrls: (urls: string[]): Promise<void> => {
+  deleteFilesByUrls: (urls: readonly string[]): void => {
     if (storage.fail) {
-      return Promise.reject(new Error("Provider unavailable"));
+      throw new Error("Provider unavailable");
     }
     for (const url of urls) {
       storage.objects.delete(keyFromFileUrl(url) ?? "");
     }
-    return Promise.resolve();
   },
   *iterateStoredFiles() {
     for (const [pathname, uploadedAt] of storage.objects) {
@@ -45,26 +42,9 @@ vi.mock("../lib/file-storage", () => ({
     }
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/cleanup-orphaned-files" dependency within this package instead of introducing an alias or barrel API.
- */
-import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
- * max-lines-per-function (#510): test("the complete sweep preserves legacy/referenced files and recovers failed deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("the complete sweep preserves legacy/referenced files and recovers failed deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("the complete sweep preserves legacy/referenced files and recovers failed deleti uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("the complete sweep preserves legacy/referenced files and recovers failed deleti's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 test("the complete sweep preserves legacy/referenced files and recovers failed deletion and late writes", async () => {
   const owner = crypto.randomUUID();
   const [orphan, referenced, legacy, young] = Array.from({ length: 4 }, () =>
@@ -78,9 +58,11 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     name: "Orphan sweep fixture",
   });
   try {
-    for (const key of [orphan, referenced, young]) {
-      await reserveEveUpload(owner, key);
-    }
+    await Promise.all(
+      [orphan, referenced, young].map(async (key) => {
+        await reserveEveUpload(owner, key);
+      })
+    );
     await db
       .update(eveStoredFile)
       .set({ createdAt: old })
@@ -89,7 +71,7 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
       owner,
       crypto.randomUUID(),
       "retain attachment",
-      async () => crypto.randomUUID()
+      createEveTestSession
     );
     await referenceEveFiles(owner, conversation.id, [referenced]);
     for (const key of [orphan, referenced, legacy]) {
@@ -139,4 +121,106 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db.delete(user).where(eq(user.id, owner));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */
+
+test("a multi-owner fence waits for family writers and rechecks references before committing", async () => {
+  // These owners sort lexically opposite to their PostgreSQL advisory hashes.
+  // A copy holds the first owner before requesting the second; cleanup must
+  // wait on the first without taking the second and creating a deadlock.
+  const owners = [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+  ];
+  const keys = [crypto.randomUUID(), crypto.randomUUID()];
+  const conversationId = crypto.randomUUID();
+  const cutoff = new Date("2026-01-01");
+  const query = postgres(env.DATABASE_URL, { max: 2 });
+  let pendingPurge: ReturnType<typeof prepareEveOrphanedFilePurge> | undefined;
+  await db.insert(user).values(
+    owners.map((id) => ({
+      email: `${id}@test.invalid`,
+      id,
+      name: "Multi-owner orphan fixture",
+    }))
+  );
+  try {
+    await db.insert(eveChat).values({
+      id: conversationId,
+      ownerId: owners[1],
+      title: "Retain attachment",
+    });
+    await db.insert(eveConversation).values({
+      chatId: conversationId,
+      id: conversationId,
+      ownerId: owners[1],
+      firstMessage: "Retain attachment",
+      operationId: conversationId,
+      sessionId: conversationId,
+      state: "bound",
+    });
+    await db.insert(eveStoredFile).values(
+      keys.map((key, index) => ({
+        createdAt: new Date("2025-01-01"),
+        key,
+        ownerId: owners[index],
+      }))
+    );
+    await query.begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[0]}`}, 0))`;
+      pendingPurge = prepareEveOrphanedFilePurge(keys, cutoff);
+      // Keep a rejection observed while this transaction deliberately blocks it.
+      void pendingPurge.catch(() => {
+        // Assert the original promise after this transaction releases its lock.
+      });
+      await expect
+        .poll(async () => {
+          const rows = await query<
+            { waiting: number }[]
+          >`select count(*)::int as waiting from pg_locks
+          where locktype = 'advisory' and not granted`;
+          return rows[0].waiting;
+        })
+        .toBe(1);
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[1]}`}, 0))`;
+      await tx`insert into "EveFileReference" ("conversationId", "key", "ownerId")
+        values (${conversationId}, ${keys[1]}, ${owners[1]})`;
+    });
+    await expect(pendingPurge).resolves.toEqual([
+      { key: keys[0], ownerId: owners[0] },
+    ]);
+    const files = await db
+      .select({ key: eveStoredFile.key, state: eveStoredFile.state })
+      .from(eveStoredFile)
+      .where(inArray(eveStoredFile.key, keys));
+    expect(files).toEqual(
+      expect.arrayContaining([
+        { key: keys[0], state: "deleting" },
+        { key: keys[1], state: "active" },
+      ])
+    );
+    await expect(
+      Promise.all([
+        prepareEveOrphanedFilePurge(keys, cutoff),
+        prepareEveOrphanedFilePurge(keys.toReversed(), cutoff),
+      ])
+    ).resolves.toEqual([
+      [{ key: keys[0], ownerId: owners[0] }],
+      [{ key: keys[0], ownerId: owners[0] }],
+    ]);
+  } finally {
+    await pendingPurge?.catch(() => {
+      // Drain any failed purge before removing its fixtures.
+    });
+    await db
+      .delete(eveFileReference)
+      .where(inArray(eveFileReference.ownerId, owners));
+    await db
+      .delete(eveConversation)
+      .where(eq(eveConversation.id, conversationId));
+    await db.delete(eveChat).where(eq(eveChat.id, conversationId));
+    await db
+      .delete(eveStoredFile)
+      .where(inArray(eveStoredFile.ownerId, owners));
+    await db.delete(user).where(inArray(user.id, owners));
+    await query.end();
+  }
+});

@@ -1,9 +1,6 @@
-import { installedInstrumentation } from "@/features/installed-instrumentation";
 import { config } from "@/lib/config";
+import { installedInstrumentation } from "@/features/installed-instrumentation";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): register reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 export const register = async (): Promise<void> => {
   // Core lifecycle starts even if an installed exporter reports missing credentials.
   if (process.env.NEXT_RUNTIME === "nodejs") {
@@ -19,4 +16,3 @@ export const register = async (): Promise<void> => {
     });
   }
 };
-/* oxlint-enable node/no-process-env */

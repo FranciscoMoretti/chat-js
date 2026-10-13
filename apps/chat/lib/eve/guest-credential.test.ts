@@ -1,6 +1,5 @@
-import { expect, test } from "vitest";
-
 import { createEveGuestCredential, eveGuestIpHash } from "./guest-credential";
+import { expect, test } from "vitest";
 
 test("legacy cleanup fixture credentials are independently generated", () => {
   const first = createEveGuestCredential();

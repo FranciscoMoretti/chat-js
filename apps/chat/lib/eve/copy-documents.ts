@@ -1,36 +1,38 @@
-import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 
 const ALLOCATIONS_PARAMETER_INDEX = 1;
 type CopyDocumentSnapshot = Awaited<
   ReturnType<typeof snapshotPublicEveCopyDocuments>
 >["documents"];
-type PreparedCopyDocument = Omit<CopyDocumentSnapshot[number], "revisions"> & {
-  revisions: (Omit<
-    CopyDocumentSnapshot[number]["revisions"][number],
-    "operationId" | "turnIndex"
-  > & {
-    operationId: string;
-    turnIndex: null;
-  })[];
+type PreparedCopyDocument = ReadonlyNativeSurface<
+  Omit<CopyDocumentSnapshot[number], "revisions">
+> & {
+  readonly revisions: readonly ReadonlyNativeSurface<
+    Omit<
+      CopyDocumentSnapshot[number]["revisions"][number],
+      "operationId" | "turnIndex"
+    > & {
+      operationId: string;
+      turnIndex: null;
+    }
+  >[];
 };
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments retains mutable snapshot and allocation views; readonly projection changes copied revision fileIds output mutability, so this scope remains unreviewed.
-unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Converts an authorized, completely allocated ancestry into idle imported revisions.
- * @param snapshot Accessible document heads and their complete root-to-head revisions.
- * @param allocations Ownership-checked destination document, revision, and file allocations.
- * @returns Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
+ * @param {CopyDocumentSnapshot} snapshot Accessible document heads and their complete root-to-head revisions.
+ * @param {Parameters< typeof rewriteEveCopyResources >[typeof ALLOCATIONS_PARAMETER_INDEX]} allocations Ownership-checked destination document, revision, and file allocations.
+ * @returns {PreparedCopyDocument[]} Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
  */
 const prepareEveCopyDocuments = (
-  snapshot: CopyDocumentSnapshot,
-  allocations: Parameters<
-    typeof rewriteEveCopyResources
-  >[typeof ALLOCATIONS_PARAMETER_INDEX]
+  snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>,
+  allocations: ReadonlyNativeSurface<
+    Parameters<
+      typeof rewriteEveCopyResources
+    >[typeof ALLOCATIONS_PARAMETER_INDEX]
+  >
 ): PreparedCopyDocument[] => {
   for (const document of snapshot) {
     const revisionIds = new Set<string>();
@@ -55,7 +57,6 @@ const prepareEveCopyDocuments = (
     }
   }
   const copied = rewriteEveCopyResources(snapshot, allocations, true);
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate copied document revisions without mutating resource-rewrite results.
   return copied.map((document) => ({
     ...document,
     revisions: document.revisions.map((revision) => ({
@@ -65,12 +66,11 @@ const prepareEveCopyDocuments = (
     })),
   }));
 };
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /**
  * Inventories every accessible revision, including files removed from the current head.
- * @param snapshot Authorized document ancestry whose historical file references must remain available.
- * @returns Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
+ * @param {ReadonlyNativeSurface<CopyDocumentSnapshot>} snapshot Authorized document ancestry whose historical file references must remain available.
+ * @returns {ReturnType<typeof eveCopyResources>} Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
  */
 const eveCopyDocumentResources = (
   snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>

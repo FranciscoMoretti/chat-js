@@ -1,16 +1,12 @@
-import { expect, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
+import { expect, test } from "bun:test";
 import {
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "./scaffold-content";
+import path from "node:path";
+import { tmpdir } from "node:os";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test.each([
   {
     excluded: [
@@ -18,10 +14,15 @@ test.each([
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
       "lib/db/eve-subagents.test.ts",
+      "lib/db/eve-guest-rate.test.ts",
+      "lib/db/eve-query-lookups.test.ts",
       "lib/db/mcp-oauth-lock.test.ts",
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
+      "lib/eve/tool-usage.test.ts",
       "tests/native-research-runtime.ts",
+      "tests/fixtures/eve-oauth-mcp-server.ts",
+      "tests/fixtures/eve-oauth-mcp-server.test.ts",
       "scripts/db-branch-create.sh",
       "scripts/db-branch-delete.sh",
       "scripts/db-branch-use.sh",
@@ -74,14 +75,14 @@ test.each([
         recursive: true,
       });
       const privateCopies = await Promise.all(
-        privateFiles.map((file) =>
-          Bun.file(path.join(destination, file)).exists()
+        privateFiles.map(
+          async (file) => await Bun.file(path.join(destination, file)).exists()
         )
       );
       expect(privateCopies).toEqual(privateFiles.map(() => false));
       const retainedCopies = await Promise.all(
-        retainedFiles.map((file) =>
-          readFile(path.join(destination, file), "utf-8")
+        retainedFiles.map(
+          async (file) => await readFile(path.join(destination, file), "utf-8")
         )
       );
       expect(retainedCopies).toEqual(
@@ -92,6 +93,3 @@ test.each([
     }
   }
 );
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

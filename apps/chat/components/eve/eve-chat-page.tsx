@@ -1,7 +1,8 @@
+import { hasText } from "@/components/text-value";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
@@ -11,17 +12,24 @@ import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { DisposableGuestChat } from "./disposable-guest-chat";
-/* oxlint-disable import/max-dependencies -- ./eve-artifact-layout import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { EveArtifactLayout } from "./eve-artifact-layout";
-/* oxlint-enable import/max-dependencies */
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions, unicorn/no-null -- EveChatPage: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { conversationId, }: { conversationId?: string; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including conversationId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-// This server boundary selects the authenticated, recovery, comparison, and chat states.
-// oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
+const creationRecoveryScope = (
+  selected: Awaited<ReturnType<typeof getEveChatPageConversation>> | undefined
+): CreationScope | undefined => {
+  if (hasText(selected?.parentConversationId)) {
+    return { conversationId: selected.parentConversationId };
+  }
+  if (hasText(selected?.initialProjectId)) {
+    return { projectId: selected.initialProjectId };
+  }
+  return undefined;
+};
+
 export const EveChatPage = async ({
   conversationId,
 }: {
@@ -29,27 +37,21 @@ export const EveChatPage = async ({
 }): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
-    if (typeof conversationId === "string" && conversationId !== "") {
+    if (hasText(conversationId)) {
       redirect("/");
     }
     return <DisposableGuestChat />;
   }
-  if (conversationId && !z.uuid().safeParse(conversationId).success) {
+  if (hasText(conversationId) && !z.uuid().safeParse(conversationId).success) {
     notFound();
   }
-  const selected =
-    typeof conversationId === "string" && conversationId !== ""
-      ? await getEveChatPageConversation(principal.ownerId, conversationId)
-      : undefined;
-  if (conversationId && !selected) {
+  const selected = hasText(conversationId)
+    ? await getEveChatPageConversation(principal.ownerId, conversationId)
+    : undefined;
+  if (hasText(conversationId) && !selected) {
     notFound();
   }
-  let recoveryScope: CreationScope | undefined;
-  if (selected?.parentConversationId) {
-    recoveryScope = { conversationId: selected.parentConversationId };
-  } else if (selected?.initialProjectId) {
-    recoveryScope = { projectId: selected.initialProjectId };
-  }
+  const recoveryScope = creationRecoveryScope(selected);
   const header = (
     <ChatHeaderView
       breadcrumb={
@@ -61,7 +63,7 @@ export const EveChatPage = async ({
       }
     />
   );
-  if (selected?.sessionId && selected.state === "bound") {
+  if (hasText(selected?.sessionId) && selected.state === "bound") {
     return (
       <EveRuntimeRoute
         id={selected.id}
@@ -91,7 +93,7 @@ export const EveChatPage = async ({
       />
     );
   }
-  if (copy && selected?.initialModelId) {
+  if (copy && hasText(selected?.initialModelId)) {
     content = (
       <EveCopyButton
         recovery={{
@@ -112,4 +114,3 @@ export const EveChatPage = async ({
     </EveArtifactLayout>
   );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions, unicorn/no-null */

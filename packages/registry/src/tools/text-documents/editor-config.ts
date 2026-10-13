@@ -1,9 +1,9 @@
-import { CodeHighlightNode, CodeNode } from "@lexical/code";
-import { LinkNode } from "@lexical/link";
-import { ListItemNode, ListNode } from "@lexical/list";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import type { EditorState, LexicalEditor } from "lexical";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { ListItemNode, ListNode } from "@lexical/list";
+import { LinkNode } from "@lexical/link";
 
 const DOCUMENT_NODE_CLASSES = [
   HeadingNode,
@@ -25,7 +25,6 @@ const createEditorConfig = (): DocumentEditorConfig => ({
   namespace: "DocumentEditor",
   nodes: [...DOCUMENT_NODE_CLASSES],
   onError: (error: Readonly<Error>): void => {
-    // oxlint-disable-next-line eslint/no-console -- Preserve Lexical's configured error-reporting boundary: every editor error is reported with its native Error object.
     console.error("Lexical error:", error);
   },
 });

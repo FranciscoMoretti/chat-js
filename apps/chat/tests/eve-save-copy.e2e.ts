@@ -1,11 +1,3 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-dispatch"; "../lib/db/eve-copy-journal"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -36,16 +28,23 @@ import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";
 import { keyFromFileUrl } from "../lib/file-url";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const mocks = vi.hoisted(() => ({
   download: vi.fn(),
   files: new Map<string, Blob>(),
-  model: vi.fn(),
+  model: vi.fn<() => Promise<void>>(),
   native: new Map<string, { sessionId: string; seed: EveCopySeed }>(),
   remove: vi.fn(),
-  request: vi.fn(),
+  request:
+    vi.fn<
+      (
+        owner: string,
+        path: string,
+        init?: { readonly body?: unknown },
+        modelId?: string
+      ) => Promise<Response>
+    >(),
   source: vi.fn(),
   upload: vi.fn(),
 }));
@@ -60,9 +59,6 @@ vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
   eveRequest: mocks.request,
 }));
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): vi.mock("../lib/file-storage") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 vi.mock("../lib/file-storage", () => ({
   createFileId: (): string =>
     crypto.randomUUID().replaceAll("-", "").slice(0, 24),
@@ -70,7 +66,6 @@ vi.mock("../lib/file-storage", () => ({
   downloadFile: mocks.download,
   uploadFileAtKey: mocks.upload,
 }));
-/* oxlint-enable no-magic-numbers */
 
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
@@ -84,6 +79,7 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  /* oxlint-disable eslint/no-await-in-loop -- Delete copy files and checkpoint entries before their headers, documents and conversation parents. */
   for (const table of [
     eveConversationCopyFile,
     eveConversationCopy,
@@ -97,41 +93,12 @@ afterAll(async () => {
   ]) {
     await db.delete(table).where(inArray(table.ownerId, owners));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await db.delete(user).where(inArray(user.id, owners));
 });
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-statements (#512): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): beforeEach uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts urls: string[]; file: Blob; init?: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-beforeEach(() => {
-  vi.resetAllMocks();
-  mocks.files.clear();
-  mocks.native.clear();
-  mocks.remove.mockImplementation((urls: string[]) => {
-    for (const url of urls) {
-      const key = keyFromFileUrl(url);
-      if (key) {
-        mocks.files.delete(key);
-      }
-    }
-    return Promise.resolve();
-  });
-  mocks.download.mockImplementation((key: string) => {
-    const file = mocks.files.get(key);
-    if (!file) {
-      throw new Error("File missing");
-    }
-    return Promise.resolve(file);
-  });
-  mocks.upload.mockImplementation((key: string, _name: string, file: Blob) => {
-    mocks.files.set(key, file);
-    return Promise.resolve();
-  });
+const installNativeCopyRequestMock = (): void => {
   mocks.request.mockImplementation(
-    async (owner: string, path: string, init?: RequestInit) => {
+    async (owner: string, path: string, init?: { readonly body?: unknown }) => {
       if (path.startsWith("/eve/chat/v1/operation/")) {
         const url = new URL(path, "http://fixture.invalid");
         if (url.searchParams.get("kind") !== "seed") {
@@ -139,9 +106,13 @@ beforeEach(() => {
         }
         const operationId = url.pathname.split("/").at(-1);
         const saved = mocks.native.get(`${owner}/${operationId}`);
-        return saved
-          ? Response.json({ sessionId: saved.sessionId })
-          : Response.json({ code: "eve_operation_not_found" }, { status: 404 });
+        if (saved) {
+          return Response.json({ sessionId: saved.sessionId });
+        }
+        return Response.json(
+          { code: "eve_operation_not_found" },
+          { status: 404 }
+        );
       }
       if (typeof init?.body !== "string") {
         throw new TypeError("Expected a JSON copy request body");
@@ -155,16 +126,48 @@ beforeEach(() => {
       return Response.json({ sessionId: native.sessionId });
     }
   );
-});
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+};
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
- * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fixture uses 18, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-async function fixture() {
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.files.clear();
+  mocks.native.clear();
+  mocks.remove.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture removes the requested keys from the in-memory inventory; eslint/require-await rejects an immediate async callback with no storage I/O. */
+    (urls: readonly string[]) => {
+      for (const url of urls) {
+        const key = keyFromFileUrl(url);
+        if (key !== undefined && key !== null && key !== "") {
+          mocks.files.delete(key);
+        }
+      }
+      return Promise.resolve();
+    }
+    /* oxlint-enable typescript/promise-function-async */
+  );
+  mocks.download.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture looks up each requested Blob and rejects missing keys; a static result loses key validation, and eslint/require-await rejects an immediate async callback. */
+    (key: string) => {
+      const file = mocks.files.get(key);
+      if (!file) {
+        throw new Error("File missing");
+      }
+      return Promise.resolve(file);
+    }
+    /* oxlint-enable typescript/promise-function-async */
+  );
+  mocks.upload.mockImplementation(
+    /* oxlint-disable typescript/promise-function-async -- The Promise-only storage fixture records each uploaded key and Blob for replay/cleanup checks; eslint/require-await rejects an immediate async callback with no storage I/O. */
+    (key: string, _name: string, file: Readonly<Blob>) => {
+      mocks.files.set(key, file);
+      return Promise.resolve();
+    }
+    /* oxlint-enable typescript/promise-function-async */
+  );
+  installNativeCopyRequestMock();
+});
+
+const fixture = async () => {
   const source = {
     id: crypto.randomUUID(),
     ownerId: sourceOwnerId,
@@ -280,16 +283,8 @@ async function fixture() {
     key,
     source,
   };
-}
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */
+};
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * max-lines-per-function (#510): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("saves a complete independent copy, including inline bytes and files only in old uses 2, -1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("saves a complete independent copy, including inline bytes and files only in old accepts revision; receipt; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): test("saves a complete independent copy, including inline bytes and files only in old preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("saves a complete independent copy, including inline bytes and files only in old document revisions", async () => {
   const fixtureData = await fixture();
   const bound = await saveEveCopyOperation(
@@ -329,7 +324,8 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(revisions).toHaveLength(2);
   expect(
     revisions.every(
-      (revision) => revision.ownerId === ownerId && revision.turnIndex === null
+      (revision: Readonly<{ ownerId: string; turnIndex: number | null }>) =>
+        revision.ownerId === ownerId && revision.turnIndex === null
     )
   ).toBe(true);
   const receipts = await db
@@ -339,34 +335,30 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(receipts).toHaveLength(2);
   expect(
     receipts.every(
-      (receipt) => receipt.writtenAt !== null && mocks.files.has(receipt.key)
+      (receipt: Readonly<{ key: string; writtenAt: unknown }>) =>
+        receipt.writtenAt !== null && mocks.files.has(receipt.key)
     )
   ).toBe(true);
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(mocks.request.mock.calls.at(-1)?.[3]).toBe(modelId);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("a lost native reply recovers without reopening or reading a revoked source") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a lost native reply recovers without reopening or reading a revoked source") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("a lost native reply recovers without reopening or reading a revoked source") accepts ...args; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("a lost native reply recovers without reopening or reading a revoked source", async () => {
   const fixtureData = await fixture();
   const original = mocks.request.getMockImplementation();
   if (!original) {
     throw new Error("Missing native fixture");
   }
-  mocks.request.mockImplementation(async (...args) => {
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-assignment -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
-    const response = await original(...args);
-    if (args[1] === "/eve/chat/v1/session") {
-      throw new Error("Lost native reply");
+  mocks.request.mockImplementation(
+    async (...args: Parameters<typeof original>) => {
+      const response = await original(...args);
+      if (args[1] === "/eve/chat/v1/session") {
+        throw new Error("Lost native reply");
+      }
+
+      return response;
     }
-    // oxlint-disable-next-line typescript/no-unsafe-return -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
-    return response;
-  });
+  );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Lost native reply");
@@ -393,11 +385,10 @@ test("a lost native reply recovers without reopening or reading a revoked source
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(
     mocks.request.mock.calls.filter(
-      (call) => call[1] === "/eve/chat/v1/session"
+      (call: readonly unknown[]) => call[1] === "/eve/chat/v1/session"
     )
   ).toHaveLength(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("unrelated private file references are denied before any bytes or destination resources are written", async () => {
   const fixtureData = await fixture();
@@ -415,18 +406,15 @@ test("unrelated private file references are denied before any bytes or destinati
   ).toBeUndefined();
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("uncertain storage writes retry persisted keys without taking another snapshot o uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("uncertain storage writes retry persisted keys without taking another snapshot o accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("uncertain storage writes retry persisted keys without taking another snapshot o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("uncertain storage writes retry persisted keys without taking another snapshot or making a second copy", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    (key: string, _name: string, file: Blob) => {
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture records the write before rejecting its lost reply, exercising uncertain persistence; eslint/require-await rejects an immediate async callback. */
+    (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Lost storage reply"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -452,11 +440,7 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     )
   ).rejects.toThrow("different source or model");
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("an unavailable native lookup leaves acceptance recoverable and never blindly di uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("an unavailable native lookup leaves acceptance recoverable and never blindly dispatches", async () => {
   const fixtureData = await fixture();
   mocks.request.mockResolvedValue(
@@ -473,21 +457,26 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent requests converge on the persisted allocation and one native copy") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent requests converge on the persisted allocation and one native copy") accepts attempt; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent requests converge on the persisted allocation and one native copy") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent requests converge on the persisted allocation and one native copy", async () => {
   const fixtureData = await fixture();
   const attempts = await Promise.allSettled(
-    Array.from({ length: 3 }, () =>
-      saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
+    Array.from(
+      { length: 3 },
+      async () =>
+        await saveEveCopyOperation(
+          ownerId,
+          fixtureData.input,
+          "https://chatjs.example"
+        )
     )
   );
-  expect(attempts.some((attempt) => attempt.status === "fulfilled")).toBe(true);
+  expect(
+    attempts.some(
+      (attempt: { readonly status: "rejected" | "fulfilled" }) =>
+        attempt.status === "fulfilled"
+    )
+  ).toBe(true);
   const bound = await saveEveCopyOperation(
     ownerId,
     fixtureData.input,
@@ -502,26 +491,20 @@ test("concurrent requests converge on the persisted allocation and one native co
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(
     mocks.request.mock.calls.filter(
-      (call) => call[1] === "/eve/chat/v1/session"
+      (call: readonly unknown[]) => call[1] === "/eve/chat/v1/session"
     )
   ).toHaveLength(1);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * max-statements (#512): test("revocation before acceptance purges only the rejected destination and keeps a r keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("revocation before acceptance purges only the rejected destination and keeps a r uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("revocation before acceptance purges only the rejected destination and keeps a r accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("revocation before acceptance purges only the rejected destination and keeps a r preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("revocation before acceptance purges only the rejected destination and keeps a r preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("revocation before acceptance purges only the rejected destination and keeps a replay tombstone", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    (key: string, _name: string, file: Blob) => {
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture persists the interrupted preparation before rejecting, so revocation must purge it; eslint/require-await rejects an immediate async callback. */
+    (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -549,21 +532,16 @@ test("revocation before acceptance purges only the rejected destination and keep
   ).rejects.toThrow();
   expect(mocks.source).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-statements (#512): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure", async () => {
   const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
-    (key: string, _name: string, file: Blob) => {
+    /* oxlint-disable typescript/promise-function-async -- This Promise-only storage fixture persists interrupted preparation before rejecting, supplying the object for lost-cleanup recovery; eslint/require-await rejects an immediate async callback. */
+    (key: string, _name: string, file: Readonly<Blob>) => {
       mocks.files.set(key, file);
       return Promise.reject(new Error("Interrupted preparation"));
     }
+    /* oxlint-enable typescript/promise-function-async */
   );
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
@@ -594,7 +572,6 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.files.size).toBe(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("deletion of an unwritten source file rejects preparation before another storage read", async () => {
   const fixtureData = await fixture();
@@ -620,10 +597,6 @@ test("deletion of an unwritten source file rejects preparation before another st
   });
   expect(mocks.request).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable no-undefined --
- * no-undefined (#519): test("a definitive model rejection tombstones the operation but transient catalog fai uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("a definitive model rejection tombstones the operation but transient catalog failures remain retryable", async () => {
   const fixtureData = await fixture();
   mocks.model.mockRejectedValueOnce(new Error("Catalog unavailable"));
@@ -645,12 +618,9 @@ test("a definitive model rejection tombstones the operation but transient catalo
     creationKind: "copy",
     state: "deleted",
   });
-  mocks.model.mockResolvedValue(undefined);
+  mocks.model.mockResolvedValue();
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow();
   expect(mocks.source).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
-
-/* oxlint-disable max-lines -- #509: This eve-save-copy.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

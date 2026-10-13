@@ -1,15 +1,12 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
-import React from "react";
-
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 type SuggestionsProps = ComponentProps<typeof ScrollArea>;
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Suggestions: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: SuggestionsProps). */
 
 const Suggestions = ({
   className,
@@ -23,14 +20,11 @@ const Suggestions = ({
     <ScrollBar className="hidden" orientation="horizontal" />
   </ScrollArea>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type SuggestionProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
   suggestion: string;
   onClick?: (suggestion: string) => void;
 };
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- Suggestion: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
 
 const Suggestion = ({
   suggestion,
@@ -41,10 +35,17 @@ const Suggestion = ({
   children,
   ...props
 }: SuggestionProps): ReactJSX.Element => {
-  const handleClick = (): void => {
-    onClick?.(suggestion);
-  };
+  const handleClick = React.useCallback((): void => {
+    if (onClick) {
+      onClick(suggestion);
+    }
+  }, [onClick, suggestion]);
 
+  let content: React.ReactNode = suggestion;
+  const hasChildren = Boolean(children);
+  if (hasChildren) {
+    content = children;
+  }
   return (
     <Button
       className={cn("cursor-pointer rounded-full px-4", className)}
@@ -54,11 +55,9 @@ const Suggestion = ({
       variant={variant}
       {...props}
     >
-      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
-      {children || suggestion}
+      {content}
     </Button>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { Suggestion, Suggestions };
 export type { SuggestionProps, SuggestionsProps };

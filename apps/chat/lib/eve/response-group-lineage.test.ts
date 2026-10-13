@@ -1,17 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveEveResponseGroupLineage } from "./response-group-lineage";
-import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * no-magic-numbers (#517): row uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): row accepts overrides: Partial<EveResponseGroupLineageConversation> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): row preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
+import { resolveEveResponseGroupLineage } from "./response-group-lineage";
+
 const row = (
   id: string,
   operationId: string,
-  overrides: Partial<EveResponseGroupLineageConversation> = {}
+  overrides: ReadonlyNativeSurface<
+    Partial<EveResponseGroupLineageConversation>
+  > = {}
 ): EveResponseGroupLineageConversation => ({
   createdAt: new Date(id.length * 1000),
   forkKind: null,
@@ -23,11 +22,7 @@ const row = (
   sessionId: `session-${id}`,
   ...overrides,
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function --
- * max-lines-per-function (#510): describe("response group lineage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 describe("response group lineage", () => {
   const group = {
     candidateOperationIds: ["operation-a", "operation-b"],
@@ -136,4 +131,3 @@ describe("response group lineage", () => {
     ).toBeUndefined();
   });
 });
-/* oxlint-enable max-lines-per-function */

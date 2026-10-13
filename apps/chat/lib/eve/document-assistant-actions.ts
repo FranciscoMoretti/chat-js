@@ -1,20 +1,34 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../config" dependency within this package instead of introducing an alias or barrel API.
- */
+import type { DocumentAssistantRequest } from "./document-contracts";
+import { config } from "@/lib/config";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
-import { config } from "../config";
-import type { DocumentAssistantRequest } from "./document-contracts";
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-const documentAssistantActions = (
-  kind: "text" | "code" | "sheet"
-): {
+interface DocumentAssistantAction {
   instruction: string;
   label: string;
   modelId: typeof config.ai.tools.text.polish;
-}[] => {
+}
+
+const sheetDocumentAssistantActions = (): DocumentAssistantAction[] => [
+  {
+    instruction: "Format and clean the spreadsheet data.",
+    label: "Format and clean data",
+    modelId: config.ai.tools.sheet.format,
+  },
+  ...(installedDocumentKinds.has("code")
+    ? [
+        {
+          instruction:
+            "Analyze and visualize the spreadsheet data by creating a new Python code document.",
+          label: "Analyze and visualize data",
+          modelId: config.ai.tools.sheet.analyze,
+        },
+      ]
+    : []),
+];
+
+const documentAssistantActions = (
+  kind: "text" | "code" | "sheet"
+): DocumentAssistantAction[] => {
   if (!installedDocumentKinds.has(kind)) {
     return [];
   }
@@ -44,30 +58,13 @@ const documentAssistantActions = (
       ];
     }
     case "sheet": {
-      return [
-        {
-          instruction: "Format and clean the spreadsheet data.",
-          label: "Format and clean data",
-          modelId: config.ai.tools.sheet.format,
-        },
-        ...(installedDocumentKinds.has("code")
-          ? [
-              {
-                instruction:
-                  "Analyze and visualize the spreadsheet data by creating a new Python code document.",
-                label: "Analyze and visualize data",
-                modelId: config.ai.tools.sheet.analyze,
-              },
-            ]
-          : []),
-      ];
+      return sheetDocumentAssistantActions();
     }
     default: {
       return [];
     }
   }
 };
-/* oxlint-enable max-lines-per-function */
 
 const documentAssistantRequest = (
   action: Readonly<ReturnType<typeof documentAssistantActions>[number]>,

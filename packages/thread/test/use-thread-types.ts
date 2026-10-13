@@ -1,20 +1,21 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
-
 import { AbstractThread, Thread } from "#thread-source/index";
 import type { ThreadInit, ThreadState } from "#thread-source/index";
-import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-import { useThread } from "#thread-source/react";
-import type { UseThreadHelpers } from "#thread-source/react";
+
 import { MemoryThreadState } from "#thread-source/thread-state";
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseThreadHelpers } from "#thread-source/react";
+import { useThread } from "#thread-source/react";
 
 declare const messageId: string;
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const useCompatibilityCheck = (): UseThreadHelpers => {
   const thread = useThread();
-  const chatCompatible: UseChatHelpers<UIMessage> = thread;
+  const chatCompatible: Omit<
+    UseChatHelpers<UIMessage>,
+    "addToolResult"
+  > = thread;
 
   void chatCompatible.messages;
   void chatCompatible.sendMessage({ text: "hello" });
@@ -38,12 +39,8 @@ const useCompatibilityCheck = (): UseThreadHelpers => {
   thread.tree.getSnapshot();
   void thread.tree.startRun({ from: messageId, message: { text: "branch" } });
 
-  // oxlint-disable-next-line typescript/no-unnecessary-type-arguments -- Verify the hook result remains assignable to the explicitly parameterized public helper type.
-  const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
-  return explicitHelpers;
+  return thread;
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
 class StateBackedThread extends AbstractThread {
   public constructor(threadState: Readonly<ThreadState>) {

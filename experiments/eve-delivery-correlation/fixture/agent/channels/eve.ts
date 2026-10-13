@@ -9,13 +9,11 @@ const channel = eveChannel({
     principalType: "user",
   }),
 });
-
-// oxlint-disable-next-line require-await, typescript/require-await -- The native HTTP route requires an asynchronous response; the fixture reads only its own process identity.
+// oxlint-disable-next-line require-await -- The EVE route handler contract requires a Promise response even for this synchronous PID probe.
 const processResponse = async (): Promise<Response> =>
   Response.json({ pid: process.pid });
 const fixtureChannel = {
   ...channel,
   routes: [...channel.routes, GET("/proof/process", processResponse)],
 };
-// oxlint-disable-next-line import/no-default-export -- EVE discovers this authored fixture through its required default export.
 export default fixtureChannel;

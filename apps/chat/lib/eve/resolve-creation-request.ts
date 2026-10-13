@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import {
   CheckpointRejectedError,
@@ -8,36 +8,44 @@ import {
   CreationRejectedError,
   requestConversation,
 } from "./create-conversation";
+import { finishCreation, readCreationRequest } from "./pending-create";
 import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
-import { finishCreation, readCreationRequest } from "./pending-create";
 import type { CreationScope } from "./pending-create";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { z } from "zod";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+const CHECKPOINT_READ_TIMEOUT_MS = 35_000;
+const HTTP_CONFLICT = 409;
 
- * jsdoc/require-param (#534): resolveCreationRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): resolveCreationRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): resolveCreationRequest uses 35_000, 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): resolveCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep resolveCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep resolveCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): resolveCreationRequest accepts operation: NonNullable<ReturnType<typeof readCreationRequest>>; scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): resolveCreationRequest intentionally keeps the existing falsy-value behavior of operation.fork?.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
-/** Resolve one saved operation; ambiguous outcomes never release its draft. */
+/**
+ * Resolve one saved operation; ambiguous outcomes never release its draft.
+ *
+ * @param {Pick<Storage, "getItem" | "setItem" | "removeItem">} storage Storage containing the pending creation request and retained comparison draft.
+ * @param {string} ownerId Owner used to locate and finish the saved request.
+ * @param {NonNullable<ReturnType<typeof readCreationRequest>>} operation Saved conversation or comparison operation whose identities are reused on retry.
+ * @param {CreationScope} scope Optional creation scope used to locate the pending request and retain its draft.
+ * @returns {Promise<Awaited<ReturnType<typeof requestConversation>> & { group: undefined } | { group: Awaited<ReturnType<typeof requestResponseGroup>>; id: string; sessionId: string }>} The confirmed conversation binding and comparison result when applicable; unconfirmed creation or checkpoint state rejects.
+ */
 export const resolveCreationRequest = async (
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   ownerId: string,
-  operation: NonNullable<ReturnType<typeof readCreationRequest>>,
-  scope?: CreationScope
-) => {
+  operation: ReadonlyNativeSurface<
+    NonNullable<ReturnType<typeof readCreationRequest>>
+  >,
+  scope?: ReadonlyNativeSurface<CreationScope>
+): Promise<
+  | {
+      group: Awaited<ReturnType<typeof requestResponseGroup>>;
+      id: string;
+      sessionId: string;
+    }
+  | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
+> => {
   if ("modelIds" in operation) {
-    if (operation.fork?.checkpointId) {
+    if (isNonEmptyString(operation.fork?.checkpointId)) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
         `/api/agent-conversations/${conversationId}/checkpoint`,
@@ -45,7 +53,7 @@ export const resolveCreationRequest = async (
           body: JSON.stringify({ beforeTurnId, checkpointId }),
           headers: { "content-type": "application/json" },
           method: "POST",
-          signal: AbortSignal.timeout(35_000),
+          signal: AbortSignal.timeout(CHECKPOINT_READ_TIMEOUT_MS),
         }
       );
       if (!response.ok) {
@@ -62,7 +70,7 @@ export const resolveCreationRequest = async (
               // The checkpoint-rejection schema rejects an absent JSON body.
             })
           );
-        if (response.status === 409 && rejection.success) {
+        if (response.status === HTTP_CONFLICT && rejection.success) {
           throw new CreationRejectedError(
             new CheckpointRejectedError(rejection.data.reason).message
           );
@@ -103,4 +111,3 @@ export const resolveCreationRequest = async (
   }
   return { ...binding, group: undefined };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

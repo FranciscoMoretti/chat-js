@@ -1,34 +1,40 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-documents"; "../../lib/db/eve-queries"; "../../lib/eve/conversation-scope"; "../../lib/eve/project-instructions" dependency within this package instead of introducing an alias or barrel API.
- */
-import { defineHook } from "eve/hooks";
-
 import {
   captureEveDocumentCheckpoint,
   captureEveNamedDocumentCheckpoint,
 } from "../../lib/db/eve-documents";
-import { getEveConversationProject } from "../../lib/db/eve-queries";
-import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
-import { projectInstructions } from "../../lib/eve/project-instructions";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { HookContext } from "eve/hooks";
+import { defineHook } from "eve/hooks";
 
-/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * no-magic-numbers (#517): default export uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): default export preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+import { getEveConversationProject } from "../../lib/db/eve-queries";
+import { projectInstructions } from "../../lib/eve/project-instructions";
+import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
+
+const conversationScopeTimeoutMilliseconds = 10_000;
+
 export default defineHook({
   events: {
-    "session.waiting": async (event, context) => {
+    "session.waiting": async (
+      event: Readonly<{
+        data: Readonly<{
+          checkpoint?: Readonly<{
+            checkpointId: string;
+            beforeTurnId: string;
+          }> | null;
+        }>;
+      }>,
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
       if (context.session.parent || !event.data.checkpoint) {
         return;
       }
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.id,
-        AbortSignal.timeout(10_000),
+        AbortSignal.timeout(conversationScopeTimeoutMilliseconds),
         context.session.auth.initiator?.attributes.chatjsReservationId
       );
       await captureEveNamedDocumentCheckpoint(
@@ -38,12 +44,19 @@ export default defineHook({
         Number(event.data.checkpoint.beforeTurnId.slice("turn_".length))
       );
     },
-    "turn.started": async (event, context) => {
+    "turn.started": async (
+      event: { readonly data: { readonly sequence: number } },
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
       projectInstructions.update(() => ({ content: null }));
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.parent?.rootSessionId ?? context.session.id,
-        AbortSignal.timeout(10_000),
+        AbortSignal.timeout(conversationScopeTimeoutMilliseconds),
         // Native lineage identifies the existing root binding. An inherited
         // reservation attribute never authorizes a child to claim that binding.
         context.session.parent
@@ -68,4 +81,3 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

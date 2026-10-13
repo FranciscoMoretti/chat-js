@@ -15,7 +15,6 @@ const runTestProcess = async (
     cwd: options.cwd,
     ...(options.environment
       ? {
-          // oxlint-disable-next-line node/no-process-env -- Fixture overrides must inherit the current parent environment; Bun otherwise defaults to the environment captured at process launch.
           env: { ...process.env, ...options.environment },
         }
       : {}),
@@ -29,5 +28,4 @@ const runTestProcess = async (
   ]);
   return { exitCode, stderr, stdout };
 };
-
 export { runTestProcess };

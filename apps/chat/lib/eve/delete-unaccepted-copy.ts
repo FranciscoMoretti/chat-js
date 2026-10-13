@@ -7,11 +7,24 @@ import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 
 import { purgeEveFamilyFiles } from "./purge-files";
 
-/* oxlint-disable jsdoc/require-param, max-statements --
- * jsdoc/require-param (#534): deleteUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): deleteUnacceptedEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+const purgeUnacceptedEveCopy = async (
+  ownerId: string,
+  conversationId: string,
+  deletion: Readonly<
+    NonNullable<Awaited<ReturnType<typeof getEveDeletionState>>>
+  >
+): Promise<void> => {
+  await rejectUnacceptedEveCopy(ownerId, conversationId);
+  await purgeEveFamilyDocuments(ownerId, deletion.rootId);
+  await purgeEveFamilyFiles(ownerId, deletion.rootId);
+  await completeEveConversationDeletion(ownerId, conversationId);
+};
+
+/** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path.
+ * @param {string} ownerId Owner authorizing removal of the undispatched copy.
+ * @param {string} conversationId Copy identity checked for deletion state and never-accepted dispatch proof.
+ * @returns {Promise<void>} Completes document/file cleanup and the deletion tombstone, or succeeds when a concurrent cleanup already completed. Missing identities, accepted dispatches and unresolved cleanup failures reject.
  */
-/** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path. */
 export const deleteUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
@@ -24,10 +37,7 @@ export const deleteUnacceptedEveCopy = async (
     return;
   }
   try {
-    await rejectUnacceptedEveCopy(ownerId, conversationId);
-    await purgeEveFamilyDocuments(ownerId, deletion.rootId);
-    await purgeEveFamilyFiles(ownerId, deletion.rootId);
-    await completeEveConversationDeletion(ownerId, conversationId);
+    await purgeUnacceptedEveCopy(ownerId, conversationId, deletion);
   } catch (error) {
     // A concurrent cleanup may have completed while this caller waited on the family lock.
     const current = await getEveDeletionState(ownerId, conversationId);
@@ -36,4 +46,3 @@ export const deleteUnacceptedEveCopy = async (
     }
   }
 };
-/* oxlint-enable jsdoc/require-param, max-statements */

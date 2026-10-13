@@ -1,76 +1,108 @@
+import type { PostgresLifecycleQuery } from "./compatibility";
 import type { Sql } from "postgres";
-
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): fenceEvePostgresSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): fenceEvePostgresSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): fenceEvePostgresSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): fenceEvePostgresSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fenceEvePostgresSession uses 100, 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep fenceEvePostgresSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep fenceEvePostgresSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresSession accepts connection: Sql; additionalRunIds: string[] = []; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+const FIRST_INVENTORY_PASS = 0;
+const NEXT_INVENTORY_PASS = 1;
+const MAX_INVENTORY_PASSES = 100;
+const NO_RESOURCES = 0;
+
+const readFenceableSessionInventory = async (
+  query: PostgresLifecycleQuery,
+  sessionId: string,
+  additionalRunIds: readonly string[]
+): Promise<{ runIds: string[]; streamIds: string[] }> => {
+  const inventory = await readEvePostgresRunInventoryInTransaction(
+    query,
+    sessionId,
+    additionalRunIds
+  );
+  if (inventory.activeRunIds.length > NO_RESOURCES) {
+    throw new Error("Retire all reachable runs before fencing this session.");
+  }
+  if (
+    inventory.missingRunIds.length > NO_RESOURCES ||
+    inventory.ambiguousStreamIds.length > NO_RESOURCES
+  ) {
+    throw new Error(
+      "Resolve missing runs and stream ownership before fencing this session."
+    );
+  }
+  return {
+    runIds: inventory.runs.map((run: { readonly id: string }) => run.id),
+    streamIds: inventory.streamIds,
+  };
+};
+
+// Record membership only after the caller's resource-fence write succeeds.
+const recordFencedResources = (
+  inventory: {
+    readonly runIds: readonly string[];
+    readonly streamIds: readonly string[];
+  },
+  tracking: {
+    readonly runs: Readonly<Pick<Set<string>, "add">>;
+    readonly streams: Readonly<Pick<Set<string>, "add">>;
+  }
+): void => {
+  for (const id of inventory.runIds) {
+    tracking.runs.add(id);
+  }
+  for (const id of inventory.streamIds) {
+    tracking.streams.add(id);
+  }
+};
+
 /**
  * Fence the reachable native run/stream graph for an authorized, retired session.
  * Unknown/unlinked resources, queues, sandboxes, and blobs remain outside this
  * provider boundary. No payloads are erased and this is not a deletion receipt.
+ * @param {Sql} connection Native transaction-opening capability; the returned transaction remains the SDK's exact native type.
+ * @param {string} sessionId Authorized, retired native session whose reachable resource graph is fenced.
+ * @param {readonly string[]} additionalRunIds Retained run identities used as extra inventory seeds.
+ * @returns {Promise<{ runIds: string[]; streamIds: string[] }>} Reachable identities once repeated fenced inventory stabilizes; rejects for active/missing runs, ambiguous ownership or exhausted retries.
  */
 export const fenceEvePostgresSession = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   sessionId: string,
-  additionalRunIds: string[] = []
-) =>
-  await connection.begin("isolation level read committed", async (query) => {
-    await fenceEvePostgresResourcesInTransaction(query, {
-      runIds: [sessionId],
-      streamIds: [],
-    });
-    const fencedRuns = new Set([sessionId]);
-    const fencedStreams = new Set<string>();
-    // A collector or descendant may admit a write before its own fence is held.
-    // Re-read after acquiring those fences; each pass must cover new resources.
-    for (let pass = 0; pass < 100; pass += 1) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-      const inventory = await readEvePostgresRunInventoryInTransaction(
-        query,
-        sessionId,
-        additionalRunIds
-      );
-      if (inventory.activeRunIds.length > 0) {
-        throw new Error(
-          "Retire all reachable runs before fencing this session."
-        );
-      }
-      if (
-        inventory.missingRunIds.length > 0 ||
-        inventory.ambiguousStreamIds.length > 0
-      ) {
-        throw new Error(
-          "Resolve missing runs and stream ownership before fencing this session."
-        );
-      }
-      const runIds = inventory.runs.map((run) => run.id);
-      if (
-        runIds.every((id) => fencedRuns.has(id)) &&
-        inventory.streamIds.every((id) => fencedStreams.has(id))
-      ) {
-        return { runIds, streamIds: inventory.streamIds };
-      }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+  additionalRunIds: readonly string[] = []
+): Promise<{ runIds: string[]; streamIds: string[] }> =>
+  await connection.begin(
+    "isolation level read committed",
+    async (query: PostgresLifecycleQuery) => {
       await fenceEvePostgresResourcesInTransaction(query, {
-        runIds,
-        streamIds: inventory.streamIds,
+        runIds: [sessionId],
+        streamIds: [],
       });
-      for (const id of runIds) {
-        fencedRuns.add(id);
+      const fencedRuns = new Set([sessionId]);
+      const fencedStreams = new Set<string>();
+      // A collector or descendant may admit a write before its own fence is held.
+      // Re-read after acquiring those fences; each pass must cover new resources.
+      for (
+        let pass = FIRST_INVENTORY_PASS;
+        pass < MAX_INVENTORY_PASSES;
+        pass += NEXT_INVENTORY_PASS
+      ) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Fence all newly inventoried runs/streams before taking another snapshot; concurrent snapshots could miss writes admitted before the new fence.
+        const inventory = await readFenceableSessionInventory(
+          query,
+          sessionId,
+          additionalRunIds
+        );
+        if (
+          inventory.runIds.every((id) => fencedRuns.has(id)) &&
+          inventory.streamIds.every((id) => fencedStreams.has(id))
+        ) {
+          return inventory;
+        }
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Fence all newly inventoried runs/streams before taking another snapshot; concurrent snapshots could miss writes admitted before the new fence.
+        await fenceEvePostgresResourcesInTransaction(query, inventory);
+        recordFencedResources(inventory, {
+          runs: fencedRuns,
+          streams: fencedStreams,
+        });
       }
-      for (const id of inventory.streamIds) {
-        fencedStreams.add(id);
-      }
+      throw new Error("Session inventory did not stabilize; retry fencing.");
     }
-    throw new Error("Session inventory did not stabilize; retry fencing.");
-  });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+  );

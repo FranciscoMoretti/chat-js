@@ -1,9 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
+
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -21,22 +21,39 @@ import {
   createConversationInput,
 } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
+type HistorySeedEventReader =
+  | Readonly<{
+      type: "history.seeded";
+      data: Readonly<{
+        messages: readonly unknown[];
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "history.seeded">;
+      data?: unknown;
+    }>;
+type ActionResultEventReader =
+  | Readonly<{
+      type: "action.result";
+      data: Readonly<{
+        result: Readonly<{ kind: string; toolName?: string }>;
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "action.result">;
+      data?: unknown;
+    }>;
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("copied document history survives source deletion and supports native editing") uses 240_000, 20_000, 60_000, 503, 1000, 2000, 4000, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("copied document history survives source deletion and supports native editing") accepts { page, }; testInfo; route; event; revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("copied document history survives source deletion and supports native editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copied document history survives source deletion and supports native editing", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<{
+  project: Readonly<{ use: Readonly<{ baseURL?: string | undefined }> }>;
+  outputPath: TestInfo["outputPath"];
+}>) => {
   test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(60_000);
@@ -48,7 +65,9 @@ test("copied document history survives source deletion and supports native editi
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
   const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
@@ -139,18 +158,25 @@ test("copied document history survives source deletion and supports native editi
     .poll(
       async () => {
         idle = await copiedSession.snapshot();
-        return idle.events.some((event) => event.type === "history.seeded");
+        return idle.events.some(
+          (
+            event: HistorySeedEventReader
+          ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+            event.type === "history.seeded"
+        );
       },
       { intervals: [250, 500, 1000], timeout: 20_000 }
     )
     .toBe(true);
   expect(
     idle.events.some(
-      (event) =>
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
         event.type === "turn.started" || event.type === "actions.requested"
     )
   ).toBe(false);
-  const latest = revisions.find((revision) => revision.id === head.revisionId);
+  const latest = revisions.find(
+    (revision: Readonly<{ id: string }>) => revision.id === head.revisionId
+  );
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
   expect(
     await db
@@ -171,12 +197,14 @@ test("copied document history survives source deletion and supports native editi
     },
   ]);
   expect(
-    revisions.find((revision) => revision.id === latest?.parentRevisionId)
-      ?.content
+    revisions.find(
+      (revision: Readonly<{ id: string }>) =>
+        revision.id === latest?.parentRevisionId
+    )?.content
   ).toBe(original.content);
   expect(
     revisions.every(
-      (revision) =>
+      (revision: Readonly<{ documentId: string; id: string }>) =>
         revision.id !== original.id && revision.documentId === head.documentId
     )
   ).toBe(true);
@@ -238,7 +266,7 @@ test("copied document history survives source deletion and supports native editi
     .snapshot();
   expect(
     snapshot.events.some(
-      (event) =>
+      (event: ActionResultEventReader) =>
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
         event.data.result.toolName === "readDocument"
@@ -295,12 +323,15 @@ test("copied document history survives source deletion and supports native editi
     .attach(forked.sessionId)
     .snapshot();
   const seed = forkSnapshot.events.find(
-    (event) => event.type === "history.seeded"
+    (
+      event: HistorySeedEventReader
+    ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+      event.type === "history.seeded"
   );
   expect(seed?.data.messages).toHaveLength(2);
   expect(
     forkSnapshot.events.some(
-      (event) =>
+      (event: ActionResultEventReader) =>
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
         event.data.result.toolName === "readDocument"
@@ -320,6 +351,3 @@ test("copied document history survives source deletion and supports native editi
   });
   expect(changed.status()).toBe(409);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-copy-documents-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

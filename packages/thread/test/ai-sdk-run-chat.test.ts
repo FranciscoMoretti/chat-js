@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { Chat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
-
-import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
-import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
 
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
 import { TestRunHost } from "./support/test-run-host";
+import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
+import type { UIMessage } from "ai";
 
 const userMessage = (): UIMessage => ({
   id: "user-1",
@@ -38,7 +37,6 @@ const emitRichResponse = (
   transport.finish();
 };
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
   attemptsRemaining = 500
@@ -52,11 +50,7 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("ThreadRunChat", (): void => {
   test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
@@ -74,11 +68,16 @@ describe("ThreadRunChat", (): void => {
     const standardRequest = standardChat.sendMessage(input);
     const threadRequest = threadRunChat.start();
     await Bun.sleep(0);
-    expect(threadTransport.request?.messages).toEqual(
-      standardTransport.request?.messages
+    const threadRequestOptions = threadTransport.request;
+    const standardRequestOptions = standardTransport.request;
+    if (!threadRequestOptions || !standardRequestOptions) {
+      throw new Error("Both chat implementations must send a request");
+    }
+    expect(threadRequestOptions.messages).toEqual(
+      standardRequestOptions.messages
     );
-    expect(threadTransport.request?.messageId).toBe(
-      standardTransport.request?.messageId
+    expect(threadRequestOptions.messageId).toBe(
+      standardRequestOptions.messageId
     );
     emitRichResponse(standardTransport);
     emitRichResponse(threadTransport);
@@ -89,7 +88,6 @@ describe("ThreadRunChat", (): void => {
     );
     expect(host.status).toBe("ready");
   });
-
   test("adopts the server response identity from the start chunk", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -109,10 +107,11 @@ describe("ThreadRunChat", (): void => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
-    expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
+    expect(host.tree.getMessage("server-id")).toMatchObject({
+      id: "server-id",
+    });
     expect(spec.messageId).toBe("server-id");
   });
-
   test("reports a failed stream exactly once without adding a response", async (): Promise<void> => {
     const error = new Error("stream failed");
     const callbackErrors: Error[] = [];
@@ -134,7 +133,6 @@ describe("ThreadRunChat", (): void => {
     expect(host.status).toBe("error");
     expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
   });
-
   test("continues one response after an automatic tool follow-up", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -164,7 +162,9 @@ describe("ThreadRunChat", (): void => {
     transport.finish();
 
     await waitFor((): boolean => transport.requests.length === 2);
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    expect(transport.requests.at(1)).toMatchObject({
+      options: { messageId: "assistant-1" },
+    });
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       { id: "second", type: "text-start" },
@@ -181,21 +181,20 @@ describe("ThreadRunChat", (): void => {
         .getChildren(spec.parentMessageId)
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
-    expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
-      expect.objectContaining({
-        output: { temperature: 22 },
-        state: "output-available",
-        toolCallId: "tool-1",
-        type: "dynamic-tool",
-      }),
-      expect.objectContaining({
-        text: "It is 22 degrees.",
-        type: "text",
-      }),
-    ]);
+    expect(host.tree.getMessage("assistant-1")).toMatchObject({
+      parts: [
+        expect.objectContaining({
+          output: { temperature: 22 },
+          state: "output-available",
+          toolCallId: "tool-1",
+          type: "dynamic-tool",
+        }),
+        expect.objectContaining({
+          text: "It is 22 degrees.",
+          type: "text",
+        }),
+      ],
+    });
     expect(host.status).toBe("ready");
   });
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

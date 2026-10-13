@@ -1,9 +1,8 @@
-import React from "react";
 import { AbsoluteFill } from "remotion";
 
 import { Logo } from "./shared/brand";
+import React from "react";
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- BrandExample: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 export const BrandExample = (): React.JSX.Element => (
   <AbsoluteFill
     style={{
@@ -24,4 +23,3 @@ export const BrandExample = (): React.JSX.Element => (
     </p>
   </AbsoluteFill>
 );
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */

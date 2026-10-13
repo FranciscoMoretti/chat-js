@@ -1,12 +1,12 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
+import { hasText } from "@/components/text-value";
+
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import { Sources } from "@/components/sources";
-
-/* oxlint-disable unicorn/max-nested-calls -- webSearchOutput: unicorn/max-nested-calls: keep this existing parse, validation, or rendering composition explicit at the feature boundary. */
 
 /**
  * The selected registry renderer validates its full tool schema. This shared
@@ -23,14 +23,12 @@ const webSearchOutput = z.object({
     })
   ),
 });
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including search); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
 
 export const WebSearch = ({
   part,
 }: {
   readonly messageId: string;
-  readonly part: { state: string; output?: unknown };
+  readonly part: { readonly state: string; readonly output?: unknown };
 }): ReactJSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">Search failed.</p>;
@@ -42,17 +40,36 @@ export const WebSearch = ({
   if (!result.success) {
     return <p role="alert">This search result could not be displayed.</p>;
   }
-  const sources = result.data.searches.flatMap((search) =>
-    search.results.map((source) => ({ ...source, source: "web" as const }))
+  const sources = result.data.searches.flatMap(
+    (
+      search: Readonly<{
+        results: readonly Readonly<{
+          content: string;
+          title: string;
+          url: string;
+        }>[];
+      }>
+    ) => search.results.map((source) => ({ ...source, source: "web" as const }))
   );
   const uniqueSources = [
-    ...new Map(sources.map((source) => [source.url, source])).values(),
+    ...new Map(
+      sources.map(
+        (
+          source: Readonly<{
+            source: "web";
+            content: string;
+            title: string;
+            url: string;
+          }>
+        ) => [source.url, source]
+      )
+    ).values(),
   ];
   return (
     <div className="space-y-3">
-      {result.data.error && <p role="alert">{result.data.error}</p>}
+      {}
+      {hasText(result.data.error) && <p role="alert">{result.data.error}</p>}
       {uniqueSources.length > 0 && <Sources sources={uniqueSources} />}
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

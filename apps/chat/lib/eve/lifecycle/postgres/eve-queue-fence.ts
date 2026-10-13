@@ -1,5 +1,8 @@
-import type { Sql } from "postgres";
+import type { Sql, TransactionSql } from "postgres";
+import type { PostgresLifecycleQuery } from "./compatibility";
 import { z } from "zod";
+
+const MIN_TASK_IDENTIFIER_LENGTH = 1;
 
 const installSql = `
 create table if not exists workflow.eve_queue_tasks (identifier text primary key);
@@ -54,25 +57,26 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
   on graphile_worker._private_jobs for each row execute function workflow.eve_guard_queue();
 `;
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): installEvePostgresQueueFence's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): installEvePostgresQueueFence uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): installEvePostgresQueueFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
- * Explicit provider migration after installEvePostgresResourceFence.
- * Register the provider's configured task name (normally workflow_flows).
- * Fences enqueues/replacements, not worker bookkeeping or existing job removal.
+ * Explicit provider migration after installEvePostgresResourceFence. Fences enqueues and replacements, leaving worker bookkeeping and existing job removal available.
+ *
+ * @param {Sql} connection Postgres connection used to install the queue trigger and register its task in one READ COMMITTED transaction.
+ * @param {string} taskIdentifier Nonempty provider task identifier (normally workflow_flows) whose queue writes require writable resources.
+ * @returns {Promise<void>} Resolves after the trigger and task registration commit; validation, migration or transaction failures reject.
  */
 export const installEvePostgresQueueFence = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   taskIdentifier: string
 ): Promise<void> => {
-  z.string().min(1).parse(taskIdentifier);
-  await connection.begin("isolation level read committed", async (query) => {
-    await query`select 'workflow.eve_assert_writable(text[])'::regprocedure`;
-    await query.unsafe(installSql);
-    await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
-  });
+  z.string().min(MIN_TASK_IDENTIFIER_LENGTH).parse(taskIdentifier);
+  await connection.begin(
+    "isolation level read committed",
+    async (
+      query: PostgresLifecycleQuery & Readonly<Pick<TransactionSql, "unsafe">>
+    ) => {
+      await query`select 'workflow.eve_assert_writable(text[])'::regprocedure`;
+      await query.unsafe(installSql);
+      await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
+    }
+  );
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */

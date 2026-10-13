@@ -1,12 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
-  researchAgentFiles,
   researchAgentDirectories,
+  researchAgentFiles,
 } from "../../../registry/src/tools/research";
-/* oxlint-enable import/no-relative-parent-imports */
+import { isJsonObject } from "./json-object";
 
 const researchTestFiles = [
   "lib/eve/research-availability.test.ts",
@@ -34,6 +33,9 @@ const REPOSITORY_ONLY_FILES = new Set([
   "playwright.visual.config.ts",
   "playwright.guest.config.ts",
   "lib/ai/eval-agent.ts",
+  "lib/db/eve-document-capabilities.test.ts",
+  "lib/db/eve-guest-rate.test.ts",
+  "lib/db/eve-query-lookups.test.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
@@ -47,10 +49,12 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
+  "lib/eve/tool-usage.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
   "tests/fixtures/eve-oauth-mcp-server.ts",
+  "tests/fixtures/eve-oauth-mcp-server.test.ts",
   "vitest.eve.config.ts",
   "vitest.eve-provider.config.ts",
 ]);
@@ -140,9 +144,6 @@ interface ScaffoldTsConfig {
   compilerOptions: { paths: Record<string, unknown> };
 }
 
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
 const isScaffoldPackageManifest = (
   value: unknown
 ): value is ScaffoldPackageManifest =>
@@ -186,7 +187,6 @@ const parseScaffoldTsConfig = (source: string): ScaffoldTsConfig => {
 const JSON_INDENTATION_SPACES = 2;
 
 const formattedScaffoldJson = (value: unknown): string =>
-  // oxlint-disable-next-line unicorn/no-null -- A null JSON.stringify replacer preserves unknown template fields; the third argument keeps existing deterministic two-space formatting.
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
 
 const isRepositoryOnlyDependency = (name: string): boolean =>
@@ -219,7 +219,7 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "evalite",
     "better-sqlite3",
   ]) {
-    delete manifest.devDependencies?.[dependency];
+    Reflect.deleteProperty(manifest.devDependencies ?? {}, dependency);
   }
   for (const script of [
     "eval:dev",
@@ -228,19 +228,17 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "test:research:native",
     "test:tools:live",
   ]) {
-    delete manifest.scripts?.[script];
+    Reflect.deleteProperty(manifest.scripts ?? {}, script);
   }
-  delete manifest.overrides?.evalite;
+  Reflect.deleteProperty(manifest.overrides ?? {}, "evalite");
   await writeFile(packagePath, formattedScaffoldJson(manifest));
 };
-
 const normalizeTsConfig = async (tsconfigPath: string): Promise<void> => {
   const tsconfig = parseScaffoldTsConfig(await readFile(tsconfigPath, "utf-8"));
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
   await writeFile(tsconfigPath, formattedScaffoldJson(tsconfig));
 };
-
 const removeReferenceVisualProject = async (
   destination: string
 ): Promise<void> => {
@@ -251,28 +249,27 @@ const removeReferenceVisualProject = async (
     playwright.replace(REFERENCE_VISUAL_PROJECT, "")
   );
 };
-
 const normalizeStandaloneLintConfig = async (
   destination: string
 ): Promise<void> => {
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");
   // The copied app config becomes the project root, where Oxlint permits typeAware.
-  const standaloneLint = lint.includes("options: { typeAware: true }")
-    ? lint
-    : lint.replace(
-        "  overrides: [",
-        "  options: { typeAware: true },\n  overrides: ["
-      );
+  let standaloneLint = lint;
+  if (!lint.includes("options: { typeAware: true }")) {
+    standaloneLint = lint.replace(
+      "  overrides: [",
+      "  options: { typeAware: true },\n  overrides: ["
+    );
+  }
   await writeFile(
     lintPath,
     standaloneLint.replace(
-      '        "tests/eve-fixture/agent/tools/confirm_note.ts",\n',
+      '        "tests/eve-fixture/agent/tools/confirm-note.ts",\n',
       ""
     )
   );
 };
-
 const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   await normalizePackageManifest(path.join(destination, "package.json"));
   await normalizeTsConfig(path.join(destination, "tsconfig.json"));

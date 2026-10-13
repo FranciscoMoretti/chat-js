@@ -1,9 +1,10 @@
 "use client";
 
-import type { EveMessage } from "eve/client";
+import { hasText, nonEmptyText } from "@/components/text-value";
+
 import { useEveAgent } from "eve/react";
-import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef, useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import {
@@ -16,9 +17,8 @@ import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { Button } from "@/components/ui/button";
 import type { UiToolName } from "@/lib/ai/types";
-/* oxlint-disable import/max-dependencies -- @/providers/default-model-provider import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { useDefaultModel } from "@/providers/default-model-provider";
-/* oxlint-enable import/max-dependencies */
 
 import { EveComposer } from "./eve-composer";
 import { EveMessages } from "./eve-messages";
@@ -29,13 +29,14 @@ const bindingSchema = z.object({
   expiresAt: z.number(),
   sessionId: z.string(),
 });
-type Binding = z.infer<typeof bindingSchema> & {
-  firstMessage: string;
-  modelId: string;
+type Binding = Readonly<z.infer<typeof bindingSchema>> & {
+  readonly firstMessage: string;
+  readonly modelId: string;
 };
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- retireGuest: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including binding: Binding). */
 
-const retireGuest = async (binding: Binding): Promise<void> => {
+const retireGuest = async (
+  binding: Readonly<Pick<Binding, "sessionId" | "credential">>
+): Promise<void> => {
   try {
     await fetch(`/eve/guest/v1/session/${binding.sessionId}/reset`, {
       body: "{}",
@@ -50,9 +51,6 @@ const retireGuest = async (binding: Binding): Promise<void> => {
     // Unload delivery is best effort. EVE's session timeout handles abandonment.
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable typescript/explicit-function-return-type -- createGuestSession: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const createGuestSession = async (modelId: string) => {
   const response = await fetch("/api/eve-guest", {
@@ -65,8 +63,6 @@ const createGuestSession = async (modelId: string) => {
   }
   return bindingSchema.parse(await response.json());
 };
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** Shared guest presentation, also exercised with deterministic visual fixtures. */
 const GuestConversationView = ({
@@ -80,15 +76,15 @@ const GuestConversationView = ({
   onSend,
   onStop,
 }: {
-  messages: readonly EveMessage[];
-  modelId: string;
-  busy: boolean;
-  failure?: string;
-  expired: boolean;
-  draft: string;
-  onDraftChange: (draft: string) => void;
-  onSend: (text: string) => void;
-  onStop: () => void;
+  readonly messages: readonly ReadonlyEveMessage[];
+  readonly modelId: string;
+  readonly busy: boolean;
+  readonly failure?: string;
+  readonly expired: boolean;
+  readonly draft: string;
+  readonly onDraftChange: (draft: string) => void;
+  readonly onSend: (text: string) => void;
+  readonly onStop: () => void;
 }): ReactJSX.Element => {
   const files = useEveAttachments();
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
@@ -114,7 +110,7 @@ const GuestConversationView = ({
         <ConversationScrollButton />
       </Conversation>
       <div className="mx-auto w-full max-w-3xl p-4">
-        {failure && (
+        {hasText(failure) && (
           <p role="alert" className="text-destructive mb-3 text-sm">
             {failure}
           </p>
@@ -133,7 +129,6 @@ const GuestConversationView = ({
           </output>
         )}
         <EveComposer
-          // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve guest conversation initial focus; changing navigation focus requires an accessibility and UX decision.
           autoFocus
           files={files}
           selectedTool={selectedTool}
@@ -158,14 +153,11 @@ const GuestConversationView = ({
     </>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
-
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- GuestConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { binding }: { binding: Binding }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including agent.error?.message). */
 
 const GuestConversation = ({
   binding,
 }: {
-  binding: Binding;
+  readonly binding: Binding;
 }): ReactJSX.Element => {
   const agent = useEveAgent({
     agent: "guest",
@@ -212,21 +204,29 @@ const GuestConversation = ({
         void send(binding.firstMessage);
       }
     }, 0);
-    return (): void => clearTimeout(timer);
+    return (): void => {
+      clearTimeout(timer);
+    };
   });
   useEffect(() => {
     const timer = setTimeout(
-      () => setExpired(true),
+      () => {
+        setExpired(true);
+      },
       Math.max(0, binding.expiresAt - Date.now())
     );
-    return (): void => clearTimeout(timer);
+    return (): void => {
+      clearTimeout(timer);
+    };
   }, [binding.expiresAt]);
   useEffect(() => {
     const retire = (): void => {
       void retireGuest(binding);
     };
     window.addEventListener("pagehide", retire);
-    return (): void => window.removeEventListener("pagehide", retire);
+    return (): void => {
+      window.removeEventListener("pagehide", retire);
+    };
   }, [binding]);
   const stop = async (): Promise<void> => {
     try {
@@ -236,16 +236,55 @@ const GuestConversation = ({
     }
   };
   const latestTurn = agent.events.findLast(
-    (event) =>
+    (event: {
+      readonly type:
+        | "history.seeded"
+        | "hook.result"
+        | "history.restored"
+        | "action.input.appended"
+        | "approval.candidate"
+        | "approval.settled"
+        | "context.cleared"
+        | "compaction.completed"
+        | "compaction.usage"
+        | "compaction.requested"
+        | "authorization.completed"
+        | "authorization.required"
+        | "message.appended"
+        | "message.completed"
+        | "message.received"
+        | "reasoning.appended"
+        | "session.completed"
+        | "session.failed"
+        | "session.started"
+        | "session.waiting"
+        | "result.completed"
+        | "subagent.called"
+        | "subagent.event"
+        | "subagent.completed"
+        | "subagent.started"
+        | "actions.requested"
+        | "input.requested"
+        | "input.resolved"
+        | "action.partial"
+        | "action.result"
+        | "reasoning.completed"
+        | "step.completed"
+        | "step.failed"
+        | "step.started"
+        | "turn.cancelled"
+        | "turn.completed"
+        | "turn.failed"
+        | "turn.started";
+    }) =>
       event.type === "turn.started" ||
       event.type === "turn.failed" ||
       event.type === "turn.completed" ||
       event.type === "turn.cancelled"
   );
   const failure =
-    commandError ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
-    agent.error?.message ||
+    nonEmptyText(commandError) ??
+    nonEmptyText(agent.error?.message) ??
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView
@@ -265,8 +304,6 @@ const GuestConversation = ({
     />
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- DisposableGuestChat: jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: PageTransitionEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** No URL, cookie, storage, or persisted application identity owns this chat. */
 const DisposableGuestChat = (): ReactJSX.Element => {
@@ -324,7 +361,9 @@ const DisposableGuestChat = (): ReactJSX.Element => {
       setDraft("");
       setCommandError("");
     };
-    const restore = (event: PageTransitionEvent): void => {
+    const restore = (
+      event: Readonly<Pick<PageTransitionEvent, "persisted">>
+    ): void => {
       if (event.persisted) {
         reset();
       }
@@ -351,7 +390,6 @@ const DisposableGuestChat = (): ReactJSX.Element => {
                 </p>
               )}
               <EveComposer
-                // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
                 autoFocus
                 status={busy ? "submitted" : "ready"}
                 disabled={busy || !modelId}
@@ -371,7 +409,5 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     </ChatLayout>
   );
 };
-/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines -- disposable-guest-chat keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { DisposableGuestChat, GuestConversationView };

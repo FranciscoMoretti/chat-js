@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports -- Storage descriptors are validated by the canonical registry metadata schema; the CLI Bun build bundles this sibling-package source, whose package exposes only generated registry JSON subpaths. */
-import { storageDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- StorageSelection preserves the descriptor type inferred from the canonical registry schema; the registry package exports generated JSON only, with no metadata type subpath. */
-import type { StorageDefinition } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 import { itemAddress, readItem } from "./shadcn";
+import type { StorageDefinition } from "../../../registry/metadata";
+import { storageDefinitionSchema } from "../../../registry/metadata";
 
 type RegistryFile = NonNullable<
   Awaited<ReturnType<typeof readItem>>["files"]
@@ -25,12 +21,13 @@ export const resolveStorage = async (
   if (item.type !== "registry:item") {
     throw new Error("Selected storage must have type registry:item.");
   }
-  const definition = storageDefinitionSchema.parse(item.meta?.chatjs);
+  const { chatjs } = item.meta ?? {};
+  const definition = storageDefinitionSchema.parse(chatjs);
   if (
-    item.files?.some(
+    !(item.files ?? []).some(
       (file: Readonly<RegistryFile>) =>
         file.target === "~/lib/storage-provider.ts"
-    ) !== true
+    )
   ) {
     throw new Error(
       "Storage must install lib/storage-provider.ts exporting createStorageAdapter."

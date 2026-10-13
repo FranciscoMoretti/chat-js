@@ -33,4 +33,8 @@ bunx --no-install tsc --noEmit -p experiments/eve-delivery-correlation/tsconfig.
 bun lint
 ```
 
-The central lint-exception baseline belongs to Lane D. This lane exports scoped exception snapshots for integration; full lint stops at that pending baseline integration. Targeted type-aware lint checks the changed code independently.
+On 2026-10-13, Lane C merged main `d612af7c128a3d962455f8c4574ae5a69ce2d99e`. The merge preserves scoped submission receipts and adapts delivery acknowledgement to main's external store. Proxy admission, dispatch evidence, and response projection have separate helpers; dispatch ordering is unchanged. `relayResponse` accepts an optional response body so projected streams retain main's header forwarding.
+
+Validation on this maintenance revision: `bun lint` (including docs doctor and canonical demo parity), all seven `bun test:types` tasks, the isolated experiment type check using pinned EVE dependencies, 61 focused unit tests, 13 disposable PostgreSQL integration tests, and the browser delivery fixture passed. Pending, rejected, and restored-draft screenshots were inspected. Migrations 0009/0010 and their snapshots are unchanged. The C-owned temporary PostgreSQL cluster was stopped after testing.
+
+Main removed the old exception-budget mechanism. Obsolete scoped exception snapshots were removed; remaining inline exceptions target enabled rules and document ordered receipt processing or required asynchronous fixture contracts. Historical runtime results above were not re-audited. For experiment type resolution, helper files were restored from their pinned historical Git commits into ignored `.eve` directories; their provenance was not relabeled as current Lane D bytes.

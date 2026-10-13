@@ -1,28 +1,21 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
-/* oxlint-enable import/no-nodejs-modules */
+import type { TestInfo } from "@playwright/test";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("live document completion opens once without replacing an existing panel or open keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("live document completion opens once without replacing an existing panel or open keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("live document completion opens once without replacing an existing panel or open uses 50, 1024, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("live document completion opens once without replacing an existing panel or open uses execFileSync( "bun", [ "-e", 'const result = await Bun.build({ plugins: [{ name: within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("live document completion opens once without replacing an existing panel or open accepts { page, }; testInfo; error; links; link; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("live document completion opens once without replacing an existing panel or open preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("live document completion opens once without replacing an existing panel or opening history", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   await page.goto("/login");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const script = execFileSync(
     "bun",
     [
@@ -31,12 +24,12 @@ test("live document completion opens once without replacing an existing panel or
     ],
     { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
   );
-  await page.route("**/eve-component-fixture", (route) =>
-    route.fulfill({
+  await page.route("**/eve-component-fixture", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("/eve-component-fixture");
   await page.clock.setFixedTime(new Date("2026-09-22T12:00:00.000Z"));
   await page.addScriptTag({ content: script, type: "module" });
@@ -160,4 +153,3 @@ test("live document completion opens once without replacing an existing panel or
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

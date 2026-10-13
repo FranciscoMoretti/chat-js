@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import {
   mkdir,
   mkdtemp,
@@ -8,19 +7,12 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
+import { tmpdir } from "node:os";
 
 const smokeTimeout = 180_000;
 const packageDirectory = path.resolve(import.meta.dir, "..");
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const run = (command: readonly string[], cwd: string): void => {
   const result = Bun.spawnSync({
     cmd: [...command],
@@ -40,13 +32,7 @@ const run = (command: readonly string[], cwd: string): void => {
     );
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test(
   "the packed package loads its core and React entry points",
   async (): Promise<void> => {
@@ -127,7 +113,9 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       run(["node", coreConsumerPath], temporaryDirectory);
       await Promise.all(
         ["react", "@ai-sdk/react", "@types/react", "typescript"].map(
-          async (name): Promise<void> => await linkDependency(name)
+          async (name): Promise<void> => {
+            await linkDependency(name);
+          }
         )
       );
 
@@ -282,7 +270,3 @@ function checkNormalizedHook() {
   },
   smokeTimeout
 );
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

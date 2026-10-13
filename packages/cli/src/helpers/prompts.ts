@@ -1,4 +1,31 @@
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import {
+  AUTHENTICATION_DEFAULTS,
+  FEATURES_DEFAULTS,
+} from "../../../../apps/chat/lib/config-schema";
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+  DOCUMENT_TYPE_KEYS,
+  GATEWAYS,
+} from "#cli/types";
+import type {
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
+} from "#cli/types";
+import {
+  INSTALLABLE_STORAGE_PROVIDERS,
+  parseStorageOptions,
+} from "./storage-provider";
+import {
+  authEnvRequirements,
+  builtInToolEnvRequirements,
+  coreFeatureEnvRequirements,
+  gatewayEnvRequirements,
+} from "./config-requirements";
 import {
   cancel,
   confirm,
@@ -7,64 +34,15 @@ import {
   select,
   text,
 } from "@clack/prompts";
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import {
-  AUTHENTICATION_DEFAULTS,
-  FEATURES_DEFAULTS,
-} from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { RegistryIndexItem } from "../registry/schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { StorageSelection } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import {
-  AUTH_PROVIDERS,
-  BUILT_IN_TOOL_KEYS,
-  CORE_FEATURE_KEYS,
-  DOCUMENT_TYPE_KEYS,
-  GATEWAYS,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type {
-  AuthProvider,
-  BuiltInToolKey,
-  CoreFeatureKey,
-  DocumentTypeKey,
-  Gateway,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import {
-  authEnvRequirements,
-  builtInToolEnvRequirements,
-  coreFeatureEnvRequirements,
-  gatewayEnvRequirements,
-} from "./config-requirements";
-/* oxlint-enable import/max-dependencies */
 import type { ReadonlyInput } from "./readonly-input";
-import {
-  INSTALLABLE_STORAGE_PROVIDERS,
-  parseStorageOptions,
-} from "./storage-provider";
+import type { RegistryIndexItem } from "#cli/registry/schema";
+import type { StorageSelection } from "#cli/registry/storage";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
+import { highlighter } from "#cli/utils/highlighter";
+import { resolveStorage } from "#cli/registry/storage";
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 
@@ -129,7 +107,6 @@ const handleCancel: <PromptValue>(
 ) => asserts value is Exclude<PromptValue, symbol> = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
-    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
     process.exit(PROMPT_CANCEL_EXIT_CODE);
   }
 };
@@ -141,17 +118,6 @@ const toKebabCase = (value: string | undefined): string =>
     .replaceAll(/[^a-z0-9-]/gu, "-")
     .replaceAll(/-+/gu, "-")
     .replaceAll(/^-|-$/gu, "");
-
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-const toSelectionRecord = <T extends string>(
-  keys: readonly T[],
-  selected: readonly string[]
-): Record<T, boolean> =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Prompt entries are constructed from the validated option catalog; Object.fromEntries loses the known key/value relationship.
-  Object.fromEntries(
-    keys.map((key) => [key, selected.includes(key)])
-  ) as Record<T, boolean>;
-/* oxlint-enable eslint/id-length */
 
 const promptProjectName = async (
   targetArg: string | undefined,
@@ -176,7 +142,6 @@ const promptProjectName = async (
 
   return toKebabCase(name) || "my-chat-app";
 };
-
 const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
@@ -207,17 +172,18 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (gateway === "__external__") {
     const source = await text({
       message: "Gateway registry item URL or local JSON path:",
-      validate: (value) =>
-        (value?.trim() ?? "") === ""
-          ? "Enter a registry item address"
-          : globalThis.undefined,
+      validate: (value): "Enter a registry item address" | undefined => {
+        if (typeof value !== "string" || value.trim() === "") {
+          return "Enter a registry item address";
+        }
+        return undefined;
+      },
     });
     handleCancel(source);
     return source.trim();
   }
   return gateway;
 };
-
 const APPEND_DELETE_COUNT = 0;
 const EMPTY_CONFIG_KEY_COUNT = 0;
 
@@ -242,9 +208,6 @@ const registryStorageRequirement = (
   }),
 });
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 const promptStorage = async (
   skipPrompt: boolean,
   explicitProvider?: string,
@@ -280,10 +243,12 @@ const promptStorage = async (
     if (source === "__external__") {
       const address = await text({
         message: "Storage registry item address:",
-        validate: (value) =>
-          (value?.trim() ?? "") === ""
-            ? "Enter an item address"
-            : globalThis.undefined,
+        validate: (value): "Enter an item address" | undefined => {
+          if (typeof value !== "string" || value.trim() === "") {
+            return "Enter an item address";
+          }
+          return undefined;
+        },
       });
       handleCancel(address);
       source = address.trim();
@@ -324,7 +289,7 @@ const promptStorage = async (
       selection.source === `@chatjs/${item.name}`
   );
   const providerId = PROVIDER_NAMES.find(
-    (id) => id === builtin?.meta.chatjs.id
+    (id) => id === (builtin && builtin.meta.chatjs.id)
   );
   if (providerId !== globalThis.undefined) {
     selection.definition.envRequirements = getStorageEnvironmentRequirements(
@@ -336,9 +301,6 @@ const promptStorage = async (
   }
   return selection;
 };
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const promptCoreFeatures = async (
   skipPrompt: boolean,
@@ -370,9 +332,7 @@ const promptCoreFeatures = async (
       hint:
         key === "documents"
           ? "Create, edit, and review documents in chat"
-          : coreFeatureEnvRequirements[
-              key as keyof typeof coreFeatureEnvRequirements
-            ]
+          : coreFeatureEnvRequirements[key]
               ?.map(
                 (requirement: Readonly<{ description: string }>) =>
                   requirement.description
@@ -385,11 +345,14 @@ const promptCoreFeatures = async (
   });
   handleCancel(selected);
 
-  const result = toSelectionRecord(CORE_FEATURE_KEYS, selected);
-  result.mcp = mcp ?? result.mcp;
-  return result;
+  return {
+    attachments: selected.includes("attachments"),
+    parallelResponses: selected.includes("parallelResponses"),
+    documents: selected.includes("documents"),
+    mcp: mcp ?? selected.includes("mcp"),
+    followupSuggestions: selected.includes("followupSuggestions"),
+  };
 };
-
 const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean
@@ -401,7 +364,7 @@ const promptDocumentTypes = async (
   };
 
   if (!documentsEnabled) {
-    return toSelectionRecord(DOCUMENT_TYPE_KEYS, []);
+    return { text: false, code: false, sheet: false };
   }
 
   if (skipPrompt) {
@@ -422,18 +385,27 @@ const promptDocumentTypes = async (
   });
   handleCancel(selected);
 
-  return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
+  return {
+    text: selected.includes("text"),
+    code: selected.includes("code"),
+    sheet: selected.includes("sheet"),
+  };
 };
-
 const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
-  if (item.hidden === true) {
+  const { hidden } = item;
+  const slotMeta = hidden !== true && item.meta;
+  const slotChatjs = slotMeta !== false && slotMeta && slotMeta.chatjs;
+  const hasSlot =
+    hidden !== true &&
+    Boolean(slotChatjs !== false && slotChatjs && slotChatjs.slot);
+  if (hidden === true || hasSlot) {
     return false;
   }
-  const hasSlot = Boolean(item.meta?.chatjs?.slot);
-  if (hasSlot) {
-    return false;
-  }
-  const hasDocumentRun = Boolean(item.meta?.chatjs?.documentRunExport);
+  const documentMeta = item.meta;
+  const documentChatjs = documentMeta && documentMeta.chatjs;
+  const hasDocumentRun = Boolean(
+    documentChatjs && documentChatjs.documentRunExport
+  );
   return !hasDocumentRun && item.name !== "deep-research";
 };
 
@@ -503,12 +475,14 @@ const promptAssistantTools = async (
   });
   handleCancel(selected);
 
-  const builtInTools = toSelectionRecord(
-    BUILT_IN_TOOL_KEYS,
-    selected.filter((value): value is BuiltInToolKey =>
-      (BUILT_IN_TOOL_KEYS as readonly string[]).includes(value)
-    )
-  );
+  const builtInTools = {
+    webSearch: selected.includes("webSearch"),
+    urlRetrieval: selected.includes("urlRetrieval"),
+    deepResearch: selected.includes("deepResearch"),
+    codeExecution: selected.includes("codeExecution"),
+    imageGeneration: selected.includes("imageGeneration"),
+    videoGeneration: selected.includes("videoGeneration"),
+  };
   if (builtInTools.deepResearch) {
     builtInTools.webSearch = true;
   }
@@ -520,9 +494,6 @@ const promptAssistantTools = async (
     ),
   };
 };
-
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptAuth = async (
   skipPrompt: boolean
 ): Promise<Record<AuthProvider, boolean>> => {
@@ -534,32 +505,24 @@ const promptAuth = async (
     (provider) => AUTH_DEFAULTS[provider]
   );
 
-  let selectedProviders: AuthProvider[] = [];
+  const selectedProviders = await multiselect({
+    initialValues: defaultProviders,
+    message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
+    options: AUTH_PROVIDERS.map((provider) => ({
+      hint: authEnvRequirements[provider].description,
+      label: AUTH_LABELS[provider],
+      value: provider,
+    })),
+    required: true,
+  });
+  handleCancel(selectedProviders);
 
-  while (selectedProviders.length === 0) {
-    // oxlint-disable-next-line no-await-in-loop -- Retry only after the user submits an empty selection.
-    const selected = await multiselect({
-      initialValues: defaultProviders,
-      message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
-      options: AUTH_PROVIDERS.map((provider) => ({
-        hint: authEnvRequirements[provider].description,
-        label: AUTH_LABELS[provider],
-        value: provider,
-      })),
-      required: false,
-    });
-    handleCancel(selected);
-
-    selectedProviders = selected;
-    if (selectedProviders.length === 0) {
-      logger.warn("At least one auth provider is required. Please select one.");
-    }
-  }
-
-  return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
+  return {
+    google: selectedProviders.includes("google"),
+    github: selectedProviders.includes("github"),
+    vercel: selectedProviders.includes("vercel"),
+  };
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
 const promptElectron = async (
   skipPrompt: boolean,
@@ -581,7 +544,6 @@ const promptElectron = async (
 
   return wantsElectron;
 };
-
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
@@ -608,13 +570,16 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "Search tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      if (typeof value !== "string" || value.trim() === "") {
+        return "Enter an address";
+      }
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
 const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -643,13 +608,16 @@ const promptCodeExecutionTool = async (
   }
   const address = await text({
     message: "Code-execution tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      if (typeof value !== "string" || value.trim() === "") {
+        return "Enter an address";
+      }
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
@@ -671,13 +639,16 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      if (typeof value !== "string" || value.trim() === "") {
+        return "Enter an address";
+      }
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
 const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -701,13 +672,16 @@ const promptImageGenerationTool = async (
   }
   const address = await text({
     message: "image generation tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      if (typeof value !== "string" || value.trim() === "") {
+        return "Enter an address";
+      }
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
 const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -731,13 +705,16 @@ const promptVideoGenerationTool = async (
   }
   const address = await text({
     message: "video generation tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      if (typeof value !== "string" || value.trim() === "") {
+        return "Enter an address";
+      }
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
 // One optional group; new applications never enable telemetry by default.
 const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (yes) {
@@ -755,13 +732,10 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   });
   if (isCancel(result)) {
     cancel("Operation cancelled.");
-    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
     process.exit(OBSERVABILITY_CANCEL_EXIT_CODE);
   }
   return result;
 };
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {
   promptAssistantTools,
   promptAuth,

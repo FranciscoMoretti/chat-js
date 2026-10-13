@@ -1,21 +1,13 @@
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+import { setTimeout as delay } from "node:timers/promises";
+
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
-/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): default export uses 5000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of lastUserMessage?.startsWith("slow"); lastUserMessage?.startsWith("confirm"); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * typescript/strict-void-return (#611): default export's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 export default defineAgent({
   experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
-    if (lastUserMessage?.startsWith("slow")) {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+    if (lastUserMessage?.startsWith("slow") === true) {
+      await delay(5000);
     }
     if (lastUserMessage === "fail") {
       throw new Error("Deterministic provider failure");
@@ -33,7 +25,7 @@ export default defineAgent({
         ],
       };
     }
-    if (lastUserMessage?.startsWith("confirm")) {
+    if (lastUserMessage?.startsWith("confirm") === true) {
       if (toolResults.length > 0) {
         return "Approval handled.";
       }
@@ -53,4 +45,3 @@ export default defineAgent({
   }),
   modelContextWindowTokens: 128_000,
 });
-/* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return */

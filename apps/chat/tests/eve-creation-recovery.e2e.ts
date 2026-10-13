@@ -1,7 +1,3 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env"; "../lib/eve/conversation-scope" dependency within this package instead of introducing an alias or barrel API.
- */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 import { z } from "zod";
@@ -16,11 +12,14 @@ import { eveChat, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { resolveEveConversationScope } from "../lib/eve/conversation-scope";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
+import type { getEvePostgresStreamPositions } from "../lib/eve/lifecycle/postgres/eve-stream-positions";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-const native = vi.hoisted(() => ({ positions: vi.fn(), request: vi.fn() }));
+const native = vi.hoisted(() => ({
+  positions: vi.fn<typeof getEvePostgresStreamPositions>(),
+  request: vi.fn(),
+}));
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
@@ -29,26 +28,15 @@ vi.mock("../lib/eve/server", () => ({
 vi.mock("../lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/eve/prepare-message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-vi.mock("../lib/eve/prepare-message", () => ({
-  prepareEveMessage: (message: string): Promise<string> =>
-    Promise.resolve(message),
-}));
-/* oxlint-enable typescript/promise-function-async */
 
 vi.mock("../lib/eve/conversation-title", () => ({
   eveConversationTitleFallback: (): string => "Recovery",
 }));
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): vi.mock("../lib/db/credits") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("../lib/db/credits", () => ({
-  canSpend: (): Promise<boolean> => Promise.resolve(true),
+  canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
 }));
-/* oxlint-enable typescript/promise-function-async */
+
 vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: native.positions,
 }));
@@ -63,15 +51,6 @@ afterAll(async () => {
   await db.delete(user).where(inArray(user.id, owners));
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti uses -1, 0, 1, 409, 503, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti accepts init: RequestInit; sessions: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test.each(["before-dispatch", "lost-response"])(
   "a new tab recovers %s before admitting another conversation",
   async (failure) => {
@@ -84,15 +63,20 @@ test.each(["before-dispatch", "lost-response"])(
     const allocations: string[] = [];
     let fail = true;
     native.request.mockImplementation(
-      (_owner: string, path: string, init: RequestInit) => {
+      (_owner: string, path: string, init: Readonly<{ body?: unknown }>) => {
         if (path.startsWith("/eve/chat/v1/operation/")) {
           const sessionId = receipts.get(path.split("/").at(-1) ?? "");
-          return sessionId
-            ? Response.json({ sessionId })
-            : Response.json(
-                { code: "eve_operation_not_found" },
-                { status: 404 }
-              );
+          if (
+            sessionId !== undefined &&
+            sessionId !== null &&
+            sessionId !== ""
+          ) {
+            return Response.json({ sessionId });
+          }
+          return Response.json(
+            { code: "eve_operation_not_found" },
+            { status: 404 }
+          );
         }
         if (fail && failure === "before-dispatch") {
           throw new TypeError("connection refused");
@@ -112,9 +96,6 @@ test.each(["before-dispatch", "lost-response"])(
         return Response.json({ sessionId });
       }
     );
-    native.positions.mockImplementation((_url: string, sessions: string[]) =>
-      Promise.resolve(new Map(sessions.map((id) => [id, 0])))
-    );
     const command = {
       message: "original message",
       modelId: "openai/gpt-4o",
@@ -127,6 +108,9 @@ test.each(["before-dispatch", "lost-response"])(
     );
     expect(interruptedResponse.status).toBe(409);
     const interrupted = await getEveCreation(owner, command.operationId);
+    if (interrupted === undefined) {
+      throw new Error("Missing interrupted creation");
+    }
     expect(interrupted?.state).toBe("uncertain");
     expect(interrupted?.initialRequest).toEqual(command);
 
@@ -147,6 +131,9 @@ test.each(["before-dispatch", "lost-response"])(
       expect(retained?.initialRequest).toEqual(command);
     }
     fail = false;
+    native.positions.mockResolvedValue(
+      new Map([[`wrun_${interrupted.id}`, 0]])
+    );
     const next = await createEveConversationOperation(owner, {
       ...command,
       message: "new tab",
@@ -173,12 +160,7 @@ test.each(["before-dispatch", "lost-response"])(
     expect(allocations).toHaveLength(2);
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null --
- * no-magic-numbers (#517): test("a verified native hook binds while dispatch is in flight without conflicting wi uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("a verified native hook binds while dispatch is in flight without conflicting wi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("a verified native hook binds while dispatch is in flight without conflicting with the HTTP response", async () => {
   const owner = crypto.randomUUID();
   owners.push(owner);
@@ -223,13 +205,7 @@ test("a verified native hook binds while dispatch is in flight without conflicti
     bindAcceptedEveConversation(owner, binding.id, "different-native")
   ).rejects.toThrow("binding_conflict");
 });
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent bindings cannot claim one native session for two branches") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent bindings cannot claim one native session for two branches") accepts row; result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent bindings cannot claim one native session for two branches") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent bindings cannot claim one native session for two branches", async () => {
   const owner = crypto.randomUUID();
   owners.push(owner);
@@ -245,26 +221,28 @@ test("concurrent bindings cannot claim one native session for two branches", asy
   );
   const sessionId = `wrun_${crypto.randomUUID()}`;
   const outcomes = await Promise.allSettled(
-    rows.map((row) => bindAcceptedEveConversation(owner, row.id, sessionId))
+    rows.map(
+      async (row: Readonly<{ id: string }>) =>
+        await bindAcceptedEveConversation(owner, row.id, sessionId)
+    )
   );
   expect(
-    outcomes.filter((result) => result.status === "fulfilled")
+    outcomes.filter(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
-  expect(outcomes.find((result) => result.status === "rejected")).toMatchObject(
-    {
-      reason: { code: "binding_conflict" },
-      status: "rejected",
-    }
-  );
+  expect(
+    outcomes.find(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "rejected"
+    )
+  ).toMatchObject({
+    reason: { code: "binding_conflict" },
+    status: "rejected",
+  });
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
- * max-lines-per-function (#510): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("mapping rejects deletion, foreign ownership and inherited subagent identity without rebinding", async () => {
   const owner = crypto.randomUUID();
   owners.push(owner);
@@ -317,4 +295,3 @@ test("mapping rejects deletion, foreign ownership and inherited subagent identit
     bindAcceptedEveConversation(owner, crypto.randomUUID(), sessionId)
   ).rejects.toMatchObject({ code: "identity_missing" });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

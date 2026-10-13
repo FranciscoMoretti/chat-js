@@ -1,0 +1,118 @@
+/// <reference types="@vitest/browser-playwright" />
+import { takeSnapshot } from "@uiverify/vitest";
+import React, { act } from "react";
+import { expect, test, vi } from "vitest";
+import { commands, page } from "vitest/browser";
+
+import { EveConversation } from "@/components/eve/eve-conversation";
+import { EveLogicalContext } from "@/components/eve/eve-logical-context";
+import { LogicalChat } from "@/lib/eve/logical-chat";
+import type { NativeChatAgent } from "@/lib/eve/logical-chat";
+import { mountNative } from "@/tests/visual/native-eve-fixture";
+import { unmount } from "@/tests/visual/primitive-mount";
+
+const singleInvocation = 1;
+const header = <div />;
+const conversationId = "11111111-1111-4111-8111-111111111111";
+const sessionId = "fixture-conversation-session";
+const ownerId = "fixture-user";
+
+test("conversation retains its draft across rerenders and shows delivery recovery after deferred failure", async (): Promise<void> => {
+  sessionStorage.clear();
+  const pending = Promise.withResolvers<never>();
+  const send = vi
+    .fn<NativeChatAgent["send"]>()
+    .mockReturnValue(pending.promise);
+  const agent: NativeChatAgent = {
+    cancel: vi
+      .fn<NativeChatAgent["cancel"]>()
+      .mockRejectedValue(new Error("Unexpected cancellation")),
+    data: { messages: [] },
+    error: undefined,
+    events: [],
+    prewarm: vi
+      .fn<NativeChatAgent["prewarm"]>()
+      .mockRejectedValue(new Error("Unexpected prewarm")),
+    reset: vi.fn<NativeChatAgent["reset"]>(),
+    respond: vi
+      .fn<NativeChatAgent["respond"]>()
+      .mockRejectedValue(new Error("Unexpected response")),
+    resume: vi
+      .fn<NativeChatAgent["resume"]>()
+      .mockRejectedValue(new Error("Unexpected resume")),
+    send,
+    session: undefined,
+    status: "ready",
+  };
+  const controller = new LogicalChat(conversationId, conversationId);
+  controller.observe(conversationId, agent);
+  const value = { controller, ownerId, snapshot: controller.getSnapshot() };
+  await commands.modelAssets();
+  const state = await mountNative(
+    <EveLogicalContext value={value}>
+      <EveConversation
+        conversationId={conversationId}
+        header={header}
+        ownerId={ownerId}
+        sessionId={sessionId}
+      />
+    </EveLogicalContext>
+  );
+  try {
+    await expect.element(page.getByRole("textbox")).toBeVisible();
+    await act(async (): Promise<void> => {
+      await page
+        .getByRole("textbox")
+        .fill("Preserve this draft across a render");
+    });
+    act((): void => {
+      controller.commands.update(conversationId, { cancelling: false });
+    });
+    await expect
+      .element(page.getByRole("textbox"))
+      .toHaveTextContent("Preserve this draft across a render");
+    await takeSnapshot("conversation-draft");
+    await page.getByRole("main").screenshot({ animations: "disabled" });
+    await act(async (): Promise<void> => {
+      await page.getByRole("button", { exact: true, name: "Send" }).click();
+    });
+    await expect.poll(() => send.mock.calls.length).toBe(singleInvocation);
+    await act(async (): Promise<void> => {
+      pending.reject(new Error("Fixture transport unavailable"));
+      await pending.promise.catch(() => {
+        /* The component handles this transport rejection. */
+      });
+    });
+    await expect
+      .element(page.getByText("Fixture transport unavailable", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Reconnect" }))
+      .toBeVisible();
+    await expect
+      .element(
+        page.getByText(
+          "Message delivery is unconfirmed. Your draft is saved in this tab.",
+          { exact: true }
+        )
+      )
+      .toBeVisible();
+    await takeSnapshot("conversation-delivery-recovery");
+    await page.getByRole("main").screenshot({ animations: "disabled" });
+    await act(async (): Promise<void> => {
+      await page.getByRole("button", { name: "Restore draft" }).click();
+    });
+    await expect
+      .element(page.getByRole("textbox"))
+      .toHaveTextContent("Preserve this draft across a render");
+    expect(send).toHaveBeenCalledOnce();
+  } finally {
+    pending.reject(new Error("Fixture cleanup"));
+    await pending.promise.catch(() => {
+      /* Discharge an unused gate when an earlier assertion fails. */
+    });
+    await unmount(state.fixture);
+    state.queryClient.clear();
+    sessionStorage.clear();
+  }
+});

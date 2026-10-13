@@ -25,17 +25,13 @@ const DeviceLoginFallback = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/explicit-function-return-type (#560): Keep DeviceLoginContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): DeviceLoginContent accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const DeviceLoginContent = async ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
+}): Promise<React.JSX.Element> => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -55,17 +51,13 @@ const DeviceLoginContent = async ({
     </Suspense>
   );
 };
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginRoute creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): DeviceLoginRoute keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): DeviceLoginRoute accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const DeviceLoginRoute = ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
 }): React.JSX.Element => {
   if (!config.desktopApp.enabled) {
     redirect("/login");
@@ -77,11 +69,6 @@ const DeviceLoginRoute = ({
     </Suspense>
   );
 };
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default DeviceLoginRoute;
-/* oxlint-enable import/no-default-export */

@@ -1,54 +1,43 @@
 "use client";
 
 import {
-  Root as AlertDialogPrimitiveRoot,
-  Trigger as AlertDialogPrimitiveTrigger,
-  Portal as AlertDialogPrimitivePortal,
-  Overlay as AlertDialogPrimitiveOverlay,
-  Content as AlertDialogPrimitiveContent,
-  Title as AlertDialogPrimitiveTitle,
-  Description as AlertDialogPrimitiveDescription,
   Action as AlertDialogPrimitiveAction,
   Cancel as AlertDialogPrimitiveCancel,
+  Content as AlertDialogPrimitiveContent,
+  Description as AlertDialogPrimitiveDescription,
+  Overlay as AlertDialogPrimitiveOverlay,
+  Portal as AlertDialogPrimitivePortal,
+  Root as AlertDialogPrimitiveRoot,
+  Title as AlertDialogPrimitiveTitle,
+  Trigger as AlertDialogPrimitiveTrigger,
 } from "@radix-ui/react-alert-dialog";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertDialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const AlertDialog = ({
-  ...props
-}: ReactComponentProps<typeof AlertDialogPrimitiveRoot>): ReactJSX.Element => (
+const AlertDialog = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof AlertDialogPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => (
   <AlertDialogPrimitiveRoot data-slot="alert-dialog" {...props} />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const AlertDialogTrigger = ({
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveTrigger
->): ReactJSX.Element => (
+const AlertDialogTrigger = (
+  props: ReactComponentProps<typeof AlertDialogPrimitiveTrigger>
+): ReactJSX.Element => (
   <AlertDialogPrimitiveTrigger data-slot="alert-dialog-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const AlertDialogPortal = ({
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitivePortal
->): ReactJSX.Element => (
+const AlertDialogPortal = (
+  props: ReactComponentProps<typeof AlertDialogPrimitivePortal>
+): ReactJSX.Element => (
   <AlertDialogPrimitivePortal data-slot="alert-dialog-portal" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogOverlay = ({
   className,
@@ -65,9 +54,6 @@ const AlertDialogOverlay = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogContent = ({
   className,
@@ -87,9 +73,6 @@ const AlertDialogContent = ({
     />
   </AlertDialogPortal>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const AlertDialogHeader = ({
   className,
@@ -101,9 +84,6 @@ const AlertDialogHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const AlertDialogFooter = ({
   className,
@@ -118,9 +98,6 @@ const AlertDialogFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogTitle = ({
   className,
@@ -132,9 +109,6 @@ const AlertDialogTitle = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogDescription = ({
   className,
@@ -148,9 +122,6 @@ const AlertDialogDescription = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogAction = ({
   className,
@@ -163,9 +134,6 @@ const AlertDialogAction = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogCancel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogCancel = ({
   className,
@@ -178,7 +146,6 @@ const AlertDialogCancel = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   AlertDialog,

@@ -1,20 +1,14 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { createHash } from "node:crypto";
-
-import { beforeEach, expect, it, vi } from "vitest";
-
 import {
   admitGuestCreation,
   guestRequestIpHash,
   settleGuestCreation,
 } from "./guest-admission";
-/* oxlint-enable import/no-nodejs-modules */
+import { admitGuestResponseGroup } from "./guest-group-admission";
+import { beforeEach, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
+import type { assertEveFilesOwned } from "../db/eve-files";
+import type { loadEveModelDefinition } from "./model-selection";
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): mocks uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),
   env: {
@@ -24,17 +18,17 @@ const mocks = vi.hoisted(() => ({
     VERCEL_URL: "",
   },
   existing: vi.fn(),
-  files: vi.fn(),
-  model: vi.fn(),
+  files: vi.fn<typeof assertEveFilesOwned>(),
+  group: vi.fn(),
+  model: vi.fn<typeof loadEveModelDefinition>(),
   release: vi.fn(),
   reserve: vi.fn(),
   source: vi.fn(),
 }));
-/* oxlint-enable no-undefined */
 vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
-    AVAILABLE_MODELS: ["cheap"],
+    AVAILABLE_MODELS: ["cheap", "other-cheap"],
     AVAILABLE_TOOLS: [],
     CREDITS: 10,
     RATE_LIMIT: { REQUESTS_PER_MINUTE: 5, REQUESTS_PER_MONTH: 10 },
@@ -46,6 +40,10 @@ vi.mock("../db/eve-guests", () => ({
   readExistingEveGuestMessage: mocks.existing,
   releaseEveGuestCreation: mocks.release,
   reserveEveGuestMessage: mocks.reserve,
+  reserveEveGuestMessages: mocks.group,
+}));
+vi.mock("../db/eve-response-groups", () => ({
+  reserveEveResponseGroupInTransaction: vi.fn(),
 }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.source,
@@ -55,47 +53,55 @@ vi.mock("./model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
 const HASH = /^[0-9a-f]{64}$/u;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): principal uses 64 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const principal = {
   kind: "guest",
   ownerId: "guest",
   state: "pending",
   tokenHash: "a".repeat(64),
 } as const;
-/* oxlint-enable no-magic-numbers */
 const input = {
   message: "hello",
   modelId: "cheap",
   operationId: crypto.randomUUID(),
 };
 const request = new Request("http://localhost/api/agent-conversations");
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
   mocks.env.TRUSTED_CLIENT_IP_HEADER = undefined;
-  mocks.source.mockResolvedValue(undefined);
-  mocks.existing.mockResolvedValue(undefined);
-  mocks.files.mockResolvedValue(undefined);
-  mocks.model.mockResolvedValue(undefined);
+  mocks.source.mockResolvedValue(null);
+  mocks.existing.mockResolvedValue(null);
+  mocks.files.mockResolvedValue();
+  mocks.model.mockResolvedValue({
+    apiModelId: "cheap",
+    context_window: 1000,
+    description: "Guest test model",
+    id: "cheap",
+    input: { audio: false, image: false, pdf: false, text: true, video: false },
+    max_tokens: 1000,
+    name: "Guest test model",
+    object: "model",
+    output: { audio: false, image: false, text: true, video: false },
+    owned_by: "test",
+    pricing: {},
+    reasoning: false,
+    toolCall: false,
+    type: "language",
+  });
   mocks.reserve.mockResolvedValue({
     reservationId: "attempt",
     status: "reserved",
   });
+  mocks.group.mockResolvedValue({
+    admission: { id: input.operationId },
+    reservations: [],
+    status: "admitted",
+  });
 });
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): requestHash accepts value: typeof input; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const requestHash = (value: typeof input): string =>
+const requestHash = (value: Readonly<typeof input>): string =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("does not trust arbitrary forwarded headers or alternate IP spellings for quota", () => {
   const forged = new Request(request, {
@@ -167,17 +173,93 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 
+it("checks a comparison's shared ownership once and each distinct guest model before reserving", async () => {
+  const sourceId = crypto.randomUUID();
+  mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
+  await expect(
+    admitGuestResponseGroup(request, principal, {
+      fork: { beforeTurnId: "turn_1", conversationId: sourceId },
+      message: input.message,
+      modelIds: ["cheap", "other-cheap", "cheap"],
+      operationId: input.operationId,
+    })
+  ).resolves.toEqual({
+    group: { id: input.operationId },
+    reservations: [],
+  });
+  expect(mocks.source).toHaveBeenCalledExactlyOnceWith("guest", sourceId);
+  expect(mocks.files).toHaveBeenCalledExactlyOnceWith("guest", []);
+  expect(mocks.model.mock.calls).toEqual([["cheap"], ["other-cheap"]]);
+  expect(mocks.group).toHaveBeenCalledWith(
+    [
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+      expect.objectContaining({
+        ipHash: guestRequestIpHash(request),
+        ownerId: "guest",
+      }),
+    ],
+    expect.any(Object),
+    expect.any(Function)
+  );
+});
+
+it("does not reserve a comparison when any model, source, or attachment is unavailable", async () => {
+  const groupInput = {
+    message: input.message,
+    modelIds: ["cheap", "premium"],
+    operationId: input.operationId,
+  };
+  expect(
+    await admitGuestResponseGroup(request, principal, groupInput)
+  ).toBeInstanceOf(Response);
+  expect(mocks.model).not.toHaveBeenCalled();
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  mocks.model.mockRejectedValueOnce(new Error("model unavailable"));
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["other-cheap", "cheap"],
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["cheap", "cheap"],
+      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
+
+  mocks.files.mockRejectedValueOnce(new Error("attachment not owned"));
+  expect(
+    await admitGuestResponseGroup(request, principal, {
+      ...groupInput,
+      modelIds: ["cheap", "cheap"],
+    })
+  ).toBeInstanceOf(Response);
+  expect(mocks.group).not.toHaveBeenCalled();
+});
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({
     reservationId: "attempt",
     status: "reserved",
   });
+  const requestHashMatcher: unknown = expect.stringMatching(HASH);
   expect(mocks.reserve).toHaveBeenCalledWith(
     expect.objectContaining({
       operationId: input.operationId,
       ownerId: "guest",
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This guest-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      requestHash: expect.stringMatching(HASH),
+      requestHash: requestHashMatcher,
       requestsPerMinute: 5,
     }),
     expect.objectContaining({
@@ -194,7 +276,6 @@ it("binds quota to the complete creation intent and retains native operation rep
     status: "replay",
   });
 });
-
 it("recovers an active durable reservation without repeating volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -211,10 +292,6 @@ it("recovers an active durable reservation without repeating volatile validation
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("rejects changed replay content before volatile validation") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("rejects changed replay content before volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -234,7 +311,6 @@ it("rejects changed replay content before volatile validation", async () => {
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
 it("runs full validation before reusing a released operation", async () => {
   mocks.existing.mockResolvedValue({
@@ -250,18 +326,20 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.files).toHaveBeenCalled();
   expect(mocks.reserve).toHaveBeenCalled();
 });
-
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("refunds only explicit rejection, keeps ambiguous reservations, and commits success", async () => {
-  for (const response of [
-    new Response(null, { status: 502 }),
-    Response.json({ error: "unresolved" }, { status: 409 }),
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await settleGuestCreation(response, "guest", input.operationId, "attempt");
-  }
+  await Promise.all(
+    [
+      new Response(null, { status: 502 }),
+      Response.json({ error: "unresolved" }, { status: 409 }),
+    ].map(async (response) => {
+      await settleGuestCreation(
+        response,
+        "guest",
+        input.operationId,
+        "attempt"
+      );
+    })
+  );
   expect(mocks.release).not.toHaveBeenCalled();
   await settleGuestCreation(
     Response.json({ creationRejected: true }, { status: 400 }),
@@ -286,7 +364,6 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
     "attempt"
   );
 });
-/* oxlint-enable unicorn/no-null */
 
 it("propagates the atomic refund decision when a creation already exists", async () => {
   mocks.release.mockResolvedValue(false);

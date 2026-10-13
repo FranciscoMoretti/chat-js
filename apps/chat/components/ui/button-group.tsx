@@ -1,10 +1,9 @@
-import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
 import React from "react";
-
 import { Separator } from "@/components/ui/separator";
+import { Slot } from "@radix-ui/react-slot";
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 const buttonGroupVariants = cva(
   "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
@@ -22,7 +21,6 @@ const buttonGroupVariants = cva(
     },
   }
 );
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ButtonGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ButtonGroup = ({
   className,
@@ -37,15 +35,13 @@ const ButtonGroup = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ButtonGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ButtonGroupText = ({
   className,
   asChild = false,
   ...props
 }: React.ComponentProps<"div"> & {
-  asChild?: boolean;
+  readonly asChild?: boolean;
 }): React.JSX.Element => {
   const Comp = asChild ? Slot : "div";
 
@@ -59,9 +55,6 @@ const ButtonGroupText = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ButtonGroupSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ButtonGroupSeparator = ({
   className,
@@ -78,9 +71,6 @@ const ButtonGroupSeparator = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/only-export-components -- button-group.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export {
   ButtonGroup,
@@ -88,4 +78,3 @@ export {
   ButtonGroupText,
   buttonGroupVariants,
 };
-/* oxlint-enable react/only-export-components */

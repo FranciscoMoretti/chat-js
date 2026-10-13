@@ -1,27 +1,24 @@
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { access, writeFile } from "node:fs/promises";
-import path from "node:path";
-
-import { confirm, isCancel, log } from "@clack/prompts";
-import { Command } from "commander";
-
-import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
-import {
-  parseStorageOptions,
-  configureStorageProvider,
-} from "#cli/helpers/storage-provider";
-import { resolveGateway } from "#cli/registry/gateways";
-import { resolveStorage } from "#cli/registry/storage";
-import { inferPackageManager } from "#cli/utils/get-package-manager";
-import { handleError } from "#cli/utils/handle-error";
-import { installPlan } from "#cli/utils/install-plan";
-import { planInstallation } from "#cli/utils/installation-plan";
-import { gatewayConfigEdit } from "#cli/utils/provider-config";
-import { runCommand } from "#cli/utils/run-command";
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
 } from "#cli/utils/sync-features";
+import {
+  configureStorageProvider,
+  parseStorageOptions,
+} from "#cli/helpers/storage-provider";
+import { confirm, isCancel, log } from "@clack/prompts";
+import { Command } from "commander";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { gatewayConfigEdit } from "#cli/utils/provider-config";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
+import { installPlan } from "#cli/utils/install-plan";
+import path from "node:path";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { runCommand } from "#cli/utils/run-command";
 import { syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
@@ -71,15 +68,9 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-enable import/max-dependencies */
-
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const prepareAdd = async (
   cwd: string,
   items: readonly string[],
@@ -141,7 +132,7 @@ const prepareAdd = async (
       : undefined);
   const gatewayChange = plan.providerChanges.some(
     ({ kind, previous, next }: ProviderChangeInput) =>
-      kind === "gateway" && previous && previous !== next
+      kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
   );
   const keepStorageOptions =
     !hasNonEmptyValue(options.storageConfig) &&
@@ -168,10 +159,6 @@ const prepareAdd = async (
     selectedStorage,
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   const { plan, selectedGateway, selectedStorage } = setup;
@@ -198,8 +185,6 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 export const add = new Command("add")
   .description(
     "install registry tools/features/providers and compose their ChatJS registrations"
@@ -334,5 +319,3 @@ export const add = new Command("add")
       }
     }
   );
-
-/* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

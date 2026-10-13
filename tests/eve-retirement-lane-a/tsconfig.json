@@ -6,12 +6,13 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node", "bun"],
     "allowJs": true
   },
   "include": [
     "fixture/**/*.ts",
     "dynamic/template/**/*.ts",
-    "dynamic/prepare.mjs"
+    "dynamic/*.mjs",
+    "*.mjs"
   ]
 }

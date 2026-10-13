@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): eveHistoryInput uses 1, 128, 255 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MIN_OWNER_SCOPE_LENGTH = 1;
+const MAX_OWNER_SCOPE_LENGTH = 128;
+const MAX_HISTORY_SEARCH_LENGTH = 255;
+
 export const eveHistoryInput = z.object({
   cursor: z
     .object({
@@ -11,10 +12,13 @@ export const eveHistoryInput = z.object({
       updatedAt: z.iso.datetime(),
     })
     .nullish(),
-  ownerScope: z.string().min(1).max(128).optional(),
+  ownerScope: z
+    .string()
+    .min(MIN_OWNER_SCOPE_LENGTH)
+    .max(MAX_OWNER_SCOPE_LENGTH)
+    .optional(),
   projectId: z.uuid().nullable().optional(),
-  search: z.string().trim().max(255).default(""),
+  search: z.string().trim().max(MAX_HISTORY_SEARCH_LENGTH).default(""),
 });
-/* oxlint-enable no-magic-numbers */
 
 export type EveHistoryInput = z.infer<typeof eveHistoryInput>;

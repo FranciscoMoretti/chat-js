@@ -1,9 +1,12 @@
-import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
+import {
+  writeEvePackageManifests,
+  writePackageFiles,
+} from "./test-eve-manifests";
 
 const COMMAND_ARGUMENTS_START_INDEX = 2;
-const MANIFEST_INDENTATION_SPACES = 2;
 const root = path.resolve(import.meta.dir, "..");
 const [argument] = process.argv.slice(COMMAND_ARGUMENTS_START_INDEX);
 if (!argument) {
@@ -12,13 +15,11 @@ if (!argument) {
   );
 }
 const archive = path.resolve(argument);
-/* oxlint-disable node/no-sync -- candidate: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 const candidate: unknown = JSON.parse(
   execFileSync("tar", ["-xOf", archive, "package/package.json"], {
     encoding: "utf-8",
   })
 );
-/* oxlint-enable node/no-sync */
 if (
   typeof candidate !== "object" ||
   candidate === null ||
@@ -37,44 +38,23 @@ const originals = await Promise.all(
     file,
   }))
 );
-/* oxlint-disable node/no-sync -- run: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
-/* oxlint-enable node/no-sync */
+const manifestOriginals = originals.filter(
+  ({ file }: Readonly<(typeof originals)[number]>): boolean =>
+    manifestPaths.includes(file)
+);
+const writePackageFile = async (
+  file: string,
+  content: string
+): Promise<void> => {
+  await writeFile(path.join(root, file), content);
+};
 
-/* oxlint-disable unicorn/no-null -- test-eve-package.ts: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- test-eve-package.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/promise-function-async -- test-eve-package.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
-  await Promise.all(
-    originals
-      .filter(({ file }): boolean => manifestPaths.includes(file))
-      .map(({ content, file }): Promise<void> => {
-        const manifest: unknown = JSON.parse(content);
-        if (
-          typeof manifest !== "object" ||
-          manifest === null ||
-          !("dependencies" in manifest) ||
-          typeof manifest.dependencies !== "object" ||
-          manifest.dependencies === null
-        ) {
-          throw new Error(`Expected dependencies in ${file}`);
-        }
-        Object.assign(manifest.dependencies, { eve: `file:${archive}` });
-        return writeFile(
-          path.join(root, file),
-          `${JSON.stringify(manifest, null, MANIFEST_INDENTATION_SPACES)}\n`
-        );
-      })
-  );
+  await writeEvePackageManifests(manifestOriginals, archive, writePackageFile);
   run(["install", "--ignore-scripts"]);
-  await Promise.all(
-    originals
-      .filter(({ file }): boolean => manifestPaths.includes(file))
-      .map(({ content, file }): Promise<void> =>
-        writeFile(path.join(root, file), content)
-      )
-  );
+  await writePackageFiles(manifestOriginals, writePackageFile);
   run(["lint"]);
   run(["test:types"]);
   run(
@@ -101,12 +81,5 @@ try {
   ]);
 } finally {
   // Local tarball paths and their lockfile entries must never leak into a PR.
-  await Promise.all(
-    originals.map(({ content, file }): Promise<void> =>
-      writeFile(path.join(root, file), content)
-    )
-  );
+  await writePackageFiles(originals, writePackageFile);
 }
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */

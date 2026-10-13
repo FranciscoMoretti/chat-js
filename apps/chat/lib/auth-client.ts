@@ -1,14 +1,13 @@
-import { electronProxyClient } from "@better-auth/electron/proxy";
-import { lastLoginMethodClient } from "better-auth/client/plugins";
-import { createAuthClient } from "better-auth/react";
-
-import { config } from "@/lib/config";
 import {
   ELECTRON_APP_SCHEME,
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
 } from "@/lib/electron-auth";
+import { config } from "@/lib/config";
+import { createAuthClient } from "better-auth/react";
+import { electronProxyClient } from "@better-auth/electron/proxy";
+import { lastLoginMethodClient } from "better-auth/client/plugins";
 
 const electronAuthPlugin = electronProxyClient({
   callbackPath: ELECTRON_AUTH_CALLBACK_PATH,
@@ -28,8 +27,4 @@ const authClient = createAuthClient({
   ],
 });
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- */
 export default authClient;
-/* oxlint-enable import/no-default-export */

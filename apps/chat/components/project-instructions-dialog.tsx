@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-
 import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogContent,
@@ -11,8 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+import React from "react";
+
 import { Textarea } from "@/components/ui/textarea";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ProjectInstructionsDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; */
 
 export const ProjectInstructionsDialog = ({
   open,
@@ -52,13 +53,14 @@ export const ProjectInstructionsDialog = ({
       <div className="py-4">
         <Textarea
           aria-label="Project instructions"
-          // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the instructions dialog intentionally focuses its editable instructions field.
           autoFocus
           className="min-h-[200px] resize-none"
           disabled={isPending}
-          onChange={(event: { readonly target: { readonly value: string } }) =>
-            onValueChange(event.target.value)
-          }
+          onChange={(event: {
+            readonly target: { readonly value: string };
+          }) => {
+            onValueChange(event.target.value);
+          }}
           placeholder="Enter project instructions..."
           value={value}
         />
@@ -67,7 +69,9 @@ export const ProjectInstructionsDialog = ({
       <DialogFooter>
         <Button
           disabled={isPending}
-          onClick={() => onOpenChange(false)}
+          onClick={() => {
+            onOpenChange(false);
+          }}
           type="button"
           variant="outline"
         >
@@ -80,4 +84,3 @@ export const ProjectInstructionsDialog = ({
     </DialogContent>
   </Dialog>
 );
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

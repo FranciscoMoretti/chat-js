@@ -1,7 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
 import { expect, test } from "@playwright/test";
+import type { Request, Response, TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
@@ -9,22 +7,16 @@ import { eveConversation, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("rejected send survives reload as an unsent draft and can be restored and sent o uses 210_000, 402, 0, 1, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("rejected send survives reload as an unsent draft and can be restored and sent o accepts { page, }; testInfo; route; response; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("rejected send survives reload as an unsent draft and can be restored and sent o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(210_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -58,7 +50,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
       .where(eq(userCredit.userId, conversation.ownerId));
     await composer.fill(unsent);
     const rejected = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.request().method() === "POST" &&
         response.url().includes(`/api/eve/v1/session/${binding.sessionId}`)
     );
@@ -123,9 +115,9 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.url()
   ).href;
   const operationIds: string[] = [];
-  await page.route(commandUrl, (route) => {
+  await page.route(commandUrl, async (route) => {
     operationIds.push(route.request().headers()["x-chatjs-message-operation"]);
-    return route.fulfill({
+    await route.fulfill({
       body: JSON.stringify({
         code: "usage_reconciliation_busy",
         error: "Usage reconciliation is busy.",
@@ -155,7 +147,8 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   });
   await page.unroute(commandUrl);
   const retriedRequest = page.waitForRequest(
-    (request) => request.method() === "POST" && request.url() === commandUrl
+    (request: Readonly<Pick<Request, "method" | "url">>) =>
+      request.method() === "POST" && request.url() === commandUrl
   );
   await retryButton.click();
   const retryRequest = await retriedRequest;
@@ -171,13 +164,13 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await expect(retryButton).toHaveCount(0);
 
   // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
-  await page.route(commandUrl, (route) =>
-    route.fulfill({
+  await page.route(commandUrl, async (route) => {
+    await route.fulfill({
       body: JSON.stringify({ error: "Upstream response failed" }),
       contentType: "application/json",
       status: 400,
-    })
-  );
+    });
+  });
   await composer.fill("Retain ambiguous delivery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -198,4 +191,3 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   expect(failedRead.status()).toBe(404);
   expect(await failedRead.json()).not.toHaveProperty("code");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

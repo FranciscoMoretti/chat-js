@@ -1,15 +1,13 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
-import React from "react";
 import {
-  PanelGroup as ResizablePrimitivePanelGroup,
   Panel as ResizablePrimitivePanel,
+  PanelGroup as ResizablePrimitivePanelGroup,
   PanelResizeHandle as ResizablePrimitivePanelResizeHandle,
 } from "react-resizable-panels";
-
+import { GripVertical } from "lucide-react";
+import React from "react";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ResizablePanelGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ResizablePanelGroup = ({
   className,
@@ -25,17 +23,15 @@ const ResizablePanelGroup = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const ResizablePanel = ResizablePrimitivePanel;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ResizableHandle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including withHandle). */
 
 const ResizableHandle = ({
   withHandle,
   className,
   ...props
 }: React.ComponentProps<typeof ResizablePrimitivePanelResizeHandle> & {
-  withHandle?: boolean;
+  readonly withHandle?: boolean;
 }): React.JSX.Element => (
   <ResizablePrimitivePanelResizeHandle
     className={cn(
@@ -44,13 +40,12 @@ const ResizableHandle = ({
     )}
     {...props}
   >
-    {withHandle && (
+    {withHandle === true && (
       <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-sm border">
         <GripVertical className="h-2.5 w-2.5" />
       </div>
     )}
   </ResizablePrimitivePanelResizeHandle>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 export { ResizableHandle, ResizablePanel, ResizablePanelGroup };

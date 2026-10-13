@@ -1,10 +1,19 @@
+import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
-
-import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
+import { z } from "zod";
 import { createModuleLogger } from "@/lib/logger";
-import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
+
+const JWT_PART_COUNT = 3;
+const JWT_PAYLOAD_INDEX = 1;
+const SANDBOX_VCPUS = 2;
+const SANDBOX_TIMEOUT_MS = 300_000;
+const CLEANUP_TIMEOUT_MS = 30_000;
+const LOOKUP_TIMEOUT_MS = 15_000;
+const NOT_FOUND_STATUS = 404;
 
 interface SandboxAuth {
   projectId: string;
@@ -12,27 +21,24 @@ interface SandboxAuth {
   token: string;
 }
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const tokenClaims = (token: string) => {
+const tokenClaims = (
+  token: string
+): { projectId: string; teamId: string } | undefined => {
   const parts = token.split(".");
-  if (parts.length !== 3) {
-    return;
+  if (parts.length !== JWT_PART_COUNT) {
+    return undefined;
   }
   let payload: unknown;
   try {
     payload = JSON.parse(
-      Buffer.from(parts[1] ?? "", "base64url").toString("utf-8")
+      Buffer.from(parts[JWT_PAYLOAD_INDEX] ?? "", "base64url").toString("utf-8")
     );
   } catch {
     throw new Error("Sandbox provider identity is unavailable.");
   }
   if (
     !(
-      payload &&
+      payload !== null &&
       typeof payload === "object" &&
       "owner_id" in payload &&
       "project_id" in payload
@@ -48,14 +54,8 @@ const tokenClaims = (token: string) => {
   ) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
-  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return { projectId: payload.project_id, teamId: payload.owner_id };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-statements */
 
 const getTokenAuth = (): Partial<SandboxAuth> => {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
@@ -76,12 +76,10 @@ const getTokenAuth = (): Partial<SandboxAuth> => {
   return {};
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/** Resolve the exact provider scope before a durable allocation is reserved. */
+/**
+ * Resolve the exact provider scope before a durable allocation is reserved.
+ * @returns {SandboxAuth} Provider credentials bound to one project and team.
+ */
 const resolveSandboxAuth = (): SandboxAuth => {
   const configured = getTokenAuth();
   if (
@@ -121,50 +119,38 @@ const resolveSandboxAuth = (): SandboxAuth => {
   }
   return { ...identity, token };
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable eslint/max-statements */
 
-const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
+// Installed providers must work without rewriting an existing app's env schema.
+const sandboxImageEnvironment = z.object({
+  VERCEL_SANDBOX_IMAGE_JAVASCRIPT: z.string().nonempty().optional(),
+  VERCEL_SANDBOX_IMAGE_PYTHON: z.string().nonempty().optional(),
+});
+
+const getSandboxImage = (language: SupportedExecutionLanguage): string => {
+  const images = sandboxImageEnvironment.parse(process.env);
   if (language === "javascript") {
-    return env.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT ?? "node22";
+    return images.VERCEL_SANDBOX_IMAGE_JAVASCRIPT ?? "vercel/sandbox/node:22";
   }
 
-  return (
-    env.VERCEL_SANDBOX_RUNTIME_PYTHON ??
-    env.VERCEL_SANDBOX_RUNTIME ??
-    "python3.13"
-  );
+  return images.VERCEL_SANDBOX_IMAGE_PYTHON ?? "vercel/sandbox/python:3.14";
 };
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-const createSandbox = (
-  runtime: string,
-  signal?: AbortSignal,
+const createSandbox = async (
+  image: string,
+  signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
-  auth?: SandboxAuth
+  auth?: Readonly<SandboxAuth>
 ): Promise<Sandbox> =>
-  Sandbox.create({
+  await Sandbox.create({
     name,
     persistent: false,
-    resources: { vcpus: 2 },
-    // oxlint-disable-next-line typescript/no-deprecated -- The pinned Sandbox SDK still accepts this configured runtime; switching runtime identifiers requires execution compatibility validation.
-    runtime,
+    resources: { vcpus: SANDBOX_VCPUS },
+    image,
     signal,
-    timeout: 5 * 60 * 1000,
+    timeout: SANDBOX_TIMEOUT_MS,
     ...(auth ?? getTokenAuth()),
   });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const cleanupSandbox = async (
   sandbox: Pick<Sandbox, "delete" | "stop"> | undefined,
   log: Pick<ReturnType<typeof createModuleLogger>, "info" | "warn">,
@@ -175,11 +161,11 @@ const cleanupSandbox = async (
   }
   try {
     try {
-      await sandbox.stop({ signal: AbortSignal.timeout(30_000) });
+      await sandbox.stop({ signal: AbortSignal.timeout(CLEANUP_TIMEOUT_MS) });
     } finally {
       await sandbox.delete({
         deleteOrphanSnapshots: true,
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(CLEANUP_TIMEOUT_MS),
       });
     }
     log.info({ requestId }, "sandbox closed");
@@ -188,30 +174,28 @@ const cleanupSandbox = async (
     throw closeError;
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
+const findSandboxForCleanup = async (
+  name: string,
+  auth: Readonly<SandboxAuth>
+): Promise<Sandbox | undefined> => {
   try {
     return await Sandbox.get({
       name,
       resume: false,
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
       ...auth,
     });
   } catch (error) {
-    if (error instanceof APIError && error.response.status === 404) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+    if (
+      error instanceof APIError &&
+      error.response.status === NOT_FOUND_STATUS
+    ) {
+      return undefined;
     }
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
   createCleanupSession: () => {
@@ -237,14 +221,18 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
   },
 };
 
-const getErrorMessage = (err: unknown): string =>
-  err instanceof Error ? err.message : "Unknown error";
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return "Unknown error";
+};
 export {
   cleanupSandbox,
   codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
-  getSandboxRuntime,
+  getSandboxImage,
   getTokenAuth,
   resolveSandboxAuth,
 };

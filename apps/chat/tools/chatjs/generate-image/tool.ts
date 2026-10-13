@@ -1,11 +1,9 @@
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-
-import { runImageRequest } from "./image-request";
 import type { ImageRequestContext } from "./image-request";
+import { defineTool } from "eve/tools";
 import { generateImageInput } from "./schemas";
+import { runImageRequest } from "./image-request";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import type { z } from "zod";
 
 export const generateImageTool = defineTool({
   description: `Generate an image from a user-provided prompt.

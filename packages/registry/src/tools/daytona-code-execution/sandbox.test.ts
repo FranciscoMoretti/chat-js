@@ -1,51 +1,64 @@
-/* oxlint-disable eslint/max-lines-per-function -- The suite groups independent provider boundary tests sharing one typed fixture. */
-/* oxlint-disable eslint/require-await, typescript/require-await -- Asynchronous provider stubs intentionally settle immediately unless a scenario injects a lifecycle race. */
-/* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- Test fixture factories preserve inferred mutable state so each case can inject failures at the provider boundary. */
-/* oxlint-disable eslint/no-magic-numbers -- Concrete SDK deadlines, status codes and expected counts are protocol assertions. */
-import { describe, expect, test } from "bun:test";
-
-import { DaytonaNotFoundError } from "@daytona/sdk";
+import { rejects } from "node:assert/strict";
 
 import { commandSandbox, createDaytonaProvider } from "./sandbox";
+import { describe, expect, mock, test } from "bun:test";
+import { DaytonaNotFoundError } from "@daytona/sdk";
 import type { DaytonaResource } from "./sandbox";
 
+const NOT_FOUND_STATUS = 404;
+const DELETE_TIMEOUT_SECONDS = 60;
+const COMMAND_TIMEOUT_SECONDS = 300;
+const FAILED_COMMAND_EXIT_CODE = 1;
+const EXPECTED_DELETE_ATTEMPTS = 2;
+type DaytonaClient = NonNullable<Parameters<typeof createDaytonaProvider>[1]>;
+
 const credentials = { apiKey: "test-only", organizationId: "org-a" };
+
 const resource = (
   overrides: Partial<DaytonaResource> = {}
 ): DaytonaResource => ({
-  delete: async () => {
-    // No external resource exists in this fixture.
-  },
+  delete: mock<() => Promise<void>>().mockReturnValue(Promise.resolve()),
   name: "allocation-a",
   organizationId: "org-a",
-  process: { executeCommand: async () => ({ exitCode: 0, result: "ok" }) },
+  process: {
+    executeCommand: mock<
+      DaytonaResource["process"]["executeCommand"]
+    >().mockResolvedValue({ exitCode: 0, result: "ok" }),
+  },
   state: "started",
   ...overrides,
 });
 
+const resourceClient = (): DaytonaClient => {
+  const sandbox = resource();
+  return {
+    create: mock<DaytonaClient["create"]>().mockResolvedValue(sandbox),
+    get: mock<DaytonaClient["get"]>().mockResolvedValue(sandbox),
+  };
+};
+
 describe("Daytona durable resource boundary", () => {
   test("creates a private ephemeral named resource with a wall-clock TTL", async () => {
-    const calls: unknown[] = [];
+    const create =
+      mock<DaytonaClient["create"]>().mockResolvedValue(resource());
     const adapter = createDaytonaProvider(credentials, {
-      create: async (params, options) => {
-        calls.push(params, options);
-        return resource();
-      },
-      get: async () => resource(),
+      ...resourceClient(),
+      create,
     });
     await adapter.create("allocation-a", "python");
-    expect(calls).toEqual([
-      {
-        autoStopInterval: 10,
-        ephemeral: true,
-        labels: { "chatjs-allocation": "allocation-a" },
-        language: "python",
-        name: "allocation-a",
-        public: false,
-        ttlMinutes: 10,
-      },
-      { timeout: 60 },
+    expect(create.mock.calls).toEqual([
+      [
+        {
+          autoStopInterval: 10,
+          ephemeral: true,
+          labels: { "chatjs-allocation": "allocation-a" },
+          language: "python",
+          name: "allocation-a",
+          public: false,
+          ttlMinutes: 10,
+        },
+        { timeout: 60 },
+      ],
     ]);
     expect(adapter.cleanup.provider.teamId).toBe("daytona:org-a");
     expect(adapter.cleanup.provider.projectId).toMatch(
@@ -53,84 +66,108 @@ describe("Daytona durable resource boundary", () => {
     );
     const rotated = createDaytonaProvider(
       { ...credentials, apiKey: "rotated-key" },
-      { create: async () => resource(), get: async () => resource() }
+      resourceClient()
     );
     expect(rotated.cleanup.provider).not.toEqual(adapter.cleanup.provider);
   });
 
   test("refuses cross-organization cleanup and identity mismatches", async () => {
-    let deleted = false;
+    const deleteResource =
+      mock<DaytonaResource["delete"]>().mockResolvedValue();
     const foreign = resource({
-      delete: async () => {
-        deleted = true;
-      },
+      delete: deleteResource,
       organizationId: "org-b",
     });
     const adapter = createDaytonaProvider(credentials, {
-      create: async () => foreign,
-      get: async () => foreign,
+      create: mock<() => Promise<typeof foreign>>().mockResolvedValue(foreign),
+      get: mock<() => Promise<typeof foreign>>().mockResolvedValue(foreign),
     });
-    await expect(
-      adapter.cleanup.deleteAndConfirmAbsent("allocation-a")
-    ).rejects.toThrow("identity");
-    await expect(adapter.create("allocation-a", "javascript")).rejects.toThrow(
-      "identity"
+    await rejects(
+      adapter.cleanup.deleteAndConfirmAbsent("allocation-a"),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("identity");
+        return true;
+      }
     );
-    expect(deleted).toBe(false);
+    await rejects(
+      adapter.create("allocation-a", "javascript"),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("identity");
+        return true;
+      }
+    );
+    expect(deleteResource).not.toHaveBeenCalled();
   });
 
   test("waits for deletion and then confirms provider absence", async () => {
-    const calls: unknown[] = [];
-    let deleted = false;
-    const sandbox = resource({
-      delete: async (...args) => {
-        calls.push(args);
-        deleted = true;
-      },
+    const deleting = Promise.withResolvers<boolean>();
+    const deletion = Promise.withResolvers<boolean>();
+    const deleteResource = mock<DaytonaResource["delete"]>(async () => {
+      deleting.resolve(true);
+      await deletion.promise;
     });
+    const sandbox = resource({ delete: deleteResource });
+    const get = mock<DaytonaClient["get"]>().mockResolvedValue(sandbox);
     const adapter = createDaytonaProvider(credentials, {
-      create: async () => sandbox,
-      get: async () => {
-        calls.push("get");
-        if (deleted) {
-          throw new DaytonaNotFoundError("gone", 404);
-        }
-        return sandbox;
-      },
+      create: mock<() => Promise<typeof sandbox>>().mockResolvedValue(sandbox),
+      get,
     });
-    await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
-    expect(calls).toEqual(["get", [60, true], "get"]);
+    const pending = adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
+    await deleting.promise;
+    // Absence is published only once deletion can finish; no early confirmation.
+    expect(get).toHaveBeenCalledTimes(1);
+    get.mockRejectedValue(new DaytonaNotFoundError("gone", NOT_FOUND_STATUS));
+    deletion.resolve(true);
+    await pending;
+    expect(get.mock.calls).toEqual([["allocation-a"], ["allocation-a"]]);
+    expect(deleteResource.mock.calls).toEqual([[DELETE_TIMEOUT_SECONDS, true]]);
+    expect(get.mock.invocationCallOrder.at(0)).toBeLessThan(
+      deleteResource.mock.invocationCallOrder.at(0) ?? Infinity
+    );
+    expect(deleteResource.mock.invocationCallOrder.at(0)).toBeLessThan(
+      get.mock.invocationCallOrder.at(1) ?? -Infinity
+    );
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
   });
 
   test("does not mistake network errors or incomplete deletion for absence", async () => {
-    const adapter = createDaytonaProvider(credentials, {
-      create: async () => resource(),
-      get: async () => resource(),
-    });
-    await expect(
-      adapter.cleanup.deleteAndConfirmAbsent("allocation-a")
-    ).rejects.toThrow("remains");
+    const adapter = createDaytonaProvider(credentials, resourceClient());
+    await rejects(
+      adapter.cleanup.deleteAndConfirmAbsent("allocation-a"),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("remains");
+        return true;
+      }
+    );
     const unavailable = createDaytonaProvider(credentials, {
-      create: async () => resource(),
-      get: async () => {
-        throw new Error("network");
-      },
+      ...resourceClient(),
+      get: mock<() => Promise<never>>().mockRejectedValue(new Error("network")),
     });
-    await expect(
-      unavailable.cleanup.deleteAndConfirmAbsent("allocation-a")
-    ).rejects.toThrow("network");
+    await rejects(
+      unavailable.cleanup.deleteAndConfirmAbsent("allocation-a"),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("network");
+        return true;
+      }
+    );
   });
 
   test("quotes source as one shell argument, enforces timeout and preserves output once", async () => {
-    const calls: unknown[] = [];
+    const execute = mock<
+      DaytonaResource["process"]["executeCommand"]
+    >().mockResolvedValue({ exitCode: 1, result: "traceback" });
     const sandbox = commandSandbox(
       resource({
         process: {
-          executeCommand: async (...args) => {
-            calls.push(args);
-            return { exitCode: 1, result: "traceback" };
-          },
+          executeCommand: execute,
         },
       }),
       new AbortController().signal
@@ -139,85 +176,98 @@ describe("Daytona durable resource boundary", () => {
       args: ["-c", "print('hello'); # $(touch /tmp/escaped)"],
       cmd: "python3",
     });
-    expect(calls).toEqual([
+    expect(execute.mock.calls).toEqual([
       [
         String.raw`'python3' '-c' 'print('\''hello'\''); # $(touch /tmp/escaped)'`,
         "/tmp",
         {},
-        300,
+        COMMAND_TIMEOUT_SECONDS,
       ],
     ]);
     expect(await result.stdout()).toBe("traceback");
     expect(await result.stderr()).toBe("");
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(FAILED_COMMAND_EXIT_CODE);
   });
 
   test("aborted calls cannot start a command", async () => {
-    let executed = false;
+    const execute = mock<
+      DaytonaResource["process"]["executeCommand"]
+    >().mockResolvedValue({ exitCode: 0, result: "" });
     const controller = new AbortController();
     controller.abort();
     const sandbox = commandSandbox(
       resource({
         process: {
-          executeCommand: async () => {
-            executed = true;
-            return { exitCode: 0, result: "" };
-          },
+          executeCommand: execute,
         },
       }),
       controller.signal
     );
-    await expect(
-      sandbox.runCommand({ args: [], cmd: "node" })
-    ).rejects.toThrow();
-    expect(executed).toBe(false);
+    await rejects(
+      sandbox.runCommand({ args: [], cmd: "node" }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow();
+        return true;
+      }
+    );
+    expect(execute).not.toHaveBeenCalled();
   });
 });
 
 test("a new provider session retries cleanup after restart without allocating", async () => {
-  let deleted = false;
-  let attempts = 0;
-  const sandbox = resource({
-    delete: async () => {
-      attempts += 1;
-      if (attempts === 1) {
-        throw new Error("transient delete failure");
-      }
-      deleted = true;
-    },
-  });
+  const deleting = Promise.withResolvers<boolean>();
+  const deletion = Promise.withResolvers<boolean>();
+  const deleteResource = mock<DaytonaResource["delete"]>()
+    .mockRejectedValueOnce(new Error("transient delete failure"))
+    .mockImplementation(async () => {
+      deleting.resolve(true);
+      await deletion.promise;
+    });
+  const sandbox = resource({ delete: deleteResource });
+  const get = mock<DaytonaClient["get"]>().mockResolvedValue(sandbox);
   const client = {
-    create: async (): Promise<DaytonaResource> => {
-      throw new Error("must not allocate during cleanup");
-    },
-    get: async (): Promise<DaytonaResource> => {
-      if (deleted) {
-        throw new DaytonaNotFoundError("gone", 404);
-      }
-      return sandbox;
-    },
+    create: mock<() => Promise<DaytonaResource>>().mockRejectedValue(
+      new Error("must not allocate during cleanup")
+    ),
+    get,
   };
-  await expect(
+  await rejects(
     createDaytonaProvider(credentials, client).cleanup.deleteAndConfirmAbsent(
       "allocation-a"
-    )
-  ).rejects.toThrow("transient delete failure");
-  await createDaytonaProvider(
+    ),
+    (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("transient delete failure");
+      return true;
+    }
+  );
+  expect(get).toHaveBeenCalledTimes(1);
+  const pending = createDaytonaProvider(
     credentials,
     client
   ).cleanup.deleteAndConfirmAbsent("allocation-a");
-  expect(attempts).toBe(2);
-  expect(deleted).toBe(true);
+  await deleting.promise;
+  expect(get).toHaveBeenCalledTimes(EXPECTED_DELETE_ATTEMPTS);
+  get.mockRejectedValue(new DaytonaNotFoundError("gone", NOT_FOUND_STATUS));
+  deletion.resolve(true);
+  await pending;
+  expect(get.mock.calls).toEqual([
+    ["allocation-a"],
+    ["allocation-a"],
+    ["allocation-a"],
+  ]);
+  expect(deleteResource).toHaveBeenCalledTimes(EXPECTED_DELETE_ATTEMPTS);
+  expect(client.create).not.toHaveBeenCalled();
 });
 
 test("empty required credentials fail before provider allocation", () => {
   expect(() =>
     createDaytonaProvider(
       { ...credentials, organizationId: " " },
-      {
-        create: async () => resource(),
-        get: async () => resource(),
-      }
+      resourceClient()
     )
   ).toThrow("DAYTONA_API_KEY and DAYTONA_ORGANIZATION_ID");
 });

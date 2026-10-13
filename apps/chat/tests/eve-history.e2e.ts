@@ -1,10 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -15,32 +8,21 @@ import { listEveConversations } from "../lib/db/eve-queries";
 import { eveConversation, user } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("history pages and searches older conversations without exposing other owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("history pages and searches older conversations without exposing other owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("history pages and searches older conversations without exposing other owners") uses 55, 54, 2, 50, 0, 5, -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("history pages and searches older conversations without exposing other owners") accepts { page, }; route; row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("history pages and searches older conversations without exposing other owners") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("history pages and searches older conversations without exposing other owners") intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("history pages and searches older conversations without exposing other owners", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const prefix = `history-${crypto.randomUUID()}`;
@@ -93,14 +75,9 @@ test("history pages and searches older conversations without exposing other owne
       await expand.click();
     }
     const search = page.getByRole("textbox", { name: "Search conversations" });
-    let releaseSearch: () => void = (): void => {
-      /* Assigned synchronously below. */
-    };
-    const searchGate = new Promise<void>((resolve) => {
-      releaseSearch = resolve;
-    });
+    const searchGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route("**/api/trpc/eve.list**", async (route) => {
-      await searchGate;
+      await searchGate.promise;
       await route.continue();
     });
     await search.fill(prefix);
@@ -114,7 +91,7 @@ test("history pages and searches older conversations without exposing other owne
         path: "tests/eve-results/screenshots/eve-history-loading.png",
       });
     } finally {
-      releaseSearch();
+      searchGate.resolve();
     }
     await page.unroute("**/api/trpc/eve.list**");
     await expect(
@@ -156,7 +133,9 @@ test("history pages and searches older conversations without exposing other owne
       animations: "disabled",
       path: "tests/eve-results/screenshots/eve-history-empty.png",
     });
-    await page.route("**/api/trpc/eve.list**", (route) => route.abort());
+    await page.route("**/api/trpc/eve.list**", async (route) => {
+      await route.abort();
+    });
     await search.fill(`${prefix} failed`);
     await expect(
       page.getByText("Could not load conversations.", { exact: true })
@@ -179,4 +158,3 @@ test("history pages and searches older conversations without exposing other owne
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

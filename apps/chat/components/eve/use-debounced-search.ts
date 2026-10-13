@@ -10,10 +10,14 @@ export const useDebouncedSearch = (value: string): string => {
   const [search, setSearch] = useState(normalized);
   useEffect(() => {
     const timeout = setTimeout(
-      () => setSearch(normalized),
+      () => {
+        setSearch(normalized);
+      },
       normalized ? typingDebounceDelayMs : clearedSearchDelayMs
     );
-    return (): void => clearTimeout(timeout);
+    return (): void => {
+      clearTimeout(timeout);
+    };
   }, [normalized]);
   return search;
 };

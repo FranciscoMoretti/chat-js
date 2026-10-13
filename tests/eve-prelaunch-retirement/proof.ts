@@ -1,13 +1,3 @@
-/* oxlint-disable eslint/no-console, eslint/no-magic-numbers, eslint/no-undefined, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member, unicorn/no-null --
- * eslint/no-console: Emit local proof results and retained evidence locations.
- * eslint/no-magic-numbers: Bounded proof deadlines, fixture counts and archive permissions are explicit protocol inputs.
- * eslint/no-undefined: Undefined represents absent durable evidence or a bounded poll still waiting.
- * import/no-nodejs-modules: The disposable proof owns local files and child processes.
- * import/no-relative-parent-imports: Exercise the exact shared runtime/provider implementation without adding a production export.
- * typescript/prefer-readonly-parameter-types: The database and runtime SDKs own these mutable parameter types; proofs do not mutate them.
- * unicorn/no-await-expression-member: Read the asserted evidence directly without maintaining a second mutable snapshot.
- * unicorn/no-null: SQL null and child process exit state are distinct protocol values.
- */
 import assert from "node:assert/strict";
 import path from "node:path";
 
@@ -90,8 +80,9 @@ try {
     applyRetirement(sql, client, { ...plan, digest: "changed archive" }),
     /Archive must be verified/u
   );
+  const archivedSnapshot = await session.snapshot();
   assert.deepEqual(
-    (await session.snapshot()).events,
+    archivedSnapshot.events,
     before.events,
     "Dry run and archive must not mutate history"
   );
@@ -113,11 +104,10 @@ try {
   await assert.rejects(
     sql`insert into "EveSubmission"("ownerId","operationId","conversationId",command,state) values(${owner},${operation},${conversation},'{"message":"different"}'::jsonb,'pending')`
   );
-  assert.ok(
-    (
-      await Bun.file(path.join(plan.directory, "transcript.md")).text()
-    ).includes("Run action")
-  );
+  const transcript = await Bun.file(
+    path.join(plan.directory, "transcript.md")
+  ).text();
+  assert.ok(transcript.includes("Run action"));
   const after = await session.snapshot({ signal: AbortSignal.timeout(10_000) });
   assert.ok(
     after.events.some(
@@ -166,5 +156,3 @@ try {
   await runtime.crash();
   await sql.end();
 }
-
-/* oxlint-enable eslint/no-console, eslint/no-magic-numbers, eslint/no-undefined, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/prefer-readonly-parameter-types, unicorn/no-await-expression-member, unicorn/no-null */

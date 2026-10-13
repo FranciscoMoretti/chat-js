@@ -19,11 +19,7 @@ vi.mock("./local-deletion-available", () => ({
 vi.mock("./cleanup-expired-guests", () => ({
   cleanupExpiredEveGuests: mocks.cleanup,
 }));
-/* oxlint-disable init-declarations --
- * init-declarations (#507): stop assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let stop: (() => void) | undefined;
-/* oxlint-enable init-declarations */
 beforeEach(() => {
   vi.useFakeTimers();
   vi.resetAllMocks();
@@ -38,23 +34,14 @@ beforeEach(() => {
     skipped: false,
   });
 });
-/* oxlint-disable no-undefined --
- * no-undefined (#519): afterEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 afterEach(() => {
   stop?.();
   stop = undefined;
   vi.useRealTimers();
 });
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("startup is singleton and sweeps never overlap") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("startup is singleton and sweeps never overlap") uses 60_000, 1, 180_000, 2, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("startup is singleton and sweeps never overlap") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("startup is singleton and sweeps never overlap", async () => {
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
@@ -67,22 +54,22 @@ test("startup is singleton and sweeps never overlap", async () => {
   await vi.advanceTimersByTimeAsync(180_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
   stop?.();
+  const workingDirectory = vi
+    .spyOn(process, "cwd")
+    .mockReturnValue("/refreshed-worktree");
   expect(startLocalEveGuestCleanup()).toBe(stop);
+  workingDirectory.mockRestore();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  gate.resolve(undefined);
+  gate.resolve();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
+  expect(mocks.cleanup).toHaveBeenLastCalledWith("/refreshed-worktree");
   stop?.();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " accepts values; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test.each([
   { NODE_ENV: "production" },
 
@@ -91,7 +78,25 @@ test.each([
   { DATABASE_URL: "https://localhost/fixture" },
 ])(
   "unsafe or disabled configuration never starts cleanup: %j",
-  async (values) => {
+  async (
+    values: Readonly<
+      | {
+          NODE_ENV: string;
+          EVE_GATEWAY_SECRET?: undefined;
+          DATABASE_URL?: undefined;
+        }
+      | {
+          EVE_GATEWAY_SECRET: string;
+          NODE_ENV?: undefined;
+          DATABASE_URL?: undefined;
+        }
+      | {
+          DATABASE_URL: string;
+          NODE_ENV?: undefined;
+          EVE_GATEWAY_SECRET?: undefined;
+        }
+    >
+  ) => {
     Object.assign(mocks.env, values);
     stop = startLocalEveGuestCleanup();
     await vi.advanceTimersByTimeAsync(120_000);
@@ -99,11 +104,7 @@ test.each([
     expect(stop).toBeUndefined();
   }
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("remote worker or World and a config disabled after startup cannot sweep") uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("remote worker or World and a config disabled after startup cannot sweep", async () => {
   mocks.available.mockReturnValue(false);
   expect(startLocalEveGuestCleanup()).toBeUndefined();
@@ -113,13 +114,7 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("a failed sweep retries later and stopping in flight prevents rescheduling") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a failed sweep retries later and stopping in flight prevents rescheduling") uses 120_000, 2, 60_000, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("a failed sweep retries later and stopping in flight prevents rescheduling") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("a failed sweep retries later and stopping in flight prevents rescheduling", async () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => {
     // Intentionally silence the expected cleanup failure in this test.
@@ -129,16 +124,15 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   expect(error).toHaveBeenCalledOnce();
-  const gate = Promise.withResolvers<undefined>();
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
   });
   await vi.advanceTimersByTimeAsync(60_000);
   stop?.();
-  gate.resolve(undefined);
+  gate.resolve();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */

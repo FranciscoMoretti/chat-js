@@ -1,12 +1,11 @@
-import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import { Slot } from "@radix-ui/react-slot";
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 const buttonVariants = cva(
   "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -37,7 +36,6 @@ const buttonVariants = cva(
   }
 );
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React button props to the button or Radix Slot, including native object refs. Deep readonly ref.current fails their JSX receiver; preserving React/CSS string & {} aliases still triggers this rule.
 const Button = ({
   className,
   variant,
@@ -46,7 +44,7 @@ const Button = ({
   ...props
 }: ReactComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
+    readonly asChild?: boolean;
   }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
@@ -58,7 +56,5 @@ const Button = ({
     />
   );
 };
-/* oxlint-disable react/only-export-components -- button.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Button, buttonVariants };
-/* oxlint-enable react/only-export-components */

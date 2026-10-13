@@ -1,7 +1,8 @@
-import React from "react";
+import { Button } from "@/components/ui/button";
 
 import { GitIcon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
+
+import React from "react";
 
 const GITHUB_URL = "https://github.com/franciscomoretti/chat-js";
 

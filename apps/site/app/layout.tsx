@@ -1,8 +1,8 @@
-import { Analytics } from "@vercel/analytics/next";
-import type { Metadata, Viewport } from "next";
-import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import React from "react";
+import { ThemeProvider } from "next-themes";
 
 import { siteConfig } from "@/lib/site-config";
 
@@ -90,11 +90,36 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- RootLayout: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+type ReadonlyReactIteratorResult =
+  | { readonly done?: false; readonly value: ReadonlyReactNode }
+  | { readonly done: true; readonly value: unknown };
+interface ReadonlyReactIterator {
+  readonly next: () => ReadonlyReactIteratorResult;
+  readonly [Symbol.iterator]?: () => ReadonlyReactIterator;
+}
+interface ReadonlyReactIterable {
+  readonly [Symbol.iterator]: () => ReadonlyReactIterator;
+}
+type ReadonlyAwaitedNode =
+  | Readonly<React.ReactElement>
+  | string
+  | number
+  | bigint
+  | ReadonlyReactIterable
+  | (Omit<Readonly<React.ReactPortal>, "children"> & {
+      readonly children: ReadonlyReactNode;
+    })
+  | boolean
+  | null
+  | undefined;
+type ReadonlyReactNode =
+  | ReadonlyAwaitedNode
+  | Readonly<Promise<ReadonlyAwaitedNode>>;
+
 const RootLayout = ({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReadonlyReactNode;
 }>): React.JSX.Element => (
   <html
     className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
@@ -114,11 +139,6 @@ const RootLayout = ({
     </body>
   </html>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
-/* oxlint-enable import/no-default-export */

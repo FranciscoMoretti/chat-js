@@ -3,7 +3,6 @@ import { requireCredentials } from "@/lib/required-credentials";
 
 // Read at registration time so an omitted integration never validates credentials.
 export const getLangfuseEnvironment = (
-  // oxlint-disable-next-line node/no-process-env -- Next's Node instrumentation registration reads process.env only when the optional Langfuse integration is present; injected environments remain supported for callers and tests.
   environment: Readonly<NodeJS.ProcessEnv> = process.env
 ): {
   baseUrl: string | undefined;
@@ -15,7 +14,6 @@ export const getLangfuseEnvironment = (
   const baseUrl = environment.LANGFUSE_BASE_URL;
   const hasBaseUrl = Boolean(baseUrl);
   return {
-    // oxlint-disable-next-line eslint/no-undefined -- Preserve the own baseUrl key with undefined for an unset or empty environment value so LangfuseExporter uses its default endpoint.
     baseUrl: hasBaseUrl ? baseUrl : undefined,
     debug: environment.LANGFUSE_DEBUG === "true",
     publicKey: environment.LANGFUSE_PUBLIC_KEY,

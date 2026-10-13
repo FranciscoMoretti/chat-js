@@ -1,10 +1,4 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- The dynamic runtime boundary supports the two pinned SDK context shapes; runtime guards verify them. */
-/* oxlint-disable eslint/no-await-in-loop -- Each harness continuation depends on the previous result. */
-/* oxlint-disable eslint/require-await, typescript/require-await -- Mock model and event callbacks retain the runtime Promise contract. */
-/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The fixture keeps one private executor, its approval policies and mutable effect probe together. */
-/* oxlint-disable eslint/no-magic-numbers, unicorn/no-null -- Literal protocol values and absent auth/sandbox identities are deliberate runtime fixtures. */
-/* oxlint-disable import/no-nodejs-modules -- The isolated runtime fixture uses filesystem storage and native module loading. */
-/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions -- This experiment loads two exact runtime distributions by filesystem path; dynamic internal exports have no common static type contract. Runtime assertions verify the boundary. */
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/strict-boolean-expressions -- This standalone experiment imports pinned runtime internals by filesystem path; the two distributions have no shared static type contract. Runtime assertions validate the boundary. */
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -53,6 +47,18 @@ const usage = {
 };
 const scratch = await mkdtemp(path.join(tmpdir(), "eve-lane-a-"));
 
+const newContext = () => {
+  const ctx = new ContextContainer();
+  ctx.set(SessionKey, {
+    auth: { current: owner, initiator: owner },
+    sessionId: "session",
+    turn: { id: "turn", sequence: 1 },
+  });
+  ctx.set(SessionIdKey, "session");
+  ctx.set(AuthKey, owner);
+  return ctx;
+};
+
 // A bounded candidate tool, not a replacement for the production DB transaction.
 // Execution stays private; only its authored definition enters the real harness.
 const fixture = (stream) => {
@@ -62,22 +68,13 @@ const fixture = (stream) => {
       /* Most cases do not mutate state during approval. */
     },
     callNext: false,
-    cancel: () => cancellation.abort(new Error("Turn cancelled before effect")),
+    cancel: () => {
+      cancellation.abort(new Error("Turn cancelled before effect"));
+    },
     effects: [],
     ownerId: "owner",
     policyResponses: [],
     revision: "revision-1",
-  };
-  const newContext = () => {
-    const ctx = new ContextContainer();
-    ctx.set(SessionKey, {
-      auth: { current: owner, initiator: owner },
-      sessionId: "session",
-      turn: { id: "turn", sequence: 1 },
-    });
-    ctx.set(SessionIdKey, "session");
-    ctx.set(AuthKey, owner);
-    return ctx;
   };
   let ctx = newContext();
   const guard = (value, context) => {
@@ -157,7 +154,9 @@ const fixture = (stream) => {
     };
   };
   const model = new MockLanguageModelV4({
+    // oxlint-disable-next-line eslint/require-await -- This SDK callback requires a Promise even for an immediate deterministic result.
     doGenerate: async () => response(),
+    // oxlint-disable-next-line eslint/require-await -- This SDK callback requires a Promise even for an immediate deterministic result.
     doStream: async () => {
       const result = response();
       const content = result.content.flatMap((part) =>
@@ -184,6 +183,7 @@ const fixture = (stream) => {
     abortSignal: cancellation.signal,
     capabilities: { requestInput: true },
     mode: "conversation",
+    // oxlint-disable-next-line eslint/require-await -- This SDK callback requires a Promise even for an immediate deterministic result.
     resolveModel: async () => model,
     tools: new Map([[tool.name, tool]]),
     ...(stream
@@ -208,6 +208,7 @@ const fixture = (stream) => {
   };
   const advance = async (delivery) => {
     let result = await contextStorage.run(ctx, () => step(session, delivery));
+    /* oxlint-disable eslint/no-await-in-loop -- Harness messages must be fully consumed in their emitted order. */
     for (let iteration = 0; typeof result.next === "function"; iteration += 1) {
       assert.ok(iteration < 12, "bounded native continuation");
       const current = result;
@@ -215,6 +216,7 @@ const fixture = (stream) => {
         current.next(current.session)
       );
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     ({ session } = result);
     return result;
   };
@@ -263,17 +265,3 @@ const fixture = (stream) => {
 };
 
 export { fixture, fork, foreign, input, manifest, owner, scratch };
-
-/* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions */
-
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-enable eslint/no-magic-numbers, unicorn/no-null */
-
-/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
-
-/* oxlint-enable eslint/require-await, typescript/require-await */
-
-/* oxlint-enable eslint/no-await-in-loop */
-
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

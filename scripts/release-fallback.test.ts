@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 const SUCCESS_EXIT_CODE = 0;
 const NON_SUCCESS_EXIT_CODE = 1;
@@ -125,9 +125,12 @@ const runFallback = async (cwd: string): Promise<number> => {
   const exitCode = await child.exited;
   // These assertions only distinguish success from failure. Preserve the
   // spawnSync behavior where a signal-terminated child does not count as zero.
-  return child.signalCode ? NON_SUCCESS_EXIT_CODE : exitCode;
-};
 
+  if (child.signalCode) {
+    return NON_SUCCESS_EXIT_CODE;
+  }
+  return exitCode;
+};
 const withReleaseDirectory = async (
   assertRelease: ReleaseAssertion
 ): Promise<void> => {
@@ -138,7 +141,6 @@ const withReleaseDirectory = async (
     await rm(directory, { force: true, recursive: true });
   }
 };
-
 const expectReleaseFiles = async (
   directory: string,
   expected: ReleaseFileState
@@ -150,7 +152,6 @@ const expectReleaseFiles = async (
   };
   expect(actual).toEqual(expected);
 };
-
 const expectCallCounts = async (
   directory: string,
   expected: readonly Readonly<{ count: number; pattern: string }>[]
@@ -160,7 +161,6 @@ const expectCallCounts = async (
     expect(calls.match(new RegExp(pattern, "gmu"))).toHaveLength(count);
   }
 };
-
 test("retry repairs release metadata without republishing after verification fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "fail-verification"), "");
@@ -185,7 +185,6 @@ test("retry repairs release metadata without republishing after verification fai
     ]);
   });
 });
-
 test("retry pushes an existing local tag after the first push fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "published"), "");
@@ -210,7 +209,6 @@ test("retry pushes an existing local tag after the first push fails", async (): 
     expect(calls).not.toContain("npm publish");
   });
 });
-
 for (const lookupFails of [false, true]) {
   test(
     lookupFails

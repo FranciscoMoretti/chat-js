@@ -4,7 +4,6 @@ import type {
 } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Card: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const Card = ({
   className,
@@ -19,8 +18,6 @@ const Card = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardHeader = ({
   className,
@@ -35,9 +32,6 @@ const CardHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardTitle = ({
   className,
@@ -49,9 +43,6 @@ const CardTitle = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardDescription = ({
   className,
@@ -63,9 +54,6 @@ const CardDescription = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardAction = ({
   className,
@@ -80,9 +68,6 @@ const CardAction = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardContent = ({
   className,
@@ -90,9 +75,6 @@ const CardContent = ({
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div className={cn("px-6", className)} data-slot="card-content" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const CardFooter = ({
   className,
@@ -104,7 +86,6 @@ const CardFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   Card,

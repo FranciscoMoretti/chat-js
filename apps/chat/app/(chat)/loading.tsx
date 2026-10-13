@@ -8,5 +8,4 @@ const Loading = (): React.JSX.Element => (
   </WithSkeleton>
 );
 
-// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this loading boundary module and create-component-tree selects its default component Loading.
 export default Loading;

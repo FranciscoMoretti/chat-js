@@ -1,4 +1,4 @@
-import type { Sql, TransactionSql } from "postgres";
+import type { Sql } from "postgres";
 import type postgres from "postgres";
 import { z } from "zod";
 
@@ -43,11 +43,24 @@ const message = z
 
 type Message = z.infer<typeof message>;
 
-type DeepReadonly<Value> = Value extends readonly unknown[]
-  ? { readonly [Index in keyof Value]: DeepReadonly<Value[Index]> }
-  : Value extends object
-    ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
-    : Value;
+type DeepReadonly<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
+  ? Value
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends readonly unknown[]
+        ? { readonly [Index in keyof Value]: DeepReadonly<Value[Index]> }
+        : Value extends object
+          ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
+          : Value;
 
 interface Branch {
   id: string;
@@ -69,8 +82,6 @@ interface Checkpoint {
   status: "pending" | "ready" | "failed";
 }
 
-type DB = Sql | TransactionSql;
-
 type ReadonlySqlTag = <
   RowType extends readonly (object | undefined)[] = postgres.Row[],
 >(
@@ -78,10 +89,22 @@ type ReadonlySqlTag = <
   ...parameters: readonly (string | number | null)[]
 ) => postgres.PendingQuery<RowType>;
 
+// Expose the native operations used by the protocol. Readonly properties prevent
+// receiver reassignment while preserving queries that perform database writes.
+interface SqlQueries {
+  <RowType extends readonly (object | undefined)[] = postgres.Row[]>(
+    template: readonly string[] & { readonly raw: readonly string[] },
+    ...parameters: readonly postgres.ParameterOrFragment<never>[]
+  ): postgres.PendingQuery<RowType>;
+  (ids: readonly string[]): postgres.Helper<readonly string[], []>;
+  readonly json: Sql["json"];
+}
+
+type SqlConnection = SqlQueries & Readonly<Pick<Sql, "begin">>;
+
 const hasBarrier = (barrier: string | null): boolean =>
   barrier !== null && barrier !== "";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- ownedBranch: The database result may be empty; this existing guard preserves its missing-row error. */
 const ownedBranch = async (
   sql: ReadonlySqlTag,
   owner: string,
@@ -90,12 +113,11 @@ const ownedBranch = async (
   const [row] = await sql<
     Branch[]
   >`select * from branch where id=${id} and owner=${owner} for update`;
-  if (!row) {
+  if (row === undefined) {
     throw new Error("not owned");
   }
   return row;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const history = async (
   sql: ReadonlySqlTag,
@@ -117,9 +139,6 @@ const history = async (
     message.parse(row.payload)
   );
 };
-
-/* oxlint-disable eslint/max-statements -- validatePrefix: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/no-magic-numbers -- validatePrefix: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 // A bounded neutral prototype format, NOT a claimed public EVE seed schema.
 const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
   if (
@@ -151,18 +170,16 @@ const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
     throw new Error("unresolved tool boundary");
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-params -- requireResources: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable eslint/no-magic-numbers -- requireResources: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- requireResources: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const requireResources = async (
-  sql: DB,
+  sql: SqlQueries,
   owner: string,
-  ids: string[],
-  kind: "file" | "document"
+  resources: Readonly<{
+    ids: readonly string[];
+    kind: "file" | "document";
+  }>
 ): Promise<void> => {
+  const { ids, kind } = resources;
   if (ids.length === 0) {
     return;
   }
@@ -172,13 +189,9 @@ const requireResources = async (
     throw new Error("resource not owned");
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- append: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const append = async (
-  sql: Sql,
+  sql: SqlConnection,
   input: DeepReadonly<{
     owner: string;
     branch: string;
@@ -187,18 +200,19 @@ const append = async (
     message: Message;
   }>
 ): Promise<void> => {
-  const parsed = message.parse(input.message);
-  const { annotation, ...payload } = parsed;
-  await sql.begin(async (tx) => {
+  const { annotation, parts, role } = message.parse(input.message);
+  const payload = { parts, role };
+  await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
-    await requireResources(
-      tx,
-      input.owner,
-      payload.parts.flatMap((messagePart) =>
-        messagePart.type === "file" ? [messagePart.object] : []
-      ),
-      "file"
-    );
+    await requireResources(tx, input.owner, {
+      ids: payload.parts.flatMap((messagePart) => {
+        if (messagePart.type === "file") {
+          return [messagePart.object];
+        }
+        return [];
+      }),
+      kind: "file",
+    });
     if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
@@ -212,38 +226,34 @@ const append = async (
     await tx`update branch set head=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-params -- editDocument: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- editDocument: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const editDocument = async (
-  sql: Sql,
+  sql: SqlConnection,
   owner: string,
   branch: string,
   revisions: Readonly<Record<string, string>>
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
     if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
-    await requireResources(tx, owner, Object.values(revisions), "document");
+    await requireResources(tx, owner, {
+      ids: Object.values(revisions),
+      kind: "document",
+    });
     await tx`update branch set documents=${tx.json(revisions)} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-params -- beginWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- beginWriter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const beginWriter = async (
-  sql: Sql,
+  sql: SqlConnection,
   owner: string,
   branch: string,
   id: string,
   kind: string
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
     if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
@@ -251,35 +261,26 @@ const beginWriter = async (
     await tx`insert into writer (id,branch,kind) values (${id},${branch},${kind})`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-params -- endWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- endWriter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const endWriter = async (
-  sql: Sql,
+  sql: SqlConnection,
   owner: string,
   branch: string,
   id: string
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     await ownedBranch(tx, owner, branch);
     await tx`delete from writer where id=${id} and branch=${branch}`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-statements -- reserve: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/no-magic-numbers -- reserve: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- reserve: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 // Durable steps may retry this operation. The operation identity fixes the first
 // admitted boundary; retry never resamples documents or the live sandbox.
 const reserve = async (
-  sql: Sql,
+  sql: SqlConnection,
   input: Readonly<{ owner: string; source: string; id: string; intent: string }>
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.source);
     const existingRows = await tx<
       Checkpoint[]
@@ -309,9 +310,6 @@ const reserve = async (
     await tx`update branch set barrier=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
 interface SnapshotProvider {
   // Stronger than Vercel snapshot(): replay/lookup by caller key is REQUIRED.
@@ -319,11 +317,8 @@ interface SnapshotProvider {
   restore: (key: string, sandbox: string) => Promise<void>;
 }
 
-/* oxlint-disable eslint/max-statements -- complete: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/max-params -- complete: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- complete: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const complete = async (
-  sql: Sql,
+  sql: SqlConnection,
   provider: Readonly<SnapshotProvider>,
   owner: string,
   id: string,
@@ -347,7 +342,7 @@ const complete = async (
     // Snapshot stops the original VM. Reopen parent before releasing admission.
     await provider.restore(id, `parent:${id}`);
     afterRestore?.();
-    await sql.begin(async (tx) => {
+    await sql.begin(async (tx: SqlQueries) => {
       const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
         Checkpoint[]
@@ -367,14 +362,9 @@ const complete = async (
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- fork: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- fork: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const fork = async (
-  sql: Sql,
+  sql: SqlConnection,
   provider: Readonly<SnapshotProvider>,
   input: Readonly<{ owner: string; checkpoint: string; child: string }>
 ): Promise<void> => {
@@ -384,7 +374,7 @@ const fork = async (
   if (checkpoint?.status !== "ready") {
     throw new Error("checkpoint not ready or not owned");
   }
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const prior =
       await tx`select id from child_request where id=${input.child}`;
     const branch = await tx`select id from branch where id=${input.child}`;
@@ -406,7 +396,7 @@ const fork = async (
   // Deterministic child identity + provider replay protects the allocation gap.
   const sandbox = `child:${input.child}`;
   await provider.restore(checkpoint.id, sandbox);
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const [request] = await tx<
       { deleted: boolean }[]
     >`select deleted from child_request where id=${input.child} for update`;
@@ -421,23 +411,19 @@ const fork = async (
     }
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- removeBranch: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- removeBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /** Retention proof only: keep immutable nodes/resources/checkpoints for children.
  * Production needs reachability GC + per-owner retention/deletion policy.
- * @param sql - Connection owning the deletion transaction.
- * @param owner - Tenant whose branch may be removed.
- * @param branch - Branch identity to remove without deleting retained resources.
+ * @param {SqlConnection} sql - Connection owning the deletion transaction.
+ * @param {string} owner - Tenant whose branch may be removed.
+ * @param {string} branch - Branch identity to remove without deleting retained resources.
  */
 const removeBranch = async (
-  sql: Sql,
+  sql: SqlConnection,
   owner: string,
   branch: string
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     await tx`select id from child_request where id=${branch} for update`;
     const ownedBranchRecord = await ownedBranch(tx, owner, branch);
     const writers =
@@ -449,18 +435,14 @@ const removeBranch = async (
     await tx`delete from branch where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- writeFile: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- writeFile: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Write through an admitted writer token that outlives the OS process/job.
- * @param sql - Connection owning the writer validation and update transaction.
- * @param input - Owner, branch, writer token, and file contents for the update.
+ * @param {SqlConnection} sql - Connection owning the writer validation and update transaction.
+ * @param {Readonly<{ owner: string; branch: string; writer: string; path: string; bytes: string; }>} input - Owner, branch, writer token, and file contents for the update.
  */
 const writeFile = async (
-  sql: Sql,
+  sql: SqlConnection,
   input: Readonly<{
     owner: string;
     branch: string;
@@ -469,7 +451,7 @@ const writeFile = async (
     bytes: string;
   }>
 ): Promise<void> => {
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     const tokens =
       await tx`select id from writer where id=${input.writer} and branch=${ownedBranchRecord.id}`;
@@ -483,28 +465,26 @@ const writeFile = async (
     }
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- modelHistory: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Produce a model transcript without application annotations.
- * @param sql - Connection used to read the immutable message prefix.
- * @param owner - Tenant whose message nodes may be read.
- * @param head - Last node in the prefix, or null for an empty history.
- * @returns Ordered message roles and parts without application annotations.
+ * @param {ReadonlySqlTag} sql - Read-only tag used to read the immutable message prefix.
+ * @param {string} owner - Tenant whose message nodes may be read.
+ * @param {string | null} head - Last node in the prefix, or null for an empty history.
+ * @returns {Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]>} Ordered read-only message roles and parts without application annotations.
  */
 const modelHistory = async (
-  sql: DB,
+  sql: ReadonlySqlTag,
   owner: string,
   head: string | null
-): Promise<Pick<Message, "parts" | "role">[]> => {
+): Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]> => {
   const messages = await history(sql, owner, head);
-  return messages.map(({ parts, role }) => ({ parts, role }));
+  return messages.map(({ parts, role }: DeepReadonly<Message>) => ({
+    parts,
+    role,
+  }));
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines -- modelHistory: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */
 export {
   append,
   beginWriter,
@@ -513,11 +493,10 @@ export {
   endWriter,
   fork,
   history,
-  message,
   modelHistory,
   removeBranch,
   reserve,
   validatePrefix,
   writeFile,
 };
-export type { Message, SnapshotProvider };
+export type { Message, SnapshotProvider, SqlConnection, SqlQueries };

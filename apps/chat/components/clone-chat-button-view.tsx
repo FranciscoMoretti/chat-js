@@ -1,10 +1,9 @@
 "use client";
 
 import { Copy, Loader2 } from "lucide-react";
-import React from "react";
-
 import { Button } from "@/components/ui/button";
-/* oxlint-disable react/jsx-max-depth -- CloneChatButtonView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+import React from "react";
 
 export const CloneChatButtonView = ({
   isPending,
@@ -42,4 +41,3 @@ export const CloneChatButtonView = ({
     </Button>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth */

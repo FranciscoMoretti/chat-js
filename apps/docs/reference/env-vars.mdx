@@ -234,9 +234,8 @@ ai: {
 | `VERCEL_TEAM_ID` | Self-hosted only | Your Vercel team ID (`team_...`) |
 | `VERCEL_PROJECT_ID` | Self-hosted only | Your Vercel project ID (`prj_...`) |
 | `VERCEL_TOKEN` | Self-hosted only | Vercel API token with sandbox permissions |
-| `VERCEL_SANDBOX_RUNTIME_PYTHON` | Optional | Python runtime identifier (default: `python3.13`) |
-| `VERCEL_SANDBOX_RUNTIME_JAVASCRIPT` | Optional | JavaScript runtime identifier (default: `node22`) |
-| `VERCEL_SANDBOX_RUNTIME` | Optional | Legacy Python runtime fallback. Prefer `VERCEL_SANDBOX_RUNTIME_PYTHON` |
+| `VERCEL_SANDBOX_IMAGE_PYTHON` | Optional | Python image reference (default: `vercel/sandbox/python:3.14`) |
+| `VERCEL_SANDBOX_IMAGE_JAVASCRIPT` | Optional | JavaScript image reference (default: `vercel/sandbox/node:22`) |
 
 <Callout type="note">
   On Vercel deployments, sandbox authentication happens automatically via OIDC,
@@ -344,9 +343,8 @@ All variables in one place:
 | `VERCEL_TEAM_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
 | `VERCEL_PROJECT_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
 | `VERCEL_TOKEN` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
-| `VERCEL_SANDBOX_RUNTIME_PYTHON` | Feature | Optional Python sandbox runtime override |
-| `VERCEL_SANDBOX_RUNTIME_JAVASCRIPT` | Feature | Optional JavaScript sandbox runtime override |
-| `VERCEL_SANDBOX_RUNTIME` | Feature | Legacy Python sandbox runtime override |
+| `VERCEL_SANDBOX_IMAGE_PYTHON` | Feature | Optional Python sandbox image override |
+| `VERCEL_SANDBOX_IMAGE_JAVASCRIPT` | Feature | Optional JavaScript sandbox image override |
 | `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |
 | `WORKFLOW_POSTGRES_URL` | EVE | Required locally/self-hosted, unused on Vercel |
 | `EVE_INTERNAL_ORIGIN` | EVE | Optional application gateway origin override |

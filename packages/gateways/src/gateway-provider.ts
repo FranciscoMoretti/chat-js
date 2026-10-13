@@ -2,26 +2,18 @@ import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+import type { AiGatewayModel } from "./models.ts";
 import type { ImageModel } from "ai";
 
-import type { AiGatewayModel } from "./models.ts";
-
-interface GatewayProvider<
-  TGateway extends string = string,
-  TModelId extends string = string,
-  TImageModelId extends string = string,
-  TVideoModelId extends string = string,
-> {
-  /** Create a dedicated image model instance, or null if unsupported */
-  createImageModel: (modelId: TImageModelId) => ImageModel | null;
+interface GatewayProvider<TGateway extends string = string> {
+  /** Dedicated image model factory; null when this capability is unsupported. */
+  createImageModel: ((modelId: string) => ImageModel) | null;
 
   /** Create a language model instance from a model ID like "openai/gpt-5-nano" */
-  createLanguageModel: (modelId: TModelId) => LanguageModelV4;
+  createLanguageModel: (modelId: string) => LanguageModelV4;
 
-  /** Create a video model instance, or null if unsupported */
-  createVideoModel: (
-    modelId: TVideoModelId
-  ) => Experimental_VideoModelV4 | null;
+  /** Video model factory; null when this capability is unsupported. */
+  createVideoModel: ((modelId: string) => Experimental_VideoModelV4) | null;
 
   /** Fetch the list of available models from the gateway's API */
   fetchModels: () => Promise<AiGatewayModel[]>;

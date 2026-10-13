@@ -1,27 +1,23 @@
 import { expect, test, vi } from "vitest";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import { webSearch } from "./tool";
+import { webSearchInput } from "./schemas";
 import { z } from "zod";
 
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
-import { webSearchInput } from "./schemas";
-import { webSearch } from "./tool";
-
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@tavily/core")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock("@tavily/core", (): { tavily: () => { search: typeof search } } => ({
+  tavily: (): { search: typeof search } => ({ search }),
+}));
 vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): collect accepts value: T | Promise<T> | AsyncIterable<T>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
+const collect = async <SearchValue>(
+  value:
+    | Readonly<SearchValue>
+    | Readonly<Promise<SearchValue>>
+    | Readonly<AsyncIterable<SearchValue>>
+): Promise<SearchValue[]> => {
   const result = await value;
   if (
     typeof result !== "object" ||
@@ -32,11 +28,7 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
   }
   return await Array.fromAsync(result);
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
     results: [
@@ -54,6 +46,10 @@ test("native search streams sources and seals a final cost receipt", async () =>
       testToolContext({ callId: "call" })
     )
   );
+  const finalResult = results.at(-1);
+  if (!finalResult) {
+    throw new Error("Expected a final search result");
+  }
   expect(search).toHaveBeenCalledWith(
     "news",
     expect.objectContaining({
@@ -64,12 +60,12 @@ test("native search streams sources and seals a final cost receipt", async () =>
       topic: "news",
     })
   );
-  expect(results.at(-1)).toMatchObject({
+  expect(finalResult).toMatchObject({
     output: { searches: [{ results: [{ title: "Source" }] }] },
     status: "success",
     usage: { costUsd: 0.05 },
   });
-  expect(results.at(-1)?.updates).toContainEqual(
+  expect(finalResult.updates).toContainEqual(
     expect.objectContaining({
       results: [expect.objectContaining({ source: "web", title: "Source" })],
       status: "completed",
@@ -79,10 +75,6 @@ test("native search streams sources and seals a final cost receipt", async () =>
   );
   expect(results.length).toBeGreaterThan(1);
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): test("strict fields remain required while explicit nulls apply defaults") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("strict fields remain required while explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });
   const json = z.toJSONSchema(webSearchInput);
@@ -119,4 +111,3 @@ test("strict fields remain required while explicit nulls apply defaults", async 
     })
   );
 });
-/* oxlint-enable unicorn/no-null */

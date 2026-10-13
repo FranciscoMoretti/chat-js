@@ -3,9 +3,23 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveSubagentSession } from "./schema";
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const getEveSubagent = async (ownerId: string, sessionId: string) => {
+const FIRST_USAGE_STREAM_INDEX = 0;
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+type EveSubagentBinding = Pick<
+  typeof eveSubagentSession.$inferSelect,
+  | "conversationId"
+  | "parentSessionId"
+  | "rootTurnId"
+  | "sessionId"
+  | "usageStreamIndex"
+> & { rootSessionId: typeof eveConversation.$inferSelect.sessionId };
+
+const getEveSubagent = async (
+  ownerId: string,
+  sessionId: string
+): Promise<EveSubagentBinding | null> => {
   const [binding] = await db
     .select({
       conversationId: eveSubagentSession.conversationId,
@@ -30,25 +44,26 @@ const getEveSubagent = async (ownerId: string, sessionId: string) => {
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
-  return binding;
+  return binding ?? null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Call only with native hook lineage or a trusted EVE subagent.called event. */
+/**
+ * Registers a native child session under an owned root conversation or subagent.
+ * Existing lineage is checked after insertion so conflicting ownership fails.
+ * Call only with native hook lineage or a trusted EVE subagent.called event.
+ * @param {string} ownerId Owner of the root conversation.
+ * @param {string} parentSessionId Native session ID of the root or parent subagent.
+ * @param {string} sessionId Native session ID of the child being registered.
+ * @param {string} parentTurnId Turn that launched the child from its direct parent.
+ * @returns {Promise<NonNullable<Awaited<ReturnType<typeof getEveSubagent>>>>} The persisted child binding with its root conversation and turn.
+ * @throws {Error} when the parent lineage is not owned or the child binding conflicts.
+ */
 const registerEveSubagent = async (
   ownerId: string,
   parentSessionId: string,
   sessionId: string,
   parentTurnId: string
-) => {
+): Promise<EveSubagentBinding> => {
   const [root] = await db
     .select({ id: eveConversation.id, sessionId: eveConversation.sessionId })
     .from(eveConversation)
@@ -59,12 +74,17 @@ const registerEveSubagent = async (
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
-  const parent = root
+  const parent = hasQueryRow(root)
     ? undefined
     : await getEveSubagent(ownerId, parentSessionId);
   const conversationId = root?.id ?? parent?.conversationId;
-  const rootTurnId = root ? parentTurnId : parent?.rootTurnId;
-  if (!conversationId || !rootTurnId || sessionId === parentSessionId) {
+  const rootTurnId = hasQueryRow(root) ? parentTurnId : parent?.rootTurnId;
+  if (
+    !conversationId ||
+    typeof rootTurnId !== "string" ||
+    rootTurnId === "" ||
+    sessionId === parentSessionId
+  ) {
     throw new Error("Native child has no owned parent conversation.");
   }
   await db
@@ -73,7 +93,7 @@ const registerEveSubagent = async (
     .onConflictDoNothing();
   const bound = await getEveSubagent(ownerId, sessionId);
   if (
-    !bound ||
+    bound === null ||
     bound.conversationId !== conversationId ||
     bound.parentSessionId !== parentSessionId ||
     bound.rootTurnId !== rootTurnId
@@ -84,13 +104,16 @@ const registerEveSubagent = async (
   }
   return bound;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): listEveSubagents intentionally keeps the existing falsy-value behavior of rootSessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
+const listEveSubagents = async (
+  ownerId: string,
+  rootSessionId?: string
+): Promise<
+  Pick<
+    EveSubagentBinding,
+    "rootSessionId" | "rootTurnId" | "sessionId" | "usageStreamIndex"
+  >[]
+> =>
   await db
     .select({
       rootSessionId: eveConversation.sessionId,
@@ -109,18 +132,21 @@ const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
+        typeof rootSessionId === "string" && rootSessionId !== ""
+          ? eq(eveConversation.sessionId, rootSessionId)
+          : undefined
       )
     );
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const advanceEveSubagentUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
 ): Promise<void> => {
-  if (!Number.isSafeInteger(streamIndex) || streamIndex < 0) {
+  if (
+    !Number.isSafeInteger(streamIndex) ||
+    streamIndex < FIRST_USAGE_STREAM_INDEX
+  ) {
     throw new Error("Invalid native child usage cursor.");
   }
   await db
@@ -135,7 +161,7 @@ const advanceEveSubagentUsageCursor = async (
       )
     );
 };
-/* oxlint-enable no-magic-numbers */
+
 export {
   advanceEveSubagentUsageCursor,
   getEveSubagent,

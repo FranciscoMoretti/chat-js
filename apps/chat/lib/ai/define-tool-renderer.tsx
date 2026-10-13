@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import type { ComponentType } from "react";
+import React from "react";
 import { z } from "zod";
 
 type ValidatedToolRenderer = ComponentType<{
@@ -23,14 +23,14 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "output-available"; input: TInput; output: TOutput }
 );
 
-/* oxlint-disable id-length, typescript/consistent-type-definitions -- id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
-  tool: RenderableTool<z.output<I>, z.output<O>>;
+interface ToolRendererProps<
+  InputSchema extends z.ZodType,
+  OutputSchema extends z.ZodType,
+> {
+  tool: RenderableTool<z.output<InputSchema>, z.output<OutputSchema>>;
   messageId: string;
   isReadonly: boolean;
-};
-/* oxlint-enable id-length, typescript/consistent-type-definitions */
+}
 
 const envelope = z.object({
   errorText: z.string().optional(),
@@ -49,26 +49,21 @@ const envelope = z.object({
   updates: z.array(z.unknown()).optional(),
 });
 
-/* oxlint-disable react/only-export-components -- * react/only-export-components (#553): InvalidResult is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const InvalidResult = (): React.JSX.Element => (
   <p role="alert">This tool result could not be displayed.</p>
 );
-/* oxlint-enable react/only-export-components */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep defineToolRenderer directly exported: grouping the factory in Oxlint 1.82 classifies its local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
-jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): defineToolRenderer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-react-perf/jsx-no-new-object-as-prop (#558): defineToolRenderer creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
-react/jsx-props-no-spreading (#550): defineToolRenderer forwards its typed component props; enumerating them would narrow the wrapper's supported interface.
-react/no-multi-comp (#552): defineToolRenderer keeps related render components together; extraction changes component, state, and layout boundaries.
-typescript/explicit-function-return-type (#560): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): defineToolRenderer accepts { inputSchema, streamingInputSchema, outputSchema, updateSchema, renderProgress: Prog; { tool, messageId, isReadonly, }: { tool: unknown; messageId: string; isRe; props: { tool: unknown; messageId: string; isReadonly: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): defineToolRenderer intentionally keeps the existing falsy-value behavior of input?.success; value?.success; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Keep executable tools on the server and validate their persisted data at the UI boundary. */
+/**
+ * Validate persisted tool data before passing it to the installed UI renderer.
+ * @param {object} options Schemas and components for this tool's persisted states.
+ * @param {z.ZodType<TInput>} options.inputSchema Validates complete tool input.
+ * @param {z.ZodType<Partial<TInput>>} [options.streamingInputSchema] Validates partial input while the tool is streaming.
+ * @param {z.ZodType<TOutput>} options.outputSchema Validates completed tool output.
+ * @param {z.ZodType<TUpdate>} [options.updateSchema] Filters progress updates to this tool's validated update shape.
+ * @param {ComponentType} [options.renderProgress] Displays the validated progress updates.
+ * @param {ComponentType} options.render Displays parsed input/output with the tool state, message identity and readonly view context.
+ * @returns {Function} The renderer function with a literal validation marker recognized by the installed tool registry.
+ */
 export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   inputSchema,
   streamingInputSchema,
@@ -87,15 +82,19 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     messageId: string;
     isReadonly: boolean;
   }>;
-}) => {
+}): ((props: {
+  tool: unknown;
+  messageId: string;
+  isReadonly: boolean;
+}) => React.JSX.Element) & { validatedToolRenderer: true } => {
   const ValidatedToolBody = ({
     tool,
     messageId,
     isReadonly,
   }: {
-    tool: unknown;
-    messageId: string;
-    isReadonly: boolean;
+    readonly tool: unknown;
+    readonly messageId: string;
+    readonly isReadonly: boolean;
   }): React.JSX.Element => {
     const parsed = envelope.safeParse(tool);
     if (!parsed.success) {
@@ -123,7 +122,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           {...common}
           tool={{
             ...identity,
-            input: input?.success ? input.data : undefined,
+            input: input?.success === true ? input.data : undefined,
             state: value.state,
           }}
         />
@@ -158,15 +157,18 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     );
   };
   const ValidatedToolRenderer = (props: {
-    tool: unknown;
-    messageId: string;
-    isReadonly: boolean;
+    readonly tool: unknown;
+    readonly messageId: string;
+    readonly isReadonly: boolean;
   }): React.JSX.Element => {
     const parsed = envelope.safeParse(props.tool);
     const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
       (update) => {
         const value = updateSchema?.safeParse(update);
-        return value?.success ? [value.data] : [];
+        if (value?.success === true) {
+          return [value.data];
+        }
+        return [];
       }
     );
     return (
@@ -180,8 +182,6 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     validatedToolRenderer: true as const,
   });
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-// oxlint-disable-next-line import/group-exports -- Keep defineToolRenderer directly exported to preserve Oxlint Fast Refresh factory classification; group the remaining value export here.
 export { isValidatedToolRenderer };
 export type { ValidatedToolRenderer, ToolRendererProps };

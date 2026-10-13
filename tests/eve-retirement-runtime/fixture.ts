@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-nodejs-modules -- The isolated test launcher owns temporary directories and process execution. */
 import { cp, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { z } from "zod";
 
-/* oxlint-disable max-statements, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- This launcher boundary validates the distribution and assembles the isolated process environment in one ordered setup; infer its concrete return shape. */
 export const createRuntimeFixture = async (
   fixtureSourceDirectory: string,
   experimentalInstallation?: {
@@ -19,10 +16,8 @@ export const createRuntimeFixture = async (
   const nodeModules = path.resolve(
     experimentalInstallation?.nodeModules ?? path.join(root, "node_modules")
   );
-  /* oxlint-disable node/no-process-env -- Read only the explicit launcher configuration; no application credentials enter the worker. */
   const requestedNode = process.env.EVE_TEST_NODE ?? "node";
   const searchPath = process.env.PATH ?? "";
-  /* oxlint-enable node/no-process-env */
   const node = Bun.which(requestedNode);
   if (node === null) {
     throw new Error(`Node executable not found: ${requestedNode}`);
@@ -106,4 +101,3 @@ export const createRuntimeFixture = async (
     node,
   };
 };
-/* oxlint-enable max-statements, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

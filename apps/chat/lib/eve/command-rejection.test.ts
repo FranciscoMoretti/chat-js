@@ -1,12 +1,7 @@
-import { ClientError } from "eve/client";
 import { expect, it } from "vitest";
-
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
+import { ClientError } from "eve/client";
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): it("recognizes an explicit local refusal without treating a failed connection as reje uses 402, 502, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): it("recognizes an explicit local refusal without treating a failed connection as reje keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("recognizes an explicit local refusal without treating a failed connection as rejection", async () => {
   const response = rejectEveCommand("Insufficient credits", 402);
   const error = new ClientError(response.status, await response.text());
@@ -22,16 +17,12 @@ it("recognizes an explicit local refusal without treating a failed connection as
       new ClientError(502, '{"error":"Connection interrupted"}')
     )
   ).toBe(false);
-  expect(
-    isEveCommandRejection(
-      new ClientError(
-        503,
-        JSON.stringify({ code: "usage_reconciliation_busy", error: "Busy" })
-      )
-    )
-  ).toBe(true);
+  const busyError = new ClientError(
+    503,
+    JSON.stringify({ code: "usage_reconciliation_busy", error: "Busy" })
+  );
+  expect(isEveCommandRejection(busyError)).toBe(true);
   expect(isEveCommandRejection(new Error("Network request failed"))).toBe(
     false
   );
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */

@@ -9,7 +9,6 @@ import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 
 type ActionContainerProps = ReactComponentProps<"div">;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ActionContainer: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerProps). */
 
 const ActionContainer = ({
   className,
@@ -23,10 +22,9 @@ const ActionContainer = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ActionContainerLinkProps = ReactComponentProps<typeof InternalLink>;
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerLink: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+const DISABLED_LINK_TAB_INDEX = -1;
 
 const ActionContainerLink = ({
   className,
@@ -35,14 +33,12 @@ const ActionContainerLink = ({
 }: ActionContainerLinkProps): ReactJSX.Element => (
   <InternalLink
     className={cn("absolute inset-0 z-10", className)}
-    tabIndex={tabIndex ?? -1}
+    tabIndex={tabIndex ?? DISABLED_LINK_TAB_INDEX}
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ActionContainerTopProps = ReactComponentProps<"div">;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerTop: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerTopProps). */
 
 const ActionContainerTop = ({
   className,
@@ -50,6 +46,5 @@ const ActionContainerTop = ({
 }: ActionContainerTopProps): ReactJSX.Element => (
   <div className={cn("z-20", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { ActionContainer, ActionContainerLink, ActionContainerTop };

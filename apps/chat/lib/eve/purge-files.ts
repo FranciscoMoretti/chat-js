@@ -3,23 +3,23 @@ import {
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
 } from "@/lib/db/eve-file-purge";
-import { deleteFilesByUrls } from "@/lib/file-storage";
 import { createFileUrl } from "@/lib/file-url";
+import { deleteFilesByUrls } from "@/lib/file-storage";
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers --
- * jsdoc/require-param (#534): purgeEveFamilyFiles's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): purgeEveFamilyFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+const NO_FILE_KEYS = 0;
+/** Internal deletion stage; requires native retirement/accounting settlement or never-dispatched copy proof.
+ * @param {string} ownerId Owner authorizing the family file-reference release.
+ * @param {string} rootId Retired family root whose retained file keys are prepared for purge.
+ * @returns {Promise<void>} Completes storage deletion and file-purge receipts before releasing family references; storage or database failures reject and leave retry work pending.
  */
-/** Internal deletion stage; requires native retirement/accounting settlement or never-dispatched copy proof. */
 export const purgeEveFamilyFiles = async (
   ownerId: string,
   rootId: string
 ): Promise<void> => {
   const keys = await prepareEveFamilyFilePurge(ownerId, rootId);
-  if (keys.length > 0) {
+  if (keys.length > NO_FILE_KEYS) {
     await deleteFilesByUrls(keys.map((key) => createFileUrl(key)));
     await completeEveFilePurge(ownerId, keys);
   }
   await releaseEveFamilyFileReferences(ownerId, rootId);
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers */

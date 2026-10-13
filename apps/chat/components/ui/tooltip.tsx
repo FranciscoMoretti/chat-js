@@ -1,62 +1,60 @@
 "use client";
 
-import {
-  Provider as TooltipPrimitiveProvider,
-  Root as TooltipPrimitiveRoot,
-  Trigger as TooltipPrimitiveTrigger,
-  Content as TooltipPrimitiveContent,
-  Portal as TooltipPrimitivePortal,
-  Arrow as TooltipPrimitiveArrow,
-} from "@radix-ui/react-tooltip";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import {
+  Arrow as TooltipPrimitiveArrow,
+  Content as TooltipPrimitiveContent,
+  Portal as TooltipPrimitivePortal,
+  Provider as TooltipPrimitiveProvider,
+  Root as TooltipPrimitiveRoot,
+  Trigger as TooltipPrimitiveTrigger,
+} from "@radix-ui/react-tooltip";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+const DEFAULT_TOOLTIP_DELAY_DURATION = 0;
+const DEFAULT_SIDE_OFFSET = 0;
 
 const TooltipProvider = ({
-  delayDuration = 0,
+  delayDuration = DEFAULT_TOOLTIP_DELAY_DURATION,
   ...props
-}: ReactComponentProps<typeof TooltipPrimitiveProvider>): ReactJSX.Element => (
+}: Readonly<
+  Omit<ReactComponentProps<typeof TooltipPrimitiveProvider>, "children">
+> & { readonly children: ReadonlyReactNode }): ReactJSX.Element => (
   <TooltipPrimitiveProvider
     data-slot="tooltip-provider"
     delayDuration={delayDuration}
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const Tooltip = ({
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveRoot>): ReactJSX.Element => (
+const Tooltip = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof TooltipPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => (
   <TooltipProvider>
     <TooltipPrimitiveRoot data-slot="tooltip" {...props} />
   </TooltipProvider>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const TooltipTrigger = ({
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveTrigger>): ReactJSX.Element => (
+const TooltipTrigger = (
+  props: ReactComponentProps<typeof TooltipPrimitiveTrigger>
+): ReactJSX.Element => (
   <TooltipPrimitiveTrigger data-slot="tooltip-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const TooltipContent = ({
   className,
-  sideOffset = 0,
+  sideOffset = DEFAULT_SIDE_OFFSET,
   children,
   variant = "primary",
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveContent> & {
-  variant?: "base" | "primary";
+  readonly variant?: "base" | "primary";
 }): ReactJSX.Element => (
   <TooltipPrimitivePortal>
     <TooltipPrimitiveContent
@@ -81,6 +79,5 @@ const TooltipContent = ({
     </TooltipPrimitiveContent>
   </TooltipPrimitivePortal>
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

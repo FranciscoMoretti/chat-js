@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/mcp" dependency within this package instead of introducing an alias or barrel API.
- */
 import { afterEach, expect, it, vi } from "vitest";
 
 import mcp from "../../agent/tools/mcp";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   discover: vi.fn(),
@@ -21,9 +17,6 @@ vi.mock("./mcp-tools", () => ({
   executeEveMcpTool: mocks.execute,
 }));
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("discovers for the session owner and preserves namespaced tool definitions") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("discovers for the session owner and preserves namespaced tool definitions", async () => {
   mocks.discover.mockResolvedValue([
     {
@@ -60,13 +53,9 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
   });
   expect(JSON.stringify(definitions)).not.toContain("connectorId");
 });
-/* oxlint-enable unicorn/no-null */
 
 afterEach(() => vi.restoreAllMocks());
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("continues ordinary chat when MCP discovery times out") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("continues ordinary chat when MCP discovery times out", async () => {
   const signal = AbortSignal.abort(
     new DOMException("Timed out", "TimeoutError")
@@ -85,21 +74,19 @@ it("continues ordinary chat when MCP discovery times out", async () => {
     )
   ).resolves.toEqual({});
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): vi.mock("./turn-tools") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: (): boolean => mocks.guest },
-  eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
+  eveTurnTool: {
+    get: () => {
+      if (mocks.selected) {
+        return "webSearch";
+      }
+      return null;
+    },
+  },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("does not discover remote tools for an explicitly selected local capability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("does not discover remote tools for an explicitly selected local capability", async () => {
   mocks.selected = true;
   mocks.discover.mockClear();
@@ -120,11 +107,7 @@ it("does not discover remote tools for an explicitly selected local capability",
     mocks.selected = false;
   }
 });
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("never discovers registered account connectors for a guest") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("never discovers registered account connectors for a guest", async () => {
   mocks.guest = true;
   mocks.discover.mockClear();
@@ -148,4 +131,3 @@ it("never discovers registered account connectors for a guest", async () => {
     mocks.guest = false;
   }
 });
-/* oxlint-enable unicorn/no-null */

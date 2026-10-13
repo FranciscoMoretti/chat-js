@@ -1,12 +1,9 @@
-/* oxlint-disable no-undefined -- Undefined means a pending probe or absent worker; null would be a distinct JSON marker value. */
-/* oxlint-disable import/no-nodejs-modules -- The native test controller owns child process groups, log descriptors and disposable storage. */
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { open, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { z } from "zod";
 
 import { createRuntimeFixture } from "./fixture";
@@ -18,13 +15,13 @@ const one = 1;
 const healthTimeoutMs = 1000;
 
 /** Poll external runtime evidence with a bounded deadline; never resend a command. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- The function signature supplies the probe and timeout contract. */
 const until = async <TValue>(
   probe: () => Promise<TValue | undefined> | TValue | undefined,
   timeoutMs = startupTimeoutMs
 ): Promise<TValue> => {
   const deadline = Date.now() + timeoutMs;
-  /* oxlint-disable eslint/no-await-in-loop -- Each evidence read completes before the next bounded poll. */
+  // Runtime probes and their delay must finish before checking the next deadline.
+  /* oxlint-disable no-await-in-loop */
   while (Date.now() < deadline) {
     const value = await probe();
     if (value !== undefined) {
@@ -32,12 +29,9 @@ const until = async <TValue>(
     }
     await Bun.sleep(pollIntervalMs);
   }
-  /* oxlint-enable eslint/no-await-in-loop */
+  /* oxlint-enable no-await-in-loop */
   throw new Error(`Runtime evidence timeout after ${timeoutMs}ms`);
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
-
-/* oxlint-disable max-statements, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- This test fixture owns a process and its storage for the full restart scenario; the returned methods expose the concrete lifecycle. */
 const createPersistentRuntime = async (
   source: string,
   experimentalInstallation?: {
@@ -258,7 +252,4 @@ const createPersistentRuntime = async (
       }, timeoutMs),
   };
 };
-/* oxlint-enable max-statements, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-
 export { createPersistentRuntime, until };
-/* oxlint-enable no-undefined */

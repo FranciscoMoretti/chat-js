@@ -1,4 +1,3 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The isolated native launcher resolves its own fixture directory.
 import path from "node:path";
 
 import { createRuntimeFixture } from "./fixture";

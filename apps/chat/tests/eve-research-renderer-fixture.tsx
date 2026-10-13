@@ -1,8 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result"; "../hooks/use-artifact"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-
 import type { EveMessagePart } from "eve/client";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -10,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { EveToolResult } from "../components/eve/eve-tool-result";
 import { ArtifactProvider } from "../hooks/use-artifact";
 import { createToolResult } from "../lib/eve/tool-result";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const common = {
   input: {},
@@ -18,9 +12,6 @@ const common = {
   toolName: "deepResearch",
   type: "dynamic-tool",
 } as const;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): parts uses 0, 0.5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   { ...common, inputText: "", state: "input-streaming" },
   { ...common, state: "input-available" },
@@ -81,10 +72,6 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   { ...common, output: { invalid: true }, state: "output-available" },
 ];
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable react/jsx-max-depth --
- * react/jsx-max-depth (#548): process.stdout.write keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- */
 process.stdout.write(
   renderToStaticMarkup(
     <ArtifactProvider>
@@ -98,4 +85,3 @@ process.stdout.write(
     </ArtifactProvider>
   )
 );
-/* oxlint-enable react/jsx-max-depth */

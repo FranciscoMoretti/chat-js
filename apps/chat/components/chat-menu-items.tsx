@@ -1,9 +1,10 @@
 "use client";
 
 import { FolderInput, Pencil, PinIcon, Trash2 } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+
 import React from "react";
 
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 interface ChatMenuItemsProps {

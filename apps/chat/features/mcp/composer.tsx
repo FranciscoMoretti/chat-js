@@ -1,39 +1,31 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plug, Settings } from "lucide-react";
+import type { ComposerControlProps } from "@/components/composer/control";
 import React from "react";
 import { toast } from "sonner";
 
-import type { ComposerControlProps } from "@/components/composer/control";
 import { InternalLink } from "@/components/internal-link";
+
 import {
-  DropdownMenuPortal,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
+const ConnectorsControl = ({
+  disabled,
+}: ComposerControlProps): React.JSX.Element | null => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -54,9 +46,9 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
-        _err,
+        _err: unknown,
         _newData,
-        context: { prev: typeof connectors } | undefined
+        context: { readonly prev: typeof connectors } | undefined
       ): void => {
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update connector");
@@ -64,16 +56,26 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof connectors>) => {
+            if (!old) {
+              return old;
+            }
+            return old.map(
+              (
+                connector: ReadonlyNativeSurface<
+                  NonNullable<typeof connectors>[number]
+                >
+              ) => {
+                if (connector.id === newData.id) {
+                  return { ...connector, enabled: newData.enabled };
+                }
+                return connector;
+              }
+            );
           }
-          return old.map((connector) =>
-            connector.id === newData.id
-              ? { ...connector, enabled: newData.enabled }
-              : connector
-          );
-        });
+        );
         return { prev };
       },
       onSettled: (): void => {
@@ -81,7 +83,6 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
       },
     })
   );
-
   if (!installedFeatures.has("mcp")) {
     return null;
   }
@@ -107,20 +108,30 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
             {typeof status === "string" && status !== "" ? (
               <DropdownMenuLabel>{status}</DropdownMenuLabel>
             ) : (
-              connectors?.map((connector) => (
-                <DropdownMenuCheckboxItem
-                  key={connector.id}
-                  checked={connector.enabled}
-                  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-                  disabled={disabled || connector.userId === null}
-                  onSelect={(event): void => event.preventDefault()}
-                  onCheckedChange={(enabled): void =>
-                    toggleEnabled({ enabled, id: connector.id })
-                  }
-                >
-                  <span className="truncate">{connector.name}</span>
-                </DropdownMenuCheckboxItem>
-              ))
+              connectors?.map(
+                (connector: {
+                  readonly id: string;
+                  readonly enabled: boolean;
+                  readonly userId: string | null;
+                  readonly name: string;
+                }) => (
+                  <DropdownMenuCheckboxItem
+                    key={connector.id}
+                    checked={connector.enabled}
+                    disabled={disabled === true || connector.userId === null}
+                    onSelect={(
+                      event: Readonly<Pick<Event, "preventDefault">>
+                    ): void => {
+                      event.preventDefault();
+                    }}
+                    onCheckedChange={(enabled): void => {
+                      toggleEnabled({ enabled, id: connector.id });
+                    }}
+                  >
+                    <span className="truncate">{connector.name}</span>
+                  </DropdownMenuCheckboxItem>
+                )
+              )
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -137,18 +148,6 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
     </DropdownMenuSub>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */
 
 ConnectorsControl.isAvailable = (): boolean => installedFeatures.has("mcp");
 export { ConnectorsControl };

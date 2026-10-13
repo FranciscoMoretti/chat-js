@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -7,21 +8,22 @@ import {
   ChevronUpIcon,
   FilterIcon,
 } from "lucide-react";
-import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   memo,
-  startTransition,
   useCallback,
   useMemo,
   useOptimistic,
-  useRef,
   useState,
+  useTransition,
 } from "react";
 
 import { InternalLink } from "@/components/internal-link";
+
 import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Command,
   CommandEmpty,
@@ -30,6 +32,7 @@ import {
   CommandList,
   CommandItem as UICommandItem,
 } from "@/components/ui/command";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,29 +40,62 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-/* oxlint-disable import/max-dependencies -- @/components/ui/switch import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+
+import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
+
+import type { JSX as ReactJSX } from "react";
+
 import { Switch } from "@/components/ui/switch";
-/* oxlint-enable import/max-dependencies */
+
 import { LoginCtaBanner } from "@/components/upgrade-cta/login-cta-banner";
-import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
 } from "@/lib/ai/types";
-import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";
+
 import { getEnabledFeatures } from "@/lib/features-config";
+
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
+import { ModelSelectorLogo } from "./model-selector-logo";
+
 import { useSession } from "@/providers/session-provider";
 
-import { ModelSelectorLogo } from "./model-selector-logo";
+const stopEventPropagation = (event: {
+  readonly stopPropagation: () => void;
+}): void => {
+  event.stopPropagation();
+};
+
+const preventEventDefault = (event: {
+  readonly preventDefault: () => void;
+}): void => {
+  event.preventDefault();
+};
+
+const handleInteractOutside = (event: {
+  readonly target: unknown;
+  readonly preventDefault: () => void;
+}): void => {
+  // Radix dispatches the outside event on its original target. Elements, including SVGs, expose closest(); other EventTargets do not.
+  // Keep nested portal interactions from closing the model picker.
+  if (
+    event.target instanceof Element &&
+    event.target.closest("[data-radix-popper-content-wrapper]")
+  ) {
+    event.preventDefault();
+  }
+};
 
 type FeatureFilter = Record<string, boolean>;
 
@@ -68,32 +104,39 @@ const initialFilters: FeatureFilter = {};
 for (const feature of enabledFeatures) {
   initialFilters[feature.key] = false;
 }
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- getFeatureIcons: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model: AppModelDefinition); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including condition). */
 
-const getFeatureIcons = (model: AppModelDefinition) => {
+const getFeatureIcons = (
+  model: Readonly<Pick<AppModelDefinition, "toolCall" | "input">>
+): React.ReactNode[] => {
   const icons: React.ReactNode[] = [];
   const enabled = getEnabledFeatures();
 
   const featureIconMap = [
     {
       condition: model.toolCall,
-      config: enabled.find((feature) => feature.key === "functionCalling"),
+      config: enabled.find(
+        (feature: { readonly key: string }) => feature.key === "functionCalling"
+      ),
       key: "functionCalling",
     },
     {
       condition: model.input?.image,
-      config: enabled.find((feature) => feature.key === "imageInput"),
+      config: enabled.find(
+        (feature: { readonly key: string }) => feature.key === "imageInput"
+      ),
       key: "imageInput",
     },
     {
       condition: model.input?.pdf,
-      config: enabled.find((feature) => feature.key === "pdfInput"),
+      config: enabled.find(
+        (feature: { readonly key: string }) => feature.key === "pdfInput"
+      ),
       key: "pdfInput",
     },
   ];
 
   for (const { condition, config: featureConfig } of featureIconMap) {
-    if (condition && featureConfig) {
+    if (condition === true && featureConfig) {
       const IconComponent = featureConfig.icon;
       icons.push(
         <div
@@ -109,19 +152,16 @@ const getFeatureIcons = (model: AppModelDefinition) => {
 
   return icons;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const buildMultiModelSelection = (
   modelIds: readonly AppModelId[]
 ): SelectedModelCounts => {
-  const selection: SelectedModelCounts = {};
+  const selection: Partial<Record<AppModelId, number>> = {};
   for (const modelId of modelIds) {
     selection[modelId] = 1;
   }
   return selection;
 };
-
-/* oxlint-disable no-magic-numbers -- getSelectionCount: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1). */
 
 const getSelectionCount = (selection: SelectedModelValue): number => {
   if (typeof selection === "string") {
@@ -136,26 +176,23 @@ const getSelectionCount = (selection: SelectedModelValue): number => {
 
   return count;
 };
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PureCommandItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including feature); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled). */
 
 const PureCommandItem = ({
   model,
   disabled,
   isSelected,
   count,
-  selectionControl,
+  showSelectionControl,
   onSelect,
   onCountChange,
 }: {
-  model: AppModelDefinition;
-  disabled?: boolean;
-  isSelected: boolean;
-  count?: number;
-  selectionControl?: ReactNode;
-  onSelect: () => void;
-  onCountChange?: (delta: number) => void;
+  readonly model: ReadonlyNativeSurface<AppModelDefinition>;
+  readonly disabled?: boolean;
+  readonly isSelected: boolean;
+  readonly count?: number;
+  readonly showSelectionControl: boolean;
+  readonly onSelect: (id: AppModelId) => void;
+  readonly onCountChange?: (id: AppModelId, delta: number) => void;
 }): ReactJSX.Element => {
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
@@ -165,24 +202,32 @@ const PureCommandItem = ({
   );
 
   const reasoningConfig = useMemo(
-    () => getEnabledFeatures().find((feature) => feature.key === "reasoning"),
+    () =>
+      getEnabledFeatures().find(
+        (feature: { readonly key: string }) => feature.key === "reasoning"
+      ),
     []
   );
+  const handleSelect = useCallback((): void => {
+    if (disabled !== true) {
+      onSelect(model.id);
+    }
+  }, [disabled, model, onSelect]);
 
   return (
     <UICommandItem
       className={cn(
         "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
         isSelected && "border-l-primary bg-primary/10 border-l-2",
-        disabled && "cursor-not-allowed opacity-50"
+        disabled === true && "cursor-not-allowed opacity-50"
       )}
-      onSelect={() => {
-        void (!disabled && onSelect());
-      }}
+      onSelect={handleSelect}
       value={searchValue}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        {selectionControl}
+        {showSelectionControl && (
+          <Checkbox checked={isSelected} className="pointer-events-none" />
+        )}
         <div className="shrink-0">
           <ModelSelectorLogo modelId={model.id} />
         </div>
@@ -204,8 +249,8 @@ const PureCommandItem = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               asChild
-              onClick={(event) => event.stopPropagation()}
-              onMouseDown={(event) => event.stopPropagation()}
+              onClick={stopEventPropagation}
+              onMouseDown={stopEventPropagation}
             >
               <button
                 className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
@@ -215,16 +260,15 @@ const PureCommandItem = ({
                 <ChevronDownIcon className="h-2.5 w-2.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              onKeyDown={(event) => event.stopPropagation()}
-            >
+            <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
               {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
                 <DropdownMenuItem
                   key={modelCount}
-                  onClick={(event) => {
+                  onClick={(event: {
+                    readonly stopPropagation: () => void;
+                  }) => {
                     event.stopPropagation();
-                    onCountChange(modelCount - count);
+                    onCountChange(model.id, modelCount - count);
                   }}
                 >
                   {modelCount}x
@@ -240,21 +284,8 @@ const PureCommandItem = ({
     </UICommandItem>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- CommandItem: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prev). */
-
-const CommandItem = memo(
-  PureCommandItem,
-  (prev, next) =>
-    prev.model.id === next.model.id &&
-    prev.disabled === next.disabled &&
-    prev.isSelected === next.isSelected &&
-    prev.count === next.count &&
-    (prev.onCountChange !== undefined) === (next.onCountChange !== undefined)
-);
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [, count]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+const CommandItem = memo(PureCommandItem);
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -263,34 +294,36 @@ const PureModelSelector = ({
   className,
   onModelSelectionChangeAction,
 }: {
-  allowMultiple?: boolean;
-  selectedModelId: AppModelId;
-  selectedModelSelection: SelectedModelValue;
-  onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
-  className?: string;
+  readonly allowMultiple?: boolean;
+  readonly selectedModelId: AppModelId;
+  readonly selectedModelSelection: SelectedModelValue;
+  readonly onModelSelectionChangeAction?: (
+    selection: SelectedModelValue
+  ) => void | Promise<void>;
+  readonly className?: string;
 }): ReactJSX.Element => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
+  const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [optimisticSelection, setOptimisticSelection] = useOptimistic(
     selectedModelSelection
   );
-  // Ref so callbacks don't capture stale optimisticSelection in their closure
-  const optimisticSelectionRef = useRef(optimisticSelection);
-  // oxlint-disable-next-line react/refs -- Keep callbacks synchronized with the optimistic selection.
-  optimisticSelectionRef.current = optimisticSelection;
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
+  const handleResetFilters = useCallback((): void => {
+    setFeatureFilters(initialFilters);
+  }, [setFeatureFilters]);
   const [useMultipleModels, setUseMultipleModels] = useState(
     isSelectedModelCounts(selectedModelSelection)
   );
 
   interface ModelItem {
-    disabled: boolean;
-    model: AppModelDefinition;
+    readonly disabled: boolean;
+    readonly model: ReadonlyNativeSurface<AppModelDefinition>;
   }
 
   const [previousSelection, setPreviousSelection] = useState(
@@ -313,26 +346,34 @@ const PureModelSelector = ({
 
     return new Set<string>(
       Object.entries(optimisticSelection)
-        .filter(([, count]) => typeof count === "number" && count > 0)
-        .map(([modelId]) => modelId)
+        .filter(
+          ([, count]: readonly [string, number | undefined]) =>
+            typeof count === "number" && count > 0
+        )
+        .map(([modelId]: readonly [string, number | undefined]) => modelId)
     );
   }, [optimisticSelection]);
 
   const models = useMemo<ModelItem[]>(
     () =>
-      chatModels.map((chatModel) => ({
-        disabled:
-          isAnonymous &&
-          !(
-            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-          ).includes(chatModel.id),
-        model: chatModel,
-      })),
+      chatModels.map(
+        (chatModel: ReadonlyNativeSurface<AppModelDefinition>) => ({
+          disabled:
+            isAnonymous &&
+            !(
+              ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+            ).includes(chatModel.id),
+          model: chatModel,
+        })
+      ),
     [isAnonymous, chatModels]
   );
 
   const hasDisabledModels = useMemo(
-    () => models.some((modelItem) => modelItem.disabled),
+    () =>
+      models.some(
+        (modelItem: Readonly<Pick<ModelItem, "disabled">>) => modelItem.disabled
+      ),
     [models]
   );
 
@@ -342,45 +383,58 @@ const PureModelSelector = ({
       return models;
     }
 
-    return models.filter(({ model }) =>
-      Object.entries(featureFilters).every(([key, isActive]) => {
-        if (!isActive) {
-          return true;
-        }
-        switch (key) {
-          case "reasoning": {
-            return model.reasoning;
+    return models.filter(
+      ({
+        model,
+      }: {
+        readonly model: Readonly<
+          Pick<
+            AppModelDefinition,
+            "reasoning" | "toolCall" | "input" | "output"
+          >
+        >;
+      }) =>
+        Object.entries(featureFilters).every(
+          ([key, isActive]: readonly [string, boolean]) => {
+            if (!isActive) {
+              return true;
+            }
+            switch (key) {
+              case "reasoning": {
+                return model.reasoning;
+              }
+              case "functionCalling": {
+                return model.toolCall === true;
+              }
+              case "imageInput": {
+                return model.input?.image;
+              }
+              case "pdfInput": {
+                return model.input?.pdf;
+              }
+              case "audioInput": {
+                return model.input?.audio;
+              }
+              case "imageOutput": {
+                return model.output?.image;
+              }
+              case "audioOutput": {
+                return model.output?.audio;
+              }
+              default: {
+                return true;
+              }
+            }
           }
-          case "functionCalling": {
-            return model.toolCall;
-          }
-          case "imageInput": {
-            return model.input?.image;
-          }
-          case "pdfInput": {
-            return model.input?.pdf;
-          }
-          case "audioInput": {
-            return model.input?.audio;
-          }
-          case "imageOutput": {
-            return model.output?.image;
-          }
-          case "audioOutput": {
-            return model.output?.audio;
-          }
-          default: {
-            return true;
-          }
-        }
-      })
+        )
     );
   }, [models, featureFilters]);
 
   const selectedItem = useMemo<ModelItem | null>(() => {
     // First try to find in filtered models (user's enabled models)
     const found = models.find(
-      (modelItem) => modelItem.model.id === optimisticModelId
+      (modelItem: { readonly model: { readonly id: string } }) =>
+        modelItem.model.id === optimisticModelId
     );
     if (found) {
       return found;
@@ -389,7 +443,8 @@ const PureModelSelector = ({
     // Fallback: look in all models to at least display the model name
     // This handles cases where preferences are loading or model was disabled
     const fallbackModel = allModels.find(
-      (model) => model.id === optimisticModelId
+      (model: Readonly<Pick<AppModelDefinition, "id">>) =>
+        model.id === optimisticModelId
     );
     if (fallbackModel) {
       return {
@@ -405,7 +460,10 @@ const PureModelSelector = ({
     return null;
   }, [models, allModels, optimisticModelId, isAnonymous]);
   const reasoningConfig = useMemo(
-    () => getEnabledFeatures().find((feature) => feature.key === "reasoning"),
+    () =>
+      getEnabledFeatures().find(
+        (feature: { readonly key: string }) => feature.key === "reasoning"
+      ),
     []
   );
   const activeFilterCount = useMemo(
@@ -418,87 +476,108 @@ const PureModelSelector = ({
   );
   const triggerLabel = useMemo(() => {
     if (useMultipleModels && selectedModelCount > 1) {
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-      return `${selectedItem?.model.name || "Selected model"} +${selectedModelCount - 1}`;
+      const modelName = selectedItem?.model.name;
+      if (modelName !== undefined && modelName !== "") {
+        return `${modelName} +${selectedModelCount - 1}`;
+      }
+      return `Selected model +${selectedModelCount - 1}`;
     }
 
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-    return selectedItem?.model.name || "Select model";
+    const modelName = selectedItem?.model.name;
+    if (modelName !== undefined && modelName !== "") {
+      return modelName;
+    }
+    return "Select model";
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
+
+  const dispatchSelection = useCallback(
+    (selection: SelectedModelValue): void => {
+      try {
+        // Run the producer before the transition so Send sees its local selection immediately.
+        const completion = onModelSelectionChangeAction?.(selection);
+        startTransition(async () => {
+          setOptimisticSelection(selection);
+          await completion;
+        });
+      } catch (error) {
+        startTransition(() => {
+          throw error;
+        });
+      }
+    },
+    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
+  );
 
   const selectSingleModel = useCallback(
     (id: AppModelId) => {
-      startTransition(() => {
-        setOptimisticSelection(id);
-        onModelSelectionChangeAction?.(id);
-        setOpen(false);
-      });
+      dispatchSelection(id);
+      setOpen(false);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection]
   );
 
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          typeof current === "string" ? { [current]: 1 } : current;
+      const current = optimisticSelection;
+      const currentCounts: SelectedModelCounts =
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
+      const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
 
-        let nextSelection: SelectedModelCounts;
-        if (isAlreadySelected) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          nextSelection = { ...currentCounts, [id]: 1 };
+      let nextSelection: SelectedModelCounts;
+      if (isAlreadySelected) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]: readonly [
+            string,
+            number | undefined,
+          ]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        nextSelection = { ...currentCounts, [id]: 1 };
+      }
 
-        setOptimisticSelection(nextSelection);
-        onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection, optimisticSelection]
   );
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          typeof current === "string" ? { [current]: 1 } : current;
+      const current = optimisticSelection;
+      const currentCounts: SelectedModelCounts =
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const newCount = (currentCounts[id] ?? 0) + delta;
-        let nextSelection: SelectedModelValue;
+      const newCount = (currentCounts[id] ?? 0) + delta;
+      let nextSelection: SelectedModelValue;
 
-        if (newCount <= 0) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          nextSelection = { ...currentCounts, [id]: newCount };
+      if (newCount <= 0) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]: readonly [
+            string,
+            number | undefined,
+          ]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        nextSelection = { ...currentCounts, [id]: newCount };
+      }
 
-        setOptimisticSelection(nextSelection);
-        onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection, optimisticSelection]
   );
 
   const handleMultipleModelsToggle = useCallback(
@@ -506,20 +585,13 @@ const PureModelSelector = ({
       setUseMultipleModels(checked);
 
       if (checked) {
-        const nextSelection = buildMultiModelSelection([optimisticModelId]);
-        startTransition(() => {
-          setOptimisticSelection(nextSelection);
-          onModelSelectionChangeAction?.(nextSelection);
-        });
+        dispatchSelection(buildMultiModelSelection([optimisticModelId]));
         return;
       }
 
-      startTransition(() => {
-        setOptimisticSelection(optimisticModelId);
-        onModelSelectionChangeAction?.(optimisticModelId);
-      });
+      dispatchSelection(optimisticModelId);
     },
-    [onModelSelectionChangeAction, optimisticModelId, setOptimisticSelection]
+    [dispatchSelection, optimisticModelId]
   );
 
   return (
@@ -539,7 +611,7 @@ const PureModelSelector = ({
             )}
             <p className="inline-flex items-center gap-1.5 truncate">
               {triggerLabel}
-              {selectedItem?.model.reasoning && reasoningConfig && (
+              {selectedItem?.model.reasoning === true && reasoningConfig && (
                 <span
                   className="inline-flex shrink-0 items-center gap-1"
                   title={reasoningConfig.description}
@@ -560,18 +632,9 @@ const PureModelSelector = ({
       <PopoverContent
         align="start"
         className="w-[350px] p-0"
-        onFocusOutside={(event) => event.preventDefault()}
+        onFocusOutside={preventEventDefault}
 
-        onInteractOutside={(event) => {
-          // Radix dispatches the outside event on its original target. Elements, including SVGs, expose closest(); other EventTargets do not.
-          // Keep nested portal interactions from closing the model picker.
-          if (
-            event.target instanceof Element &&
-            event.target.closest("[data-radix-popper-content-wrapper]")
-          ) {
-            event.preventDefault();
-          }
-        }}
+        onInteractOutside={handleInteractOutside}
       >
         {open && (
           <Command>
@@ -579,7 +642,7 @@ const PureModelSelector = ({
               <CommandInput
                 className="px-3"
                 containerClassName="w-full border-0 h-11"
-                onClick={(event) => event.stopPropagation()}
+                onClick={stopEventPropagation}
                 placeholder="Search models..."
               />
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
@@ -610,7 +673,7 @@ const PureModelSelector = ({
                       {activeFilterCount > 0 && (
                         <Button
                           className="h-6 text-xs"
-                          onClick={() => setFeatureFilters(initialFilters)}
+                          onClick={handleResetFilters}
                           size="sm"
                           variant="ghost"
                         >
@@ -619,33 +682,53 @@ const PureModelSelector = ({
                       )}
                     </div>
                     <div className="grid grid-cols-1 gap-2">
-                      {enabledFeatures.map((feature) => {
-                        const IconComponent = feature.icon;
-                        return (
-                          <div
-                            className="flex items-center space-x-2"
-                            key={feature.key}
-                          >
-                            <Checkbox
-                              checked={featureFilters[feature.key]}
-                              id={feature.key}
-                              onCheckedChange={(checked) =>
-                                setFeatureFilters((prev) => ({
-                                  ...prev,
-                                  [feature.key]: Boolean(checked),
-                                }))
-                              }
-                            />
-                            <Label
-                              className="flex items-center gap-1.5 text-sm"
-                              htmlFor={feature.key}
+                      {enabledFeatures.map(
+                        (
+                          feature: Readonly<
+                            Pick<
+                              (typeof enabledFeatures)[number],
+                              "key" | "name"
                             >
-                              <IconComponent className="h-3.5 w-3.5" />
-                              {feature.name}
-                            </Label>
-                          </div>
-                        );
-                      })}
+                          > & {
+                            readonly icon: React.JSXElementConstructor<
+                              Pick<
+                                React.ComponentProps<
+                                  (typeof enabledFeatures)[number]["icon"]
+                                >,
+                                "className"
+                              >
+                            >;
+                          }
+                        ) => {
+                          const IconComponent = feature.icon;
+                          return (
+                            <div
+                              className="flex items-center space-x-2"
+                              key={feature.key}
+                            >
+                              <Checkbox
+                                checked={featureFilters[feature.key]}
+                                id={feature.key}
+                                onCheckedChange={(checked) => {
+                                  setFeatureFilters(
+                                    (prev: Readonly<FeatureFilter>) => ({
+                                      ...prev,
+                                      [feature.key]: Boolean(checked),
+                                    })
+                                  );
+                                }}
+                              />
+                              <Label
+                                className="flex items-center gap-1.5 text-sm"
+                                htmlFor={feature.key}
+                              >
+                                <IconComponent className="h-3.5 w-3.5" />
+                                {feature.name}
+                              </Label>
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                   </div>
                 </PopoverContent>
@@ -679,46 +762,40 @@ const PureModelSelector = ({
             )}
             <CommandList
               className="max-h-[min(40dvh,400px)]"
-              onMouseDown={(event) => event.stopPropagation()}
+              onMouseDown={stopEventPropagation}
             >
               <CommandEmpty>No model found.</CommandEmpty>
               <CommandGroup>
-                {filteredModels.map(({ model, disabled }) => {
-                  const isSelected = useMultipleModels
-                    ? selectedModelIds.has(model.id)
-                    : model.id === optimisticModelId;
-                  const count =
-                    useMultipleModels && typeof optimisticSelection !== "string"
-                      ? (optimisticSelection[model.id] ?? 0)
-                      : undefined;
-                  return (
-                    <CommandItem
-                      count={isSelected ? count : undefined}
-                      disabled={disabled}
-                      isSelected={isSelected}
-                      key={model.id}
-                      model={model}
-                      onCountChange={
-                        useMultipleModels
-                          ? (delta): void => handleCountChange(model.id, delta)
-                          : undefined
-                      }
-                      onSelect={() =>
-                        useMultipleModels
-                          ? toggleMultiModel(model.id)
-                          : selectSingleModel(model.id)
-                      }
-                      selectionControl={
-                        useMultipleModels ? (
-                          <Checkbox
-                            checked={isSelected}
-                            className="pointer-events-none"
-                          />
-                        ) : null
-                      }
-                    />
-                  );
-                })}
+                {filteredModels.map(
+                  ({ model, disabled }: Readonly<ModelItem>) => {
+                    const isSelected = useMultipleModels
+                      ? selectedModelIds.has(model.id)
+                      : model.id === optimisticModelId;
+                    const count =
+                      useMultipleModels &&
+                      typeof optimisticSelection !== "string"
+                        ? (optimisticSelection[model.id] ?? 0)
+                        : undefined;
+                    return (
+                      <CommandItem
+                        count={isSelected ? count : undefined}
+                        disabled={disabled}
+                        isSelected={isSelected}
+                        key={model.id}
+                        model={model}
+                        onCountChange={
+                          useMultipleModels ? handleCountChange : undefined
+                        }
+                        onSelect={
+                          useMultipleModels
+                            ? toggleMultiModel
+                            : selectSingleModel
+                        }
+                        showSelectionControl={useMultipleModels}
+                      />
+                    );
+                  }
+                )}
               </CommandGroup>
             </CommandList>
             {!isAnonymous && (
@@ -742,7 +819,6 @@ const PureModelSelector = ({
     </Popover>
   );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 export const ModelSelector = memo(
   PureModelSelector,
@@ -753,5 +829,3 @@ export const ModelSelector = memo(
     prev.className === next.className &&
     prev.onModelSelectionChangeAction === next.onModelSelectionChangeAction
 );
-
-/* oxlint-disable max-lines -- model-selector keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

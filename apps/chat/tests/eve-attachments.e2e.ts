@@ -1,15 +1,8 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-file-purge"; "../lib/db/eve-orphaned-files"; "../lib/db/schema"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
+import type { Request, Response } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -24,13 +17,8 @@ import {
 } from "../lib/db/schema";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 const redAnswer = /red/iu;
 const blobUrl = /^blob:/u;
 const chatUrl = /\/chat\/[a-f0-9-]+$/u;
@@ -39,22 +27,14 @@ const redPng = Buffer.from(
   "base64"
 );
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * max-lines-per-function (#510): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("ChatJS upload remains durable through creation retries and message editing") uses 180_000, 60_000, 0, 1, 409, 400, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("ChatJS upload remains durable through creation retries and message editing") uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("ChatJS upload remains durable through creation retries and message editing") accepts { page, }; route; image; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("ChatJS upload remains durable through creation retries and message editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("ChatJS upload remains durable through creation retries and message editing") intentionally keeps the existing falsy-value behavior of retained?.data; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("ChatJS upload remains durable through creation retries and message editing", async ({
   page,
 }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(60_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
@@ -170,15 +150,23 @@ test("ChatJS upload remains durable through creation retries and message editing
       editor.getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await expect
-      .poll(() =>
-        editor
-          .getByRole("img", { exact: true, name: "eve-square.png" })
-          .evaluate(
-            (image) =>
-              image instanceof HTMLImageElement &&
-              image.complete &&
-              image.naturalWidth > 0
-          )
+      .poll(
+        async () =>
+          await editor
+            .getByRole("img", { exact: true, name: "eve-square.png" })
+            .evaluate<boolean, HTMLImageElement>(
+              (
+                image: Readonly<
+                  Pick<
+                    HTMLImageElement,
+                    "complete" | "naturalHeight" | "naturalWidth"
+                  >
+                >
+              ) =>
+                image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0
+            )
       )
       .toBe(true);
     await editor.screenshot({
@@ -229,7 +217,13 @@ test("ChatJS upload remains durable through creation retries and message editing
       filename: "eve-square.png",
       mediaType: "image/png",
     });
-    if (!retained?.data) {
+    if (
+      retained === undefined ||
+      retained === null ||
+      retained.data === undefined ||
+      retained.data === null ||
+      retained.data === ""
+    ) {
       throw new Error("Edited message lost its image");
     }
     cleanupUrls.push(retained.data);
@@ -260,30 +254,22 @@ test("ChatJS upload remains durable through creation retries and message editing
     ]);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("composer uploads and clears attachments, then reload confirms an in-flight mult uses 0, -1, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("composer uploads and clears attachments, then reload confirms an in-flight mult uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("composer uploads and clears attachments, then reload confirms an in-flight mult accepts { page, }; route; response; image; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("composer uploads and clears attachments, then reload confirms an in-flight mult preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("composer uploads and clears attachments, then reload confirms an in-flight mult intentionally keeps the existing falsy-value behavior of conversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("composer uploads and clears attachments, then reload confirms an in-flight multipart send", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   await page.goto("/");
   const urls: string[] = [];
-  async function attach(): Promise<void> {
+  const attach = async (): Promise<void> => {
     const uploaded = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.url().endsWith("/api/files/upload") &&
         response.request().method() === "POST"
     );
@@ -306,7 +292,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     await expect(
       page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();
-  }
+  };
   try {
     await attach();
     await page
@@ -322,16 +308,24 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("What color is the attached image? Answer with just the color.");
     await expect
-      .poll(() =>
-        page
-          .getByTestId("attachments-preview")
-          .getByRole("img", { exact: true, name: "eve-square.png" })
-          .evaluate(
-            (image) =>
-              image instanceof HTMLImageElement &&
-              image.complete &&
-              image.naturalWidth > 0
-          )
+      .poll(
+        async () =>
+          await page
+            .getByTestId("attachments-preview")
+            .getByRole("img", { exact: true, name: "eve-square.png" })
+            .evaluate<boolean, HTMLImageElement>(
+              (
+                image: Readonly<
+                  Pick<
+                    HTMLImageElement,
+                    "complete" | "naturalHeight" | "naturalWidth"
+                  >
+                >
+              ) =>
+                image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0
+            )
       )
       .toBe(true);
     await page.mouse.move(0, 0);
@@ -352,7 +346,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Describe the attached image in two sentences.");
     const accepted = page.waitForRequest(
-      (request) =>
+      (request: Readonly<Pick<Request, "method" | "url">>) =>
         request.method() === "POST" &&
         request.url().includes("/api/eve/v1/session/")
     );
@@ -363,7 +357,11 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     ).toHaveText("");
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
     const conversationId = new URL(page.url()).pathname.split("/").at(-1);
-    if (!conversationId) {
+    if (
+      conversationId === undefined ||
+      conversationId === null ||
+      conversationId === ""
+    ) {
       throw new Error("Missing conversation ID.");
     }
     await expect
@@ -372,14 +370,21 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
           .where(eq(eveFileReference.conversationId, conversationId));
-        return rows.map((row) => row.key).toSorted();
+        return rows
+          .map((row) => row.key)
+          .toSorted(
+            (left, right) => Number(left > right) - Number(left < right)
+          );
       })
       .toEqual(
-        // oxlint-disable-next-line typescript/require-array-sort-compare -- Optional storage keys are compared in default UTF-16 order on both sides; locale collation would change this assertion.
         urls
           .slice(1)
           .map((url) => keyFromFileUrl(url))
-          .toSorted()
+          .toSorted(
+            (left, right) =>
+              Number(String(left) > String(right)) -
+              Number(String(left) < String(right))
+          )
       );
     // Reload after durable acceptance, while the response is still in progress.
     await expect(
@@ -410,36 +415,33 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     ]);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("an uncertain creation retains the same visible attachment and immutable request uses 0, 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("an uncertain creation retains the same visible attachment and immutable request accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("an uncertain creation retains the same visible attachment and immutable request preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("an uncertain creation retains the same visible attachment and immutable request after reload", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   await page.goto("/");
-  await page.route("**/api/files/upload", (route) =>
-    route.fulfill({
+  await page.route("**/api/files/upload", async (route) => {
+    await route.fulfill({
       json: { url: "/api/files/abcdefghijklmnopqrstuvwx.png" },
-    })
-  );
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
-    route.fulfill({ body: redPng, contentType: "image/png" })
+    });
+  });
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.png",
+    async (route) => {
+      await route.fulfill({ body: redPng, contentType: "image/png" });
+    }
   );
   const requests: string[] = [];
-  await page.route("**/api/agent-conversations", (route) => {
+  await page.route("**/api/agent-conversations", async (route) => {
     requests.push(route.request().postData() ?? "");
-    return route.abort("failed");
+    await route.abort("failed");
   });
   await page
     .getByRole("group", { exact: true, name: "Message composer" })
@@ -496,25 +498,18 @@ test("an uncertain creation retains the same visible attachment and immutable re
       path: "tests/eve-results/screenshots/eve-composer-retained.png",
     });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("uploaded attachment has durable authenticated ownership") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("uploaded attachment has durable authenticated ownership") uses execFileSync("bun", [ "-e", 'import { deleteFilesByUrls } from "./lib/file-storage";  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("uploaded attachment has durable authenticated ownership") accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("uploaded attachment has durable authenticated ownership") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("uploaded attachment has durable authenticated ownership") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("uploaded attachment has durable authenticated ownership", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const uploaded = await page.request.post("/api/files/upload", {
     multipart: {
       file: {
@@ -527,7 +522,7 @@ test("uploaded attachment has durable authenticated ownership", async ({
   expect(uploaded.ok(), await uploaded.text()).toBe(true);
   const file = z.object({ url: z.string() }).parse(await uploaded.json());
   const key = keyFromFileUrl(file.url);
-  if (!key) {
+  if (key === undefined || key === null || key === "") {
     throw new Error("Upload returned an invalid key.");
   }
   try {
@@ -592,20 +587,13 @@ test("uploaded attachment has durable authenticated ownership", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-statements (#512): test("a fenced orphan URL stops serving bytes before physical removal") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a fenced orphan URL stops serving bytes before physical removal") uses 1000, 1, 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("a fenced orphan URL stops serving bytes before physical removal") uses execFileSync("bun", [ "--no-env-file", "-e", 'import { deleteFilesByUrls } from ". within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("a fenced orphan URL stops serving bytes before physical removal") accepts { page, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("a fenced orphan URL stops serving bytes before physical removal") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("a fenced orphan URL stops serving bytes before physical removal") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("a fenced orphan URL stops serving bytes before physical removal", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const upload = await page.request.post("/api/files/upload", {
     multipart: {
@@ -615,7 +603,7 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
   expect(upload.ok()).toBe(true);
   const { url } = z.object({ url: z.string() }).parse(await upload.json());
   const key = keyFromFileUrl(url);
-  if (!key) {
+  if (key === undefined || key === null || key === "") {
     throw new Error("Missing uploaded key");
   }
   try {
@@ -646,6 +634,3 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
-
-/* oxlint-disable max-lines -- #509: This eve-attachments.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

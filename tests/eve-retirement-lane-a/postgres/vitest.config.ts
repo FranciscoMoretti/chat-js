@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-default-export -- Vitest loads this Node configuration through its required default export. */
 import path from "node:path";
 
 import { defineConfig } from "vitest/config";

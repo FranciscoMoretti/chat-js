@@ -1,15 +1,8 @@
-/* oxlint-disable import/no-namespace --
- * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- */
-import type * as AI from "ai";
-import { MockVideoModelV4 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
-
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
+import { MockVideoModelV4 } from "ai/test";
 import { generateVideoResult } from "./schemas";
 import { generateVideoTool } from "./tool";
-/* oxlint-enable import/no-namespace */
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   definition: vi.fn(),
@@ -17,30 +10,25 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   upload: vi.fn(),
 }));
-vi.mock("ai", async (original) => ({
-  ...(await original<typeof AI>()),
+vi.mock(import("ai"), async (original) => ({
+  ...(await original()),
   experimental_generateVideo: mocks.generate,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
-    createVideoModel: (id: string) => {
+    createVideoModel: (id: string): MockVideoModelV4 => {
       mocks.model(id);
       return new MockVideoModelV4();
     },
     getModelDefinition: mocks.definition,
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/generated-files")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/eve/generated-files", () => ({
-  eveGeneratedFileUploader: () => mocks.upload,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/eve/generated-files",
+  (): { eveGeneratedFileUploader: () => typeof mocks.upload } => ({
+    eveGeneratedFileUploader: () => mocks.upload,
+  })
+);
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { video: { default: "default-video" } } },
@@ -104,9 +92,6 @@ it("uses configured defaults", async () => {
     expect.objectContaining({ aspectRatio: "16:9", duration: 5 })
   );
 });
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("does not invent a charge when no video is returned") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("does not invent a charge when no video is returned", async () => {
   mocks.generate.mockResolvedValue({ video: null });
   await expect(
@@ -114,7 +99,6 @@ it("does not invent a charge when no video is returned", async () => {
   ).rejects.toThrow("No video generated");
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable unicorn/no-null */
 it("retains provider cost when storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Storage unavailable"));
   expect(
@@ -129,10 +113,11 @@ it("accepts saved results without file IDs", () => {
   expect(generateVideoResult.parse(saved)).toEqual(saved);
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/ai/active-gateway", () => ({
-  getActiveGateway: () => ({ fetchModels: () => [] }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/ai/active-gateway",
+  (): { getActiveGateway: () => { fetchModels: () => never[] } } => ({
+    getActiveGateway: (): { fetchModels: () => never[] } => ({
+      fetchModels: (): never[] => [],
+    }),
+  })
+);

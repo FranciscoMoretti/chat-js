@@ -1,8 +1,6 @@
+import { siteLastModified, siteLinks } from "@/lib/site-config";
 import type { MetadataRoute } from "next";
 
-import { siteLastModified, siteLinks } from "@/lib/site-config";
-
-/* oxlint-disable import/no-default-export -- sitemap: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
@@ -31,4 +29,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 }
-/* oxlint-enable import/no-default-export */

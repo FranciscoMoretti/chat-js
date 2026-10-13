@@ -1,43 +1,25 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- */
-import assert from "node:assert/strict";
-
-import { describe, it, vi } from "vitest";
-
-import { fileIdsForStorageKeys } from "./db/file-storage-keys";
 import {
+  createFileId,
   deleteFilesByUrls,
   listFiles,
-  createFileId,
   uploadFileAtKey,
 } from "./file-storage";
+import { describe, it, vi } from "vitest";
+import assert from "node:assert/strict";
+import { fileIdsForStorageKeys } from "./db/file-storage-keys";
 import { keyFromFileUrl } from "./file-url";
-/* oxlint-enable import/no-nodejs-modules */
 
 vi.mock("@/lib/config", () => ({
   config: { appPrefix: "storage-test" },
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./storage-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./storage-provider", async () => {
   const { memory } = await import("files-sdk/memory");
   return {
-    createStorageAdapter: () => memory(),
+    createStorageAdapter: (): ReturnType<typeof memory> => memory(),
   };
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): describe("file storage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("file storage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("file storage") uses 0, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): describe("file storage") accepts file; [keys]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): describe("file storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): describe("file storage") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 describe("file storage", () => {
   it("uploads, lists, and deletes through Files SDK", async () => {
     const uploaded = await uploadFileAtKey(
@@ -48,13 +30,15 @@ describe("file storage", () => {
     );
     const key = keyFromFileUrl(uploaded.url);
 
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     assert.equal(uploaded.pathname, "hello.txt");
     assert.equal(uploaded.contentType, "text/plain");
     assert.equal(uploaded.url, `/api/files/${key}`);
     const uploadedFiles = await listFiles();
     assert.deepEqual(
-      uploadedFiles.files.map((file) => file.pathname),
+      uploadedFiles.files.map(
+        (file: { readonly pathname: string }) => file.pathname
+      ),
       [key]
     );
 
@@ -66,43 +50,74 @@ describe("file storage", () => {
     const remainingFiles = await listFiles();
     assert.equal(remainingFiles.files.length, 0);
   });
+
+  it("removes only ASCII C0 and DEL characters from upload pathnames", async () => {
+    const controlCharacters =
+      Array.from({ length: 32 }, (_value, codePoint) =>
+        String.fromCodePoint(codePoint)
+      ).join("") + String.fromCodePoint(127);
+    const c1Controls = Array.from({ length: 32 }, (_value, codePoint) =>
+      String.fromCodePoint(codePoint + 128)
+    ).join("");
+    const preservedCharacters = ` ~${c1Controls}\u200D\u2028🧪`;
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      `../pre${controlCharacters}report${preservedCharacters}.txt`,
+      "hello",
+      "text/plain"
+    );
+
+    try {
+      assert.equal(uploaded.pathname, `prereport${preservedCharacters}.txt`);
+    } finally {
+      await deleteFilesByUrls([uploaded.url]);
+    }
+  });
+
   it("lists across page boundaries with one mapping query per page", async () => {
     const uploads = await Promise.all(
-      Array.from({ length: 101 }, () =>
-        uploadFileAtKey(createFileId(), "file.txt", "content", "text/plain")
+      Array.from(
+        { length: 101 },
+        async () =>
+          await uploadFileAtKey(
+            createFileId(),
+            "file.txt",
+            "content",
+            "text/plain"
+          )
       )
     );
     vi.mocked(fileIdsForStorageKeys).mockClear();
     try {
       const { files } = await listFiles();
       assert.deepEqual(
-        new Set(files.map((file) => file.url)),
-        new Set(uploads.map((file) => file.url))
+        new Set(files.map((file: { readonly url: string }) => file.url)),
+        new Set(uploads.map((file: { readonly url: string }) => file.url))
       );
       assert.deepEqual(
         vi
           .mocked(fileIdsForStorageKeys)
-          .mock.calls.map(([keys]) => keys.length),
+          .mock.calls.map(
+            ([keys]: Readonly<[storageKeys: readonly string[]]>) => keys.length
+          ),
         [100, 1]
       );
     } finally {
-      await deleteFilesByUrls(uploads.map((file) => file.url));
+      await deleteFilesByUrls(
+        uploads.map((file: { readonly url: string }) => file.url)
+      );
     }
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./db/file-storage-keys") accepts keys: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): vi.mock("./db/file-storage-keys") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdsForStorageKeys: vi.fn((keys: string[]) =>
+  // oxlint-disable-next-line typescript/promise-function-async -- This DB fixture maps each requested storage-key batch to IDs; its Promise-only API and synchronous mapping conflict with eslint/require-await.
+  fileIdsForStorageKeys: vi.fn((keys: readonly string[]) =>
     Promise.resolve(
       new Map(keys.map((key) => [key, key.slice("objects/".length)]))
     )
   ),
+  // oxlint-disable-next-line typescript/promise-function-async -- This DB fixture derives a storage key per file ID; its Promise-only API has no work to await under eslint/require-await.
   storageKeyForFile: (id: string): Promise<string> =>
     Promise.resolve(`objects/${id}`),
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

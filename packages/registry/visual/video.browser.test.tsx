@@ -1,20 +1,11 @@
-import { takeSnapshot } from "@uiverify/vitest";
-import React, { act } from "react";
-import { createRoot } from "react-dom/client";
-import { expect, test } from "vitest";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { GenerateVideoRenderer } from "../src/tools/generate-video/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 import "../../../apps/chat/app/globals.css";
-/* oxlint-enable import/no-relative-parent-imports */
+import React from "react";
+import { expect, test } from "vitest";
+import { GenerateVideoRenderer } from "../src/tools/generate-video/renderer";
+import { createRoot } from "react-dom/client";
+import { takeSnapshot } from "@uiverify/vitest";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("video tool streaming, loading, player, and error states", async () => {
   const container = document.createElement("main");
   container.style.cssText =
@@ -26,49 +17,47 @@ test("video tool streaming, loading, player, and error states", async () => {
     "* { animation:none !important;transition:none !important; }";
   document.head.append(style);
   const root = createRoot(container);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act(() =>
-    root.render(
-      <>
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{ state: "input-streaming", toolCallId: "streaming" }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            state: "input-available",
-            toolCallId: "loading",
-          }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            input: { prompt: "Blue sky" },
-            output: {
-              prompt: "Blue sky",
-              videoUrl: new URL("fixtures/blue.mp4", import.meta.url).href,
-            },
-            state: "output-available",
-            toolCallId: "success",
-          }}
-        />
-        <GenerateVideoRenderer
-          isReadonly
-          messageId="video-fixture"
-          tool={{
-            errorText: "Provider failed",
-            input: { prompt: "Blue sky" },
-            state: "output-error",
-            toolCallId: "error",
-          }}
-        />
-      </>
-    )
+  await renderRoot(
+    root,
+    <>
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{ state: "input-streaming", toolCallId: "streaming" }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          state: "input-available",
+          toolCallId: "loading",
+        }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          input: { prompt: "Blue sky" },
+          output: {
+            prompt: "Blue sky",
+            videoUrl: new URL("fixtures/blue.mp4", import.meta.url).href,
+          },
+          state: "output-available",
+          toolCallId: "success",
+        }}
+      />
+      <GenerateVideoRenderer
+        isReadonly
+        messageId="video-fixture"
+        tool={{
+          errorText: "Provider failed",
+          input: { prompt: "Blue sky" },
+          state: "output-error",
+          toolCallId: "error",
+        }}
+      />
+    </>
   );
   try {
     const video = container.querySelector("video");
@@ -87,13 +76,8 @@ test("video tool streaming, loading, player, and error states", async () => {
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
   } finally {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
     style.remove();
   }
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

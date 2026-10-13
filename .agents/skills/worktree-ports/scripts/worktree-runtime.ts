@@ -186,7 +186,11 @@ const resolveAppEnvironments = (
         url: endpoint.url,
       });
     }
-    resolvedApps[appName] = { ...endpoint, env };
+    resolvedApps[appName] = {
+      port: endpoint.port,
+      url: endpoint.url,
+      env,
+    };
   }
   return resolvedApps;
 };

@@ -1,16 +1,27 @@
 import { expect, spyOn } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- These Bun test fixtures snapshot real files, inject Node rename/rm failures, and observe actual rollback cleanup operations. */
 import fs, { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNativeSurface<Value[Key]> }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 
 interface SyncFixture {
   baseline: string;
@@ -46,7 +57,6 @@ const prepareReplacement = async (
       : path.join(options.root, "new.ts");
   return { options, previous, target };
 };
-
 const replacementFailure = (
   root: string,
   target: string
@@ -99,7 +109,6 @@ const verifyRollback = async (
   const entries = await readdir(options.root);
   expect(entries.some((file) => file.startsWith(".demo-sync-"))).toBe(false);
 };
-
 const observeGeneratorFailure = (): {
   readonly cleanedPaths: readonly string[];
   readonly restore: () => void;

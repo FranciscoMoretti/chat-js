@@ -4,15 +4,17 @@ import {
   getUserModelPreferences,
   upsertUserModelPreference,
 } from "@/lib/db/queries";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * typescript/prefer-readonly-parameter-types (#565): settingsRouter accepts { ctx }; { ctx, input }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): settingsRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 export const settingsRouter = createTRPCRouter({
   getModelPreferences: protectedProcedure.query(
-    async ({ ctx }) => await getUserModelPreferences({ userId: ctx.user.id })
+    async ({
+      ctx,
+    }: {
+      readonly ctx: { readonly user: { readonly id: string } };
+    }) => await getUserModelPreferences({ userId: ctx.user.id })
   ),
 
   setModelEnabled: protectedProcedure
@@ -22,13 +24,23 @@ export const settingsRouter = createTRPCRouter({
         modelId: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      await upsertUserModelPreference({
-        enabled: input.enabled,
-        modelId: input.modelId,
-        userId: ctx.user.id,
-      });
-      return { success: true };
-    }),
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly user: { readonly id: string } };
+        readonly input: ReadonlyNativeSurface<{
+          enabled: boolean;
+          modelId: string;
+        }>;
+      }) => {
+        await upsertUserModelPreference({
+          enabled: input.enabled,
+          modelId: input.modelId,
+          userId: ctx.user.id,
+        });
+        return { success: true };
+      }
+    ),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

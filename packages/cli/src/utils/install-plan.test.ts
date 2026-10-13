@@ -1,33 +1,33 @@
-import { afterEach, expect, test } from "bun:test";
+import { rejects } from "node:assert/strict";
+import { parseJsonObject } from "#cli/helpers/json-object";
+import { afterEach, expect, mock, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+
 import { installItems } from "#cli/registry/shadcn";
 
 import { installPlan, recordInstalledSource } from "./install-plan";
+
 import { planInstallation } from "./installation-plan";
+
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
+import * as installationFiles from "./installation-files";
 
 const roots: string[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const server = () =>
+const server = (): Bun.Server<undefined> =>
   Bun.serve({
-    fetch(request) {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const id = new URL(request.url).pathname.slice(1).replace(".json", "");
       const definition = {
         contractVersion: 1,
@@ -72,20 +72,59 @@ const server = () =>
     hostname: "127.0.0.1",
     port: 0,
   });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-replacement-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
   return root;
 };
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("receipt hashing bounds live buffers, drains failures and never writes a partial receipt", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-hash-batch-"));
+  roots.push(root);
+  const targets = Array.from({ length: 5 }, (_, index) => `${index}.ts`);
+  const gates = targets.map(() => Promise.withResolvers<Buffer>());
+  const admitted = Promise.withResolvers<boolean>();
+  const originalRead = installationFiles.optionalFile;
+  let reads = 0;
+  const read = spyOn(installationFiles, "optionalFile").mockImplementation(
+    async (file) => {
+      const index = targets.indexOf(path.basename(file));
+      if (index === -1) {
+        return await originalRead(file);
+      }
+      reads += 1;
+      if (reads === 4) {
+        admitted.resolve(true);
+      }
+      return await gates[index].promise;
+    }
+  );
+  const recording = recordInstalledSource(root, targets);
+  const rejected = rejects(recording, /first source/u);
+  let settled = false;
+  void recording.catch(() => {
+    settled = true;
+  });
+  try {
+    await admitted.promise;
+    gates[1].reject(new Error("second source"));
+    gates[0].reject(new Error("first source"));
+    await Promise.resolve();
+    expect(reads).toBe(4);
+    expect(settled).toBe(false);
+    gates[2].resolve(Buffer.from("third"));
+    gates[3].resolve(Buffer.from("fourth"));
+    await rejected;
+    expect(reads).toBe(4);
+    expect(
+      await Bun.file(path.join(root, ".chatjs/installed-source.json")).exists()
+    ).toBe(false);
+  } finally {
+    read.mockRestore();
+  }
+});
+
 test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -99,9 +138,15 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root, { expected: first.expected });
     });
-    expect(
-      planInstallation(root, { features: [], tools: [source("second")] })
-    ).rejects.toThrow("--replace");
+    await rejects(
+      planInstallation(root, { features: [], tools: [source("second")] }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--replace");
+        return true;
+      }
+    );
     const plan = await planInstallation(
       root,
       { features: [], tools: [source("second")] },
@@ -112,11 +157,17 @@ test("explicit provider replacement preserves unrelated installations and refuse
       old,
       "// my implementation\nexport const executeCode = {};\n"
     );
-    expect(
+    await rejects(
       installPlan(root, plan, {}, async (): Promise<void> => {
         await syncTools(root);
-      })
-    ).rejects.toThrow("--overwrite");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--overwrite");
+        return true;
+      }
+    );
     expect(
       await Bun.file(
         path.join(root, "tools/chatjs/second/chatjs.json")
@@ -132,7 +183,9 @@ test("explicit provider replacement preserves unrelated installations and refuse
       }
     );
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["extra", "second"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
     expect(
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
@@ -141,18 +194,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each(["registration", "finalization"] as const)(
   "failed %s restores previous provider source, manifest, receipts and lockfiles",
   async (phase): Promise<void> => {
@@ -187,15 +229,22 @@ test.each(["registration", "finalization"] as const)(
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
       await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
-      const registrationContents = (target: string) => {
+      const registrationContents = async (
+        target: string
+      ): Promise<string | null> => {
         const file = Bun.file(path.join(root, target));
-        return file.exists().then((exists) => (exists ? file.text() : null));
+        if (await file.exists()) {
+          return await file.text();
+        }
+        return null;
       };
       const oldRegistrations = await Promise.all(
-        toolRegistrationTargets.map((target) => registrationContents(target))
+        toolRegistrationTargets.map(
+          async (target) => await registrationContents(target)
+        )
       );
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-      await expect(
+
+      await rejects(
         installPlan(
           root,
           plan,
@@ -221,8 +270,14 @@ test.each(["registration", "finalization"] as const)(
               throw new Error("fixture registration failed");
             }
           }
-        )
-      ).rejects.toThrow(`fixture ${phase} failed`);
+        ),
+        (reason: unknown) => {
+          expect(() => {
+            throw reason;
+          }).toThrow(`fixture ${phase} failed`);
+          return true;
+        }
+      );
       expect(await readFile(manifest, "utf-8")).toBe(oldManifest);
       expect(await readFile(dependencies, "utf-8")).toBe(oldDependencies);
       expect(await readFile(lockfile, "utf-8")).toBe("original lockfile");
@@ -235,7 +290,9 @@ test.each(["registration", "finalization"] as const)(
       expect(await readFile(config, "utf-8")).toBe(oldConfig);
       expect(
         await Promise.all(
-          toolRegistrationTargets.map((target) => registrationContents(target))
+          toolRegistrationTargets.map(
+            async (target) => await registrationContents(target)
+          )
         )
       ).toEqual(oldRegistrations);
       expect(
@@ -252,25 +309,16 @@ test.each(["registration", "finalization"] as const)(
         }
       );
       const tools = await syncTools(root, { checkOnly: true });
-      expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
+      expect(
+        tools.map((tool: { readonly id: string }): string => tool.id)
+      ).toEqual(["second"]);
     } finally {
-      // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-      registry.stop(true);
+      await registry.stop(true);
     }
   },
   30_000
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -290,25 +338,20 @@ test("native shadcn source can be composed without overwriting or blessing user 
       await syncTools(root);
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const receipt = JSON.parse(
-      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8")
+    const receipt = parseJsonObject(
+      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8"),
+      "installed source receipt"
     );
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["first"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["first"]);
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("registration refreshes untouched rollback baselines without blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const file = path.join(root, ".env.example");
@@ -386,7 +429,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     );
     expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
     let registered = false;
-    expect(
+    await rejects(
       installPlan(
         root,
         storagePlan,
@@ -395,67 +438,62 @@ test("registration refreshes untouched rollback baselines without blessing user 
           registered = true;
           await writeFile(file, "must not reach registration");
         }
-      )
-    ).rejects.toThrow("No source was installed");
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("No source was installed");
+        return true;
+      }
+    );
     expect(registered).toBe(false);
     expect(await readFile(file, "utf-8")).toContain("user storage notes");
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("provider installation refuses inferred native dependency destinations before any overwrite", async (): Promise<void> => {
   const root = await fixture();
   const ui = path.join(root, "components/ui/fixture.tsx");
   await mkdir(path.dirname(ui), { recursive: true });
   await writeFile(ui, "// user UI customization\n");
   const registry = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const inferred = new URL(request.url).pathname.endsWith("ui.json");
-      return Response.json(
-        inferred
-          ? {
-              files: [
-                {
-                  content: "// replacement UI\n",
-                  path: "fixture.tsx",
-                  type: "registry:ui",
-                },
-              ],
-              name: "fixture-ui",
+      if (inferred) {
+        return Response.json({
+          files: [
+            {
+              content: "// replacement UI\n",
+              path: "fixture.tsx",
               type: "registry:ui",
-            }
-          : {
-              files: [
-                {
-                  content: "export const createStorageAdapter = () => ({});\n",
-                  path: "storage-provider.ts",
-                  target: "~/lib/storage-provider.ts",
-                  type: "registry:file",
-                },
-              ],
-              meta: {
-                chatjs: {
-                  contractVersion: 1,
-                  id: "fixture-storage",
-                  kind: "storage",
-                },
-              },
-              name: "fixture-storage",
-              registryDependencies: [
-                `http://127.0.0.1:${registry.port}/ui.json`,
-              ],
-              type: "registry:item",
-            }
-      );
+            },
+          ],
+          name: "fixture-ui",
+          type: "registry:ui",
+        });
+      }
+      return Response.json({
+        files: [
+          {
+            content: "export const createStorageAdapter = () => ({});\n",
+            path: "storage-provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
+          },
+        ],
+        meta: {
+          chatjs: {
+            contractVersion: 1,
+            id: "fixture-storage",
+            kind: "storage",
+          },
+        },
+        name: "fixture-storage",
+        registryDependencies: [`http://127.0.0.1:${registry.port}/ui.json`],
+        type: "registry:item",
+      });
     },
     hostname: "127.0.0.1",
     port: 0,
@@ -477,16 +515,16 @@ test("provider installation refuses inferred native dependency destinations befo
       },
       { replace: true }
     );
-    let registered = false;
-    expect(
-      installPlan(root, plan, {}, (): Promise<void> => {
-        registered = true;
-        return Promise.reject(new Error("registration must not run"));
-      })
-    ).rejects.toThrow(
-      "Cannot safely overwrite inferred installer destinations"
+    const register = mock<() => Promise<void>>().mockRejectedValue(
+      new Error("registration must not run")
     );
-    expect(registered).toBe(false);
+    await rejects(installPlan(root, plan, {}, register), (reason: unknown) => {
+      expect(() => {
+        throw reason;
+      }).toThrow("Cannot safely overwrite inferred installer destinations");
+      return true;
+    });
+    expect(register).not.toHaveBeenCalled();
     expect(await readFile(ui, "utf-8")).toBe("// user UI customization\n");
     expect(await readFile(provider, "utf-8")).toBe(originalProvider);
     const native = await planInstallation(root, {
@@ -498,19 +536,23 @@ test("provider installation refuses inferred native dependency destinations befo
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");
-    expect(
-      installPlan(root, native, { overwrite: true }, (): Promise<void> =>
-        Promise.resolve()
-      )
-    ).rejects.toThrow("No source was installed");
+    await rejects(
+      installPlan(
+        root,
+        native,
+        { overwrite: true },
+        mock<() => Promise<void>>().mockRejectedValue(
+          new Error("registration must not run")
+        )
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("No source was installed");
+        return true;
+      }
+    );
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -1,20 +1,14 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The isolated process-restart proof uses Node assertions.
 import assert from "node:assert/strict";
-// oxlint-disable-next-line import/no-nodejs-modules -- Resolve only local fixture and isolated installation paths.
 import path from "node:path";
 
 import { Client } from "eve/client";
 import { z } from "zod";
-
-// oxlint-disable-next-line import/no-relative-parent-imports -- Lane D's controller is copied unchanged into this ignored runtime area by the shared-support setup step.
 import {
   createPersistentRuntime,
   until,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- The standalone EVE fixture shares its local barrier helper and has no application alias resolver.
 } from "../../apps/chat/.eve/lane-c-shared/persistent-runtime";
 import { acceptance, correlationIds } from "./fixture/evals/evidence";
 
-// oxlint-disable-next-line node/no-process-env -- This flag selects the explicitly isolated stock or experimental installation.
 const patched = process.env.CORRELATION_PATCHED === "1";
 const expectedCount = 2;
 const acceptedStatus = 202;
@@ -68,13 +62,11 @@ try {
   const creation = { correlationId: "create-restart", message: "initial" };
   const created = await client.sessions.create(creation);
   await created.response.result();
-  await assert.rejects(
-    async () => await loseFollowup(created.session.state.sessionId),
-    /proxy response lost/u
-  );
+  await assert.rejects(async () => {
+    await loseFollowup(created.session.state.sessionId);
+  }, /proxy response lost/u);
   const before = await until(async () => {
     const snapshot = await created.session.snapshot();
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
     return snapshot.events.filter((event) => event.type === "turn.completed")
       .length === expectedCount
       ? snapshot
@@ -96,16 +88,13 @@ try {
     .snapshot();
   assert.deepEqual(after.events, before.events);
   const received = after.events.filter(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
     (event) => event.type === "message.received"
   );
   assert.deepEqual(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
     received.map((event) => event.data.message),
     ["initial", "identical"]
   );
   assert.deepEqual(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback is typed by the released runtime SDK; it reads the supplied event without changing SDK assignability.
     received.map((event) => correlationIds(event.data)),
     patched ? [["create-restart"], ["lost-restart"]] : [[], []]
   );

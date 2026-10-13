@@ -1,24 +1,81 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/chatjs/tools"; "../ai/installed-tool-capabilities"; "../db/eve-code-sandboxes" dependency within this package instead of introducing an alias or barrel API.
- */
-import { tools } from "../../tools/chatjs/tools";
-import { getCodeSandboxCleanup } from "../ai/installed-tool-capabilities";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { getCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
+import { tools } from "@/tools/chatjs/tools";
+
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
 import { eveCodeSandboxName } from "./code-sandbox-name";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): purgeEveFamilyCodeSandboxes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): purgeEveFamilyCodeSandboxes uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): purgeEveFamilyCodeSandboxes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyCodeSandboxes accepts [name]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+const NO_RESOURCES = 0;
+const ENTRY_VALUE_INDEX = 1;
+
+type CodeSandboxCleanupSession = ReturnType<
+  NonNullable<ReturnType<typeof getCodeSandboxCleanup>>["createCleanupSession"]
+>;
+
+type CodeSandboxDeletionResource = Awaited<
+  ReturnType<typeof listEveCodeSandboxesForDeletion>
+>[number];
+
+const assertNoUncertainCodeSandboxes = (
+  resources: readonly CodeSandboxDeletionResource[]
+): void => {
+  if (resources.length > NO_RESOURCES) {
+    throw new Error(
+      "Resolve uncertain code sandbox creation before completing deletion."
+    );
+  }
+};
+
+const createCodeSandboxCleanupSession = (): CodeSandboxCleanupSession => {
+  const capability = getCodeSandboxCleanup(
+    Object.entries(tools).find(
+      ([name]: readonly [string, ...unknown[]]) => name === "codeExecution"
+    )?.[ENTRY_VALUE_INDEX]
+  );
+  if (!capability) {
+    throw new Error(
+      "Install the code execution tool to clean up its durable sandbox resources."
+    );
+  }
+  return capability.createCleanupSession();
+};
+
+const purgeConfirmedCodeSandbox = async (
+  ownerId: string,
+  resource: Readonly<
+    Awaited<ReturnType<typeof listEveCodeSandboxesForDeletion>>[number]
+  >,
+  cleanup: ReadonlyNativeSurface<CodeSandboxCleanupSession>
+): Promise<void> => {
+  if (
+    eveCodeSandboxName({
+      callId: resource.callId,
+      ownerId,
+      provider: cleanup.provider,
+      sessionId: resource.sessionId ?? undefined,
+    }) !== resource.name
+  ) {
+    throw new Error(
+      "Code sandbox provider scope does not match its allocation intent."
+    );
+  }
+  await cleanup.deleteAndConfirmAbsent(resource.name);
+  await recordEveCodeSandboxDeletion(
+    ownerId,
+    resource.conversationId,
+    resource.name
+  );
+};
+
+/**
+ * Delete confirmed family sandboxes and release ownership only after confirmed absence.
+ * Native work must already be retired. Uncertain creation intents prevent completion.
+ * @param {string} ownerId - Authorized owner used to read and retire durable sandbox allocations.
+ * @param {string} rootId - Conversation-family root whose sandbox allocations are being purged.
  */
-/** Native work must already be retired. Never infer a failed create from provider absence. */
 export const purgeEveFamilyCodeSandboxes = async (
   ownerId: string,
   rootId: string
@@ -27,46 +84,15 @@ export const purgeEveFamilyCodeSandboxes = async (
   const confirmedResources = resources.filter(
     (resource) => resource.creationConfirmed
   );
-  if (confirmedResources.length === 0) {
-    if (resources.length > 0) {
-      throw new Error(
-        "Resolve uncertain code sandbox creation before completing deletion."
-      );
-    }
+  if (confirmedResources.length === NO_RESOURCES) {
+    assertNoUncertainCodeSandboxes(resources);
     return;
   }
-  const capability = getCodeSandboxCleanup(
-    Object.entries(tools).find(([name]) => name === "codeExecution")?.[1]
-  );
-  if (!capability) {
-    throw new Error(
-      "Install the code execution tool to clean up its durable sandbox resources."
-    );
-  }
-  const cleanup = capability.createCleanupSession();
+  const cleanup = createCodeSandboxCleanupSession();
   for (const resource of confirmedResources) {
-    if (
-      eveCodeSandboxName({
-        callId: resource.callId,
-        ownerId,
-        provider: cleanup.provider,
-        sessionId: resource.sessionId ?? undefined,
-      }) !== resource.name
-    ) {
-      throw new Error(
-        "Code sandbox provider scope does not match its allocation intent."
-      );
-    }
-    // Cleanup and absence confirmation form one ordered provider transaction.
-    // eslint-disable-next-line no-await-in-loop -- Confirm provider absence before releasing durable ownership for each sandbox; cleanup and deletion recording must remain ordered.
-    await cleanup.deleteAndConfirmAbsent(resource.name);
-    // Release durable ownership only after provider absence is confirmed.
-    // eslint-disable-next-line no-await-in-loop -- Confirm provider absence before releasing durable ownership for each sandbox; cleanup and deletion recording must remain ordered.
-    await recordEveCodeSandboxDeletion(
-      ownerId,
-      resource.conversationId,
-      resource.name
-    );
+    // Keep identity verification, provider absence, and durable release as one ordered unit per resource.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The shared provider cleanup session verifies identity, proves absence, and durably releases one resource before the next; a failed resource must retain later ownership.
+    await purgeConfirmedCodeSandbox(ownerId, resource, cleanup);
   }
   if (resources.some((resource) => !resource.creationConfirmed)) {
     throw new Error(
@@ -74,4 +100,3 @@ export const purgeEveFamilyCodeSandboxes = async (
     );
   }
 };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

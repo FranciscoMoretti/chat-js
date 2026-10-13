@@ -1,26 +1,25 @@
-import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-import { createEveToolCost } from "@/lib/eve/tool-cost";
-import { eveToolImageContext } from "@/lib/eve/tool-image-context";
-import { eveToolModelProvider } from "@/lib/eve/tool-models";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import type { ToolUsage } from "@/lib/eve/tool-usage";
-import { createModuleLogger } from "@/lib/logger";
-
 import {
   ABSENT_DIAGNOSTIC_VALUE,
   getErrorDebugInfo,
   resolveError,
   serializeError,
 } from "./image-errors";
-import {
-  runGenerateImageMultimodal,
-  runGenerateImageTraditional,
-} from "./image-generation";
 import type {
   GeneratedImageResult,
   ImageGenerationOptions,
   ImageStoreFile,
 } from "./image-generation";
+import type { ToolUsage } from "@/lib/eve/tool-usage";
+import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
+import { createEveToolCost } from "@/lib/eve/tool-cost";
+import { createModuleLogger } from "@/lib/logger";
+import { eveToolImageContext } from "@/lib/eve/tool-image-context";
+import { eveToolModelProvider } from "@/lib/eve/tool-models";
+import {
+  runGenerateImageMultimodal,
+  runGenerateImageTraditional,
+} from "./image-generation";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { resolveImageModel } from "./image-model";
 
 const log = createModuleLogger("ai.tools.generate-image");
@@ -56,14 +55,15 @@ const createImageRequest = (
       return usage.fail();
     }
   };
-  const selected = context.session.auth.current?.attributes.modelId;
+  const { current } = context.session.auth;
+  const selected = current && current.attributes.modelId;
   const selectedModel =
     typeof selected === "string" ? selected : ABSENT_DIAGNOSTIC_VALUE;
   const { attachments, lastGeneratedImage } = eveToolImageContext.get();
   const startMs = Date.now();
   const imageParts = attachments.filter(
     (part: Readonly<{ type: string; mediaType?: string }>): boolean =>
-      part.type === "file" && part.mediaType?.startsWith("image/") === true
+      part.type === "file" && (part.mediaType ?? "").startsWith("image/")
   );
   return {
     options: {
@@ -102,9 +102,11 @@ const executeImageRequest = async (
       options.modelProvider,
       selectedModel
     );
-    return selection.multimodal
-      ? await runGenerateImageMultimodal(options, selection)
-      : await runGenerateImageTraditional(options, selection.modelId);
+
+    if (selection.multimodal) {
+      return await runGenerateImageMultimodal(options, selection);
+    }
+    return await runGenerateImageTraditional(options, selection.modelId);
   } catch (error) {
     const resolvedError = await resolveError(error);
     log.error(

@@ -1,58 +1,46 @@
 "use client";
 
 import {
-  Root as DialogPrimitiveRoot,
-  Trigger as DialogPrimitiveTrigger,
-  Portal as DialogPrimitivePortal,
   Close as DialogPrimitiveClose,
-  Overlay as DialogPrimitiveOverlay,
   Content as DialogPrimitiveContent,
-  Title as DialogPrimitiveTitle,
   Description as DialogPrimitiveDescription,
+  Overlay as DialogPrimitiveOverlay,
+  Portal as DialogPrimitivePortal,
+  Root as DialogPrimitiveRoot,
+  Title as DialogPrimitiveTitle,
+  Trigger as DialogPrimitiveTrigger,
 } from "@radix-ui/react-dialog";
-import { XIcon } from "lucide-react";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Dialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const Dialog = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveRoot>): ReactJSX.Element => (
-  <DialogPrimitiveRoot data-slot="dialog" {...props} />
-);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+const Dialog = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof DialogPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => <DialogPrimitiveRoot data-slot="dialog" {...props} />;
 
-const DialogTrigger = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveTrigger>): ReactJSX.Element => (
+const DialogTrigger = (
+  props: ReactComponentProps<typeof DialogPrimitiveTrigger>
+): ReactJSX.Element => (
   <DialogPrimitiveTrigger data-slot="dialog-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const DialogPortal = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitivePortal>): ReactJSX.Element => (
+const DialogPortal = (
+  props: ReactComponentProps<typeof DialogPrimitivePortal>
+): ReactJSX.Element => (
   <DialogPrimitivePortal data-slot="dialog-portal" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const DialogClose = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveClose>): ReactJSX.Element => (
+const DialogClose = (
+  props: ReactComponentProps<typeof DialogPrimitiveClose>
+): ReactJSX.Element => (
   <DialogPrimitiveClose data-slot="dialog-close" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DialogOverlay = ({
   className,
@@ -67,9 +55,6 @@ const DialogOverlay = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DialogContent = ({
   className,
@@ -77,7 +62,7 @@ const DialogContent = ({
   showCloseButton = true,
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveContent> & {
-  showCloseButton?: boolean;
+  readonly showCloseButton?: boolean;
 }): ReactJSX.Element => (
   <DialogPortal data-slot="dialog-portal">
     <DialogOverlay />
@@ -102,9 +87,6 @@ const DialogContent = ({
     </DialogPrimitiveContent>
   </DialogPortal>
 );
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const DialogHeader = ({
   className,
@@ -116,9 +98,6 @@ const DialogHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const DialogFooter = ({
   className,
@@ -133,9 +112,6 @@ const DialogFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DialogTitle = ({
   className,
@@ -147,9 +123,6 @@ const DialogTitle = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DialogDescription = ({
   className,
@@ -163,7 +136,6 @@ const DialogDescription = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   Dialog,

@@ -1,12 +1,8 @@
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-
-import type postgresType from "postgres";
-
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
+import { fileURLToPath } from "node:url";
 
 const EMPTY_MESSAGE_LENGTH = 0;
 const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
@@ -16,7 +12,6 @@ const POSTGRES_MAX_LIFETIME_SECONDS = 0;
 const POSTGRES_CLOSE_TIMEOUT_SECONDS = 5;
 const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 interface BuildOperations {
   openDatabase: (url: string) => {
     close: () => Promise<void>;
@@ -24,12 +19,10 @@ interface BuildOperations {
   };
   run: (
     command: "db:migrate" | "build",
-    env: NodeJS.ProcessEnv
+    env: Readonly<NodeJS.ProcessEnv>
   ) => Promise<void>;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 const formatBuildFailure = (phase: string, error: unknown): string => {
   if (phase === "validation" && error instanceof PreviewConfigurationError) {
     return `Maintainer build failed during validation: ${error.message}`;
@@ -46,14 +39,10 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     );
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runMaintainerBuild: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runMaintainerBuild = async (
-  source: NodeJS.ProcessEnv,
-  operations: BuildOperations
+  source: Readonly<NodeJS.ProcessEnv>,
+  operations: Readonly<BuildOperations>
 ): Promise<void> => {
   let phase = "validation";
   let failureMessage: string | undefined;
@@ -105,22 +94,10 @@ const runMaintainerBuild = async (
     throw new Error(failureMessage);
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable node/no-process-env -- vercel-preview-build.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-console -- vercel-preview-build.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- vercel-preview-build.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 if (import.meta.main) {
   try {
-    const require = createRequire(
-      new URL("../apps/chat/package.json", import.meta.url)
-    );
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Resolve the chat workspace postgres package explicitly; its exported default has the imported postgres type.
-    const { default: postgres }: { default: typeof postgresType } =
-      await import(require.resolve("postgres"));
+    const { default: postgres } = await import("postgres");
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {
@@ -130,14 +107,15 @@ if (import.meta.main) {
           max_lifetime: POSTGRES_MAX_LIFETIME_SECONDS,
         });
         return {
-          close: (): Promise<void> =>
-            connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS }),
+          close: async (): Promise<void> => {
+            await connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS });
+          },
           execute: async (query): Promise<void> => {
             await connection.unsafe(query);
           },
         };
       },
-      run: async (command, env): Promise<void> => {
+      run: async (command, env: Readonly<NodeJS.ProcessEnv>): Promise<void> => {
         const child = Bun.spawn(["bun", "run", command], {
           cwd: fileURLToPath(new URL("../apps/chat/", import.meta.url)),
           env,
@@ -163,8 +141,4 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable node/no-process-env */
 export { runMaintainerBuild };

@@ -1,40 +1,39 @@
 "use client";
 
 import {
-  Root as HoverCardPrimitiveRoot,
-  Trigger as HoverCardPrimitiveTrigger,
   Content as HoverCardPrimitiveContent,
   Portal as HoverCardPrimitivePortal,
+  Root as HoverCardPrimitiveRoot,
+  Trigger as HoverCardPrimitiveTrigger,
 } from "@radix-ui/react-hover-card";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- HoverCard: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const HoverCard = ({
-  ...props
-}: ReactComponentProps<typeof HoverCardPrimitiveRoot>): ReactJSX.Element => (
+const DEFAULT_SIDE_OFFSET = 4;
+
+const HoverCard = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof HoverCardPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => (
   <HoverCardPrimitiveRoot data-slot="hover-card" {...props} />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-const HoverCardTrigger = ({
-  ...props
-}: ReactComponentProps<typeof HoverCardPrimitiveTrigger>): ReactJSX.Element => (
+const HoverCardTrigger = (
+  props: ReactComponentProps<typeof HoverCardPrimitiveTrigger>
+): ReactJSX.Element => (
   <HoverCardPrimitiveTrigger data-slot="hover-card-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const HoverCardContent = ({
   className,
   align = "center",
-  sideOffset = 4,
+  sideOffset = DEFAULT_SIDE_OFFSET,
   ...props
 }: ReactComponentProps<typeof HoverCardPrimitiveContent>): ReactJSX.Element => (
   <HoverCardPrimitivePortal data-slot="hover-card-portal">
@@ -50,6 +49,5 @@ const HoverCardContent = ({
     />
   </HoverCardPrimitivePortal>
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { HoverCard, HoverCardContent, HoverCardTrigger };

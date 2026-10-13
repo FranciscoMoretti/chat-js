@@ -1,10 +1,14 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef, useState } from "react";
 
+import {
+  DEFAULT_PROJECT_COLOR,
+  DEFAULT_PROJECT_ICON,
+} from "@/lib/project-icons";
+
 import { ProjectIconPicker } from "@/components/project-icon-picker";
-import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogContent,
@@ -13,19 +17,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
-import {
-  DEFAULT_PROJECT_COLOR,
-  DEFAULT_PROJECT_ICON,
-} from "@/lib/project-icons";
+
+import { Button } from "@/components/ui/button";
+
+import { Input } from "@/components/ui/input";
+
+import type { JSX as ReactJSX } from "react";
 
 export interface ProjectDetailsData {
-  color: ProjectColorName;
-  icon: ProjectIconName;
-  name: string;
+  readonly color: ProjectColorName;
+  readonly icon: ProjectIconName;
+  readonly name: string;
 }
-/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ProjectDetailsDialog = ({
   open,
@@ -37,15 +42,16 @@ export const ProjectDetailsDialog = ({
   onSubmit,
   isLoading,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mode: "create" | "edit";
-  initialName?: string;
-  initialIcon?: ProjectIconName;
-  initialColor?: ProjectColorName;
-  onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
-  isLoading: boolean;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly mode: "create" | "edit";
+  readonly initialName?: string;
+  readonly initialIcon?: ProjectIconName;
+  readonly initialColor?: ProjectColorName;
+  readonly onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
+  readonly isLoading: boolean;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
@@ -99,7 +105,6 @@ export const ProjectDetailsDialog = ({
       onOpenChange(false);
     }
   };
-
   const handleSubmit = async (): Promise<void> => {
     setSubmitError("");
     try {
@@ -108,7 +113,6 @@ export const ProjectDetailsDialog = ({
       setSubmitError("Could not save project. Try again.");
     }
   };
-
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       setName(initialName ?? "");
@@ -148,12 +152,15 @@ export const ProjectDetailsDialog = ({
             onIconChange={setIcon}
           />
           <Input
-            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the project editor intentionally starts keyboard entry in the project name field.
             autoFocus
             className="flex-1"
             maxLength={255}
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={(keyboardEvent) => {
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => {
+              setName(event.target.value);
+            }}
+            onKeyDown={(keyboardEvent: { readonly key: string }) => {
               if (keyboardEvent.key === "Enter" && !isDisabled) {
                 void handleSubmit();
               } else if (keyboardEvent.key === "Escape") {
@@ -166,13 +173,20 @@ export const ProjectDetailsDialog = ({
         </div>
         {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
-          <Button onClick={() => handleOpenChange(false)} variant="outline">
+          <Button
+            onClick={() => {
+              handleOpenChange(false);
+            }}
+            variant="outline"
+          >
             Cancel
           </Button>
           <Button
             disabled={isDisabled}
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Project submission owns dialog state and failure feedback; the button only triggers that lifecycle.
-            onClick={handleSubmit}
+
+            onClick={() => {
+              startEventAction(handleSubmit);
+            }}
           >
             {buttonText}
           </Button>
@@ -181,4 +195,3 @@ export const ProjectDetailsDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */

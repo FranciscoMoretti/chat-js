@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Ordered migrations and fixtures exercise the real schema. */
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
@@ -9,34 +5,41 @@ import { PGlite } from "@electric-sql/pglite";
 import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-/* oxlint-enable import/no-nodejs-modules */
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./client") accepts query: SQL; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-vi.mock("./client", () => {
-  const database = drizzle(postgres);
-  return {
+const mocks = vi.hoisted(() => ({
+  execute:
+    vi.fn<(query: ReadonlyNativeSurface<SQL>) => Promise<readonly unknown[]>>(),
+}));
+vi.mock(
+  "./client",
+  (): {
     db: {
-      execute: async (query: SQL) => {
-        const result = await database.execute(query);
-        return result.rows;
+      execute: (
+        query: ReadonlyNativeSurface<SQL>
+      ) => Promise<readonly unknown[]>;
+      transaction: ReturnType<typeof drizzle>["transaction"];
+    };
+  } => {
+    const database = drizzle(postgres);
+    mocks.execute.mockImplementation(async (query) => {
+      const result = await database.execute(query);
+      return result.rows;
+    });
+    return {
+      db: {
+        execute: mocks.execute,
+        transaction: database.transaction.bind(database),
       },
-      transaction: database.transaction.bind(database),
-    },
-  };
-});
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+    };
+  }
+);
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- */
 const { eveEventSearchText } = await import("../eve/search-text");
-/* oxlint-enable import/no-relative-parent-imports */
 const { indexEveSearchText, searchEveConversations } =
   await import("./eve-search");
 const { completeEveConversationDeletion } = await import("./eve-deletion");
@@ -48,7 +51,7 @@ const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
 beforeAll(async () => {
-  for (const filename of [
+  const filenames = [
     "0000_eve_baseline.sql",
     "0001_brainy_the_stranger.sql",
     "0002_nappy_caretaker.sql",
@@ -57,45 +60,54 @@ beforeAll(async () => {
     "0005_managed_workflow_safeguards.sql",
     "0006_unpriced_usage_index.sql",
     "0007_kind_charles_xavier.sql",
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply the real migrations in sequence.
-    await postgres.exec(
-      await readFile(
-        new URL(`migrations/${filename}`, import.meta.url),
-        "utf-8"
-      )
-    );
+  ];
+  const migrations = await Promise.all(
+    filenames.map(
+      async (filename) =>
+        await readFile(
+          new URL(`migrations/${filename}`, import.meta.url),
+          "utf-8"
+        )
+    )
+  );
+  for (const migration of migrations) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
+    await postgres.exec(migration);
   }
   await postgres.exec(
     `insert into "user" (id, name, email) values ('alice', 'Alice', 'alice@example.test'), ('bob', 'Bob', 'bob@example.test')`
   );
-  for (const [id, conversationId, ownerId, title] of [
-    [chat, branch, "alice", "Weekend notes"],
-    [titleChat, titleBranch, "alice", "Saffron cooking"],
-    [otherChat, otherBranch, "bob", "Private saffron"],
-  ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Seed each owned chat and its binding.
-    await postgres.query(
-      `insert into "EveChat" (id, "ownerId", title) values ($1, $2, $3)`,
-      [id, ownerId, title]
-    );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Seed each owned chat and its binding.
-    await postgres.query(
-      `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, $3, '', $1::uuid, $1::text, 'bound')`,
-      [conversationId, id, ownerId]
-    );
-  }
+  await postgres.query(
+    `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Weekend notes'), ($2, 'alice', 'Saffron cooking'), ($3, 'bob', 'Private saffron')`,
+    [chat, titleChat, otherChat]
+  );
+  await postgres.query(
+    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound'), ($3::uuid, $4, 'alice', '', $3::uuid, $3::text, 'bound'), ($5::uuid, $6, 'bob', '', $5::uuid, $5::text, 'bound')`,
+    [branch, chat, titleBranch, titleChat, otherBranch, otherChat]
+  );
 }, DATABASE_SETUP_TIMEOUT_MS);
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-afterAll(() => postgres.close());
-/* oxlint-enable typescript/promise-function-async */
+afterAll(async () => {
+  await postgres.close();
+});
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
+it("rejects malformed database rows before returning search results or cursors", async () => {
+  mocks.execute.mockResolvedValueOnce([
+    {
+      conversationId: branch,
+      excerpt: "Try saffron in the rice.",
+      highlightQuery: "'saffron'",
+      highlightWords: {},
+      id: chat,
+      rank: "invalid",
+      title: "Weekend notes",
+      updatedAt: "2026-10-13T00:00:00.000000Z",
+    },
+  ]);
+  await expect(
+    searchEveConversations("alice", { search: "saffron" })
+  ).rejects.toThrow("rank");
+});
+
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
     { key: "user", text: "Try saffron in the rice." },
@@ -117,7 +129,6 @@ it("finds message-only matches, boosts titles, highlights excerpts and deduplica
   );
   expect(count.rows[0].count).toBe(2);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 it("rejects cross-owner indexing and handles punctuation-only searches", async () => {
   await indexEveSearchText("bob", branch, [
@@ -128,11 +139,6 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
   const punctuation = await searchEveConversations("alice", { search: "!!!" });
   expect(punctuation.items).toEqual([]);
 });
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ accepts ids; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ["saff", [titleChat, chat]],
   ["SAFF", [titleChat, chat]],
@@ -150,7 +156,7 @@ it.each([
   ["' | & :*", []],
 ])(
   "matches the last positive unquoted word as a prefix: %s",
-  async (search, ids) => {
+  async (search: string, ids: readonly string[]) => {
     const result = await searchEveConversations("alice", { search });
     expect(result.items.map((item) => item.id)).toEqual(ids);
     if (search === "saffron ri") {
@@ -158,11 +164,7 @@ it.each([
     }
   }
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
   const matchingBranch = "00000000-0000-4000-8000-000000000007";
   await postgres.query(
@@ -181,11 +183,7 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
   expect(result.items[0].rank).toBeGreaterThan(2);
   expect(result.items[0].excerpt).toContain("⟦Saff⟧ron");
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["SAFF", "⟦Saff⟧ron"], ["saffron OR saff", "⟦Saffron⟧"], ['"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ["SAFF", "⟦Saff⟧ron"],
   ["saffron OR saff", "⟦Saffron⟧"],
@@ -200,11 +198,7 @@ it.each([
     );
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("shows an assistant-only Hello match even when the title also matches", async () => {
   await postgres.query(
     `update "EveChat" set title = 'Friendly Hello Chat' where id = $1`,
@@ -237,11 +231,7 @@ it("shows an assistant-only Hello match even when the title also matches", async
     [titleChat]
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],
   ["istan", "İstanbul", "⟦İstan⟧bul"],
@@ -257,12 +247,7 @@ it.each([
     );
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result  uses 20, 0, 5, 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("continues past tied ranks and timestamps without skipping when an earlier result  accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
     insert into "user" (id, name, email) values ('pager', 'Pager', 'pager@example.test');
@@ -289,12 +274,7 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
     new Set([...first.items, ...second.items].map((item) => item.id)).size
   ).toBe(25);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("finds a maximum-length quoted phrase crossing a chunk boundary") uses 48, 2, 255, 1999, 0, 8200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds a maximum-length quoted phrase crossing a chunk boundary") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
   const phrase = `start ${"word ".repeat(48)}endingz`;
   expect(phrase.length + 2).toBe(255);
@@ -313,12 +293,7 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
   });
   expect(result.items.map((item) => item.id)).toEqual([chat]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("hides deleting chats and permanently erases text without allowing a late backfill accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where id = $1`,
@@ -334,14 +309,56 @@ it("hides deleting chats and permanently erases text without allowing a late bac
   );
   expect(count.rows[0].count).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
- * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("repairs only the known unpublished preview history and preserves conversation dat uses 1_789_411_557_764, 1_789_979_176_755, 1_790_327_870_855, 3, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): it("repairs only the known unpublished preview history and preserves conversation dat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
+it("blocks deletion for retained document revisions only within the requested family", async () => {
+  const deletingChat = crypto.randomUUID();
+  const deletingConversation = crypto.randomUUID();
+  const unrelatedChat = crypto.randomUUID();
+  const unrelatedConversation = crypto.randomUUID();
+  await postgres.query(
+    `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Delete me'), ($2, 'alice', 'Keep me')`,
+    [deletingChat, unrelatedChat]
+  );
+  await postgres.query(
+    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", state) values ($1, $2, 'alice', 'Delete me', $1, 'deleting'), ($3, $4, 'alice', 'Keep me', $3, 'bound')`,
+    [deletingConversation, deletingChat, unrelatedConversation, unrelatedChat]
+  );
+  await postgres.query(
+    `insert into "EveDocumentRevision" ("conversationId", "documentId", "ownerId", "operationId", content, kind, title) values ($1, $2, 'alice', 'retain', 'Private payload', 'text', 'Retained'), ($3, $4, 'alice', 'unrelated', 'Other payload', 'text', 'Unrelated')`,
+    [
+      deletingConversation,
+      crypto.randomUUID(),
+      unrelatedConversation,
+      crypto.randomUUID(),
+    ]
+  );
+  await expect(
+    completeEveConversationDeletion("alice", deletingChat)
+  ).rejects.toThrow("Application content cleanup is incomplete.");
+  const pending = await postgres.query<{ state: string }>(
+    `select state from "EveConversation" where id = $1`,
+    [deletingConversation]
+  );
+  expect(pending.rows[0].state).toBe("deleting");
+  await postgres.query(
+    `delete from "EveDocumentRevision" where "conversationId" = $1`,
+    [deletingConversation]
+  );
+  await completeEveConversationDeletion("alice", deletingChat);
+  const finalized = await postgres.query<{
+    state: string;
+    firstMessage: string;
+  }>(`select state, "firstMessage" from "EveConversation" where id = $1`, [
+    deletingConversation,
+  ]);
+  expect(finalized.rows[0]).toEqual({ firstMessage: "", state: "deleted" });
+  const unrelated = await postgres.query<{ content: string }>(
+    `select content from "EveDocumentRevision" where "conversationId" = $1`,
+    [unrelatedConversation]
+  );
+  expect(unrelated.rows).toEqual([{ content: "Other payload" }]);
+});
+
 const repairPreviewSearchHistory = async (
   preview: Readonly<Pick<PGlite, "exec" | "query">>
 ): Promise<void> => {
@@ -352,18 +369,21 @@ const repairPreviewSearchHistory = async (
       create table "EveChat" (title text);
       insert into "EveChat" values ('Retained conversation');
     `);
-  for (const [file, at] of [
-    ["0000_eve_baseline.sql", 1_789_411_557_764],
-    ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
-  ] as const) {
-    const hash = createHash("sha256")
-      .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
-      .digest("hex");
-    await preview.query(
-      "insert into drizzle.__drizzle_migrations values ($1, $2)",
-      [hash, at]
-    );
-  }
+  const [baseline, nextMigration] = await Promise.all([
+    readFile(new URL("migrations/0000_eve_baseline.sql", import.meta.url)),
+    readFile(
+      new URL("migrations/0001_brainy_the_stranger.sql", import.meta.url)
+    ),
+  ]);
+  await preview.query(
+    "insert into drizzle.__drizzle_migrations values ($1, $2), ($3, $4)",
+    [
+      createHash("sha256").update(baseline).digest("hex"),
+      1_789_411_557_764,
+      createHash("sha256").update(nextMigration).digest("hex"),
+      1_789_979_176_755,
+    ]
+  );
   const repair = await readFile(
     new URL("../../scripts/repair-search-preview.sql", import.meta.url),
     "utf-8"
@@ -403,7 +423,6 @@ const repairPreviewSearchHistory = async (
   );
   expect(removedTable.rows[0]).toMatchObject({ table_name: null });
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 describe("preview search history", (): void => {
   const preview = new PGlite();
@@ -413,14 +432,10 @@ describe("preview search history", (): void => {
   beforeAll(async (): Promise<void> => {
     await preview.waitReady;
   }, DATABASE_SETUP_TIMEOUT_MS);
-
   afterAll(async (): Promise<void> => {
     await preview.close();
   });
-
   it("repairs only the known unpublished preview history and preserves conversation data", async (): Promise<void> => {
     await repairPreviewSearchHistory(preview);
   });
 });
-
-/* oxlint-disable max-lines -- #509: This eve-search.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

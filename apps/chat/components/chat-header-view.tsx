@@ -1,21 +1,22 @@
 "use client";
 
-import React from "react";
-import type { ReactNode } from "react";
-
 import { HeaderActions } from "@/components/header-actions";
+
+import React from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ChatHeaderView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatHeaderView = ({
   breadcrumb,
   actions,
   className,
 }: {
-  breadcrumb: ReactNode;
-  actions?: ReactNode;
-  className?: string;
+  readonly breadcrumb: ReadonlyReactNode;
+  readonly actions?: ReadonlyReactNode;
+  readonly className?: string;
 }): React.JSX.Element => (
   <header
     className={cn(
@@ -33,4 +34,3 @@ export const ChatHeaderView = ({
     <HeaderActions />
   </header>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

@@ -1,26 +1,11 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
-import {
-  createContext as reactCreateContext,
-  useContext as useReactContext,
-  useState as useReactState,
-  useCallback as useReactCallback,
-  useEffect as useReactEffect,
-  useMemo as useReactMemo,
-} from "react";
 import type {
-  ComponentProps as ReactComponentProps,
   CSSProperties as ReactCSSProperties,
+  ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -28,23 +13,38 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-disable import/max-dependencies -- @/hooks/use-mobile import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-enable import/max-dependencies */
+import {
+  createContext as reactCreateContext,
+  useCallback as useReactCallback,
+  useContext as useReactContext,
+  useEffect as useReactEffect,
+  useMemo as useReactMemo,
+  useState as useReactState,
+} from "react";
+
+import { Input } from "@/components/ui/input";
+import { PanelLeftIcon } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Slot } from "@radix-ui/react-slot";
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
+
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
-/* oxlint-disable no-magic-numbers -- SIDEBAR_COOKIE_MAX_AGE: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 60). */
 
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-/* oxlint-enable no-magic-numbers */
+// Persist the sidebar preference for one week, in seconds.
+const SIDEBAR_COOKIE_MAX_AGE = 604_800;
+const MILLISECONDS_PER_SECOND = 1000;
+
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const mobileSidebarStyle: ReactCSSProperties & {
@@ -65,10 +65,8 @@ interface SidebarContextProps {
   isMobile: boolean;
   toggleSidebar: () => void;
 }
-/* oxlint-disable unicorn/no-null -- SidebarContext: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const SidebarContext = reactCreateContext<SidebarContextProps | null>(null);
-/* oxlint-enable unicorn/no-null */
 
 const useSidebar = (): SidebarContextProps => {
   const context = useReactContext(SidebarContext);
@@ -79,8 +77,6 @@ const useSidebar = (): SidebarContextProps => {
   return context;
 };
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent). */
-
 const SidebarProvider = ({
   defaultOpen = true,
   open: openProp,
@@ -90,9 +86,9 @@ const SidebarProvider = ({
   children,
   ...props
 }: ReactComponentProps<"div"> & {
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  readonly defaultOpen?: boolean;
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 }): ReactJSX.Element => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useReactState(false);
@@ -112,17 +108,16 @@ const SidebarProvider = ({
 
       // This sets the cookie to keep the sidebar state.
       // Prefer Cookie Store API when available
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
-      if ("cookieStore" in window) {
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
-        void window.cookieStore.set({
-          expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
+      if ("cookieStore" in globalThis) {
+        void globalThis.cookieStore.set({
+          expires:
+            Date.now() + SIDEBAR_COOKIE_MAX_AGE * MILLISECONDS_PER_SECOND,
           name: SIDEBAR_COOKIE_NAME,
           path: "/",
           value: String(openState),
         });
       } else {
-        // oxlint-disable-next-line unicorn/no-document-cookie -- Preserve the cookie fallback for browsers without Cookie Store support.
+        // oxlint-disable-next-line unicorn/no-document-cookie -- Native-boundaries browser test removes Cookie Store and verifies this compatibility path persists the sidebar preference.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       }
     },
@@ -130,17 +125,21 @@ const SidebarProvider = ({
   );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = useReactCallback(
-    () =>
-      isMobile
-        ? setOpenMobile((wasOpen) => !wasOpen)
-        : setOpen((wasOpen) => !wasOpen),
-    [isMobile, setOpen, setOpenMobile]
-  );
+  const toggleSidebar = useReactCallback(() => {
+    if (isMobile) {
+      setOpenMobile((wasOpen) => !wasOpen);
+      return;
+    }
+    setOpen((wasOpen) => !wasOpen);
+  }, [isMobile, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   useReactEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
+    const handleKeyDown = (
+      event: Readonly<
+        Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "preventDefault">
+      >
+    ): void => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
@@ -151,7 +150,9 @@ const SidebarProvider = ({
     };
 
     globalThis.addEventListener("keydown", handleKeyDown);
-    return (): void => globalThis.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
   }, [toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -195,8 +196,6 @@ const SidebarProvider = ({
     </SidebarContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Sidebar = ({
   side = "left",
@@ -206,11 +205,15 @@ const Sidebar = ({
   children,
   ...props
 }: ReactComponentProps<"div"> & {
-  side?: "left" | "right";
-  variant?: "sidebar" | "floating" | "inset";
-  collapsible?: "offcanvas" | "icon" | "none";
+  readonly side?: "left" | "right";
+  readonly variant?: "sidebar" | "floating" | "inset";
+  readonly collapsible?: "offcanvas" | "icon" | "none";
 }): ReactJSX.Element => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const hasInsetSpacing = variant === "floating" || variant === "inset";
+  const hasFlushEdges = !hasInsetSpacing;
+  const isLeft = side === "left";
+  const isRight = !isLeft;
 
   if (collapsible === "none") {
     return (
@@ -264,22 +267,25 @@ const Sidebar = ({
           "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+          hasInsetSpacing &&
+            "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]",
+          hasFlushEdges &&
+            "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
         )}
         data-slot="sidebar-gap"
       />
       <div
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-          side === "left"
-            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+          isLeft &&
+            "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
+          isRight &&
+            "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
           // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          hasInsetSpacing &&
+            "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]",
+          hasFlushEdges &&
+            "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className
         )}
         data-slot="sidebar-container"
@@ -296,9 +302,6 @@ const Sidebar = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 const SidebarTrigger = ({
   className,
@@ -306,16 +309,22 @@ const SidebarTrigger = ({
   ...props
 }: ReactComponentProps<typeof Button>): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
+  const handleClick = useReactCallback<
+    NonNullable<ReactComponentProps<typeof Button>["onClick"]>
+  >(
+    (event) => {
+      onClick?.(event);
+      toggleSidebar();
+    },
+    [onClick, toggleSidebar]
+  );
 
   return (
     <Button
       className={cn("size-7", className)}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      onClick={(event) => {
-        onClick?.(event);
-        toggleSidebar();
-      }}
+      onClick={handleClick}
       size="icon"
       variant="ghost"
       {...props}
@@ -325,9 +334,6 @@ const SidebarTrigger = ({
     </Button>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"button">). */
 
 const SidebarRail = ({
   className,
@@ -357,9 +363,6 @@ const SidebarRail = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInset: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"main">). */
 
 const SidebarInset = ({
   className,
@@ -375,9 +378,6 @@ const SidebarInset = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<typeof Input>). */
 
 const SidebarInput = ({
   className,
@@ -390,9 +390,6 @@ const SidebarInput = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarHeader = ({
   className,
@@ -405,9 +402,6 @@ const SidebarHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarFooter = ({
   className,
@@ -420,9 +414,6 @@ const SidebarFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarSeparator = ({
   className,
@@ -438,9 +429,6 @@ const SidebarSeparator = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarContent = ({
   className,
@@ -456,9 +444,6 @@ const SidebarContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarGroup = ({
   className,
@@ -471,15 +456,14 @@ const SidebarGroup = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarGroupLabel = ({
   className,
   asChild = false,
   ...props
-}: ReactComponentProps<"div"> & { asChild?: boolean }): ReactJSX.Element => {
+}: ReactComponentProps<"div"> & {
+  readonly asChild?: boolean;
+}): ReactJSX.Element => {
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -495,16 +479,13 @@ const SidebarGroupLabel = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarGroupAction = ({
   className,
   asChild = false,
   ...props
 }: ReactComponentProps<"button"> & {
-  asChild?: boolean;
+  readonly asChild?: boolean;
 }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
@@ -523,9 +504,6 @@ const SidebarGroupAction = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarGroupContent = ({
   className,
@@ -538,9 +516,6 @@ const SidebarGroupContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
 
 const SidebarMenu = ({
   className,
@@ -553,9 +528,6 @@ const SidebarMenu = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
 
 const SidebarMenuItem = ({
   className,
@@ -568,7 +540,6 @@ const SidebarMenuItem = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const sidebarMenuButtonVariants = cva(
   "peer/menu-button ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
@@ -588,7 +559,6 @@ const sidebarMenuButtonVariants = cva(
     },
   }
 );
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- SidebarMenuButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including tooltip). */
 
 const SidebarMenuButton = ({
   asChild = false,
@@ -599,9 +569,9 @@ const SidebarMenuButton = ({
   className,
   ...props
 }: ReactComponentProps<"button"> & {
-  asChild?: boolean;
-  isActive?: boolean;
-  tooltip?: string | ReactComponentProps<typeof TooltipContent>;
+  readonly asChild?: boolean;
+  readonly isActive?: boolean;
+  readonly tooltip?: string | ReactComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
@@ -617,7 +587,8 @@ const SidebarMenuButton = ({
     />
   );
 
-  if (!tooltip) {
+  const hasTooltip = Boolean(tooltip);
+  if (!hasTooltip) {
     return button;
   }
 
@@ -636,9 +607,6 @@ const SidebarMenuButton = ({
     </Tooltip>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarMenuAction = ({
   className,
@@ -646,8 +614,8 @@ const SidebarMenuAction = ({
   showOnHover = false,
   ...props
 }: ReactComponentProps<"button"> & {
-  asChild?: boolean;
-  showOnHover?: boolean;
+  readonly asChild?: boolean;
+  readonly showOnHover?: boolean;
 }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
@@ -671,9 +639,6 @@ const SidebarMenuAction = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuBadge: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SidebarMenuBadge = ({
   className,
@@ -694,16 +659,13 @@ const SidebarMenuBadge = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarMenuSkeleton = ({
   className,
   showIcon = false,
   ...props
 }: ReactComponentProps<"div"> & {
-  showIcon?: boolean;
+  readonly showIcon?: boolean;
 }): ReactJSX.Element => (
   <div
     className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
@@ -725,9 +687,6 @@ const SidebarMenuSkeleton = ({
     />
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
 
 const SidebarMenuSub = ({
   className,
@@ -744,9 +703,6 @@ const SidebarMenuSub = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
 
 const SidebarMenuSubItem = ({
   className,
@@ -759,9 +715,6 @@ const SidebarMenuSubItem = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarMenuSubButton = ({
   asChild = false,
@@ -770,9 +723,9 @@ const SidebarMenuSubButton = ({
   className,
   ...props
 }: ReactComponentProps<"a"> & {
-  asChild?: boolean;
-  size?: "sm" | "md";
-  isActive?: boolean;
+  readonly asChild?: boolean;
+  readonly size?: "sm" | "md";
+  readonly isActive?: boolean;
 }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "a";
 
@@ -794,9 +747,6 @@ const SidebarMenuSubButton = ({
     />
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/only-export-components -- sidebar.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export {
   Sidebar,
@@ -824,6 +774,3 @@ export {
   SidebarTrigger,
   useSidebar,
 };
-/* oxlint-enable react/only-export-components */
-
-/* oxlint-disable max-lines -- sidebar keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

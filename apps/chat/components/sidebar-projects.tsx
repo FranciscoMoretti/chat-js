@@ -1,22 +1,28 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderPlus } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
 import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { usePathname, useRouter } from "next/navigation";
+
+import { FolderPlus } from "lucide-react";
+
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
-import type { ProjectDetailsData } from "@/components/project-details-dialog";
+
+import type { JSX as ReactJSX } from "react";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
+
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SidebarProjects: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data). */
 
 export const SidebarProjects = (): ReactJSX.Element => {
   const pathname = usePathname();
@@ -40,7 +46,7 @@ export const SidebarProjects = (): ReactJSX.Element => {
 
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: (data: Readonly<{ id: string }>) => {
         void queryClient.invalidateQueries({
           queryKey: trpc.project.list.queryKey(),
         });
@@ -60,30 +66,35 @@ export const SidebarProjects = (): ReactJSX.Element => {
       name: data.name,
     });
   };
-
   return (
     <>
       <SidebarMenuItem>
         <SidebarMenuButton
           className="cursor-pointer"
-          onClick={() => setNewProjectDialogOpen(true)}
+          onClick={() => {
+            setNewProjectDialogOpen(true);
+          }}
         >
           <FolderPlus className="size-4" />
           <span>New project</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
       {!isLoading &&
-        projects?.map((project) => {
-          const isActive = currentProjectId === project.id;
-          return (
-            <SidebarProjectItem
-              isActive={isActive}
-              key={project.id}
-              project={project}
-              setOpenMobile={setOpenMobile}
-            />
-          );
-        })}
+        projects?.map(
+          (
+            project: ReadonlyNativeSurface<NonNullable<typeof projects>[number]>
+          ) => {
+            const isActive = currentProjectId === project.id;
+            return (
+              <SidebarProjectItem
+                isActive={isActive}
+                key={project.id}
+                project={project}
+                setOpenMobile={setOpenMobile}
+              />
+            );
+          }
+        )}
 
       <ProjectDetailsDialog
         isLoading={createProjectMutation.isPending}
@@ -95,4 +106,3 @@ export const SidebarProjects = (): ReactJSX.Element => {
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

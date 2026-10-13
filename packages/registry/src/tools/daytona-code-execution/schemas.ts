@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+import { z } from "zod";
 
 const codeExecutionInput = z.object({
   code: z
@@ -15,14 +14,12 @@ const codeExecutionInput = z.object({
   title: z.string().describe("The title of the code snippet."),
 });
 
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const codeExecutionResult = z.object({
+  message: z.string(),
   chart: z.union([
     z.string(),
     z.object({ base64: z.string(), format: z.string() }),
     z.record(z.string(), z.json()),
   ]),
-  message: z.string(),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 export { codeExecutionInput, codeExecutionResult };

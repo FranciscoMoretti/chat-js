@@ -1,24 +1,20 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
 import { ChevronDownIcon, Code } from "lucide-react";
-import React from "react";
-import type { ComponentProps } from "react";
-
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-
 import { CodeBlock, CodeBlockCopyButton } from "./code-block";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ComponentProps } from "react";
+import React from "react";
+import type { ToolUIPart } from "ai";
+import { cn } from "@/lib/utils";
 import { getStatusBadge } from "./tool";
 
 type SandboxRootProps = ComponentProps<typeof Collapsible>;
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sandbox: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxRootProps). */
 
 const Sandbox = ({
   className,
@@ -30,7 +26,6 @@ const Sandbox = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface SandboxHeaderProps {
   title?: string;
@@ -38,14 +33,12 @@ interface SandboxHeaderProps {
   className?: string;
 }
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
 const SandboxHeader = ({
   className,
   title,
   state,
   ...props
-}: SandboxHeaderProps): React.JSX.Element => (
+}: Readonly<SandboxHeaderProps>): React.JSX.Element => (
   <CollapsibleTrigger
     className={cn(
       "flex w-full items-center justify-between gap-4 p-3",
@@ -61,11 +54,8 @@ const SandboxHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxContentProps = ComponentProps<typeof CollapsibleContent>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxContentProps). */
 
 const SandboxContent = ({
   className,
@@ -79,11 +69,8 @@ const SandboxContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxTabsProps = ComponentProps<typeof Tabs>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabs: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsProps). */
 
 const SandboxTabs = ({
   className,
@@ -91,11 +78,8 @@ const SandboxTabs = ({
 }: SandboxTabsProps): React.JSX.Element => (
   <Tabs className={cn("w-full", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxTabsBarProps = ComponentProps<"div">;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsBar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsBarProps). */
 
 const SandboxTabsBar = ({
   className,
@@ -109,11 +93,8 @@ const SandboxTabsBar = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxTabsListProps = ComponentProps<typeof TabsList>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsListProps). */
 
 const SandboxTabsList = ({
   className,
@@ -124,11 +105,8 @@ const SandboxTabsList = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxTabsTriggerProps = ComponentProps<typeof TabsTrigger>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsTriggerProps). */
 
 const SandboxTabsTrigger = ({
   className,
@@ -142,11 +120,8 @@ const SandboxTabsTrigger = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxTabContentProps = ComponentProps<typeof TabsContent>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabContentProps). */
 
 const SandboxTabContent = ({
   className,
@@ -154,11 +129,8 @@ const SandboxTabContent = ({
 }: SandboxTabContentProps): React.JSX.Element => (
   <TabsContent className={cn("mt-0 text-sm", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxCode: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxCodeProps). */
 
 const SandboxCode = ({
   className,
@@ -171,11 +143,8 @@ const SandboxCode = ({
     />
   </CodeBlock>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type SandboxOutputProps = Omit<ComponentProps<typeof CodeBlock>, "language">;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxOutput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxOutputProps). */
 
 const SandboxOutput = ({
   className,
@@ -192,7 +161,6 @@ const SandboxOutput = ({
     />
   </CodeBlock>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {
   Sandbox,
   SandboxCode,

@@ -1,10 +1,6 @@
 "use client";
 
-import { XIcon } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import React from "react";
 import type { ComponentProps, HTMLAttributes } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -12,11 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { LucideIcon } from "lucide-react";
+import React from "react";
+import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ArtifactProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Artifact: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactProps). */
 
 const Artifact = ({
   className,
@@ -30,11 +27,8 @@ const Artifact = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactHeaderProps). */
 
 const ArtifactHeader = ({
   className,
@@ -48,11 +42,8 @@ const ArtifactHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactCloseProps = ComponentProps<typeof Button>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ArtifactClose = ({
   className,
@@ -75,11 +66,8 @@ const ArtifactClose = ({
     <span className="sr-only">Close</span>
   </Button>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactTitleProps). */
 
 const ArtifactTitle = ({
   className,
@@ -90,11 +78,8 @@ const ArtifactTitle = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactDescriptionProps). */
 
 const ArtifactDescription = ({
   className,
@@ -102,11 +87,8 @@ const ArtifactDescription = ({
 }: ArtifactDescriptionProps): React.JSX.Element => (
   <p className={cn("text-muted-foreground text-sm", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactActionsProps). */
 
 const ArtifactActions = ({
   className,
@@ -114,15 +96,12 @@ const ArtifactActions = ({
 }: ArtifactActionsProps): React.JSX.Element => (
   <div className={cn("flex items-center gap-1", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
   icon?: LucideIcon;
 };
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
 const ArtifactAction = ({
   tooltip,
@@ -134,6 +113,11 @@ const ArtifactAction = ({
   variant = "ghost",
   ...props
 }: ArtifactActionProps): React.JSX.Element => {
+  let accessibleLabel = tooltip;
+  if (typeof label === "string" && label !== "") {
+    accessibleLabel = label;
+  }
+
   const button = (
     <Button
       className={cn(
@@ -146,8 +130,7 @@ const ArtifactAction = ({
       {...props}
     >
       {Icon ? <Icon className="size-4" /> : children}
-      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
-      <span className="sr-only">{label || tooltip}</span>
+      <span className="sr-only">{accessibleLabel}</span>
     </Button>
   );
 
@@ -166,11 +149,8 @@ const ArtifactAction = ({
 
   return button;
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactContentProps). */
 
 const ArtifactContent = ({
   className,
@@ -178,7 +158,6 @@ const ArtifactContent = ({
 }: ArtifactContentProps): React.JSX.Element => (
   <div className={cn("flex-1 overflow-auto p-4", className)} {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {
   Artifact,
   ArtifactAction,

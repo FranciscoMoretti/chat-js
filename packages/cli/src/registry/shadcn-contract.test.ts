@@ -1,9 +1,8 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { installItems, listTools, readItem, registryConfig } from "./shadcn";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { tmpdir } from "node:os";
 
 const createConfigFixture = async (registry: unknown): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-metadata-"));
@@ -13,7 +12,6 @@ const createConfigFixture = async (registry: unknown): Promise<string> => {
   );
   return root;
 };
-
 const configuredRegistry = {
   headers: { "X-Registry-Contract": "preserved" },
   params: { version: "fixture" },
@@ -33,7 +31,6 @@ test("registry config preserves the SDK object URL, parameters and headers contr
     await rm(root, { force: true, recursive: true });
   }
 });
-
 const metadataVariants: readonly unknown[] = [
   {},
   JSON.parse('{"chatjs":null}'),
@@ -84,7 +81,6 @@ test("tool listing narrows only the ChatJS kind and retains arbitrary metadata",
     await rm(root, { force: true, recursive: true });
   }
 });
-
 test("item parsing returns the SDK schema data without stripping third-party metadata", async () => {
   const server = Bun.serve({
     fetch: () => Response.json(selectedItem),
@@ -101,7 +97,6 @@ test("item parsing returns the SDK schema data without stripping third-party met
     await rm(root, { force: true, recursive: true });
   }
 });
-
 const installableItem = {
   files: [
     {
@@ -135,7 +130,6 @@ test("installing an immutable source selection leaves caller ownership intact", 
     await rm(root, { force: true, recursive: true });
   }
 });
-
 const CHILD_EXIT_SUCCESS = 0;
 const registryConfigInProcess = async (
   root: string,
@@ -159,7 +153,6 @@ const registryConfigInProcess = async (
   });
   return JSON.parse(stdout);
 };
-
 test("the process registry override remains the fallback and configured registry objects take priority", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-registry-process-"));
   const processUrl = "https://example.com/process/{name}.json";

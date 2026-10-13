@@ -8,37 +8,31 @@ const mocks = vi.hoisted(() => ({
   state: { status: "authorizing", url: "https://auth.test?state=active" },
 }));
 vi.mock("./cache", () => ({ invalidateAllMcpCaches: mocks.invalidate }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("./mcp-client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("./mcp-client", () => ({
   MCPClient: class {
     public state = mocks.state;
-    public get status() {
+    public get status(): string {
       return this.state.status;
     }
-    public getAuthorizationUrl() {
+    public getAuthorizationUrl(): URL {
       return new URL(this.state.url);
     }
     public close = mocks.close;
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.state.status = "authorizing";
   mocks.state.url = "https://auth.test?state=active";
 });
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep connector's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const connector = (id: string) => ({
+const connector = (
+  id: string
+): { id: string; name: string; type: "http"; url: string } => ({
   id,
   name: "Server",
-  type: "http" as const,
+  type: "http",
   url: "https://mcp.test",
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 
 it("a failed state cannot remove another active authorization", async () => {
   const config = connector("other-state");
@@ -62,7 +56,6 @@ it("the matching authorizing client is removed and closed", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
-
 it("unconditional removal closes and evicts an established client", async () => {
   mocks.state.status = "connected";
   const config = connector("unconditional");

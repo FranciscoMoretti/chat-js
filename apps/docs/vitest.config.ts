@@ -1,23 +1,29 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { existsSync, statSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
-import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-
-import { uiverifyPlugin } from "@uiverify/vitest/plugin";
-import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
 import type { Plugin } from "vitest/config";
+import { defineConfig } from "vitest/config";
+
+import path from "node:path";
+
+import { playwright } from "@vitest/browser-playwright";
+import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
-/* oxlint-disable node/no-sync -- serveBuiltDocs: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- serveBuiltDocs: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const serveBuiltDocs = (): Plugin => ({
-  configureServer(server) {
-    server.middlewares.use((request, _response, next) => {
+  configureServer(
+    server: Readonly<{
+      middlewares: Readonly<{
+        use: Parameters<
+          Extract<
+            NonNullable<Plugin["configureServer"]>,
+            (...args: readonly never[]) => unknown
+          >
+        >["0"]["middlewares"]["use"];
+      }>;
+    }>
+  ) {
+    server.middlewares.use((request, _response: unknown, next) => {
       const [pathname = "/", query] = (request.url ?? "/").split("?");
 
       if (pathname === "/docs" || pathname.startsWith("/docs/")) {
@@ -28,7 +34,8 @@ const serveBuiltDocs = (): Plugin => ({
           publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
         }
 
-        request.url = `${publicPath}${query ? `?${query}` : ""}`;
+        const querySuffix = query && `?${query}`;
+        request.url = `${publicPath}${querySuffix ?? ""}`;
       }
 
       next();
@@ -37,10 +44,7 @@ const serveBuiltDocs = (): Plugin => ({
   enforce: "pre",
   name: "serve-built-docs",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable import/no-default-export -- vitest.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default defineConfig({
   plugins: [serveBuiltDocs(), uiverifyPlugin()],
   publicDir: dist,
@@ -55,4 +59,3 @@ export default defineConfig({
     include: ["e2e/**/*.browser.test.ts"],
   },
 });
-/* oxlint-enable import/no-default-export */

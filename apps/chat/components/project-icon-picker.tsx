@@ -1,32 +1,38 @@
 "use client";
 
-import { Smile } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
-import React from "react";
-
 import { ProjectIcon } from "@/components/project-icon";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
+
+import { Button } from "@/components/ui/button";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+
+import React from "react";
+
+import type { JSX as ReactJSX } from "react";
+
+import { Smile } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 interface ProjectIconPickerProps {
-  className?: string;
-  color: ProjectColorName | null;
-  icon: ProjectIconName | null;
-  onColorChange: (color: ProjectColorName) => void;
-  onIconChange: (icon: ProjectIconName) => void;
+  readonly className?: string;
+  readonly color: ProjectColorName | null;
+  readonly icon: ProjectIconName | null;
+  readonly onColorChange: (color: ProjectColorName) => void;
+  readonly onIconChange: (icon: ProjectIconName) => void;
 }
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ProjectIconPicker = ({
   icon,
@@ -65,7 +71,9 @@ export const ProjectIconPicker = ({
                   "ring-foreground ring-2 ring-offset-2"
               )}
               key={swatchColor.name}
-              onClick={() => onColorChange(swatchColor.name)}
+              onClick={() => {
+                onColorChange(swatchColor.name);
+              }}
               style={{ backgroundColor: swatchColor.value }}
               type="button"
             />
@@ -82,7 +90,9 @@ export const ProjectIconPicker = ({
                 icon === iconName && "bg-muted ring-foreground ring-1"
               )}
               key={iconName}
-              onClick={() => onIconChange(iconName)}
+              onClick={() => {
+                onIconChange(iconName);
+              }}
               type="button"
             >
               <ProjectIcon color={displayColor} icon={iconName} size={18} />
@@ -93,4 +103,3 @@ export const ProjectIconPicker = ({
     </Popover>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

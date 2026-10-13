@@ -1,33 +1,24 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
 import { textPdf } from "./eve-attachment-fixtures";
 
 const projectPath = /\/project\/[a-f\d-]+$/u;
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * init-declarations (#507): for (const project of [false, true]) { test(`first mess assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): for (const project of [false, true]) { test(`first mess keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): for (const project of [false, true]) { test(`first mess keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const project of [false, true]) { test(`first mess uses -1, 0, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): for (const project of [false, true]) { test(`first mess uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): for (const project of [false, true]) { test(`first mess accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): for (const project of [false, true]) { test(`first mess preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const project of [false, true]) { test(`first mess intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 for (const project of [false, true]) {
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
     page,
-  }, testInfo) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+  }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
     const composer = page.getByRole("group", {
       exact: true,
       name: "Message composer",
     });
     let projectId: string | undefined;
-    const release = Promise.withResolvers<undefined>();
+    const release: PromiseWithResolvers<void> = Promise.withResolvers();
     let received = false;
     await page.route("**/api/agent-conversations", async (route) => {
       received = true;
@@ -58,14 +49,14 @@ for (const project of [false, true]) {
         await expect(page).toHaveURL(projectPath);
         projectId = new URL(page.url()).pathname.split("/").at(-1);
         await page.setViewportSize({ height: 844, width: 390 });
-        await page.route("**/api/files/upload", (route) =>
-          route.fulfill({
+        await page.route("**/api/files/upload", async (route) => {
+          await route.fulfill({
             json: {
               url: "/api/files/012345678901234567890123.pdf",
             },
             status: 200,
-          })
-        );
+          });
+        });
         await page
           .getByRole("group", { exact: true, name: "Message composer" })
           .getByLabel("Attach files", { exact: true })
@@ -115,7 +106,7 @@ for (const project of [false, true]) {
             .getByTestId("input-attachment-preview")
         ).toHaveCount(0);
       }
-      release.resolve(undefined);
+      release.resolve();
       await expect(page.getByRole("alert")).toBeVisible();
       await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
         "Optimistic first message"
@@ -139,8 +130,8 @@ for (const project of [false, true]) {
         ).toBeVisible();
       }
     } finally {
-      release.resolve(undefined);
-      if (projectId) {
+      release.resolve();
+      if (projectId !== undefined && projectId !== null && projectId !== "") {
         const removed = await page.request.post("/api/trpc/project.remove", {
           data: { json: { id: projectId } },
           timeout: 15_000,
@@ -150,36 +141,26 @@ for (const project of [false, true]) {
     }
   });
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 const chatPath = /\/chat\/[a-f\d-]+$/u;
 const visualStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root, .tsqd-parent-container { visibility: hidden !important; }";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): for (const identity of ["registered", "guest"]) { test( keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): for (const identity of ["registered", "guest"]) { test( keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const identity of ["registered", "guest"]) { test( uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): for (const identity of ["registered", "guest"]) { test( uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): for (const identity of ["registered", "guest"]) { test( accepts { page, }; testInfo; route; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): for (const identity of ["registered", "guest"]) { test( preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const identity of ["registered", "guest"]) { test( intentionally keeps the existing falsy-value behavior of document.querySelector('[role="log"]')?.textContent?.includes(text); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 for (const identity of ["registered", "guest"]) {
   test(`first send keeps its document and optimistic message through stream attachment (${identity})`, async ({
     page,
-  }, testInfo) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+  }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
       waitUntil: "domcontentloaded",
     });
     const input = page.getByLabel("Message", { exact: true });
     await expect(input).toHaveAttribute("contenteditable", "true");
     const message = "Do not use tools. Reply with exactly: Runtime ready";
-    const creation = Promise.withResolvers<undefined>();
-    const stream = Promise.withResolvers<undefined>();
+    const creation: PromiseWithResolvers<void> = Promise.withResolvers();
+    const stream: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route("**/api/agent-conversations", async (route) => {
       await creation.promise;
       await route.continue();
@@ -191,11 +172,14 @@ for (const identity of ["registered", "guest"]) {
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Network.enable");
     let documents = 0;
-    cdp.on("Network.requestWillBeSent", (event) => {
-      if (event.type === "Document") {
-        documents += 1;
+    cdp.on(
+      "Network.requestWillBeSent",
+      (event: Readonly<{ type?: string }>) => {
+        if (event.type === "Document") {
+          documents += 1;
+        }
       }
-    });
+    );
     const origin = await page.evaluate(() => performance.timeOrigin);
     try {
       await input.fill(message);
@@ -205,7 +189,9 @@ for (const identity of ["registered", "guest"]) {
         document.documentElement.dataset.missingFirstMessage = "false";
         const observer = new MutationObserver(() => {
           if (
-            !document.querySelector('[role="log"]')?.textContent?.includes(text)
+            document
+              .querySelector('[role="log"]')
+              ?.textContent?.includes(text) !== true
           ) {
             document.documentElement.dataset.missingFirstMessage = "true";
           }
@@ -213,11 +199,13 @@ for (const identity of ["registered", "guest"]) {
         observer.observe(document.body, { childList: true, subtree: true });
         document.addEventListener(
           "stop-message-observer",
-          () => observer.disconnect(),
+          () => {
+            observer.disconnect();
+          },
           { once: true }
         );
       }, message);
-      creation.resolve(undefined);
+      creation.resolve();
       await expect(page).toHaveURL(chatPath);
       await expect(page.getByRole("log")).toContainText(message);
       await page.screenshot({
@@ -227,7 +215,7 @@ for (const identity of ["registered", "guest"]) {
       });
       expect(await page.evaluate(() => performance.timeOrigin)).toBe(origin);
       expect(documents).toBe(0);
-      stream.resolve(undefined);
+      stream.resolve();
       await expect(
         page.getByRole("log").getByText("Runtime ready", { exact: true })
       ).toBeVisible({ timeout: 60_000 });
@@ -269,9 +257,8 @@ for (const identity of ["registered", "guest"]) {
       await expect(input).toHaveText("");
       await expect(page.getByRole("log")).toHaveCount(0);
     } finally {
-      creation.resolve(undefined);
-      stream.resolve(undefined);
+      creation.resolve();
+      stream.resolve();
     }
   });
 }
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

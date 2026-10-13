@@ -1,30 +1,32 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveMessage } from "eve/client";
 
 import type { EveForkInput, EveForkKind } from "./contracts";
+import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
 const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --
- no-undefined (#519): eveUserForkBoundary uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
-const eveUserForkBoundary = (
-  message: Pick<EveMessage, "id" | "role" | "metadata">
-): string | undefined => {
+const eveUserForkBoundary = (message: {
+  readonly id: string;
+  readonly role: EveMessage["role"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
+}): string | undefined => {
   if (message.role !== "user" || message.metadata?.optimistic) {
-    return;
+    return undefined;
   }
   if (
-    message.metadata?.turnId &&
+    isNonEmptyString(message.metadata?.turnId) &&
     nativeBoundary.test(message.metadata.turnId)
   ) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return message.metadata.turnId;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-  return importedBoundary.test(message.id) ? message.id : undefined;
+  if (importedBoundary.test(message.id)) {
+    return message.id;
+  }
+  return undefined;
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
 interface EveBranchReference {
   forkKind?: EveForkKind | null;
@@ -36,15 +38,11 @@ interface EveBranchReference {
   responseGroupIndex?: number | null;
 }
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
-max-statements (#512): resolveForkSource keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): resolveForkSource uses 5 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): resolveForkSource intentionally keeps the existing falsy-value behavior of current.parentConversationId; current.forkTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 /** Resolve native checkpoint ancestry while keeping imported seed boundaries local.
- * @param conversationId Conversation version from which the edit or fork starts.
- * @param boundaryId Imported message or native turn checkpoint immediately before the fork.
- * @param branches Known ancestry used to find the conversation owning the native checkpoint.
- * @returns The source conversation and its local message or native turn boundary.
+ * @param {string} conversationId Conversation version from which the edit or fork starts.
+ * @param {string} boundaryId Imported message or native turn checkpoint immediately before the fork.
+ * @param {readonly Readonly<EveBranchReference>[]} branches Known ancestry used to find the conversation owning the native checkpoint.
+ * @returns {EveForkInput} The source conversation and its local message or native turn boundary.
  */
 const resolveForkSource = (
   conversationId: string,
@@ -69,7 +67,10 @@ const resolveForkSource = (
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
     if (
-      !(current.parentConversationId && current.forkTurnId) ||
+      !(
+        isNonEmptyString(current.parentConversationId) &&
+        isNonEmptyString(current.forkTurnId)
+      ) ||
       BigInt(beforeTurnId.slice(5)) >= BigInt(current.forkTurnId.slice(5))
     ) {
       return { beforeTurnId, conversationId: current.id };
@@ -79,6 +80,6 @@ const resolveForkSource = (
   }
   throw new Error("The source version is unavailable. Reload before editing.");
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
+
 export { eveUserForkBoundary, resolveForkSource };
 export type { EveBranchReference };

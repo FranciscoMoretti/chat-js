@@ -43,7 +43,6 @@ test.each([
     ).rejects.toThrow();
   }
 );
-
 test("sends credentials only to the configured HTTPS origin without redirects", async () => {
   const request = vi.fn(() => batch(emptyBatch));
   vi.stubGlobal("fetch", request);
@@ -56,7 +55,6 @@ test("sends credentials only to the configured HTTPS origin without redirects", 
     })
   );
 });
-
 test("drains multiple guest batches before reporting success", async () => {
   const request = vi
     .fn(() => batch(emptyBatch))
@@ -66,7 +64,6 @@ test("drains multiple guest batches before reporting success", async () => {
   await runHostedCleanup("https://chat.example", "secret");
   expect(request).toHaveBeenCalledTimes(drainedRequests);
 });
-
 test("fails when later cleanup work cannot complete", async () => {
   const request = vi
     .fn(() => Response.json({ success: false }, { status: unavailable }))
@@ -77,7 +74,6 @@ test("fails when later cleanup work cannot complete", async () => {
   ).rejects.toThrow();
   expect(request).toHaveBeenCalledTimes(failedRequests);
 });
-
 test("bounds a backlog that never drains", async () => {
   const request = vi.fn(() => batch(fullBatch));
   vi.stubGlobal("fetch", request);
@@ -86,7 +82,6 @@ test("bounds a backlog that never drains", async () => {
   ).rejects.toThrow("batch limit");
   expect(request).toHaveBeenCalledTimes(batchLimit);
 });
-
 test.each([
   "http://chat.example",
   "https://user:pass@chat.example",

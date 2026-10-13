@@ -1,90 +1,119 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
- */
-import { createHash } from "node:crypto";
-
-import type { ToolContext } from "eve/tools";
-
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
-import {
-  getEveDocumentRevision,
-  saveEveDocumentRevision,
-} from "../db/eve-documents";
-import { resolveEveConversationScope } from "./conversation-scope";
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+import {
+  getEveDocumentRevision,
+  saveEveDocumentRevision,
+} from "@/lib/db/eve-documents";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolContext } from "eve/tools";
+import { createHash } from "node:crypto";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { resolveEveConversationScope } from "./conversation-scope";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers --
- * jsdoc/require-param (#534): documentIdForCall's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): documentIdForCall's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): documentIdForCall uses 0, 16, 6, 128, 8, 64, 12, 20 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+const DOCUMENT_OPERATION_VALUE_INDEX = 1;
+const UUID_START_OFFSET = 0;
+const UUID_BYTE_LENGTH = 16;
+const UUID_VERSION_BYTE_INDEX = 6;
+const UUID_VERSION_PAYLOAD_MODULUS = 16;
+const UUID_VERSION_EIGHT_BITS = 128;
+const UUID_VARIANT_BYTE_INDEX = 8;
+const UUID_VARIANT_PAYLOAD_MODULUS = 64;
+const UUID_RFC_VARIANT_BITS = 128;
+const UUID_FIRST_GROUP_HEX_END = 8;
+const UUID_SECOND_GROUP_HEX_END = 12;
+const UUID_THIRD_GROUP_HEX_END = 16;
+const UUID_FOURTH_GROUP_HEX_END = 20;
+
+/**
+ * Deterministic UUIDv8: retrying a create must address exactly the same document.
+ *
+ * @param {string} sessionId Session identity included in the SHA-256 input.
+ * @param {string} callId Tool-call identity included in the SHA-256 input.
+ * @returns {string} A UUIDv8 string derived from the session and call identities.
  */
-/** Deterministic UUIDv8: retrying a create must address exactly the same document. */
 const documentIdForCall = (sessionId: string, callId: string): string => {
   const bytes = createHash("sha256")
     .update(JSON.stringify([sessionId, callId]))
     .digest()
-    .subarray(0, 16);
-  bytes[6] = (bytes[6] % 16) + 128;
-  bytes[8] = (bytes[8] % 64) + 128;
+    .subarray(UUID_START_OFFSET, UUID_BYTE_LENGTH);
+  bytes[UUID_VERSION_BYTE_INDEX] =
+    (bytes[UUID_VERSION_BYTE_INDEX] % UUID_VERSION_PAYLOAD_MODULUS) +
+    UUID_VERSION_EIGHT_BITS;
+  bytes[UUID_VARIANT_BYTE_INDEX] =
+    (bytes[UUID_VARIANT_BYTE_INDEX] % UUID_VARIANT_PAYLOAD_MODULUS) +
+    UUID_RFC_VARIANT_BITS;
   const hex = bytes.toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return `${hex.slice(UUID_START_OFFSET, UUID_FIRST_GROUP_HEX_END)}-${hex.slice(UUID_FIRST_GROUP_HEX_END, UUID_SECOND_GROUP_HEX_END)}-${hex.slice(UUID_SECOND_GROUP_HEX_END, UUID_THIRD_GROUP_HEX_END)}-${hex.slice(UUID_THIRD_GROUP_HEX_END, UUID_FOURTH_GROUP_HEX_END)}-${hex.slice(UUID_FOURTH_GROUP_HEX_END)}`;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * max-lines-per-function (#510): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): executeEveDocumentTool uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): executeEveDocumentTool uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep executeEveDocumentTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep executeEveDocumentTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): executeEveDocumentTool accepts context: DocumentContext; [key]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): executeEveDocumentTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const executeEveDocumentTool = async (
+const readEveDocumentTool = async (
+  value: unknown,
+  context: ReadonlyNativeSurface<DocumentContext>
+): ReturnType<typeof executeEveDocumentTool> => {
+  const input = eveDocumentReadInput.parse(value);
+  const scope = await resolveEveConversationScope(
+    context.session.auth.initiator?.principalId,
+    context.session.id,
+    context.abortSignal
+  );
+  const revision = await getEveDocumentRevision(
+    scope.ownerId,
+    scope.conversationId,
+    input.documentId
+  );
+  if (!(revision && installedDocumentKinds.has(revision.kind))) {
+    throw new Error("Document not found.");
+  }
+  return {
+    content: revision.content,
+    date: revision.createdAt.toISOString(),
+    documentId: revision.documentId,
+    fileIds: revision.fileIds,
+    kind: revision.kind,
+    revisionId: revision.id,
+    status: "success",
+    title: revision.title,
+  };
+};
+
+type DocumentToolResult =
+  | {
+      content: string;
+      date: string;
+      documentId: string;
+      fileIds: readonly string[];
+      kind: Awaited<ReturnType<typeof saveEveDocumentRevision>>["kind"];
+      revisionId: string;
+      status: string;
+      title: string;
+      result?: undefined;
+    }
+  | {
+      date: string;
+      documentId: string;
+      kind: Awaited<ReturnType<typeof saveEveDocumentRevision>>["kind"];
+      result: string;
+      revisionId: string;
+      status: string;
+      title: string;
+      content?: undefined;
+      fileIds?: undefined;
+    };
+
+const writeEveDocumentTool = async (
   name: string,
   value: unknown,
-  context: DocumentContext
-) => {
-  if (name === "readDocument") {
-    const input = eveDocumentReadInput.parse(value);
-    const scope = await resolveEveConversationScope(
-      context.session.auth.initiator?.principalId,
-      context.session.id,
-      context.abortSignal
-    );
-    const revision = await getEveDocumentRevision(
-      scope.ownerId,
-      scope.conversationId,
-      input.documentId
-    );
-    if (!(revision && installedDocumentKinds.has(revision.kind))) {
-      throw new Error("Document not found.");
-    }
-    return {
-      content: revision.content,
-      date: revision.createdAt.toISOString(),
-      documentId: revision.documentId,
-      fileIds: revision.fileIds,
-      kind: revision.kind,
-      revisionId: revision.id,
-      status: "success",
-      title: revision.title,
-    };
-  }
+  context: ReadonlyNativeSurface<DocumentContext>
+): Promise<DocumentToolResult> => {
   const operation = Object.entries(eveDocumentOperations).find(
-    ([key]) => key === name
-  )?.[1];
+    ([key]: readonly [string, ...unknown[]]) => key === name
+  )?.[DOCUMENT_OPERATION_VALUE_INDEX];
   if (!(operation && installedDocumentKinds.has(operation.kind))) {
     throw new Error("Document tool is unavailable.");
   }
@@ -122,4 +151,16 @@ export const executeEveDocumentTool = async (
     title: revision.title,
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
+export const executeEveDocumentTool = async (
+  name: string,
+  value: unknown,
+  context: ReadonlyNativeSurface<
+    Readonly<Pick<DocumentContext, "session" | "abortSignal" | "callId">>
+  >
+): Promise<DocumentToolResult> => {
+  if (name === "readDocument") {
+    return await readEveDocumentTool(value, context);
+  }
+  return await writeEveDocumentTool(name, value, context);
+};

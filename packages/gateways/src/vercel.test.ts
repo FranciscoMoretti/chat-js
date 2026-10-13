@@ -1,14 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
 
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
+const FIRST_MODEL_INDEX = 0;
 const SUPPORTED_LANGUAGE_MODEL_COUNT = 1;
 const modelCatalogResponse = {
   data: [
@@ -57,7 +56,7 @@ describe("VercelGateway", () => {
     const models = await new VercelGateway().fetchModels();
 
     expect(models).toHaveLength(SUPPORTED_LANGUAGE_MODEL_COUNT);
-    const [model] = models;
+    const model: unknown = models[FIRST_MODEL_INDEX];
     expect(model).toMatchObject({
       id: "openai/gpt-test",
       pricing: {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
-import { isWorktreeEnvConfig } from "./worktree-config";
 import type { WorktreeEnvConfig } from "./worktree-runtime";
+import { isWorktreeEnvConfig } from "./worktree-config";
 import { resolveWorktreeRuntime } from "./worktree-runtime";
 
 const ZERO_OFFSET = 0;
@@ -80,11 +80,13 @@ describe("rejects malformed worktree runtime settings", () => {
     expect(() =>
       resolveWorktreeRuntime(
         {
-          ...config,
           apps: {
             chat: { offset: ZERO_OFFSET },
             site: { offset: ZERO_OFFSET },
           },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
         },
         {}
       )
@@ -92,26 +94,39 @@ describe("rejects malformed worktree runtime settings", () => {
   });
 
   it("requires at least one app", () => {
-    expect(() => resolveWorktreeRuntime({ ...config, apps: {} }, {})).toThrow(
-      "at least one app"
-    );
+    expect(() =>
+      resolveWorktreeRuntime(
+        { apps: {}, range: config.range, slot: config.slot, url: config.url },
+        {}
+      )
+    ).toThrow("at least one app");
   });
 
   it("requires a valid slot environment variable", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        { ...config, slot: { ...config.slot, env: "not valid" } },
+        {
+          apps: config.apps,
+          range: config.range,
+          slot: { default: config.slot.default, env: "not valid" },
+          url: config.url,
+        },
         {}
       )
     ).toThrow("slot.env");
   });
 });
 
-describe("validates app ports and template references", () => {
+describe("validates app ports", () => {
   it("rejects offsets outside the reserved range", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        { ...config, apps: { chat: { offset: PORT_RANGE_STRIDE } } },
+        {
+          apps: { chat: { offset: PORT_RANGE_STRIDE } },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
+        },
         {}
       )
     ).toThrow("stride");
@@ -120,23 +135,32 @@ describe("validates app ports and template references", () => {
   it("rejects privileged ports", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        { ...config, range: { ...config.range, base: PRIVILEGED_PORT } },
+        {
+          apps: config.apps,
+          range: { base: PRIVILEGED_PORT, stride: config.range.stride },
+          slot: config.slot,
+          url: config.url,
+        },
         {}
       )
     ).toThrow("1024-65535");
   });
+});
 
+describe("validates template references", () => {
   it("rejects unknown template variables", () => {
     expect(() =>
       resolveWorktreeRuntime(
         {
-          ...config,
           apps: {
             chat: {
               exports: { APP_URL: "{apps.missing.url}" },
               offset: ZERO_OFFSET,
             },
           },
+          range: config.range,
+          slot: config.slot,
+          url: config.url,
         },
         {}
       )
@@ -146,7 +170,12 @@ describe("validates app ports and template references", () => {
   it("rejects cross-app references in the shared URL template", () => {
     expect(() =>
       resolveWorktreeRuntime(
-        { ...config, url: "http://localhost:{apps.chat.port}" },
+        {
+          apps: config.apps,
+          range: config.range,
+          slot: config.slot,
+          url: "http://localhost:{apps.chat.port}",
+        },
         {}
       )
     ).toThrow("url must not reference other apps");

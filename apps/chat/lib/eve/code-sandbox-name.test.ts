@@ -42,9 +42,6 @@ test("the same native call has a stable opaque name, isolated by owner and sessi
   );
 });
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): test("missing native identity cannot allocate an anonymous fallback sandbox") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("missing native identity cannot allocate an anonymous fallback sandbox", () => {
   for (const scope of [
     { callId: "call", ownerId: undefined, provider, sessionId: "session" },
@@ -56,4 +53,3 @@ test("missing native identity cannot allocate an anonymous fallback sandbox", ()
     );
   }
 });
-/* oxlint-enable no-undefined */

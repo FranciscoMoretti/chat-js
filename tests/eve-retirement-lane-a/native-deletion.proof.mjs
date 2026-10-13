@@ -1,8 +1,4 @@
-/* oxlint-disable eslint/no-console -- The proof command emits per-case results and a machine-readable summary. */
-/* oxlint-disable eslint/no-await-in-loop -- Run scenarios serially against shared runtime modules and disposable session storage. */
-/* oxlint-disable eslint/no-magic-numbers, unicorn/no-null -- Expected effect counts and explicit unauthenticated identity are the security assertions. */
-/* oxlint-disable import/no-nodejs-modules -- This standalone proof owns assertions and disposal of its temporary session storage. */
-/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions -- This experiment loads two exact runtime distributions by filesystem path; dynamic internal exports have no common static type contract. Runtime assertions verify the boundary. */
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/strict-boolean-expressions -- This standalone experiment imports pinned runtime internals by filesystem path; the two distributions have no shared static type contract. Runtime assertions validate the boundary. */
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 
@@ -149,18 +145,20 @@ if (!fork) {
 let failures = 0;
 try {
   for (const stream of [false, true]) {
+    /* oxlint-disable eslint/no-await-in-loop -- Scenarios share runtime modules and disposable session storage, so execute them serially. */
     for (const [name, scenario] of scenarios) {
       try {
         await scenario(fixture(stream));
-        console.log(`PASS ${stream ? "stream" : "generate"}: ${name}`);
+        console.log(`PASS ${stream ? "stream" : "generate"}: ${String(name)}`);
       } catch (error) {
         failures += 1;
         console.error(
-          `FAIL ${stream ? "stream" : "generate"}: ${name}: ${error.message}`
+          `FAIL ${stream ? "stream" : "generate"}: ${String(name)}: ${String(error.message)}`
         );
       }
     }
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 } finally {
   await rm(scratch, { force: true, recursive: true });
 }
@@ -173,13 +171,3 @@ console.log(
   })
 );
 assert.equal(failures, 0, "native deletion removal gate");
-
-/* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions */
-
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-enable eslint/no-magic-numbers, unicorn/no-null */
-
-/* oxlint-enable eslint/no-await-in-loop */
-
-/* oxlint-enable eslint/no-console */

@@ -1,7 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
-import { toolResultSchema } from "@/lib/eve/tool-result";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },
@@ -15,41 +14,41 @@ vi.mock("@mendable/firecrawl-js", () => ({
     public extract = mocks.extract;
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn() }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/logger",
+  (): { createModuleLogger: () => { error: () => void } } => ({
+    createModuleLogger: (): { error: () => void } => ({
+      error: vi.fn<() => void>(),
+    }),
+  })
+);
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test.each(["missing configuration", "invalid URL"])(
+test.each([
+  ["missing configuration", "https://example.com"],
+  ["invalid URL", "file:///private"],
+])(
   "%s produces a zero-cost receipt without calling Firecrawl",
-  async (reason) => {
+  async (reason, url) => {
+    const noChargeUsd = 0;
     if (reason === "missing configuration") {
       mocks.env.FIRECRAWL_API_KEY = "";
     }
     const { retrieveUrl } = await import("./tool");
     const result = await retrieveUrl.execute(
       {
-        url:
-          reason === "invalid URL" ? "file:///private" : "https://example.com",
+        url,
       },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).usage.costUsd).toBe(0);
+    expect(toolResultSchema.parse(result).usage.costUsd).toBe(noChargeUsd);
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable no-magic-numbers */
 
 test.each([false, true])(
   "provider completion keeps unknown cost explicit (failure=%s)",
@@ -70,5 +69,63 @@ test.each([false, true])(
     );
     expect(toolResultSchema.parse(result).usage.costUsd).toBeUndefined();
     expect(mocks.scrape).toHaveBeenCalledOnce();
+  }
+);
+
+test.each([
+  {
+    data: {
+      content: "Extracted content",
+      description: "Extracted description",
+      title: "Extracted title",
+    },
+    expected: {
+      content: "Extracted content",
+      description: "Extracted description",
+      title: "Scraped title",
+    },
+  },
+  {
+    data: {
+      content: "Valid extracted content",
+      description: "Valid extracted description",
+      title: { malformed: true },
+    },
+    expected: {
+      content: "Valid extracted content",
+      description: "Valid extracted description",
+      title: "Scraped title",
+    },
+  },
+  {
+    data: { description: "Partial description" },
+    expected: {
+      content: "",
+      description: "Partial description",
+      title: "Scraped title",
+    },
+  },
+  {
+    data: { content: 42, description: false, title: {} },
+    expected: { content: "", description: "", title: "Scraped title" },
+  },
+])(
+  "validates extracted fallback fields without replacing scraped values ($data)",
+  async ({ data, expected }) => {
+    mocks.scrape.mockResolvedValue({
+      markdown: "",
+      metadata: { description: "", title: "Scraped title" },
+      success: true,
+    });
+    mocks.extract.mockResolvedValue({ success: true, data });
+    const { retrieveUrl } = await import("./tool");
+    const result = await retrieveUrl.execute(
+      { url: "https://example.com/page?token=private" },
+      testToolContext()
+    );
+    expect(toolResultSchema.parse(result).output).toEqual({
+      results: [{ ...expected, url: "https://example.com/page" }],
+    });
+    expect(mocks.extract).toHaveBeenCalledOnce();
   }
 );

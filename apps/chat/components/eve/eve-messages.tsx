@@ -1,13 +1,10 @@
 "use client";
 
-import type {
-  EveMessage,
-  EveMessageInputRequest,
-  EveMessagePart,
-  InputResponse,
-} from "eve/client";
-import type { JSX as ReactJSX, ReactNode } from "react";
+import { hasText } from "@/components/text-value";
+
+import type { EveMessageInputRequest, InputResponse } from "eve/client";
 import React, { useState } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
@@ -17,9 +14,7 @@ import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view"
 import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { RetryButtonView } from "@/components/retry-button-view";
-/* oxlint-disable import/max-dependencies -- @/components/tag import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { Tag } from "@/components/tag";
-/* oxlint-enable import/max-dependencies */
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserMessageView } from "@/components/user-message-view";
@@ -29,22 +24,26 @@ import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PendingInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including request.allowFreeform). */
 
 const PendingInput = ({
   request,
   disabled,
   respond,
 }: {
-  request: EveMessageInputRequest;
-  disabled: boolean;
-  respond: (response: InputResponse) => void;
+  readonly request: EveMessageInputRequest;
+  readonly disabled: boolean;
+  readonly respond: (response: InputResponse) => void;
 }): ReactJSX.Element => {
   const [text, setText] = useState("");
   return (
@@ -55,9 +54,9 @@ const PendingInput = ({
           <Button
             disabled={disabled}
             key={option.id}
-            onClick={() =>
-              respond({ optionId: option.id, requestId: request.requestId })
-            }
+            onClick={() => {
+              respond({ optionId: option.id, requestId: request.requestId });
+            }}
             type="button"
             variant={option.style === "danger" ? "outline" : "default"}
           >
@@ -65,10 +64,10 @@ const PendingInput = ({
           </Button>
         ))}
       </div>
-      {request.allowFreeform && (
+      {request.allowFreeform === true && (
         <form
           className="space-y-2"
-          onSubmit={(event) => {
+          onSubmit={(event: { readonly preventDefault: () => void }) => {
             event.preventDefault();
             if (text.trim()) {
               respond({ requestId: request.requestId, text: text.trim() });
@@ -79,7 +78,11 @@ const PendingInput = ({
             aria-label="Your answer"
             disabled={disabled}
             maxLength={16_000}
-            onChange={(event) => setText(event.target.value)}
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => {
+              setText(event.target.value);
+            }}
             value={text}
           />
           <Button disabled={disabled || !text.trim()} type="submit">
@@ -90,10 +93,9 @@ const PendingInput = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const toolStatus = (
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>
+  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
 ): string => {
   if (part.state === "approval-requested") {
     return "Waiting for input.";
@@ -110,7 +112,33 @@ const toolStatus = (
   return "Working…";
 };
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Part: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
+  switch (part.type) {
+    case "text":
+    case "reasoning": {
+      return `${part.type}:${part.stepIndex ?? "unscoped"}`;
+    }
+    case "file": {
+      if (typeof part.url === "string" && part.url !== "") {
+        return `file:${part.stepIndex ?? "unscoped"}:${part.url}`;
+      }
+      return `file:${part.stepIndex ?? "unscoped"}:${part.filename ?? "unnamed"}:${part.mediaType}`;
+    }
+    case "step-start": {
+      return "step-start";
+    }
+    case "authorization": {
+      return `authorization:${part.turnId}:${part.stepIndex}:${part.name}`;
+    }
+    case "dynamic-tool": {
+      return `dynamic-tool:${part.toolCallId}`;
+    }
+    default: {
+      const unreachable: never = part;
+      return unreachable;
+    }
+  }
+};
 
 // This renderer handles all streamed EVE part variants and their recovery states.
 
@@ -122,12 +150,12 @@ const Part = ({
   respond,
   previewDocument = false,
 }: {
-  previewDocument?: boolean;
-  messageId: string;
-  isReadonly: boolean;
-  part: EveMessagePart;
-  disabled: boolean;
-  respond: (response: InputResponse) => void;
+  readonly previewDocument?: boolean;
+  readonly messageId: string;
+  readonly isReadonly: boolean;
+  readonly part: ReadonlyEveMessagePart;
+  readonly disabled: boolean;
+  readonly respond: (response: InputResponse) => void;
 }): React.JSX.Element | null => {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
@@ -206,93 +234,157 @@ const Part = ({
     </section>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveMessages: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message: EveMessage); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including eveUserForkBoundary(message)); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
-// Parts remain EVE-owned; the message chrome is shared with the original runtime.
-export const EveMessages = ({
+interface EveMessagesProps {
+  readonly conversationId?: string;
+  readonly messageKey?: (message: ReadonlyEveMessage) => string;
+  readonly messages: readonly ReadonlyEveMessage[];
+  readonly isReadonly: boolean;
+  readonly actionsDisabled?: boolean;
+  readonly onEdit?: (message: ReadonlyEveMessage) => void;
+  readonly onSuggestion?: (suggestion: string) => void;
+  readonly onRegenerate?: (
+    message: ReadonlyEveMessage,
+    response: ReadonlyEveMessage
+  ) => void;
+  readonly editor?: {
+    readonly messageId: string;
+    readonly content: ReadonlyReactNode;
+    readonly onCancel: () => void;
+    readonly disabled: boolean;
+  };
+  readonly renderResponses?: (message: ReadonlyEveMessage) => ReactNode;
+  readonly renderVersions?: (
+    message: ReadonlyEveMessage,
+    userMessage?: ReadonlyEveMessage
+  ) => ReactNode;
+  readonly modelForMessage?: (
+    message: ReadonlyEveMessage
+  ) => string | undefined;
+  readonly disabled: boolean;
+  readonly respond: (response: InputResponse) => void;
+}
+
+interface MessageRowProps extends Omit<
+  EveMessagesProps,
+  "messages" | "messageKey"
+> {
+  readonly message: ReadonlyEveMessage;
+  readonly userMessage: ReadonlyEveMessage | undefined;
+  readonly isLast: boolean;
+  readonly latestDocumentCallId: string | undefined;
+  readonly actionsDisabled: boolean;
+}
+
+const AssistantFeedback = ({
+  message,
+  userMessage,
   conversationId,
-  messages,
+  disabled,
+  actionsDisabled,
+  editor,
+  onRegenerate,
+  modelId,
+}: Pick<
+  MessageRowProps,
+  | "message"
+  | "userMessage"
+  | "conversationId"
+  | "disabled"
+  | "actionsDisabled"
+  | "editor"
+  | "onRegenerate"
+> & { readonly modelId: string | undefined }): ReactJSX.Element => (
+  <>
+    {hasText(conversationId) && (
+      <EveFeedbackActions
+        conversationId={conversationId}
+        disabled={disabled}
+        messageId={message.id}
+      />
+    )}
+    {onRegenerate && (
+      <RetryButtonView
+        disabled={
+          actionsDisabled ||
+          Boolean(editor) ||
+          !(
+            hasText(message.metadata?.turnId) ||
+            hasText(message.metadata?.modelId)
+          ) ||
+          !(userMessage && hasText(eveUserForkBoundary(userMessage)))
+        }
+        onRetry={() => {
+          if (userMessage) {
+            onRegenerate(userMessage, message);
+          }
+        }}
+      />
+    )}
+    {hasText(modelId) && (
+      <div className="ml-2 flex items-center">
+        <Tag>{modelId}</Tag>
+      </div>
+    )}
+  </>
+);
+
+const EveMessageActions = ({
+  message,
+  userMessage,
+  conversationId,
   isReadonly,
   disabled,
-  respond,
+  actionsDisabled,
+  editor,
   onEdit,
   onRegenerate,
-  onSuggestion,
-  editor,
   renderVersions,
-  renderResponses,
-  modelForMessage,
-  actionsDisabled = disabled,
-  messageKey,
-}: {
-  conversationId?: string;
-  messageKey?: (message: EveMessage) => string;
-  messages: readonly EveMessage[];
-  isReadonly: boolean;
-  actionsDisabled?: boolean;
-  onEdit?: (message: EveMessage) => void;
-  onSuggestion?: (suggestion: string) => void;
-  onRegenerate?: (message: EveMessage, response: EveMessage) => void;
-  editor?: {
-    messageId: string;
-    content: ReactNode;
-    onCancel: () => void;
-    disabled: boolean;
-  };
-  renderResponses?: (message: EveMessage) => ReactNode;
-  renderVersions?: (message: EveMessage, userMessage?: EveMessage) => ReactNode;
-  modelForMessage?: (message: EveMessage) => string | undefined;
-  disabled: boolean;
-  respond: (response: InputResponse) => void;
-}) => {
-  const latestDocumentCallId = messages
-    .flatMap((message) => message.parts)
-    .filter((part) => part.type === "dynamic-tool")
-    .findLast(
-      (part) =>
-        Object.hasOwn(eveDocumentOperations, part.toolName) ||
-        part.toolName === "readDocument"
-    )?.toolCallId;
-  let precedingUser: EveMessage | undefined;
-  // oxlint-disable-next-line eslint/complexity -- A row combines streamed content with its role-specific shared controls.
-  return messages.map((message) => {
-    const userMessage = precedingUser;
-    if (message.role === "user") {
-      precedingUser = message;
-    }
-    const editing = editor?.messageId === message.id ? editor : undefined;
-    const canEdit =
-      !isReadonly &&
-      onEdit &&
-      !actionsDisabled &&
-      !editor &&
-      eveUserForkBoundary(message);
-    const text = message.parts
-      .filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("\n");
-    const modelId = modelForMessage?.(message);
-    const actions = (
-      <MessageActionsView
-        editDisabled={
-          editing
-            ? editing.disabled
-            : actionsDisabled ||
-              Boolean(editor) ||
-              !eveUserForkBoundary(message)
-        }
-        isEditing={Boolean(editing)}
-        isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
-        onCancelEdit={editing?.onCancel}
-        onStartEdit={
-          !isReadonly && onEdit ? (): void => onEdit(message) : undefined
-        }
-        role={message.role}
-        siblings={renderVersions?.(message, userMessage)}
-
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message copy manages clipboard failures and feedback within the async handler.
-        onCopy={async () => {
+  modelId,
+  isLast,
+  text,
+}: Pick<
+  MessageRowProps,
+  | "message"
+  | "userMessage"
+  | "conversationId"
+  | "isReadonly"
+  | "disabled"
+  | "actionsDisabled"
+  | "editor"
+  | "onEdit"
+  | "onRegenerate"
+  | "renderVersions"
+  | "isLast"
+> & {
+  readonly modelId: string | undefined;
+  readonly text: string;
+}): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
+  const editing = editor?.messageId === message.id ? editor : undefined;
+  return (
+    <MessageActionsView
+      editDisabled={
+        editing
+          ? editing.disabled
+          : actionsDisabled ||
+            Boolean(editor) ||
+            !hasText(eveUserForkBoundary(message))
+      }
+      isEditing={Boolean(editing)}
+      isLoading={disabled && isLast && !editing}
+      onCancelEdit={editing?.onCancel}
+      onStartEdit={
+        !isReadonly && onEdit
+          ? (): void => {
+              onEdit(message);
+            }
+          : undefined
+      }
+      role={message.role}
+      siblings={renderVersions?.(message, userMessage)}
+      onCopy={() => {
+        startEventAction(async () => {
           if (!text.trim()) {
             toast.error("There's no text to copy!");
             return;
@@ -303,81 +395,119 @@ export const EveMessages = ({
           } catch {
             toast.error("Unable to copy this message.");
           }
-        }}
+        });
+      }}
+      feedback={
+        message.role === "assistant" && !isReadonly ? (
+          <AssistantFeedback
+            message={message}
+            userMessage={userMessage}
+            conversationId={conversationId}
+            disabled={disabled}
+            actionsDisabled={actionsDisabled}
+            editor={editor}
+            onRegenerate={onRegenerate}
+            modelId={modelId}
+          />
+        ) : undefined
+      }
+    />
+  );
+};
 
-        feedback={
-          message.role === "assistant" && !isReadonly ? (
-            <>
-              {conversationId && (
-                <EveFeedbackActions
-                  conversationId={conversationId}
-                  disabled={disabled}
-                  messageId={message.id}
-                />
-              )}
-              {onRegenerate && (
-                <RetryButtonView
-                  disabled={
-                    actionsDisabled ||
-                    Boolean(editor) ||
-                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback.
-                    !(message.metadata?.turnId || message.metadata?.modelId) ||
-                    !(userMessage && eveUserForkBoundary(userMessage))
-                  }
-                  onRetry={() => {
-                    if (userMessage) {
-                      onRegenerate(userMessage, message);
-                    }
-                  }}
-                />
-              )}
-              {modelId && (
-                <div className="ml-2 flex items-center">
-                  <Tag>{modelId}</Tag>
-                </div>
-              )}
-            </>
-          ) : undefined
+const EveMessageRow = ({
+  message,
+  userMessage,
+  isLast,
+  latestDocumentCallId,
+  conversationId,
+  isReadonly,
+  disabled,
+  actionsDisabled,
+  respond,
+  onEdit,
+  onRegenerate,
+  onSuggestion,
+  editor,
+  renderVersions,
+  renderResponses,
+  modelForMessage,
+}: MessageRowProps): ReactJSX.Element => {
+  const editing = editor?.messageId === message.id ? editor : undefined;
+  const canEdit =
+    !isReadonly &&
+    onEdit !== undefined &&
+    !actionsDisabled &&
+    !editor &&
+    hasText(eveUserForkBoundary(message));
+  const text = message.parts
+    .filter((part: ReadonlyEveMessagePart) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+  const partOccurrences = new Map<string, number>();
+  const nextPartKey = (part: ReadonlyEveMessagePart): string => {
+    const identity = messagePartIdentity(part);
+    const occurrence = partOccurrences.get(identity) ?? 0;
+    partOccurrences.set(identity, occurrence + 1);
+    return `${message.id}:${identity}:${occurrence}`;
+  };
+  const modelId = modelForMessage?.(message);
+  const actions = (
+    <EveMessageActions
+      message={message}
+      userMessage={userMessage}
+      conversationId={conversationId}
+      isReadonly={isReadonly}
+      disabled={disabled}
+      actionsDisabled={actionsDisabled}
+      editor={editor}
+      onEdit={onEdit}
+      onRegenerate={onRegenerate}
+      renderVersions={renderVersions}
+      modelId={modelId}
+      isLast={isLast}
+      text={text}
+    />
+  );
+  if (message.role === "user") {
+    return (
+      <UserMessageView
+        actions={actions}
+        attachments={message.parts
+          .filter((part: ReadonlyEveMessagePart) => part.type === "file")
+          .map((part): React.JSX.Element => (
+            <EveAttachment key={nextPartKey(part)} part={part} />
+          ))}
+        editor={editing?.content}
+        editDisabled={!canEdit}
+        messageId={message.id}
+        responses={renderResponses?.(message)}
+        onEdit={
+          !isReadonly && onEdit
+            ? (): void => {
+                onEdit(message);
+              }
+            : undefined
         }
+        text={text}
       />
     );
-    if (message.role === "user") {
-      return (
-        <UserMessageView
-          actions={actions}
-          attachments={message.parts
-            .filter((part) => part.type === "file")
-            .map((part, index): React.JSX.Element => (
-              // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
-              <EveAttachment key={`${message.id}:file:${index}`} part={part} />
-            ))}
-          editor={editing?.content}
-          editDisabled={!canEdit}
-          key={messageKey?.(message) ?? message.id}
-          messageId={message.id}
-          responses={renderResponses?.(message)}
-          onEdit={
-            !isReadonly && onEdit ? (): void => onEdit(message) : undefined
-          }
-          text={text}
-        />
-      );
-    }
-    return (
-      <Message
-        className="w-full max-w-full items-start py-1"
-        data-message-id={message.id}
-        from={message.role}
-        key={messageKey?.(message) ?? message.id}
-      >
-        <MessageContent className="w-full px-0 py-0 text-left">
-          <span className="sr-only">Assistant</span>
-          {message.parts.map((part, index): React.JSX.Element => (
+  }
+  return (
+    <Message
+      className="w-full max-w-full items-start py-1"
+      data-message-id={message.id}
+      from={message.role}
+    >
+      <MessageContent className="w-full px-0 py-0 text-left">
+        <span className="sr-only">Assistant</span>
+        {message.parts
+          .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
+          .map((part): React.JSX.Element => (
             <Part
               disabled={disabled}
               isReadonly={isReadonly}
-              // oxlint-disable-next-line react/no-array-index-key -- #551: EVE message parts are append-only; their index is their stable identity.
-              key={`${message.id}:${index}`}
+              key={nextPartKey(part)}
               messageId={message.id}
               part={part}
               respond={respond}
@@ -387,22 +517,59 @@ export const EveMessages = ({
               }
             />
           ))}
-          {actions}
-          {message.id === messages.at(-1)?.id &&
-            !isReadonly &&
-            !actionsDisabled &&
-            onSuggestion &&
-            config.ai.tools.followupSuggestions.enabled && (
-              <FollowUpSuggestionsView
-                onSelect={onSuggestion}
-                suggestions={messageFollowupSuggestions(message)}
-              />
-            )}
-        </MessageContent>
-      </Message>
-    );
-  });
+        {actions}
+        {isLast &&
+          !isReadonly &&
+          !actionsDisabled &&
+          onSuggestion &&
+          config.ai.tools.followupSuggestions.enabled && (
+            <FollowUpSuggestionsView
+              onSelect={onSuggestion}
+              suggestions={messageFollowupSuggestions(message)}
+            />
+          )}
+      </MessageContent>
+    </Message>
+  );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable max-lines -- eve-messages keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
+// Parts remain EVE-owned; the message chrome is shared with the original runtime.
+export const EveMessages = ({
+  messages,
+  messageKey,
+  disabled,
+  actionsDisabled = disabled,
+  ...props
+}: EveMessagesProps): ReactJSX.Element[] => {
+  const latestDocumentCallId = messages
+    .flatMap(
+      (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
+        message.parts
+    )
+    .filter((part: ReadonlyEveMessagePart) => part.type === "dynamic-tool")
+    .findLast(
+      (part) =>
+        Object.hasOwn(eveDocumentOperations, part.toolName) ||
+        part.toolName === "readDocument"
+    )?.toolCallId;
+  const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
+  let precedingUser: ReadonlyEveMessage | undefined;
+  for (const message of messages) {
+    precedingUsers.push(precedingUser);
+    if (message.role === "user") {
+      precedingUser = message;
+    }
+  }
+  return messages.map((message, index) => (
+    <EveMessageRow
+      {...props}
+      key={messageKey?.(message) ?? message.id}
+      message={message}
+      userMessage={precedingUsers[index]}
+      isLast={message.id === messages.at(-1)?.id}
+      latestDocumentCallId={latestDocumentCallId}
+      disabled={disabled}
+      actionsDisabled={actionsDisabled}
+    />
+  ));
+};

@@ -2,24 +2,135 @@ import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveUsage } from "@/lib/db/eve-billing";
 import { registerEveSubagent } from "@/lib/db/eve-subagents";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { toolResultSchema, hasEveToolReceipt } from "./tool-result";
+import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): ingestEveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): ingestEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): ingestEveUsage accepts event: MessageStreamEvent; attribution?: { sessionId: string; turnId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+/** Native evidence fields consumed by billing; tool output stays unknown until receipt validation. */
+interface UsageEventData {
+  "action.result": Pick<
+    Extract<MessageStreamEvent, { type: "action.result" }>["data"],
+    "status" | "turnId"
+  > & {
+    result:
+      | (Pick<
+          Extract<
+            Extract<
+              MessageStreamEvent,
+              { type: "action.result" }
+            >["data"]["result"],
+            { kind: "tool-result" }
+          >,
+          "kind" | "callId"
+        > & { output: unknown })
+      | Pick<
+          Exclude<
+            Extract<
+              MessageStreamEvent,
+              { type: "action.result" }
+            >["data"]["result"],
+            { kind: "tool-result" }
+          >,
+          "kind"
+        >;
+  };
+  "compaction.usage": Pick<
+    Extract<MessageStreamEvent, { type: "compaction.usage" }>["data"],
+    "usage" | "providerMetadata" | "turnId"
+  >;
+  "hook.result": Pick<
+    Extract<MessageStreamEvent, { type: "hook.result" }>["data"],
+    "modelCalls" | "turnId"
+  >;
+  "step.completed": Pick<
+    Extract<MessageStreamEvent, { type: "step.completed" }>["data"],
+    "usage" | "providerMetadata" | "turnId"
+  >;
+  "step.failed": Pick<
+    Extract<MessageStreamEvent, { type: "step.failed" }>["data"],
+    "turnId"
+  >;
+  "subagent.called": Pick<
+    Extract<MessageStreamEvent, { type: "subagent.called" }>["data"],
+    "remote" | "childSessionId" | "turnId"
+  >;
+}
+
+/** Read original SDK event objects without claiming ownership of their unused recursive payloads. */
+type UsageEventReader = ReadonlyNativeSurface<
+  | {
+      [EventType in keyof UsageEventData]: Pick<
+        Extract<MessageStreamEvent, { type: EventType }>,
+        "type" | "meta"
+      > & { data: UsageEventData[EventType] };
+    }[keyof UsageEventData]
+  | (Pick<
+      Exclude<MessageStreamEvent, { type: keyof UsageEventData }>,
+      "type" | "meta"
+    > & { data?: unknown })
+>;
+
+const NO_USAGE_COST_USD = 0;
+
+const ingestHookUsage = async (
+  ownerId: string,
+  billingSession: string,
+  eventId: string,
+  event: Extract<UsageEventReader, { type: "hook.result" }>,
+  attribution?: Readonly<{ sessionId: string; turnId: string }>
+): Promise<boolean> => {
+  let completedCallsPriced = true;
+  for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Persist each model-attempt receipt before the next; a rejected ledger write must stop later attempts and unresolved completed calls prevent cursor advance.
+    const priced = await recordEveUsage({
+      costUsd:
+        call.usage?.costUsd ??
+        (call.failed === true ? NO_USAGE_COST_USD : undefined),
+      eventId: `${eventId}:model-call:${index}`,
+      generationId: call.providerMetadata?.gateway?.generationId,
+      ownerId,
+      sessionId: billingSession,
+      turnId: attribution?.turnId ?? event.data.turnId,
+    });
+    if (call.failed !== true && !priced) {
+      completedCallsPriced = false;
+    }
+  }
+  return completedCallsPriced;
+};
+
+const ingestToolUsage = async (
+  ownerId: string,
+  billingSession: string,
+  sessionId: string,
+  event: Extract<UsageEventReader, { type: "action.result" }>,
+  attribution?: Readonly<{ sessionId: string; turnId: string }>
+): Promise<boolean> => {
+  if (event.data.result.kind !== "tool-result") {
+    return true;
+  }
+  const result = toolResultSchema.safeParse(event.data.result.output);
+  if (!hasEveToolReceipt(event.data.result.output)) {
+    return true;
+  }
+  const recordedCost = result.success ? result.data.usage.costUsd : undefined;
+  return await recordEveUsage({
+    costUsd:
+      event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
+    eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
+    ownerId,
+    sessionId: billingSession,
+    turnId: attribution?.turnId ?? event.data.turnId,
+  });
+};
+
+/** Returns whether this event permits the usage cursor to advance. Unpriced completed calls return false. */
 export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
-  event: MessageStreamEvent,
+  event: UsageEventReader,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   if (event.type === "subagent.called" && !event.data.remote) {
     await registerEveSubagent(
       ownerId,
@@ -27,56 +138,42 @@ export const ingestEveUsage = async (
       event.data.childSessionId,
       event.data.turnId
     );
-    return undefined;
+    return true;
   }
   const billingSession = attribution?.sessionId ?? sessionId;
   const eventId = attribution
     ? `eve-child:${sessionId}:${event.meta.id}`
     : event.meta.id;
   if (event.type === "hook.result") {
-    let completedCallsPriced = true;
-    for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
-      const priced = await recordEveUsage({
-        costUsd: call.usage?.costUsd ?? (call.failed === true ? 0 : undefined),
-        eventId: `${eventId}:model-call:${index}`,
-        generationId: call.providerMetadata?.gateway?.generationId,
-        ownerId,
-        sessionId: billingSession,
-        turnId: attribution?.turnId ?? event.data.turnId,
-      });
-      if (call.failed !== true && !priced) {
-        completedCallsPriced = false;
-      }
-    }
-    return completedCallsPriced;
-  }
-  if (
-    event.type === "action.result" &&
-    event.data.result.kind === "tool-result"
-  ) {
-    const result = toolResultSchema.safeParse(event.data.result.output);
-    if (!hasEveToolReceipt(event.data.result.output)) {
-      return undefined;
-    }
-    const recordedCost = result.success ? result.data.usage.costUsd : undefined;
-    return await recordEveUsage({
-      costUsd: event.data.status === "rejected" ? 0 : recordedCost,
-      eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
+    return await ingestHookUsage(
       ownerId,
-      sessionId: billingSession,
-      turnId: attribution?.turnId ?? event.data.turnId,
-    });
+      billingSession,
+      eventId,
+      event,
+      attribution
+    );
+  }
+  if (event.type === "action.result") {
+    return await ingestToolUsage(
+      ownerId,
+      billingSession,
+      sessionId,
+      event,
+      attribution
+    );
   }
   if (
     event.type !== "step.completed" &&
     event.type !== "compaction.usage" &&
     event.type !== "step.failed"
   ) {
-    return undefined;
+    return true;
   }
   const priced = await recordEveUsage({
-    costUsd: event.type === "step.failed" ? 0 : event.data.usage?.costUsd,
+    costUsd:
+      event.type === "step.failed"
+        ? NO_USAGE_COST_USD
+        : event.data.usage?.costUsd,
     eventId,
     generationId:
       event.type === "step.failed"
@@ -88,6 +185,9 @@ export const ingestEveUsage = async (
   });
   // A failed step has no completed-call usage receipt. Keep its evidence without
   // reporting a missing completed charge (the same policy used for failed hook calls).
-  return event.type === "step.failed" ? undefined : priced;
+
+  if (event.type === "step.failed") {
+    return true;
+  }
+  return priced;
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

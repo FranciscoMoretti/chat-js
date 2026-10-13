@@ -1,29 +1,38 @@
 "use client";
 
-import React from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupSeparator,
   ButtonGroupText,
 } from "@/components/ui/button-group";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
-export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
+import { ControlDefaultsVisualFixture } from "@/components/ui/control-defaults-visual-fixture";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import React from "react";
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
+
+export const UiPrimitivesVisualFixture = ({
+  includeProgress = false,
+  includeControlDefaults = false,
+  progressValue,
+}: {
+  readonly includeProgress?: boolean;
+  readonly includeControlDefaults?: boolean;
+  readonly progressValue?: number;
+} = {}): React.JSX.Element => (
   <main
     className="space-y-8 px-8 pt-8 pb-40"
     data-testid="ui-primitives-fixture"
@@ -66,6 +75,48 @@ export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
       </ButtonGroup>
     </section>
 
+    {includeControlDefaults && <ControlDefaultsVisualFixture />}
+
+    {includeProgress && (
+      <section className="max-w-3xl space-y-3" data-testid="progress-states">
+        <h2>Progress states</h2>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <p>Missing value</p>
+            <Progress aria-label="Missing value" />
+          </div>
+          <div className="space-y-2">
+            <p>Null value</p>
+            <Progress aria-label="Null value" value={null} />
+          </div>
+          <div className="space-y-2">
+            <p>NaN value</p>
+            <Progress aria-label="NaN value" value={Number.NaN} />
+          </div>
+          <div className="space-y-2">
+            <p>Zero</p>
+            <Progress aria-label="Zero" value={0} />
+          </div>
+          <div className="space-y-2">
+            <p>Complete</p>
+            <Progress aria-label="Complete" value={100} />
+          </div>
+          <div className="space-y-2">
+            <p>Negative</p>
+            <Progress aria-label="Negative" value={-10} />
+          </div>
+          <div className="space-y-2">
+            <p>Above full scale</p>
+            <Progress aria-label="Above full scale" value={150} />
+          </div>
+          <div className="space-y-2">
+            <p>Updating</p>
+            <Progress aria-label="Updating" value={progressValue} />
+          </div>
+        </div>
+      </section>
+    )}
+
     <section className="grid max-w-3xl grid-cols-[auto_6rem_auto_auto_auto_auto] items-center gap-3">
       <span>Horizontal</span>
       <Separator className="!w-24 shrink-0" />
@@ -86,4 +137,3 @@ export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
     </section>
   </main>
 );
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

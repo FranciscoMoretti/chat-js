@@ -1,17 +1,17 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { InternalLink } from "@/components/internal-link";
+
 import React from "react";
 
-import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 
 interface LoginPromptProps {
-  className?: string;
-  description: string;
-  title: string;
+  readonly className?: string;
+  readonly description: string;
+  readonly title: string;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- LoginPrompt: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { title, description, className, }: LoginPromptProps). */
 
 export const LoginPrompt = ({
   title,
@@ -32,4 +32,3 @@ export const LoginPrompt = ({
     </InternalLink>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

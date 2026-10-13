@@ -1,5 +1,5 @@
-import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { expect, test } from "vitest";
+import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import { toModelData } from "./to-model-data";
 

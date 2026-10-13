@@ -1,8 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -15,17 +10,9 @@ import {
 import { eveConversation, user } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): openSidebar accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-async function openSidebar(page: Page): Promise<void> {
+const openSidebar = async (page: Page): Promise<void> => {
   if (
     await page
       .getByRole("textbox", { name: "Search conversations" })
@@ -37,38 +24,27 @@ async function openSidebar(page: Page): Promise<void> {
     exact: true,
     name: "Expand sidebar",
   });
-  if (await expand.isVisible()) {
-    await expand.click();
-  } else {
-    await page
-      .getByRole("button", { exact: true, name: "Toggle Sidebar" })
-      .click();
-  }
-}
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): for (const width of [1280, 390]) { test(`sidebar deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): for (const width of [1280, 390]) { test(`sidebar deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const width of [1280, 390]) { test(`sidebar deleti uses 1280, 390, 1, 202, 200, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): for (const width of [1280, 390]) { test(`sidebar deleti accepts { page, }; testInfo; route; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): for (const width of [1280, 390]) { test(`sidebar deleti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): for (const width of [1280, 390]) { test(`sidebar deleti intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+  const sidebarControl = (await expand.isVisible())
+    ? expand
+    : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
+  await sidebarControl.click();
+};
+
 for (const width of [1280, 390]) {
   test(`sidebar deletion at ${width}px survives reload and checks uncertain results`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ height: 844, width });
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const [owner] = await db
       .select()
       .from(user)
       .where(eq(user.email, "dev@localhost"));
-    if (!owner) {
+    if (owner === undefined) {
       throw new Error("Missing development user");
     }
     const id = crypto.randomUUID();
@@ -125,7 +101,7 @@ for (const width of [1280, 390]) {
         })
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
-      expect(await getEveConversation(owner.id, id)).toBeUndefined();
+      expect(await getEveConversation(owner.id, id)).toBeNull();
       const conversationMatchesDuringPendingCleanup =
         await listEveConversations(owner.id, {
           search: title,
@@ -191,4 +167,3 @@ for (const width of [1280, 390]) {
     }
   });
 }
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

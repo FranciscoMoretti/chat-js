@@ -1,9 +1,7 @@
 import { defineTool } from "eve/tools";
-
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-
-import { executeEveCodeDocument } from "./execute";
 import { documentExecutionInput } from "./schemas";
+import { executeEveCodeDocument } from "./execute";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
 export const runCodeDocument = defineTool({
   description:

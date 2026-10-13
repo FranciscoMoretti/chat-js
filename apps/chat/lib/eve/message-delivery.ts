@@ -1,11 +1,21 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
+
+type DeliveryEvent =
+  | {
+      readonly type: "message.received";
+      readonly data: { readonly metadata?: unknown };
+    }
+  | { readonly type: Exclude<MessageStreamEvent["type"], "message.received"> };
 
 const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
@@ -31,10 +41,6 @@ const deliveryMetadata = z.object({
   chatjs: z.object({ operationId: z.uuid() }),
 });
 
-/* oxlint-disable no-undefined, unicorn/max-nested-calls --
- * no-undefined: Undefined represents absent stream evidence or an optional query result; null is a persisted value.
- * unicorn/max-nested-calls: Validate nested wire metadata at the projection boundary without inventing intermediate domain values.
- */
 const receiptMatches = (
   metadata: unknown,
   sessionId: string,
@@ -55,9 +61,7 @@ const receiptMatches = (
   );
 };
 
-/* oxlint-enable no-undefined, unicorn/max-nested-calls */
-
-type PendingEveMessage = z.infer<typeof pendingMessage>;
+type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;
 
 type ActivePendingEveMessage = PendingEveMessage & {
   operationId: string;
@@ -72,9 +76,6 @@ type DeliveryStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 const storageKey = (sessionId: string): string =>
   `chatjs.eve.pending-message:${sessionId}`;
 
-/* oxlint-disable id-length --
- * id-length (#506): write uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 const write = <T extends PendingEveMessage>(
   storage: DeliveryStorage,
   sessionId: string,
@@ -83,18 +84,13 @@ const write = <T extends PendingEveMessage>(
   storage.setItem(storageKey(sessionId), JSON.stringify(value));
   return value;
 };
-/* oxlint-enable id-length */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/strict-boolean-expressions (#610): read intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): read preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const read = (
   storage: DeliveryStorage,
   sessionId: string
 ): PendingEveMessage | null => {
   const stored = storage.getItem(storageKey(sessionId));
-  if (!stored) {
+  if (!isNonEmptyString(stored)) {
     return null;
   }
   try {
@@ -108,23 +104,18 @@ const read = (
   storage.removeItem(storageKey(sessionId));
   return null;
 };
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
 const eveMessageDelivery = {
   acknowledge: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
-    event: MessageStreamEvent
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
+    event: DeliveryEvent
   ): boolean => {
     if (
       event.type !== "message.received" ||
-      !pending.operationId ||
+      !isNonEmptyString(pending.operationId) ||
       !receiptMatches(event.data.metadata, sessionId, pending.operationId)
     ) {
       return false;
@@ -138,7 +129,7 @@ const eveMessageDelivery = {
   begin: (
     storage: DeliveryStorage,
     sessionId: string,
-    input: NewPendingEveMessage
+    input: ReadonlyNativeSurface<NewPendingEveMessage>
   ): ActivePendingEveMessage =>
     write(storage, sessionId, {
       ...input,
@@ -158,7 +149,7 @@ const eveMessageDelivery = {
   reject: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
     rejection: string,
     retryable = false
   ): PendingEveMessage & { rejection: string; retryable: boolean } =>
@@ -166,17 +157,16 @@ const eveMessageDelivery = {
   retry: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage
+    pending: ReadonlyNativeSurface<PendingEveMessage>
   ): ActivePendingEveMessage | undefined => {
     const current = read(storage, sessionId);
     if (
-      !pending.operationId ||
-      !current?.retryable ||
+      !isNonEmptyString(pending.operationId) ||
+      !(current?.retryable === true) ||
       current.operationId !== pending.operationId
     ) {
-      return;
+      return undefined;
     }
-    // oxlint-disable-next-line typescript/consistent-return -- #580: eveMessageDelivery has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return write(storage, sessionId, {
       ...current,
       operationId: pending.operationId,
@@ -185,13 +175,12 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.
- * @param operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
- * @param selectedTool App UI tool selection, normalized to null when no tool is selected.
- * @returns The app namespace containing the operation acknowledgement and display-safe tool selection.
+ * @param {string} operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
+ * @param {UiToolName | null | undefined} selectedTool App UI tool selection, normalized to null when no tool is selected.
+ * @returns {{ chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & { operationId: string; }; }} The app namespace containing the operation acknowledgement and display-safe tool selection.
  */
 const eveMessageDeliveryMetadata = (
   operationId: string,

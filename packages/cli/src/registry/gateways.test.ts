@@ -1,24 +1,31 @@
+import { builtInGateways, resolveGateway } from "./gateways";
 import { expect, it } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
+import { tmpdir } from "node:os";
 
-import { builtInGateways, resolveGateway } from "./gateways";
+const FIRST_GATEWAY_INDEX = 0;
+const EPHEMERAL_PORT = 0;
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it("validates gateway integration metadata with the standard registry schema", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-metadata-"));
   const source = path.join(cwd, "gateway.json");
   try {
-    await writeFile(source, JSON.stringify(builtInGateways[0]));
+    await writeFile(
+      source,
+      JSON.stringify(builtInGateways[FIRST_GATEWAY_INDEX])
+    );
     const resolvedGateway = await resolveGateway(source);
     expect(resolvedGateway.definition.id).toBe("vercel");
     await writeFile(
       source,
       JSON.stringify({
-        ...builtInGateways[0],
+        ...builtInGateways[FIRST_GATEWAY_INDEX],
         meta: {
-          chatjs: { ...builtInGateways[0].meta.chatjs, contractVersion: 999 },
+          chatjs: {
+            ...builtInGateways[FIRST_GATEWAY_INDEX].meta.chatjs,
+            contractVersion: 999,
+          },
         },
       })
     );
@@ -27,17 +34,16 @@ it("validates gateway integration metadata with the standard registry schema", a
     await rm(cwd, { force: true, recursive: true });
   }
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   const server = Bun.serve({
-    fetch: (request) =>
-      new URL(request.url).pathname === "/gateway.json"
-        ? Response.redirect(new URL("/target.json", request.url))
-        : Response.json(builtInGateways[0]),
+    fetch: (request: Readonly<Pick<Request, "url">>) => {
+      if (new URL(request.url).pathname === "/gateway.json") {
+        return Response.redirect(new URL("/target.json", request.url));
+      }
+      return Response.json(builtInGateways[FIRST_GATEWAY_INDEX]);
+    },
     hostname: "127.0.0.1",
-    port: 0,
+    port: EPHEMERAL_PORT,
   });
   try {
     expect(resolveGateway("http://example.com/gateway.json")).rejects.toThrow(
@@ -50,5 +56,3 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */

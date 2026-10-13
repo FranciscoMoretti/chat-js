@@ -1,0 +1,82 @@
+{
+  "main": "d612af7c128a3d962455f8c4574ae5a69ce2d99e",
+  "payload": {
+    "count": 455,
+    "rules": {
+      "eslint(default-param-last)": 1,
+      "eslint(func-style)": 7,
+      "eslint(no-await-in-loop)": 11,
+      "eslint(no-inner-declarations)": 1,
+      "eslint(no-promise-executor-return)": 2,
+      "eslint(no-shadow)": 2,
+      "eslint(one-var)": 1,
+      "eslint(prefer-destructuring)": 1,
+      "eslint(prefer-template)": 11,
+      "eslint(require-unicode-regexp)": 1,
+      "eslint(sort-vars)": 2,
+      "promise(avoid-new)": 2,
+      "promise(prefer-await-to-then)": 4,
+      "typescript(no-unsafe-argument)": 16,
+      "typescript(no-unsafe-assignment)": 81,
+      "typescript(no-unsafe-call)": 65,
+      "typescript(no-unsafe-member-access)": 158,
+      "typescript(no-unsafe-return)": 7,
+      "typescript(no-unsafe-type-assertion)": 2,
+      "typescript(prefer-regexp-exec)": 1,
+      "typescript(promise-function-async)": 3,
+      "typescript(strict-boolean-expressions)": 11,
+      "typescript(strict-void-return)": 5,
+      "unicorn(catch-error-name)": 2,
+      "unicorn(no-await-expression-member)": 45,
+      "unicorn(no-useless-undefined)": 2,
+      "unicorn(relative-url-style)": 1,
+      "unicorn(text-encoding-identifier-case)": 10
+    },
+    "files": {
+      "runtime-fixture/agent/channels/invoke.ts": 2,
+      "runtime-fixture/agent/tools/mcp.ts": 15,
+      "runtime-fixture/agent/tools/static-gate.ts": 4,
+      "runtime-old-run.ts": 112,
+      "runtime-postgres.ts": 11,
+      "runtime-proof.mjs": 311
+    }
+  },
+  "upstream_added_files": {
+    "count": 124,
+    "rules": {
+      "eslint(curly)": 15,
+      "eslint(func-style)": 10,
+      "eslint(no-await-in-loop)": 3,
+      "eslint(no-duplicate-imports)": 5,
+      "eslint(no-loop-func)": 3,
+      "eslint(no-nested-ternary)": 1,
+      "eslint(no-plusplus)": 4,
+      "eslint(no-use-before-define)": 3,
+      "eslint(one-var)": 4,
+      "eslint(prefer-destructuring)": 13,
+      "eslint(prefer-named-capture-group)": 2,
+      "eslint(require-await)": 12,
+      "eslint(require-unicode-regexp)": 2,
+      "eslint(sort-vars)": 4,
+      "import(consistent-type-specifier-style)": 2,
+      "import(first)": 12,
+      "import(newline-after-import)": 8,
+      "import(no-duplicates)": 4,
+      "typescript(consistent-type-definitions)": 1,
+      "typescript(no-explicit-any)": 2,
+      "typescript(no-non-null-assertion)": 5,
+      "typescript(tsconfig-error)": 2,
+      "unicorn(numeric-separators-style)": 3,
+      "unicorn(relative-url-style)": 2,
+      "unicorn(text-encoding-identifier-case)": 2
+    }
+  },
+  "upstream_modified_hunks": {
+    "count": 6,
+    "rules": {
+      "eslint(curly)": 3,
+      "typescript(no-non-null-assertion)": 1,
+      "unicorn(no-useless-undefined)": 2
+    }
+  }
+}

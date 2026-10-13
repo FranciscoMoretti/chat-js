@@ -1,22 +1,28 @@
 "use client";
 
-import { LogIn, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { JSX as ReactJSX } from "react";
+import { LogIn, X } from "lucide-react";
 import React, { useState } from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { Button } from "@/components/ui/button";
+
+import type { JSX as ReactJSX } from "react";
+
 import { cn } from "@/lib/utils";
 
+const BANNER_ANIMATE = { height: "auto", opacity: 1 };
+const BANNER_EXIT = { height: 0, opacity: 0 };
+const BANNER_INITIAL = { height: 0, opacity: 0 };
+const BANNER_TRANSITION = { duration: 0.2 };
+
 interface LoginCtaBannerProps {
-  className?: string;
-  compact?: boolean;
-  dismissible?: boolean;
-  message: string;
-  variant?: "default" | "amber" | "red";
+  readonly className?: string;
+  readonly compact?: boolean;
+  readonly dismissible?: boolean;
+  readonly message: string;
+  readonly variant?: "default" | "amber" | "red";
 }
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- LoginCtaBanner: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const LoginCtaBanner = ({
   message,
@@ -56,11 +62,11 @@ export const LoginCtaBanner = ({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ height: "auto", opacity: 1 }}
+        animate={BANNER_ANIMATE}
         className="w-full"
-        exit={{ height: 0, opacity: 0 }}
-        initial={{ height: 0, opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        exit={BANNER_EXIT}
+        initial={BANNER_INITIAL}
+        transition={BANNER_TRANSITION}
       >
         <div
           className={cn(
@@ -90,7 +96,9 @@ export const LoginCtaBanner = ({
           {dismissible && (
             <Button
               className="h-6 w-6 p-0 opacity-70 hover:bg-transparent hover:opacity-100"
-              onClick={() => setDismissed(true)}
+              onClick={() => {
+                setDismissed(true);
+              }}
               size="sm"
               variant="ghost"
             >
@@ -102,4 +110,3 @@ export const LoginCtaBanner = ({
     </AnimatePresence>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

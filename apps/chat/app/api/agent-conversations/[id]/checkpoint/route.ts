@@ -1,47 +1,72 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-
 import { getEveConversation } from "@/lib/db/eve-queries";
-import { env } from "@/lib/env";
 import {
   readEveCheckpoint,
   waitForEveCheckpoint,
 } from "@/lib/eve/checkpoint-readiness";
 import { CheckpointRejectedError } from "@/lib/eve/checkpoint-rejection";
+import { env } from "@/lib/env";
+import { eveRequest } from "@/lib/eve/server";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
-import { eveRequest } from "@/lib/eve/server";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): inputSchema uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MAX_TURN_ID_LENGTH = 64;
+const CHECKPOINT_REQUEST_TIMEOUT_MS = 15_000;
+const CHECKPOINT_ACCEPTED_STATUS = 202;
+
 const inputSchema = z
   .object({
     beforeTurnId: z
       .string()
-      .max(64)
+      .max(MAX_TURN_ID_LENGTH)
       .regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u),
     checkpointId: z.uuid(),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
+const checkpointFailureResponse = (
+  error: unknown,
+  id: string,
+  input: ReadonlyNativeSurface<
+    Extract<ReturnType<typeof inputSchema.safeParse>, { success: true }>
+  >
+): Response => {
+  if (error instanceof CheckpointRejectedError) {
+    return Response.json(
+      {
+        checkpointRejected: true,
+        conversationId: id,
+        error: error.message,
+        reason: error.reason,
+        ...input.data,
+      },
+      { headers: { "cache-control": "no-store" }, status: 409 }
+    );
+  }
+  return Response.json(
+    {
+      error:
+        "Checkpoint capture is unconfirmed. Retain this request before retrying.",
+    },
+    { headers: { "cache-control": "no-store" }, status: 409 }
+  );
+};
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): POST uses 15_000, 202 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): POST accepts request: Request; context: { params: Promise<{ id: string; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of source?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+/**
+ * Requests checkpoint capture for a bound source conversation.
+ * On an ambiguous response, the caller must retain this request for a same-request retry.
+ * @param {Request} request Same-origin request containing checkpoint identity and turn data.
+ * @param {{ params: Promise<{ id: string }> }} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} JSON confirming readiness or explaining rejection or uncertainty.
  */
-/** The caller retains this checkpoint identity before posting and on ambiguous failure. */
 export const POST = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   context: {
-    params: Promise<{
-      id: string;
-    }>;
+    readonly params: Readonly<
+      Promise<{
+        readonly id: string;
+      }>
+    >;
   }
 ): Promise<Response> => {
   const principal = await resolveEvePrincipal(request.headers);
@@ -60,7 +85,12 @@ export const POST = async (
     );
   }
   const source = await getEveConversation(principal.ownerId, id);
-  if (!source?.sessionId || source.state !== "bound") {
+  const sessionId = source?.sessionId;
+  if (
+    typeof sessionId !== "string" ||
+    sessionId === "" ||
+    source?.state !== "bound"
+  ) {
     return Response.json(
       { error: "Source conversation not found." },
       { status: 404 }
@@ -70,26 +100,26 @@ export const POST = async (
     if (
       !(await readEveCheckpoint(
         principal.ownerId,
-        source.sessionId,
+        sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId
       ))
     ) {
       const accepted = await eveRequest(
         principal.ownerId,
-        `/eve/chat/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
+        `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint`,
         {
           body: JSON.stringify(input.data),
           method: "POST",
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(CHECKPOINT_REQUEST_TIMEOUT_MS),
         }
       );
-      if (accepted.status !== 202) {
+      if (accepted.status !== CHECKPOINT_ACCEPTED_STATUS) {
         throw new Error("Checkpoint capture was not accepted.");
       }
       await waitForEveCheckpoint(
         principal.ownerId,
-        source.sessionId,
+        sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId
       );
@@ -99,25 +129,6 @@ export const POST = async (
       { headers: { "cache-control": "no-store" } }
     );
   } catch (error) {
-    if (error instanceof CheckpointRejectedError) {
-      return Response.json(
-        {
-          checkpointRejected: true,
-          conversationId: id,
-          error: error.message,
-          reason: error.reason,
-          ...input.data,
-        },
-        { headers: { "cache-control": "no-store" }, status: 409 }
-      );
-    }
-    return Response.json(
-      {
-        error:
-          "Checkpoint capture is unconfirmed. Retain this request before retrying.",
-      },
-      { headers: { "cache-control": "no-store" }, status: 409 }
-    );
+    return checkpointFailureResponse(error, id, input);
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

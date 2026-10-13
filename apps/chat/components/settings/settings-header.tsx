@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+
+import React from "react";
 
 export const SettingsHeader = (): React.JSX.Element => {
   const { isMobile } = useSidebar();

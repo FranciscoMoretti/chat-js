@@ -1,17 +1,12 @@
+import { builtInGateways } from "#cli/registry/gateways";
 import { readFileSync } from "node:fs";
 
-import { builtInGateways } from "#cli/registry/gateways";
-
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** An independently hosted registry with a name, credentials and file layout unknown to the CLI. */
 export const externalGatewayFixture = () => {
   const openAiCompatibleGateway = builtInGateways.find(
-    (item): boolean => item.meta.chatjs.id === "openai-compatible"
+    (item: {
+      readonly meta: { readonly chatjs: { readonly id: string } };
+    }): boolean => item.meta.chatjs.id === "openai-compatible"
   );
   if (!openAiCompatibleGateway) {
     throw new Error("Missing OpenAI-compatible gateway fixture");
@@ -63,9 +58,3 @@ export const externalGatewayFixture = () => {
     },
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable jsdoc/require-returns */

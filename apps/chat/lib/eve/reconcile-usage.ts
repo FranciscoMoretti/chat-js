@@ -1,42 +1,38 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "eve/client" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
-
-import {
-  advanceEveUsageCursor,
-  getEveUsageCursor,
-  withManagedUsageReconciliation,
-} from "@/lib/db/eve-billing";
-import { listEveOwnerBindings } from "@/lib/db/eve-queries";
 import {
   advanceEveSubagentUsageCursor,
   getEveSubagent,
   listEveSubagents,
 } from "@/lib/db/eve-subagents";
-import { env } from "@/lib/env";
-
-import { ingestEveActivity } from "./activity";
-import { getEveConnectionOptions } from "./connection-options";
-import { recoverEveCreations } from "./recover-creations";
+import {
+  advanceEveUsageCursor,
+  getEveUsageCursor,
+  withManagedUsageReconciliation,
+} from "@/lib/db/eve-billing";
+import type { MessageStreamEvent } from "eve/client";
 import { assertEveConfigured } from "./server";
+import { env } from "@/lib/env";
+import { getEveConnectionOptions } from "./connection-options";
 import { getEveStreamPositions } from "./stream-positions";
+import { ingestEveActivity } from "./activity";
 import { ingestEveUsage } from "./usage";
+import { listEveOwnerBindings } from "@/lib/db/eve-queries";
+import { recoverEveCreations } from "./recover-creations";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-continue (#515): reconcileEveSubagentUsage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-no-magic-numbers (#517): reconcileEveSubagentUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): reconcileEveSubagentUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): reconcileEveSubagentUsage intentionally keeps the existing falsy-value behavior of nested; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Settle native descendants before admission or erasing a root session. */
+const INITIAL_STREAM_INDEX = 0;
+const STREAM_EVENT_INCREMENT = 1;
+const STREAM_READ_TIMEOUT_MS = 15_000;
+const MAX_CONCURRENT_USAGE_READS = 4;
+const NO_UNPRICED_SESSIONS = 0;
+
+/**
+ * Settle native descendants before admission or erasing a root session.
+ * @param {string} ownerId - Owner whose child sessions and billing cursors are reconciled.
+ * @param {string} sessionId - Root session binding required for every discovered descendant.
+ * @param {boolean} replayUnpriced - Replay from the beginning instead of each saved child cursor.
+ * @returns {Promise<boolean>} Whether every visited child has resolved usage; unresolved children keep their cursors.
+ */
 const reconcileEveSubagentUsage = async (
   ownerId: string,
   sessionId: string,
@@ -50,7 +46,9 @@ const reconcileEveSubagentUsage = async (
     descendants.map((child) => child.sessionId)
   );
   for (const child of descendants) {
-    const start = replayUnpriced ? 0 : child.usageStreamIndex;
+    const start = replayUnpriced
+      ? INITIAL_STREAM_INDEX
+      : child.usageStreamIndex;
     const length = positions.get(child.sessionId);
     if (length !== undefined && length < child.usageStreamIndex) {
       throw new Error(
@@ -62,17 +60,18 @@ const reconcileEveSubagentUsage = async (
     }
     let childIndex = start;
     let childUnresolved = false;
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
     for await (const event of client.sessions.attach(child.sessionId).stream({
       follow: false,
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
       startIndex: start,
     })) {
-      childIndex += 1;
+      childIndex += STREAM_EVENT_INCREMENT;
       if (
-        (await ingestEveUsage(ownerId, child.sessionId, event, {
+        !(await ingestEveUsage(ownerId, child.sessionId, event, {
           sessionId,
           turnId: child.rootTurnId,
-        })) === false
+        }))
       ) {
         childUnresolved = true;
       }
@@ -82,7 +81,8 @@ const reconcileEveSubagentUsage = async (
         !discovered.has(event.data.childSessionId)
       ) {
         const nested = await getEveSubagent(ownerId, event.data.childSessionId);
-        if (!nested || nested.rootSessionId !== sessionId) {
+
+        if (nested === null || nested.rootSessionId !== sessionId) {
           throw new Error("Delegated usage requires an owned root binding.");
         }
         discovered.add(nested.sessionId);
@@ -92,20 +92,18 @@ const reconcileEveSubagentUsage = async (
     if (childUnresolved) {
       unresolved = true;
     } else if (childIndex > start) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
       await advanceEveSubagentUsageCursor(ownerId, child.sessionId, childIndex);
     }
   }
   return !unresolved;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-init-declarations (#507): reconcileEveUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): reconcileEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): reconcileEveUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-/** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
+/**
+ * Repair missed usage/activity hooks from Eve's authoritative stream.
+ * @param {string} ownerId - Owner whose root and descendant usage will be ingested.
+ * @param {string} sessionId - Root session whose cursor advances only after reconciliation succeeds.
+ * @param {boolean} replayUnpriced - Replay the root and descendants from the beginning to retry pricing. */
 const reconcileEveUsage = async (
   ownerId: string,
   sessionId: string,
@@ -113,7 +111,7 @@ const reconcileEveUsage = async (
 ): Promise<void> => {
   assertEveConfigured();
   const startIndex = replayUnpriced
-    ? 0
+    ? INITIAL_STREAM_INDEX
     : await getEveUsageCursor(ownerId, sessionId);
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
@@ -122,10 +120,10 @@ const reconcileEveUsage = async (
   let latestActivity: MessageStreamEvent | undefined;
   for await (const event of session.stream({
     follow: false,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
     startIndex,
   })) {
-    streamIndex += 1;
+    streamIndex += STREAM_EVENT_INCREMENT;
     if (
       event.type === "message.received" ||
       event.type === "message.completed"
@@ -138,7 +136,7 @@ const reconcileEveUsage = async (
         event.type === "compaction.usage" ||
         event.type === "hook.result" ||
         event.type === "action.result") &&
-      priced === false
+      !priced
     ) {
       unresolved = true;
     }
@@ -158,23 +156,20 @@ const reconcileEveUsage = async (
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): reconcileAllOwnerUsage uses 4 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): reconcileAllOwnerUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): reconcileAllOwnerUsage accepts unpricedSessions = new Set<string>(); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reconcileAllOwnerUsage intentionally keeps the existing falsy-value behavior of row.sessionId; child.rootSessionId; next.done; next.value.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const reconcileAllOwnerUsage = async (
   ownerId: string,
-  unpricedSessions = new Set<string>()
+  unpricedSessions: Readonly<ReadonlySet<string>> = new Set<string>()
 ): Promise<void> => {
   const bindings = await listEveOwnerBindings(ownerId);
-  if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
+  if (
+    bindings.some(
+      (row) =>
+        row.state !== "bound" ||
+        typeof row.sessionId !== "string" ||
+        row.sessionId === ""
+    )
+  ) {
     throw new Error(
       "Resolve uncertain session creation before starting more work."
     );
@@ -182,11 +177,19 @@ const reconcileAllOwnerUsage = async (
   assertEveConfigured();
   const children = await listEveSubagents(ownerId);
   const positions = await getEveStreamPositions([
-    ...bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : [])),
+    ...bindings.flatMap((row) => {
+      if (typeof row.sessionId === "string" && row.sessionId !== "") {
+        return [row.sessionId];
+      }
+      return [];
+    }),
     ...children.map((child) => child.sessionId),
   ]);
   for (const row of bindings) {
-    const length = row.sessionId ? positions.get(row.sessionId) : undefined;
+    const length =
+      typeof row.sessionId === "string" && row.sessionId !== ""
+        ? positions.get(row.sessionId)
+        : undefined;
     if (length !== undefined && length < row.usageStreamIndex) {
       throw new Error("Eve stream is shorter than its durable billing cursor.");
     }
@@ -201,7 +204,7 @@ const reconcileAllOwnerUsage = async (
         "Eve child stream is shorter than its durable billing cursor."
       );
     }
-    if (!child.rootSessionId) {
+    if (typeof child.rootSessionId !== "string" || child.rootSessionId === "") {
       throw new Error("Native child has no owned root session.");
     }
     if (length !== child.usageStreamIndex) {
@@ -211,7 +214,8 @@ const reconcileAllOwnerUsage = async (
   const pending = bindings
     .filter(
       (row) =>
-        !row.sessionId ||
+        typeof row.sessionId !== "string" ||
+        row.sessionId === "" ||
         unpricedSessions.has(row.sessionId) ||
         rootsWithPendingChildren.has(row.sessionId) ||
         positions.get(row.sessionId) !== row.usageStreamIndex
@@ -227,12 +231,15 @@ const reconcileAllOwnerUsage = async (
   const worker = async (): Promise<void> => {
     while (!failure) {
       const next = pending.next();
-      if (next.done) {
+      if (next.done === true) {
         return;
       }
       try {
-        if (next.value.sessionId) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
+        if (
+          typeof next.value.sessionId === "string" &&
+          next.value.sessionId !== ""
+        ) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
           await reconcileEveUsage(
             ownerId,
             next.value.sessionId,
@@ -245,17 +252,16 @@ const reconcileAllOwnerUsage = async (
     }
   };
   await Promise.all(
-    Array.from({ length: Math.min(4, bindings.length) }, worker)
+    Array.from(
+      { length: Math.min(MAX_CONCURRENT_USAGE_READS, bindings.length) },
+      worker
+    )
   );
   if (failure) {
     throw failure.cause;
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): reconcileEveOwnerUsage accepts unpricedSessions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reconcileEveOwnerUsage intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const reconcileEveOwnerUsage = async (
   ownerId: string,
   sessionId?: string
@@ -269,17 +275,17 @@ const reconcileEveOwnerUsage = async (
   // settled history must not be streamed on every message or new conversation.
   await withManagedUsageReconciliation(
     ownerId,
-    async (sweepDue, unpricedSessions) => {
-      if (sweepDue || unpricedSessions.size > 0) {
+    async (sweepDue, unpricedSessions: Readonly<ReadonlySet<string>>) => {
+      if (sweepDue || unpricedSessions.size > NO_UNPRICED_SESSIONS) {
         // Older cursors can have passed failed attempts before their explicit
         // zero-charge classification; replay that evidence rather than strand it.
         await reconcileAllOwnerUsage(ownerId, unpricedSessions);
-      } else if (sessionId) {
+      } else if (typeof sessionId === "string" && sessionId !== "") {
         // The conversation receiving new work is never covered by the cooldown.
         await reconcileEveUsage(ownerId, sessionId);
       }
     }
   );
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };

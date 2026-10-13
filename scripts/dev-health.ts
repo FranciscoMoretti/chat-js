@@ -1,8 +1,14 @@
 const HEALTH_CHECK_TIMEOUT_MS = 6000;
 const EMPTY_URL_LENGTH = 0;
 
-const checkHealth = async (origin: string): Promise<void> => {
-  const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+const checkHealth = async (
+  origin: string,
+  cancellation?: AbortSignal
+): Promise<void> => {
+  const timeout = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+  const signal = cancellation
+    ? AbortSignal.any([cancellation, timeout])
+    : timeout;
   await Promise.all([
     (async (): Promise<void> => {
       const response = await fetch(new URL("/api/health", origin), {
@@ -40,19 +46,15 @@ const checkHealth = async (origin: string): Promise<void> => {
     })(),
   ]);
 };
-
 if (import.meta.main) {
   try {
-    // oxlint-disable-next-line node/no-process-env -- Read the configured readiness origin at this CLI boundary.
     const appUrl = process.env.APP_URL;
     if (typeof appUrl !== "string" || appUrl.length === EMPTY_URL_LENGTH) {
       throw new Error("Run bun dev:health from the repository root.");
     }
     await checkHealth(appUrl);
-    // oxlint-disable-next-line eslint/no-console -- Preserve the command's successful readiness message.
     console.info("Healthy: ChatJS, Eve and database are ready.");
   } catch (error) {
-    // oxlint-disable-next-line eslint/no-console -- Preserve the command's operator-facing failure diagnostic.
     console.error(
       error instanceof Error ? error.message : "Runtime unavailable"
     );

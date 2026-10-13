@@ -12,5 +12,4 @@ const ModelToolbarVisualFixturePage = (): React.JSX.Element => {
   return <ModelToolbarVisualFixture />;
 };
 
-// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ModelToolbarVisualFixturePage.
 export default ModelToolbarVisualFixturePage;

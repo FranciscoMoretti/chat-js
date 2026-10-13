@@ -1,6 +1,7 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import type { JSX as ReactJSX } from "react";
 import React, { act, useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster, toast } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
@@ -10,13 +11,12 @@ import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { useEveAttachments } from "@/components/eve/use-eve-attachments";
-/* oxlint-disable import/max-dependencies -- @/components/settings/settings-nav import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { SettingsNav } from "@/components/settings/settings-nav";
-/* oxlint-enable import/max-dependencies */
 import { composerControls } from "@/composer-controls";
 import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { composerTools } from "@/tools/chatjs/composer-tools";
 
 import "./sandbox.css";
@@ -28,7 +28,7 @@ const state = vi.hoisted(() => ({
   error: false,
   featuresEnabled: true,
   globalConnector: false,
-  handleSubmit: vi.fn(),
+  handleSubmit: vi.fn<() => void>(),
   history: new Array<DraftAttachment>(),
   missingMetadata: false,
   mobile: false,
@@ -40,14 +40,16 @@ const state = vi.hoisted(() => ({
   upload: vi.fn(),
   uploadsInstalled: true,
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including files: AttachmentUploadInput). */
 
 vi.mock("@/features/installed-uploads", async () => {
   const { attachmentUploads } =
     await import("@/features/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
-    return state.uploadsInstalled ? behavior : { uploadQueue: [] };
+    if (state.uploadsInstalled) {
+      return behavior;
+    }
+    return { uploadQueue: [] };
   };
   return {
     attachmentUploads: {
@@ -56,35 +58,27 @@ vi.mock("@/features/installed-uploads", async () => {
     },
   };
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 24); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including file: File); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 vi.mock("@/features/attachment-uploads/upload", () => ({
-  uploadAttachment: (file: File) => {
-    state.upload(file);
-    return Promise.resolve({
+  uploadAttachment: async (file: ReadonlyNativeSurface<File>) => {
+    await state.upload(file);
+    return {
       contentType: file.type,
       digest: "fixture",
       name: file.name,
       url: `/api/files/${String(state.upload.mock.calls.length).padStart(24, "0")}.png`,
-    });
+    };
   },
 }));
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
     data: state.authenticated ? { user: { id: "fixture" } } : null,
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => state.mobile }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type -- composer-menu.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
     getModelById: () => ({
@@ -93,7 +87,6 @@ vi.mock("@/providers/chat-models-provider", () => ({
     }),
   }),
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 vi.mock("@/lib/config", () => ({
   config: {
     attachments: {
@@ -107,7 +100,6 @@ vi.mock("@/lib/config", () => ({
     },
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/features/installed", () => ({
   installedFeatures: {
@@ -116,9 +108,7 @@ vi.mock("@/features/installed", () => ({
       (id !== "attachment-uploads" || state.uploadsInstalled),
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedToolNames: {
     has: (name: string) =>
@@ -134,9 +124,7 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
           ].includes(name)),
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/trpc/react", () => ({
   useTRPC: () => ({
     mcp: {
@@ -148,30 +136,28 @@ vi.mock("@/trpc/react", () => ({
     },
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including connector); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutate: state.toggle }),
   useQuery: () => ({
-    data: state.connectors.map((connector) => ({
-      ...connector,
-      userId: state.globalConnector ? null : "fixture",
-    })),
+    data: state.connectors.map(
+      (
+        connector: Readonly<{ enabled: boolean; id: string; name: string }>
+      ) => ({
+        ...connector,
+        userId: state.globalConnector ? null : "fixture",
+      })
+    ),
     isError: state.error,
     isPending: state.pending,
   }),
   useQueryClient: () => ({}),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("next/navigation", () => ({
   usePathname: () => "/settings/connectors",
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- composer-menu.browser route: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: React.ComponentProps<"a">). */
 vi.mock("@/components/internal-link", () => ({
   InternalLink: ({
     children,
@@ -180,9 +166,6 @@ vi.mock("@/components/internal-link", () => ({
     <a {...props}>{children}</a>
   ),
 }));
-/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type -- composer-menu.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
   const actual = await importOriginal<{
@@ -191,29 +174,25 @@ vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
   return {
     composerTools: {
       ...actual.composerTools,
-      get webSearch() {
-        return state.removedTool || state.missingMetadata
-          ? undefined
-          : actual.composerTools.webSearch;
+      get webSearch(): (typeof composerTools)["webSearch"] | undefined {
+        if (state.removedTool || state.missingMetadata) {
+          return undefined;
+        }
+        return actual.composerTools.webSearch;
       },
     },
   };
 });
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "fixture",
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 vi.mock("@/components/eve/eve-model-picker", () => ({
   EveModelPicker: (): React.JSX.Element => <button type="button">Model</button>,
 }));
 
 const originalControls = [...composerControls];
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const mount = async (
   disabled = false,
@@ -226,7 +205,9 @@ const mount = async (
   document.body.append(container);
   const root = createRoot(container);
   const Fixture = (): ReactJSX.Element => {
-    const [attachments, setAttachments] = useState(state.history);
+    const [attachments, setAttachments] = useState<
+      readonly Readonly<DraftAttachment>[]
+    >(state.history);
     const files = useEveAttachments({ attachments, setAttachments });
     const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
       initialTool
@@ -241,7 +222,7 @@ const mount = async (
             onToolChange={setSelectedTool}
             disabled={disabled}
             draft="Hello"
-            onDraftChange={vi.fn()}
+            onDraftChange={vi.fn<(_draft: string) => void>()}
             onSubmit={state.handleSubmit}
           />
         </>
@@ -260,14 +241,21 @@ const mount = async (
             selectedModelId="fixture"
             selectedTool={selectedTool}
             onToolChange={setSelectedTool}
-            onAttach={(...args) => {
+            onAttach={(
+              ...args: readonly [
+                accept: string,
+                capture?: "user" | "environment",
+              ]
+            ) => {
               state.attach(...args);
             }}
           />
           <ActiveTool
             selectedTool={selectedTool}
             disabled={disabled}
-            onClear={() => setSelectedTool(null)}
+            onClear={() => {
+              setSelectedTool(null);
+            }}
           />
         </div>
         <div style={{ marginTop: 384 }}>
@@ -276,16 +264,13 @@ const mount = async (
       </>
     );
   };
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-  await act(() => root.render(<Fixture />));
+
+  await renderRoot(root, <Fixture />);
   return async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   };
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
-/* oxlint-disable max-statements, no-magic-numbers -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 afterEach(() => {
   toast.dismiss();
@@ -304,20 +289,18 @@ afterEach(() => {
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
+  state.upload.mockReset();
 });
-/* oxlint-enable max-statements, no-magic-numbers */
-
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("one ordered menu selects and clears tools, attaches files, and toggles connectors", async () => {
   const cleanup = await mount();
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     expect(
       [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item) => item.textContent
+        (item: { readonly textContent: string }) => item.textContent
       )
     ).toEqual([
       "Attach files",
@@ -328,81 +311,86 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       "Create a video",
       "Connectors",
     ]);
-    await act(() =>
-      page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click()
-    );
+    await act(async () => {
+      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+    });
     await expect
       .element(page.getByRole("button", { name: "Clear Search tool" }))
       .toHaveTextContent("Search");
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     await expect
       .element(page.getByRole("menuitemcheckbox", { name: /Web Search/u }))
       .toBeChecked();
     await takeSnapshot("composer-selected-tool");
-    await act(() =>
-      page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click()
-    );
+    await act(async () => {
+      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+    });
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toHaveTextContent("Add");
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
-    await act(() =>
-      page.getByRole("menuitem", { exact: true, name: "Attach files" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { exact: true, name: "Attach files" })
+        .click();
+    });
     expect(state.attach).toHaveBeenCalledWith(
       "application/pdf,image/jpeg,image/png"
     );
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
-    await act(() =>
-      page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { exact: true, name: "Connectors" })
+        .hover();
+    });
     await expect
       .element(page.getByRole("menuitemcheckbox", { name: "Documentation" }))
       .toBeVisible();
-    await act(() =>
-      page.getByRole("menuitemcheckbox", { name: "Documentation" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("menuitemcheckbox", { name: "Documentation" })
+        .click();
+    });
     expect(state.toggle).toHaveBeenCalledWith({ enabled: false, id: "docs" });
     await takeSnapshot("composer-connectors");
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-
-/* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("mobile camera and guest controls respect the same order; disabled composer cannot open", async () => {
   state.mobile = true;
   state.authenticated = false;
   const cleanup = await mount();
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     await expect
       .element(page.getByRole("menuitem", { name: "Take photo" }))
       .toBeVisible();
-    await act(() =>
-      page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
-    );
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { exact: true, name: "Connectors" })
+        .hover();
+    });
     await expect
       .element(page.getByRole("menuitem", { exact: true, name: "Sign in" }))
       .toHaveAttribute("href", "/login");
     await takeSnapshot("composer-guest-connectors");
-    await act(() =>
-      page.getByRole("menuitem", { name: "Attach files" }).hover()
-    );
+    await act(async () => {
+      await page.getByRole("menuitem", { name: "Attach files" }).hover();
+    });
     await takeSnapshot("composer-mobile-guest");
-    await act(() =>
-      page.getByRole("menuitem", { name: "Attach files" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("menuitem", { name: "Attach files" }).click();
+    });
     expect(state.attach).not.toHaveBeenCalled();
     await expect
       .element(page.getByRole("link", { exact: true, name: "Sign in" }))
@@ -416,8 +404,8 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toBeDisabled();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
+    // Select act's completion overload for this synchronous, undefined-returning callback.
+    await act<undefined>((): undefined => {
       const trigger = page
         .getByRole("button", { name: "Composer options" })
         .element();
@@ -431,24 +419,23 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await disabledCleanup();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom ordering and omitted MCP need no placeholder", async () => {
   composerControls.splice(
     0,
     composerControls.length,
-    ...originalControls.filter((item) => item.id !== "mcp").toReversed()
+    ...originalControls
+      .filter((item: { readonly id: string }) => item.id !== "mcp")
+      .toReversed()
   );
   const cleanup = await mount();
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     expect(
       [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item) => item.textContent
+        (item: { readonly textContent: string }) => item.textContent
       )
     ).toEqual([
       "Create a video",
@@ -459,13 +446,13 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
       "Attach files",
     ]);
     await takeSnapshot("composer-custom-order-without-mcp");
-    await act(() => userEvent.keyboard("{Escape}"));
+    await act(async () => {
+      await userEvent.keyboard("{Escape}");
+    });
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 for (const status of ["loading", "error", "empty"] as const) {
   test(`connectors ${status} keeps management reachable`, async () => {
@@ -474,12 +461,14 @@ for (const status of ["loading", "error", "empty"] as const) {
     state.connectors = [];
     const cleanup = await mount();
     try {
-      await act(() =>
-        page.getByRole("button", { name: "Composer options" }).click()
-      );
-      await act(() =>
-        page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
-      );
+      await act(async () => {
+        await page.getByRole("button", { name: "Composer options" }).click();
+      });
+      await act(async () => {
+        await page
+          .getByRole("menuitem", { exact: true, name: "Connectors" })
+          .hover();
+      });
       const messages = {
         empty: "No connected servers",
         error: "Could not load connectors",
@@ -495,9 +484,6 @@ for (const status of ["loading", "error", "empty"] as const) {
     }
   });
 }
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 for (const selected of ["webSearch", "editTextDocument"] as const) {
   test(`can clear ${selected} after signing out and switching to a model without tools`, async () => {
@@ -505,9 +491,9 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
     state.toolCall = false;
     const cleanup = await mount(false, selected);
     try {
-      await act(() =>
-        page.getByRole("button", { name: "Composer options" }).click()
-      );
+      await act(async () => {
+        await page.getByRole("button", { name: "Composer options" }).click();
+      });
       await expect
         .element(
           page.getByRole("menuitemcheckbox", { name: "Create an image" })
@@ -524,7 +510,9 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
         )
         .toHaveTextContent("not supported");
       await takeSnapshot(`composer-clear-${selected}`);
-      await act(() => page.getByRole("menuitem", { name: /^Clear /u }).click());
+      await act(async () => {
+        await page.getByRole("menuitem", { name: /^Clear /u }).click();
+      });
       await expect
         .element(page.getByRole("button", { name: "Composer options" }))
         .toHaveTextContent("Add");
@@ -533,20 +521,17 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
     }
   });
 }
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- composer-menu.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("missing catalog capability metadata does not block tool selection", async () => {
   state.unknownCapabilities = true;
   const cleanup = await mount();
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
-    await act(() =>
-      page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
+    await act(async () => {
+      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+    });
     await expect
       .element(page.getByRole("button", { name: "Clear Search tool" }))
       .toHaveTextContent("Search");
@@ -554,20 +539,19 @@ test("missing catalog capability metadata does not block tool selection", async 
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- composer-menu.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("global connectors remain visible but cannot invoke the own-only toggle", async () => {
   state.globalConnector = true;
   const cleanup = await mount();
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
-    await act(() =>
-      page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { exact: true, name: "Connectors" })
+        .hover();
+    });
     await expect
       .element(page.getByRole("menuitemcheckbox", { name: "Documentation" }))
       .toHaveAttribute("aria-disabled", "true");
@@ -577,8 +561,6 @@ test("global connectors remain visible but cannot invoke the own-only toggle", a
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("no available controls hides the menu but still allows clearing a restored selection", async () => {
   state.featuresEnabled = false;
@@ -593,15 +575,17 @@ test("no available controls hides the menu but still allows clearing a restored 
   }
   const selectedCleanup = await mount(false, "webSearch");
   try {
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     await expect
       .element(page.getByRole("menuitem", { name: "Clear unavailable tool" }))
       .toBeVisible();
-    await act(() =>
-      page.getByRole("menuitem", { name: "Clear unavailable tool" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("menuitem", { name: "Clear unavailable tool" })
+        .click();
+    });
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .not.toBeInTheDocument();
@@ -609,9 +593,6 @@ test("no available controls hides the menu but still allows clearing a restored 
     await selectedCleanup();
   }
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 for (const mobile of [false, true]) {
   test(`active pill clears selection without opening the menu (${mobile ? "mobile" : "desktop"})`, async () => {
@@ -628,9 +609,9 @@ for (const mobile of [false, true]) {
       await takeSnapshot(
         `composer-active-pill-${mobile ? "mobile" : "desktop"}`
       );
-      await act(() =>
-        page.getByRole("button", { name: "Clear Search tool" }).click()
-      );
+      await act(async () => {
+        await page.getByRole("button", { name: "Clear Search tool" }).click();
+      });
       await expect
         .element(page.getByRole("button", { name: "Clear Search tool" }))
         .not.toBeInTheDocument();
@@ -640,9 +621,6 @@ for (const mobile of [false, true]) {
     }
   });
 }
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable typescript/promise-function-async -- composer-menu.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("removed tool keeps a clearable unavailable pill", async () => {
   state.removedTool = true;
@@ -652,9 +630,11 @@ test("removed tool keeps a clearable unavailable pill", async () => {
       .element(page.getByRole("button", { name: "Clear unavailable tool" }))
       .toBeVisible();
     await takeSnapshot("composer-unavailable-tool");
-    await act(() =>
-      page.getByRole("button", { name: "Clear unavailable tool" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("button", { name: "Clear unavailable tool" })
+        .click();
+    });
     await expect
       .element(page.getByRole("button", { name: "Clear unavailable tool" }))
       .not.toBeInTheDocument();
@@ -662,8 +642,6 @@ test("removed tool keeps a clearable unavailable pill", async () => {
     await cleanup();
   }
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("unavailable restored tool blocks submission until cleared", async () => {
   state.removedTool = true;
@@ -677,26 +655,29 @@ test("unavailable restored tool blocks submission until cleared", async () => {
       .toHaveTextContent("selected tool is unavailable");
     await takeSnapshot("composer-unavailable-submission");
     const message = page.getByRole("textbox", { exact: true, name: "Message" });
-    await act(() => message.click());
-    await act(() => userEvent.keyboard("{Enter}"));
+    await act(async () => {
+      await message.click();
+    });
+    await act(async () => {
+      await userEvent.keyboard("{Enter}");
+    });
     expect(state.handleSubmit).not.toHaveBeenCalled();
-    await act(() =>
-      page.getByRole("button", { name: "Clear unavailable tool" }).click()
-    );
+    await act(async () => {
+      await page
+        .getByRole("button", { name: "Clear unavailable tool" })
+        .click();
+    });
     await expect
       .element(page.getByRole("button", { exact: true, name: "Send" }))
       .toBeEnabled();
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Send" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Send" }).click();
+    });
     expect(state.handleSubmit).toHaveBeenCalledOnce();
   } finally {
     await cleanup();
   }
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable max-statements, typescript/promise-function-async -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("installed tool without display metadata remains selectable and can send", async () => {
   state.missingMetadata = true;
@@ -708,13 +689,13 @@ test("installed tool without display metadata remains selectable and can send", 
     await expect
       .element(page.getByRole("button", { exact: true, name: "Send" }))
       .toBeEnabled();
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Send" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { exact: true, name: "Send" }).click();
+    });
     expect(state.handleSubmit).toHaveBeenCalledOnce();
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     await expect
       .element(
         page.getByRole("menuitemcheckbox", { exact: true, name: "webSearch" })
@@ -725,9 +706,93 @@ test("installed tool without display metadata remains selectable and can send", 
     await cleanup();
   }
 });
-/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+test.each(["picker", "paste", "drop"])(
+  "%s locks Send before a deferred upload completes",
+  async (source) => {
+    const pending = Promise.withResolvers<boolean>();
+    state.upload.mockReturnValue(pending.promise);
+    const cleanup = await mount(false, null, true);
+    try {
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File([new Uint8Array([1, 2, 3])], "pending.png", {
+          type: "image/png",
+        })
+      );
+      if (source === "picker") {
+        const input =
+          document.querySelector<HTMLInputElement>('input[type="file"]');
+        if (!input) {
+          throw new Error("Missing installed upload picker");
+        }
+        input.files = transfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      } else if (source === "paste") {
+        page
+          .getByRole("textbox", { exact: true, name: "Message" })
+          .element()
+          .dispatchEvent(
+            new ClipboardEvent("paste", {
+              bubbles: true,
+              cancelable: true,
+              clipboardData: transfer,
+            })
+          );
+      } else {
+        page
+          .getByRole("group", { name: "Message composer" })
+          .element()
+          .dispatchEvent(
+            new DragEvent("drop", {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: transfer,
+            })
+          );
+      }
+      await vi.waitFor(() => {
+        expect(state.upload).toHaveBeenCalledOnce();
+      });
+      await expect
+        .element(page.getByRole("button", { exact: true, name: "Send" }))
+        .toBeDisabled();
+      await expect
+        .element(page.getByRole("button", { name: "Composer options" }))
+        .toBeDisabled();
+      await expect
+        .element(page.getByTestId("input-attachment-preview"))
+        .toBeVisible();
+      expect(state.handleSubmit).not.toHaveBeenCalled();
+      if (source === "picker") {
+        await takeSnapshot("composer-pending-upload-lock");
+        await page
+          .getByRole("group", { name: "Message composer" })
+          .screenshot();
+      }
+      await act(async () => {
+        await Promise.resolve();
+        pending.resolve(true);
+      });
+      await expect
+        .element(page.getByTestId("input-attachment-preview"))
+        .toBeVisible();
+      await expect
+        .element(page.getByRole("button", { exact: true, name: "Send" }))
+        .toBeEnabled();
+      if (source === "picker") {
+        await expect
+          .element(page.getByLabelText("Attach files"))
+          .toHaveValue("");
+      }
+      await page.getByRole("button", { exact: true, name: "Send" }).click();
+      expect(state.handleSubmit).toHaveBeenCalledOnce();
+    } finally {
+      pending.resolve(true);
+      await cleanup();
+    }
+  }
+);
 
 test("installed uploads handle picker, paste and drop; omitted uploads leave no input or upload handlers", async () => {
   const cleanup = await mount(false, null, true);
@@ -735,17 +800,13 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const file = new File([new Uint8Array([1, 2, 3])], "photo.png", {
       type: "image/png",
     });
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
     const input =
       document.querySelector<HTMLInputElement>('input[type="file"]');
     if (!input) {
       throw new Error("Missing installed upload picker");
     }
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
-      input.files = transfer.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
+    await act(async () => {
+      await page.elementLocator(input).upload(file);
     });
     await expect
       .element(page.getByTestId("input-attachment-preview"))
@@ -761,8 +822,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
+    await act<undefined>((): undefined => {
       message.dispatchEvent(
         new ClipboardEvent("paste", {
           bubbles: true,
@@ -771,12 +831,13 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
         })
       );
     });
-    await vi.waitFor(() => expect(state.upload).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => {
+      expect(state.upload).toHaveBeenCalledTimes(2);
+    });
     const composer = page
       .getByRole("group", { name: "Message composer" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,
@@ -785,7 +846,9 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
         })
       );
     });
-    await vi.waitFor(() => expect(state.upload).toHaveBeenCalledTimes(3));
+    await vi.waitFor(() => {
+      expect(state.upload).toHaveBeenCalledTimes(3);
+    });
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toBeEnabled();
@@ -793,8 +856,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     unsupported.items.add(
       new File(["plain text"], "notes.txt", { type: "text/plain" })
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,
@@ -844,8 +906,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
-    await act(() => {
+    await act<undefined>((): undefined => {
       composer.dispatchEvent(
         new DragEvent("drop", {
           bubbles: true,
@@ -862,9 +923,9 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
       );
     });
     expect(state.upload).not.toHaveBeenCalled();
-    await act(() =>
-      page.getByRole("button", { name: "Composer options" }).click()
-    );
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
     await expect
       .element(page.getByRole("menuitem", { name: "Attach files" }))
       .not.toBeInTheDocument();
@@ -873,6 +934,3 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     await omittedCleanup();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
-
-/* oxlint-disable max-lines -- composer-menu.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

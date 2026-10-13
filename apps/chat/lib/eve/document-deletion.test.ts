@@ -1,7 +1,6 @@
 import type { ToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { deleteDocument } from "@/tools/chatjs/delete-document/tool";
 
@@ -32,9 +31,6 @@ const identity = {
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const context = testToolContext({
   session: {
     auth: { current: null, initiator: { ...identity, attributes: {} } },
@@ -42,11 +38,10 @@ const context = testToolContext({
     turn: { id: "turn", sequence: 1 },
   },
 });
-/* oxlint-enable unicorn/no-null */
 
 const requestDocumentDeletion = async (
   toolInput: Readonly<typeof input>,
-  toolContext: ReadonlyNativeSurface<ToolContext>
+  toolContext: Readonly<ToolContext>
 ): Promise<unknown> => {
   const { approval } = deleteDocument;
   if (!approval || typeof approval === "function") {
@@ -75,9 +70,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it("requests native approval only for the current owned title and revision") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("requests native approval only for the current owned title and revision", async () => {
   await expect(requestDocumentDeletion(input, context)).resolves.toBe(
     "user-approval"
@@ -95,13 +87,12 @@ it("requests native approval only for the current owned title and revision", asy
   await expect(
     requestDocumentDeletion({ ...input, title: "Misleading title" }, context)
   ).rejects.toThrow("Document changed");
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "Document not found"
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
 
 it("requires an owner receipt before performing the conditional deletion", async () => {
   await expect(deleteDocument.execute(input, context)).rejects.toThrow(
@@ -127,7 +118,6 @@ it("requires an owner receipt before performing the conditional deletion", async
     context.abortSignal
   );
 });
-
 it("rejects absent document implementations before requesting approval or executing", async () => {
   mocks.kinds.clear();
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
@@ -138,7 +128,6 @@ it("rejects absent document implementations before requesting approval or execut
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-
 it("rechecks kind availability after approval", async () => {
   mocks.kinds.delete("text");
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(

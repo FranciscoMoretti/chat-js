@@ -1,12 +1,12 @@
-import { spawn } from "node:child_process";
+import { Command } from "commander";
+import type { PackageManager } from "#cli/types";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
 import { once } from "node:events";
 import path from "node:path";
+import { spawn } from "node:child_process";
 
-import { Command } from "commander";
-
-import type { PackageManager } from "#cli/types";
-import { inferPackageManager } from "#cli/utils/get-package-manager";
-import { handleError } from "#cli/utils/handle-error";
+const EXIT_SUCCESS = 0;
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
@@ -25,15 +25,14 @@ const getTsEvalCommand = (pm: PackageManager): [string, string[]] => {
     case "yarn": {
       return ["yarn", ["dlx", "tsx", "--eval", EVAL_SCRIPT]];
     }
-    default: {
+    case "npm": {
       return ["npx", ["tsx", "--eval", EVAL_SCRIPT]];
     }
+    // No default
   }
+  return ["npx", ["tsx", "--eval", EVAL_SCRIPT]];
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const config = new Command()
   .name("config")
   .description(
@@ -57,14 +56,13 @@ export const config = new Command()
       });
 
       const stderr: string[] = [];
-      child.stderr?.on("data", (data): void => {
+      child.stderr.on("data", (data): void => {
         stderr.push(String(data));
       });
 
-      let code: number | null;
+      let closeEvent: readonly unknown[];
       try {
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Node child-process close emits the exit code followed by a signal; the event library exposes an untyped tuple.
-        [code] = await once(child, "close");
+        closeEvent = await once(child, "close");
       } catch (error) {
         throw new Error(
           `Could not spawn ${cmd}. Make sure ${pm} is installed. ${error instanceof Error ? error.message : String(error)}`,
@@ -74,13 +72,11 @@ export const config = new Command()
         );
       }
 
-      if (code !== 0) {
+      const [code] = closeEvent;
+      if (code !== EXIT_SUCCESS) {
         throw new Error(`Failed to resolve config:\n${stderr.join("").trim()}`);
       }
     } catch (error) {
       handleError(error);
     }
   });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-statements */

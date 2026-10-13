@@ -1,16 +1,16 @@
-import { experimental_generateVideo as generateVideo } from "ai";
-import { defineTool } from "eve/tools";
 import type { ToolContext } from "eve/tools";
+import { defineTool } from "eve/tools";
+import { experimental_generateVideo as generateVideo } from "ai";
 
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
 import { createEveToolCost } from "@/lib/eve/tool-cost";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { createModuleLogger } from "@/lib/logger";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import { createModuleLogger } from "@/lib/logger";
 
 import { generateVideoInput } from "./schemas";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
 // Fixed estimate — not yet available from provider API
 const COST_CENTS = 50;
@@ -20,7 +20,12 @@ const DEFAULT_ASPECT_RATIO = "16:9";
 const DEFAULT_DURATION_SECONDS = 5;
 const FIRST_SUBTYPE_INDEX = 0;
 const FIRST_PARAMETER_INDEX = 0;
-const ALLOWED_EXTENSIONS = new Set(["mp4", "webm", "mov"]);
+const videoExtensions: ReadonlyMap<string, string> = new Map([
+  ["mp4", "mp4"],
+  ["webm", "webm"],
+  ["mov", "mov"],
+  ["quicktime", "mov"],
+]);
 
 const resolveVideoExtension = (mediaType?: string): string => {
   if (!(typeof mediaType === "string" && mediaType !== "")) {
@@ -32,17 +37,14 @@ const resolveVideoExtension = (mediaType?: string): string => {
     return "mp4";
   }
 
-  const subtype = subtypeWithParams
-    .split(";")
-    .at(FIRST_SUBTYPE_INDEX)
-    ?.trim()
+  const subtype = (subtypeWithParams.split(";").at(FIRST_SUBTYPE_INDEX) ?? "")
+    .trim()
     .toLowerCase();
   if (!(typeof subtype === "string" && subtype !== "")) {
     return "mp4";
   }
 
-  const mappedSubtype = subtype === "quicktime" ? "mov" : subtype;
-  return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
+  return videoExtensions.get(subtype) ?? "mp4";
 };
 
 const resolveVideoModel = async (
@@ -60,14 +62,13 @@ const resolveVideoModel = async (
     }
   }
   const modelId = config.ai.tools.video.default;
-  if (!(typeof modelId === "string" && modelId !== "")) {
-    throw new Error(
+  if (typeof modelId !== "string") {
+    throw new TypeError(
       "Set ai.tools.video.default to a video model supported by your gateway."
     );
   }
   return modelId;
 };
-
 type Context = Readonly<
   Pick<ToolContext, "session"> & { abortSignal: Readonly<AbortSignal> }
 >;
@@ -162,7 +163,7 @@ const generateAndStoreVideo = async (
     throw new Error("No video generated");
   }
   // Provider usage is billable even if the subsequent storage upload fails.
-  integration.costAccumulator?.addAPICost("generateVideo", COST_CENTS);
+  integration.costAccumulator.addAPICost("generateVideo", COST_CENTS);
   const buffer = Buffer.from(video.uint8Array);
   const uploadArguments = [
     `generated-video-${Date.now()}.${resolveVideoExtension(video.mediaType)}`,
@@ -184,8 +185,8 @@ const prepareGeneration = (
   const costAccumulator = createEveToolCost(usage);
   const modelProvider = eveToolModelProvider;
   const uploadFile = eveGeneratedFileUploader(context);
-  const selected = context.session.auth.current?.attributes.modelId;
-  // oxlint-disable-next-line eslint/no-undefined -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.
+  const { current } = context.session.auth;
+  const selected = current && current.attributes.modelId;
   const selectedModel = typeof selected === "string" ? selected : undefined;
   const startMs = Date.now();
   return {

@@ -1,8 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -12,36 +7,24 @@ import { db } from "../lib/db/client";
 import { eveChat, eveConversation, user } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 const metadataTitle = /renamed|metadata newer/u;
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("rename and pin persist, preserve input, and reject another owner's changes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("rename and pin persist, preserve input, and reject another owner's changes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("rename and pin persist, preserve input, and reject another owner's changes") uses 0, 1, 2, 1000, 404, 400, 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("rename and pin persist, preserve input, and reject another owner's changes")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): test("rename and pin persist, preserve input, and reject another owner's changes") accepts { page, browser, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("rename and pin persist, preserve input, and reject another owner's changes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): test("rename and pin persist, preserve input, and reject another owner's changes") intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("rename and pin persist, preserve input, and reject another owner's changes", async ({
   page,
   browser,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const ids = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
@@ -141,15 +124,17 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       .toBe(false);
     await page.reload();
     await expect(conversationLinks.first()).toHaveText(secondTitle);
-    for (const { procedure, input } of [
-      { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
-      { input: { id: ids[2], isPinned: true }, procedure: "pin" },
-    ]) {
-      const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
-        data: { json: input },
-      });
-      expect(response.status()).toBe(404);
-    }
+    await Promise.all(
+      [
+        { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
+        { input: { id: ids[2], isPinned: true }, procedure: "pin" },
+      ].map(async ({ procedure, input }) => {
+        const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
+          data: { json: input },
+        });
+        expect(response.status()).toBe(404);
+      })
+    );
     const invalid = await page.request.post("/api/trpc/eve.rename", {
       data: { json: { id: ids[0], title: "  " } },
     });
@@ -191,4 +176,3 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -1,20 +1,20 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import type { z } from "zod";
-
 import { eveResponseGroupCandidates } from "@/lib/eve/response-group-candidates";
-import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
+import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
 import { eveConversation, eveResponseGroup } from "./schema";
-/* oxlint-enable import/no-nodejs-modules */
+import type { z } from "zod";
+
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+const isNonemptyString = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
 
 const FIRST_PARAMETER_INDEX = 0;
 const EMPTY_FAMILY_SIZE = 0;
@@ -23,27 +23,25 @@ const SINGLE_MATCH_LIMIT = 1;
 type ResponseGroupTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
+type ResponseGroupTombstoneTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "update">
+>;
+type ResponseGroupWriteTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "execute" | "insert" | "update">
+>;
 type ResponseGroupRow = typeof eveResponseGroup.$inferSelect;
 type ConversationRow = typeof eveConversation.$inferSelect;
-type ReservedResponseGroup = Omit<
-  ResponseGroupRow,
-  "candidates" | "inputHash"
-> & {
-  candidates: NonNullable<ResponseGroupRow["candidates"]>;
-  inputHash: string;
-};
+type ReservedResponseGroup = ReadonlyNativeSurface<
+  Omit<ResponseGroupRow, "candidates" | "inputHash"> & {
+    candidates: NonNullable<ResponseGroupRow["candidates"]>;
+    inputHash: string;
+  }
+>;
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): reserveGroupRow accepts tx: ResponseGroupTransaction; value: z.infer<typeof eveResponseGroupInput>; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reserveGroupRow intentionally keeps the existing falsy-value behavior of existing; sourceId; source; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): reserveGroupRow preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const reserveGroupRow = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupWriteTransaction,
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ResponseGroupRow | undefined> => {
   const input = eveResponseGroupInput.parse(value);
   const inputHash = createHash("sha256")
@@ -60,39 +58,39 @@ const reserveGroupRow = async (
   if (existing?.deleted) {
     throw new Error("This response group has been deleted.");
   }
-  if (existing && existing.inputHash !== inputHash) {
+  if (hasQueryRow(existing) && existing.inputHash !== inputHash) {
     throw new Error(
       "This response group already has a different message, model order, tool selection, or source."
     );
   }
   const sourceId = input.fork?.conversationId ?? null;
-  const [source] = sourceId
-    ? await tx
-        .select()
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.id, sourceId),
-            eq(eveConversation.ownerId, ownerId)
+  const [source] =
+    typeof sourceId === "string" && sourceId !== ""
+      ? await tx
+          .select()
+          .from(eveConversation)
+          .where(
+            and(
+              eq(eveConversation.id, sourceId),
+              eq(eveConversation.ownerId, ownerId)
+            )
           )
-        )
-    : [];
-  if (sourceId && !source) {
+      : [];
+  if (typeof sourceId === "string" && sourceId !== "" && !hasQueryRow(source)) {
     throw new Error("Source conversation not found.");
   }
   // An exact replay can recover the missing association of a pre-contract group.
   // Commit it even when the source has since retired, so deletion can find it.
-  if (existing && !existing.sourceIdentityKnown) {
+  if (hasQueryRow(existing) && !existing.sourceIdentityKnown) {
     await tx
       .update(eveResponseGroup)
       .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
       .where(condition);
   }
-  if (source && source.state !== "bound") {
-    return;
+  if (hasQueryRow(source) && source.state !== "bound") {
+    return undefined;
   }
-  if (existing) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+  if (hasQueryRow(existing)) {
     return existing;
   }
   const candidates = eveResponseGroupCandidates(
@@ -103,7 +101,8 @@ const reserveGroupRow = async (
     .insert(eveResponseGroup)
     .values({
       candidateOperationIds: candidates.map(
-        (candidate) => candidate.operationId
+        (candidate: Readonly<{ modelId: string; operationId: string }>) =>
+          candidate.operationId
       ),
       candidates,
       inputHash,
@@ -113,22 +112,16 @@ const reserveGroupRow = async (
       sourceIdentityKnown: true,
     })
     .returning();
-  // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return group;
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): requireGroup accepts result: Awaited<ReturnType<typeof reserveGroupRow>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): requireGroup intentionally keeps the existing falsy-value behavior of result.inputHash; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const requireGroup = (
-  result: Awaited<ReturnType<typeof reserveGroupRow>>
+  result: ReadonlyNativeSurface<Awaited<ReturnType<typeof reserveGroupRow>>>
 ): ReservedResponseGroup => {
   if (!result) {
     throw new Error("Source conversation is unavailable.");
   }
-  if (!(result.candidates && result.inputHash)) {
+  if (!(result.candidates && isNonemptyString(result.inputHash))) {
     throw new Error("Response group content is unavailable.");
   }
   return {
@@ -137,63 +130,51 @@ const requireGroup = (
     inputHash: result.inputHash,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): reserveEveResponseGroup accepts value: z.infer<typeof eveResponseGroupInput>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): reserveEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 /**
  * Reserve every candidate under the same owner lock used by family deletion.
- * @param ownerId Owner whose family lock fences the comparison reservation.
- * @param value Comparison input whose complete content hash and ordered candidates define replay identity.
- * @returns The allocated or replayed group with available candidate content, after committing its reservation.
+ * @param {string} ownerId Owner whose family lock fences the comparison reservation.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose complete content hash and ordered candidates define replay identity.
+ * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group with available candidate content, after committing its reservation.
  */
 const reserveEveResponseGroup = async (
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ReservedResponseGroup> => {
-  const result = await db.transaction((tx) =>
-    reserveGroupRow(tx, ownerId, value)
+  const result = await db.transaction(
+    async (tx: ResponseGroupWriteTransaction) =>
+      await reserveGroupRow(tx, ownerId, value)
   );
   return requireGroup(result);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --typescript/prefer-readonly-parameter-types (#565): reserveEveResponseGroupInTransaction accepts tx: ResponseGroupTransaction; value: z.infer<typeof eveResponseGroupInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Must commit with guest quota when admitting an anonymous comparison.
- * @param tx Native transaction shared with the caller's guest quota admission.
- * @param ownerId Owner whose family lock fences the comparison reservation.
- * @param value Comparison input whose hash and candidate order define replay identity.
- * @returns The allocated or replayed group; the caller controls the shared transaction commit.
+ * @param {ResponseGroupWriteTransaction} tx Native transaction capabilities shared with the caller's guest quota admission.
+ * @param {string} ownerId Owner whose family lock fences the comparison reservation.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose hash and candidate order define replay identity.
+ * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group; the caller controls the shared transaction commit.
  */
 const reserveEveResponseGroupInTransaction = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupWriteTransaction,
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ReservedResponseGroup> =>
   requireGroup(await reserveGroupRow(tx, ownerId, value));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): tombstoneEveResponseGroups accepts tx: ResponseGroupTransaction; family: { id: string; operationId: string; }[]; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): tombstoneEveResponseGroups intentionally keeps the existing falsy-value behavior of unknown; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): tombstoneEveResponseGroups keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * Caller holds the owner family lock; retain identities but erase request metadata.
- * @param tx Native deletion transaction already holding the owner family lock.
- * @param ownerId Owner whose source and candidate groups are tombstoned.
- * @param family Conversation and operation identities defining the deleted family.
+ * @param {ResponseGroupTransaction} tx Native deletion transaction already holding the owner family lock.
+ * @param {string} ownerId Owner whose source and candidate groups are tombstoned.
+ * @param {{ id: string; operationId: string; }[]} family Conversation and operation identities defining the deleted family.
  */
 const tombstoneEveResponseGroups = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupTombstoneTransaction,
   ownerId: string,
-  family: {
+  family: readonly Readonly<{
     id: string;
     operationId: string;
-  }[]
+  }>[]
 ): Promise<void> => {
   const [unknown] = await tx
     .select({ id: eveResponseGroup.id })
@@ -206,7 +187,8 @@ const tombstoneEveResponseGroups = async (
       )
     )
     .limit(SINGLE_MATCH_LIMIT);
-  if (unknown) {
+  const hasUnknownSource = hasQueryRow(unknown);
+  if (hasUnknownSource) {
     throw new Error(
       "Recover saved response group requests before deleting conversations."
     );
@@ -231,29 +213,24 @@ const tombstoneEveResponseGroups = async (
       )
     );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): recordEveResponseGroupRejection accepts rejection?: { error: string; code?: "project_not_found"; }; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): recordEveResponseGroupRejection intentionally keeps the existing falsy-value behavior of group?.candidates?.some( (candidate) => candidate.operationId === operationId ); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Clear an old rejection before retry; only a definitive result may replace it.
- * @param ownerId Owner whose family lock serializes the candidate update.
- * @param groupId Live response group containing the candidate operation.
- * @param operationId Exact candidate operation whose rejection is replaced or cleared.
- * @param rejection Definitive rejection details; absence clears the prior rejection for retry.
+ * @param {string} ownerId Owner whose family lock serializes the candidate update.
+ * @param {string} groupId Live response group containing the candidate operation.
+ * @param {string} operationId Exact candidate operation whose rejection is replaced or cleared.
+ * @param {{ error: string; code?: "project_not_found"; } | undefined} rejection Definitive rejection details; absence clears the prior rejection for retry.
  */
 const recordEveResponseGroupRejection = async (
   ownerId: string,
   groupId: string,
   operationId: string,
   rejection?: {
-    error: string;
-    code?: "project_not_found";
+    readonly error: string;
+    readonly code?: "project_not_found";
   }
 ): Promise<void> => {
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: ResponseGroupWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -264,35 +241,38 @@ const recordEveResponseGroupRejection = async (
     );
     const [group] = await tx.select().from(eveResponseGroup).where(condition);
     if (
-      !group?.candidates?.some(
-        (candidate) => candidate.operationId === operationId
-      )
+      group?.candidates?.some(
+        (candidate: { readonly operationId: string }) =>
+          candidate.operationId === operationId
+      ) !== true
     ) {
       throw new Error("Response group is unavailable.");
     }
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
-    const candidates = group.candidates.map((candidate) =>
-      candidate.operationId === operationId
-        ? {
+    const candidates = group.candidates.map(
+      (
+        candidate: ReadonlyNativeSurface<
+          NonNullable<ResponseGroupRow["candidates"]>[number]
+        >
+      ) => {
+        if (candidate.operationId === operationId) {
+          return {
             modelId: candidate.modelId,
             operationId,
             ...(rejection ? { rejection } : {}),
-          }
-        : candidate
+          };
+        }
+        return candidate;
+      }
     );
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
 };
-/* oxlint-enable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, typescript/strict-boolean-expressions --max-lines-per-function (#510): getEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): getEveResponseGroup intentionally keeps the existing falsy-value behavior of row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Owner-only ordered bindings; transcript content remains in native sessions.
- * @param ownerId Owner used to authorize group and conversation lookups.
- * @param id Live response group whose original candidate order is preserved.
- * @returns Parsed candidate binding or rejection states, or no result for missing or deleting groups.
+ * @param {string} ownerId Owner used to authorize group and conversation lookups.
+ * @param {string} id Live response group whose original candidate order is preserved.
+ * @returns {Promise<z.output<typeof eveResponseGroupResult> | undefined>} Parsed candidate binding or rejection states, or no result for missing or deleting groups.
  */
 const getEveResponseGroup = async (
   ownerId: string,
@@ -309,7 +289,7 @@ const getEveResponseGroup = async (
       )
     );
   if (!group?.candidates) {
-    return;
+    return undefined;
   }
   const conversations = await db
     .select()
@@ -326,9 +306,8 @@ const getEveResponseGroup = async (
         row.state === "deleting" || row.state === "deleted"
     )
   ) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     candidates: group.candidates.map(
       (
@@ -344,7 +323,7 @@ const getEveResponseGroup = async (
           (conversation: Readonly<Pick<ConversationRow, "operationId">>) =>
             conversation.operationId === candidate.operationId
         );
-        if (row?.state === "bound" && row.sessionId) {
+        if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
           return {
             ...identity,
             conversationId: row.id,
@@ -355,21 +334,17 @@ const getEveResponseGroup = async (
         if (row) {
           return { ...identity, state: "unresolved" };
         }
-        return candidate.rejection
-          ? { ...identity, state: "rejected", ...candidate.rejection }
-          : { ...identity, state: "waiting" };
+
+        if (candidate.rejection) {
+          return { ...identity, state: "rejected", ...candidate.rejection };
+        }
+        return { ...identity, state: "waiting" };
       }
     ),
     id: group.id,
   });
 };
-/* oxlint-enable max-lines-per-function, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- max-lines-per-function (#510): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): getEveResponseGroupForConversation intentionally keeps the existing falsy-value behavior of conversation; member.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/max-nested-calls (#568): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const getEveResponseGroupForConversation = async (
   ownerId: string,
   conversationId: string
@@ -387,8 +362,8 @@ const getEveResponseGroupForConversation = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!conversation) {
-    return;
+  if (!hasQueryRow(conversation)) {
+    return undefined;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const family = await db
@@ -414,11 +389,15 @@ const getEveResponseGroupForConversation = async (
       )
     );
   const boundFamily = family.flatMap(
-    (member: ReadonlyNativeSurface<(typeof family)[number]>) =>
-      member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+    (member: ReadonlyNativeSurface<(typeof family)[number]>) => {
+      if (isNonemptyString(member.sessionId)) {
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
   if (boundFamily.length === EMPTY_FAMILY_SIZE) {
-    return;
+    return undefined;
   }
   const operationIds = sql`ARRAY[${sql.join(
     boundFamily.map(
@@ -456,14 +435,14 @@ const getEveResponseGroupForConversation = async (
     groups
   );
   if (!lineage) {
-    return;
+    return undefined;
   }
   const lineageGroup = groups.find(
     (group: ReadonlyNativeSurface<(typeof groups)[number]>) =>
       group.id === lineage.groupId
   );
   if (!lineageGroup) {
-    return;
+    return undefined;
   }
   const candidateConversations = await db
     .select({
@@ -487,7 +466,7 @@ const getEveResponseGroupForConversation = async (
     ),
   ];
   if (candidateRootIds.length === EMPTY_FAMILY_SIZE) {
-    return;
+    return undefined;
   }
   const groupFamilies = await db
     .select({
@@ -512,8 +491,12 @@ const getEveResponseGroupForConversation = async (
       )
     );
   const boundGroupFamilies = groupFamilies.flatMap(
-    (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) =>
-      member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+    (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) => {
+      if (isNonemptyString(member.sessionId)) {
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
   const groupLineage = resolveEveResponseGroupLineage(
     conversationId,
@@ -521,16 +504,14 @@ const getEveResponseGroupForConversation = async (
     [lineageGroup]
   );
   if (!groupLineage) {
-    return;
+    return undefined;
   }
   const group = await getEveResponseGroup(ownerId, lineage.groupId);
   if (!group) {
-    return;
+    return undefined;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroupForConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     ...group,
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     candidates: group.candidates.map(
       (
         candidate: ReadonlyNativeSurface<
@@ -540,17 +521,16 @@ const getEveResponseGroupForConversation = async (
         const replacement = groupLineage.replacements.get(
           candidate.operationId
         );
-        return candidate.state === "bound" && replacement
-          ? { ...candidate, ...replacement }
-          : candidate;
+
+        if (candidate.state === "bound" && replacement) {
+          return { ...candidate, ...replacement };
+        }
+        return candidate;
       }
     ),
   });
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines -- #509: This eve-response-groups.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
- */
 export {
   getEveResponseGroup,
   getEveResponseGroupForConversation,

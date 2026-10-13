@@ -1,26 +1,22 @@
 import { expect, test } from "@playwright/test";
+import type { Response, TestInfo } from "@playwright/test";
 
 const chatRoute = /\/chat\/[a-f\d-]+$/u;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("logical chat keeps its URL and native observers across first send, retry, edit  uses 240_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("logical chat keeps its URL and native observers across first send, retry, edit  accepts { page, }; testInfo; route; error; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("logical chat keeps its URL and native observers across first send, retry, edit  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("logical chat keeps its URL and native observers across first send, retry, edit and reload", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
   });
   await page.goto("/");
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const initialTime = await page.evaluate(() => performance.timeOrigin);
   const composer = page.getByRole("group", {
     exact: true,
@@ -57,7 +53,7 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     page.getByRole("button", { exact: true, name: "Retry" }).last()
   ).toBeEnabled();
   const retryAccepted = page.waitForResponse(
-    (response) =>
+    (response: Readonly<Pick<Response, "request" | "url">>) =>
       response.url().endsWith("/api/agent-conversations") &&
       response.request().method() === "POST"
   );
@@ -94,7 +90,7 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Do not use tools. Reply with exactly jade.");
   const editAccepted = page.waitForResponse(
-    (response) =>
+    (response: Readonly<Pick<Response, "request" | "url">>) =>
       response.url().endsWith("/api/agent-conversations") &&
       response.request().method() === "POST"
   );
@@ -129,4 +125,3 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     path: testInfo.outputPath("reloaded-tree.png"),
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

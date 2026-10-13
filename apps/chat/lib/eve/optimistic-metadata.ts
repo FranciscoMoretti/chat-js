@@ -3,11 +3,11 @@ import type {
   QueryClient,
   QueryKey,
 } from "@tanstack/react-query";
-
 import type {
   getEveChatIdentity,
   listEveConversations,
 } from "@/lib/db/eve-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 type Identity = Awaited<ReturnType<typeof getEveChatIdentity>>;
 type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
@@ -18,8 +18,8 @@ interface Metadata {
 
 /**
  * Background title refreshes defer to the last metadata mutation's reconciliation.
- * @param cache Query client whose active mutations share the chat metadata flag.
- * @returns Number of active mutations tagged with eveMetadata, across chat branches.
+ * @param {Readonly<Pick<QueryClient, "isMutating">>} cache Query client whose active mutations share the chat metadata flag.
+ * @returns {number} Number of active mutations tagged with eveMetadata, across chat branches.
  */
 const pendingEveMetadataMutations = (
   cache: Readonly<Pick<QueryClient, "isMutating">>
@@ -45,11 +45,10 @@ const rollbackFields = <Value extends Metadata>(
     : {}),
 });
 
-/* oxlint-disable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const optimisticEveMetadata = async (
-  cache: QueryClient,
+  cache: Readonly<
+    Pick<QueryClient, "cancelQueries" | "getQueriesData" | "setQueryData">
+  >,
   listKey: QueryKey,
   detailKey: QueryKey,
   id: string,
@@ -65,13 +64,23 @@ const optimisticEveMetadata = async (
     if (data) {
       cache.setQueryData(key, {
         ...data,
-        // oxlint-disable-next-line oxc/no-map-spread -- #541: React Query updates require fresh page and item objects rather than mutating cached snapshots.
-        pages: data.pages.map((page) => ({
-          ...page,
-          items: page.items.map((item) =>
-            item.id === id ? { ...item, ...patch } : item
-          ),
-        })),
+        pages: data.pages.map(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+            ...page,
+            items: page.items.map(
+              (
+                item: ReadonlyNativeSurface<
+                  History["pages"][number]["items"][number]
+                >
+              ) => {
+                if (item.id === id) {
+                  return { ...item, ...patch };
+                }
+                return item;
+              }
+            ),
+          })
+        ),
       });
     }
   }
@@ -84,34 +93,47 @@ const optimisticEveMetadata = async (
   return (): void => {
     for (const [key, previous] of lists) {
       const before = previous?.pages
-        .flatMap((page) => page.items)
-        .find((item) => item.id === id);
+        .flatMap(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => page.items
+        )
+        .find((item: { readonly id: string }) => item.id === id);
       if (before) {
         cache.setQueryData<History>(
           key,
           (current) =>
             current && {
               ...current,
-              pages: current.pages.map((page) => ({
-                ...page,
-                items: page.items.map((item) =>
-                  item.id === id ? rollbackFields(item, before, patch) : item
-                ),
-              })),
+              pages: current.pages.map(
+                (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+                  ...page,
+                  items: page.items.map(
+                    (
+                      item: ReadonlyNativeSurface<
+                        History["pages"][number]["items"][number]
+                      >
+                    ) => {
+                      if (item.id === id) {
+                        return rollbackFields(item, before, patch);
+                      }
+                      return item;
+                    }
+                  ),
+                })
+              ),
             }
         );
       }
     }
     for (const [key, previous] of details) {
       if (previous?.chatId === id) {
-        cache.setQueryData<Identity>(key, (current) =>
-          current?.chatId === id
-            ? rollbackFields(current, previous, patch)
-            : current
-        );
+        cache.setQueryData<Identity>(key, (current) => {
+          if (current?.chatId === id) {
+            return rollbackFields(current, previous, patch);
+          }
+          return current;
+        });
       }
     }
   };
 };
-/* oxlint-enable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types */
 export { optimisticEveMetadata, pendingEveMetadataMutations };

@@ -1,34 +1,87 @@
-import type { ToolContext } from "eve/tools";
-
-import { getEveDocumentRevision } from "@/lib/db/eve-documents";
-import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-import { eveToolAllowed } from "@/lib/eve/turn-tools";
-import { codeExecutor } from "@/tools/chatjs/code-executor";
-import {
-  installedDocumentKinds,
-  installedToolNames,
-} from "@/tools/chatjs/installed-features";
-
 import {
   documentExecutionInput,
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./schemas";
+import {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
+import type { ToolContext } from "eve/tools";
+import { getEveDocumentRevision } from "@/lib/db/eve-documents";
+import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
+import { eveToolAllowed } from "@/lib/eve/turn-tools";
+import { codeExecutor } from "@/tools/chatjs/code-executor";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+type ReadonlyCodeExecutionContext = Readonly<
+  Pick<ToolContext, "callId" | "session"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
+>;
+type CodeResult = Awaited<ReturnType<NonNullable<typeof codeExecutor>>>;
+type SuccessfulCodeResult = Extract<CodeResult, { status: "success" }>;
+type DocumentExecutionSource = Readonly<{
+  code: string;
+  language: "python" | "javascript";
+  title: string;
+}>;
+type DocumentExecutionResult = {
+  -readonly [
+    Key in keyof Omit<SuccessfulCodeResult, "output">
+  ]: SuccessfulCodeResult[Key];
+} & {
+  output: ReturnType<typeof eveCodeExecutionResult.parse> & {
+    code: string;
+    language: "python" | "javascript";
+    title: string;
+    documentId: string;
+    revisionId: string;
+  };
+};
+
+type DocumentExecutionStream = AsyncGenerator<
+  Extract<CodeResult, { status: "error" }> | DocumentExecutionResult,
+  void,
+  unknown
+>;
+
+const documentResult = (
+  result: Readonly<
+    Omit<SuccessfulCodeResult, "output"> & {
+      output: Readonly<SuccessfulCodeResult["output"]>;
+    }
+  >,
+  source: DocumentExecutionSource,
+  revision: Readonly<{ documentId: string; id: string }>
+): DocumentExecutionResult => {
+  const output = eveCodeExecutionResult.safeParse(result.output);
+  return {
+    ...result,
+    output: {
+      ...(output.success
+        ? output.data
+        : {
+            chart: "",
+            message:
+              "Execution finished, but its output has an unsupported format.",
+          }),
+      ...source,
+      documentId: revision.documentId,
+      revisionId: revision.id,
+    },
+  };
+};
+
 /**
  * Execute saved source, never model-supplied replacement code.
+ * @param {unknown} value Untrusted tool input validated against the shared execution schema.
+ * @param {ToolContext} context Native tool context supplying session scope, call metadata, and cancellation.
  * @yields {unknown} Native EVE platform result snapshots with document identity.
  */
 export const executeEveCodeDocument = async function* executeEveCodeDocument(
   value: unknown,
-  context: ToolContext
-) {
+  context: ReadonlyCodeExecutionContext
+): DocumentExecutionStream {
   if (
     !(
       installedDocumentKinds.has("code") &&
@@ -39,7 +92,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   const input = documentExecutionInput.parse(value);
   const scope = await resolveEveConversationScope(
-    context.session.auth.initiator?.principalId,
+    (context.session.auth.initiator ?? {}).principalId,
     context.session.id,
     context.abortSignal
   );
@@ -49,7 +102,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     input.documentId,
     input.revisionId
   );
-  if (revision?.kind !== "code") {
+  if (!revision || revision.kind !== "code") {
     throw new Error("Code document not found.");
   }
   const language = documentExecutionLanguage(revision.title);
@@ -70,26 +123,5 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     yield result;
     return;
   }
-  const output = eveCodeExecutionResult.safeParse(result.output);
-  yield {
-    ...result,
-    output: {
-      ...(output.success
-        ? output.data
-        : {
-            chart: "",
-            message:
-              "Execution finished, but its output has an unsupported format.",
-          }),
-      ...source,
-      documentId: revision.documentId,
-      revisionId: revision.id,
-    },
-  };
+  yield documentResult(result, source, revision);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */

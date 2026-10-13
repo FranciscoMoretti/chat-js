@@ -2,7 +2,7 @@ diff --git a/runtime-proof.mjs b/runtime-proof.mjs
 new file mode 100644
 --- /dev/null
 +++ b/runtime-proof.mjs
-@@ -0,0 +1,501 @@
+@@ -0,0 +1,519 @@
 +import assert from "node:assert/strict";
 +import { spawn } from "node:child_process";
 +import {
@@ -54,16 +54,20 @@ new file mode 100644
 +      .filter(Boolean)
 +      .map(JSON.parse);
 +  } catch (e) {
-+    if (e.code === "ENOENT") return [];
++    if (e.code === "ENOENT") {
++      return [];
++    }
 +    throw e;
 +  }
 +};
 +const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-+async function until(check, label, timeout = 60000) {
++async function until(check, label, timeout = 60_000) {
 +  const start = Date.now();
 +  while (Date.now() - start < timeout) {
 +    const value = await check();
-+    if (value) return value;
++    if (value) {
++      return value;
++    }
 +    await delay(100);
 +  }
 +  throw new Error("Timed out: " + label);
@@ -119,14 +123,16 @@ new file mode 100644
 +    );
 +    return;
 +  }
-+  if (!worker || worker.exitCode !== null || worker.signalCode !== null) return;
++  if (!worker || worker.exitCode !== null || worker.signalCode !== null) {
++    return;
++  }
 +  const stopped = new Promise((resolve) => worker.once("exit", resolve));
 +  worker.kill(crash ? "SIGKILL" : "SIGTERM");
 +  const stopping = worker;
-+  const timer = setTimeout(() => stopping.kill("SIGKILL"), 10000);
++  const timer = setTimeout(() => stopping.kill("SIGKILL"), 10_000);
 +  await stopped;
 +  clearTimeout(timer);
-+  if (crash)
++  if (crash) {
 +    await until(async () => {
 +      try {
 +        await readFile(file(".eve/dev-server-state.v1.json"));
@@ -135,6 +141,7 @@ new file mode 100644
 +        return e.code === "ENOENT";
 +      }
 +    }, "dev ownership release");
++  }
 +}
 +async function create() {
 +  return await new Client({ host: url }).sessions.create({ message: "hello" });
@@ -154,19 +161,23 @@ new file mode 100644
 +    amount: 2,
 +    mode: "safe",
 +  });
-+  if (mode === "patched")
++  if (mode === "patched") {
 +    assert.equal(entry.receipt.responder.principalId, "owner");
-+  else assert.equal(entry.receipt, undefined);
++  } else {
++    assert.equal(entry.receipt, undefined);
++  }
 +}
 +const watchdog = setTimeout(
 +  () => {
 +    worker?.kill("SIGKILL");
 +    console.error("Runtime proof timeout:", app);
-+    if (externalRuntime)
++    if (externalRuntime) {
 +      void externalRuntime.crash().finally(() => process.exit(1));
-+    else process.exit(1);
++    } else {
++      process.exit(1);
++    }
 +  },
-+  externalRuntime ? 300000 : 180000
++  externalRuntime ? 300_000 : 180_000
 +);
 +const results = [];
 +let entry;
@@ -242,9 +253,11 @@ new file mode 100644
 +    const originalRequest = (await rows("requests.jsonl")).find(
 +      (row) => row.sessionId === entry.sessionId && row.callId === entry.callId
 +    );
-+    if (mode === "patched")
++    if (mode === "patched") {
 +      assert.equal(entry.messages, originalRequest.messages);
-+    else assert.notEqual(entry.messages, originalRequest.messages);
++    } else {
++      assert.notEqual(entry.messages, originalRequest.messages);
++    }
 +    assert.ok(
 +      (await rows("discovery.jsonl")).some(
 +        (row) =>
@@ -273,8 +286,9 @@ new file mode 100644
 +      )
 +    ).result();
 +    const changedEntry = (await rows("entries.jsonl")).at(-1);
-+    if (mode === "patched") checkEntry(changedEntry);
-+    else {
++    if (mode === "patched") {
++      checkEntry(changedEntry);
++    } else {
 +      assert.equal(changedEntry.connector, "replacement");
 +      assert.equal(changedEntry.receipt, undefined);
 +    }
@@ -294,8 +308,9 @@ new file mode 100644
 +      projection.connector,
 +      mode === "patched" ? "original" : "replacement"
 +    );
-+    if (mode === "patched")
++    if (mode === "patched") {
 +      assert.equal(projection.messages, changedEntry.messages);
++    }
 +    const nextWaiting = await (await changedSession.send("next")).result();
 +    assert.equal(nextWaiting.inputRequests.length, 1);
 +    assert.equal(
@@ -318,11 +333,12 @@ new file mode 100644
 +      mode: "safe",
 +    });
 +    assert.notEqual(nextEntry.callId, changedEntry.callId);
-+    if (mode === "patched")
++    if (mode === "patched") {
 +      assert.equal(
 +        nextEntry.receipt.requestId,
 +        nextWaiting.inputRequests[0].requestId
 +      );
++    }
 +    assert.equal(
 +      (await rows("effects.jsonl")).length,
 +      mode === "patched" ? 3 : 0
@@ -399,16 +415,17 @@ new file mode 100644
 +  await until(
 +    async () => (await rows("entries.jsonl")).length > entryCount,
 +    "candidate settlement after Workflow restart",
-+    externalRuntime ? 15000 : 60000
++    externalRuntime ? 15_000 : 60_000
 +  );
 +  const candidateEntry = (await rows("entries.jsonl")).at(-1);
 +  assert.notEqual(candidateEntry.pid, candidatePid);
 +  checkEntry(candidateEntry);
-+  if (mode === "patched")
++  if (mode === "patched") {
 +    assert.equal(
 +      candidateEntry.receipt.requestId,
 +      beforeCandidate.waiting.inputRequests[0].requestId
 +    );
++  }
 +  await until(
 +    async () =>
 +      mode === "stock" ||
@@ -438,11 +455,12 @@ new file mode 100644
 +  checkEntry(entry);
 +  const enteredPid = entry.pid;
 +  const settledReceipt = entry.receipt;
-+  if (mode === "patched")
++  if (mode === "patched") {
 +    assert.equal(
 +      settledReceipt.requestId,
 +      second.waiting.inputRequests[0].requestId
 +    );
++  }
 +  streamAbort.abort();
 +  await stop(true, enteredPid);
 +  await rm(file("pause-before-effect"));
@@ -453,7 +471,7 @@ new file mode 100644
 +      return all.length > before + 1 && all.at(-1).pid !== enteredPid;
 +    },
 +    "Workflow replay of interrupted executor",
-+    externalRuntime ? 15000 : 90000
++    externalRuntime ? 15_000 : 90_000
 +  );
 +  entry = (await rows("entries.jsonl")).at(-1);
 +  checkEntry(entry);
@@ -508,12 +526,16 @@ diff --git a/runtime-postgres.ts b/runtime-postgres.ts
 new file mode 100644
 --- /dev/null
 +++ b/runtime-postgres.ts
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,41 @@
 +import { pathToFileURL } from "node:url";
 +import path from "node:path";
++
 +const [harness, dependencies, handoff] = process.argv.slice(2);
-+if (!harness || !dependencies || !handoff)
-+  throw new Error("Pass D harness, experimental installation, and disposable handoff");
++if (!harness || !dependencies || !handoff) {
++  throw new Error(
++    "Pass D harness, experimental installation, and disposable handoff"
++  );
++}
 +const { preparePostgresFixture } = await import(
 +  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
 +);
@@ -533,7 +555,7 @@ new file mode 100644
 +    provenance:
 +      "B preserved callback binding; EVE 0.71.3 fab8ba1424eddfdedd6a177cac21710258da0e81 plus receipt.patch",
 +  },
-+  { world: "postgres", inlineOwnershipLeaseSeconds: 1 },
++  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
 +);
 +console.log("Postgres fixture:", runtime.directory);
 +globalThis.laneBRuntime = runtime;
@@ -550,17 +572,19 @@ diff --git a/runtime-old-run.ts b/runtime-old-run.ts
 new file mode 100644
 --- /dev/null
 +++ b/runtime-old-run.ts
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,187 @@
 +import assert from "node:assert/strict";
 +import { readFile, writeFile, unlink, symlink } from "node:fs/promises";
 +import path from "node:path";
 +import { pathToFileURL } from "node:url";
++
 +const [harness, productionModules, targetModules, handoff] =
 +  process.argv.slice(2);
-+if (!handoff)
++if (!handoff) {
 +  throw new Error(
 +    "Pass D harness, production node_modules, target node_modules, handoff"
 +  );
++}
 +const { preparePostgresFixture } = await import(
 +  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
 +);
@@ -594,7 +618,9 @@ new file mode 100644
 +      .filter(Boolean)
 +      .map(JSON.parse);
 +  } catch (error) {
-+    if (error.code === "ENOENT") return [];
++    if (error.code === "ENOENT") {
++      return [];
++    }
 +    throw error;
 +  }
 +};
@@ -608,7 +634,7 @@ new file mode 100644
 +let stage = "seed-start";
 +const watchdog = setTimeout(() => {
 +  void runtime.crash().finally(() => process.exit(1));
-+}, 180000);
++}, 180_000);
 +try {
 +  for (const [name, value] of Object.entries({
 +    "owner.txt": "owner",
@@ -616,17 +642,18 @@ new file mode 100644
 +    "connector.txt": "original",
 +    "suffix.txt": ":original",
 +    "policy.txt": "open",
-+  }))
++  })) {
 +    await put(name, value);
++  }
 +  await runtime.start();
 +  const oldClient = new OldClient({ host: runtime.url });
 +  const historical = await oldClient.sessions.create({
 +    message: "history",
-+    signal: AbortSignal.timeout(45000),
++    signal: AbortSignal.timeout(45_000),
 +  });
 +  await historical.response.result();
 +  const snapshot = await historical.session.snapshot({
-+    signal: AbortSignal.timeout(15000),
++    signal: AbortSignal.timeout(15_000),
 +  });
 +  assert.ok(snapshot.events.length > 0);
 +  assert.equal(
@@ -639,7 +666,7 @@ new file mode 100644
 +  await put("policy.txt", "required");
 +  const pending = await oldClient.sessions.create({
 +    message: "hello",
-+    signal: AbortSignal.timeout(45000),
++    signal: AbortSignal.timeout(45_000),
 +  });
 +  const waiting = await pending.response.result();
 +  assert.equal(waiting.inputRequests.length, 1);
@@ -679,7 +706,7 @@ new file mode 100644
 +  stage = "read-history";
 +  const restoredHistory = await client.sessions
 +    .attach(historical.session.state.sessionId)
-+    .snapshot({ signal: AbortSignal.timeout(15000) });
++    .snapshot({ signal: AbortSignal.timeout(15_000) });
 +  assert.deepEqual(restoredHistory.events, snapshot.events);
 +  await put("history-decoded.json", JSON.stringify(restoredHistory, null, 2));
 +  stage = "resume-pending";
@@ -691,7 +718,7 @@ new file mode 100644
 +      requestId: request.requestId,
 +      optionId: "approve",
 +    })),
-+    { signal: AbortSignal.timeout(45000) }
++    { signal: AbortSignal.timeout(45_000) }
 +  );
 +  await response.result();
 +  const effects = (await rows("effects.jsonl")).filter(
@@ -737,9 +764,10 @@ diff --git a/runtime-fixture/agent/agent.ts b/runtime-fixture/agent/agent.ts
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/agent.ts
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,20 @@
 +import { defineAgent } from "eve";
 +import { mockModel } from "eve/evals";
++
 +export default defineAgent({
 +  defaultTools: false,
 +  description: "Conditional approval runtime proof",
@@ -753,18 +781,17 @@ new file mode 100644
 +              input: { label: lastUserMessage, amount: "2" },
 +            },
 +          ],
-+        },
++        }
 +  ),
-+  modelContextWindowTokens: 128000,
++  modelContextWindowTokens: 128_000,
 +});
 diff --git a/runtime-fixture/agent/channels/eve.ts b/runtime-fixture/agent/channels/eve.ts
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/channels/eve.ts
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,10 @@
 +import { eveChannel } from "eve/channels/eve";
 +
-+// oxlint-disable-next-line import/no-default-export -- EVE discovers channels through their default exports.
 +export default eveChannel({
 +  auth: () => ({
 +    attributes: {},
@@ -777,8 +804,9 @@ diff --git a/runtime-fixture/agent/channels/invoke.ts b/runtime-fixture/agent/ch
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/channels/invoke.ts
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,24 @@
 +import { defineChannel, POST } from "eve/channels";
++
 +export default defineChannel({
 +  routes: [
 +    POST("/proof/invoke", async (request, { invokeTool }) => {
@@ -811,8 +839,13 @@ diff --git a/runtime-fixture/agent/tools/mcp.ts b/runtime-fixture/agent/tools/mc
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/tools/mcp.ts
-@@ -0,0 +1,105 @@
-+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+@@ -0,0 +1,119 @@
++import {
++  appendFileSync,
++  existsSync,
++  readFileSync,
++  writeFileSync,
++} from "node:fs";
 +import { setTimeout } from "node:timers/promises";
 +
 +import { defineDynamic, defineTool } from "eve/tools";
@@ -825,7 +858,7 @@ new file mode 100644
 +      const messages = JSON.stringify(context.messages);
 +      appendFileSync(
 +        "discovery.jsonl",
-+        JSON.stringify({ messages, sessionId: context.session.id }) + "\n",
++        JSON.stringify({ messages, sessionId: context.session.id }) + "\n"
 +      );
 +      const connector = readFileSync("connector.txt", "utf8");
 +      const suffix = readFileSync("suffix.txt", "utf8");
@@ -833,14 +866,16 @@ new file mode 100644
 +        conditional: defineTool({
 +          description: "Fixture MCP effect",
 +          inputSchema: z.object({
-+            label: z.string().transform((value) => value.toUpperCase() + suffix),
++            label: z
++              .string()
++              .transform((value) => value.toUpperCase() + suffix),
 +            amount: z.coerce.number(),
 +            mode: z.string().default("safe"),
 +          }),
 +          toModelOutput(output) {
 +            appendFileSync(
 +              "projections.jsonl",
-+              JSON.stringify({ connector, messages, output }) + "\n",
++              JSON.stringify({ connector, messages, output }) + "\n"
 +            );
 +            return { type: "text", value: JSON.stringify(output) };
 +          },
@@ -856,7 +891,7 @@ new file mode 100644
 +                  callId: ctx.callId,
 +                  input: ctx.toolInput,
 +                  pid: process.pid,
-+                }) + "\n",
++                }) + "\n"
 +              );
 +              if (policy === "flip") {
 +                writeFileSync("policy.txt", "required");
@@ -870,9 +905,11 @@ new file mode 100644
 +                JSON.stringify({
 +                  pid: process.pid,
 +                  decision: response.decision,
-+                }) + "\n",
++                }) + "\n"
 +              );
-+              while (existsSync("pause-response")) await setTimeout(50);
++              while (existsSync("pause-response")) {
++                await setTimeout(50);
++              }
 +              return response.principal.principalId === "owner"
 +                ? { status: "allowed" }
 +                : { status: "rejected", reason: "owner only" };
@@ -896,19 +933,24 @@ new file mode 100644
 +              callId: ctx.callId,
 +            };
 +            appendFileSync("entries.jsonl", JSON.stringify(evidence) + "\n");
-+            while (existsSync("pause-before-effect")) await setTimeout(50);
++            while (existsSync("pause-before-effect")) {
++              await setTimeout(50);
++            }
 +            ctx.abortSignal.throwIfAborted();
 +            if (
-+              readFileSync("owner.txt", "utf8") !== ctx.session.auth.initiator?.principalId ||
++              readFileSync("owner.txt", "utf8") !==
++                ctx.session.auth.initiator?.principalId ||
 +              readFileSync("enabled.txt", "utf8") !== "true"
-+            )
++            ) {
 +              return { blocked: "current connector unavailable", ...evidence };
++            }
 +            if (
 +              readFileSync("policy.txt", "utf8") === "required" &&
 +              (receipt?.responder.principalId !== "owner" ||
 +                receipt.responder.authenticator !== "retirement-fixture")
-+            )
++            ) {
 +              return { blocked: "missing exact consent", ...evidence };
++            }
 +            appendFileSync("effects.jsonl", JSON.stringify(evidence) + "\n");
 +            return { effect: true, ...evidence };
 +          },
@@ -921,11 +963,12 @@ diff --git a/runtime-fixture/agent/tools/static-gate.ts b/runtime-fixture/agent/
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/tools/static-gate.ts
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,38 @@
 +import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 +
 +import { defineTool } from "eve/tools";
 +import { z } from "zod";
++
 +export default defineTool({
 +  description:
 +    "Static counterpart of conditional MCP gate for invokeTool coverage",
@@ -952,8 +995,9 @@ new file mode 100644
 +      readFileSync("policy.txt", "utf8") === "required" &&
 +      (receipt?.responder.principalId !== "owner" ||
 +        receipt.responder.authenticator !== "retirement-fixture")
-+    )
++    ) {
 +      return { blocked: true, caller: ctx.session.auth.current };
++    }
 +    appendFileSync("invoke-effects.jsonl", JSON.stringify(input) + "\n");
 +    return { effect: true };
 +  },

@@ -1,13 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { Dirent } from "node:fs";
-import {
-  mkdir,
-  readFile,
-  readdir,
-  rename,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { z } from "zod";
@@ -15,12 +7,15 @@ import { z } from "zod";
 import { installItems } from "#cli/registry/shadcn";
 
 import { updateEnvironmentExample } from "./environment-example";
+
 import { prepareDependencyUpdate } from "./installation-dependencies";
-import type { planInstallation } from "./installation-plan";
+import { directoryFiles, optionalFile } from "./installation-files";
+
 import { assertMcpApprovalSchema } from "./mcp-schema";
-// oxlint-disable-next-line import/max-dependencies -- Installation composes provider validation, dependency ownership and rollback within one transaction.
+
+import type { planInstallation } from "./installation-plan";
+
 import { preflight } from "./preflight";
-// oxlint-disable-next-line import/max-dependencies -- Keep schema checks, provider registration and rollback together at the installation transaction boundary.
 import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;
@@ -36,32 +31,22 @@ const NO_INFERRED_DESTINATIONS = 0;
 const NO_REPLACEMENTS = 0;
 const NO_RESTORATION_ERRORS = 0;
 const RECEIPT_INDENTATION_SPACES = 2;
+const SOURCE_READ_CONCURRENCY = 4;
 const receiptFile = ".chatjs/installed-source.json";
 const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-const optionalFile = async (file: string): Promise<Buffer | null> => {
-  try {
-    return await readFile(file);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return null;
-    }
-    throw error;
-  }
-};
-/* oxlint-enable unicorn/no-null */
 
 const readReceipt = async (
   cwd: string
 ): Promise<z.infer<typeof receiptSchema>> => {
   await preflight(cwd, [receiptFile]);
   const source = await optionalFile(path.join(cwd, receiptFile));
-  return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
+  if (source) {
+    return receiptSchema.parse(JSON.parse(source.toString()));
+  }
+  return {};
 };
-
 const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ...new Set(
     plan.items.flatMap((item: ReadonlyNative<Plan["items"][number]>) =>
@@ -70,39 +55,53 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
           file: ReadonlyNative<
             NonNullable<Plan["items"][number]["files"]>[number]
           >
-        ) =>
-          file.target?.startsWith("~/") === true
-            ? [file.target.slice(REGISTRY_ROOT_PREFIX.length)]
-            : []
+        ) => {
+          if (file.target?.startsWith("~/") === true) {
+            return [file.target.slice(REGISTRY_ROOT_PREFIX.length)];
+          }
+          return [];
+        }
       )
     )
   ),
 ];
 
-const directoryFiles = async (
+const sourceHashes = async (
   cwd: string,
-  directory: string
-): Promise<string[]> => {
-  const entries = await readdir(path.join(cwd, directory), {
-    withFileTypes: true,
-  });
-  const files = await Promise.all(
-    entries.map(async (entry: Readonly<Dirent>) => {
-      const target = `${directory}/${entry.name}`;
-      if (entry.isSymbolicLink()) {
-        throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
+  targets: readonly string[],
+  validate?: (target: string, digest: string | null) => void
+): Promise<(readonly [string, string | null])[]> => {
+  const hashes: (readonly [string, string | null])[] = [];
+  for (
+    let offset = 0;
+    offset < targets.length;
+    offset += SOURCE_READ_CONCURRENCY
+  ) {
+    // oxlint-disable-next-line no-await-in-loop -- Bound live file buffers to four; drain each batch before reporting its first source-order read error.
+    const batch = await Promise.allSettled(
+      targets
+        .slice(offset, offset + SOURCE_READ_CONCURRENCY)
+        .map(async (target) => {
+          const content = await optionalFile(path.join(cwd, target));
+          const digest = content ? hash(content) : null;
+          validate?.(target, digest);
+          return [target, digest] as const;
+        })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
       }
-      return entry.isDirectory() ? await directoryFiles(cwd, target) : [target];
-    })
-  );
-  return files.flat();
+      hashes.push(result.value);
+    }
+  }
+  return hashes;
 };
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
- * @param cwd Project containing the receipt and installed source files.
- * @param targets Ordered installed paths to hash without modifying the caller list.
+ * @param {string} cwd Project containing the receipt and installed source files.
+ * @param {readonly string[]} targets Ordered installed paths to hash without modifying the caller list.
  */
 const recordInstalledSource = async (
   cwd: string,
@@ -110,11 +109,9 @@ const recordInstalledSource = async (
 ): Promise<void> => {
   const receipt = await readReceipt(cwd);
   await preflight(cwd, targets);
-  for (const target of targets) {
-    // oxlint-disable-next-line no-await-in-loop -- Hash each installed file without keeping all source in memory.
-    const content = await optionalFile(path.join(cwd, target));
-    if (content) {
-      receipt[target] = hash(content);
+  for (const [target, digest] of await sourceHashes(cwd, targets)) {
+    if (digest !== null) {
+      receipt[target] = digest;
     }
   }
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
@@ -123,8 +120,6 @@ const recordInstalledSource = async (
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
-/* oxlint-enable unicorn/no-null */
-
 const plannedSourceTargets = sourceTargets;
 
 const hasProviderKind = (
@@ -136,15 +131,12 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /**
  * Validate protection before mutation; stage retired exclusive sources until registration succeeds.
- * @param cwd Project whose installed source and receipts are protected.
- * @param plan Resolved items and exclusive provider replacements to install.
- * @param options Authorization and extra paths for protection and rollback.
- * @param register Registration operation awaited before retired source is removed.
+ * @param {string} cwd Project whose installed source and receipts are protected.
+ * @param {ReadonlyNative<Plan>} plan Resolved items and exclusive provider replacements to install.
+ * @param {{ readonly overwrite?: boolean; readonly fresh?: boolean; readonly managedTargets?: readonly string[]; readonly rollbackTargets?: readonly string[]; readonly finalize?: () => Promise<void>; }} options Authorization and extra paths for protection and rollback.
+ * @param {() => Promise<void>} register Registration operation awaited before retired source is removed.
  */
 const installPlan = async (
   cwd: string,
@@ -233,15 +225,13 @@ const installPlan = async (
       ? [...targets, ...retired.flat()]
       : [];
   if (!(options.fresh === true) && !(options.overwrite === true)) {
-    for (const target of protectedFiles) {
-      // oxlint-disable-next-line no-await-in-loop -- Fail before any installer writes.
-      const content = await optionalFile(path.join(cwd, target));
-      if (content && receipt[target] !== hash(content)) {
+    await sourceHashes(cwd, protectedFiles, (target, digest) => {
+      if (digest !== null && receipt[target] !== digest) {
         throw new Error(
           `${target} is modified or has no installed-source baseline. Review it and pass --overwrite to authorize replacing it. No source was installed.`
         );
       }
-    }
+    });
   }
   const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { readonly from: string; readonly to: string }[] = [];
@@ -255,7 +245,7 @@ const installPlan = async (
         ".chatjs",
         `replaced-${previous.id}-${randomUUID()}`
       );
-      // oxlint-disable-next-line no-await-in-loop -- Stage each old provider before registering the new complete installation.
+      // oxlint-disable-next-line no-await-in-loop -- Record each completed rename before starting the next; rollback restores exactly staged providers and must not race an outstanding rename after failure.
       await rename(from, to);
       staged.push({ from, to });
     }
@@ -274,8 +264,9 @@ const installPlan = async (
         async ({
           from,
           to,
-        }: Readonly<(typeof staged)[number]>): Promise<void> =>
-          await rename(to, from)
+        }: Readonly<(typeof staged)[number]>): Promise<void> => {
+          await rename(to, from);
+        }
       ),
       ...[...existing].map(
         async ([target, content]: ReadonlyNative<
@@ -288,8 +279,12 @@ const installPlan = async (
       ),
     ]);
     const restorationErrors = restored.flatMap(
-      (result: ReadonlyNative<(typeof restored)[number]>) =>
-        result.status === "rejected" ? [String(result.reason)] : []
+      (result: ReadonlyNative<(typeof restored)[number]>) => {
+        if (result.status === "rejected") {
+          return [String(result.reason)];
+        }
+        return [];
+      }
     );
     throw new Error(
       `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
@@ -298,8 +293,9 @@ const installPlan = async (
   }
   await Promise.all(
     staged.map(
-      async ({ to }: Readonly<(typeof staged)[number]>): Promise<void> =>
-        await rm(to, { force: true, recursive: true })
+      async ({ to }: Readonly<(typeof staged)[number]>): Promise<void> => {
+        await rm(to, { force: true, recursive: true });
+      }
     )
   );
   await recordInstalledSource(
@@ -309,7 +305,10 @@ const installPlan = async (
       // Registration can update rollback-only files. Refresh an existing baseline
       // only when the file was untouched beforehand; never bless user edits.
       if (!targets.includes(target)) {
-        return previous ? receipt[target] === hash(previous) : false;
+        if (previous) {
+          return receipt[target] === hash(previous);
+        }
+        return false;
       }
       return (
         !previous ||
@@ -320,7 +319,4 @@ const installPlan = async (
     })
   );
 };
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 export { installPlan, plannedSourceTargets, recordInstalledSource };

@@ -1,8 +1,7 @@
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
-
+import type { McpConnector } from "@/lib/db/schema";
 import { db } from "@/lib/db/client";
 import { mcpConnector } from "@/lib/db/schema";
-import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-queries");
@@ -24,18 +23,17 @@ const getMcpConnectorsByUserId = async ({
     throw error;
   }
 };
-
 const getMcpConnectorById = async ({
   id,
 }: Readonly<{
   id: string;
-}>): Promise<McpConnector | undefined> => {
+}>): Promise<McpConnector | null> => {
   try {
     const [connector] = await db
       .select()
       .from(mcpConnector)
       .where(eq(mcpConnector.id, id));
-    return connector;
+    return connector ?? null;
   } catch (error) {
     log.error(
       { err: error },
@@ -44,7 +42,6 @@ const getMcpConnectorById = async ({
     throw error;
   }
 };
-
 const getMcpConnectorByNameId = async ({
   userId,
   nameId,
@@ -53,7 +50,7 @@ const getMcpConnectorByNameId = async ({
   userId: string | null;
   nameId: string;
   excludeId?: string;
-}>): Promise<McpConnector | undefined> => {
+}>): Promise<McpConnector | null> => {
   try {
     const conditions = [
       eq(mcpConnector.nameId, nameId),
@@ -68,7 +65,7 @@ const getMcpConnectorByNameId = async ({
         : and(...conditions);
 
     const [connector] = await db.select().from(mcpConnector).where(whereClause);
-    return connector;
+    return connector ?? null;
   } catch (error) {
     log.error(
       { err: error },
@@ -77,7 +74,6 @@ const getMcpConnectorByNameId = async ({
     throw error;
   }
 };
-
 const createMcpConnector = async ({
   userId,
   name,
@@ -101,9 +97,7 @@ const createMcpConnector = async ({
       .values({
         name,
         nameId,
-        // oxlint-disable-next-line unicorn/no-null -- Explicit SQL NULL clears an absent OAuth credential; empty strings are credentials and omitting the binding delegates to column defaults.
         oauthClientId: oauthClientId ?? null,
-        // oxlint-disable-next-line unicorn/no-null -- Explicit SQL NULL clears an absent OAuth secret; empty strings are credentials and omitting the binding delegates to column defaults.
         oauthClientSecret: oauthClientSecret ?? null,
         type,
         url,
@@ -116,7 +110,6 @@ const createMcpConnector = async ({
     throw error;
   }
 };
-
 const updateMcpConnector = async ({
   id,
   updates,
@@ -148,7 +141,6 @@ const updateMcpConnector = async ({
     throw error;
   }
 };
-
 const deleteMcpConnector = async ({
   id,
 }: Readonly<{ id: string }>): Promise<void> => {
@@ -159,7 +151,6 @@ const deleteMcpConnector = async ({
     throw error;
   }
 };
-
 export {
   createMcpConnector,
   deleteMcpConnector,

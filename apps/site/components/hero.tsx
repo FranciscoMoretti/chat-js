@@ -4,7 +4,6 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-/* oxlint-disable eslint/no-magic-numbers -- Sparkle: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 const Sparkle = ({
   className,
   size = 24,
@@ -23,12 +22,6 @@ const Sparkle = ({
     <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8Z" />
   </svg>
 );
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-disable react/no-multi-comp -- Hero: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- Hero: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-
-/* oxlint-disable react/jsx-max-depth -- Hero: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 export const Hero = (): React.JSX.Element => (
   <section className="relative overflow-hidden">
@@ -158,8 +151,3 @@ export const Hero = (): React.JSX.Element => (
     </div>
   </section>
 );
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */

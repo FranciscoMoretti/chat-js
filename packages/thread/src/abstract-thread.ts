@@ -1,13 +1,12 @@
-import type { UIMessage } from "ai";
-
-import { ThreadCore } from "./thread-core";
-import type { ThreadCoreOptions } from "./thread-core";
 import type {
   CanonicalMessage,
-  MessageMetadata,
   MessageData,
+  MessageMetadata,
   MessageTools,
 } from "./types";
+import { ThreadCore } from "./thread-core";
+import type { ThreadCoreOptions } from "./thread-core";
+import type { UIMessage } from "ai";
 
 abstract class AbstractThread<
   TMessage extends UIMessage = UIMessage,
@@ -21,7 +20,6 @@ abstract class AbstractThread<
   declare protected readonly messageSpecialization?: TMessage;
 
   protected constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original SDK schemas and live state controller; recursive readonly schema arrays are incompatible with the SDK constructor.
     options: ThreadCoreOptions<CanonicalMessage<TMessage>>
   ) {
     super(options);

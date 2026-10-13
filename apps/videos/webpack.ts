@@ -1,25 +1,42 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:module import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
-import { createRequire } from "node:module";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
-import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-
 import type { WebpackOverrideFn } from "@remotion/bundler";
 
+import { createRequire } from "node:module";
+import path from "node:path";
+
 const require = createRequire(path.resolve("package.json"));
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- webpackOverride: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+const ALIAS_NOT_FOUND = -1;
+const peerAliases = {
+  react: path.dirname(require.resolve("react/package.json")),
+  "react-dom": path.dirname(require.resolve("react-dom/package.json")),
+};
+
 // Resolve both peers from this workspace, including imports inside hoisted Remotion packages.
-export const webpackOverride: WebpackOverrideFn = (config) => ({
-  ...config,
-  resolve: {
-    ...config.resolve,
-    alias: {
-      // oxlint-disable-next-line typescript/no-misused-spread -- Remotion supplies an alias map here; converting the alternative webpack array form needs an explicit resolution-precedence policy.
-      ...config.resolve?.alias,
-      react: path.dirname(require.resolve("react/package.json")),
-      "react-dom": path.dirname(require.resolve("react-dom/package.json")),
+export const webpackOverride: WebpackOverrideFn = (
+  config: Readonly<Parameters<WebpackOverrideFn>["0"]>
+) => {
+  let alias = config.resolve?.alias;
+  if (Array.isArray(alias)) {
+    // Keep native ordering and exact-only aliases, just as distinct map keys are preserved.
+    alias = [...alias];
+    for (const [name, target] of Object.entries(peerAliases)) {
+      const index = alias.findIndex(
+        (option: Readonly<{ name: string; onlyModule?: boolean }>) =>
+          option.name === name && option.onlyModule !== true
+      );
+      if (index === ALIAS_NOT_FOUND) {
+        alias.push({ alias: target, name });
+      } else {
+        alias[index] = { ...alias[index], alias: target };
+      }
+    }
+  } else {
+    alias = { ...alias, ...peerAliases };
+  }
+  return {
+    ...config,
+    resolve: {
+      ...config.resolve,
+      alias,
     },
-  },
-});
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+  };
+};

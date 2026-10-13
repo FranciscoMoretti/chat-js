@@ -1,20 +1,18 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-
 import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; { params, }: { params: Promise<{ id: string; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 export const GET = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Pick<Request, "headers">>,
   {
     params,
   }: {
-    params: Promise<{
-      id: string;
-    }>;
+    readonly params: Readonly<
+      Promise<{
+        readonly id: string;
+      }>
+    >;
   }
 ): Promise<Response> => {
   const principal = await resolveEvePrincipal(request.headers);
@@ -26,10 +24,11 @@ export const GET = async (
     return new Response(null, { status: 404 });
   }
   const group = await getEveResponseGroup(principal.ownerId, id);
-  return group
-    ? Response.json(group, {
-        headers: { "cache-control": "private, no-store" },
-      })
-    : new Response(null, { status: 404 });
+
+  if (group) {
+    return Response.json(group, {
+      headers: { "cache-control": "private, no-store" },
+    });
+  }
+  return new Response(null, { status: 404 });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

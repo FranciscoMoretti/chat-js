@@ -1,10 +1,6 @@
+import config from "./playwright.eve.config";
 import { defineConfig } from "@playwright/test";
 
-import config from "./playwright.eve.config";
-
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
 export default defineConfig({
   ...config,
   outputDir: "./tests/eve-results/ui-parity",
@@ -30,4 +26,3 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
 });
-/* oxlint-enable import/no-default-export */

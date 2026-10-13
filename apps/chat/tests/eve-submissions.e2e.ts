@@ -1,12 +1,3 @@
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, import/max-dependencies, unicorn/no-await-expression-member, unicorn/no-null --
- * max-lines-per-function: Keep the ordered dispatch/receipt or streaming scenario together so its evidence transitions remain reviewable.
- * max-statements: Keep the transaction or boundary scenario ordered; splitting its statements would hide the evidence transition.
- * no-magic-numbers: Protocol statuses, array positions and deterministic scenario counts are local to this boundary.
- * no-undefined: Undefined represents absent stream evidence or an optional query result; null is a persisted value.
- * import/max-dependencies: The integration test intentionally joins actual persistence, delivery, projection, copy and deletion boundaries.
- * unicorn/no-await-expression-member: Assert the state from each completed database observation at its exact point in the scenario.
- * unicorn/no-null: Explicit null represents the stored no-tool selection or an empty HTTP body, not missing evidence.
- */
 import { eq } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
@@ -56,13 +47,12 @@ vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));
 vi.mock("@/lib/eve/prepare-message", () => ({
-  // oxlint-disable-next-line require-await, typescript/require-await -- Match the asynchronous preparation boundary with deterministic fixture data.
+  // oxlint-disable-next-line require-await -- Preserve the async preparation boundary without using model or attachment services.
   prepareEveMessage: async (message: string): Promise<string> => message,
 }));
 vi.mock("@/lib/db/eve-files", () => ({ referenceEveFiles: vi.fn() }));
 vi.mock("@/lib/db/credits", () => ({
-  // oxlint-disable-next-line require-await, typescript/require-await -- Preserve asynchronous admission without external billing.
-  canSpend: async (): Promise<boolean> => true,
+  canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
 }));
 vi.mock("@/lib/eve/reconcile-usage", () => ({
   reconcileEveOwnerUsage: vi.fn(),
@@ -145,9 +135,9 @@ test("immutable binding and one dispatch claimant survive concurrent attempts an
     claimEveSubmission(ownerId, operationId),
   ]);
   expect(claims.filter(Boolean)).toHaveLength(1);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("uncertain");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "uncertain");
   expect(await claimEveSubmission(ownerId, operationId)).toBe(false);
   expect(
     await readEveSubmission(ownerId, otherSession, operationId)
@@ -157,17 +147,17 @@ test("immutable binding and one dispatch claimant survive concurrent attempts an
   ).toBeUndefined();
   const received = event(operationId);
   await projectEveSubmissionEvents(ownerId, otherSession, [received]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("uncertain");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "uncertain");
   await projectEveSubmissionEvents(ownerId, sessionId, [received]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("received");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "received");
   await settleEveSubmission(ownerId, operationId, "admitted");
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("received");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "received");
 });
 
 test("coalesced receipts retain every token and the last explicit null selection through stream, history and copy", async () => {
@@ -207,12 +197,12 @@ test("coalesced receipts retain every token and the last explicit null selection
   expect(JSON.stringify(copy.seed)).not.toContain(ownerId);
   expect(JSON.stringify(copy.seed)).not.toContain("createTextDocument");
   expect(projected).toContain('"selectedTool":null');
-  expect((await readEveSubmission(ownerId, sessionId, first))?.state).toBe(
-    "received"
-  );
-  expect((await readEveSubmission(ownerId, sessionId, last))?.state).toBe(
-    "received"
-  );
+  await expect(
+    readEveSubmission(ownerId, sessionId, first)
+  ).resolves.toHaveProperty("state", "received");
+  await expect(
+    readEveSubmission(ownerId, sessionId, last)
+  ).resolves.toHaveProperty("state", "received");
   const values = new Map<string, string>();
   const storage = {
     getItem: (key: string): string | null => values.get(key) ?? null,
@@ -257,9 +247,9 @@ test("admission and controls never fabricate receipt; unknown or mixed tokens ca
       type: "session.waiting",
     },
   ]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("admitted");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "admitted");
   expect(
     await recordEveMessageReceipt({
       legacy: false,
@@ -270,9 +260,9 @@ test("admission and controls never fabricate receipt; unknown or mixed tokens ca
       sessionId,
     })
   ).toBeUndefined();
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("admitted");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "admitted");
   await projectEveSubmissionEvents(ownerId, sessionId, [
     {
       data: { sequence: 0, turnId: "turn_0" },
@@ -280,17 +270,17 @@ test("admission and controls never fabricate receipt; unknown or mixed tokens ca
       type: "turn.cancelled",
     },
   ]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("admitted");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "admitted");
   await projectEveSubmissionEvents(ownerId, sessionId, [event(operationId)]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("received");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "received");
   await rejectEveSubmissionAdmission(ownerId, operationId);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("received");
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "received");
   const rejected = crypto.randomUUID();
   await reserve(rejected);
   await settleEveSubmission(ownerId, rejected, "rejected");
@@ -331,9 +321,9 @@ test("replayed materialization keeps the first receipt and annotation even when 
       },
     },
   ]);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.messageId
-  ).toBe(original.meta.id);
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("messageId", original.meta.id);
 });
 
 test("copied history imports display annotations without transferring submission identity", async () => {
@@ -395,14 +385,14 @@ test("authenticated proxy persists uncertainty before losing the response and ne
   const context = {
     params: Promise.resolve({ path: ["v1", "session", sessionId] }),
   };
-  expect((await POST(request(), context)).status).toBe(502);
-  expect(
-    (await readEveSubmission(ownerId, sessionId, operationId))?.state
-  ).toBe("uncertain");
-  expect((await POST(request(), context)).status).toBe(409);
+  await expect(POST(request(), context)).resolves.toHaveProperty("status", 502);
+  await expect(
+    readEveSubmission(ownerId, sessionId, operationId)
+  ).resolves.toHaveProperty("state", "uncertain");
+  await expect(POST(request(), context)).resolves.toHaveProperty("status", 409);
   expect(proxy.request).toHaveBeenCalledTimes(1);
   proxy.principal.mockResolvedValue({ kind: "registered", ownerId: "foreign" });
-  expect((await POST(request(), context)).status).toBe(404);
+  await expect(POST(request(), context)).resolves.toHaveProperty("status", 404);
   expect(proxy.request).toHaveBeenCalledTimes(1);
 });
 
@@ -463,7 +453,3 @@ test("deletion erases submission content and annotations while fencing retired o
   ).rejects.toThrow("another command");
   expect(await claimEveSubmission(ownerId, operationId)).toBe(false);
 });
-
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, import/max-dependencies, unicorn/no-await-expression-member, unicorn/no-null */
-
-/* oxlint-disable max-lines -- Keep the real PostgreSQL submission, projection and retirement scenarios in one isolated fixture lifecycle. */

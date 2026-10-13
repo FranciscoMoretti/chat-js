@@ -1,8 +1,6 @@
-import path from "node:path";
-
 import { Command } from "commander";
-
 import { handleError } from "#cli/utils/handle-error";
+import path from "node:path";
 import { syncFeatures } from "#cli/utils/sync-features";
 import { syncTools } from "#cli/utils/sync-tools";
 

@@ -1,14 +1,14 @@
-import type { ComposerControl } from "@/components/composer/control";
 import {
   CanvasControl,
-  SearchControl,
-  ResearchControl,
   ImageControl,
+  ResearchControl,
+  SearchControl,
   VideoControl,
 } from "@/components/composer/tool-controls";
-// Initial menu order. Reorder or extend this array; chat-js sync preserves it.
-import { attachmentUploads } from "@/features/attachment-uploads/integration";
+import type { ComposerControl } from "@/components/composer/control";
 import { ConnectorsControl } from "@/features/mcp/composer";
+import { attachmentUploads } from "@/features/attachment-uploads/integration";
+// Initial menu order. Reorder or extend this array; chat-js sync preserves it.
 
 export const composerControls: ComposerControl[] = [
   ...attachmentUploads.controls,

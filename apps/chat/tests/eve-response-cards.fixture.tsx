@@ -1,14 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-response-group-cards"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable jsx-a11y/prefer-tag-over-role -- The fixture preserves the production-compatible role markup used by its visual contract. */
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
+import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const candidates: EveResponseCardCandidate[] = [
   { modelName: "GPT-5", operationId: "ready", state: "bound", status: "ready" },
@@ -61,9 +56,6 @@ const candidates: EveResponseCardCandidate[] = [
     status: "awaiting-input",
   },
 ];
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components -- * no-magic-numbers (#517): Fixture uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const Fixture = (): React.JSX.Element => {
   const [selected, setSelected] = useState<string | null>("ready");
   return (
@@ -74,7 +66,9 @@ const Fixture = (): React.JSX.Element => {
         <ResponseChoiceCards
           slots={[
             {
-              handleSelect: (): void => setSelected("legacy1"),
+              handleSelect: (): void => {
+                setSelected("legacy1");
+              },
               id: "legacy1",
               loading: false,
               modelName: "GPT-5",
@@ -82,7 +76,9 @@ const Fixture = (): React.JSX.Element => {
               statusLabel: "Selected",
             },
             {
-              handleSelect: (): void => setSelected("legacy2"),
+              handleSelect: (): void => {
+                setSelected("legacy2");
+              },
               id: "legacy2",
               loading: true,
               modelName: "Claude Sonnet 4.5",
@@ -100,7 +96,7 @@ const Fixture = (): React.JSX.Element => {
           selectedOperationId={selected}
         />
       </section>
-      <p role="status">Selected operation: {selected}</p>
+      <output className="block">Selected operation: {selected}</output>
       <section aria-label="Single candidate">
         <EveResponseGroupCards
           candidates={candidates.slice(0, 1)}
@@ -114,7 +110,6 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components */
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");

@@ -1,9 +1,8 @@
 import { expect, test } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { normalizeScaffoldContent } from "./scaffold-content";
+import path from "node:path";
+import { tmpdir } from "node:os";
 
 const createFixture = async (
   manifest: string,
@@ -28,7 +27,6 @@ const createFixture = async (
   );
   return directory;
 };
-
 const sourceManifest =
   '{"z_extension":{"keep":["nested"]},"dependencies":{"keep":"^1","diff":"^1","@lexical/react":"^1","@lexical/list":"^1"},"devDependencies":{"pg":"^1","retain":"^1"},"scripts":{"keep":"command","test:tools:live":"bad"},"overrides":{"evalite":"^1","keep":{"nested":"value"}}}';
 const normalizedManifest = `{
@@ -91,7 +89,6 @@ test("normalizes the original JSON objects while preserving extensions and prope
     await rm(directory, { force: true, recursive: true });
   }
 });
-
 test("preserves optional null maps instead of replacing or dropping their own fields", async () => {
   const directory = await createFixture(
     '{"z_extension":"keep","dependencies":null,"devDependencies":null,"scripts":null,"overrides":null}'
@@ -111,7 +108,6 @@ test("preserves optional null maps instead of replacing or dropping their own fi
     await rm(directory, { force: true, recursive: true });
   }
 });
-
 const invalidManifests = [
   "[]",
   "null",

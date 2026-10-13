@@ -1,12 +1,11 @@
 import { z } from "zod";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): eveCopyInput uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MIN_MODEL_ID_LENGTH = 1;
+const MAX_MODEL_ID_LENGTH = 200;
+
 export const eveCopyInput = z.strictObject({
-  modelId: z.string().min(1).max(200),
+  modelId: z.string().min(MIN_MODEL_ID_LENGTH).max(MAX_MODEL_ID_LENGTH),
   operationId: z.uuid().transform((id) => id.toLowerCase()),
   sourceConversationId: z.uuid().transform((id) => id.toLowerCase()),
 });
-/* oxlint-enable no-magic-numbers */
 export type EveCopyInput = z.infer<typeof eveCopyInput>;

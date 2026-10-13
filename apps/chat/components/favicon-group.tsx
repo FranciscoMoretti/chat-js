@@ -1,8 +1,10 @@
+import { Favicon } from "./favicon";
+
 import type React from "react";
 
 import { cn } from "@/lib/utils";
 
-import { Favicon } from "./favicon";
+const DEFAULT_MAX_VISIBLE_FAVICONS = 4;
 
 // Define a simpler interface for the sources needed by this component
 interface FaviconSource {
@@ -17,13 +19,12 @@ interface FaviconGroupProps {
   // Use the simpler interface
   readonly sources: readonly FaviconSource[];
 }
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- FaviconGroup: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership */
 
 export const FaviconGroup: React.FC<FaviconGroupProps> = ({
   sources,
-  maxVisible = 4,
+  maxVisible = DEFAULT_MAX_VISIBLE_FAVICONS,
   className,
-}) => {
+}): React.JSX.Element => {
   const visibleSources = sources.slice(0, maxVisible);
 
   return (
@@ -47,4 +48,3 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

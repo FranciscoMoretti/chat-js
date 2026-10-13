@@ -1,23 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
-
 import { getEveRuntimeEnvOptions } from "./env-schema";
 
+import { z } from "zod";
+
 const schema = z.object(getEveRuntimeEnvOptions({}));
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): valid uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const valid = {
   EVE_GATEWAY_SECRET: "a".repeat(32),
   EVE_INTERNAL_ORIGIN: "http://localhost:3000",
   WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve",
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): describe("EVE runtime environment") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): describe("EVE runtime environment") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 describe("EVE runtime environment", () => {
   test("requires the complete runtime contract", () => {
     expect(schema.safeParse(valid).success).toBe(true);
@@ -65,11 +57,19 @@ describe("EVE runtime environment", () => {
     { ...valid, WORKFLOW_POSTGRES_URL: "not-a-url" },
     { ...valid, EVE_INTERNAL_ORIGIN: "postgresql://localhost/eve" },
     { ...valid, WORKFLOW_POSTGRES_URL: "https://localhost/eve" },
-  ])("rejects malformed runtime configuration", (value) => {
-    expect(schema.safeParse(value).success).toBe(false);
-  });
+  ])(
+    "rejects malformed runtime configuration",
+    (
+      value: Readonly<{
+        EVE_GATEWAY_SECRET: string;
+        EVE_INTERNAL_ORIGIN: string;
+        WORKFLOW_POSTGRES_URL: string;
+      }>
+    ) => {
+      expect(schema.safeParse(value).success).toBe(false);
+    }
+  );
 });
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types */
 
 test.each(["preview", "production"])(
   "Vercel %s needs no workflow database",

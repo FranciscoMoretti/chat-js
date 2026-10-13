@@ -1,17 +1,9 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:assert/strict" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-documents"; "../lib/db/eve-file-purge"; "../lib/db/eve-files" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import assert from "node:assert/strict";
 
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
@@ -51,11 +43,13 @@ import { documentHistoryTurns } from "../lib/eve/document-history";
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
+const rejectLostNativeReply = vi
+  .fn<() => Promise<never>>()
+  .mockRejectedValue(new Error("Lost native reply"));
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -63,9 +57,6 @@ await db.insert(user).values(
     name: "Artifact fixture",
   }))
 );
-/* oxlint-disable max-statements --
- * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 afterAll(async () => {
   await db
     .delete(eveImportedDocumentCheckpointEntry)
@@ -97,46 +88,28 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, owner));
   await db.delete(user).where(eq(user.id, stranger));
 });
-/* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Artifact fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep draft's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): draft preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-function draft(conversationId: string) {
-  return {
-    content: "Original",
-    conversationId,
-    documentId: crypto.randomUUID(),
-    expectedRevisionId: null,
-    fileIds: [],
-    kind: "text" as const,
-    operationId: crypto.randomUUID(),
-    ownerId: owner,
-    title: "Notes",
-    turnIndex: 0,
-  };
-}
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+const draft = (conversationId: string) => ({
+  content: "Original",
+  conversationId,
+  documentId: crypto.randomUUID(),
+  expectedRevisionId: null,
+  fileIds: [],
+  kind: "text" as const,
+  operationId: crypto.randomUUID(),
+  ownerId: owner,
+  title: "Notes",
+  turnIndex: 0,
+});
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document purge requires the owned family fence, erases inherited revisions, and uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("document purge requires the owned family fence, erases inherited revisions, and is retryable", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -146,7 +119,7 @@ test("document purge requires the owned family fence, erases inherited revisions
     owner,
     crypto.randomUUID(),
     "Purge fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: root.id } }
   );
   await saveEveDocumentRevision({
@@ -172,19 +145,21 @@ test("document purge requires the owned family fence, erases inherited revisions
   ).rejects.toThrow("content cleanup is incomplete");
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await purgeEveFamilyDocuments(owner, deletion.rootId);
-  for (const table of [
-    eveDocumentCheckpointEntry,
-    eveDocumentCheckpoint,
-    eveDocumentHead,
-    eveDocumentRevision,
-  ]) {
-    expect(
-      await db
-        .select({ conversationId: table.conversationId })
-        .from(table)
-        .where(inArray(table.conversationId, [root.id, child.id]))
-    ).toEqual([]);
-  }
+  await Promise.all(
+    [
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+      eveDocumentRevision,
+    ].map(async (table) => {
+      expect(
+        await db
+          .select({ conversationId: table.conversationId })
+          .from(table)
+          .where(inArray(table.conversationId, [root.id, child.id]))
+      ).toEqual([]);
+    })
+  );
   expect(
     await getEveDocumentRevision(owner, unrelated.id, surviving.documentId)
   ).toEqual(surviving);
@@ -203,12 +178,7 @@ test("document purge requires the owned family fence, erases inherited revisions
     })
   ).rejects.toThrow();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("an external document reference rolls back every purge step") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("an external document reference rolls back every purge step") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("an external document reference rolls back every purge step", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -224,19 +194,21 @@ test("an external document reference rolls back every purge step", async () => {
   });
   await beginEveConversationDeletion(owner, root.id);
   await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow();
-  for (const table of [
-    eveDocumentCheckpointEntry,
-    eveDocumentCheckpoint,
-    eveDocumentHead,
-    eveDocumentRevision,
-  ]) {
-    expect(
-      await db
-        .select({ conversationId: table.conversationId })
-        .from(table)
-        .where(eq(table.conversationId, root.id))
-    ).toHaveLength(1);
-  }
+  await Promise.all(
+    [
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+      eveDocumentRevision,
+    ].map(async (table) => {
+      expect(
+        await db
+          .select({ conversationId: table.conversationId })
+          .from(table)
+          .where(eq(table.conversationId, root.id))
+      ).toHaveLength(1);
+    })
+  );
   expect(
     await db
       .select()
@@ -244,14 +216,7 @@ test("an external document reference rolls back every purge step", async () => {
       .where(eq(eveDocumentHead.conversationId, external.id))
   ).toHaveLength(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("manual edits backfill inherited boundaries in old forks before adding manual an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("manual edits backfill inherited boundaries in old forks before adding manual an uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("manual edits backfill inherited boundaries in old forks before adding manual an uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("manual edits backfill inherited boundaries in old forks before adding manual an preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
   const source = await conversation();
   const input = draft(source.id);
@@ -260,7 +225,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     owner,
     crypto.randomUUID(),
     "Old fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: source.id } }
   );
   const turns = documentHistoryTurns([
@@ -299,7 +264,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     owner,
     crypto.randomUUID(),
     "Inherited boundary",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const earlierBranchRevision = await getEveDocumentRevision(
@@ -309,15 +274,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
   );
   expect(earlierBranchRevision?.id).toBe(original.id);
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("manual edits backfill old native boundaries and stay isolated across nested for uses 0, 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("manual edits backfill old native boundaries and stay isolated across nested for uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("manual edits backfill old native boundaries and stay isolated across nested for preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("manual edits backfill old native boundaries and stay isolated across nested forks", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -355,7 +312,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     owner,
     crypto.randomUUID(),
     "Manual branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
   );
   const childRevisionAfterManualEdit = await getEveDocumentRevision(
@@ -368,7 +325,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     owner,
     crypto.randomUUID(),
     "Before manual",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const earlierNestedBranchRevision = await getEveDocumentRevision(
@@ -402,23 +359,16 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     })
   ).rejects.toThrow("native history");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("turn checkpoints restore exact heads, including empty state, and never change o uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("turn checkpoints restore exact heads, including empty state, and never change o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
   const chat = await conversation();
   await captureEveDocumentCheckpoint(owner, chat.id, 0);
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   await Promise.all(
-    Array.from({ length: 5 }, () =>
-      captureEveDocumentCheckpoint(owner, chat.id, 1)
-    )
+    Array.from({ length: 5 }, async () => {
+      await captureEveDocumentCheckpoint(owner, chat.id, 1);
+    })
   );
   await saveEveDocumentRevision({
     ...input,
@@ -433,7 +383,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     owner,
     crypto.randomUUID(),
     "Later branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
   );
   // Replaying fork initialization must leave inherited boundaries unchanged.
@@ -442,7 +392,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     owner,
     crypto.randomUUID(),
     "Earlier nested branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: laterBranch.id } }
   );
   const laterBranchRevision = await getEveDocumentRevision(
@@ -457,50 +407,45 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     input.documentId
   );
   expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
-  for (const beforeTurnId of ["turn_0", "turn_1"]) {
-    const child = await createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "Checkpoint fork",
-      async () => crypto.randomUUID(),
-      { fork: { beforeTurnId, conversationId: chat.id } }
-    );
-    const document = await getEveDocumentRevision(
-      owner,
-      child.id,
-      input.documentId
-    );
-    if (beforeTurnId === "turn_0") {
-      expect(document).toBeUndefined();
-    } else {
-      expect(document?.id).toBe(first.id);
-      expect(document?.content).toBe("Original");
-    }
-  }
+  await Promise.all(
+    ["turn_0", "turn_1"].map(async (beforeTurnId) => {
+      const child = await createEveConversation(
+        owner,
+        crypto.randomUUID(),
+        "Checkpoint fork",
+        createEveTestSession,
+        { fork: { beforeTurnId, conversationId: chat.id } }
+      );
+      const document = await getEveDocumentRevision(
+        owner,
+        child.id,
+        input.documentId
+      );
+      if (beforeTurnId === "turn_0") {
+        expect(document).toBeNull();
+      } else {
+        expect(document?.id).toBe(first.id);
+        expect(document?.content).toBe("Original");
+      }
+    })
+  );
   await expect(
     captureEveDocumentCheckpoint(stranger, chat.id, 2)
   ).rejects.toThrow("not found");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("a document save cancelled while waiting for its lock never writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a document save cancelled while waiting for its lock never writes") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("a document save cancelled while waiting for its lock never writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("a document save cancelled while waiting for its lock never writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("a document save cancelled while waiting for its lock never writes", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const controller = new AbortController();
-  const held = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const held: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const lockKey = `eve-document:${chat.id}`;
   const locker = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`
     );
-    held.resolve(undefined);
+    held.resolve();
     await release.promise;
   });
   await held.promise;
@@ -519,7 +464,7 @@ test("a document save cancelled while waiting for its lock never writes", async 
     controller.abort();
   } finally {
     controller.abort();
-    release.resolve(undefined);
+    release.resolve();
     await locker;
     await saving;
   }
@@ -529,14 +474,7 @@ test("a document save cancelled while waiting for its lock never writes", async 
     []
   );
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
- * max-lines-per-function (#510): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document viewing respects visibility, revocation and fork ancestry without expo uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("document viewing respects visibility, revocation and fork ancestry without expo uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("document viewing respects visibility, revocation and fork ancestry without exposing storage metadata", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -564,7 +502,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     owner,
     crypto.randomUUID(),
     "Public branch",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   await db
@@ -599,13 +537,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     await getAccessibleEveDocument(undefined, child.id, input.documentId)
   ).toBeUndefined();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native document calls replay safely and reject stale edits and cross-conversati uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("native document calls replay safely and reject stale edits and cross-conversation reads", async () => {
   const chat = await conversation();
   const principal = {
@@ -689,18 +621,12 @@ test("native document calls replay safely and reject stale edits and cross-conve
     await getEveDocumentHistory(owner, chat.id, created.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent replays create one revision and old replays never rewind the head") uses 1, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent replays create one revision and old replays never rewind the head") accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("concurrent replays create one revision and old replays never rewind the head") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("concurrent replays create one revision and old replays never rewind the head", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const revisions = await Promise.all(
-    Array.from({ length: 8 }, () => saveEveDocumentRevision(input))
+    Array.from({ length: 8 }, async () => await saveEveDocumentRevision(input))
   );
   expect(new Set(revisions.map((revision) => revision.id)).size).toBe(1);
   const second = await saveEveDocumentRevision({
@@ -722,25 +648,20 @@ test("concurrent replays create one revision and old replays never rewind the he
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("two distinct saves from the same revision cannot overwrite each other") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("two distinct saves from the same revision cannot overwrite each other") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("two distinct saves from the same revision cannot overwrite each other") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("two distinct saves from the same revision cannot overwrite each other", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const outcomes = await Promise.allSettled(
-    ["A", "B"].map((content) =>
-      saveEveDocumentRevision({
-        ...input,
-        content,
-        expectedRevisionId: first.id,
-        operationId: crypto.randomUUID(),
-      })
+    ["A", "B"].map(
+      async (content) =>
+        await saveEveDocumentRevision({
+          ...input,
+          content,
+          expectedRevisionId: first.id,
+          operationId: crypto.randomUUID(),
+        })
     )
   );
   expect(
@@ -753,7 +674,6 @@ test("two distinct saves from the same revision cannot overwrite each other", as
     await getEveDocumentHistory(owner, chat.id, input.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("artifact reads and updates are scoped to owner and conversation", async () => {
   const chat = await conversation();
@@ -791,14 +711,6 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
     })
   ).rejects.toThrow();
 });
-
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * max-lines-per-function (#510): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("forks select the pre-turn revision and parent and child edits stay independent" uses -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("forks select the pre-turn revision and parent and child edits stay independent" accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("forks select the pre-turn revision and parent and child edits stay independent", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -814,7 +726,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     owner,
     crypto.randomUUID(),
     "Fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   const childHistoryAtFork = await getEveDocumentHistory(
@@ -855,7 +767,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     owner,
     crypto.randomUUID(),
     "Nested",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const nestedBranchHistory = await getEveDocumentHistory(
@@ -878,15 +790,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
       )
   ).toHaveLength(4);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("history beyond 1000 revisions remains readable and forkable without loading all uses 0, 1, -1, 1002, 498 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("history beyond 1000 revisions remains readable and forkable without loading all accepts version; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): test("history beyond 1000 revisions remains readable and forkable without loading all intentionally keeps the existing falsy-value behavior of tail; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test("history beyond 1000 revisions remains readable and forkable without loading all contents", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -907,7 +811,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     }))
   );
   const tail = ids.at(-1);
-  if (!tail) {
+  if (tail === undefined || tail === null || tail === "") {
     throw new Error("Missing fixture tail");
   }
   await db
@@ -934,7 +838,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     owner,
     crypto.randomUUID(),
     "Long fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_500", conversationId: chat.id } }
   );
   const longChildHistory = await getEveDocumentHistory(
@@ -945,14 +849,9 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
-  ).toBeUndefined();
+  ).toBeNull();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("document references protect owned files across families and revision history") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document references protect owned files across families and revision history") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("document references protect owned files across families and revision history", async () => {
   const prefix = "/api/files/";
   const source = await conversation();
@@ -998,15 +897,7 @@ test("document references protect owned files across families and revision histo
   );
   expect(copiedDocumentRevision?.content).toBe(input.content);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("named idle snapshots preserve manual edits across retries without changing turn uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("named idle snapshots preserve manual edits across retries without changing turn uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("named idle snapshots preserve manual edits across retries without changing turn preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -1050,7 +941,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     operationId,
     "Named fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork }
   );
   const namedChildRevision = await getEveDocumentRevision(
@@ -1063,7 +954,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     crypto.randomUUID(),
     "Turn fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
   const ordinaryChildRevision = await getEveDocumentRevision(
@@ -1077,7 +968,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     owner,
     crypto.randomUUID(),
     "Nested fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
   const grandchildRevision = await getEveDocumentRevision(
@@ -1091,17 +982,12 @@ test("named idle snapshots preserve manual edits across retries without changing
       owner,
       operationId,
       "Named fork",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       { fork: { ...fork, checkpointId: crypto.randomUUID() } }
     )
   ).rejects.toThrow("different");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("named checkpoints reject foreign owners, changed boundaries and deletion, and preserve empty manifests", async () => {
   const chat = await conversation();
   const checkpointId = crypto.randomUUID();
@@ -1119,12 +1005,12 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     owner,
     crypto.randomUUID(),
     "Empty fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     { fork: { beforeTurnId: "turn_1", checkpointId, conversationId: chat.id } }
   );
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   // Include a nonempty manifest to verify FK-safe family cleanup too.
   await captureEveNamedDocumentCheckpoint(
     owner,
@@ -1139,29 +1025,23 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
   ).rejects.toThrow("not found");
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await purgeEveFamilyDocuments(owner, deletion.rootId);
-  for (const table of [
-    eveNamedDocumentCheckpointEntry,
-    eveNamedDocumentCheckpoint,
-  ]) {
-    expect(
-      await db.select().from(table).where(eq(table.conversationId, chat.id))
-    ).toEqual([]);
-  }
+  await Promise.all(
+    [eveNamedDocumentCheckpointEntry, eveNamedDocumentCheckpoint].map(
+      async (table) => {
+        expect(
+          await db.select().from(table).where(eq(table.conversationId, chat.id))
+        ).toEqual([]);
+      }
+    )
+  );
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("missing or mismatched named document boundaries stop native allocation") uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): test("missing or mismatched named document boundaries stop native allocation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("missing or mismatched named document boundaries stop native allocation", async () => {
   const chat = await conversation();
   const checkpointId = crypto.randomUUID();
-  let allocations = 0;
-  const allocate = (): Promise<string> => {
-    allocations += 1;
-    return Promise.resolve(crypto.randomUUID());
-  };
+  const allocate = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(crypto.randomUUID());
   const missing = {
     beforeTurnId: "turn_1",
     checkpointId,
@@ -1186,16 +1066,9 @@ test("missing or mismatched named document boundaries stop native allocation", a
       { fork: missing }
     )
   ).rejects.toThrow("Named document checkpoint");
-  expect(allocations).toBe(0);
+  expect(allocate).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
- * max-statements (#512): test.each([false, true])("native descendants retain imported document boundaries, inc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each([false, true])("native descendants retain imported document boundaries, inc uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test.each([false, true])("native descendants retain imported document boundaries, inc uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): test.each([false, true])("native descendants retain imported document boundaries, inc intentionally keeps the existing falsy-value behavior of checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 test.each([false, true])(
   "native descendants retain imported document boundaries, including empty ones (named=%s)",
   async (named) => {
@@ -1215,14 +1088,18 @@ test.each([false, true])(
     });
     await captureEveDocumentCheckpoint(owner, root.id, 1);
     const checkpointId = named ? crypto.randomUUID() : undefined;
-    if (checkpointId) {
+    if (
+      checkpointId !== undefined &&
+      checkpointId !== null &&
+      checkpointId !== ""
+    ) {
       await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
     }
     const child = await createEveConversation(
       owner,
       crypto.randomUUID(),
       "Imported prefix descendant",
-      async () => crypto.randomUUID(),
+      createEveTestSession,
       {
         fork: { beforeTurnId: "turn_1", checkpointId, conversationId: root.id },
       }
@@ -1249,13 +1126,7 @@ test.each([false, true])(
     ]);
   }
 );
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("imported forks restore the selected document boundary and exclude the later pre uses 0, 2, 4, 6 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -1290,48 +1161,41 @@ test("imported forks restore the selected document boundary and exclude the late
       revisionId: later.id,
     },
   ]);
-  for (const index of [0, 2, 6]) {
-    const [child] = await insertEveConversationFixtures({
-      firstMessage: "Imported edit",
-      forkMessageId: `seed_message_${index}`,
-      operationId: crypto.randomUUID(),
-      ownerId: owner,
-      parentConversationId: root.id,
-      rootConversationId: root.id,
-    });
-    await expect(
-      initializeEveForkDocuments(stranger, child.id)
-    ).rejects.toThrow("Fork conversation not found");
-    if (index === 6) {
-      await expect(initializeEveForkDocuments(owner, child.id)).rejects.toThrow(
-        "Imported document boundary is unavailable"
-      );
-    } else {
-      await initializeEveForkDocuments(owner, child.id);
-      await initializeEveForkDocuments(owner, child.id);
-    }
-    const heads = await db
-      .select({ revisionId: eveDocumentHead.revisionId })
-      .from(eveDocumentHead)
-      .where(eq(eveDocumentHead.conversationId, child.id));
-    expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
-    const headers = await db
-      .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
-      .from(eveImportedDocumentCheckpoint)
-      .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
-    expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
-  }
+  await Promise.all(
+    [0, 2, 6].map(async (index) => {
+      const [child] = await insertEveConversationFixtures({
+        firstMessage: "Imported edit",
+        forkMessageId: `seed_message_${index}`,
+        operationId: crypto.randomUUID(),
+        ownerId: owner,
+        parentConversationId: root.id,
+        rootConversationId: root.id,
+      });
+      await expect(
+        initializeEveForkDocuments(stranger, child.id)
+      ).rejects.toThrow("Fork conversation not found");
+      if (index === 6) {
+        await expect(
+          initializeEveForkDocuments(owner, child.id)
+        ).rejects.toThrow("Imported document boundary is unavailable");
+      } else {
+        await initializeEveForkDocuments(owner, child.id);
+        await initializeEveForkDocuments(owner, child.id);
+      }
+      const heads = await db
+        .select({ revisionId: eveDocumentHead.revisionId })
+        .from(eveDocumentHead)
+        .where(eq(eveDocumentHead.conversationId, child.id));
+      expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
+      const headers = await db
+        .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
+        .from(eveImportedDocumentCheckpoint)
+        .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
+      expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
+    })
+  );
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("imported fork reservations retain their boundary across uncertain creation and  uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("imported fork reservations retain their boundary across uncertain creation and 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): test("imported fork reservations retain their boundary across uncertain creation and  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("imported fork reservations retain their boundary across uncertain creation and  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("imported fork reservations retain their boundary across uncertain creation and reject changed retries", async () => {
   const root = await conversation();
   await db.insert(eveImportedDocumentCheckpoint).values(
@@ -1343,11 +1207,14 @@ test("imported fork reservations retain their boundary across uncertain creation
   );
   const operationId = crypto.randomUUID();
   const fork = { beforeMessageId: "seed_message_2", conversationId: root.id };
-  const failedDispatch = () => Promise.reject(new Error("Lost native reply"));
   await expect(
-    createEveConversation(owner, operationId, "Replacement", failedDispatch, {
-      fork,
-    })
+    createEveConversation(
+      owner,
+      operationId,
+      "Replacement",
+      rejectLostNativeReply,
+      { fork }
+    )
   ).rejects.toThrow();
   const [reserved] = await db
     .select()
@@ -1359,6 +1226,7 @@ test("imported fork reservations retain their boundary across uncertain creation
     state: "uncertain",
   });
   const sessionId = crypto.randomUUID();
+  /* oxlint-disable eslint/no-await-in-loop -- Both changed intents replay the same operation ID; preserve sequential rejection checks. */
   for (const changed of [
     { beforeMessageId: "seed_message_0", conversationId: root.id },
     { beforeTurnId: "turn_0", conversationId: root.id },
@@ -1368,16 +1236,17 @@ test("imported fork reservations retain their boundary across uncertain creation
         owner,
         operationId,
         "Replacement",
-        async () => sessionId,
+        vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
         { fork: changed }
       )
     ).rejects.toThrow("different");
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const bound = await createEveConversation(
     owner,
     operationId,
     "Replacement",
-    async () => sessionId,
+    vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
     { fork }
   );
   expect(bound).toEqual({ id: reserved.id, sessionId });
@@ -1386,18 +1255,12 @@ test("imported fork reservations retain their boundary across uncertain creation
       owner,
       operationId,
       "Replacement",
-      failedDispatch,
+      rejectLostNativeReply,
       { fork }
     )
   ).toEqual(bound);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -1407,7 +1270,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     owner,
     crypto.randomUUID(),
     "Retained fork",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     {
       fork: { beforeTurnId: "turn_1", conversationId: root.id },
     }
@@ -1448,7 +1311,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
   expect(
     await getEveDocumentRevision(owner, root.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   const childRevisionAfterDeletion = await getEveDocumentRevision(
     owner,
     child.id,
@@ -1460,14 +1323,14 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     owner,
     crypto.randomUUID(),
     "After deletion",
-    async () => crypto.randomUUID(),
+    createEveTestSession,
     {
       fork: { beforeTurnId: "turn_2", conversationId: root.id },
     }
   );
   expect(
     await getEveDocumentRevision(owner, later.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   const replacement = await saveEveDocumentRevision({
     ...input,
     operationId: crypto.randomUUID(),
@@ -1484,6 +1347,3 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   );
   expect(rootRevisionAfterDeletion?.id).toBe(replacement.id);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This eve-documents.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

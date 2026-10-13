@@ -1,39 +1,73 @@
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import path from "node:path";
+import { tmpdir } from "node:os";
+
+import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+import { parsePackageJson } from "#cli/helpers/package-manifest";
+import { requireJsonObject } from "#cli/helpers/json-object";
+
+import { installItems } from "#cli/registry/shadcn";
+
 import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { scaffoldFromTemplate } from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
 import { syncFeatures } from "./sync-features";
 
+const lintInstalledObservability = async (root: string): Promise<void> => {
+  const config = path.join(root, "export-rules.json");
+  await writeFile(config, JSON.stringify({ rules: {} }));
+  const lintProcess = Bun.spawn({
+    cmd: [
+      path.join(import.meta.dir, "../../../../node_modules/.bin/oxlint"),
+      "-c",
+      config,
+      "--import-plugin",
+      "-A",
+      "all",
+      "-D",
+      "import/no-duplicates",
+      "-D",
+      "typescript/consistent-type-definitions",
+      "--no-ignore",
+      "--report-unused-disable-directives-severity",
+      "error",
+      path.join(root, "features/installed-layout.ts"),
+      path.join(root, "features/installed-instrumentation.ts"),
+    ],
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    lintProcess.exited,
+    new Response(lintProcess.stdout).text(),
+    new Response(lintProcess.stderr).text(),
+  ]);
+  const diagnosticOutput = `Native export validation failed:\n${stdout}\n${stderr}`;
+  expect(exitCode, diagnosticOutput).toBe(0);
+};
+
 const roots: string[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-observability-"));
   roots.push(root);
   return root;
 };
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const itemFiles = async (item: (typeof observabilityItems)[number]) => [
+interface ReadonlyObservabilityItem {
+  readonly files: readonly Readonly<
+    (typeof observabilityItems)[number]["files"][number]
+  >[];
+  readonly meta: { readonly chatjs: unknown };
+  readonly name: string;
+}
+
+const itemFiles = async (item: ReadonlyObservabilityItem) => [
   ...(await Promise.all(
     item.files.map(async (file) => ({
       ...file,
@@ -50,25 +84,23 @@ const itemFiles = async (item: (typeof observabilityItems)[number]) => [
     type: "registry:file" as const,
   },
 ];
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+type ReadonlyObservabilityFile = Readonly<{
+  content: string;
+  target: string;
+}>;
 // Every subset protects omission as well as independent installation.
 for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   const selected = observabilityItems.filter(
-    (_, index): number => Math.floor(mask / 2 ** index) % 2
+    (_: unknown, index): number => Math.floor(mask / 2 ** index) % 2
   );
-  test(`generates only installed observability imports: ${selected.map((item): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
+  test(`generates only installed observability imports: ${selected.map((item: { readonly name: string }): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
     const root = await fixture();
     await Promise.all(
-      selected.map(async (item): Promise<void> => {
+      selected.map(async (item: ReadonlyObservabilityItem): Promise<void> => {
         const files = await itemFiles(item);
         await Promise.all(
-          files.map(async (file): Promise<void> => {
+          files.map(async (file: ReadonlyObservabilityFile): Promise<void> => {
             const target = path.join(root, file.target.replace(/^~\//u, ""));
             await mkdir(path.dirname(target), { recursive: true });
             await writeFile(target, file.content);
@@ -77,6 +109,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
       })
     );
     await syncFeatures(root);
+    await lintInstalledObservability(root);
     const layout = await readFile(
       path.join(root, "features/installed-layout.ts"),
       "utf-8"
@@ -89,6 +122,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
       path.join(root, "features/installed.ts"),
       "utf-8"
     );
+    expect(instrumentation).not.toContain("sort-imports");
     for (const item of observabilityItems) {
       const output = item.name === "langfuse" ? instrumentation : layout;
       expect(output.includes(`@/features/${item.name}/`)).toBe(
@@ -102,23 +136,17 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     ).toBe(layout);
   });
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const item of observabilityItems) {
   test(`shadcn installs ${item.name} independently into an omitted scaffold`, async (): Promise<void> => {
     const root = await fixture();
     await scaffoldFromTemplate(root);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    const manifest = JSON.parse(
+    const manifest = parsePackageJson(
       await readFile(path.join(root, "package.json"), "utf-8")
+    );
+    const dependencies = requireJsonObject(
+      manifest.dependencies,
+      "dependencies"
     );
     for (const dependency of [
       "@vercel/analytics",
@@ -127,14 +155,14 @@ for (const item of observabilityItems) {
       "langfuse",
       "langfuse-vercel",
     ]) {
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      expect(manifest.dependencies[dependency]).toBeUndefined();
+      expect(dependencies[dependency]).toBeUndefined();
     }
     const descriptors = await Promise.all(
-      observabilityItems.map((feature): Promise<boolean> =>
-        Bun.file(
-          path.join(root, `features/${feature.name}/chatjs.json`)
-        ).exists()
+      observabilityItems.map(
+        async (feature: { readonly name: string }): Promise<boolean> =>
+          await Bun.file(
+            path.join(root, `features/${feature.name}/chatjs.json`)
+          ).exists()
       )
     );
     expect(descriptors).toEqual(observabilityItems.map((): boolean => false));
@@ -156,9 +184,12 @@ for (const item of observabilityItems) {
         root
       );
       await syncFeatures(root);
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const installedManifest = JSON.parse(
+      const installedManifest = parsePackageJson(
         await readFile(path.join(root, "package.json"), "utf-8")
+      );
+      const installedDependencies = requireJsonObject(
+        installedManifest.dependencies,
+        "installed dependencies"
       );
       for (const dependency of item.dependencies) {
         const versionSeparator = dependency.lastIndexOf("@");
@@ -166,8 +197,7 @@ for (const item of observabilityItems) {
           versionSeparator > 0
             ? dependency.slice(0, versionSeparator)
             : dependency;
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-        expect(installedManifest.dependencies[name]).toBeDefined();
+        expect(installedDependencies[name]).toBeDefined();
       }
       const registration = await readFile(
         path.join(root, "features/installed.ts"),
@@ -175,7 +205,7 @@ for (const item of observabilityItems) {
       );
       expect(registration).toContain(`"${item.name}"`);
       for (const feature of observabilityItems.filter(
-        (candidate): boolean => candidate !== item
+        (candidate: ReadonlyObservabilityItem): boolean => candidate !== item
       )) {
         expect(registration).not.toContain(`"${feature.name}"`);
       }
@@ -188,12 +218,11 @@ for (const item of observabilityItems) {
       await server.stop(true);
     }
   }, 30_000);
-
   test(`rejects orphaned and mismatched ${item.name} source before writing registrations`, async (): Promise<void> => {
     const root = await fixture();
     const files = await itemFiles(item);
     await Promise.all(
-      files.map(async (file): Promise<void> => {
+      files.map(async (file: ReadonlyObservabilityFile): Promise<void> => {
         const target = path.join(root, file.target.replace(/^~\//u, ""));
         await mkdir(path.dirname(target), { recursive: true });
         await writeFile(target, file.content);
@@ -212,8 +241,3 @@ for (const item of observabilityItems) {
     ).toBe(false);
   });
 }
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

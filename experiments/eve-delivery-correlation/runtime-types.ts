@@ -54,7 +54,6 @@ interface RuntimeModules {
     readonly createTurnInputMessages: (input: StepInput) => unknown;
   };
   readonly "harness/emission": {
-    // oxlint-disable-next-line eslint/max-params -- This signature mirrors the released runtime preamble function for the isolated module probe.
     readonly emitTurnPreamble: (
       emit: (event: ReceivedEvent) => Promise<void>,
       input: StepInput,

@@ -1,21 +1,23 @@
 "use client";
-import React from "react";
-
-import { EveDocumentTool } from "@/components/eve/eve-document-tool";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-
-import { ReasonSearchResearchProgress } from "./progress";
 import { researchInput, researchOutput } from "./schemas";
+import { EveDocumentTool } from "@/components/eve/eve-document-tool";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ReasonSearchResearchProgress } from "./progress";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,
   outputSchema: researchOutput,
-  render: ({ tool, messageId, isReadonly }) => {
+  render: ({
+    tool,
+    messageId,
+    isReadonly,
+  }: ReadonlyNativeSurface<
+    ToolRendererProps<typeof researchInput, typeof researchOutput>
+  >) => {
     const result = tool.state === "output-available" ? tool.output : undefined;
     let content = <output>Researching…</output>;
     if (result && "format" in result) {
@@ -42,7 +44,3 @@ export const DeepResearchRenderer = defineToolRenderer({
   renderProgress: ReasonSearchResearchProgress,
   updateSchema: ResearchUpdateSchema,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-enable eslint/no-undefined */

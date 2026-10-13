@@ -1,4 +1,3 @@
-/* oxlint-disable import/max-dependencies -- * import/max-dependencies (#524): import from "lucide-react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling. */
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -17,32 +16,29 @@ import {
   toSearchParamRecord,
 } from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";
-/* oxlint-enable import/max-dependencies */
 
 const metadata: Metadata = {
   description: "Login to your account",
   title: "Login",
 };
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * typescript/explicit-function-return-type (#560): Keep LoginPageContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): LoginPageContent accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): LoginPageContent preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const LoginPageContent = async ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
+}): Promise<React.JSX.Element> => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isElectronTransfer =
     config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
-  const session = isElectronTransfer
-    ? await auth.api.getSession({ headers: await headers() })
-    : null;
+  if (isElectronTransfer) {
+    const session = await auth.api.getSession({ headers: await headers() });
 
-  if (session?.user && isElectronTransfer) {
-    return <ElectronTransferUser query={query} session={session} />;
+    if (session?.user) {
+      return <ElectronTransferUser query={query} session={session} />;
+    }
   }
 
   return (
@@ -58,16 +54,13 @@ const LoginPageContent = async ({
     </Suspense>
   );
 };
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-max-depth (#548): LoginPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * react/no-multi-comp (#552): LoginPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): LoginPage accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const LoginPage = ({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams: Readonly<
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
+  >;
 }): React.JSX.Element => (
   <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
     <InternalLink
@@ -95,11 +88,6 @@ const LoginPage = ({
     </div>
   </div>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default LoginPage;
-/* oxlint-enable import/no-default-export */

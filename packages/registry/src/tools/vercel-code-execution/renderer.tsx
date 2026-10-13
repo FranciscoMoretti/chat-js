@@ -1,22 +1,32 @@
 "use client";
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 import React from "react";
-
 import { SandboxComposed } from "@/components/sandbox";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
-
-import { codeExecutionInput, codeExecutionResult } from "./schemas";
 
 type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionInput,
   typeof codeExecutionResult
 >["tool"];
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
+type CodeExecutionViewTool = Readonly<{
+  state: CodeExecutionTool["state"];
+  input?: Readonly<{
+    code?: string;
+    language?: string;
+    title?: string;
+  }>;
+  output?: Readonly<{
+    chart: unknown;
+    message: string;
+  }>;
+}>;
+
+const CodeExecutionView = ({
+  tool,
+}: Readonly<{ tool: CodeExecutionViewTool }>): React.JSX.Element => {
   const args = tool.input ?? {
     code: "",
     icon: "default",
@@ -41,22 +51,17 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const CodeExecution = defineToolRenderer({
   inputSchema: codeExecutionInput,
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
   streamingInputSchema: codeExecutionInput.partial().extend({
-    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/prefer-top-level-await -- #574: Zod schema fallback, not a Promise.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- oxc-project/oxc#22161: synchronous Zod fallback preserves streamed code on invalid language. Zod requires the undefined fallback argument.
     language: codeExecutionInput.shape.language.optional().catch(undefined),
-    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/prefer-top-level-await -- #574: Zod schema fallback, not a Promise.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- oxc-project/oxc#22161: synchronous Zod fallback preserves streamed code on invalid title. Zod requires the undefined fallback argument.
     title: codeExecutionInput.shape.title.optional().catch(undefined),
   }),
 });
-/* oxlint-enable eslint/no-undefined */
 export { CodeExecution };
 export type { CodeExecutionTool };

@@ -2,7 +2,6 @@ import { defineConfig } from "vitest/config";
 
 import config from "./vitest.eve.config";
 
-// oxlint-disable-next-line import/no-default-export -- Vitest loads the configuration through its default export.
 export default defineConfig({
   ...config,
   test: {

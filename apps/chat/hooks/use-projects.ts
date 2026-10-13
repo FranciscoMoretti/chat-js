@@ -1,22 +1,36 @@
 "use client";
 
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
+import type { AppRouter } from "@/trpc/routers/_app";
 import type { Project } from "@/lib/db/schema";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { UseMutationResult } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable max-lines-per-function, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- useRenameProject: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
-export const useRenameProject = () => {
+interface ProjectRenameSnapshot {
+  previous?: Project[];
+  detail?: Project | null;
+}
+
+export const useRenameProject = (): UseMutationResult<
+  inferRouterOutputs<AppRouter>["project"]["update"],
+  TRPCClientErrorLike<AppRouter>,
+  inferRouterInputs<AppRouter>["project"]["update"],
+  ProjectRenameSnapshot
+> => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
   return useMutation(
-    trpc.project.update.mutationOptions<{
-      previous?: Project[];
-      detail?: Project | null;
-    }>({
-      onError: (_error, _variables, context) => {
+    trpc.project.update.mutationOptions<ProjectRenameSnapshot>({
+      onError: (
+        _error: unknown,
+        _variables,
+        context: Readonly<ProjectRenameSnapshot> | undefined
+      ) => {
         if (context?.previous) {
           queryClient.setQueryData(
             trpc.project.list.queryKey(),
@@ -45,23 +59,29 @@ export const useRenameProject = () => {
             ? variables.updates.name
             : undefined;
         if (typeof nextName === "string" && nextName !== "") {
-          queryClient.setQueryData<Project | null>(detailKey, (old) =>
-            old ? { ...old, name: nextName } : old
-          );
+          queryClient.setQueryData<Project | null>(detailKey, (old) => {
+            if (old) {
+              return { ...old, name: nextName };
+            }
+            return old;
+          });
           queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
-            old?.map((project) =>
-              project.id === variables.id
-                ? { ...project, name: nextName }
-                : project
-            )
+            old?.map((project: ReadonlyNativeSurface<Project>) => {
+              if (project.id === variables.id) {
+                return { ...project, name: nextName };
+              }
+              return project;
+            })
           );
         }
         return { detail, previous };
       },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: trpc.project.pathKey() }),
+      onSettled: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: trpc.project.pathKey(),
+        });
+      },
       onSuccess: () => toast.success("Project renamed"),
     })
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

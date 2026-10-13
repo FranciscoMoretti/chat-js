@@ -1,6 +1,5 @@
-import type { UIMessage } from "ai";
-
 import type { AbstractThread } from "./abstract-thread";
+import type { UIMessage } from "ai";
 
 const DISABLED_THROTTLE_WAIT_MS = 0;
 

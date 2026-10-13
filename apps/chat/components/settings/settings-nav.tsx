@@ -1,13 +1,16 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+import { InternalLink } from "@/components/internal-link";
+
 import React from "react";
 
-import { InternalLink } from "@/components/internal-link";
+import type { JSX as ReactJSX } from "react";
+
 import type { SettingsItem } from "@/components/settings/settings-item";
+
 import { cn } from "@/lib/utils";
 import { settingsItems } from "@/settings-items";
+import { usePathname } from "next/navigation";
 
 type ReadonlyNavItem = Readonly<
   Pick<SettingsItem, "href" | "label" | "isVisible">

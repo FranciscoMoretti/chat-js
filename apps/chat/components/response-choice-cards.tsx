@@ -1,9 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
+
 import React from "react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface ResponseChoiceSlot {
@@ -15,13 +16,12 @@ export interface ResponseChoiceSlot {
   disabled?: boolean;
   handleSelect: () => void;
 }
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth, unicorn/no-null -- ResponseChoiceCards: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
  * Layout only: controllers own ordering, lifecycle, and selection.
- * @param props Response-card layout inputs.
- * @param props.slots Controller-owned ordered choices and selection callbacks.
- * @returns Choice buttons, or null when the controller provides no slots.
+ * @param {{ readonly slots: readonly Readonly<ResponseChoiceSlot>[]; }} props Response-card layout inputs.
+ * @param {readonly Readonly<ResponseChoiceSlot>[]} props.slots Controller-owned ordered choices and selection callbacks.
+ * @returns {React.JSX.Element | null} Choice buttons, or null when the controller provides no slots.
  */
 export const ResponseChoiceCards = ({
   slots,
@@ -58,4 +58,3 @@ export const ResponseChoiceCards = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth, unicorn/no-null */

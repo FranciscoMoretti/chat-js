@@ -1,9 +1,7 @@
-/* oxlint-disable import/no-nodejs-modules -- The driver checks native effects and controls disposable fixture files. */
 import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { Client } from "eve/client";
 import { z } from "zod";
 
@@ -20,7 +18,6 @@ const crashTestLeaseSeconds = 1;
 const postgresFlag = process.argv.indexOf("--postgres");
 const absentFlag = -1;
 const argumentOffset = 1;
-/* oxlint-disable no-undefined -- Absent Postgres preparation retains the published local-world launcher defaults. */
 const postgres =
   postgresFlag === absentFlag
     ? undefined
@@ -46,7 +43,6 @@ const runtime = await createPersistentRuntime(
     world: postgres === undefined ? "local" : "postgres",
   }
 );
-/* oxlint-enable no-undefined */
 const processMarker = z.object({ pid: z.number().int().positive() });
 const noSettledProcess = 0;
 let settledPid = noSettledProcess;
@@ -71,7 +67,6 @@ try {
     JSON.stringify(snapshot)
   );
   const request = snapshot.events.find(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE owns the event type; this predicate only reads it.
     (event) => event.type === "input.requested"
   );
   assert.ok(request);
@@ -83,7 +78,6 @@ try {
     toolName: "act",
   });
   const [approval] = request.data.requests;
-  // oxlint-disable-next-line no-undefined -- Missing array entries indicate that the runtime never requested approval.
   if (approval === undefined) {
     throw new Error("Missing pending approval");
   }
@@ -107,7 +101,6 @@ try {
     const candidate = processMarker.parse(
       await runtime.waitForMarker("candidate")
     );
-    // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
     await runtime.crash(abruptServer ? candidate.pid : undefined);
     if (operatorRecovery) {
       const candidateGeneration = 1;
@@ -120,10 +113,7 @@ try {
     settledPid = settled.pid;
     const settledSnapshot = await session.snapshot();
     assert.ok(
-      settledSnapshot.events.some(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native SDK owns the event type; this assertion only reads it.
-        (event) => event.type === "approval.settled"
-      )
+      settledSnapshot.events.some((event) => event.type === "approval.settled")
     );
     await writeFile(
       path.join(runtime.directory, "settled-snapshot.json"),
@@ -133,7 +123,6 @@ try {
       await Bun.file(path.join(runtime.directory, "effects.jsonl")).exists(),
       false
     );
-    // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
     await runtime.crash(abruptServer ? settled.pid : undefined);
     if (operatorRecovery) {
       const settledGeneration = 2;

@@ -2,8 +2,6 @@ import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
 const noResults = 0;
-
-// oxlint-disable-next-line import/no-default-export -- EVE's compiler discovers the fixture through its default export.
 export default defineAgent({
   defaultTools: false,
   description: "Compiled dynamic approval restart fixture",

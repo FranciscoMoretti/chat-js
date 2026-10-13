@@ -1,84 +1,85 @@
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { inputResponseSchema } from "eve/client";
+import { eveMessageInput } from "./message-input";
+import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "@/lib/ai/types";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { eveMessageInput } from "./message-input";
+const MIN_IDENTIFIER_LENGTH = 1;
+const MAX_MODEL_IDENTIFIER_LENGTH = 200;
+const MAX_TURN_IDENTIFIER_LENGTH = 200;
+const MIN_INPUT_RESPONSES = 1;
+const MAX_INPUT_RESPONSES = 16;
 
 const streamIndex = /^\d{1,12}$/u;
 const sessionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)(?:\/(?<operation>stream|cancel))?$/u;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): message uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const message = z
   .object({
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
-    modelId: z.string().min(1).max(200).optional(),
+    modelId: z
+      .string()
+      .min(MIN_IDENTIFIER_LENGTH)
+      .max(MAX_MODEL_IDENTIFIER_LENGTH)
+      .optional(),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): respond uses 1, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/max-nested-calls (#568): respond keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const respond = z
   .object({
     inputResponses: z
       .array(
         z
           .object({
-            requestId: z.string().min(1),
+            requestId: z.string().min(MIN_IDENTIFIER_LENGTH),
             optionId: z.string().optional(),
             text: z.string().optional(),
           })
           .strict()
           .refine((value) => inputResponseSchema.safeParse(value).success)
       )
-      .min(1)
-      .max(16),
+      .min(MIN_INPUT_RESPONSES)
+      .max(MAX_INPUT_RESPONSES),
   })
   .strict();
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): cancel uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 // Attached/resumed EVE clients cancel the active turn without a turn ID.
 const cancel = z
-  .object({ turnId: z.string().min(1).max(200).optional() })
+  .object({
+    turnId: z
+      .string()
+      .min(MIN_IDENTIFIER_LENGTH)
+      .max(MAX_TURN_IDENTIFIER_LENGTH)
+      .optional(),
+  })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * no-magic-numbers (#517): parseSessionRequest uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): parseSessionRequest intentionally keeps the existing falsy-value behavior of match?.[1]; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): parseSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const parseSessionRequest = (path: string, method: string) => {
-  const match = sessionPath.exec(path);
-  if (!match?.[1]) {
+const parseSessionRequest = (
+  path: string,
+  method: string
+): {
+  sessionId: string;
+  schema: typeof cancel | z.ZodUnion<[typeof message, typeof respond]>;
+} | null => {
+  const { groups } = sessionPath.exec(path) ?? {};
+  if (!groups) {
     return null;
   }
-  const { 2: action } = match;
+  const { sessionId } = groups;
+  if (typeof sessionId !== "string") {
+    return null;
+  }
+  const action = groups.operation;
   if (
     !(
       (method === "GET" && action === "stream") ||
-      (method === "POST" && (!action || action === "cancel"))
+      (method === "POST" && (typeof action !== "string" || action === "cancel"))
     )
   ) {
     return null;
   }
   return {
-    sessionId: match[1],
+    sessionId,
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const safeStreamQuery = (
   params: ReadonlyNativeSurface<URLSearchParams>
 ): URLSearchParams | null => {
@@ -87,13 +88,15 @@ const safeStreamQuery = (
     if (result.has(key)) {
       return null;
     }
-    if (
-      key === "startIndex"
-        ? !streamIndex.test(value)
-        : !(
-            (key === "includeTailIndex" || key === "streamControlVersion") &&
-            value === "1"
-          )
+    if (key === "startIndex") {
+      if (!streamIndex.test(value)) {
+        return null;
+      }
+    } else if (
+      !(
+        (key === "includeTailIndex" || key === "streamControlVersion") &&
+        value === "1"
+      )
     ) {
       return null;
     }
@@ -101,18 +104,18 @@ const safeStreamQuery = (
   }
   return result;
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const sameOrigin = (
   request: ReadonlyNativeSurface<Request>,
   origin: string
 ): boolean => {
   const supplied = request.headers.get("origin");
-  return supplied
-    ? supplied === origin
-    : request.method === "GET" &&
-        request.headers.get("sec-fetch-site") !== "cross-site";
+  if (supplied !== null && supplied !== "") {
+    return supplied === origin;
+  }
+  return (
+    request.method === "GET" &&
+    request.headers.get("sec-fetch-site") !== "cross-site"
+  );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export { parseSessionRequest, safeStreamQuery, sameOrigin };

@@ -9,7 +9,6 @@ import type {
   CoreFeatureKey,
   Gateway,
 } from "#cli/types";
-
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -23,16 +22,14 @@ interface EnvRequirementLike {
   readonly options: readonly (readonly string[])[];
 }
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvVarEntry = {
+interface EnvVarEntry {
   /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
   /** Human-readable description derived from the Zod schema */
   description: string;
   /** Group key used to render "one of" alternatives together */
   oneOfGroup?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 const singleAlternative = 1;
@@ -49,19 +46,18 @@ interface EnvChecklistInput {
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
- * @param requirement The alternatives to expand without modifying their catalog.
- * @returns One checklist entry per credential alternative.
+ * @param {EnvRequirementLike} requirement The alternatives to expand without modifying their catalog.
+ * @returns {EnvVarEntry[]} One checklist entry per credential alternative.
  */
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
-  const oneOfGroup =
-    requirement.options.length > singleAlternative
-      ? requirement.options
-          .map((group) => group.map(String).join("+"))
-          .join("|")
-      : // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for a single credential alternative.
-        undefined;
+  let oneOfGroup: string | undefined = undefined;
+  if (requirement.options.length > singleAlternative) {
+    oneOfGroup = requirement.options
+      .map((group) => group.map(String).join("+"))
+      .join("|");
+  }
 
   return requirement.options.map((group) => {
     let description = group
@@ -70,10 +66,13 @@ const requirementToEntries = (
 
     if (description === "") {
       const fallbackDescription = requirement.description;
-      description =
-        typeof fallbackDescription === "string" && fallbackDescription !== ""
-          ? fallbackDescription
-          : "Required environment variable";
+      description = "Required environment variable";
+      if (
+        typeof fallbackDescription === "string" &&
+        fallbackDescription !== ""
+      ) {
+        description = fallbackDescription;
+      }
     }
     return {
       description,

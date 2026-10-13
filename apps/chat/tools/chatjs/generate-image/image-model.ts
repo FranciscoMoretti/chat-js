@@ -42,15 +42,17 @@ const resolveImageModel = async (
     return selected;
   }
   const defaultId = config.ai.tools.image.default;
-  if (typeof defaultId !== "string" || defaultId === "") {
-    throw new Error(
+  if (typeof defaultId !== "string") {
+    throw new TypeError(
       "Set ai.tools.image.default to an image model supported by your gateway."
     );
   }
   const fallback = await findMultimodalModel(provider, defaultId);
-  return fallback.multimodal
-    ? fallback
-    : { modelId: defaultId, multimodal: false };
+
+  if (fallback.multimodal) {
+    return fallback;
+  }
+  return { modelId: defaultId, multimodal: false };
 };
 export { resolveImageModel };
 export type { ImageModelSelection };

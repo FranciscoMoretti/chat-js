@@ -1,40 +1,46 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 import { cleanupPreviewDatabase } from "./cleanup-preview-database.mjs";
 
-const preview = {
+const preview: Branch = {
   created_at: "2026-09-28T00:00:00Z",
   id: "br-preview",
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
-const rootBranch = {
+const rootBranch: Branch = {
   created_at: "2026-01-01T00:00:00Z",
   default: true,
   id: "br-root",
   name: "main",
-  // oxlint-disable-next-line unicorn/no-null -- Exercise Neon's explicit null parent sentinel separately from an omitted parent_id in a root-branch API response.
   parent_id: null,
   protected: false,
 };
+interface Call {
+  readonly method: string;
+  readonly url: string;
+}
 interface Branch {
-  created_at: string;
-  default?: boolean;
-  id: string;
-  name: string;
-  parent_id?: string | null;
-  primary?: boolean;
-  protected?: boolean;
+  readonly created_at: string;
+  readonly default?: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly parent_id?: string | null;
+  readonly primary?: boolean;
+  readonly protected?: boolean;
 }
 interface RunOptions {
-  state?: string;
-  repo?: string;
-  open?: boolean;
-  branches?: Branch[];
-  deleteStatus?: number;
-  pages?: { branches: Branch[]; pagination: { next: string } }[];
-  stateBeforeDelete?: string;
-  openBeforeDelete?: boolean;
+  readonly state?: string;
+  readonly repo?: string;
+  readonly open?: boolean;
+  readonly branches?: readonly Branch[];
+  readonly deleteStatus?: number;
+  readonly pages?: readonly {
+    readonly branches: readonly Branch[];
+    readonly pagination: Readonly<{ next: string }>;
+  }[];
+  readonly stateBeforeDelete?: string;
+  readonly openBeforeDelete?: boolean;
 }
 const expectRejection = async (
   operation: Readonly<Promise<unknown>>,
@@ -58,13 +64,57 @@ const expectRejection = async (
   }
   throw new Error("Expected the operation to reject.");
 };
+interface GitHubState {
+  readonly state: string;
+  readonly repo: string;
+  readonly open: boolean;
+  readonly stateBeforeDelete: string;
+  readonly openBeforeDelete: boolean;
+}
+const createGitHub = ({
+  state,
+  repo,
+  open,
+  stateBeforeDelete,
+  openBeforeDelete,
+}: GitHubState): Parameters<typeof cleanupPreviewDatabase>[0]["github"] => ({
+  paginate: mock<
+    Parameters<typeof cleanupPreviewDatabase>[0]["github"]["paginate"]
+  >()
+    .mockResolvedValueOnce(open ? [{}] : [])
+    .mockResolvedValue(openBeforeDelete ? [{}] : []),
+  rest: {
+    pulls: {
+      get: mock<
+        Parameters<
+          typeof cleanupPreviewDatabase
+        >[0]["github"]["rest"]["pulls"]["get"]
+      >()
+        .mockResolvedValueOnce({
+          data: {
+            closed_at: "2026-09-29T00:00:00Z",
+            head: { ref: "feature", repo: { full_name: repo } },
+            state,
+          },
+        })
+        .mockResolvedValue({
+          data: {
+            closed_at: "2026-09-29T00:00:00Z",
+            head: { ref: "feature", repo: { full_name: repo } },
+            state: stateBeforeDelete,
+          },
+        }),
+      list: (): void => {
+        // Pagination is handled by the mock; the list method is only a token.
+      },
+    },
+  },
+});
 
-/* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
-/* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- run: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
-/* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+type RunResult = Readonly<{
+  calls: readonly Call[];
+  result: Awaited<ReturnType<typeof cleanupPreviewDatabase>>;
+}>;
 const run = async ({
   state = "closed",
   repo = "owner/repo",
@@ -74,65 +124,43 @@ const run = async ({
   pages = [{ branches, pagination: { next: "" } }],
   stateBeforeDelete = state,
   openBeforeDelete = open,
-}: RunOptions = {}) => {
-  const calls: { method: string; url: string }[] = [];
-  let getCount = 0;
-  let listCount = 0;
-  let pageIndex = 0;
+}: RunOptions = {}): Promise<RunResult> => {
+  const github = createGitHub({
+    open,
+    openBeforeDelete,
+    repo,
+    state,
+    stateBeforeDelete,
+  });
+  const request =
+    mock<Parameters<typeof cleanupPreviewDatabase>[0]["request"]>();
+  for (const page of pages) {
+    request.mockResolvedValueOnce(Response.json(page));
+  }
+  request.mockResolvedValue(new Response(null, { status: deleteStatus }));
   const result = await cleanupPreviewDatabase({
     apiKey: "test-key",
-    github: {
-      paginate: (_method: unknown, params: unknown) => {
-        expect(params).toEqual({
-          head: "owner:feature",
-          owner: "owner",
-          per_page: 100,
-          repo: "repo",
-          state: "open",
-        });
-        return Promise.resolve(
-          ((listCount += 1) === 1 ? open : openBeforeDelete) ? [{}] : []
-        );
-      },
-      rest: {
-        pulls: {
-          get: () =>
-            Promise.resolve({
-              data: {
-                closed_at: "2026-09-29T00:00:00Z",
-                head: { ref: "feature", repo: { full_name: repo } },
-                state: (getCount += 1) === 1 ? state : stateBeforeDelete,
-              },
-            }),
-          list: (): void => {
-            // Pagination is handled by the mock; the list method is only a token.
-          },
-        },
-      },
-    },
+    github,
     number: 123,
     repository: { owner: "owner", repo: "repo" },
-    request: (url: string, options: RequestInit) => {
-      calls.push({ method: options.method ?? "GET", url });
-      return Promise.resolve(
-        options.method === "DELETE"
-          ? new Response(null, { status: deleteStatus })
-          : Response.json(pages[(pageIndex += 1) - 1])
-      );
-    },
+    request,
   });
+  for (const [, params] of mock(github.paginate).mock.calls) {
+    expect(params).toEqual({
+      head: "owner:feature",
+      owner: "owner",
+      per_page: 100,
+      repo: "repo",
+      state: "open",
+    });
+  }
+  const calls: Call[] = request.mock.calls.map(([url, options]) => ({
+    method: options.method ?? "GET",
+    url,
+  }));
   return { calls, result };
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-lines-per-function -- preview database cleanup: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
-/* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- preview database cleanup: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 describe("preview database cleanup", (): void => {
   it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {
     const { calls } = await run();
@@ -148,7 +176,7 @@ describe("preview database cleanup", (): void => {
     ]);
   });
   it("accepts root branches with null or absent parent_id beside the preview", async (): Promise<void> => {
-    const absentParent = {
+    const absentParent: Branch = {
       created_at: rootBranch.created_at,
       id: rootBranch.id,
       name: rootBranch.name,
@@ -163,24 +191,27 @@ describe("preview database cleanup", (): void => {
         "GET",
         "DELETE",
       ]);
-      expect(calls[1]?.url).toEndWith("/br-preview");
+      expect(calls[1].url).toEndWith("/br-preview");
     }
   });
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
-    async (options): Promise<void> => {
+    async (options: RunOptions): Promise<void> => {
       const { calls } = await run(options);
       expect(calls).toEqual([]);
     }
   );
   it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])(
     "preserves a preview whose PR use changes during lookup %j",
-    async (options): Promise<void> => {
+    async (options: RunOptions): Promise<void> => {
       const { calls, result } = await run(options);
       expect(calls.every((call): boolean => call.method === "GET")).toBe(true);
       expect(result).toContain("Skipped");
     }
   );
+});
+
+describe("preview database cleanup", (): void => {
   it.each(["2026-09-30T00:00:00Z", "invalid"])(
     "preserves recreated previews or unknown creation dates %s",
     async (created_at): Promise<void> => {
@@ -191,6 +222,9 @@ describe("preview database cleanup", (): void => {
       expect(result).toContain("Skipped");
     }
   );
+});
+
+describe("preview database cleanup", (): void => {
   it("finds later-page previews using the opaque next cursor", async (): Promise<void> => {
     const { calls, result } = await run({
       pages: [
@@ -198,7 +232,7 @@ describe("preview database cleanup", (): void => {
         { branches: [preview], pagination: { next: "" } },
       ],
     });
-    expect(calls[1]?.url).toEndWith("?cursor=next%2Fpage%3F");
+    expect(calls[1].url).toEndWith("?cursor=next%2Fpage%3F");
     expect(result).toContain("Deleted");
   });
   it("checks uniqueness across all pages and rejects looping pagination", async (): Promise<void> => {
@@ -221,12 +255,18 @@ describe("preview database cleanup", (): void => {
       "repeated"
     );
   });
+});
+
+describe("preview database cleanup", (): void => {
   it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
     expect(absent.calls).toHaveLength(1);
     const concurrent = await run({ deleteStatus: 404 });
     expect(concurrent.result).toContain("Deleted");
   });
+});
+
+describe("preview database cleanup", (): void => {
   it.each([
     { ...preview, id: "br-quiet-pine-za1aryyz" },
     { ...preview, parent_id: rootBranch.parent_id },
@@ -245,6 +285,3 @@ describe("preview database cleanup", (): void => {
     await expectRejection(run({ deleteStatus: 403 }), "deletion failed (403)");
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */

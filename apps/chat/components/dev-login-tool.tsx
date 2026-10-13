@@ -4,15 +4,13 @@ import React from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable node/no-process-env, unicorn/no-null -- node/no-process-env: this Next.js fixture gate reads the build-time environment flag before exposing its development-only route; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
 export const DevLoginTool = (): React.JSX.Element | null => {
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
 
   return (
-    // oxlint-disable-next-line next/no-html-link-for-pages -- This auth API endpoint must set cookies and perform a full-document redirect; it is not a Next page.
+    // oxlint-disable-next-line next/no-html-link-for-pages -- /api/dev-login sets the auth cookie and redirects via a full document GET; this is an API endpoint, not a client page transition.
     <a
       className={cn(
         buttonVariants({ size: "sm" }),
@@ -29,4 +27,3 @@ export const DevLoginTool = (): React.JSX.Element | null => {
     </a>
   );
 };
-/* oxlint-enable node/no-process-env, unicorn/no-null */

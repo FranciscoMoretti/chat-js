@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
 
-import { spawn } from "bun";
-
 import { loadWorktreeConfig, resolveWorktreeRuntime } from "./worktree-runtime";
+import { spawn } from "bun";
 
 const ARGUMENT_START_INDEX = 2;
 const FIRST_ARGUMENT_INDEX = 0;
@@ -17,23 +16,21 @@ const args = process.argv.slice(ARGUMENT_START_INDEX);
 const configFile = ".worktree-env.json";
 const config = await loadWorktreeConfig(configFile);
 // This CLI resolves the ambient slot setting before forwarding its validated app environment.
-// oxlint-disable-next-line node/no-process-env -- The CLI boundary reads the configured slot from this process environment.
 const runtime = resolveWorktreeRuntime(config, process.env);
 
 const fail: (message: string) => never = (message) => {
-  // oxlint-disable-next-line eslint/no-console -- The operator-facing failure diagnostic must stay on stderr.
   console.error(message);
   process.exit(FAILURE_EXIT_CODE);
 };
 
-// oxlint-disable-next-line eslint/no-console -- The status output is the CLI's documented human and --info output channel.
-const writeStatus = (message: string): void => console.log(message);
+const writeStatus = (message: string): void => {
+  console.log(message);
+};
 
 if (args[FIRST_ARGUMENT_INDEX] === "--info") {
-  const info = { ...runtime, configFile };
+  const info = { apps: runtime.apps, slot: runtime.slot, configFile };
   if (args[SECOND_ARGUMENT_INDEX] === "--json") {
     // JSON.stringify treats a null replacer as absent; the third argument controls indentation.
-    // oxlint-disable-next-line unicorn/no-null -- Use the native serializer without a filtering replacer for the CLI's JSON output.
     writeStatus(JSON.stringify(info, null, JSON_INDENT_SPACES));
   } else {
     writeStatus(`Worktree slot ${runtime.slot}`);
@@ -84,10 +81,11 @@ const spawnChild = (
 };
 
 // Forward ambient variables for commands that rely on inherited setup alongside app-specific overrides.
-// oxlint-disable-next-line node/no-process-env -- Child processes inherit this CLI's environment and receive validated app exports.
 const childEnvironment = { ...process.env, ...app.env };
 const child = spawnChild(args, childEnvironment);
 
-process.on("SIGTERM", () => child.kill("SIGTERM"));
+process.on("SIGTERM", () => {
+  child.kill("SIGTERM");
+});
 
 process.exit(await child.exited);

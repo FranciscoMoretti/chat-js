@@ -1,16 +1,14 @@
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { eveForkInput } from "./contracts";
 import { eveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): eveResponseGroupInput uses 1, 200, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveResponseGroupInput accepts input; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveResponseGroupInput intentionally keeps the existing falsy-value behavior of input.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 export const eveResponseGroupInput = z
   .object({
     operationId: z.uuid(),
@@ -23,15 +21,55 @@ export const eveResponseGroupInput = z
   })
   .strict()
   .refine(
-    (input) => !(input.fork && input.projectId),
+    (input: {
+      readonly fork?: z.infer<typeof eveForkInput>;
+      readonly projectId?: string;
+    }) => !(input.fork !== undefined && isNonEmptyString(input.projectId)),
     "Forks inherit their source project."
   )
   .refine(
-    (input) => !input.forkKind || input.fork,
+    (input: {
+      readonly forkKind?: "edit" | "comparison";
+      readonly fork?: z.infer<typeof eveForkInput>;
+    }) => !input.forkKind || input.fork !== undefined,
     "Fork intent requires a source conversation."
   )
-  .transform((input) => ({
-    ...input,
-    operationId: input.operationId.toLowerCase(),
-  }));
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+  .transform(
+    (
+      input: ReadonlyNativeSurface<{
+        operationId: string;
+        modelIds: string[];
+        selectedTool?:
+          | "deepResearch"
+          | "createTextDocument"
+          | "createCodeDocument"
+          | "createSheetDocument"
+          | "editTextDocument"
+          | "editCodeDocument"
+          | "editSheetDocument"
+          | "webSearch"
+          | "generateImage"
+          | "generateVideo"
+          | undefined;
+        fork?:
+          | {
+              conversationId: string;
+              beforeTurnId: string;
+              checkpointId?: string | undefined;
+              beforeMessageId?: undefined;
+            }
+          | {
+              conversationId: string;
+              beforeMessageId: string;
+              beforeTurnId?: undefined;
+              checkpointId?: undefined;
+            }
+          | undefined;
+        forkKind?: "edit" | "comparison" | undefined;
+        projectId?: string | undefined;
+      }> & { readonly message: ReadonlyEveMessageInput }
+    ) => ({
+      ...input,
+      operationId: input.operationId.toLowerCase(),
+    })
+  );

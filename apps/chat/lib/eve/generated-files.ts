@@ -1,29 +1,27 @@
-import type { ToolContext } from "eve/tools";
-
 import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
 } from "@/lib/db/eve-files";
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 import type { FileUploader } from "@/lib/file-storage";
-
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolContext } from "eve/tools";
 import { resolveEveConversationScope } from "./conversation-scope";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): eveGeneratedFileUploader accepts context: Pick<ToolContext, "abortSignal"> & { session?: { id: string; auth: { ; body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 export const eveGeneratedFileUploader =
   (
-    context: Pick<ToolContext, "abortSignal"> & {
-      session?: {
-        id: string;
-        auth: {
-          initiator?: {
-            principalId: string;
-          } | null;
+    context: ReadonlyNativeSurface<
+      Pick<ToolContext, "abortSignal"> & {
+        readonly session?: {
+          readonly id: string;
+          readonly auth: {
+            readonly initiator?: {
+              readonly principalId: string;
+            } | null;
+          };
         };
-      };
-    }
+      }
+    >
   ): FileUploader =>
   async (filename, body, contentType) => {
     if (!context.session) {
@@ -46,4 +44,3 @@ export const eveGeneratedFileUploader =
       }
     );
   };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

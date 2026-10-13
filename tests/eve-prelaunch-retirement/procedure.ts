@@ -1,17 +1,3 @@
-/* oxlint-disable eslint/max-lines-per-function, eslint/max-params, eslint/max-statements, eslint/no-await-in-loop, eslint/no-magic-numbers, eslint/no-undefined, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * eslint/max-lines-per-function: Keep the bounded retirement transaction sequence reviewable as one operation.
- * eslint/max-params: The proof passes its explicit database, original client, scoped archive and fault injection boundary.
- * eslint/max-statements: Keep the archive-before-retirement and proof evidence transitions in order.
- * eslint/no-await-in-loop: Observe ordered runtime evidence and retirement stages without reordering or redispatch.
- * eslint/no-magic-numbers: Bounded proof deadlines, fixture counts and archive permissions are explicit protocol inputs.
- * eslint/no-undefined: Undefined represents absent durable evidence or a bounded poll still waiting.
- * import/no-nodejs-modules: The disposable proof owns local files and child processes.
- * import/no-relative-parent-imports: Exercise the exact shared runtime/provider implementation without adding a production export.
- * typescript/explicit-function-return-type: Infer the isolated proof result from the exact runtime and database implementation.
- * typescript/explicit-module-boundary-types: The research procedure returns its concrete archive/inventory type without a production API commitment.
- * typescript/prefer-readonly-parameter-types: The database and runtime SDKs own these mutable parameter types; proofs do not mutate them.
- * unicorn/no-null: SQL null and child process exit state are distinct protocol values.
- */
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -34,6 +20,8 @@ const inventoryRetirement = async (
   assert.ok(roots.length > 0 && roots.length <= 100);
   await assertPostgresLifecycleCompatibility(connection);
   const scopes = [];
+  // Inventory validates each session before proceeding; a failed scope must stop collection.
+  /* oxlint-disable no-await-in-loop */
   for (const root of new Set(roots)) {
     const inventory = await readEvePostgresRunInventory(connection, root);
     assert.deepEqual(
@@ -53,6 +41,7 @@ const inventoryRetirement = async (
       streamIds: inventory.streamIds,
     });
   }
+  /* oxlint-enable no-await-in-loop */
   return scopes;
 };
 const archiveRetirement = async (
@@ -68,6 +57,8 @@ const archiveRetirement = async (
     "# Read-only prelaunch history",
     "Pending approvals below are abandoned historical records; never execute or replay them.",
   ];
+  // Archive each native snapshot and its database evidence in session order before continuing.
+  /* oxlint-disable no-await-in-loop */
   for (const scope of scopes) {
     const snapshot = await client.sessions
       .attach(scope.root)
@@ -93,6 +84,7 @@ const archiveRetirement = async (
       }
     }
   }
+  /* oxlint-enable no-await-in-loop */
   const target =
     await connection`select current_database() as database, inet_server_addr()::text as address, inet_server_port() as port`;
   const content = JSON.stringify(
@@ -156,6 +148,8 @@ const applyRetirement = async (
     })),
     "Changed inventory requires a new archive and review"
   );
+  // Retirement must finish reset, terminal evidence, marker, and fencing before another session starts.
+  /* oxlint-disable no-await-in-loop */
   for (const scope of plan.scopes) {
     const [marker] =
       await connection`select session_id from workflow.eve_session_retirements where session_id=${scope.root}`;
@@ -194,8 +188,7 @@ const applyRetirement = async (
     // Keep immutable command/owner/conversation identity; only retire its authority.
     await connection`update "EveSubmission" s set state='retired', "messageId"=null from "EveConversation" c where c.id=s."conversationId" and c."ownerId"=s."ownerId" and c."sessionId"=${scope.root} and s.state<>'retired'`;
   }
+  /* oxlint-enable no-await-in-loop */
 };
 
 export { inventoryRetirement, archiveRetirement, applyRetirement };
-
-/* oxlint-enable eslint/max-lines-per-function, eslint/max-params, eslint/max-statements, eslint/no-await-in-loop, eslint/no-magic-numbers, eslint/no-undefined, import/no-nodejs-modules, import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

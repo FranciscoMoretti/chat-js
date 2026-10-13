@@ -1,23 +1,17 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { z } from "zod";
 
 const captureStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
- * max-lines-per-function (#510): test("logical header metadata is optimistic, rolls back, and preserves project and mo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("logical header metadata is optimistic, rolls back, and preserves project and mo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("logical header metadata is optimistic, rolls back, and preserves project and mo uses 180_000, -1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("logical header metadata is optimistic, rolls back, and preserves project and mo's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): test("logical header metadata is optimistic, rolls back, and preserves project and mo accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("logical header metadata is optimistic, rolls back, and preserves project and mo preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("logical header metadata is optimistic, rolls back, and preserves project and mo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("logical header metadata is optimistic, rolls back, and preserves project and mobile context", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
@@ -174,4 +168,3 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
     style: captureStyle,
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */

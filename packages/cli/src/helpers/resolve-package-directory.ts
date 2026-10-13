@@ -1,13 +1,36 @@
-import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import pathModule from "node:path";
+import { readFile } from "node:fs/promises";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+const hasMatchingPackageManifest = async (
+  directory: string,
+  packageName: string
+): Promise<boolean> => {
+  try {
+    const manifestSource = await readFile(
+      pathModule.join(directory, "package.json"),
+      "utf-8"
+    );
+    const manifest: unknown = JSON.parse(manifestSource);
+    return (
+      typeof manifest === "object" &&
+      manifest !== null &&
+      "name" in manifest &&
+      manifest.name === packageName
+    );
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+};
+
 /**
  * Resolve an installed package from the workspace that declares the dependency.
- * @param packageName Package identifier to resolve through workspace dependencies.
- * @param resolveFrom Workspace directory whose package.json anchors module resolution.
- * @returns The ancestor directory with that package's matching manifest name.
+ * @param {string} packageName Package identifier to resolve through workspace dependencies.
+ * @param {string} resolveFrom Workspace directory whose package.json anchors module resolution.
+ * @returns {Promise<string>} The ancestor directory with that package's matching manifest name.
  */
 export const resolvePackageDirectory = async (
   packageName: string,
@@ -20,29 +43,12 @@ export const resolvePackageDirectory = async (
   const filesystemRoot = pathModule.parse(directory).root;
 
   while (directory !== filesystemRoot) {
-    try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each parent depends on the resolved entry's preceding directory.
-      const manifestSource = await readFile(
-        pathModule.join(directory, "package.json"),
-        "utf-8"
-      );
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Package discovery reads only the manifest name and leaves unrelated package metadata untouched.
-      const manifest = JSON.parse(manifestSource) as { name?: string };
-      if (manifest.name === packageName) {
-        return directory;
-      }
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !("code" in error) ||
-        error.code !== "ENOENT"
-      ) {
-        throw error;
-      }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect the current manifest before advancing to its parent; matches and non-missing errors stop traversal.
+    if (await hasMatchingPackageManifest(directory, packageName)) {
+      return directory;
     }
     directory = pathModule.dirname(directory);
   }
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
-/* oxlint-enable eslint/max-statements */

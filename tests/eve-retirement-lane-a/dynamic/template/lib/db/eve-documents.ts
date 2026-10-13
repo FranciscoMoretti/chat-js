@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports -- The disposable DB substitute validates its boundary with Node assertions and the fixture control store. */
 import assert from "node:assert/strict";
 
 import { input } from "../../proof/input";
@@ -40,5 +39,3 @@ const removeEveDocumentFromConversation = async (
 };
 
 export { getEveDocumentRevision, removeEveDocumentFromConversation };
-
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */

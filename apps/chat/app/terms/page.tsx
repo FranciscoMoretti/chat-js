@@ -2,13 +2,12 @@ import React from "react";
 
 import { config } from "@/lib/config";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): getPlanTypesLabel accepts { hasFree, hasPro, }: { hasFree: boolean; hasPro: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getPlanTypesLabel = ({
   hasFree,
   hasPro,
 }: {
-  hasFree: boolean;
-  hasPro: boolean;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
 }): string => {
   if (hasFree && hasPro) {
     return "free and paid";
@@ -18,12 +17,7 @@ const getPlanTypesLabel = ({
   }
   return "free";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): PricingSection uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * react/jsx-max-depth (#548): PricingSection keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): PricingSection accepts { hasAnyPlan, planTypesLabel, hasFree, hasPro, currencySymbol, paymentProcessors, }: ; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const PricingSection = ({
   hasAnyPlan,
   planTypesLabel,
@@ -32,12 +26,12 @@ const PricingSection = ({
   currencySymbol,
   paymentProcessors,
 }: {
-  hasAnyPlan: boolean;
-  planTypesLabel: string;
-  hasFree: boolean;
-  hasPro: boolean;
-  currencySymbol: string;
-  paymentProcessors: string[];
+  readonly hasAnyPlan: boolean;
+  readonly planTypesLabel: string;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
+  readonly currencySymbol: string;
+  readonly paymentProcessors: readonly string[];
 }): React.JSX.Element => {
   if (!hasAnyPlan) {
     return (
@@ -99,14 +93,7 @@ const PricingSection = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): TermsPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): TermsPage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * react-perf/jsx-no-new-array-as-prop (#556): TermsPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): TermsPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/strict-boolean-expressions (#610): TermsPage intentionally keeps the existing falsy-value behavior of currencyCode; config.policies.terms.lastUpdated; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): TermsPage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const TermsPage = (): React.JSX.Element => {
   const currencySymbolMap: Record<string, string> = {
     EUR: "€",
@@ -115,9 +102,10 @@ const TermsPage = (): React.JSX.Element => {
   };
 
   const currencyCode = config.pricing?.currency;
-  const currencySymbol = currencyCode
-    ? (currencySymbolMap[currencyCode] ?? currencyCode)
-    : "";
+  const currencySymbol =
+    typeof currencyCode === "string" && currencyCode !== ""
+      ? (currencySymbolMap[currencyCode] ?? currencyCode)
+      : "";
   const hasFree = Boolean(config.pricing?.free);
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
@@ -129,7 +117,7 @@ const TermsPage = (): React.JSX.Element => {
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
       <h1>{config.policies.terms.title}</h1>
-      {config.policies.terms.lastUpdated ? (
+      {(config.policies.terms.lastUpdated ?? "").length > 0 ? (
         <p>
           <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
         </p>
@@ -278,8 +266,5 @@ const TermsPage = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */
 export default TermsPage;
-/* oxlint-enable import/no-default-export */

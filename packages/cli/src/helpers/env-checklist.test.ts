@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
-import { coreFeatureEnvRequirements } from "./config-requirements";
 import { collectEnvChecklist } from "./env-checklist";
+import { coreFeatureEnvRequirements } from "./config-requirements";
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const requiredMcpEncryptionKeyCount = 1;
+const mcpRequirementGroupCount = 2;
+
 describe("collectEnvChecklist", () => {
   it("uses the LiteLLM base URL as the gateway requirement", () => {
     const entries = collectEnvChecklist({
@@ -33,12 +33,16 @@ describe("collectEnvChecklist", () => {
       installableToolEnvRequirements: [],
     });
 
-    expect(entries.some((entry) => entry.vars === "LITELLM_BASE_URL")).toBe(
-      true
-    );
-    expect(entries.some((entry) => entry.vars === "LITELLM_API_KEY")).toBe(
-      false
-    );
+    expect(
+      entries.some(
+        (entry: { readonly vars: string }) => entry.vars === "LITELLM_BASE_URL"
+      )
+    ).toBe(true);
+    expect(
+      entries.some(
+        (entry: { readonly vars: string }) => entry.vars === "LITELLM_API_KEY"
+      )
+    ).toBe(false);
   });
 
   it("uses selected retrieval credentials without requiring Firecrawl", () => {
@@ -72,10 +76,16 @@ describe("collectEnvChecklist", () => {
       ],
     });
 
-    expect(entries.some((entry) => entry.vars === "PAGE_TOKEN")).toBe(true);
-    expect(entries.some((entry) => entry.vars.includes("FIRECRAWL"))).toBe(
-      false
-    );
+    expect(
+      entries.some(
+        (entry: { readonly vars: string }) => entry.vars === "PAGE_TOKEN"
+      )
+    ).toBe(true);
+    expect(
+      entries.some((entry: { readonly vars: string }) =>
+        entry.vars.includes("FIRECRAWL")
+      )
+    ).toBe(false);
   });
 
   it("keeps required, gateway, feature, and authentication entries ordered", () => {
@@ -104,9 +114,14 @@ describe("collectEnvChecklist", () => {
     });
 
     expect(
-      entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
-    ).toHaveLength(1);
-    expect(entries.map((entry) => entry.vars)).toEqual([
+      entries.filter(
+        (entry: { readonly vars: string }) =>
+          entry.vars === "MCP_ENCRYPTION_KEY"
+      )
+    ).toHaveLength(requiredMcpEncryptionKeyCount);
+    expect(
+      entries.map((entry: { readonly vars: string }) => entry.vars)
+    ).toEqual([
       "AUTH_SECRET",
       "DATABASE_URL",
       "LITELLM_BASE_URL",
@@ -139,16 +154,14 @@ describe("collectEnvChecklist", () => {
       ],
     });
 
-    expect(entries.some((entry) => entry.vars === "CUSTOM_TOKEN")).toBe(true);
+    expect(
+      entries.some(
+        (entry: { readonly vars: string }) => entry.vars === "CUSTOM_TOKEN"
+      )
+    ).toBe(true);
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
   const previous = coreFeatureEnvRequirements.mcp;
   coreFeatureEnvRequirements.mcp = [
@@ -184,23 +197,28 @@ it("includes every installed MCP requirement and preserves combined and alternat
       ],
     });
     expect(
-      entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
-    ).toHaveLength(1);
-    expect(entries.map((entry) => entry.vars)).toEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.arrayContaining([
-        "MCP_ENCRYPTION_KEY",
-        "TEAM + TOKEN",
-        "OIDC_TOKEN",
-      ])
+      entries.filter(
+        (entry: { readonly vars: string }) =>
+          entry.vars === "MCP_ENCRYPTION_KEY"
+      )
+    ).toHaveLength(requiredMcpEncryptionKeyCount);
+    const variables = entries.map(
+      (entry: { readonly vars: string }) => entry.vars
     );
+    for (const required of [
+      "MCP_ENCRYPTION_KEY",
+      "TEAM + TOKEN",
+      "OIDC_TOKEN",
+    ]) {
+      expect(variables).toContain(required);
+    }
     expect(
-      entries.filter((entry) => entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN")
-    ).toHaveLength(2);
+      entries.filter(
+        (entry: { readonly oneOfGroup?: string }) =>
+          entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN"
+      )
+    ).toHaveLength(mcpRequirementGroupCount);
   } finally {
     coreFeatureEnvRequirements.mcp = previous;
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */

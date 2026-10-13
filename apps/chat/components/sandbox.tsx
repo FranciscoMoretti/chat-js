@@ -1,9 +1,5 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
-import React from "react";
-import type { BundledLanguage } from "shiki";
-
 import {
   Sandbox,
   SandboxCode,
@@ -16,14 +12,19 @@ import {
   SandboxTabsTrigger,
 } from "@/components/ai-elements/sandbox";
 
+import type { BundledLanguage } from "shiki";
+
+import React from "react";
+
+import type { ToolUIPart } from "ai";
+
 interface SandboxComposedProps {
-  code: string;
-  language?: BundledLanguage;
-  output?: string;
-  state: ToolUIPart["state"];
-  title?: string;
+  readonly code: string;
+  readonly language?: BundledLanguage;
+  readonly output?: string;
+  readonly state: ToolUIPart["state"];
+  readonly title?: string;
 }
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const SandboxComposed = ({
   code,
@@ -56,4 +57,3 @@ export const SandboxComposed = ({
     </Sandbox>
   );
 };
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

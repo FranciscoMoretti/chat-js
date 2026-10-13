@@ -1,26 +1,21 @@
 "use client";
+import type { BaseChart } from "./interactive-charts";
 import Image from "next/image";
+import InteractiveChart from "./interactive-charts";
 import React from "react";
 import { z } from "zod";
-
-import InteractiveChart from "./interactive-charts";
-import type { BaseChart } from "./interactive-charts";
 
 const chartLabels = {
   title: z.string().default(""),
   x_label: z.string().optional(),
   y_label: z.string().optional(),
 };
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const series = z.array(
   z.object({
     label: z.string(),
     points: z.array(z.tuple([z.union([z.number(), z.string()]), z.number()])),
   })
 );
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const chartSchema = z.discriminatedUnion("type", [
   z.object({
     ...chartLabels,
@@ -48,21 +43,17 @@ const chartSchema = z.discriminatedUnion("type", [
     type: z.literal("bar"),
   }),
 ]);
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MIN_PNG_BASE64_LENGTH = 1;
 const pngSchema = z.object({
-  base64: z.string().min(1),
+  base64: z.string().min(MIN_PNG_BASE64_LENGTH),
   format: z.literal("png"),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const CodeExecutionChart = ({ value }: { value: unknown }) => {
+export const CodeExecutionChart = ({
+  value,
+}: {
+  readonly value: unknown;
+}): React.JSX.Element => {
   const parsedChart = chartSchema.safeParse(value);
   const chart: BaseChart | null = parsedChart.success ? parsedChart.data : null;
   const parsedPng = pngSchema.safeParse(value);
@@ -90,8 +81,3 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
     </>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */

@@ -1,31 +1,21 @@
 import { Loader2, SearchIcon } from "lucide-react";
-import { motion } from "motion/react";
-import React from "react";
-
-import { WebSourceBadge } from "@/components/source-badge";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-
 import { UpdateTitle } from "./update-title";
+import { WebSourceBadge } from "@/components/source-badge";
+import { motion } from "motion/react";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchTask = ({
   update,
   minimal,
   isRunning,
-}: {
-  update: ResearchUpdate;
+}: Readonly<{
+  update: ReadonlyNativeSurface<ResearchUpdate>;
   minimal: boolean;
   isRunning: boolean;
-}) => (
+}>): React.JSX.Element => (
   <div className="group">
     {!minimal && (
       <div className="flex items-center gap-2">
@@ -52,7 +42,7 @@ export const ResearchTask = ({
       initial={{ height: 0, opacity: 0 }}
     >
       <div className="space-y-2 py-2 pr-2">
-        {update.type === "web" && update.queries && (
+        {update.type === "web" && update.queries !== undefined && (
           <div className="flex flex-wrap gap-2">
             {update.queries.map((query) => (
               <Badge
@@ -95,23 +85,16 @@ export const ResearchTask = ({
             </p>
           </div>
         )}
-        {update.type === "writing" && update.message && (
-          <div className="space-y-2">
-            <p className="text-foreground text-sm font-light">
-              {update.message}
-            </p>
-          </div>
-        )}
+        {update.type === "writing" &&
+          update.message !== undefined &&
+          update.message !== "" && (
+            <div className="space-y-2">
+              <p className="text-foreground text-sm font-light">
+                {update.message}
+              </p>
+            </div>
+          )}
       </div>
     </motion.div>
   </div>
 );
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@chat-js/thread` is the headless, framework-independent threaded conversation engine. `@chat-js/thread/react` adapts that engine to React through `useThread`. The hook keeps the standard AI SDK `useChat` interface for the selected conversation path and adds a `tree` namespace for branching, navigation, and concurrent responses.
+`@chat-js/thread` is the headless, framework-independent threaded conversation engine. `@chat-js/thread/react` adapts that engine to React through `useThread`. The hook exposes the current AI SDK `useChat` helpers for the selected conversation path and adds a `tree` namespace for branching, navigation, and concurrent responses.
 
 One `useThread` call represents one threaded conversation. Branches and parallel responses do not require additional hooks or mounted components.
 
@@ -52,7 +52,7 @@ await chat.sendMessage({ text: "Continue" });
 await chat.stop();
 ```
 
-`UseThreadHelpers<TMessage>` extends `UseChatHelpers<TMessage>`. Existing chat rendering and composer code can continue to use the top-level helpers. The additional tree state and controls live under `chat.tree`:
+`UseThreadHelpers<TMessage>` uses `UseChatHelpers<TMessage>` without the deprecated `addToolResult` alias. Client tools provide results through `addToolOutput`. Existing chat rendering and composer code can continue to use the top-level helpers. The additional tree state and controls live under `chat.tree`:
 
 ```ts
 chat.tree.cursorId;

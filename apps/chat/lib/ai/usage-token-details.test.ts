@@ -1,18 +1,13 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-
 import {
   Context,
   ContextCacheUsage,
   ContextReasoningUsage,
 } from "@/components/ai-elements/context";
-
+import { describe, expect, it } from "vitest";
+import { createElement } from "react";
 import { getUsageTokenDetails } from "./usage-token-details";
+import { renderToStaticMarkup } from "react-dom/server";
 
-/* oxlint-disable max-lines-per-function --
- * max-lines-per-function (#510): describe("persisted token usage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 describe("persisted token usage", () => {
   it("renders legacy usage counts without requiring nested SDK 7 objects", () => {
     const html = renderToStaticMarkup(
@@ -79,4 +74,3 @@ describe("persisted token usage", () => {
     ).toEqual({ cachedInputTokens: 0, reasoningTokens: 0 });
   });
 });
-/* oxlint-enable max-lines-per-function */

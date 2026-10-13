@@ -1,50 +1,49 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
+import type { ReadonlyInput } from "./readonly-input";
+import { builtInGateways } from "#cli/registry/gateways";
 import { mcpDefinition } from "../../../registry/src/features/mcp";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInGateways } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
 
 type EnvVarName = string;
 
 interface EnvRequirement {
-  description: string;
-  options: EnvVarName[][];
+  readonly description: string;
+  readonly options: readonly (readonly EnvVarName[])[];
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
   Object.fromEntries(
-    builtInGateways.map((item) => [
-      item.meta.chatjs.id,
-      item.meta.chatjs.envRequirements.map((requirement) => ({
-        ...requirement,
-        description:
-          requirement.description ??
-          requirement.options.map((option) => option.join(" + ")).join(" or "),
-      })),
-    ])
+    builtInGateways.map(
+      (item: ReadonlyInput<(typeof builtInGateways)[number]>) => [
+        item.meta.chatjs.id,
+        item.meta.chatjs.envRequirements.map((requirement) => ({
+          ...requirement,
+          description:
+            requirement.description ??
+            requirement.options
+              .map((option) => option.join(" + "))
+              .join(" or "),
+        })),
+      ]
+    )
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const coreFeatureEnvRequirements: Partial<
   Record<CoreFeatureKey, EnvRequirement[]>
 > = {
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Customize CLI descriptions without modifying the registry definition shared by other consumers.
-  mcp: (mcpDefinition.envRequirements ?? []).map((requirement) => ({
-    ...requirement,
-    description:
-      requirement.description ??
-      requirement.options.map((group) => group.join(" + ")).join(" or "),
-  })),
+  mcp: (mcpDefinition.envRequirements ?? []).map(
+    (
+      requirement: ReadonlyInput<
+        NonNullable<typeof mcpDefinition.envRequirements>[number]
+      >
+    ) => ({
+      ...requirement,
+      description:
+        requirement.description ??
+        requirement.options.map((group) => group.join(" + ")).join(" or "),
+    })
+  ),
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const builtInToolEnvRequirements: Record<
   BuiltInToolKey,
   EnvRequirement | undefined
@@ -62,7 +61,6 @@ const builtInToolEnvRequirements: Record<
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
   },
 };
-/* oxlint-enable eslint/no-undefined */
 
 const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {

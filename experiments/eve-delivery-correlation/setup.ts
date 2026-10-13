@@ -1,6 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This isolated runtime proof owns disposable files, process controls and Node assertions.
 import { mkdir, writeFile, access, symlink } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This isolated runtime proof owns disposable files, process controls and Node assertions.
 import path from "node:path";
 
 const successExitCode = 0;
@@ -17,22 +15,21 @@ const run = async (args: readonly string[], cwd?: string): Promise<void> => {
     throw new Error(`Command failed: ${args.join(" ")}`);
   }
 };
-for (const name of ["lane-c-deps", "lane-c-stock-deps"]) {
-  const dir = path.resolve(area, name);
-  // oxlint-disable-next-line eslint/no-await-in-loop -- The bounded proof observes ordered runtime state; parallel polling or command dispatch would change the scenario.
-  await mkdir(dir, { recursive: true });
-  // oxlint-disable-next-line eslint/no-await-in-loop -- The bounded proof observes ordered runtime state; parallel polling or command dispatch would change the scenario.
-  await writeFile(
-    path.resolve(dir, "package.json"),
-    JSON.stringify({
-      dependencies: { ai: "7.0.106", eve: "0.71.3", zod: "4.3.6" },
-      private: true,
-      type: "module",
-    })
-  );
-  // oxlint-disable-next-line eslint/no-await-in-loop -- The bounded proof observes ordered runtime state; parallel polling or command dispatch would change the scenario.
-  await run(["bun", "install"], dir);
-}
+await Promise.all(
+  ["lane-c-deps", "lane-c-stock-deps"].map(async (name) => {
+    const dir = path.resolve(area, name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.resolve(dir, "package.json"),
+      JSON.stringify({
+        dependencies: { ai: "7.0.106", eve: "0.71.3", zod: "4.3.6" },
+        private: true,
+        type: "module",
+      })
+    );
+    await run(["bun", "install"], dir);
+  })
+);
 const checkout = path.resolve(area, "lane-c-runtime");
 if (
   !(await access(path.resolve(checkout, ".git")).then(

@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+import { z } from "zod";
 
 const MINIMUM_RESEARCH_TEXT_LENGTH = 1;
 

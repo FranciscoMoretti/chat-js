@@ -1,84 +1,142 @@
+import { describe, expect, test, vi } from "vitest";
+import { CodeExecution } from "./renderer";
+import { CodeExecution as RegistryCodeExecution } from "../../../../../packages/registry/src/tools/vercel-code-execution/renderer";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { expect, test, vi } from "vitest";
 
-import { CodeExecution } from "./renderer";
+const createStreamingTool = (
+  input: unknown
+): {
+  readonly input: unknown;
+  readonly state: "input-streaming";
+  readonly toolCallId: string;
+} => ({
+  input,
+  state: "input-streaming",
+  toolCallId: "stream",
+});
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/components/sandbox") accepts { code }: { code: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 vi.mock("@/components/sandbox", () => ({
-  SandboxComposed: ({ code }: { code: string }): React.JSX.Element => (
-    <pre>{code}</pre>
+  SandboxComposed: ({
+    code,
+    language,
+    title,
+  }: {
+    readonly code: string;
+    readonly language: string;
+    readonly title: string;
+  }): React.JSX.Element => (
+    <pre data-language={language} data-title={title}>
+      {code}
+    </pre>
   ),
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts", () => ({
-  default: () => null,
-}));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
- * react-perf/jsx-no-new-object-as-prop (#558): test("passes validated partial code to the sandbox while input is streaming") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- */
-test("passes validated partial code to the sandbox while input is streaming", () => {
-  const html = renderToStaticMarkup(
-    <CodeExecution
-      isReadonly={false}
-      messageId="stream"
-      tool={{
-        input: { code: "print(53 *" },
-        state: "input-streaming",
-        toolCallId: "stream",
-      }}
-    />
-  );
-  expect(html).toContain("print(53 *");
-});
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+vi.mock(
+  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  (): { default: () => null } => ({
+    default: (): null => null,
+  })
+);
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
- * react-perf/jsx-no-new-object-as-prop (#558): test("does not render malformed partial code") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- */
-test("does not render malformed partial code", () => {
-  const html = renderToStaticMarkup(
-    <CodeExecution
-      isReadonly={false}
-      messageId="stream"
-      tool={{
-        input: { code: { invalid: true } },
-        state: "input-streaming",
-        toolCallId: "stream",
-      }}
-    />
-  );
-  expect(html).not.toContain("invalid");
-  expect(html).toContain("<pre></pre>");
-});
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
- * react-perf/jsx-no-new-object-as-prop (#558): test.each(["pyth", "java"])("keeps code visible while language is %s") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- */
-test.each(["pyth", "java"])(
-  "keeps code visible while language is %s",
-  (language) => {
+describe.each([
+  { name: "app", Renderer: CodeExecution },
+  { name: "registry", Renderer: RegistryCodeExecution },
+])("$name code execution renderer", ({ Renderer }) => {
+  test("passes validated partial code to the sandbox while input is streaming", () => {
     const html = renderToStaticMarkup(
-      <CodeExecution
+      <Renderer
         isReadonly={false}
         messageId="stream"
-        tool={{
-          input: { code: "print(1)", language },
-          state: "input-streaming",
-          toolCallId: "stream",
-        }}
+        tool={createStreamingTool({ code: "print(53 *" })}
+      />
+    );
+    expect(html).toContain("print(53 *");
+  });
+
+  test.each([
+    { code: { invalid: true } },
+    { code: { invalid: true }, language: "pyth", title: {} },
+  ])("does not render malformed partial code %j", (input) => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        isReadonly={false}
+        messageId="stream"
+        tool={createStreamingTool(input)}
+      />
+    );
+    expect(html).not.toContain("invalid");
+    expect(html).toContain('data-language="python" data-title=""></pre>');
+  });
+
+  test.each(["pyth", "java", null, 42, {}])(
+    "keeps code and title visible while language is %j",
+    (language) => {
+      const html = renderToStaticMarkup(
+        <Renderer
+          isReadonly={false}
+          messageId="stream"
+          tool={createStreamingTool({
+            code: "print(1)",
+            language,
+            title: "Calculation",
+          })}
+        />
+      );
+      expect(html).toContain("print(1)");
+      expect(html).toContain('data-language="python"');
+      expect(html).toContain('data-title="Calculation"');
+    }
+  );
+
+  test.each([{ title: null }, { title: 42 }, { title: {} }, { title: [] }])(
+    "keeps code and language visible while title is $title",
+    ({ title }) => {
+      const html = renderToStaticMarkup(
+        <Renderer
+          isReadonly={false}
+          messageId="stream"
+          tool={createStreamingTool({
+            code: "console.log(1)",
+            language: "javascript",
+            title,
+          })}
+        />
+      );
+      expect(html).toContain("console.log(1)");
+      expect(html).toContain('data-language="javascript"');
+      expect(html).toContain('data-title=""');
+    }
+  );
+
+  test("keeps code visible when both streaming metadata fields are malformed", () => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        isReadonly={false}
+        messageId="stream"
+        tool={createStreamingTool({
+          code: "print(1)",
+          language: "pyth",
+          title: {},
+        })}
       />
     );
     expect(html).toContain("print(1)");
-  }
-);
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+    expect(html).toContain('data-language="python" data-title=""');
+  });
+
+  test.each([
+    { code: "print(1)", language: "pyth", title: "Calculation" },
+    { code: "print(1)", language: "python", title: {} },
+  ])("rejects invalid completed input %j", (input) => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        isReadonly={false}
+        messageId="complete"
+        tool={{ input, state: "input-available", toolCallId: "complete" }}
+      />
+    );
+    expect(html).toContain("This tool result could not be displayed.");
+    expect(html).not.toContain("print(1)");
+  });
+});

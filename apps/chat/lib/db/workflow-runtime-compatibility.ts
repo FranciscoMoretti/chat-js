@@ -16,7 +16,6 @@ const resolveEveStepVersion = (name: string, version: string): string => {
   return stepVersion;
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Postgres exposes its callable mutable connection as Sql; this check only reads from it. */
 const assertEvePostgresRuntimeCompatibility = async (
   connection: Sql,
   expectedStepVersion: string
@@ -46,6 +45,4 @@ const assertEvePostgresRuntimeCompatibility = async (
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
 export { assertEvePostgresRuntimeCompatibility, resolveEveStepVersion };

@@ -102,7 +102,6 @@ const fetchBranchPage = async ({ base, cursor, headers, request }) => {
   }
   return pageValue;
 };
-
 /**
  * @param {Readonly<NeonBranchPage>} page - Validated page whose cursor advances the scan.
  * @param {Readonly<Set<string>>} seenCursors - Previously followed opaque cursors.
@@ -158,7 +157,6 @@ const listBranches = async ({ base, headers, request }) => {
   } while (cursor !== EMPTY_CURSOR);
   return branches;
 };
-
 /**
  * @param {NeonBranch} branch - Candidate preview branch returned by Neon.
  * @param {string} parentId - Parent branch that must never be deleted.
@@ -187,7 +185,6 @@ const hasOpenPullRequest = async (github, repository, headRef) => {
   });
   return open.length > NO_BRANCH_MATCHES;
 };
-
 /**
  * @param {readonly NeonBranch[]} branches - All validated Neon branches.
  * @param {string} name - Expected preview branch name.
@@ -249,7 +246,6 @@ const checkPullRequestGate = async (github, repository, number) => {
   }
   return { kind: "ready", pull };
 };
-
 /**
  * @param {Readonly<{pull: PullRequest, apiKey: string | undefined, request: NeonRequest}>} options - Validated closed pull request and Neon request configuration.
  * @returns {Promise<PreviewCandidate>} The candidate branch, if safe to remove.
@@ -274,7 +270,6 @@ const resolvePreviewCandidate = async ({ pull, apiKey, request }) => {
   }
   return { base: NEON_BRANCHES_URL, branch, headers, kind: "ready" };
 };
-
 /**
  * @param {Readonly<{github: GitHubClient, repository: Readonly<{owner: string, repo: string}>, number: number, apiKey: string | undefined, request: NeonRequest}>} options - GitHub ownership and Neon request state needed to identify a candidate.
  * @returns {Promise<DeletionPreparation>} The initial safety result and exact candidate branch.
@@ -303,7 +298,6 @@ const preparePreviewDeletion = async ({
   }
   return { candidate, kind: "ready", pull };
 };
-
 /**
  * @param {Readonly<{request: NeonRequest, base: string, headers: Readonly<Record<string, string>>, branchId: string}>} options - Inputs for deleting one selected Neon branch.
  * @returns {Promise<void>} Resolves after successful or already-completed deletion.
@@ -318,7 +312,6 @@ const deletePreviewBranch = async ({ request, base, headers, branchId }) => {
     throw new Error(`Neon branch deletion failed (${response.status}).`);
   }
 };
-
 /**
  * @param {Readonly<{github: GitHubClient, repository: Readonly<{owner: string, repo: string}>, number: number, pull: PullRequest, candidate: Extract<PreviewCandidate, {kind: "ready"}>, request: NeonRequest}>} options - Revalidated deletion candidate and API clients.
  * @returns {Promise<DeletionOutcome>} Whether deletion was skipped or completed.
@@ -353,7 +346,6 @@ const deletePreviewIfStillSafe = async ({
   });
   return { kind: "deleted" };
 };
-
 // Maintainer infrastructure only: never copied into generated applications.
 /**
  * @returns {Promise<string>} Cleanup outcome after validating current pull-request and branch ownership.
@@ -383,7 +375,8 @@ export const cleanupPreviewDatabase = async ({
     repository,
     request,
   });
-  return outcome.kind === "deleted"
-    ? `Deleted preview database for PR #${number}.`
-    : outcome.result;
+  if (outcome.kind === "deleted") {
+    return `Deleted preview database for PR #${number}.`;
+  }
+  return outcome.result;
 };

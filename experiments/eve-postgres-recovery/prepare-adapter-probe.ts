@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules, no-console -- The local proof prepares a hash-pinned driver and prints its path. */
 import assert from "node:assert/strict";
 import path from "node:path";
 
@@ -8,10 +7,11 @@ const provider = path.join(
   import.meta.dir,
   "node_modules/@workflow/world-postgres"
 );
+// Updated for the Oct 13 lint-only maintenance of the preserved Oct 8 controller.
 const source = await Bun.file(path.join(shared, "restart.ts")).text();
 assert.equal(
   new Bun.CryptoHasher("sha256").update(source).digest("hex"),
-  "1b7b294b0effb2137f7497ce8f81a125426668eb8029778374e02ab940ccedf9"
+  "eb5ac890673e1c44da4160eed2338e68518c25a2955d5c140adc974826cd2e30"
 );
 // Keep EVE and its client fixed. Only the experimental provider symlink changes.
 const replacement = `if (postgres) {
@@ -36,6 +36,13 @@ const script = source
   )
   .replace("await runtime.remove();", "await runtime.crash();");
 const output = path.join(repo, "apps/chat/.eve/oct8/released.ts");
-await Bun.write(output, script);
+const auditedScript = script
+  .split("\n")
+  .map((line) =>
+    line.startsWith("import ") && line.includes(`from "${shared}/`)
+      ? `// oxlint-disable-next-line import/no-absolute-path -- This isolated adapter comparison must bind the exact pinned shared runtime installation.\n${line}`
+      : line
+  )
+  .join("\n");
+await Bun.write(output, auditedScript);
 console.log(output);
-/* oxlint-enable import/no-nodejs-modules, no-console */

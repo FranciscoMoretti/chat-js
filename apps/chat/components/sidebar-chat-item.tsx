@@ -1,26 +1,30 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
-import type { JSX as ReactJSX, ReactNode } from "react";
 import React, { memo, useState } from "react";
+
+import type { JSX as ReactJSX, ReactNode } from "react";
+
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-import { ChatMenuItems } from "@/components/chat-menu-items";
-import { InternalLink } from "@/components/internal-link";
-import { ShareDialog } from "@/components/share-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
+
+import { InternalLink } from "@/components/internal-link";
+
+import { ShareDialog } from "@/components/share-button";
+
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.KeyboardEvent); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const PureSidebarChatItem = ({
   chat,
@@ -35,10 +39,10 @@ const PureSidebarChatItem = ({
   renderShareContent,
 }: {
   readonly chat: {
-    id: string;
-    title: string;
-    isPinned: boolean;
-    projectId: string | null;
+    readonly id: string;
+    readonly title: string;
+    readonly isPinned: boolean;
+    readonly projectId: string | null;
   };
   readonly isActive: boolean;
   readonly onDelete?: (chatId: string) => void;
@@ -51,10 +55,12 @@ const PureSidebarChatItem = ({
   readonly renderShareContent: (
     chatId: string,
     onClose: () => void
-  ) => ReactNode;
+  ) => Exclude<ReactNode, Promise<unknown>>;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
+  const { projectId } = chat;
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
-    chat.projectId
+    projectId !== null && projectId !== ""
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
@@ -77,8 +83,9 @@ const PureSidebarChatItem = ({
       setIsEditing(false);
     }
   };
-
-  const handleKeyDown = (event: React.KeyboardEvent): void => {
+  const handleKeyDown = (
+    event: Readonly<Pick<React.KeyboardEvent, "key">>
+  ): void => {
     if (event.key === "Enter") {
       void handleRename();
     } else if (event.key === "Escape") {
@@ -92,14 +99,18 @@ const PureSidebarChatItem = ({
       {isEditing ? (
         <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
           <Input
-            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing inline Rename replaces the sidebar item with this focused title editor.
             autoFocus
             className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             maxLength={255}
 
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
-            onBlur={handleRename}
-            onChange={(event) => setEditTitle(event.target.value)}
+            onBlur={() => {
+              startEventAction(handleRename);
+            }}
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => {
+              setEditTitle(event.target.value);
+            }}
             onKeyDown={handleKeyDown}
             value={editTitle}
           />
@@ -132,14 +143,24 @@ const PureSidebarChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
             isPinned={chat.isPinned}
-            onDelete={onDelete ? (): void => onDelete(chat.id) : undefined}
+            onDelete={
+              onDelete
+                ? (): void => {
+                    onDelete(chat.id);
+                  }
+                : undefined
+            }
             onMoveProject={onMoveProject}
             onRename={() => {
               setIsEditing(true);
               setEditTitle(chat.title);
             }}
-            onShare={() => setShareDialogOpen(true)}
-            onTogglePin={() => onPin(chat.id, !chat.isPinned)}
+            onShare={() => {
+              setShareDialogOpen(true);
+            }}
+            onTogglePin={() => {
+              onPin(chat.id, !chat.isPinned);
+            }}
             showShare={showShare}
           />
         </DropdownMenuContent>
@@ -155,8 +176,6 @@ const PureSidebarChatItem = ({
     </SidebarMenuItem>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
 
 export const SidebarChatItem = memo(
   PureSidebarChatItem,
@@ -190,4 +209,3 @@ export const SidebarChatItem = memo(
     return true;
   }
 );
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */

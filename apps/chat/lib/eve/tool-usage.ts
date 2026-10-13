@@ -1,20 +1,25 @@
 import type { ToolContext } from "eve/tools";
 
-import { createToolResult, createToolError } from "./tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { ToolOutput, ToolResult } from "./tool-result";
+import { createToolError, createToolResult } from "./tool-result";
 
 /** Only an explicitly reported domain failure becomes an error receipt. */
 class ExpectedToolFailureError extends Error {
   public override name = "ExpectedToolFailureError";
 }
 
-/* oxlint-disable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-returns (#535): createToolUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): createToolUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): createToolUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge. */
-const createToolUsage = () => {
+/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge.
+ * @returns {ToolUsage} An accounting session whose incomplete/failed charges keep the settled total absent, and whose explicit fail method produces a domain error receipt.
+ */
+const createToolUsage = (): {
+  addCostUsd: (cost: number) => void;
+  addDeferredCost: (resolve: () => Promise<number>) => void;
+  fail: () => never;
+  markUnknown: () => void;
+  totalUsd: () => Promise<number | undefined>;
+} => {
   let reported = false;
   let unknown = false;
   let total = 0;
@@ -38,7 +43,7 @@ const createToolUsage = () => {
     markUnknown: (): void => {
       unknown = true;
     },
-    async totalUsd() {
+    async totalUsd(): Promise<number | undefined> {
       await Promise.all(
         pending.splice(0).map(async (resolve) => {
           try {
@@ -48,20 +53,25 @@ const createToolUsage = () => {
           }
         })
       );
-      return reported && !unknown ? total : undefined;
+      if (reported && !unknown) {
+        return total;
+      }
+      return undefined;
     },
   };
 };
-/* oxlint-enable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-type ToolUsage = ReturnType<typeof createToolUsage>;
 
-/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-max-statements (#512): executeWithToolUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): executeWithToolUsage accepts context: Pick<ToolContext, "abortSignal">; usage: ToolUsage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const executeWithToolUsage = async <T extends ToolOutput>(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (usage: ToolUsage) => T | Promise<T>
-): Promise<ToolResult<T>> => {
+type ToolUsage = ReturnType<typeof createToolUsage>;
+type ToolProgressOptions<Output extends ToolOutput> = ReadonlyNativeSurface<{
+  usage: ToolUsage;
+  abortSignal: AbortSignal;
+  publish: (output: Output, updates?: readonly ToolOutput[]) => void;
+}>;
+
+const executeWithToolUsage = async <Output extends ToolOutput>(
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (usage: ReadonlyNativeSurface<ToolUsage>) => Output | Promise<Output>
+): Promise<ToolResult<Output>> => {
   context.abortSignal.throwIfAborted();
   const usage = createToolUsage();
   try {
@@ -72,57 +82,58 @@ const executeWithToolUsage = async <T extends ToolOutput>(
   } catch (error) {
     context.abortSignal.throwIfAborted();
     if (!(error instanceof ExpectedToolFailureError)) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Provider rejection values are diagnostics, not domain receipts or control flow.
+      throw new Error("Unexpected tool failure.", { cause: error });
     }
     const costUsd = await usage.totalUsd();
     context.abortSignal.throwIfAborted();
     return createToolError(costUsd);
   }
 };
-/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-init-declarations (#507): executeWithToolProgress assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): executeWithToolProgress's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-undefined (#519): executeWithToolProgress uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): executeWithToolProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Streaming alone needs a queue; accounting is shared.
- * @yields {object} Progress snapshots followed by the final usage receipt.
+ * @param {ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>} context Native cancellation capability checked before execution and while settling usage.
+ * @param {(options: ReadonlyNativeSurface<{usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: readonly ToolOutput[]) => void}>) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
+ * @yields {ToolResult<Output>} Progress snapshots followed by the final settled usage receipt.
  */
 const executeWithToolProgress = async function* executeWithToolProgress<
-  T extends ToolOutput,
+  Output extends ToolOutput,
 >(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (options: {
-    usage: ToolUsage;
-    abortSignal: AbortSignal;
-    publish: (output: T, updates?: ToolOutput[]) => void;
-  }) => Promise<T>
-): AsyncGenerator<ToolResult<T>> {
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (options: ToolProgressOptions<Output>) => Promise<Output>
+): AsyncGenerator<ToolResult<Output>, void> {
   context.abortSignal.throwIfAborted();
   const cancellation = new AbortController();
   const abortSignal = AbortSignal.any([
     context.abortSignal,
     cancellation.signal,
   ]);
-  let updates: ToolOutput[] | undefined;
+  let updates: readonly ToolOutput[] | undefined;
   let cancelled = false;
-  const stream = new ReadableStream<ToolResult<T>>({
+  const stream = new ReadableStream<ToolResult<Output>>({
     cancel(): void {
       cancelled = true;
       cancellation.abort();
     },
-    async start(controller): Promise<void> {
-      const publish = (output: T, nextUpdates?: ToolOutput[]): void => {
+    async start(
+      controller: Readonly<ReadableStreamDefaultController<ToolResult<Output>>>
+    ): Promise<void> {
+      const publish = (
+        output: Output,
+        nextUpdates?: readonly ToolOutput[]
+      ): void => {
         updates = nextUpdates;
         if (!cancelled) {
           controller.enqueue(createToolResult(output, undefined, updates));
         }
       };
       try {
-        const result = await executeWithToolUsage({ abortSignal }, (usage) =>
-          execute({ abortSignal, publish, usage })
+        const result = await executeWithToolUsage(
+          { abortSignal },
+          async (usage) => await execute({ abortSignal, publish, usage })
         );
         if (!cancelled) {
           controller.enqueue({ ...result, updates });
@@ -137,6 +148,5 @@ const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
-/* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
 export type { ToolUsage };

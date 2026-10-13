@@ -4,7 +4,6 @@ import type { ReadonlyDeep } from "./readonly-types";
 
 const SDK_PARAMETER_INDEX = 0;
 
-// oxlint-disable-next-line unicorn/no-null -- The reconnect stream uses the SDK-required null sentinel for its empty state.
 const NO_RECONNECT_STREAM = null;
 
 export class ControlledTransport implements ChatTransport<UIMessage> {
@@ -38,18 +37,20 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
             controller,
             options,
           });
-          options.abortSignal?.addEventListener(
-            "abort",
-            (): void => {
-              controller.enqueue({ type: "abort" });
-              controller.close();
-            },
-            { once: true }
-          );
+          const abortSignal = options.abortSignal ?? globalThis.undefined;
+          if (abortSignal !== globalThis.undefined) {
+            abortSignal.addEventListener(
+              "abort",
+              (): void => {
+                controller.enqueue({ type: "abort" });
+                controller.close();
+              },
+              { once: true }
+            );
+          }
         },
       })
     );
-
   public async reconnectToStream(
     _options: ReadonlyDeep<
       Parameters<
@@ -61,7 +62,6 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.#reconnectStream = NO_RECONNECT_STREAM;
     return await Promise.resolve(stream);
   }
-
   public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {
     const holder: {
       controller?: Readonly<ReadableStreamDefaultController<UIMessageChunk>>;
@@ -81,23 +81,40 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   }
 
   public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
-    this.requests[requestIndex]?.controller.enqueue(chunk);
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.enqueue(chunk);
   }
 
   public finish(requestIndex: number): void {
-    this.requests[requestIndex]?.controller.close();
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.close();
   }
 
   public fail(requestIndex: number, error: Readonly<Error>): void {
-    this.requests[requestIndex]?.controller.error(error);
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.error(error);
   }
 
   public emitText(requestIndex: number, messageId: string, text: string): void {
-    const controller = this.requests[requestIndex]?.controller;
-    controller?.enqueue({ messageId, type: "start" });
-    controller?.enqueue({ id: "text", type: "text-start" });
-    controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
-    controller?.enqueue({ id: "text", type: "text-end" });
-    controller?.close();
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      const controller = request.controller ?? globalThis.undefined;
+      if (controller !== globalThis.undefined) {
+        controller.enqueue({ messageId, type: "start" });
+        controller.enqueue({ id: "text", type: "text-start" });
+        controller.enqueue({ delta: text, id: "text", type: "text-delta" });
+        controller.enqueue({ id: "text", type: "text-end" });
+        controller.close();
+      }
+    }
   }
 }

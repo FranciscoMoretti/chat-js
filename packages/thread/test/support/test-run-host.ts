@@ -30,7 +30,6 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
 
   public constructor(
     transport: Readonly<ChatTransport<UIMessage>>,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree construction receives the original canonical SDK message; readonly nested parts cannot satisfy its native message type.
     initialMessage: Readonly<UIMessage>,
     spec: Readonly<ThreadRunSpec>
   ) {
@@ -41,13 +40,13 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
 
   public getMessagePath = (messageId: string | null): UIMessage[] =>
     this.tree.getPath(messageId);
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.updatePath receives canonical SDK messages; readonly nested parts cannot satisfy its native message array, while the outer array is readonly.
   public updateRunPath = (messages: readonly Readonly<UIMessage>[]): void => {
     this.tree.updatePath(messages);
   };
   public registerToolCall = registerToolCall;
-  public removeMessage = (messageId: string): void =>
+  public removeMessage = (messageId: string): void => {
     this.tree.removeLeaf(messageId);
+  };
   public setRunError = (
     _runId: string,
     error: Readonly<Error> | undefined
@@ -61,7 +60,6 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
   };
   public writeRunMessage = (
     _runId: string,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage receives the original canonical SDK response; readonly nested parts cannot satisfy its native stored-message type.
     message: Readonly<UIMessage>
   ): void => {
     if (

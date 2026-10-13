@@ -35,11 +35,9 @@ afterAll(async () => {
   await connection`delete from workflow.eve_resource_fences where resource = any(${fixtureIds.map((sessionId) => `run:${sessionId}`)})`;
   await connection.end();
 });
-
 test("setup installs the supported native lifecycle contract", async () => {
   await expect(lifecycle.check()).resolves.toBeUndefined();
 });
-
 test("a provider schema upgrade refuses retirement before side effects", async () => {
   const retire = vi
     .fn<() => Promise<void>>()
@@ -55,7 +53,6 @@ test("a provider schema upgrade refuses retirement before side effects", async (
     await connection`delete from workflow_drizzle.workflow_migrations where hash = 'unsupported-test' and created_at = ${future}`;
   }
 });
-
 test("disabled queue fences refuse cleanup before retirement", async () => {
   const retire = vi
     .fn<() => Promise<void>>()
@@ -70,7 +67,6 @@ test("disabled queue fences refuse cleanup before retirement", async () => {
     await connection`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
-
 test("always-enabled fences are accepted, replica-only fences are rejected", async () => {
   await connection`alter table graphile_worker._private_jobs enable always trigger eve_queue_fence`;
   try {
@@ -83,7 +79,6 @@ test("always-enabled fences are accepted, replica-only fences are rejected", asy
     await connection`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
-
 test.each([
   "create or replace trigger eve_resource_fence after insert or update on workflow.workflow_events for each row execute function workflow.eve_guard_run_payload()",
   "create or replace trigger eve_resource_fence before insert on workflow.workflow_events for each row execute function workflow.eve_guard_run_payload()",
@@ -103,10 +98,8 @@ test.each([
     await installEvePostgresQueueFence(connection, "workflow_flows");
   }
 });
-
 const createRun = async (started: boolean): Promise<string> => {
   // The provider's create-run API requires null to allocate a native run ID.
-  // oxlint-disable-next-line unicorn/no-null -- null is the provider's documented server-generated run ID input.
   const created = await world.events.create(null, {
     eventData: {
       deploymentId: "fixture",
@@ -122,10 +115,8 @@ const createRun = async (started: boolean): Promise<string> => {
   }
   return sessionId;
 };
-
 // Keep this ordered public-contract scenario together: retirement, fencing,
 // payload removal, and retry must share the same native run and receipt.
-/* oxlint-disable eslint/max-statements -- This integration scenario verifies the persisted lifecycle across sequential provider operations. */
 test.each([false, true])(
   "provider retires, fences and purges a real run (started: %s)",
   async (started) => {
@@ -178,5 +169,3 @@ test.each([false, true])(
     expect(retire).toHaveBeenCalledExactlyOnceWith(sessionId);
   }
 );
-
-/* oxlint-enable eslint/max-statements */

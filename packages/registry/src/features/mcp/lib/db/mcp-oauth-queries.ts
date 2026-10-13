@@ -4,16 +4,14 @@ import type {
   OAuthTokens,
 } from "@ai-sdk/mcp";
 import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
-
+import type { McpOAuthSession } from "@/lib/db/schema";
 import { db } from "@/lib/db/client";
 import { mcpOAuthSession } from "@/lib/db/schema";
-import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const AUTHENTICATED_SESSION_LIMIT = 1;
 const EMPTY_UPDATE_COUNT = 0;
 const FIRST_QUERY_ROW_INDEX = 0;
-// oxlint-disable-next-line eslint/no-undefined -- Drizzle update bindings omit an undefined column update while retaining explicit null clearing.
 const OMITTED_COLUMN_UPDATE = undefined;
 
 const log = createModuleLogger("mcp-queries");
@@ -49,7 +47,6 @@ const getAuthenticatedSession = async ({
     .limit(AUTHENTICATED_SESSION_LIMIT);
   return session;
 };
-
 const getSessionByState = async ({
   state,
 }: Readonly<{ state: string }>): Promise<McpOAuthSession | undefined> => {
@@ -62,7 +59,6 @@ const getSessionByState = async ({
           .where(eq(mcpOAuthSession.state, state));
   return rows.at(FIRST_QUERY_ROW_INDEX);
 };
-
 const createOAuthSession = async ({
   mcpConnectorId,
   serverUrl,
@@ -105,7 +101,6 @@ const createOAuthSession = async ({
     .returning();
   return session;
 };
-
 const requireSessionByState = async (
   state: string
 ): Promise<McpOAuthSession> => {
@@ -119,7 +114,6 @@ const requireSessionByState = async (
   }
   return session;
 };
-
 const setOAuthCodeVerifierOnceByState = async ({
   state,
   codeVerifier,
@@ -145,7 +139,6 @@ const setOAuthCodeVerifierOnceByState = async ({
 
   return await requireSessionByState(state);
 };
-
 const setOAuthClientInfoOnceByState = async ({
   state,
   clientInfo,
@@ -168,7 +161,6 @@ const setOAuthClientInfoOnceByState = async ({
 
   return await requireSessionByState(state);
 };
-
 const updateSessionByState = async ({
   state,
   updates,
@@ -203,7 +195,6 @@ const updateSessionByState = async ({
   }
   return session;
 };
-
 const saveTokensAndCleanup = async ({
   state,
   mcpConnectorId,
@@ -244,14 +235,13 @@ const saveTokensAndCleanup = async ({
 
   return session;
 };
-
 /** Remove only an unfinished OAuth attempt, atomically preserving any token winner.
- * @param options - State identifying the unfinished authorization attempt.
- * @returns The removed row when no token winner was present.
+ * @param {Readonly<{ state: string }>} options - State identifying the unfinished authorization attempt.
+ * @returns {Promise<McpOAuthSession | null>} The removed row when no token winner was present.
  */
 const deletePendingSessionByState = async (
   options: Readonly<{ state: string }>
-): Promise<McpOAuthSession | undefined> => {
+): Promise<McpOAuthSession | null> => {
   const { state } = options;
   const [session] = await db
     .delete(mcpOAuthSession)
@@ -259,9 +249,8 @@ const deletePendingSessionByState = async (
       and(eq(mcpOAuthSession.state, state), isNull(mcpOAuthSession.tokens))
     )
     .returning();
-  return session;
+  return session ?? null;
 };
-
 const deleteSessionByState = async ({
   state,
 }: Readonly<{
@@ -269,7 +258,6 @@ const deleteSessionByState = async ({
 }>): Promise<void> => {
   await db.delete(mcpOAuthSession).where(eq(mcpOAuthSession.state, state));
 };
-
 const deleteSessionsByConnectorId = async ({
   mcpConnectorId,
 }: Readonly<{
@@ -279,7 +267,6 @@ const deleteSessionsByConnectorId = async ({
     .delete(mcpOAuthSession)
     .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
 };
-
 export {
   createOAuthSession,
   deletePendingSessionByState,

@@ -30,39 +30,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { config } from "@/lib/config";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import type { McpConnector } from "@/lib/db/schema";
-/* oxlint-enable import/max-dependencies */
+import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const McpConnectDialog = ({
   open,
   onClose,
   connector,
 }: {
-  open: boolean;
-  onClose: () => void;
-  connector: McpConnector | null;
-}) => {
+  readonly open: boolean;
+  readonly onClose: () => void;
+  readonly connector: Readonly<
+    Pick<McpConnector, "id" | "name" | "type" | "url">
+  > | null;
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const attempt = useRef(0);
   useEffect(() => {
-    if (!open || !connector?.id) {
+    if (!open || (connector?.id ?? "") === "") {
       attempt.current += 1;
     }
     return (): void => {
@@ -79,7 +66,10 @@ export const McpConnectDialog = ({
     if (!connector) {
       return "";
     }
-    return connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+    if (connector.type === "http") {
+      return getGoogleFaviconUrl(connector.url);
+    }
+    return "";
   }, [connector]);
 
   const { mutate: authorize, isPending } = useMutation(
@@ -95,12 +85,14 @@ export const McpConnectDialog = ({
     authorize(
       { id: connector.id },
       {
-        onError: (err): void => {
+        onError: (err: { readonly message: string }): void => {
           if (attempt.current === currentAttempt) {
             toast.error(err.message || "Failed to start connection");
           }
         },
-        onSuccess: ({ authorizationUrl }): void => {
+        onSuccess: ({
+          authorizationUrl,
+        }: Readonly<{ authorizationUrl: string }>): void => {
           if (attempt.current !== currentAttempt) {
             return;
           }
@@ -136,10 +128,11 @@ export const McpConnectDialog = ({
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
               {faviconUrl ? (
-                <>
-                  <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-                  <Globe className="text-muted-foreground hidden size-5" />
-                </>
+                <Favicon
+                  className="size-5 rounded-sm"
+                  fallback={<Globe className="text-muted-foreground size-5" />}
+                  url={faviconUrl}
+                />
               ) : (
                 <Globe className="text-muted-foreground size-5" />
               )}
@@ -149,7 +142,9 @@ export const McpConnectDialog = ({
                 Connect {connector?.name ?? "connector"}
               </DialogTitle>
               <DialogDescription className="truncate">
-                {connector?.url ? getUrlWithoutParams(connector.url) : null}
+                {connector !== null && connector.url !== ""
+                  ? getUrlWithoutParams(connector.url)
+                  : null}
               </DialogDescription>
             </div>
           </div>
@@ -223,16 +218,3 @@ export const McpConnectDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */

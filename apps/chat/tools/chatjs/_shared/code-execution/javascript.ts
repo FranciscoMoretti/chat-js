@@ -121,13 +121,14 @@ const findExecutionTrailer = (
   const index = lines.findLastIndex((line) =>
     line.startsWith(EXECUTION_STATUS_PREFIX)
   );
-  return index === MISSING_STATUS_LINE_INDEX
-    ? { found: false }
-    : {
-        found: true,
-        index,
-        raw: lines[index].slice(EXECUTION_STATUS_PREFIX.length),
-      };
+  if (index === MISSING_STATUS_LINE_INDEX) {
+    return { found: false };
+  }
+  return {
+    found: true,
+    index,
+    raw: lines[index].slice(EXECUTION_STATUS_PREFIX.length),
+  };
 };
 
 const parseExecutionOutput = async (
@@ -164,7 +165,6 @@ const parseExecutionOutput = async (
     outputText: lines.join("\n").trim(),
   };
 };
-
 const formatExecutionMessage = (
   parts: Readonly<{
     outputText: string;

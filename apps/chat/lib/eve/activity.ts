@@ -2,15 +2,17 @@ import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveConversationActivity } from "@/lib/db/eve-queries";
 
-/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): ingestEveActivity's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): ingestEveActivity accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/** Project only activity metadata from Eve; replay must never move a chat backwards.
+ * @param {string} ownerId Owner used to scope the monotonic activity update.
+ * @param {string} sessionId Native session whose conversation receives activity metadata.
+ * @param {MessageStreamEvent} event Native event supplying a received/completed message timestamp.
+ * @returns {Promise<void>} Resolves after the authorized activity update, or without a write for unrelated event kinds.
  */
-/** Project only activity metadata from Eve; replay must never move a chat backwards. */
 export const ingestEveActivity = async (
   ownerId: string,
   sessionId: string,
-  event: MessageStreamEvent
+
+  event: Readonly<Pick<MessageStreamEvent, "type" | "meta">>
 ): Promise<void> => {
   if (event.type === "message.received" || event.type === "message.completed") {
     await recordEveConversationActivity(
@@ -20,4 +22,3 @@ export const ingestEveActivity = async (
     );
   }
 };
-/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */

@@ -1,34 +1,25 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import path from "node:path";
+import { tmpdir } from "node:os";
+
 import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
+
 import { planInstallation } from "./installation-plan";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
 const roots: string[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map(
-        async (root): Promise<void> =>
-          await rm(root, { force: true, recursive: true })
-      )
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
   const reader = toolDefinitionSchema.parse({
     contractVersion: 1,
@@ -45,7 +36,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
     tools: [{ toolExport: "createTextDocument" }],
   });
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
       const definition = isReader ? reader : documents;
       return Response.json({
@@ -62,8 +53,8 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   try {
     const source = `http://127.0.0.1:${server.port}`;
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun matcher before checking that planning made no writes.
-    await expect(
+
+    await rejects(
       planInstallation(
         root,
         {
@@ -71,59 +62,67 @@ test("plans transitive dependencies and repairs against the complete resulting i
           tools: [`${source}/text-documents.json`],
         },
         { documents: false, fresh: true }
-      )
-    ).rejects.toThrow("--no-documents");
-    expect(await Bun.file(join(root, "package.json")).exists()).toBe(false);
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--no-documents");
+        return true;
+      }
+    );
+    expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
+      false
+    );
     const first = await planInstallation(root, {
       features: [],
       tools: [`${source}/text-documents.json`],
     });
-    expect(first.expected.map((item): string => item.id).toSorted()).toEqual([
-      "read-document",
-      "text-documents",
-    ]);
-    expect(await Bun.file(join(root, "tools/chatjs/tools.ts")).exists()).toBe(
-      false
-    );
-    const dir = join(root, "tools/chatjs/text-documents");
+    expect(
+      first.expected
+        .map((item: { readonly id: string }): string => item.id)
+        .toSorted()
+    ).toEqual(["read-document", "text-documents"]);
+    expect(
+      await Bun.file(path.join(root, "tools/chatjs/tools.ts")).exists()
+    ).toBe(false);
+    const dir = path.join(root, "tools/chatjs/text-documents");
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "chatjs.json"), JSON.stringify(documents));
+    await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
-      join(dir, "document.tsx"),
+      path.join(dir, "document.tsx"),
       "export const documentUi = {};\n"
     );
     await writeFile(
-      join(dir, "tool.ts"),
+      path.join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
-    expect(planInstallation(root, { features: [], tools: [] })).rejects.toThrow(
-      "requires installed tools: readDocument"
+    await rejects(
+      planInstallation(root, { features: [], tools: [] }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed tools: readDocument");
+        return true;
+      }
     );
     const repair = await planInstallation(root, {
       features: [],
       tools: [`${source}/read-document.json`],
     });
     expect(repair.expected).toEqual([reader]);
-    expect(await readFile(join(dir, "tool.ts"), "utf-8")).toContain(
+    expect(await readFile(path.join(dir, "tool.ts"), "utf-8")).toContain(
       "createTextDocument"
     );
   } finally {
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-feature-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
   roots.push(root);
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
         name === "langfuse"
@@ -153,54 +152,69 @@ test("validates feature dependencies and exclusive storage slots before writing"
   });
   const source = `http://127.0.0.1:${server.port}`;
   try {
-    expect(
+    await rejects(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
-      })
-    ).rejects.toThrow("requires installed features: mcp");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed features: mcp");
+        return true;
+      }
+    );
     const plan = await planInstallation(root, {
       features: [`${source}/mcp.json`, `${source}/langfuse.json`],
       tools: [],
     });
-    expect(plan.features.map((feature) => feature.id).toSorted()).toEqual([
-      "langfuse",
-      "mcp",
-    ]);
     expect(
+      plan.features
+        .map((feature: { readonly id: string }): string => feature.id)
+        .toSorted()
+    ).toEqual(["langfuse", "mcp"]);
+    await rejects(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
         gateway: `${source}/mcp.json`,
         tools: [],
-      })
-    ).rejects.toThrow("Selected gateway item has incompatible ChatJS metadata");
-    const dir = join(root, "features/mcp");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Selected gateway item has incompatible ChatJS metadata");
+        return true;
+      }
+    );
+    const dir = path.join(root, "features/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
-      join(dir, "chatjs.json"),
+      path.join(dir, "chatjs.json"),
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
     expect(
-      planInstallation(root, {
+      await planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
       })
-    ).resolves.toMatchObject({ features: [{ id: "langfuse" }] });
-    expect(
+    ).toMatchObject({ features: [{ id: "langfuse" }] });
+    await rejects(
       planInstallation(root, {
         features: [],
         storage: { options: {}, source: `${source}/first.json` },
         tools: [],
-      })
-    ).rejects.toThrow("Only one storage provider");
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Only one storage provider");
+        return true;
+      }
+    );
     expect(
-      await Bun.file(join(root, "features/installed-routers.ts")).exists()
+      await Bun.file(path.join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);
   } finally {
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

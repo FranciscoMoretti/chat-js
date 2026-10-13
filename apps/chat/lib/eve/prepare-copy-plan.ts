@@ -1,39 +1,35 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
-import { createHash } from "node:crypto";
-
 import { parseSessionTranscriptSeed } from "eve/transcript";
-
-import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
-import { createFileId } from "@/lib/file-storage";
-
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
-import type { EveCopyPlan } from "./copy-journal-contract";
 import {
   eveCopyInlineAttachments,
   materializeEveCopyTranscript,
 } from "./copy-transcript";
+import type { EveCopyPlan } from "./copy-journal-contract";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createFileId } from "@/lib/file-storage";
+import { createHash } from "node:crypto";
 import type { prepareEveCopyTranscript } from "./copy-transcript";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): prepareEveCopyPlan's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveCopyPlan's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): prepareEveCopyPlan accepts projection: ReturnType<typeof prepareEveCopyTranscript>; snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>; file; checkpoint; head; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): prepareEveCopyPlan preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): prepareEveCopyPlan intentionally keeps the existing falsy-value behavior of documentId; revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+
+/**
+ * Allocate destination identities and rewrite an authorized public projection and ancestry.
+ * Inputs must come from server authorization, never browser-supplied content.
+ * @param {ReturnType<typeof prepareEveCopyTranscript>} projection - Public transcript seed and referenced file keys to copy.
+ * @param {Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>} snapshot - Authorized document revisions and transcript checkpoints.
+ * @param {(key: string) => Promise<Blob>} readPublicFile - Read an authorized source attachment to compute its digest and metadata.
+ * @param {string} origin - Origin used when materializing destination attachment URLs.
+ * @returns {Promise<EveCopyPlan>} Copy plan with allocated identities, source descriptors, and remapped document boundaries; no destination files are written here.
  */
-/** Input is an authorized public projection and ancestry, never browser-supplied content. */
 export const prepareEveCopyPlan = async (
-  projection: ReturnType<typeof prepareEveCopyTranscript>,
-  snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>,
+  projection: Readonly<
+    Pick<ReturnType<typeof prepareEveCopyTranscript>, "resources" | "seed">
+  >,
+  snapshot: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>
+  >,
   readPublicFile: (key: string) => Promise<Blob>,
   origin: string
 ): Promise<EveCopyPlan> => {
@@ -49,14 +45,14 @@ export const prepareEveCopyPlan = async (
       resources.revisionIds.map((id) => [id, crypto.randomUUID()])
     ),
   };
-  const files: EveCopyPlan["files"] = [];
+  const files: EveCopyPlan["files"][number][] = [];
   for (const key of new Set([
     ...projection.resources.fileKeys,
     ...resources.fileKeys,
   ])) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Read and hash one source Blob at a time, retaining only its digest and size in the plan; parallel reads would retain all attachment byte buffers.
     const source = await readPublicFile(key);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Read and hash one source Blob at a time, retaining only its digest and size in the plan; parallel reads would retain all attachment byte buffers.
     const bytes = Buffer.from(await source.arrayBuffer());
     const destination = createFileId();
     allocations.files.set(key, destination);
@@ -80,7 +76,13 @@ export const prepareEveCopyPlan = async (
     });
   }
   const metadata = new Map(
-    files.map((file) => [file.key, { type: file.mediaType, size: file.size }])
+    files.map(
+      (file: {
+        readonly key: string;
+        readonly mediaType: string;
+        readonly size: number;
+      }) => [file.key, { type: file.mediaType, size: file.size }]
+    )
   );
   const seed = await materializeEveCopyTranscript(
     projection.seed,
@@ -90,7 +92,7 @@ export const prepareEveCopyPlan = async (
       if (!file) {
         throw new Error("Missing copied file metadata.");
       }
-      return Promise.resolve(file);
+      return file;
     },
     origin
   );
@@ -99,19 +101,31 @@ export const prepareEveCopyPlan = async (
     files,
     documentCheckpoints: checkpoints.map((checkpoint) => ({
       messageIndex: checkpoint.messageIndex,
-      heads: checkpoint.heads.map((head) => {
-        const documentId = allocations.documents.get(head.documentId);
-        const revisionId = allocations.revisions.get(head.revisionId);
-        if (!(documentId && revisionId)) {
-          throw new Error("Missing copied document boundary allocation.");
+      heads: checkpoint.heads.map(
+        (head: Readonly<{ documentId: string; revisionId: string }>) => {
+          const documentId = allocations.documents.get(head.documentId);
+          const revisionId = allocations.revisions.get(head.revisionId);
+          if (
+            typeof documentId !== "string" ||
+            documentId === "" ||
+            typeof revisionId !== "string" ||
+            revisionId === ""
+          ) {
+            throw new Error("Missing copied document boundary allocation.");
+          }
+          return { documentId, revisionId };
         }
-        return { documentId, revisionId };
-      }),
+      ),
     })),
-    sourceHeads: documents.map((document) => ({
-      documentId: document.documentId,
-      revisionId: document.headRevisionId,
-    })),
+    sourceHeads: documents.map(
+      (document: {
+        readonly documentId: string;
+        readonly headRevisionId: string;
+      }) => ({
+        documentId: document.documentId,
+        revisionId: document.headRevisionId,
+      })
+    ),
     documents: prepareEveCopyDocuments(documents, allocations).map(
       (document) => ({
         documentId: document.documentId,
@@ -129,4 +143,3 @@ export const prepareEveCopyPlan = async (
     ),
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

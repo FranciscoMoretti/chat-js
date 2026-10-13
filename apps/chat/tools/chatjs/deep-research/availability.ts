@@ -1,10 +1,9 @@
-import type { ToolContext } from "eve/tools";
-
 import { eveToolAllowed, eveTurnTool } from "@/lib/eve/turn-tools";
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
+import type { ToolContext } from "eve/tools";
 import { providers } from "@/tools/chatjs/providers";
 
 export const researchAvailable = (

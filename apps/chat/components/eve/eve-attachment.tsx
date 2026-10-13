@@ -1,22 +1,21 @@
 "use client";
 
-import type { EveMessagePart } from "eve/client";
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useState } from "react";
 
 import { AttachmentList } from "@/components/attachment-list";
-/* oxlint-disable init-declarations, max-lines-per-function, no-undefined, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- EveAttachment: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including source?.startsWith("data:")). */
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 export const EveAttachment = ({
   part,
 }: {
-  part: Extract<EveMessagePart, { type: "file" }>;
+  readonly part: Extract<ReadonlyEveMessagePart, { readonly type: "file" }>;
 }): ReactJSX.Element => {
   const [resolved, setResolved] = useState<{ source: string; url: string }>();
   const source = part.url;
-  useEffect(() => {
-    if (!source?.startsWith("data:")) {
-      return;
+  useEffect((): (() => void) | undefined => {
+    if (!(source?.startsWith("data:") === true)) {
+      return undefined;
     }
     let disposed = false;
     let objectUrl: string | undefined;
@@ -34,7 +33,7 @@ export const EveAttachment = ({
       }
     };
     void resolveAttachment();
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
+
     return (): void => {
       disposed = true;
       if (typeof objectUrl === "string" && objectUrl !== "") {
@@ -43,21 +42,21 @@ export const EveAttachment = ({
     };
   }, [source]);
   let url = source;
-  if (source?.startsWith("data:")) {
+  if (source?.startsWith("data:") === true) {
     url = resolved?.source === source ? resolved.url : undefined;
   }
-  return typeof url === "string" && url !== "" ? (
-    <AttachmentList
-      attachments={[
-        {
-          contentType: part.mediaType,
-          name: part.filename ?? "Attachment",
-          url,
-        },
-      ]}
-    />
-  ) : (
-    <p>{part.filename ?? "Attachment"}</p>
-  );
+  if (typeof url === "string" && url !== "") {
+    return (
+      <AttachmentList
+        attachments={[
+          {
+            contentType: part.mediaType,
+            name: part.filename ?? "Attachment",
+            url,
+          },
+        ]}
+      />
+    );
+  }
+  return <p>{part.filename ?? "Attachment"}</p>;
 };
-/* oxlint-enable init-declarations, max-lines-per-function, no-undefined, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

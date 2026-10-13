@@ -2,7 +2,6 @@
 
 import { Copy, History, Redo2, Undo2 } from "lucide-react";
 import React from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { documentUi } from "@/tools/chatjs/document-ui";
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- EveDocumentActions: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types */
 
 export const EveDocumentActions = ({
   kind,
@@ -28,17 +27,17 @@ export const EveDocumentActions = ({
   disabled,
   run,
 }: {
-  kind: "text" | "code" | "sheet";
-  content: string;
-  canCompare: boolean;
-  comparing: boolean;
-  onCompare: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
-  previousDisabled: boolean;
-  nextDisabled: boolean;
-  disabled: boolean;
-  run: ReactNode;
+  readonly kind: "text" | "code" | "sheet";
+  readonly content: string;
+  readonly canCompare: boolean;
+  readonly comparing: boolean;
+  readonly onCompare: () => void;
+  readonly onPrevious: () => void;
+  readonly onNext: () => void;
+  readonly previousDisabled: boolean;
+  readonly nextDisabled: boolean;
+  readonly disabled: boolean;
+  readonly run: ReadonlyReactNode;
 }): React.JSX.Element => {
   const copy = async (): Promise<void> => {
     try {
@@ -132,4 +131,3 @@ export const EveDocumentActions = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

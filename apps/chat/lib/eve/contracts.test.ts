@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-
+import { describe, expect, it, vi } from "vitest";
 import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
 import {
@@ -9,10 +8,6 @@ import {
 } from "./request-policy";
 import { sendCommand } from "./send-command";
 
-/* oxlint-disable max-lines-per-function, unicorn/no-null --
- * max-lines-per-function (#510): describe("Eve request policy") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): describe("Eve request policy") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("Eve request policy", () => {
   it("denies raw create, control bypasses and cross-origin mutations", () => {
     for (const path of [
@@ -104,20 +99,12 @@ describe("Eve request policy", () => {
     }
   });
 });
-/* oxlint-enable max-lines-per-function, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): describe("Eve command recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("Eve command recovery") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep describe("Eve command recovery")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): describe("Eve command recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): describe("Eve command recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("Eve command recovery", () => {
   it("validates before retaining intent and isolates pending intents by account", () => {
     const data = new Map<string, string>();
     const storage = {
-      getItem: (key: string) => data.get(key) ?? null,
+      getItem: (key: string): string | null => data.get(key) ?? null,
       removeItem: (key: string): void => {
         data.delete(key);
       },
@@ -139,61 +126,43 @@ describe("Eve command recovery", () => {
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
   it("surfaces callback-only failures and catches up after cancellation", async () => {
-    let replayed = 0;
+    const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
     await expect(
       sendCommand(
-        () => Promise.resolve(),
-        () => {
-          replayed += 1;
-          return Promise.resolve();
-        },
+        vi.fn<() => Promise<void>>().mockResolvedValue(),
+        resume,
         true,
         () => new Error("failed")
       )
     ).rejects.toThrow("failed");
-    expect(replayed).toBe(0);
+    expect(resume).toHaveBeenCalledTimes(0);
     await sendCommand(
-      () => Promise.resolve(),
-      () => {
-        replayed += 1;
-        return Promise.resolve();
-      },
+      vi.fn<() => Promise<void>>().mockResolvedValue(),
+      resume,
       true,
       () => {
         // This test verifies replay without an additional side effect.
       }
     );
-    expect(replayed).toBe(1);
+    expect(resume).toHaveBeenCalledTimes(1);
   });
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): it("waits for authoritative acceptance after cancellation without submitting twice") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): it("waits for authoritative acceptance after cancellation without submitting twice") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
-  let submissions = 0;
-  let snapshots = 0;
+  const send = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
   await sendCommand(
-    () => {
-      submissions += 1;
-      return Promise.resolve();
-    },
-    () => {
-      snapshots += 1;
-      return Promise.resolve();
-    },
+    send,
+    resume,
     true,
     () => {
       // This test verifies cancellation without an additional side effect.
     },
-    () => snapshots >= 2
+    () => resume.mock.calls.length >= 2
   );
-  expect(submissions).toBe(1);
-  expect(snapshots).toBe(2);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(resume).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };

@@ -1,12 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateway-model-defaults" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { gatewayModelDefaults } from "../ai/gateway-model-defaults";
-/* oxlint-enable import/no-relative-parent-imports */
+import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 
-const { getAppModelDefinition } = vi.hoisted(() => ({
+const { fetchModels, getAppModelDefinition } = vi.hoisted(() => ({
+  fetchModels:
+    vi.fn<() => Promise<{ id: string; pricing: { image: string } }[]>>(),
   getAppModelDefinition:
     vi.fn<
       (
@@ -16,18 +14,16 @@ const { getAppModelDefinition } = vi.hoisted(() => ({
 }));
 
 vi.mock("../ai/app-models", () => ({ getAppModelDefinition }));
+vi.mock("@/lib/ai/models", () => ({ fetchModels }));
 
 beforeEach(() => {
+  fetchModels.mockReset().mockResolvedValue([]);
   getAppModelDefinition.mockReset().mockResolvedValue({
     pricing: { input: "0.00001", output: "0.00003" },
   });
 });
 
 const { CostAccumulator } = await import("./cost-accumulator");
-/* oxlint-disable max-lines-per-function, no-magic-numbers --
- * max-lines-per-function (#510): describe("CostAccumulator") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("CostAccumulator") uses 3, 0, 5, 35, 8, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 describe("CostAccumulator", () => {
   describe("LLM cost calculation", () => {
     it("should calculate cost from tokens and pricing", async () => {
@@ -152,6 +148,34 @@ describe("CostAccumulator", () => {
       );
     });
   });
+  describe("image cost tracking", () => {
+    it("preserves recorded addition order before final cent rounding", async () => {
+      fetchModels.mockResolvedValue([
+        { id: "first-image", pricing: { image: "0.0085" } },
+        { id: "second-image", pricing: { image: "0.0011" } },
+      ]);
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("base", 0.04);
+      accumulator.addImageCost("first-image", 1, {}, "first");
+      accumulator.addImageCost("second-image", 1, {}, "second");
+      // Keep sequential floating-point additions: regrouping image costs
+      // before adding the API subtotal would round this boundary to one cent.
+      expect(await accumulator.getTotalCost()).toBe(2);
+      expect(fetchModels).toHaveBeenCalledOnce();
+    });
+    it("retains known charges when the image catalog lookup fails", async () => {
+      fetchModels.mockRejectedValue(new Error("Catalog unavailable"));
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("base", 5);
+      accumulator.addImageCost("unknown-image", 1, {}, "image");
+      accumulator.addLLMCost(
+        gatewayModelDefaults.workflows.chat,
+        { inputTokens: 1000 },
+        "chat"
+      );
+      expect(await accumulator.getTotalCost()).toBe(6);
+    });
+  });
   describe("getEntries", () => {
     it("should return copy of entries", () => {
       const accumulator = new CostAccumulator();
@@ -173,4 +197,3 @@ describe("CostAccumulator", () => {
     });
   });
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers */

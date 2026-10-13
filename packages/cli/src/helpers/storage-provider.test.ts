@@ -1,35 +1,19 @@
-import { describe, expect, it } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import pathModule from "node:path";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { storageDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInStorage } from "../../../registry/src/storage/catalog";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { itemAddress } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
 import {
   configureStorageProvider,
   parseStorageOptions,
 } from "./storage-provider";
+import { describe, expect, it } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { builtInStorage } from "../../../registry/src/storage/catalog";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
+import { itemAddress } from "#cli/registry/shadcn";
+import pathModule from "node:path";
+import { resolveStorage } from "#cli/registry/storage";
+import { storageDefinitionSchema } from "../../../registry/metadata";
+import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = pathModule;
+const firstRequirementIndex = 0;
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
     for (const item of builtInStorage) {
@@ -46,9 +30,12 @@ describe("storage registry integration", () => {
     expect(getStorageEnvironmentRequirements("r2", { binding: {} })).toEqual(
       []
     );
+    const firstRequirement =
+      getStorageEnvironmentRequirements("vercel-blob")[firstRequirementIndex];
     expect(
-      getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
-        (option) => option.map((provider) => provider.key)
+      firstRequirement.options.map(
+        (option: readonly { readonly key: string }[]) =>
+          option.map((provider: { readonly key: string }) => provider.key)
       )
     ).toEqual([
       ["BLOB_READ_WRITE_TOKEN"],
@@ -63,14 +50,14 @@ describe("storage registry integration", () => {
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
-      await mkdir(join(cwd, "lib"));
+      await mkdir(pathModule.join(cwd, "lib"));
       const definition = storageDefinitionSchema.parse({
         contractVersion: 1,
         envRequirements: [{ options: [["ACME_TOKEN"]] }],
         id: "acme",
         kind: "storage",
       });
-      const source = join(cwd, "custom.json");
+      const source = pathModule.join(cwd, "custom.json");
       const item = {
         files: [
           {
@@ -88,21 +75,23 @@ describe("storage registry integration", () => {
       const selection = await resolveStorage(source, cwd);
       selection.options = { bucket: "uploads" };
       await writeFile(
-        join(cwd, "lib/storage-provider.ts"),
+        pathModule.join(cwd, "lib/storage-provider.ts"),
         "// installed custom source"
       );
-      await writeFile(join(cwd, "package.json"), "{}");
+      await writeFile(pathModule.join(cwd, "package.json"), "{}");
       await configureStorageProvider(cwd, selection);
       expect(
-        await readFile(join(cwd, "lib/storage-provider.ts"), "utf-8")
+        await readFile(pathModule.join(cwd, "lib/storage-provider.ts"), "utf-8")
       ).toBe("// installed custom source");
-      expect(await readFile(join(cwd, "package.json"), "utf-8")).toBe("{}");
       expect(
-        await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")
+        await readFile(pathModule.join(cwd, "package.json"), "utf-8")
+      ).toBe("{}");
+      expect(
+        await readFile(pathModule.join(cwd, "lib/storage-options.ts"), "utf-8")
       ).toContain('"bucket": "uploads"');
-      expect(await readFile(join(cwd, ".env.example"), "utf-8")).toContain(
-        "ACME_TOKEN="
-      );
+      expect(
+        await readFile(pathModule.join(cwd, ".env.example"), "utf-8")
+      ).toContain("ACME_TOKEN=");
       await writeFile(
         source,
         JSON.stringify({
@@ -120,7 +109,3 @@ describe("storage registry integration", () => {
     }
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

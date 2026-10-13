@@ -1,16 +1,15 @@
 "use client";
 
-import { ArrowDownIcon } from "lucide-react";
-import React, { useCallback } from "react";
-import type { ComponentProps } from "react";
-import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+import { hasCustomContent } from "@/components/custom-content";
 
+import React, { useCallback } from "react";
+import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+import { ArrowDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 type ConversationProps = ComponentProps<typeof StickToBottom>;
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Conversation: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ConversationProps). */
 
 const Conversation = ({
   className,
@@ -24,11 +23,8 @@ const Conversation = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ConversationContentProps = ComponentProps<typeof StickToBottom.Content>;
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ConversationContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ConversationContentProps). */
 
 const ConversationContent = ({
   className,
@@ -39,15 +35,12 @@ const ConversationContent = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;
   description?: string;
   icon?: React.ReactNode;
 };
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ConversationEmptyState: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including icon). */
 
 const ConversationEmptyState = ({
   className,
@@ -66,7 +59,11 @@ const ConversationEmptyState = ({
   >
     {children ?? (
       <>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+        {hasCustomContent(icon) ? (
+          <div className="text-muted-foreground">{icon}</div>
+        ) : (
+          icon
+        )}
         <div className="space-y-1">
           <h3 className="text-sm font-medium">{title}</h3>
           {description && (
@@ -77,16 +74,13 @@ const ConversationEmptyState = ({
     )}
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 type ConversationScrollButtonProps = ComponentProps<typeof Button>;
-
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ConversationScrollButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ConversationScrollButtonProps). */
 
 const ConversationScrollButton = ({
   className,
   ...props
-}: ConversationScrollButtonProps) => {
+}: ConversationScrollButtonProps): false | React.JSX.Element => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
@@ -111,7 +105,6 @@ const ConversationScrollButton = ({
     )
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export {
   Conversation,
   ConversationContent,

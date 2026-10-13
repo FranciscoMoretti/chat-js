@@ -1,23 +1,13 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
-/* oxlint-enable import/no-nodejs-modules */
+import type { TestInfo } from "@playwright/test";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): test("EVE message presentation keeps editing, actions, versions and cards coherent") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("EVE message presentation keeps editing, actions, versions and cards coherent") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("EVE message presentation keeps editing, actions, versions and cards coherent") uses 30, 1024, 2, 0, 4, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("EVE message presentation keeps editing, actions, versions and cards coherent") uses execFileSync( "bun", ["tests/eve-message-presentation.build.mjs"], { encoding: "ut; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/prefer-readonly-parameter-types (#565): test("EVE message presentation keeps editing, actions, versions and cards coherent") accepts { page, }; testInfo; error; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("EVE message presentation keeps editing, actions, versions and cards coherent", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     ["tests/eve-message-presentation.build.mjs"],
@@ -259,4 +249,3 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   ).toBe(true);
   expect(errors).toEqual([]);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types */

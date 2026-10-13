@@ -1,13 +1,25 @@
 "use client";
 
 import React from "react";
-import type { ReactNode } from "react";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { hasCustomContent } from "@/components/custom-content";
 import { cn } from "@/lib/utils";
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- UserMessageView: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editor). */
 
-/** Inline editing and message chrome for EVE messages. */
+/**
+ * Inline editing and message chrome for EVE messages.
+ *
+ * @param {string} text Visible user message text.
+ * @param {ReadonlyReactNode | undefined} attachments Attached files for this message.
+ * @param {ReadonlyReactNode} actions Message action controls.
+ * @param {ReadonlyReactNode | undefined} responses Additional response content below the message.
+ * @param {ReadonlyReactNode | undefined} editor Inline editor content.
+ * @param {(() => void) | undefined} onEdit Opens the inline editor on double click.
+ * @param {boolean | undefined} editDisabled Disables inline editing.
+ * @param {string | undefined} messageId Stable message identity.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const UserMessageView = ({
   text,
   attachments,
@@ -18,35 +30,48 @@ export const UserMessageView = ({
   editDisabled = false,
   messageId,
 }: {
-  text: string;
-  attachments?: ReactNode;
-  actions: ReactNode;
-  responses?: ReactNode;
-  editor?: ReactNode;
-  onEdit?: () => void;
-  editDisabled?: boolean;
-  messageId?: string;
+  readonly text: string;
+  readonly attachments?: ReadonlyReactNode;
+  readonly actions: ReadonlyReactNode;
+  readonly responses?: ReadonlyReactNode;
+  readonly editor?: ReadonlyReactNode;
+  readonly onEdit?: () => void;
+  readonly editDisabled?: boolean;
+  readonly messageId?: string;
 }): React.JSX.Element => (
   <Message
-    className={cn(editor ? "max-w-full [&>div]:max-w-full" : undefined, "py-1")}
+    className={cn(
+      hasCustomContent(editor) ? "max-w-full [&>div]:max-w-full" : undefined,
+      "py-1"
+    )}
     data-message-id={messageId}
     from="user"
   >
-    <div className={cn("flex w-full flex-col gap-2", !editor && "items-end")}>
-      {!editor && responses}
-      {!editor &&
+    <div
+      className={cn(
+        "flex w-full flex-col gap-2",
+        !hasCustomContent(editor) && "items-end"
+      )}
+    >
+      {!hasCustomContent(editor) && responses}
+      {!hasCustomContent(editor) &&
         (onEdit ? (
           <button
             aria-disabled={editDisabled}
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
             data-testid="message-content"
-            onClick={(event) => {
+            onClick={(
+              event: Readonly<{
+                currentTarget: Readonly<Pick<HTMLButtonElement, "contains">>;
+              }>
+            ) => {
               if (editDisabled) {
                 return;
               }
               const selection = globalThis.getSelection();
               if (
-                selection?.toString() &&
+                selection !== null &&
+                selection.toString() !== "" &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {
                 return;
@@ -72,11 +97,12 @@ export const UserMessageView = ({
             <pre className="font-sans whitespace-pre-wrap">{text}</pre>
           </MessageContent>
         ))}
-      {editor && (
+      {hasCustomContent(editor) ? (
         <div className="flex flex-row items-start gap-2">{editor}</div>
+      ) : (
+        editor
       )}
       <div className="self-end">{actions}</div>
     </div>
   </Message>
 );
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

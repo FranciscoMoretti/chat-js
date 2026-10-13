@@ -1,8 +1,6 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
@@ -15,7 +13,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { installedLayoutComponents } from "@/features/installed-layout";
 import { config } from "@/lib/config";
 import { env } from "@/lib/env";
-/* oxlint-enable import/max-dependencies */
 
 const metadata: Metadata = {
   description: config.appDescription,
@@ -30,10 +27,10 @@ const metadata: Metadata = {
 };
 
 const viewport = {
-  interactiveWidget: "resizes-content" as const,
+  interactiveWidget: "resizes-content",
   // Disable auto-zoom on mobile Safari
   maximumScale: 1,
-};
+} satisfies Viewport;
 
 const geist = Geist({
   display: "swap",
@@ -67,18 +64,11 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-/* oxlint-disable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * node/no-process-env (#537): RootLayout reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * react/jsx-max-depth (#548): RootLayout keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): RootLayout accepts { children, }: Readonly<{ children: React.ReactNode; }>; { id, Component }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): RootLayout preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const RootLayout = ({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>): React.JSX.Element => (
+}: {
+  readonly children: ReadonlyReactNode;
+}): React.JSX.Element => (
   <html
     className={`${geist.variable} ${geistMono.variable}`}
     // `next-themes` injects an extra classname to the body element to avoid
@@ -93,7 +83,7 @@ const RootLayout = ({
         {THEME_COLOR_SCRIPT}
       </Script>
       {process.env.NODE_ENV === "development" &&
-      !process.env.PLAYWRIGHT &&
+      (process.env.PLAYWRIGHT ?? "") === "" &&
       env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
         <Script
           src="https://unpkg.com/react-scan/dist/auto.global.js"
@@ -118,17 +108,22 @@ const RootLayout = ({
           {children}
         </ThemeProvider>
       </NuqsAdapter>
-      {installedLayoutComponents.map(({ id, Component }) => (
-        <Component key={id} />
-      ))}
+      {installedLayoutComponents.map(
+        ({
+          id,
+          Component,
+        }: {
+          readonly id: string;
+          readonly Component: React.JSXElementConstructor<
+            Readonly<React.Attributes>
+          >;
+        }) => (
+          <Component key={id} />
+        )
+      )}
     </body>
   </html>
 );
-/* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
-/* oxlint-enable import/no-default-export */

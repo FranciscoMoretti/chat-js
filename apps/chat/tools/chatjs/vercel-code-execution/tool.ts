@@ -1,55 +1,50 @@
+import type {
+  CodeExecutionContext,
+  CodeExecutor,
+} from "@/lib/eve/code-executor";
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { Sandbox } from "@vercel/sandbox";
 import { defineTool } from "eve/tools";
-
-import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-import type { CodeExecutor } from "@/lib/eve/code-executor";
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { createModuleLogger } from "@/lib/logger";
-import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
-
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
-  getSandboxRuntime,
+  getSandboxImage,
   resolveSandboxAuth,
 } from "./execution-sandbox";
-/* oxlint-enable import/max-dependencies */
-import { codeExecutionResult, codeExecutionInput } from "./schemas";
+import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
+import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 
 // Vercel Sandbox execution.
 const COST_CENTS = 5;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const observeCleanup = async (pending: Promise<void>): Promise<void> => {
+const observeCleanup = async (
+  pending: Readonly<Promise<void>>
+): Promise<void> => {
   try {
     await pending;
   } catch {
     // The tool's finally block observes and propagates this cleanup failure.
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const executeCode: CodeExecutor = ({ code, title, language }, context) =>
-  executeWithToolUsage(context, async (usage) => {
+const executeCode: CodeExecutor = async (
+  { code, title, language },
+  context: ReadonlyNativeSurface<CodeExecutionContext>
+) =>
+  await executeWithToolUsage(context, async (usage) => {
     const { abortSignal } = context;
     const sandboxOwnership = eveCodeSandboxOwnership(context);
     const log = createModuleLogger("code-execution");
     const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const runtime = getSandboxRuntime(language);
+    const image = getSandboxImage(language);
 
     let sandbox: Sandbox | undefined;
     let cleanup: Promise<void> | undefined;
@@ -67,16 +62,21 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
     };
 
     try {
-      abortSignal?.throwIfAborted();
-      log.info({ language, requestId, runtime, title }, "creating sandbox");
-      const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
+      if (abortSignal !== undefined) {
+        abortSignal.throwIfAborted();
+      }
+      log.info({ language, image, requestId, title }, "creating sandbox");
+      const auth =
+        sandboxOwnership === undefined ? undefined : resolveSandboxAuth();
       const name = auth
         ? await sandboxOwnership?.reserve(auth, abortSignal)
         : undefined;
-      sandbox = await createSandbox(runtime, abortSignal, name, auth);
+      sandbox = await createSandbox(image, abortSignal, name, auth);
       await sandboxOwnership?.created(sandbox.name);
-      abortSignal?.addEventListener("abort", stop, { once: true });
-      abortSignal?.throwIfAborted();
+      if (abortSignal !== undefined) {
+        abortSignal.addEventListener("abort", stop, { once: true });
+        abortSignal.throwIfAborted();
+      }
       log.debug({ requestId }, "sandbox created");
 
       log.info({ language, requestId, title }, "executing code");
@@ -106,19 +106,13 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
         message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
-      abortSignal?.removeEventListener("abort", stop);
+      if (abortSignal !== undefined) {
+        abortSignal.removeEventListener("abort", stop);
+      }
       stop();
       await cleanup;
     }
   });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const codeExecution = withCodeSandboxCleanup(
   defineTool({

@@ -1,13 +1,7 @@
-import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-
+import { QueryClient } from "@tanstack/react-query";
 import { optimisticEveMetadata } from "./optimistic-metadata";
 
-/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
- * max-lines-per-function (#510): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): describe("optimistic logical chat metadata") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("optimistic logical chat metadata", () => {
   it("updates every paginated list and branch alias, then rolls back only the failed field", async () => {
     const cache = new QueryClient();
@@ -89,4 +83,3 @@ describe("optimistic logical chat metadata", () => {
     });
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */

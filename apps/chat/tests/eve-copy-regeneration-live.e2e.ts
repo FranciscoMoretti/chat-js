@@ -1,7 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -13,28 +11,24 @@ import {
   createConversationInput,
 } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const originalModel = "google/gemini-2.5-flash-lite";
 const selectedModel = "google/gemini-2.5-flash";
 const answer = /^provenance-ready\.?$/iu;
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * init-declarations (#507): test("copied responses regenerate with their original model after reload") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("copied responses regenerate with their original model after reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("copied responses regenerate with their original model after reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("copied responses regenerate with their original model after reload") uses 300_000, 20_000, 120_000, 200, 503, 1000, 2000, 4000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("copied responses regenerate with their original model after reload") accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test("copied responses regenerate with their original model after reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("copied responses regenerate with their original model after reload", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<{
+  project: Readonly<{ use: Readonly<{ baseURL?: string | undefined }> }>;
+  outputPath: TestInfo["outputPath"];
+}>) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", {
     data: { model: originalModel },
@@ -139,4 +133,3 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 30_000,
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

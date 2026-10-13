@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-import { auth } from "@ai-sdk/mcp";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import type { McpOAuthSession } from "../../db/schema";
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { McpOAuthSession } from "@/lib/db/schema";
+import { auth } from "@ai-sdk/mcp";
 
 const sdkIssuer = "http://127.0.0.1:3799";
 const sdkMetadata = {
@@ -38,35 +34,21 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
   setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/mcp-oauth-lock")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
-  withMcpOAuthRefreshLock: async (_id: string, run: () => Promise<unknown>) =>
-    await run(),
+  withMcpOAuthRefreshLock: async (
+    _id: string,
+    run: () => Promise<unknown>
+  ): Promise<unknown> => await run(),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable init-declarations --
- * init-declarations (#507): stored assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let stored: McpOAuthSession;
-/* oxlint-enable init-declarations */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep provider's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/promise-function-async (#606): provider preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-const provider = () =>
+const provider = (): McpOAuthClientProvider =>
   new McpOAuthClientProvider({
     clientMetadata: { redirect_uris: ["http://localhost:3790/callback"] },
     mcpConnectorId: "connector",
-    onRedirectToAuthorization: (): Promise<void> => Promise.resolve(),
+    onRedirectToAuthorization: vi.fn<() => Promise<void>>().mockResolvedValue(),
     serverUrl: "http://127.0.0.1:3799/mcp",
   });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep refreshRequest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const refreshRequest = (refreshToken: string) =>
+const refreshRequest = (refreshToken: string): Request =>
   new Request("http://127.0.0.1:3799/token", {
     body: new URLSearchParams({
       grant_type: "refresh_token",
@@ -74,13 +56,6 @@ const refreshRequest = (refreshToken: string) =>
     }),
     method: "POST",
   });
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts { tokens }: { tokens: Record<string, unknown> }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   stored = {
@@ -99,21 +74,26 @@ beforeEach(() => {
     },
     updatedAt: new Date(0),
   };
+  // oxlint-disable-next-line typescript/promise-function-async -- The async DB read fixture must observe stored after each credential write; a static resolved value becomes stale, and eslint/require-await rejects this immediate async reader.
   mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.setClientInfo.mockImplementation(
-    ({ clientInfo }: { clientInfo: Record<string, unknown> }) => {
+    ({
+      clientInfo,
+    }: {
+      readonly clientInfo: Readonly<Record<string, unknown>>;
+    }) => {
       stored = { ...stored, clientInfo };
       return stored;
     }
   );
   mocks.setCodeVerifier.mockImplementation(
-    ({ codeVerifier }: { codeVerifier: string }) => {
+    ({ codeVerifier }: { readonly codeVerifier: string }) => {
       stored = { ...stored, codeVerifier };
       return stored;
     }
   );
   mocks.save.mockImplementation(
-    ({ tokens }: { tokens: Record<string, unknown> }) => {
+    ({ tokens }: { readonly tokens: Readonly<Record<string, unknown>> }) => {
       stored = { ...stored, tokens };
       return stored;
     }
@@ -125,7 +105,6 @@ test("absent stored credentials return undefined", async () => {
   await expect(client.clientInformation()).resolves.toBeUndefined();
   await expect(client.tokens()).resolves.toBeUndefined();
 });
-
 test("credentials saved by the pinned SDK can be read by a fresh provider", async () => {
   stored = { ...stored, tokens: null };
   mocks.fetch
@@ -169,8 +148,6 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
     token_endpoint: sdkMetadata.token_endpoint,
   });
 });
-
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
 
 test("stored client information retains metadata, credentials, pins and extensions", async () => {
@@ -187,7 +164,6 @@ test("stored client information retains metadata, credentials, pins and extensio
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-
 test("older records without authorization-server pins remain readable", async () => {
   const clientInfo = {
     client_id: "legacy",
@@ -198,7 +174,6 @@ test("older records without authorization-server pins remain readable", async ()
   await expect(client.clientInformation()).resolves.toEqual(clientInfo);
   await expect(client.tokens()).resolves.toEqual(stored.tokens);
 });
-
 test.each([
   {},
   { client_id: "registered" },
@@ -216,7 +191,6 @@ test.each([
     expect(mocks.setClientInfo).not.toHaveBeenCalled();
   }
 );
-
 test.each([
   {},
   { access_token: "secret" },
@@ -240,7 +214,6 @@ test.each([
     expect(mocks.save).not.toHaveBeenCalled();
   }
 );
-
 test("tokens read under the refresh lock are decoded before reuse", async () => {
   const client = provider();
   await client.tokens();
@@ -251,7 +224,6 @@ test("tokens read under the refresh lock are decoded before reuse", async () => 
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
 test("a repaired stored credential can replace a stale malformed cache", async () => {
   stored = { ...stored, tokens: { access_token: false } };
   const client = provider();
@@ -270,13 +242,11 @@ test("a repaired stored credential can replace a stale malformed cache", async (
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
 test("an empty redirect list remains supported for an authenticated SDK-shaped record", async () => {
   const clientInfo = { client_id: "registered", redirect_uris: [] };
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-
 test("an access-token winner is reused even when its refresh token did not change", async () => {
   const client = provider();
   await client.tokens();
@@ -286,11 +256,6 @@ test("an access-token winner is reused even when its refresh token did not chang
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK saves", async () => {
   const client = provider();
   await client.tokens();
@@ -309,7 +274,7 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
     .mockResolvedValueOnce(Response.json(second));
   await client.fetch(refreshRequest("refresh-old"));
   await client.fetch(refreshRequest("refresh-first"));
-  expect(stored.tokens?.pin).toBe("retained");
+  expect(stored.tokens).toHaveProperty("pin", "retained");
   stored = {
     ...stored,
     tokens: {
@@ -320,16 +285,11 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
   };
   await client.saveTokens(first);
   await client.saveTokens(second);
-  expect(stored.tokens?.access_token).toBe("third");
+  expect(stored.tokens).toHaveProperty("access_token", "third");
   expect(mocks.save).toHaveBeenCalledTimes(2);
   expect(await client.tokens()).toMatchObject({ access_token: "third" });
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("refresh responses cannot replace the saved authorization-server pins") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refresh responses cannot replace the saved authorization-server pins") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("refresh responses cannot replace the saved authorization-server pins", async () => {
   const pins = {
     authorization_server: "https://trusted.example",
@@ -365,7 +325,6 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
 test("callback states cannot be adopted after a connector changes server URL", async () => {
   stored = { ...stored, serverUrl: "https://other.example.test/mcp" };
@@ -373,10 +332,6 @@ test("callback states cannot be adopted after a connector changes server URL", a
     "different MCP server"
   );
 });
-
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): test("configured OAuth client information preserves credentials") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test("configured OAuth client information preserves credentials", async () => {
   const client = new McpOAuthClientProvider({
     clientMetadata: {
@@ -386,7 +341,7 @@ test("configured OAuth client information preserves credentials", async () => {
     mcpConnectorId: "connector",
     oauthClientId: "configured-id",
     oauthClientSecret: "configured-secret",
-    onRedirectToAuthorization: (): Promise<void> => Promise.resolve(),
+    onRedirectToAuthorization: vi.fn<() => Promise<void>>().mockResolvedValue(),
     serverUrl: stored.serverUrl,
   });
   await expect(client.clientInformation()).resolves.toEqual({
@@ -396,11 +351,7 @@ test("configured OAuth client information preserves credentials", async () => {
     token_endpoint_auth_method: "client_secret_basic",
   });
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("failed client registration persistence can be retried without an optimistic cac uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("failed client registration persistence can be retried without an optimistic cache", async () => {
   const client = provider();
   await client.tokens();
@@ -416,7 +367,6 @@ test("failed client registration persistence can be retried without an optimisti
   await client.saveClientInformation(clientInfo);
   expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers */
 
 test("a successful rotated refresh persists its credentials even after caller cancellation", async () => {
   const client = provider();
@@ -439,5 +389,3 @@ test("a successful rotated refresh persists its credentials even after caller ca
     refresh_token: "rotated",
   });
 });
-
-/* oxlint-disable max-lines -- Keep the persisted OAuth credential contract, SDK round-trip and refresh-race cases together with their shared session fixture. */

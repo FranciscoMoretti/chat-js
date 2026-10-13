@@ -1,4 +1,3 @@
-import { AbstractChat } from "ai";
 import type {
   ChatInit,
   ChatRequestOptions,
@@ -7,16 +6,15 @@ import type {
   UIMessage,
   UIMessageChunk,
 } from "ai";
+import { AbstractChat } from "ai";
 
-import type { ReadonlyMessageValue } from "./message-utils";
 import { ThreadRunState } from "./thread-run-state";
 
 const FIRST_PARAMETER_INDEX = 0;
 const LAST_MESSAGE_INDEX = -1;
 
-// oxlint-disable-next-line eslint/no-undefined -- Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
-const NO_VALUE = undefined;
-// oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream returns null when the server has no stream; the ready transition preserves an existing run error for that result.
+// Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
+const NO_VALUE = globalThis.undefined;
 const NO_RECONNECT_STREAM = null;
 
 type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
@@ -69,7 +67,6 @@ interface ThreadRunHost<TMessage extends UIMessage> {
   transport: ChatTransport<TMessage>;
   generateMessageId: () => string;
   getMessagePath: (messageId: string | null) => TMessage[];
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Existing run hosts receive mutable SDK message arrays; accepting readonly arrays rejects their contravariant callback implementations.
   updateRunPath: (messages: TMessage[]) => void;
   registerToolCall: (runId: string, toolCallId: string) => void;
   removeMessage: (messageId: string) => void;
@@ -82,7 +79,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   readonly #state: ThreadRunState<TMessage>;
 
   public constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK receives the original schema instances; recursive readonly JSONSchema arrays are incompatible with FlexibleSchema.
     host: RunChatHost<TMessage>,
     spec: Readonly<ThreadRunSpec>
   ) {
@@ -104,12 +100,10 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           messages: host.getMessagePath(spec.messageId ?? spec.parentMessageId),
         });
       },
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK static/dynamic generic tool-call union when forwarding to the current callback; mapped readonly changes its conditional assignability.
       onToolCall: async (event): Promise<void> => {
         host.registerToolCall(spec.id, event.toolCall.toolCallId);
         await host.onToolCall?.(event);
       },
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK callback receives the original mutable message array; existing callbacks may update that array.
       sendAutomaticallyWhen: (event): boolean | PromiseLike<boolean> =>
         host.sendAutomaticallyWhen?.(event) ?? false,
       state,
@@ -125,14 +119,15 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     let first = true;
     return new TransformStream<UIMessageChunk, UIMessageChunk>({
       transform(
-        chunk: ReadonlyMessageValue<UIMessageChunk>,
+        chunk: Readonly<UIMessageChunk>,
         controller: Readonly<TransformStreamDefaultController<UIMessageChunk>>
       ): void {
         let chunkToEnqueue = chunk;
         if (
           first &&
           chunk.type === "start" &&
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           chunkToEnqueue = {
             ...chunk,
@@ -145,7 +140,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type !== "start" &&
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           savePrefix(structuredClone(lastMessage));
           controller.enqueue({
@@ -163,7 +159,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   private static createTransport<TMessage extends UIMessage>(
     host: Readonly<Pick<RunChatHost<TMessage>, "transport">>,
     spec: Readonly<ThreadRunSpec>,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The transport owns resetting the resume prefix and preserving the reconnect error on this live run state; readonly properties prohibit these required writes.
     state: ThreadRunState<TMessage>
   ): ChatTransport<TMessage> {
     return {
@@ -184,13 +179,11 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           })
         );
       },
-      // oxlint-disable-next-line typescript/promise-function-async -- Custom ChatTransport.sendMessages may throw before returning a promise. Direct forwarding lets SDK makeRequest invoke the public onError callback synchronously during Thread.regenerate; async+await defers that observable callback.
-      sendMessages: (
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK message array to the current transport without changing its mutable array contract or cloning its identity.
+      sendMessages: async (
         options
       ): ReturnType<ChatTransport<TMessage>["sendMessages"]> => {
         state.resumePrefix = NO_VALUE;
-        return host.transport.sendMessages({
+        return await host.transport.sendMessages({
           ...options,
           messageId:
             spec.messageId === NO_VALUE && options.trigger === "submit-message"
@@ -221,9 +214,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   public async start(options?: RequestReader): Promise<void> {
     await this.sendMessage(NO_VALUE, options);
   }
-
   public async startWithMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AbstractChat.sendMessage accepts mutable parts arrays and native FileList input; readonly parts cannot be passed to that SDK method.
     message: NonNullable<
       Parameters<
         AbstractChat<TMessage>["sendMessage"]
@@ -233,7 +224,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   ): Promise<void> {
     await this.sendMessage(message, options);
   }
-
   public async regenerateMessage(
     messageId: string,
     options?: RequestReader

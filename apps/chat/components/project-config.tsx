@@ -1,12 +1,13 @@
 "use client";
 
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { Pencil } from "lucide-react";
-import React from "react";
 
 import { ProjectIcon } from "@/components/project-icon";
+
 import { Button } from "@/components/ui/button";
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectName). */
+
+import React from "react";
 
 export const ProjectConfig = ({
   projectName,
@@ -27,7 +28,7 @@ export const ProjectConfig = ({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      {projectName && (
+      {typeof projectName === "string" && projectName !== "" ? (
         <div className="flex items-center gap-2">
           {projectIcon && projectColor && (
             <ProjectIcon color={projectColor} icon={projectIcon} size={24} />
@@ -44,6 +45,8 @@ export const ProjectConfig = ({
             <span className="sr-only">Rename project</span>
           </Button>
         </div>
+      ) : (
+        projectName
       )}
 
       <Button
@@ -67,4 +70,3 @@ export const ProjectConfig = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions */

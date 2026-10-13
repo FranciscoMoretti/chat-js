@@ -1,6 +1,5 @@
 import type { RegistryItem } from "shadcn/schema";
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- The registry catalog imports its package-local descriptor schema; the inherited @/ alias resolves app code and cannot address packages/registry/metadata.ts.
 import { featureDefinitionSchema } from "../../metadata";
 
 export const observabilityItems = [

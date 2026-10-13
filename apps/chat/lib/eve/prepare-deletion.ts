@@ -4,24 +4,30 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): prepareEveFamilyDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveFamilyDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): prepareEveFamilyDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): prepareEveFamilyDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep prepareEveFamilyDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep prepareEveFamilyDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): prepareEveFamilyDeletion intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/** Authorize and retire the whole family before fencing work for external-resource inventory.
+ * @param {string} ownerId Owner whose conversation family is authorized and retired.
+ * @param {string} conversationId Conversation used to resolve the deletion family.
+ * @returns {ReturnType<typeof prepareEveFamilyDeletion>} The retired family with each native session inventory and sorted distinct run/stream identities, or no result for an absent family. Missing session bindings and lifecycle preparation failures reject before external-resource cleanup.
  */
-/** Authorize and retire the whole family before fencing work for external-resource inventory. */
 export const prepareEveFamilyDeletion = async (
   ownerId: string,
   conversationId: string
-) => {
+): Promise<
+  | (NonNullable<Awaited<ReturnType<typeof retireEveFamilyForDeletion>>> & {
+      nativeInventories: {
+        sessionId: string;
+        runIds: string[];
+        streamIds: string[];
+      }[];
+      runIds: string[];
+      streamIds: string[];
+    })
+  | undefined
+> => {
   const lifecycle = requireEveDeletionLifecycle();
   const family = await retireEveFamilyForDeletion(ownerId, conversationId);
   if (!family) {
-    return;
+    return undefined;
   }
   const nativeInventories: {
     sessionId: string;
@@ -32,10 +38,10 @@ export const prepareEveFamilyDeletion = async (
   const streamIds = new Set<string>();
   for (const conversation of family.conversations) {
     const { sessionId } = conversation;
-    if (!sessionId) {
+    if (typeof sessionId !== "string" || sessionId === "") {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Use one dedicated two-connection native preparation pool at a time; siblings can share descendant resources and no partial family inventory may reach provider cleanup.
     const inventory = await lifecycle.prepare(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });
@@ -47,7 +53,6 @@ export const prepareEveFamilyDeletion = async (
       streamIds.add(id);
     }
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: prepareEveFamilyDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     ...family,
     nativeInventories,
@@ -55,4 +60,3 @@ export const prepareEveFamilyDeletion = async (
     streamIds: [...streamIds].toSorted(),
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

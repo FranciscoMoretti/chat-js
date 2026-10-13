@@ -1,8 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-fence"; "@/lib/eve/lifecycle/postgres/eve-queue-purge"; "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -14,7 +9,6 @@ import {
 } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
 
 import { env } from "../lib/env";
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue fence acceptance requires local Postgres.");
@@ -25,9 +19,6 @@ const ids: string[] = [];
 const runIds: string[] = [];
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (ids.length > 0) {
     await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text in ${query(ids)}`;
@@ -41,57 +32,43 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable no-magic-numbers */
 
-function runId(): string {
+const runId = (): string => {
   const id = crypto.randomUUID();
   runIds.push(id);
   return id;
-}
+};
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep envelope's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-function envelope(body: unknown) {
-  return {
-    attempt: 1,
-    data: Buffer.from(JSON.stringify(body)).toString("base64"),
-    id: "fixture",
-    messageId: `msg_${crypto.randomUUID()}`,
-  };
-}
-/* oxlint-enable typescript/explicit-function-return-type */
-async function job(body: unknown): Promise<string> {
+const envelope = (body: unknown) => ({
+  attempt: 1,
+  data: Buffer.from(JSON.stringify(body)).toString("base64"),
+  id: "fixture",
+  messageId: `msg_${crypto.randomUUID()}`,
+});
+const job = async (body: unknown): Promise<string> => {
   const [row] = await query<
     { id: string }[]
   >`select id::text from graphile_worker.add_job(
     ${task}, ${query.json(envelope(body))}::json, run_at := now() + interval '1 day')`;
   ids.push(row.id);
   return row.id;
-}
-
+};
 test("queue fencing rejects retries and resilient child creation for fenced roots", async () => {
   const root = runId();
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   await expect(job({ runId: root })).rejects.toMatchObject({ code: "55000" });
-  for (const key of [
-    "$parentRunId",
-    "$rootRunId",
-    "$eve.parent",
-    "$eve.root",
-  ]) {
-    await expect(
-      job({ runId: runId(), runInput: { attributes: { [key]: root } } })
-    ).rejects.toMatchObject({ code: "55000" });
-  }
+  await Promise.all(
+    ["$parentRunId", "$rootRunId", "$eve.parent", "$eve.root"].map(
+      async (key) => {
+        await expect(
+          job({ runId: runId(), runInput: { attributes: { [key]: root } } })
+        ).rejects.toMatchObject({ code: "55000" });
+      }
+    )
+  );
   await job({ runId: runId() });
   await job({ __healthCheck: true, correlationId: "fixture" });
 });
-
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): test("workers can release locks after fencing but cannot replace or move a protected  uses 0, -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): test("workers can release locks after fencing but cannot replace or move a protected  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("workers can release locks after fencing but cannot replace or move a protected payload", async () => {
   const root = runId();
   const id = await job({ runId: root });
@@ -114,18 +91,12 @@ test("workers can release locks after fencing but cannot replace or move a prote
     await query`select id from graphile_worker.complete_jobs(${query.array([id])}::bigint[])`
   ).toHaveLength(1);
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
 test("unsupported queue messages fail closed for registered tasks", async () => {
   await expect(job({ unexpected: true })).rejects.toMatchObject({
     code: "22023",
   });
 });
-
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("queue purge removes queued descendants and retains their IDs across retries") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("queue purge removes queued descendants and retains their IDs across retries") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("queue purge removes queued descendants and retains their IDs across retries", async () => {
   const root = runId();
   const child = runId();
@@ -164,11 +135,7 @@ test("queue purge removes queued descendants and retains their IDs across retrie
     code: "55000",
   });
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("queue purge refuses even an old worker lock and succeeds after explicit release uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("queue purge refuses even an old worker lock and succeeds after explicit release", async () => {
   const root = runId();
   const id = await job({ runId: root });
@@ -185,4 +152,61 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
   const purgeResult = await purgeEvePostgresQueue(query, input);
   expect(purgeResult.removedJobIds).toEqual([id]);
 });
-/* oxlint-enable no-magic-numbers */
+
+test.each([99, 100])(
+  "queue purge preserves the discovery boundary for a chain of %i descendants",
+  async (descendantCount) => {
+    const root = runId();
+    const descendants = Array.from({ length: descendantCount }, () => runId());
+    const family = [root, ...descendants];
+    const payloads = family.map((id, index) =>
+      JSON.stringify(
+        envelope({
+          runId: id,
+          ...(index > 0 && {
+            runInput: { attributes: { $parentRunId: family[index - 1] } },
+          }),
+        })
+      )
+    );
+    const queued = await query<{ id: string }[]>`
+      select (graphile_worker.add_job(
+        ${task}, payload::json, run_at := now() + interval '1 day'
+      )).id::text as id from unnest(${query.array(payloads)}::text[]) payload`;
+    const jobIds = queued.map(({ id }) => id);
+    ids.push(...jobIds);
+    await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
+    const input = { runIds: [root], sessionId: root, taskIdentifier: task };
+
+    if (descendantCount === 99) {
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: jobIds.toSorted(),
+        runIds: family.toSorted(),
+      });
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: [],
+        runIds: family.toSorted(),
+      });
+      return;
+    }
+
+    await expect(purgeEvePostgresQueue(query, input)).rejects.toThrow(
+      "Queue inventory did not stabilize"
+    );
+    expect(
+      await query`select id from graphile_worker._private_jobs where id::text in ${query(jobIds)}`
+    ).toHaveLength(family.length);
+    expect(
+      await query`select run_id from workflow.eve_queue_purge_runs
+        where session_id = ${root} and task_identifier = ${task}`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource in ${query(descendants.map((id) => `run:${id}`))} and fenced`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource = ${`run:${root}`} and fenced`
+    ).toHaveLength(1);
+  }
+);

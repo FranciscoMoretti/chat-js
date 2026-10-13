@@ -63,6 +63,5 @@ const loadWorktreeConfig = async (
   }
   return parsedConfig;
 };
-
 export { isWorktreeEnvConfig, loadWorktreeConfig };
 export type { WorktreeAppConfig, WorktreeEnvConfig };

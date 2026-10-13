@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import type { JSX as ReactJSX } from "react";
 import React, { useMemo } from "react";
+
+import type { JSX as ReactJSX } from "react";
 
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- ModelSelectorLogo: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ModelSelectorLogo = ({
   modelId,
@@ -35,4 +35,3 @@ export const ModelSelectorLogo = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, unicorn/no-null */

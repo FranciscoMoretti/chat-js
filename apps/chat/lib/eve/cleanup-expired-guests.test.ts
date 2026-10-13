@@ -54,9 +54,6 @@ test("failed deletion remains pending while the rest of the batch progresses", a
     ["guest", "ready", "/trusted/app"],
   ]);
 });
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("never-dispatched copies use their proven unaccepted deletion path") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("never-dispatched copies use their proven unaccepted deletion path", async () => {
   mocks.claim.mockResolvedValueOnce([{ id: "copy", ownerId: "guest" }]);
   mocks.copy.mockResolvedValue(true);
@@ -65,7 +62,6 @@ test("never-dispatched copies use their proven unaccepted deletion path", async 
   expect(mocks.deleteCopy).toHaveBeenCalledWith("guest", "copy");
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers */
 
 test("an absent deletion receipt is pending and cannot count as an erased family", async () => {
   mocks.claim.mockResolvedValueOnce([{ id: "uncertain", ownerId: "guest" }]);
@@ -75,14 +71,12 @@ test("an absent deletion receipt is pending and cannot count as an erased family
     skipped: false,
   });
 });
-
 test("inventory failures reject instead of claiming an empty successful sweep", async () => {
   const failure = new Error("guest inventory unavailable");
   mocks.claim.mockRejectedValueOnce(failure);
   await expect(cleanupExpiredEveGuests("/trusted/app")).rejects.toBe(failure);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-
 test("a supported empty sweep reports success only after checking inventory", async () => {
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
     deletedCount: 0,

@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { CreationRejectedError } from "./create-conversation";
 import {
@@ -17,11 +18,6 @@ import { resolveCreationRequest } from "./resolve-creation-request";
 import type { EveResponseGroupResult } from "./response-group-contracts";
 
 afterEach(() => vi.unstubAllGlobals());
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null --
- * no-magic-numbers (#517): fixture uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): fixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const fixture = () => {
   const entries = new Map<string, string>();
   const storage = {
@@ -40,29 +36,28 @@ const fixture = () => {
     ["model-a", "model-a", "model-b"]
   );
   const result: EveResponseGroupResult = {
-    candidates: operation.modelIds.map((modelId, index) =>
-      index === 0
-        ? {
-            conversationId: crypto.randomUUID(),
-            modelId,
-            operationId: crypto.randomUUID(),
-            sessionId: "native-first",
-            state: "bound",
-          }
-        : { modelId, operationId: crypto.randomUUID(), state: "unresolved" }
-    ),
+    candidates: operation.modelIds.map((modelId, index) => {
+      if (index === 0) {
+        return {
+          conversationId: crypto.randomUUID(),
+          modelId,
+          operationId: crypto.randomUUID(),
+          sessionId: "native-first",
+          state: "bound",
+        };
+      }
+      return { modelId, operationId: crypto.randomUUID(), state: "unresolved" };
+    }),
     id: crypto.randomUUID(),
   };
   return { operation, result, storage };
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("lost creation replies retain the exact ordered operation across changed compose uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("lost creation replies retain the exact ordered operation across changed composer choices", async () => {
   const { storage, operation } = fixture();
-  const fetcher = vi.fn().mockRejectedValue(new Error("Lost reply"));
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(new Error("Lost reply"));
   vi.stubGlobal("fetch", fetcher);
   await expect(
     resolveCreationRequest(storage, "owner", operation)
@@ -73,17 +68,12 @@ test("lost creation replies retain the exact ordered operation across changed co
     ])
   ).toEqual(operation);
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls[0][1].body).toBe(JSON.stringify(operation));
+  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
   expect(() => prepareCreation(storage, "owner", "Another request")).toThrow(
     "saved comparison"
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("partial binding moves recovery before releasing the composer and preserves a su keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("partial binding moves recovery before releasing the composer and preserves a subsequent draft", async () => {
   const { storage, operation, result } = fixture();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(result)));
@@ -109,11 +99,7 @@ test("partial binding moves recovery before releasing the composer and preserves
   expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
   expect(readCreationRequest(storage, "owner")).toEqual(next);
 });
-/* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep test("storage failure cannot release an unresolved request")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 test("storage failure cannot release an unresolved request", () => {
   const { storage, operation, result } = fixture();
   const failing = {
@@ -122,16 +108,12 @@ test("storage failure cannot release an unresolved request", () => {
       throw new Error("Storage full");
     },
   };
-  expect(() =>
-    retainResponseGroupDraft(failing, "owner", operation, result)
-  ).toThrow("Storage full");
+  expect(() => {
+    retainResponseGroupDraft(failing, "owner", operation, result);
+  }).toThrow("Storage full");
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("all rejected candidates are definitive while a mixed uncertain result keeps its uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("all rejected candidates are definitive while a mixed uncertain result keeps its request", async () => {
   const { operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
@@ -157,17 +139,17 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(mixed)));
   await expect(requestResponseGroup(operation)).resolves.toEqual(mixed);
 });
-/* oxlint-enable no-magic-numbers */
 
 test("rejected secondary candidates retain the original request for their retry", () => {
   const { storage, operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
     ...result,
-    candidates: result.candidates.map((candidate) =>
-      candidate.state === "bound"
-        ? candidate
-        : { ...candidate, error: "Model unavailable", state: "rejected" }
-    ),
+    candidates: result.candidates.map((candidate) => {
+      if (candidate.state === "bound") {
+        return candidate;
+      }
+      return { ...candidate, error: "Model unavailable", state: "rejected" };
+    }),
   };
   retainResponseGroupDraft(storage, "owner", operation, rejected);
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
@@ -202,11 +184,6 @@ test("moving a definitively rejected project comparison preserves all repeated m
   ).toBeUndefined();
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("follow-up retries recover the saved checkpoint before dispatch") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("follow-up retries recover the saved checkpoint before dispatch", async () => {
   const { storage, result } = fixture();
   const conversationId = crypto.randomUUID();
@@ -224,7 +201,7 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     { ...scope, fork }
   );
   const fetcher = vi
-    .fn()
+    .fn<typeof fetch>()
     .mockResolvedValueOnce(new Response("Lost capture reply", { status: 409 }));
   vi.stubGlobal("fetch", fetcher);
   await expect(
@@ -255,20 +232,18 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     .mockResolvedValueOnce(Response.json(result));
   await resolveCreationRequest(storage, "owner", recovered, scope);
   expect(fetcher.mock.calls[1][0]).toEqual(fetcher.mock.calls[0][0]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls[1][1].body).toEqual(fetcher.mock.calls[0][1].body);
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual(operation);
+  expect(fetcher.mock.calls[1][1]?.body).toEqual(
+    fetcher.mock.calls[0][1]?.body
+  );
+  expect(JSON.parse(z.string().parse(fetcher.mock.calls[2][1]?.body))).toEqual(
+    operation
+  );
   expect(readCreationRequest(storage, "owner", scope)).toBeUndefined();
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
     operation
   );
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("a checkpoint receipt for different history cannot dispatch a comparison") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("a checkpoint receipt for different history cannot dispatch a comparison", async () => {
   const { storage } = fixture();
   const conversationId = crypto.randomUUID();
@@ -298,60 +273,56 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
     operation
   );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-statements (#512): test("only an exact durable checkpoint rejection releases a comparison for editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("only an exact durable checkpoint rejection releases a comparison for editing") accepts [url]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): test("only an exact durable checkpoint rejection releases a comparison for editing") intentionally keeps the existing falsy-value behavior of fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint")); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
-  const { storage } = fixture();
-  const conversationId = crypto.randomUUID();
-  const fork = {
-    beforeTurnId: "turn_1",
-    checkpointId: crypto.randomUUID(),
-    conversationId,
-  };
-  const scope = { conversationId };
-  const operation = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Keep this draft",
-    ["a", "b"],
-    { ...scope, fork }
-  );
-  const rejection = {
-    checkpointRejected: true,
-    reason: "source_advanced",
-    ...fork,
-  };
-  const fetcher = vi.fn();
-  vi.stubGlobal("fetch", fetcher);
-  for (const body of [
-    { ...rejection, checkpointId: crypto.randomUUID() },
-    { ...rejection, beforeTurnId: "turn_2" },
-    { ...rejection, conversationId: crypto.randomUUID() },
-    { ...rejection, reason: "unknown" },
-  ]) {
-    fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await expect(
+test.each([
+  { change: {}, definitive: true },
+  { change: { checkpointId: crypto.randomUUID() }, definitive: false },
+  { change: { beforeTurnId: "turn_2" }, definitive: false },
+  { change: { conversationId: crypto.randomUUID() }, definitive: false },
+  { change: { reason: "unknown" }, definitive: false },
+])(
+  "recognizes only exact durable checkpoint rejection %j",
+  async ({ change, definitive }) => {
+    const { storage } = fixture();
+    const conversationId = crypto.randomUUID();
+    const fork = {
+      beforeTurnId: "turn_1",
+      checkpointId: crypto.randomUUID(),
+      conversationId,
+    };
+    const scope = { conversationId };
+    const operation = prepareResponseGroupCreation(
+      storage,
+      "owner",
+      "Keep this draft",
+      ["a", "b"],
+      { ...scope, fork }
+    );
+    const rejection = {
+      checkpointRejected: true,
+      reason: "source_advanced",
+      ...fork,
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({ ...rejection, ...change }, { status: 409 })
+      );
+    vi.stubGlobal("fetch", fetcher);
+    const rejected = expect(
       resolveCreationRequest(storage, "owner", operation, scope)
-    ).rejects.not.toBeInstanceOf(CreationRejectedError);
+    ).rejects;
+    await (definitive
+      ? rejected.toBeInstanceOf(CreationRejectedError)
+      : rejected.not.toBeInstanceOf(CreationRejectedError));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(
+      fetcher.mock.calls.every(
+        ([url]: Readonly<(typeof fetcher.mock.calls)[number]>) =>
+          typeof url === "string" && url.endsWith("/checkpoint")
+      )
+    ).toBe(true);
+    // The UI owns releasing the matching pending request; the original draft is never erased here.
     expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
   }
-  fetcher.mockResolvedValueOnce(Response.json(rejection, { status: 409 }));
-  await expect(
-    resolveCreationRequest(storage, "owner", operation, scope)
-  ).rejects.toBeInstanceOf(CreationRejectedError);
-  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
-    true
-  );
-  // The UI owns releasing the matching pending request; the original draft is never erased here.
-  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
-});
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable max-lines -- #509: This create-response-group.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+);

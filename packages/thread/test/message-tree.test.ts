@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import type { UIMessage } from "ai";
-
 import { MessageTree } from "#thread-source/message-tree";
+
+import type { UIMessage } from "ai";
 
 const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   id,
@@ -10,9 +10,6 @@ const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   role,
 });
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 describe("MessageTree", () => {
   test("derives the selected path without deleting sibling branches", () => {
     const tree = new MessageTree({
@@ -32,7 +29,7 @@ describe("MessageTree", () => {
         .getSiblings("a2")
         .map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["a2", "a3"]);
-    expect(tree.getMessage("a3")?.id).toBe("a3");
+    expect(tree.getMessage("a3")).toMatchObject({ id: "a3" });
   });
 
   test("sets the selected path without deleting hidden descendants", () => {
@@ -47,7 +44,7 @@ describe("MessageTree", () => {
     expect(
       tree.getPath().map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["u1", "a1", "u3"]);
-    expect(tree.getMessage("a2")?.id).toBe("a2");
+    expect(tree.getMessage("a2")).toMatchObject({ id: "a2" });
   });
 
   test("clears the selected path without deleting tree nodes", () => {
@@ -59,7 +56,7 @@ describe("MessageTree", () => {
 
     expect(tree.cursorId).toBeNull();
     expect(tree.getPath()).toEqual([]);
-    expect(tree.getMessage("a1")?.id).toBe("a1");
+    expect(tree.getMessage("a1")).toMatchObject({ id: "a1" });
   });
 
   test("updates a path without changing the selected path", () => {
@@ -80,7 +77,7 @@ describe("MessageTree", () => {
     expect(
       tree.getPath().map(({ id }: Readonly<Pick<UIMessage, "id">>) => id)
     ).toEqual(["u1", "a1", "u2"]);
-    expect(tree.getMessage("a3")?.id).toBe("a3");
+    expect(tree.getMessage("a3")).toMatchObject({ id: "a3" });
   });
 
   test("validates a path before changing existing nodes", () => {
@@ -89,21 +86,21 @@ describe("MessageTree", () => {
     });
     tree.upsertMessage(message("u2"), "a1");
 
-    expect(() => tree.setPath([message("u1"), message("u2")])).toThrow(
-      "Cannot move message u2"
-    );
+    expect(() => {
+      tree.setPath([message("u1"), message("u2")]);
+    }).toThrow("Cannot move message u2");
     expect(tree.getParentId("u2")).toBe("a1");
   });
 
   test("rejects missing parents and cycles", () => {
     const tree = new MessageTree({ messages: [message("u1")] });
 
-    expect(() => tree.upsertMessage(message("u2"), "missing")).toThrow(
-      "Unknown parent message missing"
-    );
-    expect(() => tree.upsertMessage(message("u1"), "u1")).toThrow(
-      "Cannot create a cycle involving u1"
-    );
+    expect(() => {
+      tree.upsertMessage(message("u2"), "missing");
+    }).toThrow("Unknown parent message missing");
+    expect(() => {
+      tree.upsertMessage(message("u1"), "u1");
+    }).toThrow("Cannot create a cycle involving u1");
   });
 
   test("allows message IDs that resemble internal root keys", () => {
@@ -126,9 +123,9 @@ describe("MessageTree", () => {
       messages: [message("u1"), message("a1", "assistant")],
     });
 
-    expect(() => tree.removeLeaf("u1")).toThrow(
-      "Cannot remove non-leaf message u1"
-    );
+    expect(() => {
+      tree.removeLeaf("u1");
+    }).toThrow("Cannot remove non-leaf message u1");
     tree.removeLeaf("a1");
 
     expect(tree.cursorId).toBe("u1");
@@ -210,6 +207,3 @@ describe("MessageTree", () => {
     ).toThrow("Unknown parent message b");
   });
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

@@ -1,10 +1,8 @@
+import type { PackageManager } from "#cli/types";
 import fs from "node:fs";
 import path from "node:path";
 
-import type { PackageManager } from "#cli/types";
-
 const launcherPackageManager = (): PackageManager => {
-  // oxlint-disable-next-line node/no-process-env -- Read the launching package manager per call; inferPackageManager uses this current process fallback only after exhausting project manifests and lockfiles.
   const userAgent = process.env.npm_config_user_agent ?? "";
   if (userAgent.startsWith("pnpm/")) {
     return "pnpm";
@@ -22,8 +20,6 @@ const launcherPackageManager = (): PackageManager => {
   return "bun";
 };
 
-/* oxlint-disable node/no-sync -- These private manifest probes preserve inferPackageManager's synchronous PackageManager API: commands/config.ts uses that value immediately to build install arguments. The paired existence check and parse keep file errors and declaration precedence unchanged. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const readManifest = (manifestPath: string): unknown => {
   try {
     return JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
@@ -54,15 +50,16 @@ const readDeclaredPackageManager = (
   }
 
   const [declared] = manifest.packageManager.split("@");
-  return declared === "bun" ||
+  if (
+    declared === "bun" ||
     declared === "npm" ||
     declared === "pnpm" ||
     declared === "yarn"
-    ? declared
-    : undefined;
+  ) {
+    return declared;
+  }
+  return undefined;
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
 
 interface LockfileDefinition {
   readonly filenames: readonly string[];
@@ -84,11 +81,10 @@ const directoryPackageManager = (cwd: string): PackageManager | undefined => {
   }
   const lockfile = LOCKFILES.find((candidate: LockfileDefinition): boolean =>
     candidate.filenames.some((filename): boolean =>
-      // oxlint-disable-next-line node/no-sync -- inferPackageManager synchronously selects a manager before config.ts builds install command arguments; async probing would change its public PackageManager result to a Promise.
       fs.existsSync(path.join(cwd, filename))
     )
   );
-  return lockfile?.manager;
+  return lockfile && lockfile.manager;
 };
 
 const inferPackageManager = (cwd = process.cwd()): PackageManager => {

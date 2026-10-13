@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
 import React, {
   createContext,
   useCallback,
@@ -8,10 +8,8 @@ import React, {
   useMemo,
   useState,
 } from "react";
-
-import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
-
-/* oxlint-disable no-undefined -- initialArtifactData: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
+import type { JSX as ReactJSX } from "react";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 const initialArtifactData: UIArtifact = {
   content: "",
@@ -23,17 +21,17 @@ const initialArtifactData: UIArtifact = {
   status: "idle",
   title: "",
 };
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- Selector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including state: UIArtifact). */
-
-type Selector<T> = (state: UIArtifact) => T;
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+type Selector<Selected> = (state: UIArtifact) => Selected;
 
 type MetadataUpdater = (current: ArtifactMetadata) => ArtifactMetadata;
 
+// Function-valued updates are callbacks; stored metadata is the callback result.
+const isMetadataUpdater = (
+  value: ArtifactMetadata | MetadataUpdater
+): value is MetadataUpdater => typeof value === "function";
+
 type MetadataStore = Record<string, ArtifactMetadata>;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ArtifactContextType: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact: UIArtifact). */
 
 interface ArtifactContextType {
   artifact: UIArtifact;
@@ -46,19 +44,15 @@ interface ArtifactContextType {
     metadata: ArtifactMetadata | MetadataUpdater
   ) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-undefined -- ArtifactContext: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
-/* oxlint-enable no-undefined */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- ArtifactProvider:   typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: ReactNode }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ArtifactProvider = ({
   children,
 }: {
-  children: ReactNode;
+  readonly children: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const [artifactState, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
@@ -66,7 +60,7 @@ const ArtifactProvider = ({
 
   const setArtifact = useCallback(
     (updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)) => {
-      setArtifactState((currentArtifact) => {
+      setArtifactState((currentArtifact: UIArtifact) => {
         if (typeof updaterFn === "function") {
           return updaterFn(currentArtifact);
         }
@@ -78,13 +72,11 @@ const ArtifactProvider = ({
 
   const setMetadata = useCallback(
     (documentId: string, metadata: ArtifactMetadata | MetadataUpdater) => {
-      setMetadataStore((current) => ({
+      setMetadataStore((current: Readonly<MetadataStore>) => ({
         ...current,
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Artifact metadata intentionally varies with document kind; narrowing it requires a discriminated metadata/store API migration.
-        [documentId]:
-          typeof metadata === "function"
-            ? metadata(current[documentId] ?? null)
-            : metadata,
+        [documentId]: isMetadataUpdater(metadata)
+          ? metadata(current[documentId] ?? null)
+          : metadata,
       }));
     },
     []
@@ -106,7 +98,6 @@ const ArtifactProvider = ({
     </ArtifactContext.Provider>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 const useArtifactContext = (): ArtifactContextType => {
   const context = useContext(ArtifactContext);
@@ -126,8 +117,6 @@ const useArtifactSelector = <Selected,>(
   return selectedValue;
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --   typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
 interface ArtifactHookValue {
   artifact: UIArtifact;
   closeArtifact: () => void;
@@ -137,6 +126,13 @@ interface ArtifactHookValue {
   setMetadata: (metadataArg: ArtifactMetadata | MetadataUpdater) => void;
 }
 
+const hideArtifact = (currentArtifact: UIArtifact): UIArtifact => {
+  if (currentArtifact.status === "streaming") {
+    return { ...currentArtifact, isVisible: false };
+  }
+  return { ...initialArtifactData, status: "idle" };
+};
+
 const useArtifact = (): ArtifactHookValue => {
   const {
     artifact,
@@ -145,11 +141,12 @@ const useArtifact = (): ArtifactHookValue => {
     setMetadata: setMetadataStore,
   } = useArtifactContext();
 
-  const metadata = useMemo(
-    () =>
-      artifact.documentId ? (metadataStore[artifact.documentId] ?? null) : null,
-    [metadataStore, artifact.documentId]
-  );
+  const metadata = useMemo(() => {
+    if (artifact.documentId) {
+      return metadataStore[artifact.documentId] ?? null;
+    }
+    return null;
+  }, [metadataStore, artifact.documentId]);
 
   const setMetadata = useCallback(
     (metadataArg: ArtifactMetadata | MetadataUpdater): void => {
@@ -165,14 +162,7 @@ const useArtifact = (): ArtifactHookValue => {
   }, [setArtifact]);
 
   const closeArtifact = useCallback((): void => {
-    setArtifact((currentArtifact) =>
-      currentArtifact.status === "streaming"
-        ? {
-            ...currentArtifact,
-            isVisible: false,
-          }
-        : { ...initialArtifactData, status: "idle" }
-    );
+    setArtifact(hideArtifact);
   }, [setArtifact]);
 
   return useMemo(
@@ -187,7 +177,4 @@ const useArtifact = (): ArtifactHookValue => {
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable react/only-export-components -- #620: Consumers import ArtifactProvider, useArtifact, useArtifactSelector from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ArtifactProvider, useArtifact, useArtifactSelector };
-/* oxlint-enable react/only-export-components */

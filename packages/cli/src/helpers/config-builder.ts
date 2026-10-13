@@ -1,19 +1,12 @@
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-import { z } from "zod";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
 import {
   applyDefaults,
   configDescriptionSchema,
 } from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInGateways } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import type { ReadonlyInput } from "./readonly-input";
+import { builtInGateways } from "#cli/registry/gateways";
+import { z } from "zod";
 
 const defaultsFor = (
   input: ReadonlyInput<{
@@ -21,16 +14,24 @@ const defaultsFor = (
     gatewayDefaults?: GatewayDefinition["defaults"];
   }>
 ): ReadonlyInput<GatewayDefinition["defaults"]> => {
-  const defaults =
-    input.gatewayDefaults ??
-    builtInGateways.find(
-      (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
-        item.meta.chatjs.id === input.gateway
-    )?.meta.chatjs.defaults;
-  if (!defaults) {
+  if (input.gatewayDefaults) {
+    return input.gatewayDefaults;
+  }
+  const gateway = builtInGateways.find(
+    (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
+      item.meta.chatjs.id === input.gateway
+  );
+  if (!gateway) {
     throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
   }
-  return defaults;
+  return gateway.meta.chatjs.defaults;
+};
+
+const configPropertyPath = (prefix: string, key: string): string => {
+  if (prefix === "") {
+    return key;
+  }
+  return `${prefix}.${key}`;
 };
 
 const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
@@ -49,7 +50,7 @@ const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
 
     if (node instanceof z.ZodObject) {
       for (const [key, property] of Object.entries(node.shape)) {
-        visit(property, prefix === "" ? key : `${prefix}.${key}`);
+        visit(property, configPropertyPath(prefix, key));
       }
     }
     if (node instanceof z.ZodDiscriminatedUnion) {
@@ -64,74 +65,119 @@ const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
 
 const descriptions = extractDescriptions(configDescriptionSchema);
 
+const INTEGER_SEPARATOR_THRESHOLD = 10_000;
+const INDENTATION_STEP = 1;
+const EMPTY_COLLECTION_LENGTH = 0;
+
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
-const formatKey = (key: string): string =>
-  VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
+const formatKey = (key: string): string => {
+  if (VALID_KEY_REGEX.test(key)) {
+    return key;
+  }
+  return JSON.stringify(key);
+};
 
 const compareEntryKeys = (
   [left]: readonly [string, unknown],
   [right]: readonly [string, unknown]
 ): number => left.localeCompare(right);
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-const formatValue = (value: unknown, indent: number): string => {
-  const spaces = "  ".repeat(indent);
-  const inner = "  ".repeat(indent + 1);
+const formatSymbol = (value: symbol): string => {
+  const { description = "" } = value;
+  if (description === "") {
+    return "Symbol()";
+  }
+  return `Symbol(${description})`;
+};
 
-  if (value === null || value === undefined) {
-    return "undefined";
-  }
-  if (typeof value === "string") {
-    return JSON.stringify(value);
-  }
+const formatNumber = (value: number): string => {
   if (
-    typeof value === "number" &&
     Number.isSafeInteger(value) &&
-    Math.abs(value) >= 10_000
+    Math.abs(value) >= INTEGER_SEPARATOR_THRESHOLD
   ) {
     return String(value).replaceAll(/\d(?=(?:\d{3})+$)/gu, "$&_");
   }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    const values: readonly unknown[] = value;
-    if (values.length === 0) {
-      return "[]";
-    }
-    if (values.every((entry) => typeof entry === "string")) {
-      return `[${values.map((entry): string => JSON.stringify(entry)).join(", ")}]`;
-    }
-    return `[\n${values
-      .map((entry): string => `${inner}${formatValue(entry, indent + 1)}`)
-      .join(",\n")}\n${spaces}]`;
-  }
-
-  if (typeof value === "object") {
-    const entries = Object.entries(value).toSorted(compareEntryKeys);
-    if (entries.length === 0) {
-      return "{}";
-    }
-    return `{\n${entries
-      .map(
-        ([key, entry]: readonly [string, unknown]): string =>
-          `${inner}${formatKey(key)}: ${formatValue(entry, indent + 1)}`
-      )
-      .join(",\n")},\n${spaces}}`;
-  }
-
-  // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
   return String(value);
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const formatOtherPrimitive = (value: unknown): string => {
+  if (typeof value === "symbol") {
+    return formatSymbol(value);
+  }
+  if (typeof value === "function" || typeof value === "bigint") {
+    return value.toString();
+  }
+  return "undefined";
+};
+
+const formatPrimitive = (value: unknown): string => {
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number") {
+    return formatNumber(value);
+  }
+  if (typeof value === "boolean") {
+    return String(value);
+  }
+  return formatOtherPrimitive(value);
+};
+
+interface FormatIndentation {
+  readonly indent: number;
+  readonly spaces: string;
+  readonly inner: string;
+}
+
+const formatArray = (
+  values: readonly unknown[],
+  indentation: FormatIndentation,
+  serialize: (value: unknown, indent: number) => string
+): string => {
+  if (values.length === EMPTY_COLLECTION_LENGTH) {
+    return "[]";
+  }
+  if (values.every((entry) => typeof entry === "string")) {
+    return `[${values.map((entry): string => JSON.stringify(entry)).join(", ")}]`;
+  }
+  return `[\n${values
+    .map(
+      (entry): string =>
+        `${indentation.inner}${serialize(entry, indentation.indent + INDENTATION_STEP)}`
+    )
+    .join(",\n")}\n${indentation.spaces}]`;
+};
+
+const formatObject = (
+  value: object,
+  indentation: FormatIndentation,
+  serialize: (value: unknown, indent: number) => string
+): string => {
+  const entries = Object.entries(value).toSorted(compareEntryKeys);
+  if (entries.length === EMPTY_COLLECTION_LENGTH) {
+    return "{}";
+  }
+  return `{\n${entries
+    .map(
+      ([key, entry]: readonly [string, unknown]): string =>
+        `${indentation.inner}${formatKey(key)}: ${serialize(entry, indentation.indent + INDENTATION_STEP)}`
+    )
+    .join(",\n")},\n${indentation.spaces}}`;
+};
+
+const formatValue = (value: unknown, indent: number): string => {
+  const spaces = "  ".repeat(indent);
+  const inner = "  ".repeat(indent + INDENTATION_STEP);
+  if (value === null || typeof value !== "object") {
+    return formatPrimitive(value);
+  }
+  if (Array.isArray(value)) {
+    return formatArray(value, { indent, inner, spaces }, formatValue);
+  }
+  return formatObject(value, { indent, inner, spaces }, formatValue);
+};
+
 const generateConfig = (
   obj: object,
   indent: number,
@@ -142,17 +188,19 @@ const generateConfig = (
   return Object.entries(obj)
     .toSorted(compareEntryKeys)
     .map(([key, value]: readonly [string, unknown]): string => {
-      const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+      const path = configPropertyPath(pathPrefix, key);
       const desc = descriptions.get(path);
-      const comment =
-        typeof desc === "string" && desc !== "" ? `${spaces}// ${desc}\n` : "";
+      let comment = "";
+      if (typeof desc === "string" && desc !== "") {
+        comment = `${spaces}// ${desc}\n`;
+      }
 
       if (
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value)
       ) {
-        const nested = generateConfig(value, indent + 1, path);
+        const nested = generateConfig(value, indent + INDENTATION_STEP, path);
         return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
 
@@ -160,7 +208,6 @@ const generateConfig = (
     })
     .join("\n");
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const toConfigInput = (
   input: ReadonlyInput<{
@@ -205,27 +252,29 @@ const toConfigInput = (
   },
 });
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const buildConfigTs = (input: {
-  appName: string;
-  appPrefix: string;
-  appUrl: string;
-  withElectron: boolean;
-  gateway: Gateway;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-}): string => {
+export const buildConfigTs = (
+  input: ReadonlyInput<{
+    appName: string;
+    appPrefix: string;
+    appUrl: string;
+    withElectron: boolean;
+    gateway: Gateway;
+    gatewayDefaults?: GatewayDefinition["defaults"];
+    coreFeatures: Record<CoreFeatureKey, boolean>;
+    auth: Record<AuthProvider, boolean>;
+  }>
+): string => {
   const partial = toConfigInput(input);
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
   const toolOverrides: Record<string, object> = ai.tools;
   const tools = Object.fromEntries(
-    Object.entries(defaults.tools).map(([name, value]) => [
-      name,
-      { ...value, ...toolOverrides[name] },
-    ])
+    Object.entries(defaults.tools).map(
+      ([name, value]: readonly [
+        string,
+        ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
+      ]) => [name, { ...value, ...toolOverrides[name] }]
+    )
   );
   const fullConfig = {
     ...applyDefaults(appConfig),
@@ -241,12 +290,9 @@ export const buildConfigTs = (input: {
  * @see https://chatjs.dev/docs/reference/config
  */
 const config = defineConfig({
-${generateConfig(fullConfig, 1, "")}
+${generateConfig(fullConfig, INDENTATION_STEP, "")}
 });
 
-// oxlint-disable-next-line import/no-default-export -- The app configuration loader imports this single configuration object as the module default.
 export default config;
 `;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */

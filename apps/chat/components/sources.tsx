@@ -1,6 +1,4 @@
 import { ArrowRight, FileText } from "lucide-react";
-import React, { useId } from "react";
-
 import {
   Dialog,
   DialogContent,
@@ -8,6 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
 import {
   Drawer,
   DrawerContent,
@@ -15,22 +14,27 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { getFaviconUrl } from "@/lib/url-utils";
-import { cn } from "@/lib/utils";
+
+import React, { useId } from "react";
+import { Favicon } from "./favicon";
+
+import { FaviconGroup } from "./favicon-group";
+
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
-import { Favicon } from "./favicon";
-import { FaviconGroup } from "./favicon-group";
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, }: { sources: SearchResultItem[] | undefined; }). */
+import { cn } from "@/lib/utils";
+
+import { getFaviconUrl } from "@/lib/url-utils";
+
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const SourcesList = ({
   sources,
 }: {
-  sources: SearchResultItem[] | undefined;
+  readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
 }): React.JSX.Element => (
   <div className="space-y-3">
-    {sources?.map((source: SearchResultItem): React.JSX.Element => (
+    {sources?.map((source: Readonly<SearchResultItem>): React.JSX.Element => (
       <a
         aria-label={source.title}
         className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
@@ -53,15 +57,13 @@ const SourcesList = ({
     ))}
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AllSourcesView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AllSourcesView = ({
   sources,
   id,
 }: {
-  sources: SearchResultItem[] | undefined;
-  id?: string;
+  readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
+  readonly id?: string;
 }): React.JSX.Element => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const title = "All Sources";
@@ -110,16 +112,13 @@ const AllSourcesView = ({
     </Drawer>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShowSourcesButton = ({
   sources,
   dialogId,
 }: {
-  sources: SearchResultItem[];
-  dialogId: string;
+  readonly sources: readonly Readonly<SearchResultItem>[];
+  readonly dialogId: string;
 }): React.JSX.Element => (
   <button
     aria-label="Show all sources"
@@ -141,13 +140,11 @@ const ShowSourcesButton = ({
     <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
   </button>
 );
-/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources }: { sources: SearchResultItem[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const Sources = ({
   sources,
 }: {
-  sources: SearchResultItem[];
+  readonly sources: readonly Readonly<SearchResultItem>[];
 }): React.JSX.Element | null => {
   const sourcesDialogId = useId();
   if (sources.length === 0) {
@@ -163,4 +160,3 @@ export const Sources = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */

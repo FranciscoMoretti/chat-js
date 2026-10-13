@@ -1,12 +1,9 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Daytona request types and AbortSignal are SDK-owned mutable contracts; these adapters forward them without changing their public assignability. */
-/* oxlint-disable-next-line import/no-nodejs-modules -- Server-side credential scope hashing must use Node crypto and never expose the API key. */
-import { createHash } from "node:crypto";
-
-import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
-
+import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
 import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createHash } from "node:crypto";
 
 const API_URL = "https://app.daytona.io/api";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -23,7 +20,18 @@ interface DaytonaResource {
 }
 interface DaytonaClient {
   readonly create: (
-    params: CreateSandboxFromSnapshotParams,
+    params: ReadonlyNativeSurface<
+      Pick<
+        CreateSandboxFromSnapshotParams,
+        | "autoStopInterval"
+        | "ephemeral"
+        | "labels"
+        | "language"
+        | "name"
+        | "public"
+        | "ttlMinutes"
+      >
+    >,
     options?: Readonly<{ timeout?: number }>
   ) => Promise<DaytonaResource>;
   readonly get: (name: string) => Promise<DaytonaResource>;
@@ -41,8 +49,8 @@ const shellArgument = (value: string): string =>
   `'${value.replaceAll("'", String.raw`'\''`)}'`;
 
 const waitForCommand = async <Result>(
-  operation: Promise<Result>,
-  signal: AbortSignal
+  operation: Readonly<Promise<Result>>,
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): Promise<Result> => {
   const cancelled = Promise.withResolvers<never>();
   const stop = (): void => {
@@ -58,12 +66,14 @@ const waitForCommand = async <Result>(
     signal.removeEventListener("abort", stop);
   }
 };
-
 const commandSandbox = (
   resource: DaytonaResource,
-  signal: AbortSignal
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): ExecutionSandbox => ({
-  async runCommand({ cmd, args }) {
+  async runCommand({
+    cmd,
+    args,
+  }: Readonly<{ cmd: string; args: readonly string[] }>) {
     signal.throwIfAborted();
     const result = await waitForCommand(
       resource.process.executeCommand(
@@ -106,13 +116,11 @@ const findResource = async (
     return resource;
   } catch (error) {
     if (error instanceof DaytonaNotFoundError) {
-      // oxlint-disable-next-line unicorn/no-null -- Null is explicit provider absence, distinct from an unsuccessful request.
       return null;
     }
     throw error;
   }
 };
-
 const cleanupSession = (
   client: DaytonaClient,
   credentials: Credentials

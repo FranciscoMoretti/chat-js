@@ -1,23 +1,18 @@
 "use client";
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
+import { retrievedInput, retrievedResult } from "./schemas";
 import React from "react";
 import ReactMarkdown from "react-markdown";
-
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-
-import { retrievedInput, retrievedResult } from "./schemas";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
   typeof retrievedResult
 >["tool"];
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-const LoadingState = () => (
+const LoadingState = (): React.JSX.Element => (
   <div className="border-border bg-card my-4 rounded-xl border p-4">
     <div className="flex items-center gap-4">
       <div className="relative h-10 w-10">
@@ -35,18 +30,9 @@ const LoadingState = () => (
   </div>
 );
 
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
+const ErrorState = ({
+  errorMessage,
+}: Readonly<{ errorMessage: string | undefined }>): React.JSX.Element => (
   <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
     <div className="flex items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
@@ -63,40 +49,22 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
     </div>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const getItemProperty = <T,>(
+const getItemProperty = (
   item: unknown,
   property: string,
-  defaultValue: T
-): T => {
-  if (item && typeof item === "object" && property in item) {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    const value = (item as Record<string, unknown>)[property];
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    return (value as T) ?? defaultValue;
+  defaultValue: string
+): string => {
+  if (item !== null && typeof item === "object" && property in item) {
+    const value: unknown = Reflect.get(item, property);
+    return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentHeader = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>): React.JSX.Element => {
   const url = getItemProperty(firstItem, "url", "");
   const title = getItemProperty(firstItem, "title", "Retrieved Content");
   const description = getItemProperty(
@@ -139,22 +107,10 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentDetails = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>): React.JSX.Element => {
   const content = getItemProperty(firstItem, "content", "No content available");
 
   return (
@@ -176,68 +132,48 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const getFirstItem = (result: unknown): unknown => {
   if (
-    result &&
+    result !== null &&
     typeof result === "object" &&
     "results" in result &&
     Array.isArray(result.results)
   ) {
     return result.results[0];
   }
+  return undefined;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getErrorMessage = (
   result: unknown,
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    result && typeof result === "object" && "error" in result
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (result.error as string)
+    result !== null &&
+    typeof result === "object" &&
+    "error" in result &&
+    typeof result.error === "string"
+      ? result.error
       : undefined;
   const firstItemError =
-    firstItem && typeof firstItem === "object" && "error" in firstItem
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (firstItem.error as string)
+    firstItem !== null &&
+    typeof firstItem === "object" &&
+    "error" in firstItem &&
+    typeof firstItem.error === "string"
+      ? firstItem.error
       : undefined;
 
   return topLevelError ?? firstItemError ?? null;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const RetrieveUrlView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: RetrieveUrlRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>): React.JSX.Element | null => {
   if (tool.state === "input-available" || tool.state === "input-streaming") {
     return <LoadingState />;
   }
@@ -246,7 +182,7 @@ const RetrieveUrlView = ({
     return null;
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return null;
   }
 
@@ -265,13 +201,6 @@ const RetrieveUrlView = ({
     </div>
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-enable eslint/max-statements */
 
 export const RetrieveUrlRenderer = defineToolRenderer({
   inputSchema: retrievedInput,

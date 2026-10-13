@@ -1,6 +1,7 @@
 "use client";
 
-import type { EveMessagePart } from "eve/client";
+import { hasText } from "@/components/text-value";
+
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef } from "react";
 import { useIsClient } from "usehooks-ts";
@@ -12,6 +13,7 @@ import {
   eveDocumentOperations,
   eveDocumentResult,
 } from "@/lib/eve/document-contracts";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 import {
   useDocumentConversation,
@@ -24,7 +26,6 @@ const partialDocument = z.object({
   documentId: z.string().optional(),
   title: z.string().optional(),
 });
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- EveDocumentTool: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [name]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
 
 export const EveDocumentTool = ({
   part,
@@ -32,15 +33,19 @@ export const EveDocumentTool = ({
   isReadonly,
   preview = false,
 }: {
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-  messageId: string;
-  isReadonly: boolean;
-  preview?: boolean;
+  readonly part: Extract<
+    ReadonlyEveMessagePart,
+    { readonly type: "dynamic-tool" }
+  >;
+  readonly messageId: string;
+  readonly isReadonly: boolean;
+  readonly preview?: boolean;
 }): ReactJSX.Element => {
   const isClient = useIsClient();
   const replaying = useDocumentReplaying();
   const conversationId = useDocumentConversation();
   const { setArtifact } = useArtifact();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React requires an initial ref value; undefined represents the uninitialized state.
   const pendingCall = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (replaying) {
@@ -48,7 +53,7 @@ export const EveDocumentTool = ({
       return;
     }
     const operation = Object.entries(eveDocumentOperations).find(
-      ([name]) => name === part.toolName
+      ([name]: readonly [string, unknown]) => name === part.toolName
     )?.[1];
     if (part.state === "input-streaming" || part.state === "input-available") {
       pendingCall.current = part.toolCallId;
@@ -103,15 +108,16 @@ export const EveDocumentTool = ({
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
-      if (!completed?.success) {
-        return current.previewCallId === part.toolCallId
-          ? {
-              ...current,
-              isVisible: current.documentId !== "init",
-              previewCallId: undefined,
-              status: "idle",
-            }
-          : current;
+      if (!(completed?.success === true)) {
+        if (current.previewCallId === part.toolCallId) {
+          return {
+            ...current,
+            isVisible: current.documentId !== "init",
+            previewCallId: undefined,
+            status: "idle",
+          };
+        }
+        return current;
       }
       if (
         current.isVisible &&
@@ -156,7 +162,7 @@ export const EveDocumentTool = ({
     return <p role="alert">This document result could not be displayed.</p>;
   }
   const writeAction = part.toolName.startsWith("create") ? "create" : "update";
-  if (preview && conversationId) {
+  if (preview && hasText(conversationId)) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}
@@ -177,4 +183,3 @@ export const EveDocumentTool = ({
     />
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

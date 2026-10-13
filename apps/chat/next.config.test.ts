@@ -1,11 +1,11 @@
 import { afterEach, expect, test, vi } from "vitest";
+import type { NextConfig } from "next";
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/next")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
+type WorkerRewrites = Awaited<ReturnType<NonNullable<NextConfig["rewrites"]>>>;
+
 vi.mock("eve/next", () => ({
-  withEve: () => () => ({
-    rewrites: () => ({
+  withEve: () => (): { rewrites: () => WorkerRewrites } => ({
+    rewrites: (): WorkerRewrites => ({
       beforeFiles: [
         {
           destination: "http://worker/eve/v1/:path*",
@@ -15,23 +15,21 @@ vi.mock("eve/next", () => ({
     }),
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.resetModules();
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep routes's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const routes = async () => {
+const routes = async (): Promise<WorkerRewrites | undefined> => {
   const { default: configure } = await import("./next.config");
   const config = await configure("phase-production-build", {
     defaultConfig: {},
   });
-  return await config.rewrites?.();
+  if (typeof config.rewrites !== "function") {
+    throw new TypeError("Expected the EVE routing fixture to supply rewrites");
+  }
+  return await config.rewrites();
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 test("keeps EVE named-agent routing without an external deployment alias", async () => {
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");

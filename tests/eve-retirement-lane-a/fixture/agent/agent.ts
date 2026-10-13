@@ -1,8 +1,6 @@
-/* oxlint-disable eslint/no-magic-numbers -- Zero tool results selects the deterministic first mock-model call. */
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
-// oxlint-disable-next-line import/no-default-export -- EVE discovers the fixture agent by default export.
 export default defineAgent({
   defaultTools: false,
   description: "Lane A native deletion approval proof",
@@ -24,5 +22,3 @@ export default defineAgent({
   ),
   modelContextWindowTokens: 128_000,
 });
-
-/* oxlint-enable eslint/no-magic-numbers */

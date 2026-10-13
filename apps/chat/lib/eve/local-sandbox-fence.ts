@@ -1,24 +1,20 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { mkdir, readdir, writeFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { createHash } from "node:crypto";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import nodePath from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): fenceLocalEveSandboxMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): fenceLocalEveSandboxMutations uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): fenceLocalEveSandboxMutations accepts sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+// Conservative cleanup budget, independent of the filesystem worker pool size.
+const MAX_CONCURRENT_FENCE_OPERATIONS = 4;
+
 /**
  * Permanently stop new local sandbox operations for an authorized native family.
  * Existing operation records must disappear before inventory and cleanup proceed.
  * Never expire or discard unresolved records on a timer: provider work may remain.
+ * @param {string} appRoot - Application root containing the local .eve mutation journal.
+ * @param {readonly string[]} sessionIds - Authorized family members to fence; duplicates share one marker.
  */
 export const fenceLocalEveSandboxMutations = async (
   appRoot: string,
-  sessionIds: string[]
+  sessionIds: readonly string[]
 ): Promise<void> => {
   const scopes = [...new Set(sessionIds)].map((id) =>
     nodePath.join(
@@ -28,40 +24,75 @@ export const fenceLocalEveSandboxMutations = async (
       createHash("sha256").update(id).digest("hex")
     )
   );
-  for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-    await mkdir(scope, { recursive: true });
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-    await writeFile(nodePath.join(scope, "deleted"), "1\n", {
-      flag: "wx",
-      mode: 0o600,
-    }).catch((error: unknown) => {
-      if (
-        !(error instanceof Error && "code" in error && error.code === "EEXIST")
-      ) {
-        throw error;
-      }
-    });
-  }
-  for (const scope of scopes) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-    const operations = await readdir(nodePath.join(scope, "operations")).catch(
-      (error: unknown) => {
-        if (
-          error instanceof Error &&
-          "code" in error &&
-          error.code === "ENOENT"
-        ) {
-          return [];
-        }
-        throw error;
-      }
+  // Drain each bounded batch before admitting more work or reporting failure.
+  for (
+    let offset = 0;
+    offset < scopes.length;
+    offset += MAX_CONCURRENT_FENCE_OPERATIONS
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound filesystem cleanup to four active marker chains; drain every started write before admitting the next batch or returning failure.
+    const markers = await Promise.allSettled(
+      scopes
+        .slice(offset, offset + MAX_CONCURRENT_FENCE_OPERATIONS)
+        .map(async (scope) => {
+          await mkdir(scope, { recursive: true });
+          await writeFile(nodePath.join(scope, "deleted"), "1\n", {
+            flag: "wx",
+            mode: 0o600,
+          }).catch((error: unknown) => {
+            if (
+              !(
+                error instanceof Error &&
+                "code" in error &&
+                error.code === "EEXIST"
+              )
+            ) {
+              throw error;
+            }
+          });
+        })
     );
-    if (operations.length > 0) {
-      throw new Error(
-        "Sandbox operations are still pending. Resolve them before cleanup."
-      );
+    for (const marker of markers) {
+      if (marker.status === "rejected") {
+        throw marker.reason;
+      }
+    }
+  }
+  // Lease inspection starts only once every marker is written. Keep failures
+  // in family order, independent of filesystem completion order.
+  for (
+    let offset = 0;
+    offset < scopes.length;
+    offset += MAX_CONCURRENT_FENCE_OPERATIONS
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound lease reads to four active requests; drain each inspection batch before admitting more or returning its first failure.
+    const inspections = await Promise.allSettled(
+      scopes
+        .slice(offset, offset + MAX_CONCURRENT_FENCE_OPERATIONS)
+        .map(async (scope) => {
+          const operations = await readdir(
+            nodePath.join(scope, "operations")
+          ).catch((error: unknown) => {
+            if (
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "ENOENT"
+            ) {
+              return [];
+            }
+            throw error;
+          });
+          if (operations.length > 0) {
+            throw new Error(
+              "Sandbox operations are still pending. Resolve them before cleanup."
+            );
+          }
+        })
+    );
+    for (const inspection of inspections) {
+      if (inspection.status === "rejected") {
+        throw inspection.reason;
+      }
     }
   }
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */

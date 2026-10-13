@@ -1,17 +1,43 @@
 import type { MessageStreamEvent } from "eve/client";
 
-const MISSING_SEPARATOR_INDEX = -1;
-const FIRST_CHARACTER_INDEX = 0;
-const MODEL_SEPARATOR_LENGTH = 1;
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): responseModelReferences accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
+type ModelReferenceEvent = IgnoredSdkFields<MessageStreamEvent> &
+  (
+    | {
+        readonly type: "step.started";
+        readonly data: {
+          readonly turnId: string;
+          readonly modelId: string;
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "step.started" }>["data"]
+        >;
+      }
+    | {
+        readonly type: "history.restored";
+        readonly data: {
+          readonly events: readonly ModelReferenceEvent[];
+        } & IgnoredSdkFields<
+          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
+        >;
+      }
+    | {
+        readonly type: Exclude<
+          MessageStreamEvent["type"],
+          "step.started" | "history.restored"
+        >;
+      }
+  );
+
 /** First native model reference per turn, including inherited history.
- * @param events Native stream events whose live and inherited steps carry model provenance.
- * @returns The first recorded model reference for each native turn.
+ * @param {readonly MessageStreamEvent[]} events Native stream events whose live and inherited steps carry model provenance.
+ * @returns {Map<string, string>} The first recorded model reference for each native turn.
  */
 const responseModelReferences = (
-  events: readonly MessageStreamEvent[]
+  events: readonly ModelReferenceEvent[]
 ): Map<string, string> => {
   const models = new Map<string, string>();
   for (const event of events) {
@@ -28,36 +54,32 @@ const responseModelReferences = (
   }
   return models;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): responseModel accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Native responses require runtime evidence; imported responses retain provenance.
- * @param events Native stream evidence used to resolve the turn's model reference.
- * @param turnId Native turn identity, or an empty identity for an imported response.
- * @param importedModelId Original model reference retained by an imported response.
- * @returns The provider model ID after removing its gateway prefix.
+ * @param {readonly MessageStreamEvent[]} events Native stream evidence used to resolve the turn's model reference.
+ * @param {string} turnId Native turn identity, or an empty identity for an imported response.
+ * @param {string | undefined} importedModelId Original model reference retained by an imported response.
+ * @returns {string} The provider model ID after removing its gateway prefix.
  */
 const responseModel = (
-  events: readonly MessageStreamEvent[],
+  events: readonly ModelReferenceEvent[],
   turnId: string,
   importedModelId?: string
 ): string => {
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;
-  const separator = reference?.indexOf("/") ?? MISSING_SEPARATOR_INDEX;
+  const separator = (reference ?? "").indexOf("/");
   if (
     typeof reference === "string" &&
     reference !== "" &&
-    separator > FIRST_CHARACTER_INDEX &&
-    separator < reference.length - MODEL_SEPARATOR_LENGTH
+    separator > 0 &&
+    separator < reference.length - 1
   ) {
-    return reference.slice(separator + MODEL_SEPARATOR_LENGTH);
+    return reference.slice(separator + 1);
   }
   throw new Error(
     "The response model is unavailable. Reload before regenerating."
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { responseModel, responseModelReferences };

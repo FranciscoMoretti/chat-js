@@ -71,21 +71,18 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
           CI_PLAYWRIGHT: "false",
           LANGFUSE_PUBLIC_KEY: "",
           LANGFUSE_SECRET_KEY: "",
-          PLAYWRIGHT: playwright ? "true" : "false",
+          PLAYWRIGHT: String(playwright),
           PLAYWRIGHT_TEST_BASE_URL: "",
         },
       }
     );
-    expect(child.exitCode).toBe(
-      runtime === "nodejs" && !playwright
-        ? MISSING_CREDENTIALS_EXIT_CODE
-        : SUCCESS_EXIT_CODE
-    );
-    expect(child.stdout.trim()).toBe(
-      runtime === "nodejs" && !playwright
-        ? "CHATJS_MISSING_CREDENTIALS:langfuse"
-        : "registered"
-    );
+    if (runtime === "nodejs" && !playwright) {
+      expect(child.exitCode).toBe(MISSING_CREDENTIALS_EXIT_CODE);
+      expect(child.stdout.trim()).toBe("CHATJS_MISSING_CREDENTIALS:langfuse");
+    } else {
+      expect(child.exitCode).toBe(SUCCESS_EXIT_CODE);
+      expect(child.stdout.trim()).toBe("registered");
+    }
   });
 }
 

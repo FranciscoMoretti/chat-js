@@ -1,29 +1,24 @@
+import { setTimeout as delay } from "node:timers/promises";
+
 import { z } from "zod";
 
 import { checkDatabase } from "@/lib/db/health";
 import { env } from "@/lib/env";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): eveHealth uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MINIMUM_WORKFLOW_ID_LENGTH = 1;
+const EVE_HEALTH_TIMEOUT_MS = 4000;
+const READINESS_TIMEOUT_MS = 4500;
+
 const eveHealth = z.object({
   ok: z.literal(true),
   status: z.literal("ready"),
-  workflowId: z.string().min(1),
+  workflowId: z.string().min(MINIMUM_WORKFLOW_ID_LENGTH),
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
- * init-declarations (#507): GET assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * no-magic-numbers (#517): GET uses 4000, 4500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): GET accepts response; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
   // Both workers must be ready before the host sends traffic to this instance.
-  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new AbortController();
   try {
     await Promise.race([
       Promise.all([
@@ -34,7 +29,7 @@ export const GET = async (): Promise<Response> => {
             {
               cache: "no-store",
               redirect: "error",
-              signal: AbortSignal.timeout(4000),
+              signal: AbortSignal.timeout(EVE_HEALTH_TIMEOUT_MS),
             }
           );
           if (!response.ok) {
@@ -43,13 +38,10 @@ export const GET = async (): Promise<Response> => {
           eveHealth.parse(await response.json());
         }),
       ]),
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
-      new Promise<never>((_resolve, reject) => {
-        timeout = setTimeout(
-          () => reject(new Error("Readiness timed out")),
-          4500
-        );
-      }),
+      (async () => {
+        await delay(READINESS_TIMEOUT_MS, null, { signal: timeout.signal });
+        throw new Error("Readiness timed out");
+      })(),
     ]);
     return Response.json(
       { status: "ready" },
@@ -61,7 +53,6 @@ export const GET = async (): Promise<Response> => {
       { headers: { "cache-control": "no-store" }, status: 503 }
     );
   } finally {
-    clearTimeout(timeout);
+    timeout.abort();
   }
 };
-/* oxlint-enable init-declarations, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */

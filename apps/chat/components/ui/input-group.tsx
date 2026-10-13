@@ -1,17 +1,16 @@
 "use client";
 
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
+  PointerEvent as ReactPointerEvent,
 } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- InputGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+import { cva } from "class-variance-authority";
 
 const InputGroup = ({
   className,
@@ -40,7 +39,6 @@ const InputGroup = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const inputGroupAddonVariants = cva(
   "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
@@ -62,7 +60,7 @@ const inputGroupAddonVariants = cva(
     },
   }
 );
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+const PRIMARY_POINTER_BUTTON = 0;
 
 const InputGroupAddon = ({
   className,
@@ -74,25 +72,41 @@ const InputGroupAddon = ({
     className={cn(inputGroupAddonVariants({ align }), className)}
     data-align={align}
     data-slot="input-group-addon"
-    onPointerDown={(event) => {
+    onPointerDown={(
+      event: Readonly<
+        Pick<ReactPointerEvent<HTMLDivElement>, "button" | "preventDefault">
+      > & {
+        readonly target: unknown;
+        readonly currentTarget: {
+          readonly parentElement: Readonly<
+            Pick<HTMLElement, "querySelector">
+          > | null;
+        };
+      }
+    ) => {
       if (
-        event.button !== 0 ||
+        event.button !== PRIMARY_POINTER_BUTTON ||
         !(event.target instanceof Element) ||
         event.target.closest("button, a, input, textarea, select")
       ) {
         return;
       }
       event.preventDefault();
-      event.currentTarget.parentElement
-        ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
-          "input, textarea"
-        )
-        ?.focus();
+
+      const parent = event.currentTarget.parentElement;
+      if (!parent) {
+        return;
+      }
+      const input = parent.querySelector<
+        HTMLInputElement | HTMLTextAreaElement
+      >("input, textarea");
+      if (input) {
+        input.focus();
+      }
     }}
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const inputGroupButtonVariants = cva(
   "flex items-center gap-2 text-sm shadow-none",
@@ -111,7 +125,6 @@ const inputGroupButtonVariants = cva(
     },
   }
 );
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const InputGroupButton = ({
   className,
@@ -129,9 +142,6 @@ const InputGroupButton = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
 const InputGroupText = ({
   className,
@@ -145,9 +155,6 @@ const InputGroupText = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"input">). */
 
 const InputGroupInput = ({
   className,
@@ -162,9 +169,6 @@ const InputGroupInput = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupTextarea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"textarea">). */
 
 const InputGroupTextarea = ({
   className,
@@ -179,7 +183,6 @@ const InputGroupTextarea = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   InputGroup,

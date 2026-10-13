@@ -1,39 +1,29 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-
-import { asSchema, jsonSchema } from "ai";
 import type { ModelMessage, Tool } from "ai";
+import { createHash } from "node:crypto";
+import { asSchema, jsonSchema } from "ai";
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
+import type { McpConnector } from "@/lib/db/schema";
 import type { ToolContext } from "eve/tools";
-
-import { installedFeatures } from "@/features/installed";
 import { requireMcpCredentials } from "@/features/mcp/setup";
-import { createToolId } from "@/lib/ai/mcp-name-id";
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
+import { createModuleLogger } from "@/lib/logger";
+import { createToolId } from "@/lib/ai/mcp-name-id";
+import { installedFeatures } from "@/features/installed";
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
 } from "@/lib/db/mcp-queries";
-// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies.
-import type { McpConnector } from "@/lib/db/schema";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
-import { createModuleLogger } from "@/lib/logger";
 
-import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
-
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...parameters: readonly never[]
-) => unknown
-  ? Value
-  : Value extends object
-    ? {
-        readonly [Property in keyof Value]: ReadonlyNativeSurface<
-          Value[Property]
-        >;
-      }
-    : Value;
+// Read-only native session/approval metadata and cancellation used by MCP adapters.
+type McpToolContext = Readonly<{
+  session: ToolContext["session"];
+  callId: ToolContext["callId"];
+  abortSignal: Readonly<AbortSignal>;
+  approval?: Readonly<Pick<NonNullable<ToolContext["approval"]>, "responder">>;
+}>;
 
 const log = createModuleLogger("eve.mcp");
 
@@ -41,32 +31,43 @@ const FIRST_CHARACTER_INDEX = 0;
 const TOOL_NAME_PREFIX_LENGTH = 51;
 const TOOL_NAME_HASH_LENGTH = 12;
 const CONNECTOR_DISCOVERY_TIMEOUT_MS = 10_000;
+const CONNECTOR_DISCOVERY_CONCURRENCY = 2;
 const MCP_APPROVAL_TIMEOUT_MS = 30_000;
 const MAXIMUM_VALIDATION_ERRORS = 3;
 type ValidatedMcpTool<NativeTool> = NativeTool extends Tool
   ? Omit<NativeTool, "inputSchema"> & {
-      inputSchema: ReturnType<
-        typeof jsonSchema<Record<string, NonNullable<unknown>>>
-      >;
+      inputSchema: ReturnType<typeof jsonSchema<Record<string, unknown>>>;
     }
   : never;
 
 const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/u;
 const UNSAFE_TOOL_NAME = /[^a-zA-Z0-9_-]/gu;
 
-const modelToolName = (name: string): string =>
-  VALID_TOOL_NAME.test(name)
-    ? name
-    : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
+const modelToolName = (name: string): string => {
+  if (VALID_TOOL_NAME.test(name)) {
+    return name;
+  }
+  return `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
+};
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const withAbort = async <T>(
   operation: () => Promise<T>,
-  signal: ReadonlyNativeSurface<AbortSignal>
+  signal: Readonly<
+    Pick<
+      AbortSignal,
+      | "throwIfAborted"
+      | "reason"
+      | "addEventListener"
+      | "removeEventListener"
+      | "aborted"
+    >
+  >
 ): Promise<T> => {
   signal.throwIfAborted();
   const aborted = Promise.withResolvers<never>();
-  const cancel = (): void => aborted.reject(signal.reason);
+  const cancel = (): void => {
+    aborted.reject(signal.reason);
+  };
   signal.addEventListener("abort", cancel, { once: true });
   try {
     return await Promise.race([operation(), aborted.promise]);
@@ -74,18 +75,41 @@ const withAbort = async <T>(
     signal.removeEventListener("abort", cancel);
   }
 };
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const assertConnector = (
-  connector: McpConnector | undefined,
+  connector: Readonly<
+    Pick<
+      McpConnector,
+      | "enabled"
+      | "userId"
+      | "id"
+      | "name"
+      | "oauthClientId"
+      | "oauthClientSecret"
+      | "type"
+      | "url"
+      | "requireApproval"
+    >
+  > | null,
   ownerId: string
-): McpConnector => {
+): Readonly<
+  Pick<
+    McpConnector,
+    | "enabled"
+    | "userId"
+    | "id"
+    | "name"
+    | "oauthClientId"
+    | "oauthClientSecret"
+    | "type"
+    | "url"
+    | "requireApproval"
+  >
+> => {
   if (
     !(
       installedFeatures.has("mcp") &&
-      connector?.enabled &&
+      connector?.enabled === true &&
       (connector.userId === ownerId || connector.userId === null)
     )
   ) {
@@ -94,19 +118,24 @@ const assertConnector = (
   requireMcpCredentials();
   return connector;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const withConnector = async <T>(
-  connector: McpConnector,
-  signal: AbortSignal,
+  connector: Readonly<
+    Pick<
+      McpConnector,
+      "id" | "name" | "oauthClientId" | "oauthClientSecret" | "type" | "url"
+    >
+  >,
+  signal: Readonly<
+    Pick<
+      AbortSignal,
+      | "throwIfAborted"
+      | "reason"
+      | "addEventListener"
+      | "removeEventListener"
+      | "aborted"
+    >
+  >,
   run: (tools: Record<string, Tool>) => Promise<T>
 ): Promise<T> => {
   signal.throwIfAborted();
@@ -117,55 +146,48 @@ const withConnector = async <T>(
     url: connector.url,
   });
   let closing: Promise<void> | undefined;
-  const close = (): Promise<void> => {
+  const close = async (): Promise<void> => {
     closing ??= client.close();
-    return closing;
+    await closing;
+  };
+  const closeAfterAbort = async (): Promise<void> => {
+    try {
+      await close();
+    } catch {
+      // The scope's finally awaits the same close and reports its failure.
+    }
   };
   const cancel = (): void => {
-    void close();
+    void closeAfterAbort();
   };
   signal.addEventListener("abort", cancel, { once: true });
   try {
-    await withAbort(() => client.connect(undefined, signal), signal);
+    await withAbort(async () => {
+      await client.connect({ abortSignal: signal });
+    }, signal);
     signal.throwIfAborted();
     if (client.status !== "connected") {
       throw new Error(
         "Connect this MCP server in settings before using its tools."
       );
     }
-    const tools = await withAbort(() => client.tools(), signal);
+    const tools = await withAbort(async () => await client.tools(), signal);
     signal.throwIfAborted();
-    return await withAbort(() => run(tools), signal);
+    return await withAbort(async () => await run(tools), signal);
   } finally {
     signal.removeEventListener("abort", cancel);
     await close();
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/id-length */
-
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Discovers serializable MCP descriptions while closing every opened connector client.
- * @param ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
- * @param signal Discovery cancellation boundary combined with each connector's connection timeout.
- * @returns Safe model tool names and serializable remote descriptions/identities for durable use.
+ * @param {string | undefined} ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
+ * @param {AbortSignal} signal Discovery cancellation boundary combined with each connector's connection timeout.
+ * @returns {Promise< (Awaited<ReturnType<typeof describeMcpTool>> & { name: string; connectorId: string; remoteName: string; })[] >} Safe model tool names and serializable remote descriptions/identities for durable use.
  */
 const discoverEveMcpTools = async (
   ownerId: string | undefined,
-  signal: AbortSignal
+  signal: Readonly<AbortSignal>
 ): Promise<
   (Awaited<ReturnType<typeof describeMcpTool>> & {
     name: string;
@@ -184,7 +206,7 @@ const discoverEveMcpTools = async (
   }
   requireMcpCredentials();
   const connectors = await withAbort(
-    () => getMcpConnectorsByUserId({ userId: ownerId }),
+    async () => await getMcpConnectorsByUserId({ userId: ownerId }),
     signal
   );
   const descriptions: (Awaited<ReturnType<typeof describeMcpTool>> & {
@@ -192,7 +214,12 @@ const discoverEveMcpTools = async (
     connectorId: string;
     remoteName: string;
   })[] = [];
-  for (const connector of connectors) {
+  const enabledConnectors = connectors.filter((connector) => connector.enabled);
+  for (
+    let offset = 0;
+    offset < enabledConnectors.length;
+    offset += CONNECTOR_DISCOVERY_CONCURRENCY
+  ) {
     if (
       signal.aborted &&
       signal.reason instanceof DOMException &&
@@ -201,73 +228,79 @@ const discoverEveMcpTools = async (
       break;
     }
     signal.throwIfAborted();
-    if (!connector.enabled) {
-      continue;
-    }
-    const connectorSignal = AbortSignal.any([
-      signal,
-      AbortSignal.timeout(CONNECTOR_DISCOVERY_TIMEOUT_MS),
-    ]);
-    try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
-      await withConnector(
-        assertConnector(connector, ownerId),
-        connectorSignal,
-        async (tools): Promise<void> => {
-          for (const [remoteName, tool] of Object.entries(tools)) {
-            connectorSignal.throwIfAborted();
-            try {
-              // MCP output and approval policies are adapted explicitly below.
-              const { toModelOutput: _outputAdapter, ...definition } = tool;
-              // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
-              const description = await describeMcpTool(definition);
-              connectorSignal.throwIfAborted();
-              descriptions.push({
-                ...description,
-                connectorId: connector.id,
-                name: modelToolName(
-                  createToolId(
-                    connector.nameId,
-                    remoteName,
-                    connector.userId === null
-                  )
-                ),
-                remoteName,
-              });
-            } catch {
-              connectorSignal.throwIfAborted();
-              log.warn(
-                { connectorId: connector.id, remoteName },
-                "Unsupported MCP tool schema"
-              );
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep at most two live connector scopes and await every close before admitting another batch or returning cancellation.
+    const batch = await Promise.allSettled(
+      enabledConnectors
+        .slice(offset, offset + CONNECTOR_DISCOVERY_CONCURRENCY)
+        .map(async (connector) => {
+          const connectorDescriptions: typeof descriptions = [];
+          const connectorSignal = AbortSignal.any([
+            signal,
+            AbortSignal.timeout(CONNECTOR_DISCOVERY_TIMEOUT_MS),
+          ]);
+          try {
+            await withConnector(
+              assertConnector(connector, ownerId),
+              connectorSignal,
+              async (tools): Promise<void> => {
+                for (const [remoteName, tool] of Object.entries(tools)) {
+                  connectorSignal.throwIfAborted();
+                  try {
+                    // MCP output and approval policies are adapted explicitly below.
+                    const { toModelOutput: _outputAdapter, ...definition } =
+                      tool;
+                    // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
+                    const description = await describeMcpTool(definition);
+                    connectorSignal.throwIfAborted();
+                    connectorDescriptions.push({
+                      ...description,
+                      connectorId: connector.id,
+                      name: modelToolName(
+                        createToolId(
+                          connector.nameId,
+                          remoteName,
+                          connector.userId === null
+                        )
+                      ),
+                      remoteName,
+                    });
+                  } catch {
+                    connectorSignal.throwIfAborted();
+                    log.warn(
+                      { connectorId: connector.id, remoteName },
+                      "Unsupported MCP tool schema"
+                    );
+                  }
+                }
+              }
+            );
+          } catch {
+            if (
+              signal.aborted &&
+              signal.reason instanceof DOMException &&
+              signal.reason.name === "TimeoutError"
+            ) {
+              return connectorDescriptions;
             }
+            signal.throwIfAborted();
+            log.warn(
+              { connectorId: connector.id },
+              "MCP discovery unavailable"
+            );
           }
-        }
-      );
-    } catch {
-      if (
-        signal.aborted &&
-        signal.reason instanceof DOMException &&
-        signal.reason.name === "TimeoutError"
-      ) {
-        break;
+          return connectorDescriptions;
+        })
+    );
+    for (const result of batch) {
+      if (result.status === "rejected") {
+        throw result.reason;
       }
-      signal.throwIfAborted();
-      log.warn({ connectorId: connector.id }, "MCP discovery unavailable");
+      descriptions.push(...result.value);
     }
   }
   return descriptions;
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable eslint/no-continue */
-
-/* oxlint-enable eslint/max-lines-per-function */
-
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   const schema = await asSchema(tool.inputSchema).jsonSchema;
   // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
@@ -282,58 +315,49 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   return {
     ...tool,
     inputSchema: jsonSchema(schema, {
-      validate: (value) =>
-        validate(value)
-          ? { success: true, value }
-          : {
-              error: new Error(
-                `Invalid tool input: ${
-                  validate.errors
-                    ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
-                    .map(
-                      (error): string =>
-                        `${error.instancePath || "/"} ${error.message}`
-                    )
-                    .join("; ") ?? "schema validation failed"
-                }`
-              ),
-              success: false,
-            },
+      validate: (value) => {
+        if (validate(value)) {
+          return { success: true, value };
+        }
+        return {
+          error: new Error(
+            `Invalid tool input: ${
+              validate.errors
+                ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
+                .map(
+                  (error: {
+                    readonly instancePath: string;
+                    readonly message?: string | undefined;
+                  }): string => `${error.instancePath || "/"} ${error.message}`
+                )
+                .join("; ") ?? "schema validation failed"
+            }`
+          ),
+          success: false,
+        };
+      },
     }),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
+const validateMcpInput = async (
+  tool: Readonly<Pick<Tool, "inputSchema">>,
+  input: unknown
+): Promise<void> => {
   const validated = await asSchema(tool.inputSchema).validate?.(input);
-  if (!validated?.success) {
-    throw validated && !validated.success
-      ? validated.error
-      : new Error("Invalid tool input.");
+  if (validated?.success !== true) {
+    if (validated?.success === false) {
+      throw validated.error;
+    }
+    throw new Error("Invalid tool input.");
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const executeEveMcpTool = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal" | "approval">,
+  context: McpToolContext,
   messages: readonly ModelMessage[]
 ): Promise<ReturnType<typeof eveMcpResult.parse>> => {
   const ownerId = context.session.auth.initiator?.principalId;
@@ -343,7 +367,7 @@ const executeEveMcpTool = async (
   context.abortSignal.throwIfAborted();
   const connector = assertConnector(
     await withAbort(
-      () => getMcpConnectorById({ id: connectorId }),
+      async () => await getMcpConnectorById({ id: connectorId }),
       context.abortSignal
     ),
     ownerId
@@ -385,33 +409,19 @@ const executeEveMcpTool = async (
     });
   });
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/init-declarations */
-
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Evaluates current MCP approval policy using serializable identifiers and a temporary client.
- * @param connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
- * @param remoteName Exact remote tool name whose availability and schema are rechecked.
- * @param input Tool input validated before its current approval policy is evaluated.
- * @param context Native session authentication, call identity, and cancellation evidence.
- * @param messages Model history supplied to the tool's approval callback.
- * @returns Whether the current tool requires user approval; the temporary client closes on all paths.
+ * @param {string} connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
+ * @param {string} remoteName Exact remote tool name whose availability and schema are rechecked.
+ * @param {unknown} input Tool input validated before its current approval policy is evaluated.
+ * @param {Pick<McpToolContext, "session" | "abortSignal">} context Native session authentication and cancellation evidence.
+ * @returns {Promise<"user-approval" | "not-applicable">} Whether the current tool requires user approval; the temporary client closes on all paths.
  */
 const requestEveMcpApproval = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "abortSignal">
+  context: Pick<McpToolContext, "session" | "abortSignal">
 ): Promise<"user-approval" | "not-applicable"> => {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
@@ -422,7 +432,10 @@ const requestEveMcpApproval = async (
     AbortSignal.timeout(MCP_APPROVAL_TIMEOUT_MS),
   ]);
   const connector = assertConnector(
-    await withAbort(() => getMcpConnectorById({ id: connectorId }), signal),
+    await withAbort(
+      async () => await getMcpConnectorById({ id: connectorId }),
+      signal
+    ),
     ownerId
   );
   return await withConnector(connector, signal, async (tools) => {
@@ -430,13 +443,17 @@ const requestEveMcpApproval = async (
       throw new Error("MCP tool is no longer available.");
     }
     await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
-    return connector.requireApproval ? "user-approval" : "not-applicable";
+
+    if (connector.requireApproval) {
+      return "user-approval";
+    }
+    return "not-applicable";
   });
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-enable eslint/max-params */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-export { discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval };
+export {
+  discoverEveMcpTools,
+  executeEveMcpTool,
+  requestEveMcpApproval,
+  type McpToolContext,
+};

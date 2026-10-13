@@ -62,7 +62,9 @@ const documentExecutionLanguage = (
   if (!title.includes(".")) {
     return "python";
   }
-  const extension = title.split(".").at(LAST_EXTENSION_INDEX)?.toLowerCase();
+  const extension = (
+    title.split(".").at(LAST_EXTENSION_INDEX) ?? ""
+  ).toLowerCase();
   if (!(typeof extension === "string" && extension !== "")) {
     return "python";
   }

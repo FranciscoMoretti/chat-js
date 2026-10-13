@@ -9,9 +9,6 @@ const suggestions = [
   "Why is this useful?",
   "Can you show an example?",
 ];
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("reads only the dedicated annotation and ignores malformed optional content") uses 81 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("reads only the dedicated annotation and ignores malformed optional content", () => {
   expect(
     messageFollowupSuggestions({
@@ -36,10 +33,6 @@ it("reads only the dedicated annotation and ignores malformed optional content",
   ).toEqual([]);
   expect(messageFollowupSuggestions({})).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("keeps only bounded current-turn text and excludes tool-call preambles") uses 20_000, 12_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("keeps only bounded current-turn text and excludes tool-call preambles", () => {
   const blank = followupContext(
     { assistant: "Previous answer", user: "Previous" },
@@ -78,4 +71,3 @@ it("keeps only bounded current-turn text and excludes tool-call preambles", () =
   });
   expect(completed.assistant).toBe("Final answer");
 });
-/* oxlint-enable no-magic-numbers */

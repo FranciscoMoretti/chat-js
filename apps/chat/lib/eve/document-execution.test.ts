@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
-/* oxlint-enable import/no-relative-parent-imports */
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   code: true,
@@ -44,9 +40,6 @@ const revision = {
   kind: "code",
   title: "saved.py",
 };
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const context = testToolContext({
   abortSignal: new AbortController().signal,
   callId: "run-code",
@@ -64,7 +57,6 @@ const context = testToolContext({
     turn: { id: "turn", sequence: 1 },
   },
 });
-/* oxlint-enable unicorn/no-null */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -113,18 +105,24 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     usage: { costUsd: 0.05 },
   });
 });
-
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   undefined,
   { ...revision, kind: "text" },
   { ...revision, title: "unsupported.ts" },
 ])(
   "rejects unavailable or unsupported revisions before sandbox execution",
-  async (value) => {
+  async (
+    value: Readonly<
+      | {
+          kind: string;
+          content: string;
+          documentId: string;
+          id: string;
+          title: string;
+        }
+      | undefined
+    >
+  ) => {
     mocks.read.mockResolvedValue(value);
     await expect(
       executeEveCodeDocument(input, context).next()
@@ -132,7 +130,6 @@ it.each([
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
 it("does not execute when cancelled during revision lookup", async () => {
   const cancellation = new AbortController();
@@ -148,7 +145,6 @@ it("does not execute when cancelled during revision lookup", async () => {
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
@@ -167,7 +163,6 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
     usage: { costUsd: 0.05 },
   });
 });
-
 it.each(["code", "execution"])(
   "enforces the %s installation requirement before accessing documents",
   async (gate) => {

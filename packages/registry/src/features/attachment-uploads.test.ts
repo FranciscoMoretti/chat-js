@@ -40,7 +40,6 @@ test("small accepted images preserve exact bytes without browser compression", a
   const prepared = await processFilesForUpload([image], options);
   expect(prepared.files).toEqual([image]);
 });
-
 test("compresses large accepted images with configured limits", async () => {
   const image = new File(["oversized image data"], "photo.original", {
     type: "image/png",
@@ -56,7 +55,28 @@ test("compresses large accepted images with configured limits", async () => {
     maxWidthOrHeight: options.maxDimension,
   });
 });
+test("preserves MIME getter order during image compression", async () => {
+  const image = new File(["oversized image data"], "photo.original", {
+    type: "image/png",
+  });
+  const mimeTypes = [
+    "image/png",
+    "image/png",
+    "image/png",
+    "image/png",
+    "image/jpeg",
+  ];
+  Object.defineProperty(image, "type", {
+    get: () => mimeTypes.shift() ?? "image/png",
+  });
 
+  const prepared = await processFilesForUpload([image], options);
+
+  expect(mimeTypes).toEqual([]);
+  expect(prepared.files.map((file: Readonly<File>) => file.name)).toEqual([
+    "photo.jpg",
+  ]);
+});
 test("retains failed oversized originals", async () => {
   const image = new File(["oversized image data"], "photo.original", {
     type: "image/png",
@@ -66,7 +86,6 @@ test("retains failed oversized originals", async () => {
   expect(failed.stillOversized).toEqual([image]);
   expect(failed.files).toEqual([]);
 });
-
 test("preparation preserves mixed PDF and compressed-image input order", async () => {
   const pdf = new File(["pdf"], "first.pdf", { type: "application/pdf" });
   const image = new File(["oversized image data"], "second.original", {

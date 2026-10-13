@@ -1,26 +1,34 @@
 import { guardedFetch } from "guarded-fetch";
 
-type ReadonlyNativeSurface<Value> = Value extends (
-  ...parameters: readonly never[]
-) => unknown
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
   ? Value
-  : Value extends object
-    ? {
-        readonly [Property in keyof Value]: ReadonlyNativeSurface<
-          Value[Property]
-        >;
-      }
-    : Value;
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
 const MCP_NETWORK_TIMEOUT_MS = 30_000;
 
 /** Covers transport, discovery and OAuth requests with the same network policy.
- * @param input - Native URL or request to protect with the MCP network policy.
- * @param init - Native request overrides applied by the Request constructor.
- * @returns The response from the guarded transport.
+ * @param {string | ReadonlyNativeSurface<URL | Request>} input - Native URL or request to protect with the MCP network policy.
+ * @param {Readonly<RequestInit> | undefined} init - Native request overrides applied by the Request constructor.
+ * @returns {Promise<Response>} The response from the guarded transport.
  */
 export const mcpFetch = async (
   input: string | ReadonlyNativeSurface<URL | Request>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Request receives RequestInit unchanged; readonly nested header tuples are not assignable to its HeadersInit receiver, and eager normalization changes getter/iterator evaluation order.
   init?: Readonly<RequestInit>
 ): Promise<Response> => {
   const request = new Request(input, init);

@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Exercise each denied child mutation independently. */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { authenticateEveGateway } from "./gateway-auth";
@@ -37,13 +36,10 @@ vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.child.mockResolvedValue(undefined);
-  mocks.guest.mockResolvedValue(undefined);
+  mocks.child.mockResolvedValue(null);
+  mocks.guest.mockResolvedValue(null);
   mocks.mapping.mockResolvedValue({
     id: reservationId,
     ownerId: "owner",
@@ -53,11 +49,7 @@ beforeEach(() => {
   mocks.owns.mockResolvedValue(false);
   mocks.deleting.mockResolvedValue({ id: "conversation" });
 });
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const request = (path: string, method: string, secret = "fixture-secret") =>
   new Request(`http://localhost${path}`, {
     headers: {
@@ -70,11 +62,7 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
       ? { body: JSON.stringify({ operationId: reservationId }) }
       : {}),
   });
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it.each([ ["/eve/v1/session/session/reset", "POST"], ["/eve/v1/session/session/stream uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it.each([
   ["/eve/v1/session/session/reset", "POST"],
   ["/eve/v1/session/session/stream", "GET"],
@@ -86,11 +74,10 @@ it.each([
       principalId: "owner",
     });
     expect(mocks.deleting).toHaveBeenCalledWith("owner", "session");
-    mocks.deleting.mockResolvedValue(undefined);
+    mocks.deleting.mockResolvedValue(null);
     expect(await authenticateEveGateway(request(path, method))).toBeNull();
   }
 );
-/* oxlint-enable no-undefined */
 
 it.each([
   ["/eve/v1/session", "POST"],
@@ -107,7 +94,6 @@ it.each([
     expect(mocks.deleting).not.toHaveBeenCalled();
   }
 );
-
 it("rejects a forged cleanup header before querying ownership", async () => {
   expect(
     await authenticateEveGateway(
@@ -116,7 +102,6 @@ it("rejects a forged cleanup header before querying ownership", async () => {
   ).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
 });
-
 it("ordinary requests still require a bound session and cannot reset it", async () => {
   const reset = request("/eve/v1/session/session/reset", "POST");
   reset.headers.delete("x-chatjs-deletion");
@@ -128,10 +113,6 @@ it("ordinary requests still require a bound session and cannot reset it", async 
     principalId: "owner",
   });
 });
-
-/* oxlint-disable max-statements --
- * max-statements (#512): it("checkpoint readiness and capture require the source owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("checkpoint readiness and capture require the source owner", async () => {
   const read = request(
     "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0",
@@ -162,11 +143,7 @@ it("checkpoint readiness and capture require the source owner", async () => {
     principalId: "owner",
   });
 });
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): it("internal compaction requires a gateway credential and the bound owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("internal compaction requires a gateway credential and the bound owner", async () => {
   const compact = request("/eve/v1/session/source/compact", "POST");
   compact.headers.delete("x-chatjs-deletion");
@@ -187,7 +164,6 @@ it("internal compaction requires a gateway credential and the bound owner", asyn
   read.headers.delete("x-chatjs-deletion");
   expect(await authenticateEveGateway(read)).toBeNull();
 });
-/* oxlint-enable max-statements */
 
 it("ordinary owner access cannot read internal sandbox birth evidence", async () => {
   const read = request("/eve/v1/session/session/sandbox-identity", "GET");
@@ -196,10 +172,6 @@ it("ordinary owner access cannot read internal sandbox birth evidence", async ()
   expect(await authenticateEveGateway(read)).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
 });
-
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it("only allows fenced descendants of an owner-matched deleting root") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("only allows fenced descendants of an owner-matched deleting root", async () => {
   const read = request("/eve/v1/session/child/sandbox-identity", "GET");
   read.headers.set("x-chatjs-deletion-root", "root");
@@ -214,24 +186,23 @@ it("only allows fenced descendants of an owner-matched deleting root", async () 
     "root",
     "child"
   );
-  mocks.deleting.mockResolvedValue(undefined);
+  mocks.deleting.mockResolvedValue(null);
   expect(await authenticateEveGateway(read)).toBeNull();
 });
-/* oxlint-enable no-undefined */
 it("root proof headers cannot authorize descendant mutations or transcript reads", async () => {
   mocks.descendant.mockResolvedValue(true);
-  for (const [path, method] of [
-    ["reset", "POST"],
-    ["stream", "GET"],
-  ]) {
-    const read = request(`/eve/v1/session/child/${path}`, method);
-    read.headers.set("x-chatjs-deletion-root", "root");
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    expect(await authenticateEveGateway(read)).toBeNull();
-  }
+  await Promise.all(
+    [
+      ["reset", "POST"],
+      ["stream", "GET"],
+    ].map(async ([path, method]) => {
+      const read = request(`/eve/v1/session/child/${path}`, method);
+      read.headers.set("x-chatjs-deletion-root", "root");
+      expect(await authenticateEveGateway(read)).toBeNull();
+    })
+  );
   expect(mocks.descendant).not.toHaveBeenCalled();
 });
-
 it("accepts only a known tool selection as a gateway attribute", async () => {
   const command = request("/eve/v1/session", "POST");
   command.headers.delete("x-chatjs-deletion");
@@ -242,11 +213,6 @@ it("accepts only a known tool selection as a gateway attribute", async () => {
   command.headers.set("x-chatjs-tool", "server__arbitrary");
   expect(await authenticateEveGateway(command)).toBeNull();
 });
-
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): it("derives guest identity from storage and enforces anonymous model/tool policy") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("derives guest identity from storage and enforces anonymous model/tool policy") uses 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("derives guest identity from storage and enforces anonymous model/tool policy", async () => {
   const send = request("/eve/v1/session", "POST");
   send.headers.delete("x-chatjs-deletion");
@@ -274,7 +240,6 @@ it("derives guest identity from storage and enforces anonymous model/tool policy
     )
   ).toMatchObject({ attributes: { chatjsGuest: "true" } });
 });
-/* oxlint-enable max-statements, no-magic-numbers */
 
 it("stamps the reservation from the body, ignoring forged identity headers and metadata", async () => {
   const command = request("/eve/v1/session", "POST");
@@ -286,22 +251,22 @@ it("stamps the reservation from the body, ignoring forged identity headers and m
   expect(await command.json()).toEqual({ operationId: reservationId });
   expect(mocks.mapping).toHaveBeenCalledWith({ reservationId });
 });
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
-  undefined,
+  null,
   { id: reservationId, ownerId: "foreign", state: "creating" },
   { id: reservationId, ownerId: "owner", state: "deleting" },
   { id: reservationId, ownerId: "owner", state: "deleted" },
-])("rejects an unavailable creation identity: %j", async (row) => {
-  mocks.mapping.mockResolvedValue(row);
-  const command = request("/eve/v1/session", "POST");
-  command.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(command)).toBeNull();
-});
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+])(
+  "rejects an unavailable creation identity: %j",
+  async (
+    row: Readonly<{ id: string; ownerId: string; state: string } | null>
+  ) => {
+    mocks.mapping.mockResolvedValue(row);
+    const command = request("/eve/v1/session", "POST");
+    command.headers.delete("x-chatjs-deletion");
+    expect(await authenticateEveGateway(command)).toBeNull();
+  }
+);
 
 it("does not let a seed reservation use the message operation namespace", async () => {
   mocks.mapping.mockResolvedValue({
@@ -322,17 +287,8 @@ it("does not let a seed reservation use the message operation namespace", async 
     attributes: { chatjsReservationId: reservationId },
   });
 });
-
-/* oxlint-disable no-undefined, typescript/promise-function-async --
- * no-undefined (#519): it("authorizes owned child streams without granting child mutation or cross-owner acc uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): it("authorizes owned child streams without granting child mutation or cross-owner acc preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
-  mocks.child.mockImplementation((owner, session) =>
-    owner === "owner" && session === "child"
-      ? Promise.resolve({ rootSessionId: "root" })
-      : Promise.resolve(undefined)
-  );
+  mocks.child.mockResolvedValueOnce({ rootSessionId: "root" });
   const read = new Request("http://localhost/eve/v1/session/child/stream", {
     headers: {
       authorization: "Bearer fixture-secret",
@@ -342,22 +298,23 @@ it("authorizes owned child streams without granting child mutation or cross-owne
   expect(await authenticateEveGateway(read)).toMatchObject({
     principalId: "owner",
   });
-  for (const suffix of ["", "/cancel", "/reset"]) {
-    expect(
-      await authenticateEveGateway(
-        new Request(`http://localhost/eve/v1/session/child${suffix}`, {
-          headers: read.headers,
-          method: "POST",
-        })
-      )
-    ).toBeNull();
-  }
+  await Promise.all(
+    ["", "/cancel", "/reset"].map(async (suffix) => {
+      expect(
+        await authenticateEveGateway(
+          new Request(`http://localhost/eve/v1/session/child${suffix}`, {
+            headers: read.headers,
+            method: "POST",
+          })
+        )
+      ).toBeNull();
+    })
+  );
+  expect(mocks.child).toHaveBeenCalledExactlyOnceWith("owner", "child");
   const foreign = new Headers(read.headers);
   foreign.set("x-chatjs-owner", "other");
   expect(
     await authenticateEveGateway(new Request(read.url, { headers: foreign }))
   ).toBeNull();
+  expect(mocks.child).toHaveBeenLastCalledWith("other", "child");
 });
-/* oxlint-enable no-undefined, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This gateway-auth.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

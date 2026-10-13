@@ -1,28 +1,62 @@
 "use client";
 
+import type {
+  AttachmentUploadInput,
+  AttachmentUploadIntegration,
+} from "@/lib/installation-contracts";
+
 import React, { useEffect, useRef, useState } from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
 import { config } from "@/lib/config";
-import type {
-  AttachmentUploadIntegration,
-  AttachmentUploadInput,
-} from "@/lib/installation-contracts";
 import { useSession } from "@/providers/session-provider";
 
 import { AttachFilesControl, TakePhotoControl } from "./controls";
 import { uploadAttachment } from "./upload";
 import { processFilesForUpload } from "./upload-prep";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const withUploadCleanup = async (
+  upload: () => Promise<void>,
+  release: () => void
+): Promise<void> => {
+  try {
+    await upload();
+  } finally {
+    release();
+  }
+};
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
-const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
+type UploadPasteCaptureEvent = Readonly<{
+  clipboardData: Readonly<{
+    files: Readonly<Pick<FileList, "length" | typeof Symbol.iterator>>;
+  }>;
+  preventDefault: () => void;
+  stopPropagation: () => void;
+}>;
+
+interface UploadComposer {
+  input: React.JSX.Element;
+  onAttach: (accept: string, capture?: "user" | "environment") => void;
+  rootProps: Readonly<Record<string, never>> | UploadComposerRootProps;
+}
+
+interface UploadComposerRootProps {
+  onPasteCapture: (event: UploadPasteCaptureEvent) => void;
+  role: "group";
+}
+
+interface UploadsResult {
+  composer: (disabled: boolean) => UploadComposer;
+  uploadQueue: string[];
+}
+
+const useUploads = ({
+  attachmentCount,
+  onUploaded,
+}: ReadonlyNativeSurface<AttachmentUploadInput>): UploadsResult => {
+  const [, startEventAction] = React.useTransition();
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -31,7 +65,9 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   useEffect((): void => {
     currentCount.current = attachmentCount;
   }, [attachmentCount]);
-  const upload = async (files: File[]): Promise<void> => {
+  const upload = async (
+    files: ReadonlyNativeSurface<File[]>
+  ): Promise<void> => {
     if (lock.current || files.length === 0) {
       return;
     }
@@ -44,41 +80,51 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       return;
     }
     lock.current = true;
-    setUploadQueue(files.map((file): string => file.name));
-    // oxlint-disable-next-line react/todo -- Keep queue cleanup in finally for upload recovery.
-    try {
-      const result = await processFilesForUpload(files, config.attachments);
-      if (
-        result.stillOversized.length > 0 ||
-        result.unsupportedFiles.length > 0
-      ) {
-        toast.error(
-          "Some files could not be attached. Use images or PDFs within the upload size limit."
-        );
-      }
-      for (const file of result.files) {
-        try {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
-          const attachment = await uploadAttachment(file);
-          currentCount.current += 1;
-          onUploaded(attachment);
-        } catch (error) {
+    setUploadQueue(
+      files.map((file: ReadonlyNativeSurface<File>): string => file.name)
+    );
+    await withUploadCleanup(
+      async () => {
+        const result = await processFilesForUpload(files, config.attachments);
+        if (
+          result.stillOversized.length > 0 ||
+          result.unsupportedFiles.length > 0
+        ) {
           toast.error(
-            error instanceof Error ? error.message : "Upload failed."
+            "Some files could not be attached. Use images or PDFs within the upload size limit."
           );
         }
+        for (const file of result.files) {
+          try {
+            // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
+            const attachment = await uploadAttachment(file);
+            currentCount.current += 1;
+            onUploaded(attachment);
+          } catch (error) {
+            toast.error(
+              error instanceof Error ? error.message : "Upload failed."
+            );
+          }
+        }
+      },
+      () => {
+        lock.current = false;
+        setUploadQueue([]);
       }
-    } finally {
-      lock.current = false;
-      setUploadQueue([]);
-    }
+    );
   };
   const { getRootProps } = useDropzone({
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,
-    // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
-    onDrop: upload,
+
+    onDrop: (files: ReadonlyNativeSurface<File[]>) => {
+      // Start outside the transition so the upload queue locks Send immediately.
+      const completion = upload(files);
+      startEventAction(async () => {
+        await completion;
+      });
+    },
   });
   return {
     composer: (disabled: boolean) => ({
@@ -90,12 +136,17 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           multiple
           ref={input}
           type="file"
-          // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
-          onChange={async (event): Promise<void> => {
-            if (!disabled) {
-              await upload([...(event.target.files ?? [])]);
+
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if (disabled) {
+              event.target.value = "";
+              return;
             }
-            event.target.value = "";
+            const completion = upload([...(event.target.files ?? [])]);
+            startEventAction(async () => {
+              await completion;
+              event.target.value = "";
+            });
           }}
         />
       ),
@@ -115,13 +166,14 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
         ? {}
         : {
             ...getRootProps({ role: "group" }),
-            onPasteCapture: (
-              event: React.ClipboardEvent<HTMLDivElement>
-            ): void => {
+            onPasteCapture: (event: UploadPasteCaptureEvent): void => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
-                void upload([...event.clipboardData.files]);
+                const completion = upload([...event.clipboardData.files]);
+                startEventAction(async () => {
+                  await completion;
+                });
               }
             },
           },
@@ -129,13 +181,6 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     uploadQueue,
   };
 };
-/* oxlint-enable typescript/strict-void-return */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 export const attachmentUploads = {
   controls: [

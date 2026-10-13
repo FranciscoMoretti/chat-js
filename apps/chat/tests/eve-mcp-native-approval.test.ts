@@ -10,27 +10,22 @@ import {
 import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
 import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
 import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
-/* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-import { expect, test } from "vitest";
+import type { ToolContext } from "eve/tools";
+
+import { expect, test, vi } from "vitest";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const actor = {
   authenticator: "test",
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const session = {
   auth: { current: null, initiator: { ...actor, attributes: {} } },
   sessionId: "session",
   turn: { id: "turn_1", sequence: 1 },
 };
-/* oxlint-enable unicorn/no-null */
 const batch: ResolvedInputBatch = {
   event: { sequence: 1, stepIndex: 0, turnId: "turn_1" },
   inputs: [
@@ -51,11 +46,7 @@ const batch: ResolvedInputBatch = {
     },
   ],
 };
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-function fixture() {
+const fixture = () => {
   const ctx = new ContextContainer();
   ctx.set(SessionKey, session);
   const { state } = settleDirectApprovalResponse({
@@ -66,18 +57,17 @@ function fixture() {
     settledAt: 1,
   });
   return { ctx, state };
-}
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+};
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("native executor receives only its exact authorized session/call/tool/input rece accepts toolContext; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("native executor receives only its exact authorized session/call/tool/input receipt", async () => {
   const { ctx, state } = fixture();
   prepareToolApprovalReceipts(ctx, "session", [batch], state);
   await contextStorage.run(ctx, async () => {
     const execute = createToolExecuteWithAuth({
-      execute: (_input, toolContext) => toolContext.approval,
+      execute: (
+        _input,
+        toolContext: ReadonlyNativeSurface<Pick<ToolContext, "approval">>
+      ) => toolContext.approval,
       scope: "mcp__write",
     });
     expect(
@@ -98,13 +88,7 @@ test("native executor receives only its exact authorized session/call/tool/input
     ).toBeUndefined();
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("old audit history, denied responses, and ambiguous calls cannot mint receipts", () => {
   const { ctx, state } = fixture();
   contextStorage.run(ctx, () => {
@@ -112,6 +96,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "write" })
     ).toBeUndefined();
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise absent approval state through the required state argument.
     prepareToolApprovalReceipts(ctx, "session", [batch], undefined);
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "write" })
@@ -139,16 +124,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     ).toBeUndefined();
   });
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * max-lines-per-function (#510): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each(["owner", "stranger"])("native harness binds approval to its authorized res uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test.each(["owner", "stranger"])("native harness binds approval to its authorized res's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): test.each(["owner", "stranger"])("native harness binds approval to its authorized res accepts context; { responder }: { responder: { principalId: string } }; input; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): test.each(["owner", "stranger"])("native harness binds approval to its authorized res preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 test.each(["owner", "stranger"])(
   "native harness binds approval to its authorized responder: %s",
   async (principalId) => {
@@ -161,7 +137,10 @@ test.each(["owner", "stranger"])(
     const { ctx } = fixture();
     const receipts: unknown[] = [];
     const execute = createToolExecuteWithAuth({
-      execute: (_input, context): string => {
+      execute: (
+        _input,
+        context: ReadonlyNativeSurface<Pick<ToolContext, "approval">>
+      ): string => {
         receipts.push(context.approval);
         return "written";
       },
@@ -170,10 +149,16 @@ test.each(["owner", "stranger"])(
     const tool = {
       approval: {
         request: () => "user-approval" as const,
-        response: ({ responder }: { responder: { principalId: string } }) =>
-          responder.principalId === "owner"
-            ? { status: "allowed" as const }
-            : { status: "rejected" as const, reason: "Owner only" },
+        response: ({
+          responder,
+        }: {
+          readonly responder: { readonly principalId: string };
+        }) => {
+          if (responder.principalId === "owner") {
+            return { status: "allowed" as const };
+          }
+          return { status: "rejected" as const, reason: "Owner only" };
+        },
       },
       description: "write",
       execute,
@@ -186,7 +171,9 @@ test.each(["owner", "stranger"])(
     };
     const pending = appendPendingInputBatch({
       event: batch.event,
-      requests: batch.inputs.map((input) => input.request),
+      requests: batch.inputs.map(
+        (input: ResolvedInputBatch["inputs"][number]) => input.request
+      ),
       responseAuthRequiredRequestIds: ["request"],
       responseMessages: [
         {
@@ -228,27 +215,37 @@ test.each(["owner", "stranger"])(
     const step = createToolLoopHarness({
       capabilities: { requestInput: true },
       mode: "conversation",
-      resolveModel: async () => model,
+      resolveModel: vi
+        .fn<() => Promise<typeof model>>()
+        .mockResolvedValue(model),
       tools: new Map([[tool.name, tool]]),
     });
-    let result = await contextStorage.run(ctx, () =>
-      step(pending, {
-        attributedInputResponses: [
-          {
-            auth: { ...actor, attributes: {}, principalId },
-            response: { optionId: "approve", requestId: "request" },
-          },
-        ],
-      })
+    let result = await contextStorage.run(
+      ctx,
+      async () =>
+        await step(pending, {
+          attributedInputResponses: [
+            {
+              auth: { ...actor, attributes: {}, principalId },
+              response: { optionId: "approve", requestId: "request" },
+            },
+          ],
+        })
     );
+    /* oxlint-disable eslint/no-await-in-loop -- Each harness continuation returns the next session and continuation consumed by the next iteration. */
     for (
       let iteration = 0;
       iteration < 4 && typeof result.next === "function";
       iteration += 1
     ) {
       const { next } = result;
-      result = await contextStorage.run(ctx, () => next(result.session));
+      const { session: nextSession } = result;
+      result = await contextStorage.run(
+        ctx,
+        async () => await next(nextSession)
+      );
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     expect(receipts, JSON.stringify(result)).toEqual(
       principalId === "owner"
         ? [{ requestId: "request", responder: actor }]
@@ -259,4 +256,3 @@ test.each(["owner", "stranger"])(
     }
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

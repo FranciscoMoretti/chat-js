@@ -1,16 +1,15 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { isDeepStrictEqual } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
- */
-import { isDeepStrictEqual } from "node:util";
-
+import type { Sql, TransactionSql } from "postgres";
+import type { PostgresLifecycleQuery } from "./compatibility";
 import postgres from "postgres";
-import type { Sql } from "postgres";
+import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 import { z } from "zod";
 
-import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
-/* oxlint-enable import/no-nodejs-modules */
-
 const FIRST_ROW_INDEX = 0;
+const EMPTY_COUNT = 0;
+const MAX_RETAINED_RUNS = 10_000;
+type CoverageQuery = PostgresLifecycleQuery & {
+  readonly array: TransactionSql["array"];
+};
 
 const savedSchema = z.object({
   appRoot: z.string(),
@@ -18,26 +17,99 @@ const savedSchema = z.object({
   sessionIds: z.array(z.string()),
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+// Both operands come from parsed or canonicalized dense string arrays. Retained
+// proof compares ordered run identities, without object/prototype equality.
+const sameRunInventory = (
+  left: readonly string[],
+  right: readonly string[]
+): boolean =>
+  left.length === right.length &&
+  left.every((runId, index) => runId === right[index]);
+
+const assertCompleteSandboxInventory = (
+  inventory: {
+    readonly runs: readonly { readonly id: string }[];
+    readonly activeRunIds: readonly string[];
+    readonly missingRunIds: readonly string[];
+    readonly ambiguousStreamIds: readonly string[];
+    readonly sandboxCoverage: { readonly unresolvedRunIds: readonly string[] };
+  },
+  runIds: readonly string[]
+): void => {
+  const actual = inventory.runs.map((run) => run.id).toSorted();
+  if (
+    !sameRunInventory(actual, runIds) ||
+    inventory.activeRunIds.length > EMPTY_COUNT ||
+    inventory.missingRunIds.length > EMPTY_COUNT ||
+    inventory.ambiguousStreamIds.length > EMPTY_COUNT ||
+    inventory.sandboxCoverage.unresolvedRunIds.length > EMPTY_COUNT
+  ) {
+    throw new Error(
+      "Resolve incomplete sandbox workflow coverage before cleanup."
+    );
+  }
+};
+
+const readFencedSandboxCoverage = async (
+  query: PostgresLifecycleQuery,
+  scope: { readonly sessionId: string },
+  runIds: readonly string[]
+): Promise<string[]> => {
+  const inventory = await readEvePostgresRunInventoryInTransaction(
+    query,
+    scope.sessionId,
+    runIds
+  );
+  assertCompleteSandboxInventory(inventory, runIds);
+  const resources = [
+    ...runIds.map((id) => `run:${id}`),
+    ...inventory.streamIds.map((id) => `stream:${id}`),
+  ];
+  const fenced =
+    await query`select resource from workflow.eve_resource_fences where resource in ${query(resources)} and fenced = true for share`;
+  if (fenced.length !== resources.length) {
+    throw new Error("Fence native writers before verifying sandbox ownership.");
+  }
+  const { sessionIds } = inventory.sandboxCoverage;
+  if (!sessionIds.includes(scope.sessionId)) {
+    throw new Error("The deletion root is not a known sandbox-owning session.");
+  }
+  return sessionIds;
+};
+
+const readMatchingSavedCoverage = (
+  raw: unknown,
+  input: { readonly appRoot: string },
+  runIds: readonly string[]
+): string[] => {
+  const saved = savedSchema.parse(raw);
+  if (
+    saved.appRoot !== input.appRoot ||
+    !sameRunInventory(saved.runIds, runIds)
+  ) {
+    throw new Error(
+      "Sandbox coverage scope changed. Reconcile cleanup before retrying."
+    );
+  }
+  return saved.sessionIds;
+};
+
 /**
  * Internal: caller authorizes the deleting family and canonical worker root.
- * @param connection Native workflow database connection used to retain proof under the purge lock.
- * @param input Authorized root, canonical worker app root, and exact run inventory to cover.
- * @param input.sessionId Root session included in the authorized run inventory.
- * @param input.runIds Run identities whose writers must be fenced and workflow coverage complete.
- * @param input.appRoot Canonical worker root bound into the retained coverage proof.
- * @param verifyIdentity Checks each sandbox-owning session against the authorized native identity.
- * @returns Sandbox-owning session IDs from matching retained proof or newly verified coverage.
+ * @param {Sql} connection Native workflow database connection used to retain proof under the purge lock.
+ * @param {{ sessionId: string; runIds: string[]; appRoot: string; }} input Authorized root, canonical worker app root, and exact run inventory to cover.
+ * @param {string} input.sessionId Root session included in the authorized run inventory.
+ * @param {string[]} input.runIds Run identities whose writers must be fenced and workflow coverage complete.
+ * @param {string} input.appRoot Canonical worker root bound into the retained coverage proof.
+ * @param {(sessionId: string) => Promise<void>} verifyIdentity Checks each sandbox-owning session against the authorized native identity.
+ * @returns {Promise<string[]>} Sandbox-owning session IDs from matching retained proof or newly verified coverage.
  */
 const verifyEveSandboxCoverage = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   input: {
-    sessionId: string;
-    runIds: string[];
-    appRoot: string;
+    readonly sessionId: string;
+    readonly runIds: readonly string[];
+    readonly appRoot: string;
   },
   verifyIdentity: (sessionId: string) => Promise<void>
 ): Promise<string[]> => {
@@ -47,60 +119,18 @@ const verifyEveSandboxCoverage = async (
   }
   return await connection.begin(
     "isolation level read committed",
-    async (query) => {
+    async (query: CoverageQuery) => {
       // Same lock as native payload erasure: retain the evidence until proof commits.
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-native-purge:${input.sessionId}`}, 0))`;
       const savedRows =
         await query`select app_root as "appRoot", run_ids as "runIds", sandbox_session_ids as "sessionIds" from workflow.eve_sandbox_coverage where session_id = ${input.sessionId}`;
       const raw = savedRows.at(FIRST_ROW_INDEX);
       if (raw) {
-        const saved = savedSchema.parse(raw);
-        if (
-          saved.appRoot !== input.appRoot ||
-          !isDeepStrictEqual(saved.runIds, runIds)
-        ) {
-          throw new Error(
-            "Sandbox coverage scope changed. Reconcile cleanup before retrying."
-          );
-        }
-        return saved.sessionIds;
+        return readMatchingSavedCoverage(raw, input, runIds);
       }
-      const inventory = await readEvePostgresRunInventoryInTransaction(
-        query,
-        input.sessionId,
-        runIds
-      );
-      const actual = inventory.runs.map((run) => run.id).toSorted();
-      if (
-        !isDeepStrictEqual(actual, runIds) ||
-        inventory.activeRunIds.length > 0 ||
-        inventory.missingRunIds.length > 0 ||
-        inventory.ambiguousStreamIds.length > 0 ||
-        inventory.sandboxCoverage.unresolvedRunIds.length > 0
-      ) {
-        throw new Error(
-          "Resolve incomplete sandbox workflow coverage before cleanup."
-        );
-      }
-      const resources = [
-        ...runIds.map((id) => `run:${id}`),
-        ...inventory.streamIds.map((id) => `stream:${id}`),
-      ];
-      const fenced =
-        await query`select resource from workflow.eve_resource_fences where resource in ${query(resources)} and fenced = true for share`;
-      if (fenced.length !== resources.length) {
-        throw new Error(
-          "Fence native writers before verifying sandbox ownership."
-        );
-      }
-      const { sessionIds } = inventory.sandboxCoverage;
-      if (!sessionIds.includes(input.sessionId)) {
-        throw new Error(
-          "The deletion root is not a known sandbox-owning session."
-        );
-      }
+      const sessionIds = await readFencedSandboxCoverage(query, input, runIds);
       for (const sessionId of sessionIds) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound native HTTP and local identity reads to one request at a time while holding resource fences; all identities must match before the coverage proof commits.
         await verifyIdentity(sessionId);
       }
       await query`insert into workflow.eve_sandbox_coverage(session_id, app_root, run_ids, sandbox_session_ids) values (${input.sessionId}, ${input.appRoot}, ${query.array(runIds)}::text[], ${query.array(sessionIds)}::text[])`;
@@ -108,16 +138,13 @@ const verifyEveSandboxCoverage = async (
     }
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Only call after authorizing the owner of rootSessionId's deleting binding.
- * @param databaseUrl Native workflow database used to inspect the retained cleanup inventory.
- * @param rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
- * @param sessionId Candidate descendant whose native run and resource fences must be present.
- * @returns Whether the candidate is in the native inventory and both root and candidate writers are fenced.
+ * @param {string} databaseUrl Native workflow database used to inspect the retained cleanup inventory.
+ * @param {string} rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
+ * @param {string} sessionId Candidate descendant whose native run and resource fences must be present.
+ * @returns {Promise<boolean>} Whether the candidate is in the native inventory and both root and candidate writers are fenced.
  */
 const isFencedEveDescendant = async (
   databaseUrl: string,
@@ -128,13 +155,13 @@ const isFencedEveDescendant = async (
   try {
     return await connection.begin(
       "isolation level repeatable read read only",
-      async (query) => {
+      async (query: CoverageQuery) => {
         const retained = z
           .array(z.object({ id: z.string() }))
           .parse(
             await query`select run_id as id from workflow.eve_queue_purge_runs where session_id = ${rootSessionId} and task_identifier = 'workflow_flows' limit 10001`
           );
-        if (retained.length > 10_000) {
+        if (retained.length > MAX_RETAINED_RUNS) {
           return false;
         }
         const inventory = await readEvePostgresRunInventoryInTransaction(
@@ -157,5 +184,5 @@ const isFencedEveDescendant = async (
     await connection.end();
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+
 export { isFencedEveDescendant, verifyEveSandboxCoverage };

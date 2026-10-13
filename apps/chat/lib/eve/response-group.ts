@@ -5,6 +5,7 @@ import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
 } from "@/lib/db/eve-response-groups";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { conversationBinding } from "./contracts";
 import { createEveConversationOperation } from "./create-conversation-operation";
@@ -14,41 +15,34 @@ import { eveResponseGroupInput } from "./response-group-input";
 
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * init-declarations (#507): createEveResponseGroup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): createEveResponseGroup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): createEveResponseGroup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): createEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): createEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): createEveResponseGroup uses 400, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep createEveResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createEveResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): createEveResponseGroup accepts value: z.infer<typeof eveResponseGroupInput>; guestAdmission?: { reservations: { operationId: string; reservationId: string; }; candidate: (typeof group.candidates)[number]; entry; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): createEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): createEveResponseGroup intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): createEveResponseGroup preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+/**
+ * Sequential root reservation followed by independent forks; retries reuse all identities.
+ *
+ * @param {string} ownerId Owner whose comparison group and candidate identities are reserved.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input validated before reservation and dispatch.
+ * @param {{ reservations: { operationId: string; reservationId: string; }[]; group: Pick< Awaited<ReturnType<typeof reserveEveResponseGroup>>, "id" | "candidates" >; }} guestAdmission Optional pre-reserved guest group and quotas used instead of reserving another group.
+ * @returns {Promise<{ id: string; candidates: CandidateResult[] }>} The group identity and ordered bound, rejected, unresolved or waiting candidate results; later root candidates remain waiting until the primary binds.
  */
-/** Sequential root reservation followed by independent forks; retries reuse all identities. */
 export const createEveResponseGroup = async (
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>,
-  guestAdmission?: {
-    reservations: {
-      operationId: string;
-      reservationId: string;
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>,
+  guestAdmission?: ReadonlyNativeSurface<{
+    readonly reservations: {
+      readonly operationId: string;
+      readonly reservationId: string;
     }[];
-    group: Pick<
+    readonly group: Pick<
       Awaited<ReturnType<typeof reserveEveResponseGroup>>,
       "id" | "candidates"
     >;
-  }
-) => {
+  }>
+): Promise<EveResponseGroupResult> => {
   const input = eveResponseGroupInput.parse(value);
   const group =
     guestAdmission?.group ?? (await reserveEveResponseGroup(ownerId, input));
   const guestReservations = guestAdmission?.reservations;
   const dispatch = async (
-    candidate: (typeof group.candidates)[number],
+    candidate: ReadonlyNativeSurface<(typeof group.candidates)[number]>,
     fork = input.fork
   ): Promise<CandidateResult> => {
     const forkKind = input.forkKind ?? "comparison";
@@ -133,20 +127,20 @@ export const createEveResponseGroup = async (
   if (input.fork) {
     return {
       candidates: await Promise.all(
-        group.candidates.map((candidate) => dispatch(candidate))
+        group.candidates.map(async (candidate) => await dispatch(candidate))
       ),
       id: group.id,
     };
   }
   const [first, ...rest] = group.candidates;
-  if (!first) {
+  if (!(first !== undefined)) {
     throw new Error("Response group has no candidates.");
   }
   const primary = await dispatch(first);
   if (primary.state !== "bound") {
     if (primary.state === "rejected" && guestReservations) {
       await Promise.all(
-        rest.map(async (candidate) => {
+        rest.map(async (candidate: { readonly operationId: string }) => {
           const quota = guestReservations.find(
             (entry) => entry.operationId === candidate.operationId
           );
@@ -177,13 +171,13 @@ export const createEveResponseGroup = async (
     };
   }
   const candidates = await Promise.all(
-    rest.map((candidate) =>
-      dispatch(candidate, {
-        beforeTurnId: "turn_0",
-        conversationId: primary.conversationId,
-      })
+    rest.map(
+      async (candidate) =>
+        await dispatch(candidate, {
+          beforeTurnId: "turn_0",
+          conversationId: primary.conversationId,
+        })
     )
   );
   return { candidates: [primary, ...candidates], id: group.id };
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

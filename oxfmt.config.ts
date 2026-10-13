@@ -1,7 +1,6 @@
 import { defineConfig } from "oxfmt";
 import ultracite from "ultracite/oxfmt";
 
-/* oxlint-disable import/no-default-export -- oxfmt.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default defineConfig({
   ...ultracite,
   // These generated indexes have content hashes checked by chat-js sync.
@@ -9,6 +8,13 @@ export default defineConfig({
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
     "examples/**",
+    "**/components/{ai-elements,ui}/**",
+    "!**/components/{ai-elements,ui}/**/",
+    "!**/components/{ai-elements,ui}/extra/**",
+    "!**/components/{ai-elements,ui}/**/*.{test,spec}.*",
+    "!**/components/{ai-elements,ui}/**/__tests__/**",
+    "**/features/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
+    "**/lib/db/migrations/meta/**",
     "**/composer-icons.generated.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",
@@ -16,5 +22,6 @@ export default defineConfig({
     "**/lib/ai/models.generated.ts",
     "**/tools/chatjs/{tools,ui,providers,code-executor,workflow-types,tool-availability,document-ui,document-run,installed-features,composer-tools,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
   ],
+  // Preserve module evaluation order; lint-policy changes must not reorder imports.
+  sortImports: false,
 });
-/* oxlint-enable import/no-default-export */

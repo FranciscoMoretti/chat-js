@@ -1,16 +1,8 @@
-import { Cpu } from "lucide-react";
-import { headers } from "next/headers";
-import type { JSX as ReactJSX } from "react";
 import React, { Suspense } from "react";
+import { Cpu } from "lucide-react";
 
 import { EveHistory } from "@/components/eve/eve-history";
-import { EveSearchChats } from "@/components/eve/eve-search-chats";
-import { InternalLink } from "@/components/internal-link";
-import { NewChatButton } from "@/components/new-chat-button";
-import { SidebarProjects } from "@/components/sidebar-projects";
-import { SidebarTopRow } from "@/components/sidebar-top-row";
-import { ScrollArea } from "@/components/ui/scroll-area";
-/* oxlint-disable import/max-dependencies -- @/components/ui/sidebar import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+
 import {
   Sidebar,
   SidebarContent,
@@ -23,12 +15,23 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-/* oxlint-enable import/max-dependencies */
-import { Skeleton } from "@/components/ui/skeleton";
-import { auth } from "@/lib/auth";
-import { resolveEvePrincipal } from "@/lib/eve/principal";
+
+import { EveSearchChats } from "@/components/eve/eve-search-chats";
+import { InternalLink } from "@/components/internal-link";
+import { NewChatButton } from "@/components/new-chat-button";
+import type { JSX as ReactJSX } from "react";
+import { SidebarProjects } from "@/components/sidebar-projects";
+import { SidebarTopRow } from "@/components/sidebar-top-row";
+
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { SidebarUserNav } from "./sidebar-user-nav";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
@@ -40,8 +43,6 @@ const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
   );
 };
 
-/* oxlint-disable react/no-multi-comp -- HistorySkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
-
 const HistorySkeleton = (): React.JSX.Element => (
   <SidebarGroup>
     <div className="flex flex-col gap-2 px-2">
@@ -52,23 +53,21 @@ const HistorySkeleton = (): React.JSX.Element => (
     </div>
   </SidebarGroup>
 );
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null -- RegisteredEveProjects: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
-
-const RegisteredEveProjects = async () => {
+const RegisteredEveProjects = async (): Promise<ReactJSX.Element | null> => {
   const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user ? (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
-      <SidebarMenu>
-        <SidebarProjects />
-      </SidebarMenu>
-    </SidebarGroup>
-  ) : null;
+  if (session?.user) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+        <SidebarMenu>
+          <SidebarProjects />
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  }
+  return null;
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- AppSidebar: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 export const AppSidebar = (): React.JSX.Element => (
   <Sidebar
@@ -114,4 +113,3 @@ export const AppSidebar = (): React.JSX.Element => (
     </SidebarFooter>
   </Sidebar>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */

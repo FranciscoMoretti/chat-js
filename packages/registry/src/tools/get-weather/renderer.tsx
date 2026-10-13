@@ -1,14 +1,13 @@
 "use client";
 import { format, isWithinInterval } from "date-fns";
+import { weatherInput, weatherResult } from "./schemas";
 import React from "react";
-import type { z } from "zod";
-
-import { useIsMobile } from "@/hooks/use-mobile";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { cn } from "@/lib/utils";
-
-import { weatherInput, weatherResult } from "./schemas";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -17,7 +16,6 @@ type GetWeatherRendererTool = ToolRendererProps<
   typeof weatherResult
 >["tool"];
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const SAMPLE = {
   current: { interval: 900, temperature_2m: 29.3, time: "2024-10-07T19:30" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -172,21 +170,14 @@ const SAMPLE = {
   timezone_abbreviation: "GMT",
   utc_offset_seconds: 0,
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const roundUp = (num: number): number => Math.ceil(num);
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const WeatherCard = ({
   weatherAtLocation,
-}: {
+}: ReadonlyNativeSurface<{
   weatherAtLocation: WeatherAtLocation;
-}) => {
+}>): React.JSX.Element => {
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
@@ -267,25 +258,14 @@ const WeatherCard = ({
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/only-export-components */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: GetWeatherRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>): React.JSX.Element => {
   if (tool.state !== "output-available") {
     return (
       <div className="skeleton" key={tool.toolCallId}>
@@ -294,17 +274,12 @@ const GetWeatherView = ({
     );
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return <WeatherCard weatherAtLocation={SAMPLE} />;
   }
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
 
 export const GetWeatherRenderer = defineToolRenderer({
   inputSchema: weatherInput,

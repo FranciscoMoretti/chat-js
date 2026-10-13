@@ -1,6 +1,6 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { z } from "zod";
-
 import { env } from "@/lib/env";
 import {
   conversationBinding,
@@ -15,15 +15,9 @@ import {
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): POST uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): POST accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): POST preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const POST = async (request: Request): Promise<Response> => {
+export const POST = async (
+  request: ReadonlyNativeSurface<Request>
+): Promise<Response> => {
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { status: 401 });
@@ -88,15 +82,14 @@ export const POST = async (request: Request): Promise<Response> => {
         .catch(() => null)
     );
     if (binding.success) {
-      after(() =>
-        persistGeneratedEveConversationTitle({
+      after(async () => {
+        await persistGeneratedEveConversationTitle({
           conversationId: binding.data.id,
           message: input.data.message,
           ownerId: principal.ownerId,
-        })
-      );
+        });
+      });
     }
   }
   return response;
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */

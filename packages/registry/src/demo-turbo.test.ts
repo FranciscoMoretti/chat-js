@@ -1,24 +1,17 @@
 import { afterAll, expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- Create, snapshot, and remove a real temporary Git repository; Bun.file alone does not allocate temporary directories or create/remove directory trees. */
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
-import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
-import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-
-import { runTestProcess } from "./features/test-runtime";
 import {
+  findTask,
   jsonObject,
   jsonString,
-  taskList,
   parseAffectedTaskNames,
-  findTask,
   parseJsonObject,
+  taskList,
 } from "./test-json";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import type { TaskPlan } from "./test-json";
+import path from "node:path";
+import { runTestProcess } from "./features/test-runtime";
+import { tmpdir } from "node:os";
 
 const SUCCESS_EXIT_CODE = 0;
 const EXPECTED_AFFECTED_EXIT = 1;
@@ -69,7 +62,6 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
     })
   );
 };
-
 const gitIn = async (
   directory: string,
   ...args: readonly string[]
@@ -80,7 +72,6 @@ const gitIn = async (
   }
   return result.stdout.trim();
 };
-
 const initializeGitFixture = async (directory: string): Promise<void> => {
   await gitIn(directory, "init", "-b", "main");
   await gitIn(directory, "add", ".");
@@ -95,7 +86,6 @@ const initializeGitFixture = async (directory: string): Promise<void> => {
     "Baseline"
   );
 };
-
 const createFixture = async (): Promise<string> => {
   const directory = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
   try {
@@ -107,14 +97,12 @@ const createFixture = async (): Promise<string> => {
     throw error;
   }
 };
-
 const fixture = await createFixture();
 
 const git = async (...args: readonly string[]): Promise<string> => {
   const output = await gitIn(fixture, ...args);
   return output;
 };
-
 const run = async (...args: readonly string[]): Promise<TaskPlan> => {
   const result = await runTestProcess([turbo, "run", ...args, "--dry=json"], {
     cwd: fixture,
@@ -125,23 +113,19 @@ const run = async (...args: readonly string[]): Promise<TaskPlan> => {
   }
   return { tasks: taskList(result.stdout) };
 };
-
 const registryTask = async (
   taskName: string
 ): Promise<TaskPlan["tasks"][number]> => {
   const { tasks } = await run(taskName, "--filter=@chat-js/registry");
   return findTask(tasks, `@chat-js/registry#${taskName}`);
 };
-
 const taskHash = async (taskName: string): Promise<string> => {
   const selected = await registryTask(taskName);
   return jsonString(selected.hash);
 };
-
 afterAll(async () => {
   await rm(fixture, { force: true, recursive: true });
 });
-
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
   const task = await registryTask("demo:check");
   const baseline = parseJsonObject(
@@ -164,7 +148,6 @@ test("demo check hashes every owned copy and never restores app files; sync is u
   const unit = await registryTask("test:unit");
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
-
 test.each([
   ["packages/registry/src/tools/word-count/tool.ts", true],
   ["packages/registry/registry.ts", true],
@@ -197,7 +180,6 @@ test.each([
   await writeFile(target, `${previous}\n// changed input\n`);
   expect((await taskHash("demo:check")) === before).toBe(!invalidates);
 });
-
 const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
   const query = await runTestProcess(
     [
@@ -218,7 +200,6 @@ const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
   expect(query.exitCode, query.stderr).toBe(EXPECTED_AFFECTED_EXIT);
   return parseAffectedTaskNames(query.stdout);
 };
-
 const verifyAffectedExecution = async (base: string): Promise<void> => {
   const execution = await runTestProcess(
     [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
@@ -234,7 +215,6 @@ const verifyAffectedExecution = async (base: string): Promise<void> => {
     )
   ).toHaveLength(EXPECTED_DEMO_CHECK_TASKS);
 };
-
 test.each([
   "packages/registry/src/tools/word-count/tool.ts",
   "apps/chat/tools/chatjs/word-count/tool.ts",
@@ -260,7 +240,6 @@ test.each([
     await verifyAffectedExecution(base);
   }
 );
-
 test.each([
   "packages/cli/src/utils/installation-plan.ts",
   "packages/gateways/src/definition.ts",
@@ -274,7 +253,6 @@ test.each([
   await writeFile(target, `${previous}\n// changed type boundary\n`);
   expect(await taskHash("test:types")).not.toBe(before);
 });
-
 test("registry typecheck restores gateway declaration outputs on cache hits", async () => {
   const { tasks } = await run("test:types", "--filter=@chat-js/registry");
   const registry = findTask(tasks, "@chat-js/registry#test:types");

@@ -1,8 +1,3 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { ChatStatus, UIMessage } from "ai";
-
-import type { AbstractThread } from "./abstract-thread";
-import type { RequestReader } from "./ai-sdk-run-chat";
 import type {
   CanonicalMessage,
   MessageTreeSnapshot,
@@ -12,6 +7,10 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
+import type { ChatStatus, UIMessage } from "ai";
+import type { AbstractThread } from "./abstract-thread";
+import type { RequestReader } from "./ai-sdk-run-chat";
+import type { UseChatHelpers } from "@ai-sdk/react";
 
 const FIRST_PARAMETER_INDEX = 0;
 
@@ -44,7 +43,6 @@ interface TreeHelpersShape<TMessage extends UIMessage> {
   setActiveRun: (runId: string) => void;
   setCursor: (messageId: string | null) => void;
   setCursorToParentOf: (messageId: string) => void;
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public start helper accepts canonical SDK input parts and metadata; deeply readonly messages cannot satisfy the supplied controller startRun receiver.
   startRun: (options?: StartRunReader<TMessage>) => Promise<ThreadRunHandle>;
   status: ReturnType<AbstractThread<TMessage>["getSnapshot"]>["treeStatus"];
   stopAll: () => Promise<void>;
@@ -57,11 +55,11 @@ type TreeHelpers<TMessage extends UIMessage = UIMessage> = Pick<
   keyof TreeHelpersShape<TMessage>
 >;
 
-type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = UseChatHelpers<
-  CanonicalMessage<TMessage>
+type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = Omit<
+  UseChatHelpers<CanonicalMessage<TMessage>>,
+  "addToolResult"
 > & {
   sendMessage: (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public send helper retains the installed SDK input union, including mutable message parts and FileList; a deeply readonly input breaks the native sendMessage assignment.
     message?: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["sendMessage"]
     >[typeof FIRST_PARAMETER_INDEX],
@@ -101,7 +99,6 @@ type HelperControllerReader<TMessage extends UIMessage> =
         | "id"
         | "addToolApprovalResponse"
         | "addToolOutput"
-        | "addToolResult"
         | "clearError"
         | "regenerate"
         | "resumeStream"
@@ -110,7 +107,6 @@ type HelperControllerReader<TMessage extends UIMessage> =
       >
     >;
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Public tree helpers expose the original mutable SDK message/run arrays and index children arrays; deep readonly snapshots fail those declared result fields, and cloning would change the shared snapshot references.
 const createTreeHelpers = <TMessage extends UIMessage>({
   thread,
   snapshot,
@@ -142,29 +138,34 @@ const createTreeHelpers = <TMessage extends UIMessage>({
     thread.getTreeSnapshot(),
   messagesById: snapshot.messagesById,
   parentById: snapshot.parentById,
-  // oxlint-disable-next-line typescript/promise-function-async -- A supplied controller may override public resumeRun with a shared promise or synchronous failure; this exposed hook helper forwards that observable contract.
-  resumeRun: (runId, requestOptions): Promise<void> =>
-    thread.resumeRun(runId, requestOptions),
+  resumeRun: async (runId, requestOptions): Promise<void> => {
+    await thread.resumeRun(runId, requestOptions);
+  },
   rootIds: snapshot.rootIds,
   runs: snapshot.runs,
-  setActiveRun: (runId): void => thread.setActiveRun(runId),
-  setCursor: (messageId): void => thread.setCursor(messageId),
-  setCursorToParentOf: (messageId): void =>
-    thread.setCursorToParentOf(messageId),
-  // oxlint-disable-next-line typescript/promise-function-async, typescript/prefer-readonly-parameter-types -- Forward the supplied controller startRun override directly to retain its shared promise and synchronous failure; its native SDK input requires canonical metadata/parts, while request and outer options are readonly.
-  startRun: (runOptions): Promise<ThreadRunHandle> =>
-    thread.startRun(runOptions),
+  setActiveRun: (runId): void => {
+    thread.setActiveRun(runId);
+  },
+  setCursor: (messageId): void => {
+    thread.setCursor(messageId);
+  },
+  setCursorToParentOf: (messageId): void => {
+    thread.setCursorToParentOf(messageId);
+  },
+  startRun: async (runOptions): Promise<ThreadRunHandle> =>
+    await thread.startRun(runOptions),
   status: treeStatus,
-  // oxlint-disable-next-line typescript/promise-function-async -- Preserve a supplied controller stopAll override result and synchronous failure when exposing the hook helper.
-  stopAll: (): Promise<void> => thread.stopAll(),
-  // oxlint-disable-next-line typescript/promise-function-async -- The addressed-run helper forwards the supplied controller public stopRun override promise and synchronous failure.
-  stopRun: (runId): Promise<void> => thread.stopRun(runId),
-  // oxlint-disable-next-line typescript/promise-function-async -- The per-message helper forwards the supplied controller override promise and synchronous failure without async adoption.
-  stopRunForMessage: (messageId): Promise<void> =>
-    thread.stopRunForMessage(messageId),
+  stopAll: async (): Promise<void> => {
+    await thread.stopAll();
+  },
+  stopRun: async (runId): Promise<void> => {
+    await thread.stopRun(runId);
+  },
+  stopRunForMessage: async (messageId): Promise<void> => {
+    await thread.stopRunForMessage(messageId);
+  },
 });
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK hook result exposes the original mutable canonical messages array; deep readonly snapshots fail that native result field, while the controller and outer payload are readers.
 const createThreadHelpers = <TMessage extends UIMessage>({
   thread,
   setMessages,
@@ -182,8 +183,6 @@ const createThreadHelpers = <TMessage extends UIMessage>({
 }>): UseThreadHelpers<TMessage> => ({
   addToolApprovalResponse: thread.addToolApprovalResponse,
   addToolOutput: thread.addToolOutput,
-  // oxlint-disable-next-line typescript/no-deprecated -- Keep the public AI SDK-compatible helper name until consumers migrate their tool-result calls.
-  addToolResult: thread.addToolResult,
   clearError: thread.clearError,
   error,
   id: thread.id,

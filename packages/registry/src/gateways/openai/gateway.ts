@@ -1,32 +1,33 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
-  StrictLiterals,
 } from "@chat-js/gateways/provider-types";
+
+import type { AiGatewayModel } from "@chat-js/gateways/models";
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import type { ImageModel } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { z } from "zod";
 
-type OpenaiLanguageModelId = StrictLiterals<
-  ExtractModelIdFromProvider<typeof createOpenAI>
->;
-type OpenaiImageModelId = StrictLiterals<
-  ExtractImageModelIdFromProvider<typeof createOpenAI>
->;
+type OpenaiImageModelId = ExtractImageModelIdFromProvider<typeof createOpenAI>;
 
-interface OpenAIModelResponse {
-  created: number;
-  id: string;
-  object: string;
-  owned_by: string;
-}
+const providerModelSchema = z.object({
+  created: z.number().nullish(),
+  id: z.string(),
+  owned_by: z.string().nullish(),
+});
+type OpenAIModelResponse = z.output<typeof providerModelSchema>;
+const providerModelListSchema = z.object({
+  data: z.array(z.unknown()),
+});
 
+const EMPTY_MODEL_COUNT = 0;
 const UNKNOWN_MODEL_LIMIT = 0;
 const UNKNOWN_MODEL_TIMESTAMP = 0;
 const toAiGatewayModel = (
@@ -45,12 +46,29 @@ const toAiGatewayModel = (
   type: "language",
 });
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+// Validate the wire envelope separately from each model so valid neighbors survive.
+const parseProviderModels = (value: unknown): AiGatewayModel[] => {
+  const body = providerModelListSchema.parse(value);
+  const result = body.data.flatMap((entry): AiGatewayModel[] => {
+    const model = providerModelSchema.safeParse(entry);
+    if (!model.success) {
+      return [];
+    }
+    return [toAiGatewayModel(model.data)];
+  });
+  // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
+  if (
+    body.data.length > EMPTY_MODEL_COUNT &&
+    result.length === EMPTY_MODEL_COUNT
+  ) {
+    throw new Error("Provider catalog contains no valid models.");
+  }
+  return result;
+};
+
 class OpenAIGateway
   extends GatewayRuntime
-  implements
-    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
+  implements GatewayProvider<"openai">
 {
   public readonly type = "openai" as const;
 
@@ -62,7 +80,9 @@ class OpenAIGateway
     return createOpenAI({ apiKey });
   }
 
-  public createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    modelId: ExtractModelIdFromProvider<typeof createOpenAI>
+  ): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
@@ -72,11 +92,7 @@ class OpenAIGateway
     return provider.image(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
-  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENAI_API_KEY;
@@ -109,12 +125,7 @@ class OpenAIGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const body = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ??
-        []) as readonly Readonly<OpenAIModelResponse>[];
-      const result = models.map((model) => toAiGatewayModel(model));
+      const result = parseProviderModels(await response.json());
 
       this.log.info(
         { modelCount: result.length },
@@ -130,6 +141,4 @@ class OpenAIGateway
     }
   }
 }
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 export { OpenAIGateway as Gateway, OpenAIGateway };

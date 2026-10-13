@@ -1,58 +1,46 @@
 "use client";
 
-import {
-  Root as SheetPrimitiveRoot,
-  Trigger as SheetPrimitiveTrigger,
-  Close as SheetPrimitiveClose,
-  Portal as SheetPrimitivePortal,
-  Overlay as SheetPrimitiveOverlay,
-  Content as SheetPrimitiveContent,
-  Title as SheetPrimitiveTitle,
-  Description as SheetPrimitiveDescription,
-} from "@radix-ui/react-dialog";
-import { XIcon } from "lucide-react";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import {
+  Close as SheetPrimitiveClose,
+  Content as SheetPrimitiveContent,
+  Description as SheetPrimitiveDescription,
+  Overlay as SheetPrimitiveOverlay,
+  Portal as SheetPrimitivePortal,
+  Root as SheetPrimitiveRoot,
+  Title as SheetPrimitiveTitle,
+  Trigger as SheetPrimitiveTrigger,
+} from "@radix-ui/react-dialog";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: React.ComponentProps<typeof SheetPrimitive.Root>). */
 
-const Sheet = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveRoot>): ReactJSX.Element => (
-  <SheetPrimitiveRoot data-slot="sheet" {...props} />
-);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+const Sheet = (
+  props: Readonly<
+    Omit<ReactComponentProps<typeof SheetPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
+): ReactJSX.Element => <SheetPrimitiveRoot data-slot="sheet" {...props} />;
 
-const SheetTrigger = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveTrigger>): ReactJSX.Element => (
+const SheetTrigger = (
+  props: ReactComponentProps<typeof SheetPrimitiveTrigger>
+): ReactJSX.Element => (
   <SheetPrimitiveTrigger data-slot="sheet-trigger" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const SheetClose = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveClose>): ReactJSX.Element => (
+const SheetClose = (
+  props: ReactComponentProps<typeof SheetPrimitiveClose>
+): ReactJSX.Element => (
   <SheetPrimitiveClose data-slot="sheet-close" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const SheetPortal = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitivePortal>): ReactJSX.Element => (
+const SheetPortal = (
+  props: ReactComponentProps<typeof SheetPrimitivePortal>
+): ReactJSX.Element => (
   <SheetPrimitivePortal data-slot="sheet-portal" {...props} />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SheetOverlay = ({
   className,
@@ -67,9 +55,6 @@ const SheetOverlay = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SheetContent = ({
   className,
@@ -77,7 +62,7 @@ const SheetContent = ({
   side = "right",
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveContent> & {
-  side?: "top" | "right" | "bottom" | "left";
+  readonly side?: "top" | "right" | "bottom" | "left";
 }): ReactJSX.Element => (
   <SheetPortal>
     <SheetOverlay />
@@ -105,9 +90,6 @@ const SheetContent = ({
     </SheetPrimitiveContent>
   </SheetPortal>
 );
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SheetHeader = ({
   className,
@@ -119,9 +101,6 @@ const SheetHeader = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const SheetFooter = ({
   className,
@@ -133,9 +112,6 @@ const SheetFooter = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SheetTitle = ({
   className,
@@ -147,9 +123,6 @@ const SheetTitle = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SheetDescription = ({
   className,
@@ -161,7 +134,6 @@ const SheetDescription = ({
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
   Sheet,

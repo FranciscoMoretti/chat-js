@@ -1,13 +1,11 @@
 "use client";
 
-import { Root as SeparatorPrimitiveRoot } from "@radix-ui/react-separator";
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
+import { Root as SeparatorPrimitiveRoot } from "@radix-ui/react-separator";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Separator: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Separator = ({
   className,
@@ -26,6 +24,5 @@ const Separator = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Separator };

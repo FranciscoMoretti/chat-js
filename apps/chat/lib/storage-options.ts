@@ -1,9 +1,7 @@
 import type { EnvRequirement } from "./config-requirements";
 import type { createStorageAdapter } from "./storage-provider";
 
-/* oxlint-disable no-magic-numbers -- Tuple index zero selects the storage factory options parameter. */
 const storageOptions = {} satisfies Parameters<typeof createStorageAdapter>[0];
-/* oxlint-enable no-magic-numbers */
 const storageId = "vercel-blob";
 const storageEnvRequirements: EnvRequirement[] = [
   {

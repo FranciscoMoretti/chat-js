@@ -1,6 +1,5 @@
-import type { UIMessage } from "ai";
-
 import type { MessageTreeSnapshot } from "./types";
+import type { UIMessage } from "ai";
 
 type SnapshotInput<TMessage extends UIMessage> = Readonly<
   Omit<MessageTreeSnapshot<TMessage>, "nodes">

@@ -1,12 +1,14 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
+import { usePathname, useSearchParams } from "next/navigation";
+
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -14,6 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import type { JSX as ReactJSX } from "react";
+
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
 import { isElectronTransferQuery } from "@/lib/electron-auth";
@@ -21,7 +26,6 @@ import { isElectronTransferQuery } from "@/lib/electron-auth";
 type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- DeviceAuthScreen: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DeviceAuthScreen = ({
   state,
@@ -86,8 +90,6 @@ const DeviceAuthScreen = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- DeviceLoginPage: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const DeviceLoginPage = (): ReactJSX.Element => {
   const pathname = usePathname();
@@ -107,9 +109,9 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
       ? "waiting-for-app"
       : state;
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (shouldWaitForApp) {
-      return;
+      return undefined;
     }
 
     let cancelled = false;
@@ -147,7 +149,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         },
       });
     };
-
     const sessionCheck = checkSession();
     void (async (): Promise<void> => {
       try {
@@ -162,7 +163,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
       }
     })();
 
-    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       cancelled = true;
     };
@@ -203,4 +203,3 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
     />
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */

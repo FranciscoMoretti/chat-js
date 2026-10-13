@@ -1,6 +1,5 @@
 import { highlighter } from "./highlighter";
 
-/* oxlint-disable eslint/no-console -- These CLI display methods emit colored operator messages through console.log; changing their output transport is a separate command-output contract decision. */
 export const logger = {
   break(): void {
     console.log("");
@@ -21,4 +20,3 @@ export const logger = {
     console.log(highlighter.warn(args.join(" ")));
   },
 };
-/* oxlint-enable eslint/no-console */

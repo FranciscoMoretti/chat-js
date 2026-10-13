@@ -7,11 +7,6 @@ import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
 
-/* oxlint-disable eslint/max-lines-per-function -- GetStarted: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
-/* oxlint-disable react/jsx-max-depth -- GetStarted: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
@@ -27,7 +22,6 @@ export const GetStarted = (): React.JSX.Element => {
       // Ignore clipboard permission failures.
     }
   };
-
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       {/* Background atmosphere */}
@@ -109,8 +103,3 @@ export const GetStarted = (): React.JSX.Element => {
     </section>
   );
 };
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */

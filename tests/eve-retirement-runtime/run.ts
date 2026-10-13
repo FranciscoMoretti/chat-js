@@ -1,7 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules -- The isolated launcher removes its disposable directory after success. */
 import { rm } from "node:fs/promises";
 
-/* oxlint-enable import/no-nodejs-modules */
 import { createRuntimeFixture } from "./fixture";
 
 const fixtureArgumentIndex = 2;

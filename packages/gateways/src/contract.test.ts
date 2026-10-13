@@ -1,67 +1,37 @@
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
 import { describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { gatewayMetadata } from "../../registry/src/gateways/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { GatewayType } from "../../registry/src/gateways/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { gatewayMetadata } from "../../registry/src/gateways/metadata";
 import gatewayPackage from "../package.json";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import type { GatewayProvider } from "./gateway-provider";
-/* oxlint-enable import/max-dependencies */
 
 const OPTIONS_PARAMETER_INDEX = 0;
 type AdapterOptions = NonNullable<
   ConstructorParameters<typeof VercelGateway>[typeof OPTIONS_PARAMETER_INDEX]
 >;
+type GatewayInstance =
+  | InstanceType<typeof LiteLLMGateway>
+  | InstanceType<typeof OpenAICompatibleGateway>
+  | InstanceType<typeof OpenAIGateway>
+  | InstanceType<typeof OpenRouterGateway>
+  | InstanceType<typeof VercelGateway>;
 
-const callUnsupportedModel = (
-  method: (modelId: never) => unknown,
-  receiver: object
-): null => {
-  const result: unknown = Reflect.apply(method, receiver, [
-    "unsupported-model",
-  ]);
-  // Only null is both object-typed and falsy; reject every actual model value.
-  if (typeof result !== "object" || result) {
-    throw new Error("Unsupported media factory returned a model");
-  }
-  return result;
-};
 const adapters: readonly Readonly<{
-  name: GatewayType;
-  create: (
-    options: AdapterOptions
-  ) => GatewayProvider<string, never, never, never>;
+  name: keyof typeof gatewayMetadata;
+  create: (options: AdapterOptions) => GatewayInstance;
   env: Readonly<Record<string, string>>;
-  createImageModel: (options: AdapterOptions) => ImageModel | null;
-  createLanguageModel: (options: AdapterOptions) => LanguageModelV4;
+  createImageModel: (
+    options: AdapterOptions
+  ) => ReturnType<NonNullable<GatewayInstance["createImageModel"]>> | null;
+  createLanguageModel: (
+    options: AdapterOptions
+  ) => ReturnType<GatewayInstance["createLanguageModel"]>;
   createVideoModel: (
     options: AdapterOptions
-  ) => Experimental_VideoModelV4 | null;
+  ) => ReturnType<NonNullable<GatewayInstance["createVideoModel"]>> | null;
   image: boolean;
   video: boolean;
 }>[] = [
@@ -84,13 +54,7 @@ const adapters: readonly Readonly<{
       new OpenAIGateway(options).createImageModel("dall-e-3"),
     createLanguageModel: (options) =>
       new OpenAIGateway(options).createLanguageModel("gpt-5-mini"),
-    createVideoModel: (options) => {
-      const gateway = new OpenAIGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) => new OpenAIGateway(options).createVideoModel,
     env: { OPENAI_API_KEY: "test" },
     image: true,
     name: "openai",
@@ -98,22 +62,12 @@ const adapters: readonly Readonly<{
   },
   {
     create: (options) => new OpenRouterGateway(options),
-    createImageModel: (options) => {
-      const gateway = new OpenRouterGateway(options);
-      return callUnsupportedModel(
-        gateway.createImageModel.bind(gateway),
-        gateway
-      );
-    },
+    createImageModel: (options) =>
+      new OpenRouterGateway(options).createImageModel,
     createLanguageModel: (options) =>
       new OpenRouterGateway(options).createLanguageModel("openai/gpt-5-mini"),
-    createVideoModel: (options) => {
-      const gateway = new OpenRouterGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) =>
+      new OpenRouterGateway(options).createVideoModel,
     env: { OPENROUTER_API_KEY: "test" },
     image: false,
     name: "openrouter",
@@ -127,13 +81,8 @@ const adapters: readonly Readonly<{
       ),
     createLanguageModel: (options) =>
       new OpenAICompatibleGateway(options).createLanguageModel("custom-model"),
-    createVideoModel: (options) => {
-      const gateway = new OpenAICompatibleGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) =>
+      new OpenAICompatibleGateway(options).createVideoModel,
     env: { OPENAI_COMPATIBLE_BASE_URL: "https://example.test/v1" },
     image: true,
     name: "openai-compatible",
@@ -145,13 +94,7 @@ const adapters: readonly Readonly<{
       new LiteLLMGateway(options).createImageModel("custom-image-model"),
     createLanguageModel: (options) =>
       new LiteLLMGateway(options).createLanguageModel("custom-model"),
-    createVideoModel: (options) => {
-      const gateway = new LiteLLMGateway(options);
-      return callUnsupportedModel(
-        gateway.createVideoModel.bind(gateway),
-        gateway
-      );
-    },
+    createVideoModel: (options) => new LiteLLMGateway(options).createVideoModel,
     env: { LITELLM_BASE_URL: "https://example.test" },
     image: true,
     name: "litellm",
@@ -159,11 +102,12 @@ const adapters: readonly Readonly<{
   },
 ];
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 describe.each(adapters)("$name gateway contract", (adapter) => {
-  it("creates AI SDK v4 models and reports unsupported media as null", () => {
+  it("creates AI SDK v4 models and exposes unsupported factories as null", () => {
     const gateway = adapter.create({ env: adapter.env });
     expect(gateway.type).toBe(adapter.name);
+    expect(gateway.createImageModel !== null).toBe(adapter.image);
+    expect(gateway.createVideoModel !== null).toBe(adapter.video);
     expect(adapter.video).toBe(gatewayMetadata[adapter.name].supportsVideo);
     const { dependency, version } = gatewayMetadata[adapter.name];
     expect(gatewayPackage.devDependencies[dependency]).toBe(version);
@@ -185,7 +129,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
       fetch: vi
         .fn<typeof fetch>()
         .mockResolvedValue(new Response(null, { status: 503 })),
-      getFallbackModels: (name) => {
+      getFallbackModels: (name: string) => {
         requested.push(name);
         return [];
       },
@@ -194,4 +138,3 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     expect(requested).toEqual([adapter.name]);
   });
 });
-/* oxlint-enable unicorn/no-null */
