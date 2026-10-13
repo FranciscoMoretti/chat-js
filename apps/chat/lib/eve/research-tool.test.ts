@@ -1,17 +1,19 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
-import type { prepareResearch } from "@/tools/chatjs/deep-research/steps";
+import type {
+  prepareResearch,
+  saveResearchReport,
+} from "@/tools/chatjs/deep-research/steps";
 import { getDeepResearchConfig } from "@/tools/chatjs/deep-research/configuration";
 
-import { executeEveResearch } from "@/tools/chatjs/deep-research/workflow";
+import deepResearch from "@/agent/tools/deepResearch";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   prepare: vi.fn<() => ReturnType<typeof prepareResearch>>(),
-  researchCompletionTime: vi.fn(),
-  save: vi.fn(),
+  save: vi.fn<typeof saveResearchReport>(),
   searches: vi.fn(),
 }));
 vi.mock("@/tools/chatjs/deep-research/search-updates", () => ({
@@ -19,13 +21,19 @@ vi.mock("@/tools/chatjs/deep-research/search-updates", () => ({
 }));
 vi.mock("@/tools/chatjs/deep-research/steps", () => ({
   prepareResearch: mocks.prepare,
-  researchCompletionTime: mocks.researchCompletionTime,
   saveResearchReport: mocks.save,
 }));
+const researchStream = (context: WorkflowToolContext) => {
+  const result = deepResearch.execute({}, context);
+  if (!(Symbol.asyncIterator in result)) {
+    throw new Error("Research must stream progress through an async iterable.");
+  }
+  return result;
+};
 const agent = vi.fn<WorkflowToolContext["agent"]>();
 let controller: AbortController;
 let context: WorkflowToolContext;
-const document = {
+const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
   date: "2026-09-28",
   documentId: "doc",
   kind: "text",
@@ -36,7 +44,6 @@ const document = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.researchCompletionTime.mockResolvedValue(100);
   controller = new AbortController();
   context = {
     ...testToolContext({ abortSignal: controller.signal }),
@@ -56,7 +63,7 @@ beforeEach(() => {
     messages: "Research this",
     timestamp: 0,
   });
-  mocks.save.mockResolvedValue(document);
+  mocks.save.mockResolvedValue({ document, completedAt: 100 });
   mocks.searches.mockResolvedValue([]);
 });
 
@@ -74,7 +81,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     .mockResolvedValueOnce({ findings: "Follow-up findings" })
     .mockResolvedValueOnce({ complete: true, topics: [] })
     .mockResolvedValueOnce({ content: "# Both findings", title: "Report" });
-  const outputs = await Array.fromAsync(executeEveResearch({}, context));
+  const outputs = await Array.fromAsync(researchStream(context));
 
   expect(agent.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
     "researchPlanner",
@@ -100,7 +107,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     expect.objectContaining({ type: "started" })
   );
   expect(outputs.at(-1)?.updates).toContainEqual(
-    expect.objectContaining({ type: "completed" })
+    expect.objectContaining({ type: "completed", timestamp: 100 })
   );
   expect(mocks.save).toHaveBeenCalledExactlyOnceWith(context, {
     content: "# Both findings",
@@ -128,7 +135,7 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
       );
     }
   );
-  await Array.fromAsync(executeEveResearch({}, context));
+  await Array.fromAsync(researchStream(context));
   expect(
     agent.mock.calls.filter(
       ([name]: Readonly<(typeof agent.mock.calls)[number]>) =>
@@ -155,7 +162,7 @@ it("returns clarification without starting research or saving a document", async
     question: "Which scope?",
     verification: "",
   });
-  const outputs = await Array.fromAsync(executeEveResearch({}, context));
+  const outputs = await Array.fromAsync(researchStream(context));
   expect(outputs).toHaveLength(1);
   expect(outputs[0].output).toEqual({
     answer: "Which scope?",
@@ -173,7 +180,7 @@ it("runs topics sequentially and stops before new work or saving after cancellat
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
     .mockReturnValueOnce(research.promise);
-  const outputs = Array.fromAsync(executeEveResearch({}, context));
+  const outputs = Array.fromAsync(researchStream(context));
   await vi.waitFor(() => {
     expect(agent).toHaveBeenCalledTimes(3);
   });
@@ -187,9 +194,7 @@ it("runs topics sequentially and stops before new work or saving after cancellat
 
 it("validates native outputs and propagates failures without a successful report receipt", async () => {
   agent.mockResolvedValue({ research_brief: 12, title: "Report" });
-  await expect(
-    Array.fromAsync(executeEveResearch({}, context))
-  ).rejects.toThrow();
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow();
   expect(mocks.save).not.toHaveBeenCalled();
   agent
     .mockReset()
@@ -197,9 +202,9 @@ it("validates native outputs and propagates failures without a successful report
     .mockResolvedValueOnce({ complete: true, topics: [] })
     .mockResolvedValueOnce({ content: "Content", title: "Report" });
   mocks.save.mockRejectedValue(new Error("Storage unavailable"));
-  await expect(
-    Array.fromAsync(executeEveResearch({}, context))
-  ).rejects.toThrow("Storage unavailable");
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "Storage unavailable"
+  );
 });
 it("rejects oversized topic batches before starting researchers", async () => {
   agent
@@ -208,9 +213,7 @@ it("rejects oversized topic batches before starting researchers", async () => {
       complete: false,
       topics: ["First", "Second", "Third"],
     });
-  await expect(
-    Array.fromAsync(executeEveResearch({}, context))
-  ).rejects.toThrow();
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow();
   expect(agent).toHaveBeenCalledTimes(2);
   expect(
     z
@@ -238,7 +241,7 @@ it("publishes completed searches when a researcher fails without masking the fai
   mocks.searches.mockResolvedValue([search]);
   const outputs: { updates?: readonly unknown[] }[] = [];
   const consume = async (): Promise<void> => {
-    for await (const output of executeEveResearch({}, context)) {
+    for await (const output of researchStream(context)) {
       outputs.push(output);
     }
   };

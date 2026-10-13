@@ -28,17 +28,14 @@ const storage = vi.hoisted(() => ({
 }));
 
 vi.mock("../lib/file-storage", () => ({
-  deleteFilesByUrls:
-    /* oxlint-disable eslint/require-await -- The Promise-only storage adapter must reject when the provider is unavailable and delete current Map entries on each successful retry; a settled mock would omit the deletion effects this sweep verifies. */
-    async (urls: readonly string[]): Promise<void> => {
-      if (storage.fail) {
-        throw new Error("Provider unavailable");
-      }
-      for (const url of urls) {
-        storage.objects.delete(keyFromFileUrl(url) ?? "");
-      }
-    },
-  /* oxlint-enable eslint/require-await */
+  deleteFilesByUrls: (urls: readonly string[]): void => {
+    if (storage.fail) {
+      throw new Error("Provider unavailable");
+    }
+    for (const url of urls) {
+      storage.objects.delete(keyFromFileUrl(url) ?? "");
+    }
+  },
   *iterateStoredFiles() {
     for (const [pathname, uploadedAt] of storage.objects) {
       yield { pathname, uploadedAt };

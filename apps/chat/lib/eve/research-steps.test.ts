@@ -1,5 +1,6 @@
 import type { WorkflowToolContext } from "eve/tools";
-import { beforeEach, expect, it, vi } from "vitest";
+import type { executeEveDocumentTool } from "./document-tools";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import {
   prepareResearch,
@@ -10,7 +11,7 @@ import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   research: true,
-  save: vi.fn(),
+  save: vi.fn<typeof executeEveDocumentTool>(),
   selected: vi.fn(),
   snapshot: vi.fn(),
   text: true,
@@ -76,8 +77,12 @@ const context = (): WorkflowToolContext => ({
   agents: {},
   ask: vi.fn(),
 });
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.save.mockReset();
   mocks.selected.mockReturnValue(null);
   mocks.research = true;
   mocks.text = true;
@@ -167,4 +172,46 @@ it("does not save after cancellation and retains the root operation identity on 
     { content: "Content", fileIds: [], title: "Report" },
     ctx
   );
+});
+
+it("the durable save records completion only after the document write resolves", async () => {
+  const write =
+    Promise.withResolvers<Awaited<ReturnType<typeof executeEveDocumentTool>>>();
+  mocks.save.mockReturnValue(write.promise);
+  const now = vi.spyOn(Date, "now").mockReturnValue(100);
+  const ctx = context();
+  const report = { content: "# Evidence", title: "Report" };
+  const pending = saveResearchReport(ctx, report);
+  expect(now).not.toHaveBeenCalled();
+  expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
+    "createTextDocument",
+    { ...report, fileIds: [] },
+    ctx
+  );
+  const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
+    date: "2026-10-13",
+    documentId: crypto.randomUUID(),
+    kind: "text",
+    result: "Saved",
+    revisionId: crypto.randomUUID(),
+    status: "success",
+    title: "Report",
+  };
+  now.mockReturnValue(200);
+  write.resolve(document);
+  expect(await pending).toEqual({ document, completedAt: 200 });
+  expect(now).toHaveBeenCalledOnce();
+});
+
+it("a failed save cannot record successful research completion", async () => {
+  const error = new Error("Storage unavailable");
+  mocks.save.mockRejectedValue(error);
+  const now = vi.spyOn(Date, "now");
+  await expect(
+    saveResearchReport(context(), {
+      content: "Evidence",
+      title: "Report",
+    })
+  ).rejects.toBe(error);
+  expect(now).not.toHaveBeenCalled();
 });

@@ -41,7 +41,6 @@ const researchItem: RegistryItem = {
       "tool.ts",
       "availability.ts",
       "progress.tsx",
-      "workflow.ts",
       "task.tsx",
       "agent.ts",
       "schemas.ts",

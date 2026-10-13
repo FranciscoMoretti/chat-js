@@ -6,7 +6,7 @@ const renderRoot = async (
   root: ReturnType<typeof createRoot>,
   children: ReactNode
 ): Promise<void> => {
-  // oxlint-disable-next-line eslint/require-await -- React act exposes its runtime completion promise through the supported async callback overload, even when the render is synchronous.
+  // oxlint-disable-next-line eslint/require-await -- React 19 act retains its scope through async callback settlement and flushes queued effects; a sync callback closes the scope before microtask updates.
   await act(async () => {
     root.render(children);
   });
@@ -15,7 +15,7 @@ const renderRoot = async (
 const unmountRoot = async (
   root: ReturnType<typeof createRoot>
 ): Promise<void> => {
-  // oxlint-disable-next-line eslint/require-await -- React act exposes its runtime completion promise through the supported async callback overload, even when the unmount is synchronous.
+  // oxlint-disable-next-line eslint/require-await -- React 19 async act keeps effect cleanup and queued microtasks inside the awaited scope before the fixture container is removed.
   await act(async () => {
     root.unmount();
   });

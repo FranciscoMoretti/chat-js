@@ -56,7 +56,7 @@ const readResearchSnapshots = async (
   }
   return await Promise.all(requests);
 };
-// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires this durable researchSearchUpdates step to be a top-level named async function declaration.
+// oxlint-disable-next-line eslint/func-style -- EVE 0.61 authored-workflow-directives rejects const-bound steps; record owned child search snapshots so replay never rereads live evidence.
 export async function researchSearchUpdates(
   context: Context
 ): Promise<WebSearchUpdate[]> {

@@ -64,7 +64,7 @@ test("native route loading and identity failure", async () => {
     await takeSnapshot("route-loading");
 
     await act(
-      /* oxlint-disable eslint/require-await -- React act uses its asynchronous overload for rendering completion even though this fixture update itself is synchronous; no unrelated await is inserted. */
+      /* oxlint-disable eslint/require-await -- React 19 async act retains the update scope while the synchronous observer error schedules React Query/provider microtasks, then flushes their rendering. */
       async () => {
         state.rejectIdentity();
       }

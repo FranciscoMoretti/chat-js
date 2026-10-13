@@ -104,26 +104,25 @@ describe("Daytona durable resource boundary", () => {
   });
 
   test("waits for deletion and then confirms provider absence", async () => {
-    const deleteResource =
-      mock<DaytonaResource["delete"]>().mockResolvedValue();
-    const sandbox = resource({
-      delete: deleteResource,
+    const deleting = Promise.withResolvers<boolean>();
+    const deletion = Promise.withResolvers<boolean>();
+    const deleteResource = mock<DaytonaResource["delete"]>(async () => {
+      deleting.resolve(true);
+      await deletion.promise;
     });
-    const get = mock<DaytonaClient["get"]>(
-      /* oxlint-disable eslint/require-await -- The Promise-only provider lookup must inspect whether deletion has been invoked, rejecting as absent only after that invocation rather than following a precomputed result sequence. */
-      async () => {
-        if (deleteResource.mock.calls.length > 0) {
-          throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
-        }
-        return sandbox;
-      }
-      /* oxlint-enable eslint/require-await */
-    );
+    const sandbox = resource({ delete: deleteResource });
+    const get = mock<DaytonaClient["get"]>().mockResolvedValue(sandbox);
     const adapter = createDaytonaProvider(credentials, {
       create: mock<() => Promise<typeof sandbox>>().mockResolvedValue(sandbox),
       get,
     });
-    await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
+    const pending = adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
+    await deleting.promise;
+    // Absence is published only once deletion can finish; no early confirmation.
+    expect(get).toHaveBeenCalledTimes(1);
+    get.mockRejectedValue(new DaytonaNotFoundError("gone", NOT_FOUND_STATUS));
+    deletion.resolve(true);
+    await pending;
     expect(get.mock.calls).toEqual([["allocation-a"], ["allocation-a"]]);
     expect(deleteResource.mock.calls).toEqual([[DELETE_TIMEOUT_SECONDS, true]]);
     expect(get.mock.invocationCallOrder.at(0)).toBeLessThan(
@@ -218,25 +217,21 @@ describe("Daytona durable resource boundary", () => {
 });
 
 test("a new provider session retries cleanup after restart without allocating", async () => {
+  const deleting = Promise.withResolvers<boolean>();
+  const deletion = Promise.withResolvers<boolean>();
   const deleteResource = mock<DaytonaResource["delete"]>()
     .mockRejectedValueOnce(new Error("transient delete failure"))
-    .mockResolvedValue();
-  const sandbox = resource({
-    delete: deleteResource,
-  });
+    .mockImplementation(async () => {
+      deleting.resolve(true);
+      await deletion.promise;
+    });
+  const sandbox = resource({ delete: deleteResource });
+  const get = mock<DaytonaClient["get"]>().mockResolvedValue(sandbox);
   const client = {
     create: mock<() => Promise<DaytonaResource>>().mockRejectedValue(
       new Error("must not allocate during cleanup")
     ),
-    get:
-      /* oxlint-disable eslint/require-await -- The Promise-only lookup must inspect successful deletion attempts across provider sessions and reject as absent only after the retry, preserving invocation-dependent restart state. */
-      async (): Promise<DaytonaResource> => {
-        if (deleteResource.mock.calls.length >= EXPECTED_DELETE_ATTEMPTS) {
-          throw new DaytonaNotFoundError("gone", NOT_FOUND_STATUS);
-        }
-        return sandbox;
-      },
-    /* oxlint-enable eslint/require-await */
+    get,
   };
   await rejects(
     createDaytonaProvider(credentials, client).cleanup.deleteAndConfirmAbsent(
@@ -249,10 +244,21 @@ test("a new provider session retries cleanup after restart without allocating", 
       return true;
     }
   );
-  await createDaytonaProvider(
+  expect(get).toHaveBeenCalledTimes(1);
+  const pending = createDaytonaProvider(
     credentials,
     client
   ).cleanup.deleteAndConfirmAbsent("allocation-a");
+  await deleting.promise;
+  expect(get).toHaveBeenCalledTimes(EXPECTED_DELETE_ATTEMPTS);
+  get.mockRejectedValue(new DaytonaNotFoundError("gone", NOT_FOUND_STATUS));
+  deletion.resolve(true);
+  await pending;
+  expect(get.mock.calls).toEqual([
+    ["allocation-a"],
+    ["allocation-a"],
+    ["allocation-a"],
+  ]);
   expect(deleteResource).toHaveBeenCalledTimes(EXPECTED_DELETE_ATTEMPTS);
   expect(client.create).not.toHaveBeenCalled();
 });

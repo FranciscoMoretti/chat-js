@@ -96,6 +96,19 @@ const input = {
   title: "Answer",
 } as const;
 
+const rejectedMessage = async (
+  pending: Readonly<Promise<unknown>>
+): Promise<string> => {
+  try {
+    await pending;
+    return "completed";
+  } catch (error) {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return "unknown";
+  }
+};
 describe("Daytona allocation lifecycle", () => {
   test("executes exact source only after ownership confirmation and cleans before release", async () => {
     const state = setup();
@@ -140,52 +153,46 @@ describe("Daytona allocation lifecycle", () => {
   test("cancellation during create deletes the eventual allocation without executing", async () => {
     const state = setup();
 
-    state.selected.create =
-      /* oxlint-disable eslint/require-await -- The Promise-only provider create hook must abort during its invocation, before its allocation resolves, to exercise cancellation of an eventual resource. */
-      async (): Promise<FixtureResource> => {
-        state.controller.abort();
-        return state.resource;
-      };
-    /* oxlint-enable eslint/require-await */
-    await rejects(
-      executeInDaytona(
-        input,
-        state.selected,
-        state.ownership,
-        state.controller.signal
-      ),
-      (reason: unknown) => {
-        expect(() => {
-          throw reason;
-        }).toThrow();
-        return true;
-      }
+    const creating = Promise.withResolvers<boolean>();
+    const allocation = Promise.withResolvers<FixtureResource>();
+    state.selected.create = async (): Promise<FixtureResource> => {
+      creating.resolve(true);
+      return await allocation.promise;
+    };
+    const pending = executeInDaytona(
+      input,
+      state.selected,
+      state.ownership,
+      state.controller.signal
     );
+    const rejected = rejectedMessage(pending);
+    await creating.promise;
+    state.controller.abort(new Error("create cancelled"));
+    expect(state.events).toEqual(["reserve"]);
+    allocation.resolve(state.resource);
+    expect(await rejected).toBe("create cancelled");
     expect(state.events).toEqual(["reserve", "delete", "confirm", "release"]);
   });
   test("cancellation during a command deletes once and never returns its result", async () => {
     const state = setup();
+    const executing = Promise.withResolvers<boolean>();
+    const command = Promise.withResolvers<CommandReceipt>();
     state.resource.process.executeCommand =
-      /* oxlint-disable eslint/require-await -- The Promise-only command hook must abort during invocation before resolving late output, to exercise command cancellation and cleanup. */
       async (): Promise<CommandReceipt> => {
-        state.controller.abort();
-        return { exitCode: 0, result: "late output" };
+        executing.resolve(true);
+        return await command.promise;
       };
-    /* oxlint-enable eslint/require-await */
-    await rejects(
-      executeInDaytona(
-        input,
-        state.selected,
-        state.ownership,
-        state.controller.signal
-      ),
-      (reason: unknown) => {
-        expect(() => {
-          throw reason;
-        }).toThrow();
-        return true;
-      }
+    const pending = executeInDaytona(
+      input,
+      state.selected,
+      state.ownership,
+      state.controller.signal
     );
+    const rejected = rejectedMessage(pending);
+    await executing.promise;
+    state.controller.abort();
+    command.resolve({ exitCode: 0, result: "late output" });
+    expect(await rejected).toContain("cancelled");
     expect(state.events).toEqual([
       "reserve",
       "create",
@@ -240,19 +247,6 @@ describe("Daytona allocation lifecycle", () => {
   });
 });
 
-const rejectedMessage = async (
-  pending: Readonly<Promise<unknown>>
-): Promise<string> => {
-  try {
-    await pending;
-    return "completed";
-  } catch (error) {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    return "unknown";
-  }
-};
 test("cancellation settles even when the command never responds, after deletion confirms", async () => {
   const state = setup();
   const command = Promise.withResolvers<{ exitCode: number; result: string }>();
