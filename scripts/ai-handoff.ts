@@ -11,6 +11,7 @@ import {
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "..");
+let stopHookActive = false;
 
 const git = (...args: string[]): Buffer => {
   const result = Bun.spawnSync(["git", ...args], { cwd: root });
@@ -53,6 +54,11 @@ const output = (systemMessage?: string): void => {
 
 const run = async (): Promise<void> => {
   const input: unknown = JSON.parse(await Bun.stdin.text());
+  stopHookActive =
+    typeof input === "object" &&
+    input !== null &&
+    "stop_hook_active" in input &&
+    input.stop_hook_active === true;
   if (
     typeof input !== "object" ||
     input === null ||
@@ -70,23 +76,25 @@ const run = async (): Promise<void> => {
   );
   const statePath = path.join(directory, session);
   const failurePath = `${statePath}.failed`;
+  const activePath = `${statePath}.active`;
   const current = fingerprint();
   if (process.argv[2] === "start") {
     mkdirSync(directory, { recursive: true });
     // Steering and question replies can submit another prompt before Stop.
-    if (!existsSync(statePath)) {
+    if (!existsSync(activePath) || !existsSync(statePath)) {
       writeFileSync(statePath, current);
     }
+    writeFileSync(activePath, "");
     output();
     return;
   }
   if (!existsSync(statePath)) {
-    output(
+    throw new Error(
       "Handoff check skipped: no prompt-start snapshot; run bun lint and bun test:types before handing off code."
     );
-    return;
   }
   if (readFileSync(statePath, "utf-8") === current) {
+    rmSync(activePath, { force: true });
     if (
       existsSync(failurePath) &&
       readFileSync(failurePath, "utf-8") === current
@@ -113,7 +121,8 @@ const run = async (): Promise<void> => {
   writeFileSync(statePath, current);
   if (lint.exitCode !== 0 || types.exitCode !== 0) {
     writeFileSync(failurePath, current);
-    if ("stop_hook_active" in input && input.stop_hook_active === true) {
+    if (stopHookActive) {
+      rmSync(activePath, { force: true });
       output(
         "Handoff checks still fail. Automatic continuation stopped; report the remaining failures to the user."
       );
@@ -123,11 +132,18 @@ const run = async (): Promise<void> => {
     return;
   }
   rmSync(failurePath, { force: true });
+  rmSync(activePath, { force: true });
   output();
 };
 
 try {
   await run();
 } catch (error) {
-  output(`Handoff check could not run: ${String(error)}`);
+  const message = `Handoff check could not run: ${String(error)}`;
+  if (process.argv[2] === "check" && !stopHookActive) {
+    process.stderr.write(`${message}\n`);
+    process.exitCode = 2;
+  } else {
+    output(message);
+  }
 }

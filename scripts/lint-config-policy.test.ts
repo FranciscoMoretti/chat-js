@@ -310,6 +310,8 @@ test.each([null, "lint", "test:types"])(
       const discussion = await runAgentHook(temporary, "check", payload);
       expect(discussion.output).toBe("{}");
       expect(discussion.errors).toBe("");
+      const codingTurn = await runAgentHook(temporary, "start", payload);
+      expect(codingTurn.exitCode).toBe(0);
       await writeFile(
         path.join(temporary, "changed.ts"),
         "export const changed = true;\n"
@@ -319,8 +321,8 @@ test.each([null, "lint", "test:types"])(
       const otherSession = await runAgentHook(temporary, "check", {
         session_id: "different-session",
       });
-      expect(otherSession.output).toContain("no prompt-start snapshot");
-      expect(otherSession.errors).toBe("");
+      expect(otherSession.exitCode).toBe(2);
+      expect(otherSession.errors).toContain("no prompt-start snapshot");
       const result = await runAgentHook(temporary, "check", payload);
       expect(result.exitCode, result.errors).toBe(
         failingScript === null ? 0 : 2
@@ -390,6 +392,26 @@ test.each([null, "lint", "test:types"])(
         const deletion = await runAgentHook(temporary, "check", payload);
         expect(deletion.errors).toContain("lint checked");
       }
+      await writeFile(
+        path.join(temporary, "external.ts"),
+        "export const external = true;\n"
+      );
+      const nextPrompt = await runAgentHook(temporary, "start", payload);
+      expect(nextPrompt.exitCode).toBe(0);
+      const nextDiscussion = await runAgentHook(temporary, "check", payload);
+      expect(nextDiscussion.output).toBe("{}");
+      expect(nextDiscussion.errors).toBe("");
+
+      await rm(path.join(temporary, ".git", "HEAD"));
+      const brokenSnapshot = await runAgentHook(temporary, "check", payload);
+      expect(brokenSnapshot.exitCode).toBe(2);
+      expect(brokenSnapshot.errors).toContain("Handoff check could not run");
+      const brokenRetry = await runAgentHook(temporary, "check", {
+        ...payload,
+        stop_hook_active: true,
+      });
+      expect(brokenRetry.exitCode).toBe(0);
+      expect(brokenRetry.output).toContain("Handoff check could not run");
     } finally {
       await rm(temporary, { force: true, recursive: true });
     }
