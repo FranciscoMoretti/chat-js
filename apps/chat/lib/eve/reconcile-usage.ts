@@ -68,10 +68,10 @@ const reconcileEveSubagentUsage = async (
     })) {
       childIndex += STREAM_EVENT_INCREMENT;
       if (
-        (await ingestEveUsage(ownerId, child.sessionId, event, {
+        !(await ingestEveUsage(ownerId, child.sessionId, event, {
           sessionId,
           turnId: child.rootTurnId,
-        })) === false
+        }))
       ) {
         childUnresolved = true;
       }
@@ -82,7 +82,7 @@ const reconcileEveSubagentUsage = async (
       ) {
         const nested = await getEveSubagent(ownerId, event.data.childSessionId);
 
-        if (!(nested !== undefined) || nested.rootSessionId !== sessionId) {
+        if (nested === null || nested.rootSessionId !== sessionId) {
           throw new Error("Delegated usage requires an owned root binding.");
         }
         discovered.add(nested.sessionId);
@@ -136,7 +136,7 @@ const reconcileEveUsage = async (
         event.type === "compaction.usage" ||
         event.type === "hook.result" ||
         event.type === "action.result") &&
-      priced === false
+      !priced
     ) {
       unresolved = true;
     }

@@ -105,13 +105,13 @@ const ingestToolUsage = async (
   sessionId: string,
   event: Extract<UsageEventReader, { type: "action.result" }>,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   if (event.data.result.kind !== "tool-result") {
-    return undefined;
+    return true;
   }
   const result = toolResultSchema.safeParse(event.data.result.output);
   if (!hasEveToolReceipt(event.data.result.output)) {
-    return undefined;
+    return true;
   }
   const recordedCost = result.success ? result.data.usage.costUsd : undefined;
   return await recordEveUsage({
@@ -124,12 +124,13 @@ const ingestToolUsage = async (
   });
 };
 
+/** Returns whether this event permits the usage cursor to advance. Unpriced completed calls return false. */
 export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
   event: UsageEventReader,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
-): Promise<boolean | undefined> => {
+): Promise<boolean> => {
   if (event.type === "subagent.called" && !event.data.remote) {
     await registerEveSubagent(
       ownerId,
@@ -137,7 +138,7 @@ export const ingestEveUsage = async (
       event.data.childSessionId,
       event.data.turnId
     );
-    return undefined;
+    return true;
   }
   const billingSession = attribution?.sessionId ?? sessionId;
   const eventId = attribution
@@ -166,7 +167,7 @@ export const ingestEveUsage = async (
     event.type !== "compaction.usage" &&
     event.type !== "step.failed"
   ) {
-    return undefined;
+    return true;
   }
   const priced = await recordEveUsage({
     costUsd:
@@ -186,7 +187,7 @@ export const ingestEveUsage = async (
   // reporting a missing completed charge (the same policy used for failed hook calls).
 
   if (event.type === "step.failed") {
-    return undefined;
+    return true;
   }
   return priced;
 };

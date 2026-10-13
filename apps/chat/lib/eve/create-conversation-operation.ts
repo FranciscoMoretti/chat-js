@@ -74,7 +74,7 @@ export const createEveConversationOperation = async (
           { status: 400 }
         );
       }
-      if (!((await readEveGuestOwner(ownerId)) !== undefined)) {
+      if ((await readEveGuestOwner(ownerId)) === null) {
         await reconcileEveOwnerUsage(ownerId);
         if (!(await canSpend(ownerId))) {
           return Response.json(

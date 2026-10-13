@@ -11,6 +11,9 @@ vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 
 const {
+  getBoundEveConversationForSession,
+  getEveConversation,
+  getEveChatPageConversation,
   getDeletingEveConversationForSession,
   getEveConversationProject,
   getEveCreation,
@@ -18,6 +21,8 @@ const {
   readEveSessionMapping,
   updateEveConversationMetadata,
 } = await import("./eve-queries");
+
+const { getEveDeletionState } = await import("./eve-deletion");
 
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const missingId = "00000000-0000-4000-8000-000000000002";
@@ -53,19 +58,14 @@ test("session mappings preserve exact identity and tombstones while absent ident
   const mapping = await readEveSessionMapping({
     reservationId: conversationId,
   });
-  expectTypeOf(mapping).toEqualTypeOf<
-    | Pick<
-        typeof eveConversation.$inferSelect,
-        "creationKind" | "id" | "ownerId" | "sessionId" | "state"
-      >
-    | undefined
-  >();
+  expectTypeOf(mapping).toEqualTypeOf<Pick<
+    typeof eveConversation.$inferSelect,
+    "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+  > | null>();
   expect(mapping).toMatchObject({ id: conversationId, state: "bound" });
   expect(await readEveSessionMapping({ sessionId: "native" })).toEqual(mapping);
-  expect(
-    await readEveSessionMapping({ reservationId: missingId })
-  ).toBeUndefined();
-  expect(await readEveSessionMapping({ sessionId: "unknown" })).toBeUndefined();
+  expect(await readEveSessionMapping({ reservationId: missingId })).toBeNull();
+  expect(await readEveSessionMapping({ sessionId: "unknown" })).toBeNull();
   expect(await ownsEveSession("owner", "native")).toBe(true);
   expect(await ownsEveSession("other", "native")).toBe(false);
 
@@ -84,10 +84,11 @@ test("session mappings preserve exact identity and tombstones while absent ident
 
 test("deletion lookup returns only an owned deleting session", async () => {
   const absent = await getDeletingEveConversationForSession("owner", "native");
-  expectTypeOf(absent).toEqualTypeOf<
-    Pick<typeof eveConversation.$inferSelect, "id"> | undefined
-  >();
-  expect(absent).toBeUndefined();
+  expectTypeOf(absent).toEqualTypeOf<Pick<
+    typeof eveConversation.$inferSelect,
+    "id"
+  > | null>();
+  expect(absent).toBeNull();
   await postgres.exec(
     `update "EveConversation" set state='deleting' where "sessionId"='native'`
   );
@@ -98,10 +99,10 @@ test("deletion lookup returns only an owned deleting session", async () => {
   );
   expect(
     await getDeletingEveConversationForSession("other", "native")
-  ).toBeUndefined();
+  ).toBeNull();
   expect(
     await getDeletingEveConversationForSession("owner", "unknown")
-  ).toBeUndefined();
+  ).toBeNull();
   await postgres.exec(
     `update "EveConversation" set state='bound' where "sessionId"='native'`
   );
@@ -147,4 +148,27 @@ test("creation and metadata lookups preserve no-match results", async () => {
     "id" | "instructions" | "name"
   > | null>();
   expect(unassigned).toBeNull();
+});
+
+test("owner-visible lookup boundaries return null for missing and foreign identities", async () => {
+  expect(await getBoundEveConversationForSession("owner", "native")).toEqual({
+    id: conversationId,
+  });
+  expect(await getBoundEveConversationForSession("other", "native")).toBeNull();
+  expect(
+    await getBoundEveConversationForSession("owner", "missing")
+  ).toBeNull();
+  expect(await getEveConversation("owner", conversationId)).toMatchObject({
+    id: conversationId,
+  });
+  expect(await getEveConversation("other", conversationId)).toBeNull();
+  expect(await getEveConversation("owner", missingId)).toBeNull();
+  expect(await getEveChatPageConversation("other", conversationId)).toBeNull();
+  expect(await getEveChatPageConversation("owner", missingId)).toBeNull();
+  expect(await getEveDeletionState("owner", conversationId)).toEqual({
+    rootId: conversationId,
+    state: "bound",
+  });
+  expect(await getEveDeletionState("other", conversationId)).toBeNull();
+  expect(await getEveDeletionState("owner", missingId)).toBeNull();
 });

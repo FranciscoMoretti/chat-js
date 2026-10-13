@@ -54,10 +54,8 @@ const authorizeDeletionRequest = async (
     resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
     typeof workflowPostgresUrl === "string" &&
     workflowPostgresUrl !== "" &&
-    typeof (await getDeletingEveConversationForSession(
-      owner,
-      rootSessionId
-    )) === "object" &&
+    (await getDeletingEveConversationForSession(owner, rootSessionId)) !==
+      null &&
     (await isFencedEveDescendant(workflowPostgresUrl, rootSessionId, sessionId))
   );
 };
@@ -106,7 +104,7 @@ const readCreationReservation = async (
     reservationId: command.data.operationId,
   });
   if (
-    !(reservation !== undefined) ||
+    reservation === null ||
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
     reservation.state === "deleted" ||
@@ -239,7 +237,7 @@ export const authenticateEveGateway = async (
   }
   const guest = await readEveGuestOwner(owner);
   if (
-    guest !== undefined &&
+    guest !== null &&
     request.headers.get("x-chatjs-deletion") !== "1" &&
     !guestAttributesAllowed(
       guest.expiresAt,
@@ -249,7 +247,7 @@ export const authenticateEveGateway = async (
   ) {
     return null;
   }
-  if (guest !== undefined) {
+  if (guest !== null) {
     attributes.chatjsGuest = "true";
   }
   return {

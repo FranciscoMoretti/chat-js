@@ -60,12 +60,8 @@ test("authenticates and checks origin before dispatching with server-owned ident
   expect(mocks.create).not.toHaveBeenCalled();
   const resolvedResult2 = await POST(request());
   expect(resolvedResult2.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
-    "owner",
-    input,
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Assert the exact call arguments, including the explicit absent third argument.
-    undefined
-  );
+  expect(mocks.create).toHaveBeenCalledOnce();
+  expect(mocks.create).toHaveBeenCalledWith("owner", input, undefined);
 });
 
 test("unauthenticated requests cannot create groups", async () => {

@@ -97,7 +97,7 @@ export async function recordEveUsage(row) {
 const directory = ${JSON.stringify(path.join(fixture, "children"))};
 export async function getEveSubagent(owner, session) {
   try { return JSON.parse(await readFile(directory + "/" + session + ".json", "utf8")); }
-  catch (error) { if (error.code === "ENOENT") return; throw error; }
+  catch (error) { if (error.code === "ENOENT") return null; throw error; }
 }
 export async function registerEveSubagent(owner, parent, session, turn) {
   const ancestor = await getEveSubagent(owner, parent);

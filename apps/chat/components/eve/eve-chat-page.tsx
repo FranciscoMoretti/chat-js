@@ -19,7 +19,7 @@ import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
 
 const creationRecoveryScope = (
-  selected: Awaited<ReturnType<typeof getEveChatPageConversation>>
+  selected: Awaited<ReturnType<typeof getEveChatPageConversation>> | undefined
 ): CreationScope | undefined => {
   if (hasText(selected?.parentConversationId)) {
     return { conversationId: selected.parentConversationId };

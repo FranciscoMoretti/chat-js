@@ -208,7 +208,7 @@ const admitGuestCreation = async (
     principal.ownerId,
     input.operationId
   );
-  if (typeof existing === "object" && existing.state !== "released") {
+  if (existing !== null && existing.state !== "released") {
     if (existing.requestHash !== requestHash) {
       return Response.json(
         { error: "This operation has different content." },

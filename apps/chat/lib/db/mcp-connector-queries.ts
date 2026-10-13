@@ -27,13 +27,13 @@ const getMcpConnectorById = async ({
   id,
 }: Readonly<{
   id: string;
-}>): Promise<McpConnector | undefined> => {
+}>): Promise<McpConnector | null> => {
   try {
     const [connector] = await db
       .select()
       .from(mcpConnector)
       .where(eq(mcpConnector.id, id));
-    return connector;
+    return connector ?? null;
   } catch (error) {
     log.error(
       { err: error },
@@ -50,7 +50,7 @@ const getMcpConnectorByNameId = async ({
   userId: string | null;
   nameId: string;
   excludeId?: string;
-}>): Promise<McpConnector | undefined> => {
+}>): Promise<McpConnector | null> => {
   try {
     const conditions = [
       eq(mcpConnector.nameId, nameId),
@@ -65,7 +65,7 @@ const getMcpConnectorByNameId = async ({
         : and(...conditions);
 
     const [connector] = await db.select().from(mcpConnector).where(whereClause);
-    return connector;
+    return connector ?? null;
   } catch (error) {
     log.error(
       { err: error },

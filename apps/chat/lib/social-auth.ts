@@ -16,7 +16,7 @@ const SOCIAL_AUTH_PROVIDER_ORDER: Record<SocialAuthProvider, number> = {
 };
 
 const isSocialAuthProvider = (
-  value: string | null | undefined
+  value?: string | null
 ): value is SocialAuthProvider =>
   typeof value === "string" && Object.hasOwn(SOCIAL_AUTH_PROVIDER_ORDER, value);
 

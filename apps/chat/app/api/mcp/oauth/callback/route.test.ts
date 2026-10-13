@@ -163,8 +163,7 @@ it("an attempt completed between lookup and deletion retains its client", async 
     state: "state",
     tokens: null,
   });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.deleteSession.mockResolvedValue(undefined);
+  mocks.deleteSession.mockResolvedValue(null);
   await GET(
     new NextRequest(
       "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"

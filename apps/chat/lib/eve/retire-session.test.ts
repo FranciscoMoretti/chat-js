@@ -60,8 +60,7 @@ beforeEach(() => {
   mocks.deleting.mockResolvedValue({ id: "conversation" });
   mocks.reset.mockResolvedValue({ status: "reset" });
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.usage.mockResolvedValue(undefined);
+  mocks.usage.mockResolvedValue(true);
 });
 
 it("retires before reading and settling the final snapshot, including retries", async () => {
@@ -81,8 +80,7 @@ it("retires before reading and settling the final snapshot, including retries", 
 });
 
 it("rejects non-deleting or foreign sessions before native access", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.deleting.mockResolvedValue(undefined);
+  mocks.deleting.mockResolvedValue(null);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "not pending deletion"
   );
@@ -105,8 +103,7 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
 });
 
 it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.begin.mockResolvedValueOnce(undefined);
+  mocks.begin.mockResolvedValueOnce(null);
   expect(
     await retireEveFamilyForDeletion("stranger", "conversation")
   ).toBeUndefined();

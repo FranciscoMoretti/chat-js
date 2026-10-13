@@ -45,7 +45,7 @@ it("rejects a subagent inheriting its parent's reservation attribute", async () 
   expect(mocks.bind).not.toHaveBeenCalled();
 });
 it.each([
-  [undefined, "identity_missing"],
+  [null, "identity_missing"],
   [{ ownerId: "foreign", state: "creating" }, "owner_mismatch"],
   [{ ownerId: "owner", state: "deleted" }, "identity_deleted"],
   [{ ownerId: "owner", state: "deleting" }, "identity_deleted"],
@@ -61,7 +61,7 @@ it.each([
       | { ownerId: string; state: string }
       | { ownerId: string; sessionId: string; state: string }
       | { ownerId: string; sessionId: null; state: string }
-      | undefined
+      | null
     >,
     code
   ) => {
@@ -118,8 +118,7 @@ it("leaves pending copies to their resource journal", async () => {
   expect(mocks.request).not.toHaveBeenCalled();
 });
 it("does not call missing pre-attribute identity corruption", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   await expect(
     resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000))
   ).rejects.toMatchObject({ code: "identity_pending" });

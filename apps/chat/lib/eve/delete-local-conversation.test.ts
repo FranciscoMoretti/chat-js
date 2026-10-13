@@ -115,8 +115,7 @@ test("partial native purge retains pending state and retry runs the full orderin
 });
 
 test("foreign or missing families cannot erase native or application data", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.resources.mockResolvedValue(undefined);
+  mocks.resources.mockResolvedValue(null);
   expect(
     await deleteLocalEveConversationFamily("foreign", "root", "/app")
   ).toBeUndefined();

@@ -1,6 +1,6 @@
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import React from "react";
+import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import type { ControllerRenderProps } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -135,9 +135,20 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
   expect(container.textContent).toContain("Name is required");
   expect(container.textContent).toContain("Custom element");
   expect(container.querySelector('[aria-invalid="true"]')).toBeTruthy();
+  expect(container.querySelectorAll("label")).toHaveLength(2);
+  for (const label of container.querySelectorAll("label")) {
+    expect(label.control?.getAttribute("name")).toBe("name");
+    expect(label.control?.getAttribute("aria-describedby")).toContain(
+      `${label.htmlFor.replace("-form-item", "")}-form-item-description`
+    );
+  }
   await takeSnapshot("assertion-contract-visible-states");
-  await page.getByRole("button", { name: "More" }).nth(1).click();
-  await page.getByText("Rename", { exact: true }).click();
+  await act(async () => {
+    await page.getByRole("button", { name: "More" }).nth(1).click();
+  });
+  await act(async () => {
+    await page.getByText("Rename", { exact: true }).click();
+  });
   await expect.element(page.getByRole("dialog")).toBeVisible();
   await takeSnapshot("retired-project-metadata-editor-fallback");
 

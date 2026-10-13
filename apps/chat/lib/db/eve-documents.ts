@@ -1260,13 +1260,13 @@ const captureEveNamedDocumentCheckpoint = async (
  * @param {string} ownerId - Owner recorded on the authorized revision.
  * @param {string} documentId - Document identity expected by the ancestry lookup.
  * @param {string} revisionId - Selected revision whose content the caller is authorized to read.
- * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision row, or no row when that exact owned revision is absent.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | null>} Persisted revision row, or no row when that exact owned revision is absent.
  */
 const readDocumentRevision = async (
   ownerId: string,
   documentId: string,
   revisionId: string
-): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
+): Promise<typeof eveDocumentRevision.$inferSelect | null> => {
   const revisions = await db
     .select()
     .from(eveDocumentRevision)
@@ -1277,7 +1277,7 @@ const readDocumentRevision = async (
         eq(eveDocumentRevision.documentId, documentId)
       )
     );
-  return revisions.at(FIRST_ROW_INDEX);
+  return revisions.at(FIRST_ROW_INDEX) ?? null;
 };
 /**
  * Content is loaded only for the selected, accessible revision.
@@ -1285,14 +1285,14 @@ const readDocumentRevision = async (
  * @param {string} conversationId - Conversation whose current head scopes the history lookup.
  * @param {string} documentId - Document identity within that conversation.
  * @param {string | undefined} revisionId - Requested ancestor revision; omission or empty text selects the latest.
- * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision content, or no revision when the selected ancestry is unavailable.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | null>} Persisted revision content, or no revision when the selected ancestry is unavailable.
  */
 const getEveDocumentRevision = async (
   ownerId: string,
   conversationId: string,
   documentId: string,
   revisionId?: string
-): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
+): Promise<typeof eveDocumentRevision.$inferSelect | null> => {
   const history = await getEveDocumentHistory(
     ownerId,
     conversationId,
@@ -1306,7 +1306,7 @@ const getEveDocumentRevision = async (
             revision.id === revisionId
         );
   if (!selected) {
-    return undefined;
+    return null;
   }
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };

@@ -76,7 +76,7 @@ export const resolveEveConversationScope = async (
       ? { reservationId: identity.data }
       : { sessionId }
   );
-  if (!(row !== undefined)) {
+  if (row === null) {
     throw new EveSessionMappingError(
       isNonEmptyString(identity.data) ? "identity_missing" : "identity_pending"
     );

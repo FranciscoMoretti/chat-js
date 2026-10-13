@@ -79,8 +79,7 @@ it("runs owner-authorized family deletion with a server-controlled worker root",
 });
 
 it("hides unavailable and foreign bindings without cleanup", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.state.mockResolvedValue(undefined);
+  mocks.state.mockResolvedValue(null);
   const resolvedResult2 = await DELETE(request(), context);
   expect(resolvedResult2.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.state).toHaveBeenCalledWith("owner", id);

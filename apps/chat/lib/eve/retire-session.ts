@@ -48,7 +48,7 @@ const reconcileRetiredSessionUsage = async (
   let unresolved = false;
   for (const event of events) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Ingest snapshot events in native order before subagent reconciliation; unresolved costs prevent retirement receipts and payload erasure.
-    if ((await ingestEveUsage(ownerId, sessionId, event)) === false) {
+    if (!(await ingestEveUsage(ownerId, sessionId, event))) {
       unresolved = true;
     }
   }
@@ -75,10 +75,7 @@ const retireEveSessionForDeletion = async (
   assertEveConfigured();
 
   if (
-    !(
-      (await getDeletingEveConversationForSession(ownerId, sessionId)) !==
-      undefined
-    )
+    (await getDeletingEveConversationForSession(ownerId, sessionId)) === null
   ) {
     throw new Error("Conversation is not pending deletion.");
   }

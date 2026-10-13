@@ -84,8 +84,7 @@ it("requires authentication, same origin and bound ownership before native acces
   );
   expect(resolvedResult2.status).toBe(HTTP_STATUS.forbidden);
   expect(mocks.source).not.toHaveBeenCalled();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
-  mocks.source.mockResolvedValueOnce(undefined);
+  mocks.source.mockResolvedValueOnce(null);
   const resolvedResult3 = await POST(request(), context);
   expect(resolvedResult3.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.source).toHaveBeenCalledWith("owner", id);

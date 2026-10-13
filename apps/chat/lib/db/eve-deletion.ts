@@ -310,22 +310,22 @@ interface EveDeletionState {
 /** Read the owner-visible root and native deletion state, including identity tombstones.
  * @param {string} ownerId - Owner required by both identity and member queries.
  * @param {string} conversationId - Root chat ID or member conversation ID to inspect.
- * @returns {Promise<EveDeletionState | undefined>} Root identity and state, or no receipt when the owner has no matching identity or member.
+ * @returns {Promise<EveDeletionState | null>} Root identity and state, or no receipt when the owner has no matching identity or member.
  */
 const getEveDeletionState = async (
   ownerId: string,
   conversationId: string
-): Promise<EveDeletionState | undefined> => {
+): Promise<EveDeletionState | null> => {
   const [row] = await readOwnedEveDeletionReceipt(db, ownerId, conversationId);
   if (!row) {
-    return undefined;
+    return null;
   }
   if (row.state) {
     return { rootId: row.chatId, state: row.state };
   }
   const [member] = await readOwnedEveDeletionMemberState(db, ownerId, row);
   if (!member) {
-    return undefined;
+    return null;
   }
   return { rootId: row.chatId, state: member.state };
 };

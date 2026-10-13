@@ -73,7 +73,7 @@ it("retains failed-step evidence without reporting an unpriced completed call", 
     meta: { at: "2026-09-21T00:00:00Z", id: "failed-before-model" },
     type: "step.failed",
   } satisfies MessageStreamEvent;
-  expect(await ingestEveUsage("owner", "session", event)).toBeUndefined();
+  expect(await ingestEveUsage("owner", "session", event)).toBe(true);
   expect(record).toHaveBeenCalledWith(
     expect.objectContaining({
       costUsd: 0,
@@ -220,4 +220,21 @@ it("attributes child model events to the root turn without billing delegation su
     type: "subagent.completed",
   });
   expect(record).toHaveBeenCalledTimes(2);
+});
+
+it("permits cursor advancement for events without a billable tool receipt", async () => {
+  expect(
+    await ingestEveUsage(
+      "owner",
+      "session",
+      toolEvent({ answer: "ordinary output" })
+    )
+  ).toBe(true);
+  expect(
+    await ingestEveUsage("owner", "session", {
+      type: "session.completed",
+      meta: { at: "2026-10-13T00:00:00Z", id: "completion" },
+    })
+  ).toBe(true);
+  expect(record).not.toHaveBeenCalled();
 });

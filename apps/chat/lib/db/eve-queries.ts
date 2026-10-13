@@ -94,7 +94,7 @@ const visibleConversation = inArray(eveConversation.state, [
 const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id"> | undefined> => {
+): Promise<Pick<ConversationRow, "id"> | null> => {
   const rows = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -106,23 +106,20 @@ const getBoundEveConversationForSession = async (
       )
     )
     .limit(SINGLE_MATCH_LIMIT);
-  return rows[FIRST_RESULT_INDEX];
+  return rows[FIRST_RESULT_INDEX] ?? null;
 };
 
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
  * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
- * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state"> | undefined>} The durable identity and state, including tombstones, or undefined when no mapping exists.
+ * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
-): Promise<
-  | Pick<
-      ConversationRow,
-      "creationKind" | "id" | "ownerId" | "sessionId" | "state"
-    >
-  | undefined
-> => {
+): Promise<Pick<
+  ConversationRow,
+  "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+> | null> => {
   const [row] = await db
     .select({
       creationKind: eveConversation.creationKind,
@@ -137,7 +134,7 @@ const readEveSessionMapping = async (
         ? eq(eveConversation.id, identity.reservationId)
         : eq(eveConversation.sessionId, identity.sessionId)
     );
-  return row;
+  return row ?? null;
 };
 const ownsEveSession = async (
   ownerId: string,
@@ -248,7 +245,7 @@ const listEveConversations = async (
 const getEveConversation = async (
   ownerId: string,
   id: string
-): Promise<ConversationDetails | undefined> => {
+): Promise<ConversationDetails | null> => {
   const [row] = await db
     .select({
       chat: {
@@ -277,7 +274,7 @@ const getEveConversation = async (
     )
     .limit(SINGLE_MATCH_LIMIT);
   if (!hasQueryRow(row)) {
-    return undefined;
+    return null;
   }
   return {
     ...row.conversation,
@@ -310,7 +307,7 @@ const getEveChatPageConversation = async (
     .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
     .limit(SINGLE_MATCH_LIMIT);
   if (!hasQueryRow(logical)) {
-    return undefined;
+    return null;
   }
   if (isNonemptyString(logical.activeConversationId)) {
     const active = await getEveConversation(
@@ -340,7 +337,7 @@ const getEveChatPageConversation = async (
   if (hasQueryRow(member)) {
     return await getEveConversation(ownerId, member.id);
   }
-  return undefined;
+  return null;
 };
 
 const getEveChatIdentity = async (
@@ -671,19 +668,16 @@ const reserveEveConversation = async (
  * The returned session IDs can then be retired before physical purge.
  * @param {string} ownerId Owner of the selected conversation or chat.
  * @param {string} id Conversation or logical chat ID used to find the family.
- * @returns {Promise<{ conversations: Array<Pick<ConversationRow, "id" | "sessionId">>; rootId: string } | undefined>} The chat root and fenced conversation IDs, or undefined when no owned record matches.
+ * @returns {Promise<{ conversations: Array<Pick<ConversationRow, "id" | "sessionId">>; rootId: string } | null>} The chat root and fenced conversation IDs, or null when no owned record matches.
  * @throws {CreationConflictError} when creation recovery is still in progress.
  */
 const beginEveConversationDeletion = async (
   ownerId: string,
   id: string
-): Promise<
-  | {
-      conversations: Pick<ConversationRow, "id" | "sessionId">[];
-      rootId: string;
-    }
-  | undefined
-> =>
+): Promise<{
+  conversations: Pick<ConversationRow, "id" | "sessionId">[];
+  rootId: string;
+} | null> =>
   await db.transaction(
     async (
       tx: CreationTransactionView
@@ -709,7 +703,7 @@ const beginEveConversationDeletion = async (
           )
         );
       if (!hasQueryRow(source)) {
-        return undefined;
+        return null;
       }
       const familyCondition = and(
         eq(eveConversation.ownerId, ownerId),
@@ -1279,12 +1273,12 @@ const listEveConversationBranches = async (
  * Internal cleanup only; does not grant browser or conversation access.
  * @param {string} ownerId Owner whose deleting session mapping is inspected.
  * @param {string} sessionId Native session being removed by internal cleanup.
- * @returns {Promise<Pick<ConversationRow, "id"> | undefined>} The deleting conversation identity, or undefined when no owned deleting mapping exists.
+ * @returns {Promise<Pick<ConversationRow, "id"> | null>} The deleting conversation identity, or null when no owned deleting mapping exists.
  */
 const getDeletingEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-): Promise<Pick<ConversationRow, "id"> | undefined> => {
+): Promise<Pick<ConversationRow, "id"> | null> => {
   const [row] = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -1296,7 +1290,7 @@ const getDeletingEveConversationForSession = async (
       )
     )
     .limit(SINGLE_MATCH_LIMIT);
-  return row;
+  return row ?? null;
 };
 
 const getEveConversationProject = async (

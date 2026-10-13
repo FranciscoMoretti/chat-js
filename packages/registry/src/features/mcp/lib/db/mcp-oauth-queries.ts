@@ -237,11 +237,11 @@ const saveTokensAndCleanup = async ({
 };
 /** Remove only an unfinished OAuth attempt, atomically preserving any token winner.
  * @param {Readonly<{ state: string }>} options - State identifying the unfinished authorization attempt.
- * @returns {Promise<McpOAuthSession | undefined>} The removed row when no token winner was present.
+ * @returns {Promise<McpOAuthSession | null>} The removed row when no token winner was present.
  */
 const deletePendingSessionByState = async (
   options: Readonly<{ state: string }>
-): Promise<McpOAuthSession | undefined> => {
+): Promise<McpOAuthSession | null> => {
   const { state } = options;
   const [session] = await db
     .delete(mcpOAuthSession)
@@ -249,7 +249,7 @@ const deletePendingSessionByState = async (
       and(eq(mcpOAuthSession.state, state), isNull(mcpOAuthSession.tokens))
     )
     .returning();
-  return session;
+  return session ?? null;
 };
 const deleteSessionByState = async ({
   state,

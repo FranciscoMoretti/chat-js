@@ -310,7 +310,7 @@ it("rejects a missing conversation before persisting a revision", async (): Prom
   ).rejects.toThrow("Conversation not found.");
   await expect(
     getEveDocumentRevision("document-owner", conversationId, documentId)
-  ).resolves.toBeUndefined();
+  ).resolves.toBeNull();
 });
 
 it("preserves replay identity and empty revision selection", async (): Promise<void> => {

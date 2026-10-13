@@ -19,7 +19,7 @@ type EveSubagentBinding = Pick<
 const getEveSubagent = async (
   ownerId: string,
   sessionId: string
-): Promise<EveSubagentBinding | undefined> => {
+): Promise<EveSubagentBinding | null> => {
   const [binding] = await db
     .select({
       conversationId: eveSubagentSession.conversationId,
@@ -44,7 +44,7 @@ const getEveSubagent = async (
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
-  return binding;
+  return binding ?? null;
 };
 
 /**
@@ -93,7 +93,7 @@ const registerEveSubagent = async (
     .onConflictDoNothing();
   const bound = await getEveSubagent(ownerId, sessionId);
   if (
-    bound === undefined ||
+    bound === null ||
     bound.conversationId !== conversationId ||
     bound.parentSessionId !== parentSessionId ||
     bound.rootTurnId !== rootTurnId

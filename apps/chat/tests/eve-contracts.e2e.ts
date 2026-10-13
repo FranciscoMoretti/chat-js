@@ -419,7 +419,7 @@ test.each(["deleting", "deleted"] as const)(
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
       .where(eq(eveChat.id, creation?.chatId ?? ""));
-    expect(await getEveConversation(owner, bound.id)).toBeUndefined();
+    expect(await getEveConversation(owner, bound.id)).toBeNull();
     expect(await getPublicEveConversation(bound.id)).toBeUndefined();
     expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
     expect(
@@ -429,7 +429,7 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
     expect(
       await getDeletingEveConversationForSession("other", bound.sessionId)
-    ).toBeUndefined();
+    ).toBeNull();
 
     const recoveryConversations = await listEveConversations(owner);
     const recoveryRow = recoveryConversations.items.find(
@@ -497,7 +497,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
-  expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
+  expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, child.id);
@@ -650,7 +650,7 @@ test("final application deletion erases family content, preserves accounting and
       expect(row.sessionId).toBe(
         id === root.id ? root.sessionId : child.sessionId
       );
-      expect(await getEveConversation(owner, id)).toBeUndefined();
+      expect(await getEveConversation(owner, id)).toBeNull();
     })
   );
   const deletedCreation = await getEveCreation(owner, operation);

@@ -120,13 +120,10 @@ const createEveGuest = async (
 const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string
-): Promise<
-  | Pick<
-      typeof eveGuestMessage.$inferSelect,
-      "requestHash" | "reservationId" | "state"
-    >
-  | undefined
-> => {
+): Promise<Pick<
+  typeof eveGuestMessage.$inferSelect,
+  "requestHash" | "reservationId" | "state"
+> | null> => {
   const [message] = await db
     .select({
       requestHash: eveGuestMessage.requestHash,
@@ -140,7 +137,7 @@ const readExistingEveGuestMessage = async (
         eq(eveGuestMessage.operationId, operationId)
       )
     );
-  return message;
+  return message ?? null;
 };
 interface GuestBootstrap {
   tokenHash: string;
@@ -553,16 +550,16 @@ const releaseEveGuestCreation = async (
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
  * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
- * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | undefined>} The stored expiry, including expired identities, or undefined when no guest identity exists.
+ * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | null>} The stored expiry, including expired identities, or null when no guest identity exists.
  */
 const readEveGuestOwner = async (
   ownerId: string
-): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | undefined> => {
+): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt"> | null> => {
   const [guest] = await db
     .select({ expiresAt: eveGuest.expiresAt })
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, ownerId));
-  return guest;
+  return guest ?? null;
 };
 export {
   commitEveGuestMessage,

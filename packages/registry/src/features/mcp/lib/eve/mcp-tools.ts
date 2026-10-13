@@ -79,22 +79,20 @@ const withAbort = async <T>(
 };
 
 const assertConnector = (
-  connector:
-    | Readonly<
-        Pick<
-          McpConnector,
-          | "enabled"
-          | "userId"
-          | "id"
-          | "name"
-          | "oauthClientId"
-          | "oauthClientSecret"
-          | "type"
-          | "url"
-          | "requireApproval"
-        >
-      >
-    | undefined,
+  connector: Readonly<
+    Pick<
+      McpConnector,
+      | "enabled"
+      | "userId"
+      | "id"
+      | "name"
+      | "oauthClientId"
+      | "oauthClientSecret"
+      | "type"
+      | "url"
+      | "requireApproval"
+    >
+  > | null,
   ownerId: string
 ): Readonly<
   Pick<
@@ -166,10 +164,9 @@ const withConnector = async <T>(
   };
   signal.addEventListener("abort", cancel, { once: true });
   try {
-    await withAbort(
-      async () => await client.connect(undefined, signal),
-      signal
-    );
+    await withAbort(async () => {
+      await client.connect({ abortSignal: signal });
+    }, signal);
     signal.throwIfAborted();
     if (client.status !== "connected") {
       throw new Error(

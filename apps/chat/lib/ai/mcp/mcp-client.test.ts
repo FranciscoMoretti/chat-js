@@ -198,8 +198,8 @@ it("callers cancel their shared connection waits independently", async () => {
   });
   const firstAbort = new AbortController();
   const secondAbort = new AbortController();
-  const first = client.connect(undefined, firstAbort.signal);
-  const second = client.connect(undefined, secondAbort.signal);
+  const first = client.connect({ abortSignal: firstAbort.signal });
+  const second = client.connect({ abortSignal: secondAbort.signal });
   firstAbort.abort(new Error("first cancelled"));
   await expect(first).rejects.toThrow("first cancelled");
   expect(
@@ -220,7 +220,7 @@ it("cleans up a failed shared attempt after its only caller cancels", async () =
     url: "https://mcp.test",
   });
   const controller = new AbortController();
-  const waiting = client.connect(undefined, controller.signal);
+  const waiting = client.connect({ abortSignal: controller.signal });
   controller.abort(new Error("caller cancelled"));
   await expect(waiting).rejects.toThrow("caller cancelled");
   initialization.reject(new Error("shared initialization failed"));

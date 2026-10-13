@@ -70,10 +70,8 @@ beforeEach(() => {
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
   mocks.env.TRUSTED_CLIENT_IP_HEADER = undefined;
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.source.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.existing.mockResolvedValue(undefined);
+  mocks.source.mockResolvedValue(null);
+  mocks.existing.mockResolvedValue(null);
   mocks.files.mockResolvedValue();
   mocks.model.mockResolvedValue({
     apiModelId: "cheap",

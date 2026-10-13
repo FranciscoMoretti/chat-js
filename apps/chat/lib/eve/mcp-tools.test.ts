@@ -15,7 +15,7 @@ import { createToolResult, hasEveToolReceipt } from "./tool-result";
 const mocks = vi.hoisted(() => ({
   close: vi.fn<() => Promise<void>>(),
   configure: vi.fn(),
-  connect: vi.fn(),
+  connect: vi.fn<() => Promise<void>>(),
   enabled: { enabled: true },
   get: vi.fn(),
   list: vi.fn(),
@@ -111,8 +111,7 @@ beforeEach(() => {
   mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.connect.mockResolvedValue(undefined);
+  mocks.connect.mockResolvedValue();
   mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
@@ -216,8 +215,7 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.get.mockResolvedValue(undefined);
+  mocks.get.mockResolvedValue(null);
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("unavailable");

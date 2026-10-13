@@ -102,10 +102,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     );
     try {
       await Promise.allSettled(
-        clients.map(
-          async (client: Readonly<Pick<MCPClient, "connect">>) =>
-            await client.connect(undefined, AbortSignal.timeout(15_000))
-        )
+        clients.map(async (client: Readonly<Pick<MCPClient, "connect">>) => {
+          await client.connect({ abortSignal: AbortSignal.timeout(15_000) });
+        })
       );
       expect(
         clients.map(

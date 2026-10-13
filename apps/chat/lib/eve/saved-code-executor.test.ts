@@ -110,8 +110,7 @@ test.each([
 });
 
 test("never executes a revision outside the resolved conversation", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   const execution = executeEveCodeDocument(input, testToolContext());
   await expect(Array.fromAsync(execution)).rejects.toThrow(
     "Code document not found"

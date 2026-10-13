@@ -60,23 +60,21 @@ const createReservation = async (
 test("guest lookups preserve missing results and retain expired owner identities", async () => {
   const input = await createReservation(10, 10);
   const owner = await readEveGuestOwner(input.ownerId);
-  expectTypeOf(owner).toEqualTypeOf<
-    Pick<typeof eveGuest.$inferSelect, "expiresAt"> | undefined
-  >();
+  expectTypeOf(owner).toEqualTypeOf<Pick<
+    typeof eveGuest.$inferSelect,
+    "expiresAt"
+  > | null>();
   expect(owner?.expiresAt).toBeInstanceOf(Date);
-  expect(await readEveGuestOwner("unknown")).toBeUndefined();
+  expect(await readEveGuestOwner("unknown")).toBeNull();
   const missingMessage = await readExistingEveGuestMessage(
     input.ownerId,
     input.operationId
   );
-  expectTypeOf(missingMessage).toEqualTypeOf<
-    | Pick<
-        typeof eveGuestMessage.$inferSelect,
-        "requestHash" | "reservationId" | "state"
-      >
-    | undefined
-  >();
-  expect(missingMessage).toBeUndefined();
+  expectTypeOf(missingMessage).toEqualTypeOf<Pick<
+    typeof eveGuestMessage.$inferSelect,
+    "requestHash" | "reservationId" | "state"
+  > | null>();
+  expect(missingMessage).toBeNull();
   const reserved = await reserveEveGuestMessage(input);
   if (reserved.status !== "reserved") {
     throw new Error("Expected a fresh reservation.");
@@ -90,7 +88,7 @@ test("guest lookups preserve missing results and retain expired owner identities
   });
   expect(
     await readExistingEveGuestMessage("unknown", input.operationId)
-  ).toBeUndefined();
+  ).toBeNull();
   await postgres.query(
     `update "EveGuest" set "expiresAt"='2000-01-01T00:00:00Z' where "ownerId"=$1`,
     [input.ownerId]

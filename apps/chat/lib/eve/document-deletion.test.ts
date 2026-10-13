@@ -74,8 +74,7 @@ it("requests native approval only for the current owned title and revision", asy
   await expect(
     requestDocumentDeletion({ ...input, title: "Misleading title" }, context)
   ).rejects.toThrow("Document changed");
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "Document not found"
   );

@@ -77,7 +77,7 @@ export class MCPClient {
   private client?: McpClientInstance;
   private generation = INITIAL_CONNECTION_GENERATION;
   private connectionAbort?: AbortController;
-  private connectPromise?: Promise<McpClientInstance | undefined>;
+  private connectPromise?: Promise<void>;
   private readonly invalidateCache?: () => void;
   private oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
@@ -168,9 +168,12 @@ export class MCPClient {
     return client && client.serverInfo;
   }
 
-  public async connect(
-    oauthState?: string,
-    abortSignal?: Readonly<
+  public async connect({
+    oauthState,
+    abortSignal,
+  }: {
+    readonly oauthState?: string;
+    readonly abortSignal?: Readonly<
       Pick<
         AbortSignal,
         | "throwIfAborted"
@@ -179,18 +182,16 @@ export class MCPClient {
         | "removeEventListener"
         | "aborted"
       >
-    >
-  ): Promise<McpClientInstance | undefined> {
+    >;
+  } = {}): Promise<void> {
     if (abortSignal) {
       abortSignal.throwIfAborted();
     }
     if (!this.connectPromise) {
       const { generation } = this;
-      this.connectPromise = (async (): Promise<
-        McpClientInstance | undefined
-      > => {
+      this.connectPromise = (async (): Promise<void> => {
         try {
-          return await this.connectOnce(oauthState);
+          await this.connectOnce(oauthState);
         } finally {
           // Only close() can retire a pending attempt and allow a replacement.
           if (this.generation === generation) {
@@ -200,7 +201,8 @@ export class MCPClient {
       })();
     }
     if (!abortSignal) {
-      return await this.connectPromise;
+      await this.connectPromise;
+      return;
     }
     const aborted = Promise.withResolvers<never>();
     const cancel = (): void => {
@@ -211,16 +213,14 @@ export class MCPClient {
       cancel();
     }
     try {
-      return await Promise.race([this.connectPromise, aborted.promise]);
+      await Promise.race([this.connectPromise, aborted.promise]);
     } finally {
       abortSignal.removeEventListener("abort", cancel);
     }
   }
-  private async connectOnce(
-    oauthState?: string
-  ): Promise<McpClientInstance | undefined> {
+  private async connectOnce(oauthState?: string): Promise<void> {
     if (this.status === "connected" && this.client) {
-      return this.client;
+      return;
     }
 
     const { generation, oauthProvider } = this;
@@ -257,7 +257,6 @@ export class MCPClient {
       this.client = client;
       this.authorizationUrl = undefined;
       this.connectionStatus = "connected";
-      return this.client;
     } catch (error) {
       if (generation !== this.generation || signal.aborted) {
         if (generation === this.generation) {
@@ -273,7 +272,7 @@ export class MCPClient {
           { authUrl: error.authorizationUrl.toString(), connectorId: this.id },
           "OAuth authorization required"
         );
-        return undefined;
+        return;
       }
 
       this.connectionStatus = "disconnected";
@@ -313,7 +312,7 @@ export class MCPClient {
     }
 
     try {
-      await this.connect(undefined, abortSignal);
+      await this.connect({ abortSignal });
       // Check if OAuth is required (authorizationUrl gets set during connect)
       if (this.authorizationUrl !== undefined) {
         return { needsAuth: true, status: "authorizing" };

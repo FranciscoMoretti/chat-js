@@ -422,7 +422,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
         input.documentId
       );
       if (beforeTurnId === "turn_0") {
-        expect(document).toBeUndefined();
+        expect(document).toBeNull();
       } else {
         expect(document?.id).toBe(first.id);
         expect(document?.content).toBe("Original");
@@ -849,7 +849,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
-  ).toBeUndefined();
+  ).toBeNull();
 });
 
 test("document references protect owned files across families and revision history", async () => {
@@ -1010,7 +1010,7 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
   );
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   // Include a nonempty manifest to verify FK-safe family cleanup too.
   await captureEveNamedDocumentCheckpoint(
     owner,
@@ -1311,7 +1311,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
   expect(
     await getEveDocumentRevision(owner, root.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   const childRevisionAfterDeletion = await getEveDocumentRevision(
     owner,
     child.id,
@@ -1330,7 +1330,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   );
   expect(
     await getEveDocumentRevision(owner, later.id, input.documentId)
-  ).toBeUndefined();
+  ).toBeNull();
   const replacement = await saveEveDocumentRevision({
     ...input,
     operationId: crypto.randomUUID(),

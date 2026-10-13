@@ -62,8 +62,8 @@ afterAll(async () => {
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
   const child = await registerEveSubagent("owner", "root", "child", "turn_1");
   const missing = await getEveSubagent("owner", "unknown");
-  expectTypeOf(missing).toEqualTypeOf<typeof child | undefined>();
-  expect(missing).toBeUndefined();
+  expectTypeOf(missing).toEqualTypeOf<typeof child | null>();
+  expect(missing).toBeNull();
   expect(child).toMatchObject({
     conversationId,
     rootSessionId: "root",
@@ -81,7 +81,7 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
   await expect(
     registerEveSubagent("other", "foreign-root", "child", "turn_1")
   ).rejects.toThrow("ownership changed");
-  expect(await getEveSubagent("other", "child")).toBeUndefined();
+  expect(await getEveSubagent("other", "child")).toBeNull();
   await expect(
     registerEveSubagent("owner", "root", "child", "turn_2")
   ).rejects.toThrow("fresh child");
@@ -102,7 +102,7 @@ it("advances child cursors monotonically and revokes stream access when the root
   await postgres.exec(
     "update \"EveConversation\" set state='deleted' where \"sessionId\"='root'"
   );
-  expect(await getEveSubagent("owner", "cursor-child")).toBeUndefined();
+  expect(await getEveSubagent("owner", "cursor-child")).toBeNull();
   await postgres.exec(
     "update \"EveConversation\" set state='bound' where \"sessionId\"='root'"
   );
