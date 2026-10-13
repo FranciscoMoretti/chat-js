@@ -13,7 +13,7 @@ import {
   codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
-  getSandboxRuntime,
+  getSandboxImage,
   resolveSandboxAuth,
 } from "./execution-sandbox";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
@@ -44,7 +44,7 @@ const executeCode: CodeExecutor = async (
     const sandboxOwnership = eveCodeSandboxOwnership(context);
     const log = createModuleLogger("code-execution");
     const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const runtime = getSandboxRuntime(language);
+    const image = getSandboxImage(language);
 
     let sandbox: Sandbox | undefined;
     let cleanup: Promise<void> | undefined;
@@ -65,13 +65,13 @@ const executeCode: CodeExecutor = async (
       if (abortSignal !== undefined) {
         abortSignal.throwIfAborted();
       }
-      log.info({ language, requestId, runtime, title }, "creating sandbox");
+      log.info({ language, image, requestId, title }, "creating sandbox");
       const auth =
         sandboxOwnership === undefined ? undefined : resolveSandboxAuth();
       const name = auth
         ? await sandboxOwnership?.reserve(auth, abortSignal)
         : undefined;
-      sandbox = await createSandbox(runtime, abortSignal, name, auth);
+      sandbox = await createSandbox(image, abortSignal, name, auth);
       await sandboxOwnership?.created(sandbox.name);
       if (abortSignal !== undefined) {
         abortSignal.addEventListener("abort", stop, { once: true });

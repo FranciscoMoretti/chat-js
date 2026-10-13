@@ -21,6 +21,7 @@ import { executePythonInSandbox } from "../tools/chatjs/_shared/code-execution/p
 import {
   cleanupSandbox,
   createSandbox,
+  getSandboxImage,
   resolveSandboxAuth,
 } from "../tools/chatjs/vercel-code-execution/execution-sandbox";
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
@@ -38,7 +39,7 @@ for (const language of ["javascript", "python"] as const) {
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
-      language === "javascript" ? "node22" : "python3.13",
+      getSandboxImage(language),
       AbortSignal.timeout(30_000),
       name,
       auth
@@ -158,7 +159,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
       resolveSandboxAuth()
     );
     const orphan = await createSandbox(
-      "node22",
+      getSandboxImage("javascript"),
       AbortSignal.timeout(30_000),
       orphanName,
       resolveSandboxAuth()

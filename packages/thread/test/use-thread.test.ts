@@ -197,6 +197,43 @@ const trackSubscriptions = (
 };
 
 describe("useThread", (): void => {
+  test("applies client tool output through the current SDK helper", async (): Promise<void> => {
+    const thread = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          parts: [
+            {
+              input: {},
+              state: "input-available",
+              toolCallId: "lookup-1",
+              toolName: "lookup",
+              type: "dynamic-tool",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+    const hook = await renderUseThread({ thread });
+    await act(async (): Promise<void> => {
+      await hook.current.addToolOutput({
+        output: "found",
+        tool: "lookup",
+        toolCallId: "lookup-1",
+      });
+    });
+    expect(hook.current.messages.at(-1)?.parts).toMatchObject([
+      {
+        output: "found",
+        state: "output-available",
+        toolCallId: "lookup-1",
+      },
+    ]);
+    await hook.unmount();
+  });
+
   test("observes messages sent through a custom state-backed AbstractThread", async (): Promise<void> => {
     const state = new MemoryThreadState<UIMessage>({
       messages: [user("user-1")],

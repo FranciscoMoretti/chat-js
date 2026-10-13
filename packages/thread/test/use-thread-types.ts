@@ -12,7 +12,10 @@ declare const messageId: string;
 
 const useCompatibilityCheck = (): UseThreadHelpers => {
   const thread = useThread();
-  const chatCompatible: UseChatHelpers<UIMessage> = thread;
+  const chatCompatible: Omit<
+    UseChatHelpers<UIMessage>,
+    "addToolResult"
+  > = thread;
 
   void chatCompatible.messages;
   void chatCompatible.sendMessage({ text: "hello" });

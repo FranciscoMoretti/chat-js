@@ -119,20 +119,16 @@ const resolveSandboxAuth = (): SandboxAuth => {
   return { ...identity, token };
 };
 
-const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
+const getSandboxImage = (language: SupportedExecutionLanguage): string => {
   if (language === "javascript") {
-    return env.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT ?? "node22";
+    return env.VERCEL_SANDBOX_IMAGE_JAVASCRIPT ?? "vercel/sandbox/node:22";
   }
 
-  return (
-    env.VERCEL_SANDBOX_RUNTIME_PYTHON ??
-    env.VERCEL_SANDBOX_RUNTIME ??
-    "python3.13"
-  );
+  return env.VERCEL_SANDBOX_IMAGE_PYTHON ?? "vercel/sandbox/python:3.14";
 };
 
 const createSandbox = async (
-  runtime: string,
+  image: string,
   signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
   auth?: Readonly<SandboxAuth>
@@ -141,8 +137,7 @@ const createSandbox = async (
     name,
     persistent: false,
     resources: { vcpus: SANDBOX_VCPUS },
-    // oxlint-disable-next-line typescript/no-deprecated -- Existing deployments configure runtime IDs (node22/python3.13); the replacement image option requires a VCR image and cannot preserve those runtime/environment contracts by renaming this field.
-    runtime,
+    image,
     signal,
     timeout: SANDBOX_TIMEOUT_MS,
     ...(auth ?? getTokenAuth()),
@@ -229,7 +224,7 @@ export {
   codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
-  getSandboxRuntime,
+  getSandboxImage,
   getTokenAuth,
   resolveSandboxAuth,
 };

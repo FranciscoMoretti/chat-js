@@ -177,21 +177,16 @@ const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel project ID for sandbox (non-Vercel deployments)"),
-  VERCEL_SANDBOX_RUNTIME: z
+  VERCEL_SANDBOX_IMAGE_JAVASCRIPT: z
     .string()
     .min(MIN_NONEMPTY_ENV_VALUE_LENGTH)
     .optional()
-    .describe("Legacy default Vercel sandbox runtime identifier for Python"),
-  VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: z
+    .describe("Vercel sandbox image reference for JavaScript execution"),
+  VERCEL_SANDBOX_IMAGE_PYTHON: z
     .string()
     .min(MIN_NONEMPTY_ENV_VALUE_LENGTH)
     .optional()
-    .describe("Vercel sandbox runtime identifier for JavaScript execution"),
-  VERCEL_SANDBOX_RUNTIME_PYTHON: z
-    .string()
-    .min(MIN_NONEMPTY_ENV_VALUE_LENGTH)
-    .optional()
-    .describe("Vercel sandbox runtime identifier for Python execution"),
+    .describe("Vercel sandbox image reference for Python execution"),
   // Sandbox (for non-Vercel deployments)
   VERCEL_TEAM_ID: z
     .string()

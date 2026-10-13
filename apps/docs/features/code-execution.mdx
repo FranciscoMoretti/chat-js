@@ -145,13 +145,16 @@ Supported chart types:
 
 ## Customization
 
-### Sandbox Runtime
+### Sandbox Images
 
-Set the Python version via environment variable:
+Select the image for each language with environment variables:
 
 ```bash
-VERCEL_SANDBOX_RUNTIME=python3.13
+VERCEL_SANDBOX_IMAGE_PYTHON=vercel/sandbox/python:3.14
+VERCEL_SANDBOX_IMAGE_JAVASCRIPT=vercel/sandbox/node:22
 ```
+
+Vercel execution uses managed images. Python defaults to Python 3.14 on Ubuntu, and JavaScript defaults to Node.js 22 on Ubuntu. You can set either image variable to a Vercel Container Registry reference with the corresponding `python3` and `pip`, or `node`, commands available. Legacy `VERCEL_SANDBOX_RUNTIME*` settings are no longer read.
 
 ### Vercel Sandbox outside Vercel hosting
 

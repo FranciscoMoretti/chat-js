@@ -280,9 +280,6 @@ abstract class ThreadCore<
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
-  public addToolResult: AbstractChat<
-    UIMessage<Metadata, Data, Tools>
-  >["addToolResult"] = this.addToolOutput;
 
   public getTreeSnapshot(): MessageTreeSnapshot<
     UIMessage<Metadata, Data, Tools>

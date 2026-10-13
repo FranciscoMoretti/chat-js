@@ -66,76 +66,50 @@ const createSandboxFixture = (
   };
 };
 
-const runtimeScenarios: readonly Readonly<{
+const imageScenarios: readonly Readonly<{
   language: "python" | "javascript";
   name: string;
   overrides: Readonly<Partial<typeof envMock>>;
-  runtime: string;
+  image: string;
 }>[] = [
   {
     language: "python",
-    name: "uses Python defaults when no override is set",
+    name: "uses the managed Python image by default",
     overrides: {},
-    runtime: "python3.13",
+    image: "vercel/sandbox/python:3.14",
   },
   {
     language: "javascript",
-    name: "uses JavaScript defaults when no override is set",
+    name: "uses the managed Node 22 image by default",
     overrides: {},
-    runtime: "node22",
+    image: "vercel/sandbox/node:22",
   },
   {
     language: "python",
-    name: "honors VERCEL_SANDBOX_RUNTIME_PYTHON override for python",
+    name: "honors the Python image override independently",
     overrides: {
-      VERCEL_SANDBOX_RUNTIME_PYTHON: "python3.12",
+      VERCEL_SANDBOX_IMAGE_JAVASCRIPT: "vercel/sandbox/node:24",
+      VERCEL_SANDBOX_IMAGE_PYTHON: "team/project/python@sha256:fixture",
     },
-    runtime: "python3.12",
+    image: "team/project/python@sha256:fixture",
   },
   {
     language: "javascript",
-    name: "honors VERCEL_SANDBOX_RUNTIME_JAVASCRIPT override for javascript",
+    name: "honors the JavaScript image override independently",
     overrides: {
-      VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: "node20",
+      VERCEL_SANDBOX_IMAGE_JAVASCRIPT: "vercel/sandbox/node:24",
+      VERCEL_SANDBOX_IMAGE_PYTHON: "vercel/sandbox/python:3.14",
     },
-    runtime: "node20",
-  },
-  {
-    language: "python",
-    name: "falls back to legacy VERCEL_SANDBOX_RUNTIME for python",
-    overrides: {
-      VERCEL_SANDBOX_RUNTIME: "python3.11",
-    },
-    runtime: "python3.11",
-  },
-  {
-    language: "python",
-    name: "prefers VERCEL_SANDBOX_RUNTIME_PYTHON over legacy VERCEL_SANDBOX_RUNTIME",
-    overrides: {
-      VERCEL_SANDBOX_RUNTIME: "python3.11",
-      VERCEL_SANDBOX_RUNTIME_PYTHON: "python3.12",
-    },
-    runtime: "python3.12",
-  },
-  {
-    language: "javascript",
-    name: "does not use legacy VERCEL_SANDBOX_RUNTIME for javascript",
-    overrides: {
-      VERCEL_SANDBOX_RUNTIME: "python3.11",
-    },
-    runtime: "node22",
+    image: "vercel/sandbox/node:24",
   },
 ];
 
-describe("getSandboxRuntime", () => {
-  it.each(runtimeScenarios)(
-    "$name",
-    async ({ language, overrides, runtime }) => {
-      Object.assign(envMock, overrides);
-      const { getSandboxRuntime } = await import("./execution-sandbox");
-      expect(getSandboxRuntime(language)).toBe(runtime);
-    }
-  );
+describe("getSandboxImage", () => {
+  it.each(imageScenarios)("$name", async ({ language, overrides, image }) => {
+    Object.assign(envMock, overrides);
+    const { getSandboxImage } = await import("./execution-sandbox");
+    expect(getSandboxImage(language)).toBe(image);
+  });
 });
 
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
@@ -170,20 +144,79 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   expect(deleteOptions.signal).toBeInstanceOf(AbortSignal);
 });
 
-it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
+it("creates an image-backed disposable sandbox with its scope and resource bounds", async () => {
   const { createSandbox } = await import("./execution-sandbox");
   const create = vi
     .spyOn(Sandbox, "create")
     .mockRejectedValueOnce(new Error("fixture"));
+  const { signal } = new AbortController();
+  const auth = { projectId: "project", teamId: "team", token: "opaque" };
   try {
-    await expect(createSandbox("node22")).rejects.toThrow("fixture");
-    expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ persistent: false, runtime: "node22" })
-    );
+    await expect(
+      createSandbox("vercel/sandbox/node:22", signal, "owned", auth)
+    ).rejects.toThrow("fixture");
+    expect(create).toHaveBeenCalledExactlyOnceWith({
+      ...auth,
+      image: "vercel/sandbox/node:22",
+      name: "owned",
+      persistent: false,
+      resources: { vcpus: 2 },
+      signal,
+      timeout: 300_000,
+    });
   } finally {
     create.mockRestore();
   }
 });
+
+it.each(["python", "javascript"] as const)(
+  "serializes the %s image through the installed SDK v3 create API",
+  async (language) => {
+    configureSandboxCredentials();
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      Response.json({
+        routes: [],
+        sandbox: {
+          createdAt: 0,
+          currentSessionId: "session",
+          image: "vercel/sandbox/image@sha256:fixture",
+          name: "owned",
+          persistent: false,
+          status: "running",
+          updatedAt: 0,
+        },
+        session: { ...createStoppedSession(), status: "running" },
+      })
+    );
+    vi.stubGlobal("fetch", fetch);
+    const { createSandbox, getSandboxImage } =
+      await import("./execution-sandbox");
+    const { signal } = new AbortController();
+    const image = getSandboxImage(language);
+    const sandbox = await createSandbox(image, signal, "owned");
+    expect(sandbox.name).toBe("owned");
+    expect(sandbox.persistent).toBe(false);
+    expect(sandbox.image).toBe("vercel/sandbox/image@sha256:fixture");
+    expect(fetch).toHaveBeenCalledOnce();
+    const [[url, options]] = fetch.mock.calls;
+    expect(url).toBe("https://vercel.com/api/v3/sandboxes?teamId=team");
+    assert(options);
+    expect(options.method).toBe("POST");
+    expect(options.headers).toMatchObject({ Authorization: "Bearer opaque" });
+    expect(options.signal).toBe(signal);
+    assert(typeof options.body === "string");
+    expect(JSON.parse(options.body)).toEqual({
+      image,
+      name: "owned",
+      persistent: false,
+      ports: [],
+      projectId: "project",
+      resources: { vcpus: 2 },
+      timeout: 300_000,
+    });
+  }
+);
+
 it("does not report successful cleanup until deletion has completed", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();

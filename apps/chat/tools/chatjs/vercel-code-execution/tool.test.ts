@@ -16,7 +16,7 @@ vi.mock("./execution-sandbox", () => ({
   codeSandboxCleanupCapability: { createCleanupSession: vi.fn() },
   createSandbox: mocks.create,
   getErrorMessage: (error: Readonly<Error>): string => error.message,
-  getSandboxRuntime: (language: string): string => language,
+  getSandboxImage: (language: string): string => language,
   resolveSandboxAuth: mocks.resolveAuth,
 }));
 

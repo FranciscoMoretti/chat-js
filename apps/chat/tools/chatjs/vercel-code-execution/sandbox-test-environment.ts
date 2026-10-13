@@ -3,16 +3,14 @@ import { afterEach, beforeEach, vi } from "vitest";
 const envMock = vi.hoisted(
   (): {
     VERCEL_PROJECT_ID: string | undefined;
-    VERCEL_SANDBOX_RUNTIME: string | undefined;
-    VERCEL_SANDBOX_RUNTIME_PYTHON: string | undefined;
-    VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: string | undefined;
+    VERCEL_SANDBOX_IMAGE_PYTHON: string | undefined;
+    VERCEL_SANDBOX_IMAGE_JAVASCRIPT: string | undefined;
     VERCEL_TEAM_ID: string | undefined;
     VERCEL_TOKEN: string | undefined;
   } => ({
     VERCEL_PROJECT_ID: undefined,
-    VERCEL_SANDBOX_RUNTIME: undefined,
-    VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: undefined,
-    VERCEL_SANDBOX_RUNTIME_PYTHON: undefined,
+    VERCEL_SANDBOX_IMAGE_JAVASCRIPT: undefined,
+    VERCEL_SANDBOX_IMAGE_PYTHON: undefined,
     VERCEL_TEAM_ID: undefined,
     VERCEL_TOKEN: undefined,
   })

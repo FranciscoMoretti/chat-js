@@ -55,8 +55,9 @@ type TreeHelpers<TMessage extends UIMessage = UIMessage> = Pick<
   keyof TreeHelpersShape<TMessage>
 >;
 
-type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = UseChatHelpers<
-  CanonicalMessage<TMessage>
+type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = Omit<
+  UseChatHelpers<CanonicalMessage<TMessage>>,
+  "addToolResult"
 > & {
   sendMessage: (
     message?: Parameters<
@@ -98,7 +99,6 @@ type HelperControllerReader<TMessage extends UIMessage> =
         | "id"
         | "addToolApprovalResponse"
         | "addToolOutput"
-        | "addToolResult"
         | "clearError"
         | "regenerate"
         | "resumeStream"
@@ -183,8 +183,6 @@ const createThreadHelpers = <TMessage extends UIMessage>({
 }>): UseThreadHelpers<TMessage> => ({
   addToolApprovalResponse: thread.addToolApprovalResponse,
   addToolOutput: thread.addToolOutput,
-  // oxlint-disable-next-line typescript/no-deprecated -- Forward the public legacy helper itself: callers can override addToolResult independently of addToolOutput, so redirecting this property would change that compatibility contract.
-  addToolResult: thread.addToolResult,
   clearError: thread.clearError,
   error,
   id: thread.id,
