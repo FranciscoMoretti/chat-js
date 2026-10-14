@@ -1,0 +1,20 @@
+/*
+ * Stylesheet for the visual harness. It pulls in the app's real Tailwind entry
+ * (globals.css) and then widens Tailwind's content scanning.
+ *
+ * Tailwind v4 auto-detects which utility classes to generate by scanning the
+ * project, anchored at the current working directory — here that's
+ * `packages/registry`, because that's where the visual tests run. So classes
+ * used only in `apps/chat/components` (e.g. the research step rail's `border-l`,
+ * `w-px`, `min-h-full`, `items-stretch`) never get generated, and the archived
+ * DOM replays with those styles missing — the snapshot drifts from the real app.
+ *
+ * These `@source` directives force Tailwind to scan the app tree that the
+ * rendered tool components actually reach into, so the harness CSS is a superset
+ * of what the app renders with. Paths are relative to this file.
+ */
+@import "../../../../../apps/chat/app/globals.css";
+
+@source "../../../../../apps/chat/components";
+@source "../../../../../apps/chat/app";
+@source "../../../../../apps/chat/lib";

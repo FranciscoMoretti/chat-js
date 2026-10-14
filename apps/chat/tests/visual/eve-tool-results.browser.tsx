@@ -10,7 +10,7 @@ import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
 
-import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
+import { chartsFinished } from "../../../../packages/registry/src/tools/_shared/charts-finished";
 
 import "./sandbox.css";
 

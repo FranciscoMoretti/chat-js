@@ -1,0 +1,74 @@
+name: UI Verify Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/docs/**"
+      - "packages/thread/**"
+      - "bun.lock"
+      - "package.json"
+      - ".github/workflows/uiverify-docs.yml"
+  pull_request:
+    paths:
+      - "apps/docs/**"
+      - "packages/thread/**"
+      - "bun.lock"
+      - "package.json"
+      - ".github/workflows/uiverify-docs.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uiverify-docs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uiverify-docs:
+    name: uiverify-docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.1
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - name: Install Chromium
+        run: node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture docs
+        run: bun run test:visual:docs
+      # Pushes and pull requests from this repo's branches upload here, with the
+      # key. A fork's pull request gets no secrets, so it saves the capture and
+      # uiverify-upload.yml uploads it.
+      - name: Upload UI Verify build
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY }}
+        # Merged UI becomes the baseline; PR builds still require review.
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            bun run uiverify:upload:docs --auto-accept-changes
+          else
+            bun run uiverify:upload:docs
+          fi
+      - name: Save the capture
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uiverify-archive
+          path: apps/docs/uiverify-archive/
+          if-no-files-found: error
+          retention-days: 7

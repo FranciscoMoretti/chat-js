@@ -11,6 +11,12 @@ const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)
 );
 
+// The `geist` package's exports map blocks deep woff2 imports, so resolve the
+// variable font files by path and alias them (see src/tools/_shared/visual.tsx).
+const geistFonts = fileURLToPath(
+  new URL("../node_modules/geist/dist/fonts", import.meta.url)
+);
+
 export default defineConfig({
   css: {
     postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
@@ -40,6 +46,7 @@ export default defineConfig({
       "react/jsx-dev-runtime",
       "react-dom/client",
       "react-dropzone",
+      "shiki",
       "sonner",
     ],
   },
@@ -53,6 +60,14 @@ export default defineConfig({
       // use the package's equivalent published ESM component in this Vite fixture.
       "echarts-for-react/lib/index": createRequire(import.meta.url).resolve(
         "echarts-for-react/esm/index.js"
+      ),
+      "geist-mono.woff2": path.join(
+        geistFonts,
+        "geist-mono/GeistMono-Variable.woff2"
+      ),
+      "geist-sans.woff2": path.join(
+        geistFonts,
+        "geist-sans/Geist-Variable.woff2"
       ),
       "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
       react: path.dirname(appRequire.resolve("react/package.json")),
@@ -108,6 +123,7 @@ export default defineConfig({
       viewport: { height: 900, width: 1000 },
     },
     include: [
+      "src/tools/*/renderer.visual.tsx",
       "visual/*.browser.test.tsx",
       "../../apps/chat/tests/visual/*.browser.tsx",
     ],
