@@ -67,3 +67,5 @@ Shared cluster `chatjs-retirement-pg.H2ZFmo` remains available for the lanes unt
 ## Superseding decision — 8 October 2026
 
 Francisco accepts terminal retirement of prelaunch sessions while preserving readable history; old-session resumability and dual-runtime routing are no longer requirements. The [scoped cutover proof and recovery investigation](eve-prelaunch-cutover.md) replace the earlier open migration decision. Crash recovery is not classified as an upstream-only blocker: supported settings, pinned upgrades and narrowly scoped application recovery now have measured comparisons and live-worker negative controls. No live retirement or production dependency change was performed.
+
+Application-owned model accounting is a later, separately reviewed slice: [implementation, retirement liabilities, fork removals and evidence](eve-model-ledger-integration.md). The completed retirement baseline above remains the starting point.

@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "owner": "4fbb79ab-c2c1-4ee4-a56e-120cbb9e6dc6",
+  "legacy": "04ad0c5a-4da8-4440-b554-53dcf83d897a",
+  "root": "8b180e42-b127-4119-9040-fe444edb0748",
+  "assertions": "target/owner/archive/descendant/fences; legacy idempotency and unknown liabilities; eight concurrent receipts; immutable identity; pending-to-returned monotonicity; receipt after tombstone; decimal debit",
+  "historical": {
+    "cost": "0.030000000000",
+    "cents": 3,
+    "unresolved": 2
+  },
+  "credit": {
+    "credits": 96
+  }
+}

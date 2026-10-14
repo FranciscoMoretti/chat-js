@@ -1,0 +1,20 @@
+[
+  {
+    "scenario": "normal",
+    "sessionId": "wrun_01M4VAEXC16EANFCABDRB1WH2M",
+    "receipts": 3,
+    "checkpoints": 1
+  },
+  {
+    "scenario": "blank",
+    "sessionId": "wrun_01M4VAEXQBJD5VBYPQWM1G6BBP",
+    "receipts": 3,
+    "checkpoints": 0
+  },
+  {
+    "scenario": "auto",
+    "sessionId": "wrun_01M4VAEXZS5WJRK8QB3HSG2P90",
+    "receipts": 3,
+    "checkpoints": 1
+  }
+]

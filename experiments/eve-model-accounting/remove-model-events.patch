@@ -1,0 +1,436 @@
+diff --git a/packages/eve/src/client/index.ts b/packages/eve/src/client/index.ts
+index 8ecb1068..0fb9bcae 100644
+--- a/packages/eve/src/client/index.ts
++++ b/packages/eve/src/client/index.ts
+@@ -105,7 +105,6 @@ export type {
+   AssistantStepFinishReason,
+   AuthorizationOutcome,
+   CompactionCompletedStreamEvent,
+-  CompactionUsageStreamEvent,
+   CompactionRequestedStreamEvent,
+   AuthorizationCompletedStreamEvent,
+   ConnectionAuthorizationOutcome,
+diff --git a/packages/eve/src/context/hook-result.test.ts b/packages/eve/src/context/hook-result.test.ts
+index 8561d97b..203aa5fc 100644
+--- a/packages/eve/src/context/hook-result.test.ts
++++ b/packages/eve/src/context/hook-result.test.ts
+@@ -1,66 +1,28 @@
+ import { expect, it } from "vitest";
+-import { createHookResultEvent } from "#context/hook-result.js";
++import { createHookResultEvent } from "./hook-result.js";
+ 
+-it("retains every attempt while stripping provider secrets and invalid usage", () => {
+-  const event = createHookResultEvent("suggestions", "turn_2", {
+-    modelCalls: [
+-      {
+-        modelId: "model-a",
+-        usage: {
+-          inputTokens: 10,
+-          outputTokens: -1,
+-          inputTokenDetails: { cacheReadTokens: 2, cacheWriteTokens: Infinity },
+-        },
+-        providerMetadata: {
+-          gateway: { cost: "0.002", generationId: "generation-1", secret: "hidden" },
+-          provider: { secret: "hidden" },
+-        },
+-      },
+-      { modelId: "model-b", failed: true },
+-      { modelId: "model-c", providerMetadata: { gateway: { cost: " " } } },
+-    ],
+-  });
+-  expect(event).toEqual({
++it("retains response metadata for historical display", () => {
++  expect(
++    createHookResultEvent("suggestions", "turn_0", {
++      responseMetadata: { followupSuggestions: ["Next?"] },
++    }),
++  ).toEqual({
+     type: "hook.result",
+     data: {
+       hookId: "suggestions",
+-      turnId: "turn_2",
+-      modelCalls: [
+-        {
+-          modelId: "model-a",
+-          usage: { inputTokens: 10, cacheReadTokens: 2, costUsd: 0.002 },
+-          providerMetadata: { gateway: { generationId: "generation-1" } },
+-        },
+-        { modelId: "model-b", failed: true, usage: undefined, providerMetadata: undefined },
+-        { modelId: "model-c", usage: undefined, providerMetadata: undefined },
+-      ],
++      turnId: "turn_0",
++      responseMetadata: { followupSuggestions: ["Next?"] },
+     },
+   });
+-  expect(JSON.stringify(event)).not.toContain("hidden");
+-});
+-it("preserves explicit null annotation values and detaches authored objects", () => {
+-  const value = { suggestions: null };
+-  const event = createHookResultEvent("a", "turn_0", { responseMetadata: value });
+-  expect(event?.data.responseMetadata).toEqual(value);
+-  expect(event?.data.responseMetadata).not.toBe(value);
+-  expect(createHookResultEvent("a", "turn_0", {})).toBeUndefined();
+-});
+-it.each([
+-  { custom: {} },
+-  { modelCalls: [{ modelId: "" }] },
+-  { modelCalls: [{ modelId: "a", failed: "yes" }] },
+-  { modelCalls: Array.from({ length: 101 }, () => ({ modelId: "a" })) },
+-])("rejects malformed or oversized authored results", (value) => {
+-  expect(() => createHookResultEvent("a", "turn_0", value)).toThrow();
+ });
+-
+-it.each([[], null, { invalid: Infinity }])(
+-  "omits invalid display metadata while retaining paid model evidence",
+-  (responseMetadata) => {
+-    const modelCalls = [{ modelId: "paid-model", providerMetadata: { gateway: { cost: "0.01" } } }];
+-    const event = createHookResultEvent("suggestions", "turn_0", { responseMetadata, modelCalls });
+-    expect(event?.data.responseMetadata).toBeUndefined();
+-    expect(event?.data.modelCalls?.[0]?.usage?.costUsd).toBe(0.01);
+-    expect(createHookResultEvent("suggestions", "turn_0", { responseMetadata })).toBeUndefined();
++it.each([{}, { responseMetadata: undefined }, { responseMetadata: "invalid" }])(
++  "omits absent or invalid display metadata",
++  (value) => {
++    expect(createHookResultEvent("suggestions", "turn_0", value)).toBeUndefined();
+   },
+ );
++it("rejects removed monetary hook payloads", () => {
++  expect(() =>
++    createHookResultEvent("suggestions", "turn_0", { modelCalls: [{ modelId: "paid" }] }),
++  ).toThrow();
++});
+diff --git a/packages/eve/src/context/hook-result.ts b/packages/eve/src/context/hook-result.ts
+index cd200613..b430c1ea 100644
+--- a/packages/eve/src/context/hook-result.ts
++++ b/packages/eve/src/context/hook-result.ts
+@@ -1,29 +1,10 @@
+ import { z } from "#compiled/zod/index.js";
+ import { jsonObjectSchema } from "#shared/json-schemas.js";
+-import { modelUsageEvidence } from "#harness/model-usage.js";
+ import type { HookResultStreamEvent } from "#protocol/message.js";
+-import type { HookModelCall } from "#public/definitions/hook.js";
+ 
+-const resultSchema = z.strictObject({
+-  responseMetadata: z.unknown().optional(),
+-  modelCalls: z
+-    .array(
+-      z.strictObject({
+-        modelId: z.string().min(1).max(512),
+-        failed: z.boolean().optional(),
+-        usage: z
+-          .custom<HookModelCall["usage"]>(
+-            (value) => value !== null && typeof value === "object" && !Array.isArray(value),
+-          )
+-          .optional(),
+-        providerMetadata: z.record(z.string(), jsonObjectSchema).optional(),
+-      }),
+-    )
+-    .max(100)
+-    .optional(),
+-});
++const resultSchema = z.strictObject({ responseMetadata: z.unknown().optional() });
+ 
+-/** Retain billing attempts independently of the optional display annotation. */
++/** Display annotations remain independent of application-owned model accounting. */
+ export function createHookResultEvent(
+   hookId: string,
+   turnId: string,
+@@ -31,18 +12,6 @@ export function createHookResultEvent(
+ ): HookResultStreamEvent | undefined {
+   const result = resultSchema.parse(value);
+   const annotation = jsonObjectSchema.safeParse(result.responseMetadata);
+-  const responseMetadata = annotation.success ? annotation.data : undefined;
+-  if (responseMetadata === undefined && !result.modelCalls?.length) return undefined;
+-  const data: {
+-    -readonly [K in keyof HookResultStreamEvent["data"]]: HookResultStreamEvent["data"][K];
+-  } = { hookId, turnId };
+-  if (responseMetadata !== undefined) data.responseMetadata = responseMetadata;
+-  if (result.modelCalls?.length) {
+-    data.modelCalls = result.modelCalls.map((call) => ({
+-      modelId: call.modelId,
+-      failed: call.failed,
+-      ...modelUsageEvidence(call),
+-    }));
+-  }
+-  return { type: "hook.result", data };
++  if (!annotation.success) return undefined;
++  return { type: "hook.result", data: { hookId, turnId, responseMetadata: annotation.data } };
+ }
+diff --git a/packages/eve/src/harness/compaction.test.ts b/packages/eve/src/harness/compaction.test.ts
+index 7943b1e1..15508fbd 100644
+--- a/packages/eve/src/harness/compaction.test.ts
++++ b/packages/eve/src/harness/compaction.test.ts
+@@ -1002,81 +1002,3 @@ describe("compactMessages: summarization fallback", () => {
+     );
+   });
+ });
+-
+-describe("compaction usage evidence", () => {
+-  it("records returned provider usage before rejecting an empty summary", async () => {
+-    const { generateText } = await import("ai");
+-    vi.mocked(generateText, { partial: true }).mockResolvedValue({
+-      text: "",
+-      finishReason: "content-filter",
+-      usage: {
+-        inputTokens: 20,
+-        outputTokens: 0,
+-        totalTokens: undefined,
+-        inputTokenDetails: {
+-          noCacheTokens: undefined,
+-          cacheReadTokens: undefined,
+-          cacheWriteTokens: undefined,
+-        },
+-        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+-      },
+-      providerMetadata: { gateway: { cost: "0.002", generationId: "summary-1" } },
+-    } as Partial<Awaited<ReturnType<typeof generateText>>>);
+-    const onUsage = vi.fn().mockResolvedValue(undefined);
+-    await expect(
+-      compactMessages(
+-        [user("retain this"), assistant("retained answer")],
+-        {} as Parameters<typeof compactMessages>[1],
+-        { recentWindowSize: 1, threshold: ROOMY },
+-        undefined,
+-        undefined,
+-        undefined,
+-        undefined,
+-        true,
+-        undefined,
+-        onUsage,
+-      ),
+-    ).rejects.toThrow("empty summary");
+-    expect(onUsage).toHaveBeenCalledExactlyOnceWith({
+-      usage: { costUsd: 0.002, inputTokens: 20, outputTokens: 0 },
+-      providerMetadata: { gateway: { generationId: "summary-1" } },
+-    });
+-  });
+-
+-  it("records each paid attempt when shrinking the retained window", async () => {
+-    const { generateText } = await import("ai");
+-    vi.mocked(generateText, { partial: true }).mockResolvedValue({
+-      text: "summary ".repeat(1000),
+-      usage: {
+-        inputTokens: 20,
+-        outputTokens: 10,
+-        totalTokens: undefined,
+-        inputTokenDetails: {
+-          noCacheTokens: undefined,
+-          cacheReadTokens: undefined,
+-          cacheWriteTokens: undefined,
+-        },
+-        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+-      },
+-      providerMetadata: { gateway: { cost: 0.001 } },
+-    } as Partial<Awaited<ReturnType<typeof generateText>>>);
+-    const onUsage = vi.fn().mockResolvedValue(undefined);
+-    await compactMessages(
+-      [user("old"), assistant("old answer"), user("new"), assistant("new answer")],
+-      {} as Parameters<typeof compactMessages>[1],
+-      { recentWindowSize: 1, threshold: 100 },
+-      undefined,
+-      undefined,
+-      undefined,
+-      undefined,
+-      true,
+-      undefined,
+-      onUsage,
+-    );
+-    expect(vi.mocked(generateText, { partial: true }).mock.calls.length).toBeGreaterThan(1);
+-    expect(onUsage).toHaveBeenCalledTimes(
+-      vi.mocked(generateText, { partial: true }).mock.calls.length,
+-    );
+-    expect(onUsage.mock.calls.every(([evidence]) => evidence.usage.costUsd === 0.001)).toBe(true);
+-  });
+-});
+diff --git a/packages/eve/src/harness/compaction.ts b/packages/eve/src/harness/compaction.ts
+index 3027411a..831a897f 100644
+--- a/packages/eve/src/harness/compaction.ts
++++ b/packages/eve/src/harness/compaction.ts
+@@ -1,4 +1,3 @@
+-import { modelUsageEvidence } from "#harness/model-usage.js";
+ import { generateText, type LanguageModel, type ModelMessage, type TelemetryOptions } from "ai";
+ 
+ import {
+@@ -206,7 +205,6 @@ export async function compactMessages(
+   abortSignal?: AbortSignal,
+   forceSummary = false,
+   historyInputTokenCount?: number,
+-  onUsage?: (evidence: ReturnType<typeof modelUsageEvidence>) => Promise<void>,
+ ): Promise<ModelMessage[]> {
+   const { conversation, previousCheckpoint } = extractPreviousCheckpoint(messages);
+   const recentConfig = forceSummary ? { ...config, recentWindowSize: 1 } : config;
+@@ -260,9 +258,6 @@ export async function compactMessages(
+       temperature: 0,
+     });
+ 
+-    // A paid attempt remains billable even when its summary is unusable.
+-    await onUsage?.(modelUsageEvidence(result));
+-
+     if (result.text.trim().length === 0) {
+       throw new Error(
+         `The compaction model returned an empty summary. Finish reason: ${result.finishReason}.`,
+diff --git a/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts b/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
+index fbdf37ed..72f3879a 100644
+--- a/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
++++ b/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
+@@ -655,7 +655,7 @@ describe("final request envelope compaction", () => {
+   });
+ });
+ it.each(["summary", ""])(
+-  "emits compaction usage before checkpoint validation (%j)",
++  "preserves compaction checkpoints without billing events (%j)",
+   async (text) => {
+     vi.mocked(generateText, { partial: true }).mockResolvedValue({
+       text,
+@@ -699,18 +699,8 @@ it.each(["summary", ""])(
+     const events = handleEvent.mock.calls.map(([event]) => event);
+     expect(events.map((event) => event.type)).toEqual([
+       "compaction.requested",
+-      "compaction.usage",
+       ...(text ? ["compaction.completed"] : []),
+       "session.waiting",
+     ]);
+-    expect(events[1]).toMatchObject({
+-      type: "compaction.usage",
+-      data: {
+-        sessionId: "test-session",
+-        turnId: "turn_0",
+-        usage: { costUsd: 0.004, inputTokens: 30, outputTokens: 5 },
+-        providerMetadata: { gateway: { generationId: "compact-generation" } },
+-      },
+-    });
+   },
+ );
+diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
+index cd064fa7..03acff72 100644
+--- a/packages/eve/src/harness/tool-loop.ts
++++ b/packages/eve/src/harness/tool-loop.ts
+@@ -198,7 +198,6 @@ import {
+   createAuthorizationRequiredEvent,
+   createCompactionCompletedEvent,
+   createCompactionRequestedEvent,
+-  createCompactionUsageEvent,
+   createContextClearedEvent,
+   createInputRequestedEvent,
+   createInputResolvedEvent,
+@@ -3354,17 +3353,6 @@ async function maybeCompact(input: {
+                 getRequestEnvelopeTokens(session),
+               ) - requestEnvelopeTokens,
+             ),
+-        async (evidence) => {
+-          await emit?.(
+-            createCompactionUsageEvent({
+-              ...evidence,
+-              modelId: formatLanguageModelGatewayId(compaction.model),
+-              sequence: emissionState.sequence,
+-              sessionId: session.sessionId,
+-              turnId: emissionState.turnId,
+-            }),
+-          );
+-        },
+       )
+     : [...ordinary];
+   messages = validateHarnessModelMessages([...canonical.memory, ...compactedOrdinary]);
+diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
+index 27016674..6c9fa2eb 100644
+--- a/packages/eve/src/protocol/message.ts
++++ b/packages/eve/src/protocol/message.ts
+@@ -643,17 +643,6 @@ export interface CompactionRequestedStreamEvent {
+   type: "compaction.requested";
+ }
+ 
+-/** Usage returned by one compaction model call, including rejected summary attempts. */
+-export interface CompactionUsageStreamEvent {
+-  data: Pick<StepCompletedStreamEvent["data"], "usage" | "providerMetadata"> & {
+-    modelId: string;
+-    sequence: number;
+-    sessionId: string;
+-    turnId: string;
+-  };
+-  type: "compaction.usage";
+-}
+-
+ /**
+  * Stream event emitted after one compaction checkpoint message has been
+  * appended to the durable session history.
+@@ -770,12 +759,6 @@ export interface HookResultStreamEvent {
+     readonly hookId: string;
+     readonly turnId: string;
+     readonly responseMetadata?: JsonObject;
+-    readonly modelCalls?: readonly {
+-      readonly failed?: boolean;
+-      readonly modelId: string;
+-      readonly usage?: StepCompletedStreamEvent["data"]["usage"];
+-      readonly providerMetadata?: StepCompletedProviderMetadata;
+-    }[];
+   };
+ }
+ 
+@@ -832,7 +815,6 @@ export type UnstampedMessageStreamEvent =
+   | ApprovalSettledStreamEvent
+   | ContextClearedStreamEvent
+   | CompactionCompletedStreamEvent
+-  | CompactionUsageStreamEvent
+   | CompactionRequestedStreamEvent
+   | AuthorizationCompletedStreamEvent
+   | AuthorizationRequiredStreamEvent
+@@ -1923,10 +1905,3 @@ function formatActionResultOutput(output: unknown): string {
+ 
+   return "Action failed.";
+ }
+-
+-/** Creates durable usage evidence for one completed compaction model call. */
+-export function createCompactionUsageEvent(
+-  data: CompactionUsageStreamEvent["data"],
+-): CompactionUsageStreamEvent {
+-  return { type: "compaction.usage", data };
+-}
+diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
+index 39454264..ea666b70 100644
+--- a/packages/eve/src/public/definitions/hook.ts
++++ b/packages/eve/src/public/definitions/hook.ts
+@@ -1,4 +1,3 @@
+-import type { LanguageModelUsage, ProviderMetadata } from "ai";
+ import type { JsonObject } from "#shared/json.js";
+ import type { HandleMessageStreamEvent } from "../../protocol/message.js";
+ import type { SessionContext } from "./callback-context.js";
+@@ -26,7 +25,6 @@ export interface HookEventMap {
+   readonly "actions.requested": ProtocolEvent<"actions.requested">;
+   readonly "authorization.completed": ProtocolEvent<"authorization.completed">;
+   readonly "authorization.required": ProtocolEvent<"authorization.required">;
+-  readonly "compaction.usage": ProtocolEvent<"compaction.usage">;
+   readonly "compaction.completed": ProtocolEvent<"compaction.completed">;
+   readonly "compaction.requested": ProtocolEvent<"compaction.requested">;
+   readonly "context.cleared": ProtocolEvent<"context.cleared">;
+@@ -92,18 +90,9 @@ export interface HookContext extends SessionContext {
+  * infers it from the event key. The typed event is the first argument, `ctx`
+  * is the last.
+  */
+-export interface HookModelCall {
+-  /** Request failed before completed usage was available. */
+-  readonly failed?: boolean;
+-  readonly modelId: string;
+-  readonly usage?: LanguageModelUsage;
+-  readonly providerMetadata?: ProviderMetadata;
+-}
+-
+-/** Durable display annotations and auxiliary model costs; never model context. */
++/** Durable display annotations; never model context. */
+ export interface TurnCompletedHookResult {
+   readonly responseMetadata?: JsonObject;
+-  readonly modelCalls?: readonly HookModelCall[];
+ }
+ 
+ type HookReturn<TEvent> = TEvent extends { readonly type: "turn.completed" }
+diff --git a/packages/eve/src/public/hooks/index.ts b/packages/eve/src/public/hooks/index.ts
+index b7ea6ba4..3b36e7e0 100644
+--- a/packages/eve/src/public/hooks/index.ts
++++ b/packages/eve/src/public/hooks/index.ts
+@@ -8,7 +8,6 @@
+ 
+ export {
+   type HookContext,
+-  type HookModelCall,
+   type TurnCompletedHookResult,
+   type HookDefinition,
+   type HookEvent,

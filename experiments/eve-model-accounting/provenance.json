@@ -1,0 +1,10 @@
+{
+  "forkRepository": "https://github.com/FranciscoMoretti/eve.git",
+  "baseCommit": "3a7acfe6ba42a8dc9d330132b11856962a675705",
+  "productionPackage": "npm:@chat-js/eve@0.61.0-chatjs.0",
+  "ai": "7.0.106",
+  "patchSha256": "efc73f0d8f623383c655c86f9cf2aa9346ff46a042814b24d2ab5e0f67ae484f",
+  "patchValidation": "git apply --cached --check against an index at the exact base",
+  "forkFocusedTests": 59,
+  "publication": "none; production dependency unchanged"
+}
