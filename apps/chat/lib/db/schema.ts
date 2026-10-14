@@ -382,6 +382,11 @@ const eveConversation = pgTable(
     // Immutable creation intent; retained when the project is removed.
     initialProjectId: uuid("initialProjectId"),
     initialRequest: jsonb("initialRequest").$type<unknown>(),
+    modelAccountingState: text("modelAccountingState", {
+      enum: ["unprepared", "wrapper", "retired"],
+    })
+      .notNull()
+      .default("unprepared"),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()
@@ -785,6 +790,7 @@ const eveUsage = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     eventId: text("eventId").primaryKey(),
     generationId: text("generationId"),
+    modelAttempt: jsonb("modelAttempt").$type<unknown>(),
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),

@@ -72,7 +72,7 @@
     "tools/chatjs/code-documents/tool.ts": "f0fb3c63a38d6c2e2267b716b463c565f22451b0acfce65d5b21ee1fe9016e23",
     "tools/chatjs/code-executor.ts": "6316623b9b04f311ad7aa3d5baf8ec003a0fb995285aaca8a8f3220bfb924c99",
     "tools/chatjs/composer-tools.ts": "2584ee8fbf8d6130854bda50dde78f495bed47e2ab61567b3b5201f80c013ba7",
-    "tools/chatjs/deep-research/agent.ts": "a0d3fe94603cfb374efd133cd26a39f1c31b30e873f617f78ae0e66fc13ea2dd",
+    "tools/chatjs/deep-research/agent.ts": "617a491ebcce3209aa8829c59772d6d886f323358531eaef13bdfcb1f593a958",
     "tools/chatjs/deep-research/availability.ts": "b6f616065b301abb3247048ab947b37ac6fc24960441ed49d4e910c161bf1552",
     "tools/chatjs/deep-research/chatjs.json": "bada7afba53b6142dc804258813673d9f732e02fcb0dc728d8c27b522ee38399",
     "tools/chatjs/deep-research/configuration.ts": "e64971265f49efb09b78f83721d11a1f0680b78d4ccc3dd131819348c3675db6",

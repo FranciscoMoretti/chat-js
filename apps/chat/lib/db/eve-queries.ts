@@ -622,6 +622,7 @@ const reserveEveConversation = async (
         forkKind: value.forkKind,
         forkMessageId: fork?.beforeMessageId,
         forkTurnId: fork?.beforeTurnId,
+        modelAccountingState: "wrapper",
         parentConversationId: fork?.conversationId,
         rootConversationId:
           source === undefined

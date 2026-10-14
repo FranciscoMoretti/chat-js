@@ -189,7 +189,10 @@ const createPersistentRuntime = async (
         "127.0.0.1",
         "--port",
         String(port),
-        ...(recovery.world === "postgres" ? [] : ["--resume"]),
+        ...(recovery.world === "postgres" ||
+        experimentalInstallation?.distribution === "production-fork"
+          ? []
+          : ["--resume"]),
       ],
       {
         cwd: fixture.directory,

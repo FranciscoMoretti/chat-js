@@ -5,6 +5,8 @@ import {
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
+import { observeEveModelAccounting } from "../../lib/eve/model-accounting";
+
 import { ingestEveUsage } from "../../lib/eve/usage";
 
 export default defineHook({
@@ -17,6 +19,7 @@ export default defineHook({
         >;
       }>
     ) => {
+      observeEveModelAccounting(event, context.session);
       const ownerId = context.session.auth.initiator?.principalId;
       if (typeof ownerId !== "string" || ownerId === "") {
         throw new Error("Eve billing requires an authenticated owner.");
@@ -34,16 +37,7 @@ export default defineHook({
           parent.turn.id
         );
       }
-      if (
-        ![
-          "step.completed",
-          "step.failed",
-          "compaction.usage",
-          "hook.result",
-          "action.result",
-          "subagent.called",
-        ].includes(event.type)
-      ) {
+      if (!["action.result", "subagent.called"].includes(event.type)) {
         return;
       }
       const binding = await getEveSubagent(ownerId, context.session.id);

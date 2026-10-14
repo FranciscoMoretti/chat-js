@@ -24,16 +24,22 @@ export default defineHook({
       );
     },
     "turn.completed": (
-      _event: unknown,
+      event: { readonly data: { readonly turnId: string } },
       hookContext: {
-        readonly session: Readonly<Pick<HookContext["session"], "parent">>;
+        readonly session: Readonly<
+          Pick<HookContext["session"], "parent" | "id" | "auth">
+        >;
       }
     ): ReturnType<typeof generateEveFollowupSuggestions> | undefined => {
       // Suggestions are actions for the user-facing branch, not a background task.
       if (hookContext.session.parent) {
         return undefined;
       }
-      return generateEveFollowupSuggestions(context.get());
+      return generateEveFollowupSuggestions(context.get(), {
+        ownerId: hookContext.session.auth.initiator?.principalId ?? "",
+        sessionId: hookContext.session.id,
+        turnId: event.data.turnId,
+      });
     },
     "turn.started": (event: Parameters<typeof followupContext>[1]) => {
       context.update((current: FollowupContext) =>

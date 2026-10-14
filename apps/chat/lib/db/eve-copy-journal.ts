@@ -177,6 +177,7 @@ const rejectEveCopyPreflight = async (
       chatId,
       creationKind: "copy",
       firstMessage: "",
+      modelAccountingState: "wrapper",
       id: conversationId,
       operationId,
       ownerId,
@@ -572,6 +573,7 @@ const reserveEveCopyOperation = async (
         id: conversationId,
         initialContentHash: input.projectionHash,
         initialModelId: input.modelId,
+        modelAccountingState: "wrapper",
         operationId: input.operationId,
         ownerId,
       })

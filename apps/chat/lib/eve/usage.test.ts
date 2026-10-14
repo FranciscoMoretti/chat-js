@@ -8,78 +8,20 @@ const record = vi.hoisted(() => vi.fn<typeof recordEveUsage>());
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => record.mockReset());
-it("records each auxiliary model attempt with replay-stable independent identities", async () => {
-  record.mockResolvedValue(true);
-  const event: MessageStreamEvent = {
-    data: {
-      hookId: "followup-suggestions",
-      modelCalls: [
-        { modelId: "model", usage: { costUsd: 0.001 } },
-        { modelId: "model", usage: { costUsd: 0.002 } },
-      ],
-      turnId: "turn_0",
-    },
-    meta: { at: "2026-09-12T00:00:00Z", id: "hook-event" },
-    type: "hook.result",
-  };
-  expect(await ingestEveUsage("owner", "session", event)).toBe(true);
-  expect(
-    record.mock.calls.map(
-      ([call]: Readonly<(typeof record.mock.calls)[number]>) => [
-        call.eventId,
-        call.costUsd,
-      ]
-    )
-  ).toEqual([
-    ["hook-event:model-call:0", 0.001],
-    ["hook-event:model-call:1", 0.002],
-  ]);
-  await ingestEveUsage("owner", "session", event);
-  expect(record.mock.calls[2]).toEqual(record.mock.calls[0]);
-  expect(record.mock.calls[3]).toEqual(record.mock.calls[1]);
-});
-it("requires reconciliation for unpriced completed calls and preserves failed-attempt evidence", async () => {
-  record.mockResolvedValue(false);
-  const event: MessageStreamEvent = {
-    data: {
-      hookId: "followup-suggestions",
-      modelCalls: [{ modelId: "model" }],
-      turnId: "turn_0",
-    },
-    meta: { at: "2026-09-12T00:00:00Z", id: "hook-event" },
-    type: "hook.result",
-  };
-  expect(await ingestEveUsage("owner", "session", event)).toBe(false);
-  expect(
-    await ingestEveUsage("owner", "session", {
-      ...event,
-      data: { ...event.data, modelCalls: [{ failed: true, modelId: "model" }] },
+it.each([
+  "hook.result",
+  "step.completed",
+  "step.failed",
+  "compaction.usage",
+] as const)("never charges model event %s through replay", async (type) => {
+  await expect(
+    ingestEveUsage("owner", "session", {
+      type,
+      meta: { id: "event", at: "2026-10-13T00:00:00Z" },
+      data: { usage: { costUsd: 4 } },
     })
-  ).toBe(true);
-  expect(record).toHaveBeenCalledTimes(2);
-  expect(record.mock.calls[1][0].costUsd).toBe(0);
-});
-
-it("retains failed-step evidence without reporting an unpriced completed call", async () => {
-  record.mockResolvedValue(false);
-  const event = {
-    data: {
-      code: "boundary_hook_failed",
-      message: "Binding unavailable",
-      sequence: 0,
-      stepIndex: 0,
-      turnId: "turn_0",
-    },
-    meta: { at: "2026-09-21T00:00:00Z", id: "failed-before-model" },
-    type: "step.failed",
-  } satisfies MessageStreamEvent;
-  expect(await ingestEveUsage("owner", "session", event)).toBe(true);
-  expect(record).toHaveBeenCalledWith(
-    expect.objectContaining({
-      costUsd: 0,
-      eventId: "failed-before-model",
-    })
-  );
+  ).resolves.toBe(true);
+  expect(record).not.toHaveBeenCalled();
 });
 const toolEvent = (
   output: unknown,
@@ -190,36 +132,27 @@ it("does not infer billing from ordinary tool output", async () => {
   );
   expect(record).not.toHaveBeenCalled();
 });
-it("attributes child model events to the root turn without billing delegation summaries", async () => {
+it("attributes independent child tool receipts to the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_7" };
-  const event: MessageStreamEvent = {
-    data: {
-      hookId: "aux",
-      modelCalls: [{ modelId: "model", usage: { costUsd: 0.03 } }],
-      turnId: "turn_0",
-    },
-    meta: { at: "2026-09-28T00:00:00Z", id: "event" },
-    type: "hook.result",
-  };
-  await ingestEveUsage("owner", "child", event, attribution);
-  await ingestEveUsage("owner", "child", event, attribution);
-  expect(record.mock.calls[0][0]).toMatchObject({
-    costUsd: 0.03,
-    eventId: "eve-child:child:event:model-call:0",
-    sessionId: "root",
-    turnId: "turn_7",
-  });
-  expect(record.mock.calls[1]).toEqual(record.mock.calls[0]);
-  await ingestEveUsage("owner", "root", {
-    data: {
-      callId: "delegation",
-      output: "Finished",
-      subagentName: "researcher",
-    },
-    meta: event.meta,
-    type: "subagent.completed",
-  });
-  expect(record).toHaveBeenCalledTimes(2);
+  await ingestEveUsage(
+    "owner",
+    "child",
+    toolEvent({
+      version: 1,
+      kind: "chatjs.tool-result",
+      status: "success",
+      output: "ok",
+      usage: { costUsd: 0.03 },
+    }),
+    attribution
+  );
+  expect(record).toHaveBeenCalledWith(
+    expect.objectContaining({
+      sessionId: "root",
+      turnId: "turn_7",
+      costUsd: 0.03,
+    })
+  );
 });
 
 it("permits cursor advancement for events without a billable tool receipt", async () => {

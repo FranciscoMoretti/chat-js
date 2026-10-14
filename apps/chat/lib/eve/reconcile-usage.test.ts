@@ -23,6 +23,14 @@ const mocks = vi.hoisted(() => ({
   recover: vi.fn(),
   streamOptions: vi.fn(),
 }));
+vi.mock("../db/eve-model-ledger", () => ({
+  assertEveModelAccountingPrepared: vi.fn(async () => {
+    await Promise.resolve();
+  }),
+  assertEveModelCostsKnown: vi.fn(async () => {
+    await Promise.resolve();
+  }),
+}));
 vi.mock("../db/eve-subagents", () => ({
   advanceEveSubagentUsageCursor: mocks.advanceChild,
   getEveSubagent: mocks.child,

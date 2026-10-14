@@ -1,8 +1,9 @@
 import { defineAgent, defineDynamic } from "eve";
-import type { DefinedAgent } from "eve";
+import type { DefinedAgent, DynamicResolveContext } from "eve";
+
+import { resolveAccountedEveModel } from "@/lib/eve/model-accounting";
 
 import { getDeepResearchConfig } from "./configuration";
-import { resolveEveModel } from "@/lib/eve/model-selection";
 
 type Phase = "research" | "compression" | "final_report";
 export const defineResearchAgent = (
@@ -12,7 +13,10 @@ export const defineResearchAgent = (
   description: string;
   model: ReturnType<
     typeof defineDynamic<{
-      "step.started": () => ReturnType<typeof resolveEveModel>;
+      "step.started": (
+        event: unknown,
+        context: DynamicResolveContext
+      ) => ReturnType<typeof resolveAccountedEveModel>;
     }>
   >;
   tool: false;
@@ -22,8 +26,12 @@ export const defineResearchAgent = (
     description: `Deep research ${phase} phase. Called by the research workflow.`,
     model: defineDynamic({
       events: {
-        "step.started": async () =>
-          await resolveEveModel(getDeepResearchConfig()[`${phase}_model`]),
+        "step.started": async (event, context) =>
+          await resolveAccountedEveModel(
+            getDeepResearchConfig()[`${phase}_model`],
+            event,
+            context
+          ),
       },
     }),
     tool: false,
