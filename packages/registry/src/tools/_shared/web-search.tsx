@@ -31,10 +31,10 @@ const showsSources = async (section: HTMLElement): Promise<void> => {
 
 /**
  * The two web-search tools (firecrawl, tavily) share one renderer, so they share
- * the story: searching, the sources found, a partial failure alongside the
- * sources that did come back, and a failed search. Each tool supplies its own
- * typed `renderWith` (its renderer + input) and its own query and sources, so
- * the two snapshots are visually distinguishable.
+ * the story: searching, the sources found, a search with no results, a partial
+ * failure alongside the sources that did come back, and a failed search. Each
+ * tool supplies its own typed `renderWith` (its renderer + input) and its own
+ * query and sources, so the two snapshots are visually distinguishable.
  */
 export const webSearchStates = (
   renderWith: (part: WebSearchPart) => ReactNode,
@@ -55,6 +55,14 @@ export const webSearchStates = (
       output: { searches: [search] },
       state: "output-available",
       toolCallId: `${toolCallId}-sources`,
+    }),
+  },
+  {
+    label: "No results (renders nothing)",
+    ui: renderWith({
+      output: { searches: [] },
+      state: "output-available",
+      toolCallId: `${toolCallId}-empty`,
     }),
   },
   {
