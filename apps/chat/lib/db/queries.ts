@@ -1,7 +1,7 @@
 import "server-only";
 import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import type { User, UserModelPreference } from "./schema";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { GetSelectTableName } from "drizzle-orm/query-builders/select.types";
 
 import { db } from "./client";
@@ -10,6 +10,8 @@ import {
   eveChatProject,
   eveConversation,
   eveVote,
+  eveSubmission,
+  eveMessageAnnotation,
   project,
   user,
   userModelPreference,
@@ -301,8 +303,259 @@ const assignEveConversationProject = async (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
+
+// The immutable command is compared as JSONB, independent of object key order.
+const reserveEveSubmission = async (
+  input: Readonly<{
+    ownerId: string;
+    conversationId: string;
+    operationId: string;
+    command: unknown;
+    selectedTool: string | null;
+  }>
+): Promise<typeof eveSubmission.$inferSelect> =>
+  await db.transaction(async (tx) => {
+    const [scope] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, input.conversationId),
+          eq(eveConversation.ownerId, input.ownerId),
+          inArray(eveConversation.state, ["creating", "uncertain", "bound"])
+        )
+      )
+      .for("share");
+    if (scope === undefined) {
+      throw new Error("Submission conversation is unavailable.");
+    }
+    await tx.insert(eveSubmission).values(input).onConflictDoNothing();
+    const [row] = await tx
+      .select()
+      .from(eveSubmission)
+      .where(
+        and(
+          eq(eveSubmission.ownerId, input.ownerId),
+          eq(eveSubmission.operationId, input.operationId),
+          eq(eveSubmission.conversationId, input.conversationId),
+          sql`${eveSubmission.command} = ${JSON.stringify(input.command)}::jsonb`,
+          sql`${eveSubmission.selectedTool} is not distinct from ${input.selectedTool}`
+        )
+      );
+    if (row === undefined) {
+      throw new Error(
+        "Submission identity is already bound to another command."
+      );
+    }
+    return row;
+  });
+
+// The CAS commits before network dispatch. Uncertain rows are never claimed again.
+const claimEveSubmission = async (
+  ownerId: string,
+  operationId: string
+): Promise<boolean> => {
+  const [claimed] = await db
+    .update(eveSubmission)
+    .set({ state: "uncertain" })
+    .where(
+      and(
+        eq(eveSubmission.ownerId, ownerId),
+        eq(eveSubmission.operationId, operationId),
+        eq(eveSubmission.state, "pending"),
+        sql`exists (select 1 from ${eveConversation} where ${eveConversation.id} = ${eveSubmission.conversationId} and ${eveConversation.ownerId} = ${ownerId} and ${eveConversation.state} = 'bound')`
+      )
+    )
+    .returning({ operationId: eveSubmission.operationId });
+  return claimed !== undefined;
+};
+
+const settleEveSubmission = async (
+  ownerId: string,
+  operationId: string,
+  state: "admitted" | "rejected"
+): Promise<void> => {
+  await db
+    .update(eveSubmission)
+    .set({ state })
+    .where(
+      and(
+        eq(eveSubmission.ownerId, ownerId),
+        eq(eveSubmission.operationId, operationId),
+        inArray(
+          eveSubmission.state,
+          state === "admitted" ? ["pending", "uncertain"] : ["pending"]
+        )
+      )
+    );
+};
+
+// Caller must have the native session_not_active response, not a timeout or cancellation.
+const rejectEveSubmissionAdmission = async (
+  ownerId: string,
+  operationId: string
+): Promise<void> => {
+  await db
+    .update(eveSubmission)
+    .set({ state: "rejected" })
+    .where(
+      and(
+        eq(eveSubmission.ownerId, ownerId),
+        eq(eveSubmission.operationId, operationId),
+        eq(eveSubmission.state, "uncertain")
+      )
+    );
+};
+
+const readEveSubmission = async (
+  ownerId: string,
+  sessionId: string,
+  operationId: string
+): Promise<typeof eveSubmission.$inferSelect | undefined> => {
+  const [row] = await db
+    .select({ submission: eveSubmission })
+    .from(eveSubmission)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.id, eveSubmission.conversationId),
+        eq(eveConversation.ownerId, eveSubmission.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveSubmission.ownerId, ownerId),
+        eq(eveSubmission.operationId, operationId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  return row?.submission;
+};
+
+// Call only with an event read from the authenticated owner's exact native stream.
+const recordEveMessageReceipt = async (
+  input: Readonly<{
+    ownerId: string;
+    sessionId: string;
+    messageId: string;
+    operationIds: readonly string[];
+    importedSelection: string | null;
+    imported: boolean;
+  }>
+): Promise<typeof eveMessageAnnotation.$inferSelect | undefined> =>
+  await db.transaction(
+    async (
+      tx
+    ): Promise<typeof eveMessageAnnotation.$inferSelect | undefined> => {
+      const [scope] = await tx
+        .select({ id: eveConversation.id })
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.ownerId, input.ownerId),
+            eq(eveConversation.sessionId, input.sessionId),
+            eq(eveConversation.state, "bound")
+          )
+        )
+        .for("share");
+      if (scope === undefined) {
+        return undefined;
+      }
+      // Lock in stable UUID order; event order below still determines the last contributor.
+      const submissions =
+        input.operationIds.length === 0
+          ? []
+          : await tx
+              .select()
+              .from(eveSubmission)
+              .where(
+                and(
+                  eq(eveSubmission.ownerId, input.ownerId),
+                  eq(eveSubmission.conversationId, scope.id),
+                  inArray(eveSubmission.operationId, [...input.operationIds])
+                )
+              )
+              .orderBy(eveSubmission.operationId)
+              .for("update");
+      const byOperation = new Map(
+        submissions.map((row) => [row.operationId, row])
+      );
+      const contributors = input.operationIds.map((id) => byOperation.get(id));
+      const exact =
+        contributors.length > 0 &&
+        contributors.every(
+          (row) =>
+            row !== undefined &&
+            row.state !== "rejected" &&
+            row.state !== "retired"
+        );
+      // Partial/foreign tokens cannot assign another owner's annotations or acknowledge a prefix.
+      if (!exact && (submissions.length > 0 || !input.imported)) {
+        return undefined;
+      }
+      const last = exact ? contributors.at(-1) : undefined;
+      const annotation = {
+        conversationId: scope.id,
+        messageId: input.messageId,
+        operationIds: exact ? [...input.operationIds] : [],
+        ownerId: input.ownerId,
+        selectedTool:
+          last === undefined ? input.importedSelection : last.selectedTool,
+        source: exact ? "submission" : "imported",
+      } satisfies typeof eveMessageAnnotation.$inferInsert;
+      await tx
+        .insert(eveMessageAnnotation)
+        .values(annotation)
+        .onConflictDoNothing();
+      if (exact) {
+        await tx
+          .update(eveSubmission)
+          .set({
+            messageId: sql`coalesce(${eveSubmission.messageId}, ${input.messageId})`,
+            state: "received",
+          })
+          .where(
+            and(
+              eq(eveSubmission.ownerId, input.ownerId),
+              eq(eveSubmission.conversationId, scope.id),
+              inArray(eveSubmission.operationId, [...input.operationIds])
+            )
+          );
+      }
+      const [stored] = await tx
+        .select()
+        .from(eveMessageAnnotation)
+        .where(
+          and(
+            eq(eveMessageAnnotation.conversationId, scope.id),
+            eq(eveMessageAnnotation.messageId, input.messageId)
+          )
+        );
+      return stored;
+    }
+  );
+
+// Creation recovery still belongs to the pre-existing native allocation-operation contract.
+const markEveCreationSubmissionDispatch = async (
+  ownerId: string,
+  operationId: string
+): Promise<void> => {
+  await db
+    .update(eveSubmission)
+    .set({ state: "uncertain" })
+    .where(
+      and(
+        eq(eveSubmission.ownerId, ownerId),
+        eq(eveSubmission.operationId, operationId),
+        eq(eveSubmission.state, "pending")
+      )
+    );
+};
+
 export {
   assignEveConversationProject,
+  claimEveSubmission,
   createProject,
   deleteProject,
   getEveMessageVotes,
@@ -310,7 +563,13 @@ export {
   getProjectsByUserId,
   getUserById,
   getUserModelPreferences,
+  markEveCreationSubmissionDispatch,
+  readEveSubmission,
+  rejectEveSubmissionAdmission,
+  recordEveMessageReceipt,
+  reserveEveSubmission,
   saveEveMessageVote,
+  settleEveSubmission,
   updateProject,
   upsertUserModelPreference,
 };

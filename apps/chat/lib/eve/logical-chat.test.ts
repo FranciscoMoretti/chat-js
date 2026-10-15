@@ -312,3 +312,24 @@ it("registration before the URL transition does not revoke initial follow", () =
     chat.logicalId("root", "turn_0:assistant")
   );
 });
+it("aliases repeated received events through their scoped submission identity", () => {
+  const chat = new LogicalChat("chat", "root");
+  chat.setBranches([branch("root")]);
+  const operationId = "00000000-0000-4000-8000-000000000001";
+  const metadata = {
+    custom: { chatjs: { operationIds: [operationId] } },
+    turnId: "turn_0",
+  };
+  chat.observe(
+    "root",
+    agent([
+      { ...message("first-native", "user", "turn_0", "same"), metadata },
+      { ...message("replayed-native", "user", "turn_0", "same"), metadata },
+    ])
+  );
+  expect(chat.logicalId("root", "first-native")).toBe(
+    chat.logicalId("root", "replayed-native")
+  );
+  const expectedNodes = 1;
+  expect(chat.getSnapshot().nodes.size).toBe(expectedNodes);
+});

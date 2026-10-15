@@ -1,5 +1,6 @@
 import { Client } from "eve/client";
 import { assertEveConfigured } from "./server";
+import { projectEveSubmissionEvents } from "./submission-projection";
 import { eveCopyBoundaries } from "./copy-boundaries";
 import { getEveConnectionOptions } from "./connection-options";
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
@@ -28,6 +29,11 @@ export const readPublicEveCopySource = async (
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS) });
+  const events = await projectEveSubmissionEvents(
+    row.ownerId,
+    row.sessionId,
+    snapshot.events
+  );
   const current = await getPublicEveConversation(id);
   if (
     !current ||
@@ -38,10 +44,10 @@ export const readPublicEveCopySource = async (
     throw new Error("Shared conversation is unavailable.");
   }
   return {
-    boundaries: eveCopyBoundaries(snapshot.events),
+    boundaries: eveCopyBoundaries(events),
     id: row.id,
     ownerId: row.ownerId,
-    projection: prepareEveCopyTranscript(snapshot.events),
+    projection: prepareEveCopyTranscript(events),
     sessionId: row.sessionId,
     title:
       row.title ??

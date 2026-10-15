@@ -471,6 +471,71 @@ const eveConversation = pgTable(
   ]
 );
 
+// Submission commands are immutable. State records evidence, never dispatch permission after uncertainty.
+const eveSubmission = pgTable(
+  "EveSubmission",
+  {
+    command: jsonb("command").$type<unknown>().notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    messageId: text("messageId"),
+    operationId: uuid("operationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    selectedTool: text("selectedTool"),
+    state: text("state", {
+      enum: [
+        "pending",
+        "uncertain",
+        "admitted",
+        "received",
+        "rejected",
+        "retired",
+      ],
+    })
+      .notNull()
+      .default("pending"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.operationId] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }).onDelete("cascade"),
+    check(
+      "EveSubmission_state",
+      sql`${table.state} in ('pending', 'uncertain', 'admitted', 'received', 'rejected', 'retired')`
+    ),
+    check(
+      "EveSubmission_receipt",
+      sql`(${table.state} = 'received') = (${table.messageId} is not null)`
+    ),
+  ]
+);
+
+// One exact native user message may contain several ordered submissions.
+const eveMessageAnnotation = pgTable(
+  "EveMessageAnnotation",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    messageId: text("messageId").notNull(),
+    operationIds: uuid("operationIds").array().notNull(),
+    ownerId: text("ownerId").notNull(),
+    selectedTool: text("selectedTool"),
+    source: text("source", { enum: ["submission", "imported"] }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.messageId] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }).onDelete("cascade"),
+    check(
+      "EveMessageAnnotation_source",
+      sql`${table.source} in ('submission', 'imported')`
+    ),
+  ]
+);
+
 /** Temporary copy preparation is discarded once native history is bound. */
 const eveConversationCopy = pgTable(
   "EveConversationCopy",
@@ -1030,6 +1095,8 @@ export {
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
   eveResponseGroup,
+  eveSubmission,
+  eveMessageAnnotation,
   eveSearchText,
   eveStoredFile,
   eveSubagentSession,

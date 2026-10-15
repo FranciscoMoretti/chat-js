@@ -12,6 +12,13 @@ import { canSpend } from "@/lib/db/credits";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
+import {
+  claimEveSubmission,
+  reserveEveSubmission,
+  rejectEveSubmissionAdmission,
+  settleEveSubmission,
+} from "@/lib/db/queries";
+
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import {
   admitGuestMessage,
@@ -31,6 +38,8 @@ import {
   sameOrigin,
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
+import { projectEveSubmissionStream } from "@/lib/eve/submission-projection";
+
 import { relayResponse } from "./relay-response";
 import { z } from "zod";
 
@@ -124,6 +133,7 @@ const readCommand = async (
       isNewMessage: boolean;
       message: EveMessageInput | undefined;
       modelId: string | undefined;
+      operationId: string | undefined;
       selectedTool: UiToolName | undefined;
     }
 > => {
@@ -132,6 +142,7 @@ const readCommand = async (
   let message: EveMessageInput | undefined;
   let modelId: string | undefined;
   let selectedTool: UiToolName | undefined;
+  let messageOperationId: string | undefined;
   if (request.method === "POST") {
     const input = policy.schema.safeParse(
       await request.json().catch(() => null)
@@ -150,6 +161,7 @@ const readCommand = async (
           HTTP_BAD_REQUEST
         );
       }
+      messageOperationId = operationId.data;
       const suppliedTool = request.headers.get("x-chatjs-selected-tool");
       const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
       if (!tool.success) {
@@ -192,8 +204,106 @@ const readCommand = async (
     }
     isNewMessage = "message" in input.data;
   }
-  return { body, isNewMessage, message, modelId, selectedTool };
+  return {
+    body,
+    isNewMessage,
+    message,
+    modelId,
+    operationId: messageOperationId,
+    selectedTool,
+  };
 };
+
+const reserveCommand = async (
+  command: Exclude<Awaited<ReturnType<typeof readCommand>>, Response>,
+  ownerId: string,
+  conversationId: string,
+  sessionId: string
+): Promise<Response | undefined> => {
+  const { modelId, selectedTool } = command;
+  if (command.operationId !== undefined) {
+    const submission = await reserveEveSubmission({
+      command: {
+        kind: "message",
+        message: command.message,
+        modelId: modelId ?? null,
+        selectedTool: selectedTool ?? null,
+        sessionId,
+      },
+      conversationId,
+      operationId: command.operationId,
+      ownerId,
+      selectedTool: selectedTool ?? null,
+    });
+    if (submission.state !== "pending") {
+      return Response.json(
+        {
+          code: "chatjs_message_operation_exists",
+          error: "This submission already exists. Reconnect to reconcile it.",
+          state: submission.state,
+        },
+        { status: 409 }
+      );
+    }
+  }
+  return undefined;
+};
+
+const recordAdmissionRejection = async (
+  admission: Response,
+  ownerId: string,
+  operationId: string | undefined
+): Promise<void> => {
+  const rejection = z
+    .object({ code: z.literal("chatjs_command_rejected") })
+    .safeParse(
+      await admission
+        .clone()
+        .json()
+        .catch(() => null)
+    );
+  // A duplicate guest reservation is not rejection of the original dispatch.
+  if (operationId !== undefined && rejection.success) {
+    await settleEveSubmission(ownerId, operationId, "rejected");
+  }
+};
+
+const recordDispatchResult = async (
+  result: Response,
+  ownerId: string,
+  operationId: string | undefined
+): Promise<void> => {
+  if (operationId !== undefined && result.ok) {
+    await settleEveSubmission(ownerId, operationId, "admitted");
+  }
+  if (operationId !== undefined && result.status === 409) {
+    const refused = z
+      .object({ code: z.literal("session_not_active") })
+      .safeParse(
+        await result
+          .clone()
+          .json()
+          .catch(() => null)
+      );
+    if (refused.success) {
+      await rejectEveSubmissionAdmission(ownerId, operationId);
+    }
+  }
+};
+
+const relaySessionResponse = (
+  result: Response,
+  method: string,
+  ownerId: string,
+  sessionId: string
+): Response => {
+  const responseBody =
+    method === "GET" && result.ok && result.body !== null
+      ? projectEveSubmissionStream(ownerId, sessionId, result.body)
+      : result.body;
+  return relayResponse(result, responseBody);
+};
+
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
   context: {
@@ -245,13 +355,40 @@ const handle = async (
   }
   const { body, modelId, selectedTool } = command;
   try {
+    const existing = await reserveCommand(
+      command,
+      principal.ownerId,
+      conversation.id,
+      policy.sessionId
+    );
+    if (existing) {
+      return existing;
+    }
     const admission = await checkTurnAdmission(
       request,
       { principal, sessionId: policy.sessionId },
       command
     );
     if (admission instanceof Response) {
+      await recordAdmissionRejection(
+        admission,
+        principal.ownerId,
+        command.operationId
+      );
       return admission;
+    }
+    if (
+      command.operationId !== undefined &&
+      !(await claimEveSubmission(principal.ownerId, command.operationId))
+    ) {
+      return Response.json(
+        {
+          code: "chatjs_message_operation_exists",
+          error:
+            "This submission is already being handled. Reconnect to reconcile it.",
+        },
+        { status: 409 }
+      );
     }
     const result = await eveRequest(
       principal.ownerId,
@@ -269,10 +406,16 @@ const handle = async (
       modelId,
       selectedTool
     );
+    await recordDispatchResult(result, principal.ownerId, command.operationId);
     if (admission) {
       await settleGuestMessage(result, principal.ownerId, admission);
     }
-    return relayResponse(result);
+    return relaySessionResponse(
+      result,
+      request.method,
+      principal.ownerId,
+      policy.sessionId
+    );
   } catch (error) {
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);
