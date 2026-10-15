@@ -55,7 +55,6 @@ const documentItems: RegistryItem[] = [
       "Remove a document from this conversation with explicit owner approval",
     files: documentFiles("delete-document", [
       "tool.ts",
-      "execute.ts",
       "schemas.ts",
       "availability.ts",
     ]),
