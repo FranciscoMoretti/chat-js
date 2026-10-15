@@ -1,7 +1,8 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 export const relayResponse = (
-  result: ReadonlyNativeSurface<Response>
+  result: ReadonlyNativeSurface<Response>,
+  body: BodyInit | null = result.body
 ): Response => {
   const headers = new Headers({ "cache-control": "no-store" });
   for (const key of [
@@ -16,5 +17,5 @@ export const relayResponse = (
       headers.set(key, value);
     }
   }
-  return new Response(result.body, { headers, status: result.status });
+  return new Response(body, { headers, status: result.status });
 };

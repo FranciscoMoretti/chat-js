@@ -2,6 +2,7 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
+import { z } from "zod";
 
 import type { EveBranchReference } from "./fork-source";
 import { LogicalCommands } from "./logical-commands";
@@ -45,8 +46,16 @@ interface LogicalChatSnapshot {
   error?: string;
 }
 
+const lastContributor = -1;
+const projectedOperations = z.object({ operationIds: z.array(z.uuid()) });
 const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   const custom = message.metadata?.custom?.chatjs;
+  const operationId = projectedOperations
+    .safeParse(custom)
+    .data?.operationIds.at(lastContributor);
+  if (message.role === "user" && typeof operationId === "string") {
+    return JSON.stringify([sessionId, "operation", operationId, "user"]);
+  }
   if (
     message.role === "user" &&
     typeof custom === "object" &&

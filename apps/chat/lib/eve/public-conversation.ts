@@ -3,6 +3,7 @@ import { assertEveConfigured } from "./server";
 import { getEveConnectionOptions } from "./connection-options";
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
 import { sharedEveMessages } from "./shared-messages";
+import { projectEveSubmissionEvents } from "./submission-projection";
 
 const PUBLIC_TRANSCRIPT_SNAPSHOT_TIMEOUT_MS = 15_000;
 const PUBLIC_TRANSCRIPT_TITLE_PREVIEW_MAX_LENGTH = 100;
@@ -24,13 +25,18 @@ export const getPublicEveTranscript = async (
   const snapshot = await client.sessions.attach(row.sessionId).snapshot({
     signal: AbortSignal.timeout(PUBLIC_TRANSCRIPT_SNAPSHOT_TIMEOUT_MS),
   });
+  const events = await projectEveSubmissionEvents(
+    row.ownerId,
+    row.sessionId,
+    snapshot.events
+  );
   // A revocation during a slow snapshot read must take effect before disclosure.
   if (!(await getPublicEveConversation(id))) {
     return null;
   }
   return {
     id: row.id,
-    messages: sharedEveMessages(snapshot.events),
+    messages: sharedEveMessages(events),
     title:
       row.title ??
       row.firstMessage.slice(

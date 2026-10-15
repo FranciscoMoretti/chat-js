@@ -55,6 +55,10 @@ test("pending delivery survives reload and clears only for its operation", async
     .click();
   await expect(page.getByTestId("operation")).toHaveText(operationId ?? "");
   await page
+    .getByRole("button", { name: "Acknowledge foreign session" })
+    .click();
+  await expect(page.getByTestId("operation")).toHaveText(operationId ?? "");
+  await page
     .getByRole("button", { name: "Acknowledge pending operation" })
     .click();
   await expect(page.getByText("No pending message")).toBeVisible();

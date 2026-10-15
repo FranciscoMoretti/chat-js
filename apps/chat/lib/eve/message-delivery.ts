@@ -29,9 +29,37 @@ const pendingMessage = z.object({
   selectedTool: frontendToolsSchema.optional(),
 });
 
+const deliveryOperationIds = z.array(z.uuid()).optional();
+const projectedDeliveryMetadata = z.object({
+  chatjs: z.object({
+    operationIds: deliveryOperationIds,
+    sessionId: z.string(),
+  }),
+});
+
 const deliveryMetadata = z.object({
   chatjs: z.object({ operationId: z.uuid() }),
 });
+
+const receiptMatches = (
+  metadata: unknown,
+  sessionId: string,
+  operationId: string
+): boolean => {
+  const projected = projectedDeliveryMetadata.safeParse(metadata);
+  if (projected.success) {
+    if (projected.data.chatjs.sessionId !== sessionId) {
+      return false;
+    }
+    if (projected.data.chatjs.operationIds !== undefined) {
+      return projected.data.chatjs.operationIds.includes(operationId);
+    }
+  }
+  return (
+    deliveryMetadata.safeParse(metadata).data?.chatjs.operationId ===
+    operationId
+  );
+};
 
 type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;
 
@@ -88,8 +116,7 @@ const eveMessageDelivery = {
     if (
       event.type !== "message.received" ||
       !isNonEmptyString(pending.operationId) ||
-      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-        .operationId !== pending.operationId
+      !receiptMatches(event.data.metadata, sessionId, pending.operationId)
     ) {
       return false;
     }
@@ -169,17 +196,9 @@ const eveMessageDeliveryMetadata = (
   },
 });
 
-const eveMessageOperationId = (event: DeliveryEvent): string | undefined => {
-  if (event.type === "message.received") {
-    return deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-      .operationId;
-  }
-  return undefined;
-};
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,
   eveMessageDeliveryMetadata,
-  eveMessageOperationId,
 };
 export type { ActivePendingEveMessage, PendingEveMessage };

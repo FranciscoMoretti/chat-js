@@ -27,6 +27,8 @@ const KNOWN_CHATJS_TABLE_NAMES = [
   "EveNamedDocumentCheckpoint",
   "EveNamedDocumentCheckpointEntry",
   "EveResponseGroup",
+  "EveSubmission",
+  "EveMessageAnnotation",
   "EveStoredFile",
   "EveSubagentSession",
   "EveUsage",

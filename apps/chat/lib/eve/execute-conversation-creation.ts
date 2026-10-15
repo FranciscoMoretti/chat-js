@@ -8,6 +8,11 @@ import {
   getEveCreation,
 } from "@/lib/db/eve-queries";
 import {
+  reserveEveSubmission,
+  settleEveSubmission,
+  markEveCreationSubmissionDispatch,
+} from "@/lib/db/queries";
+import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
@@ -136,6 +141,13 @@ export const executeEveConversationCreation = async (
       input.operationId,
       eveMessageTitle(input.message),
       async (operationId) => {
+        await reserveEveSubmission({
+          command: { kind: "creation", ...input },
+          conversationId: operationId,
+          operationId: input.operationId,
+          ownerId,
+          selectedTool: input.selectedTool ?? null,
+        });
         const existing = await requestEveCreation(
           "lookup",
           ownerId,
@@ -145,6 +157,7 @@ export const executeEveConversationCreation = async (
           }
         );
         if (existing.ok) {
+          await settleEveSubmission(ownerId, input.operationId, "admitted");
           return z
             .object({
               sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
@@ -191,6 +204,7 @@ export const executeEveConversationCreation = async (
             input.modelId
           );
         }
+        await markEveCreationSubmissionDispatch(ownerId, input.operationId);
         const result = await requestEveCreation(
           "dispatch",
           ownerId,
@@ -214,6 +228,7 @@ export const executeEveConversationCreation = async (
         if (!result.ok) {
           throw new EveCreationTransportError("dispatch", result.status);
         }
+        await settleEveSubmission(ownerId, input.operationId, "admitted");
         return z
           .object({
             sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
