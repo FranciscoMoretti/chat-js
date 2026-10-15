@@ -11,10 +11,11 @@ const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)
 );
 
-// The `geist` package's exports map blocks deep woff2 imports, so resolve the
-// variable font files by path and alias them (see src/tools/_shared/visual.tsx).
-const geistFonts = fileURLToPath(
-  new URL("../node_modules/geist/dist/fonts", import.meta.url)
+// Resolve an exported entry so font aliases work with both hoisted and local
+// installs. The exports map blocks direct woff2 imports.
+const geistFonts = path.join(
+  path.dirname(createRequire(import.meta.url).resolve("geist/font")),
+  "fonts"
 );
 
 export default defineConfig({

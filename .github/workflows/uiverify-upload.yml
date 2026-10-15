@@ -68,6 +68,8 @@ jobs:
       # Each suite uploads to its own project. Docs renders every page: its test
       # loads the built pages in an iframe, so the module graph `--only-changed`
       # reads cannot see a page edit.
+      # Match same-repository uploads: keep differences advisory while preserving
+      # the PR's cumulative visual changeset for human review.
       - name: Upload to UI Verify
         if: steps.meta.outputs.pr != ''
         env:
@@ -82,4 +84,4 @@ jobs:
           npx -y uiverify@1.7.0 upload \
             --static-dir "$RUNNER_TEMP/archive" \
             --working-directory "$RUNNER_TEMP/repo" \
-            $ONLY_CHANGED --exit-zero-on-changes
+            $ONLY_CHANGED --auto-accept-changes
