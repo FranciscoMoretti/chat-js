@@ -34,22 +34,6 @@ interface UsageEventData {
           "kind"
         >;
   };
-  "compaction.usage": Pick<
-    Extract<MessageStreamEvent, { type: "compaction.usage" }>["data"],
-    "usage" | "providerMetadata" | "turnId"
-  >;
-  "hook.result": Pick<
-    Extract<MessageStreamEvent, { type: "hook.result" }>["data"],
-    "modelCalls" | "turnId"
-  >;
-  "step.completed": Pick<
-    Extract<MessageStreamEvent, { type: "step.completed" }>["data"],
-    "usage" | "providerMetadata" | "turnId"
-  >;
-  "step.failed": Pick<
-    Extract<MessageStreamEvent, { type: "step.failed" }>["data"],
-    "turnId"
-  >;
   "subagent.called": Pick<
     Extract<MessageStreamEvent, { type: "subagent.called" }>["data"],
     "remote" | "childSessionId" | "turnId"
@@ -71,33 +55,6 @@ type UsageEventReader = ReadonlyNativeSurface<
 >;
 
 const NO_USAGE_COST_USD = 0;
-
-const ingestHookUsage = async (
-  ownerId: string,
-  billingSession: string,
-  eventId: string,
-  event: Extract<UsageEventReader, { type: "hook.result" }>,
-  attribution?: Readonly<{ sessionId: string; turnId: string }>
-): Promise<boolean> => {
-  let completedCallsPriced = true;
-  for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Persist each model-attempt receipt before the next; a rejected ledger write must stop later attempts and unresolved completed calls prevent cursor advance.
-    const priced = await recordEveUsage({
-      costUsd:
-        call.usage?.costUsd ??
-        (call.failed === true ? NO_USAGE_COST_USD : undefined),
-      eventId: `${eventId}:model-call:${index}`,
-      generationId: call.providerMetadata?.gateway?.generationId,
-      ownerId,
-      sessionId: billingSession,
-      turnId: attribution?.turnId ?? event.data.turnId,
-    });
-    if (call.failed !== true && !priced) {
-      completedCallsPriced = false;
-    }
-  }
-  return completedCallsPriced;
-};
 
 const ingestToolUsage = async (
   ownerId: string,
@@ -141,18 +98,6 @@ export const ingestEveUsage = async (
     return true;
   }
   const billingSession = attribution?.sessionId ?? sessionId;
-  const eventId = attribution
-    ? `eve-child:${sessionId}:${event.meta.id}`
-    : event.meta.id;
-  if (event.type === "hook.result") {
-    return await ingestHookUsage(
-      ownerId,
-      billingSession,
-      eventId,
-      event,
-      attribution
-    );
-  }
   if (event.type === "action.result") {
     return await ingestToolUsage(
       ownerId,
@@ -162,32 +107,6 @@ export const ingestEveUsage = async (
       attribution
     );
   }
-  if (
-    event.type !== "step.completed" &&
-    event.type !== "compaction.usage" &&
-    event.type !== "step.failed"
-  ) {
-    return true;
-  }
-  const priced = await recordEveUsage({
-    costUsd:
-      event.type === "step.failed"
-        ? NO_USAGE_COST_USD
-        : event.data.usage?.costUsd,
-    eventId,
-    generationId:
-      event.type === "step.failed"
-        ? undefined
-        : event.data.providerMetadata?.gateway?.generationId,
-    ownerId,
-    sessionId: billingSession,
-    turnId: attribution?.turnId ?? event.data.turnId,
-  });
-  // A failed step has no completed-call usage receipt. Keep its evidence without
-  // reporting a missing completed charge (the same policy used for failed hook calls).
-
-  if (event.type === "step.failed") {
-    return true;
-  }
-  return priced;
+  // Model costs come only from durable wrapper intents and receipts.
+  return true;
 };

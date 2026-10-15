@@ -2,7 +2,8 @@ import { defineAgent, defineDynamic } from "eve";
 import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
 
-import { resolveEveModel } from "../lib/eve/model-selection";
+import { resolveAccountedEveModel } from "../lib/eve/model-accounting";
+import type { DynamicResolveContext } from "eve";
 import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { wrapLanguageModel } from "ai";
@@ -22,16 +23,18 @@ export default defineAgent({
   model: defineDynamic({
     events: {
       "step.started": async (
-        _event: unknown,
-        context: Readonly<{
-          session: Parameters<typeof installedToolAvailabilityMiddleware>[0];
-        }>
+        event: unknown,
+        context: DynamicResolveContext
       ) => {
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));
         }
-        const resolved = await resolveEveModel(selectedModel.get().modelId);
+        const resolved = await resolveAccountedEveModel(
+          selectedModel.get().modelId,
+          event,
+          context
+        );
         return {
           ...resolved,
           model: wrapLanguageModel({

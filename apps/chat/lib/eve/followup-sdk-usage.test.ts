@@ -1,9 +1,11 @@
-import { MockLanguageModelV3 } from "ai/test";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+import type { ModelCallScope } from "./model-ledger";
+import { MockLanguageModelV4 } from "ai/test";
 import { expect, it, vi } from "vitest";
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
-const model = new MockLanguageModelV3({
+const model = new MockLanguageModelV4({
   doGenerate: vi.fn().mockResolvedValue({
     content: [{ text: "This is not valid JSON", type: "text" }],
     finishReason: { raw: "stop", unified: "stop" },
@@ -17,7 +19,26 @@ const model = new MockLanguageModelV3({
     warnings: [],
   }),
 });
-const mocks = vi.hoisted(() => ({ resolveEveModel: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  resolveEveModel: vi.fn(),
+  begin: vi.fn(),
+  finish: vi.fn(),
+}));
+vi.mock("./model-accounting", async () => {
+  const { wrapEveModel } = await import("./model-ledger");
+  return {
+    accountEveModel: (
+      resolved: { model: LanguageModelV4 },
+      scope: ModelCallScope
+    ) => ({
+      ...resolved,
+      model: wrapEveModel(resolved.model, scope, {
+        begin: mocks.begin,
+        finish: mocks.finish,
+      }),
+    }),
+  };
+});
 vi.mock("./model-selection", () => ({
   resolveEveModel: mocks.resolveEveModel,
 }));
@@ -37,22 +58,23 @@ vi.mock("../config", () => ({
 }));
 
 it("the real AI SDK delivers usage before rejecting invalid structured suggestions", async () => {
-  const result = await generateEveFollowupSuggestions({
-    assistant: "Because.",
-    user: "Why?",
-  });
-  if (!result || !result.modelCalls) {
-    throw new Error("Expected recorded model usage");
-  }
-  expect(result.responseMetadata).toBeUndefined();
-  expect(result.modelCalls).toHaveLength(1);
-  expect(result.modelCalls[0]).toMatchObject({
-    modelId: "google/gemini-2.5-flash-lite",
-    providerMetadata: {
-      gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
-    },
-    usage: { inputTokens: 20, outputTokens: 10 },
-  });
-  expect(result.modelCalls[0].failed).toBeUndefined();
+  const result = await generateEveFollowupSuggestions(
+    { assistant: "Because.", user: "Why?" },
+    { ownerId: "owner", sessionId: "session", turnId: "turn" }
+  );
+  expect(result).toBeUndefined();
+  expect(mocks.begin).toHaveBeenCalledOnce();
+  expect(mocks.finish).toHaveBeenCalledWith(
+    expect.objectContaining({
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn",
+    }),
+    expect.objectContaining({
+      providerMetadata: {
+        gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
+      },
+    })
+  );
   expect(model.doGenerateCalls).toHaveLength(1);
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "EveUsage" ADD COLUMN "modelAttempt" jsonb;

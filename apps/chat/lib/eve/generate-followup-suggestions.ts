@@ -1,41 +1,18 @@
-import type { HookModelCall, TurnCompletedHookResult } from "eve/hooks";
+import type { TurnCompletedHookResult } from "eve/hooks";
 import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
 import { config } from "@/lib/config";
 import { eveFollowupSuggestions } from "./followup-suggestions";
+import { accountEveModel } from "./model-accounting";
+import type { ModelCallScope } from "./model-ledger";
 import { resolveEveModel } from "./model-selection";
 
 const FOLLOWUP_TIMEOUT_MS = 15_000;
 
-type NativeFollowupUsage = NonNullable<HookModelCall["usage"]>;
-type ReadonlyFollowupUsage = Readonly<
-  Omit<NativeFollowupUsage, "inputTokenDetails" | "outputTokenDetails" | "raw">
-> & {
-  readonly inputTokenDetails: Readonly<
-    NativeFollowupUsage["inputTokenDetails"]
-  >;
-  readonly outputTokenDetails: Readonly<
-    NativeFollowupUsage["outputTokenDetails"]
-  >;
-  readonly raw?: Readonly<NonNullable<NativeFollowupUsage["raw"]>>;
-};
-type ReadonlyFollowupProviderMetadata = {
-  readonly [
-    Provider in keyof NonNullable<HookModelCall["providerMetadata"]>
-  ]: Readonly<NonNullable<HookModelCall["providerMetadata"]>[Provider]>;
-};
-interface FollowupStep {
-  readonly providerMetadata?: ReadonlyFollowupProviderMetadata;
-  readonly usage?: ReadonlyFollowupUsage;
-}
-
-/** Auxiliary generation belongs to the native turn and never fails its answer.
- * @param {Readonly<FollowupContext>} context User and completed assistant text supplying auxiliary suggestion generation.
- * @returns {Promise<TurnCompletedHookResult | undefined>} No result when disabled/empty; otherwise native model usage and validated suggestion metadata, retaining billed attempts even when output parsing fails.
- */
-
+/** Auxiliary receipts are durable before output parsing; suggestion failure never fails the answer. */
 export const generateEveFollowupSuggestions = async (
-  context: FollowupContext
+  context: FollowupContext,
+  scope: ModelCallScope
 ): Promise<TurnCompletedHookResult | undefined> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
@@ -43,11 +20,11 @@ export const generateEveFollowupSuggestions = async (
     return undefined;
   }
   const modelId = config.ai.tools.followupSuggestions.default;
-  const modelCalls: HookModelCall[] = [];
-  let attempted = false;
   try {
-    const resolved = await resolveEveModel(modelId);
-    attempted = true;
+    const resolved = await accountEveModel(
+      await resolveEveModel(modelId),
+      scope
+    );
     const result = await generateText({
       model: resolved.model,
       ...resolved.modelOptions,
@@ -64,24 +41,13 @@ export const generateEveFollowupSuggestions = async (
           role: "user",
         },
       ],
-      onStepEnd(step: FollowupStep): void {
-        modelCalls.push({
-          modelId,
-          providerMetadata: step.providerMetadata,
-          usage: step.usage,
-        });
-      },
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
     // Usage is captured before reading output: malformed JSON can still cost money.
     return {
-      modelCalls,
       responseMetadata: eveFollowupSuggestions.parse(result.output),
     };
   } catch {
-    if (attempted && modelCalls.length === 0) {
-      modelCalls.push({ failed: true, modelId });
-    }
-    return { modelCalls };
+    return undefined;
   }
 };

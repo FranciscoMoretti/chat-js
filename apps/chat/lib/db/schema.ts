@@ -720,6 +720,7 @@ const eveUsage = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     eventId: text("eventId").primaryKey(),
     generationId: text("generationId"),
+    modelAttempt: jsonb("modelAttempt").$type<unknown>(),
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),

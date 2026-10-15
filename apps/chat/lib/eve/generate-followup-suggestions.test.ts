@@ -1,108 +1,59 @@
-import type { LanguageModelUsage, ProviderMetadata } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
-interface UsageEvidence {
-  readonly usage: Readonly<
-    Pick<LanguageModelUsage, "inputTokens" | "outputTokens">
-  >;
-  readonly providerMetadata: {
-    readonly gateway: { readonly cost: string; readonly generationId: string };
-  };
-}
-
 const mocks = vi.hoisted(() => ({
-  feature: { default: "google/gemini-2.5-flash-lite", enabled: true },
-  generate: vi.fn<
-    (options: { readonly onStepEnd: (step: UsageEvidence) => void }) => {
-      readonly output: { readonly suggestions: readonly string[] };
-    }
-  >(),
+  feature: { default: "mock", enabled: true },
+  generate: vi.fn(),
   model: vi.fn(),
+  account: vi.fn(),
 }));
 vi.mock("ai", () => ({
   Output: { object: vi.fn() },
   generateText: mocks.generate,
 }));
 vi.mock("./model-selection", () => ({ resolveEveModel: mocks.model }));
+vi.mock("./model-accounting", () => ({ accountEveModel: mocks.account }));
 vi.mock("../config", () => ({
   config: { ai: { tools: { followupSuggestions: mocks.feature } } },
 }));
-
-const evidence = {
-  providerMetadata: {
-    gateway: { cost: "0.00002", generationId: "generation" },
-  },
-  usage: { inputTokens: 10, outputTokens: 20 },
-} satisfies {
-  usage: Partial<LanguageModelUsage>;
-  providerMetadata: ProviderMetadata;
-};
 const exchange = {
   assistant: "Rain is liquid precipitation.",
   user: "What is rain?",
 };
+const scope = { ownerId: "owner", sessionId: "session", turnId: "turn" };
 const suggestions = [
   "How do clouds form?",
   "Why do raindrops fall?",
   "How is rainfall measured?",
 ];
-
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.feature.enabled = true;
-  mocks.model.mockResolvedValue({
-    model: { specificationVersion: "v3" },
-    modelOptions: {},
-  });
+  mocks.model.mockResolvedValue({ model: "unwrapped" });
+  mocks.account.mockResolvedValue({ model: "accounted", modelOptions: {} });
 });
-
-it("retains paid usage when structured output cannot be read", async () => {
-  mocks.generate.mockImplementation(({ onStepEnd }) => {
-    onStepEnd(evidence);
-    return {
-      get output(): never {
-        throw new Error("Malformed suggestions");
-      },
-    };
-  });
-  const result = await generateEveFollowupSuggestions(exchange);
-  expect(result?.responseMetadata).toBeUndefined();
-  expect(result?.modelCalls).toEqual([
-    { modelId: mocks.feature.default, ...evidence },
-  ]);
-  expect(mocks.generate).toHaveBeenCalledWith(
-    expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
-  );
-});
-
-it("returns valid suggestions and records the configured auxiliary model", async () => {
-  mocks.generate.mockImplementation(({ onStepEnd }) => {
-    onStepEnd(evidence);
-    return { output: { suggestions } };
-  });
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [{ modelId: mocks.feature.default, ...evidence }],
+it("uses an owned accounting wrapper and returns only display metadata", async () => {
+  mocks.generate.mockResolvedValue({ output: { suggestions } });
+  expect(await generateEveFollowupSuggestions(exchange, scope)).toEqual({
     responseMetadata: { suggestions },
   });
-  expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
+  expect(mocks.account).toHaveBeenCalledWith({ model: "unwrapped" }, scope);
+  expect(mocks.generate).toHaveBeenCalledWith(
+    expect.objectContaining({ model: "accounted", maxRetries: 0 })
+  );
 });
-it("records a failed attempt without turning an optional feature error into answer failure", async () => {
+it("does not fail the answer or manufacture a zero price on auxiliary failure", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [{ failed: true, modelId: mocks.feature.default }],
-  });
+  expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
 });
-it("does not spend when disabled, without an answer, or before model resolution succeeds", async () => {
+it("does not call a provider when disabled, empty, or accounting binding fails", async () => {
   mocks.feature.enabled = false;
-  expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();
+  expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
   mocks.feature.enabled = true;
   expect(
-    await generateEveFollowupSuggestions({ ...exchange, assistant: "" })
+    await generateEveFollowupSuggestions({ ...exchange, assistant: "" }, scope)
   ).toBeUndefined();
-  mocks.model.mockRejectedValue(new Error("Model configuration unavailable"));
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [],
-  });
+  mocks.account.mockRejectedValue(new Error("unprepared"));
+  expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
   expect(mocks.generate).not.toHaveBeenCalled();
 });

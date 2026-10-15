@@ -1,3 +1,4 @@
+import { assertEveModelCostsKnown } from "@/lib/db/eve-model-ledger";
 import { Client } from "eve/client";
 import {
   advanceEveSubagentUsageCursor,
@@ -131,13 +132,7 @@ const reconcileEveUsage = async (
       latestActivity = event;
     }
     const priced = await ingestEveUsage(ownerId, sessionId, event);
-    if (
-      (event.type === "step.completed" ||
-        event.type === "compaction.usage" ||
-        event.type === "hook.result" ||
-        event.type === "action.result") &&
-      !priced
-    ) {
+    if (!priced) {
       unresolved = true;
     }
   }
@@ -269,6 +264,7 @@ const reconcileEveOwnerUsage = async (
   await recoverEveCreations(ownerId);
   if (resolveWorkflowWorld(env) !== "vercel") {
     await reconcileAllOwnerUsage(ownerId);
+    await assertEveModelCostsKnown(ownerId);
     return;
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
@@ -277,8 +273,7 @@ const reconcileEveOwnerUsage = async (
     ownerId,
     async (sweepDue, unpricedSessions: Readonly<ReadonlySet<string>>) => {
       if (sweepDue || unpricedSessions.size > NO_UNPRICED_SESSIONS) {
-        // Older cursors can have passed failed attempts before their explicit
-        // zero-charge classification; replay that evidence rather than strand it.
+        // Tool receipts may be missing despite a previous successful sweep.
         await reconcileAllOwnerUsage(ownerId, unpricedSessions);
       } else if (typeof sessionId === "string" && sessionId !== "") {
         // The conversation receiving new work is never covered by the cooldown.
@@ -286,6 +281,7 @@ const reconcileEveOwnerUsage = async (
       }
     }
   );
+  await assertEveModelCostsKnown(ownerId);
 };
 
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };

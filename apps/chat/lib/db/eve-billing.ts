@@ -5,6 +5,8 @@ import { db } from "./client";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { env } from "@/lib/env";
 import postgres from "postgres";
+import { z } from "zod";
+import { isDeepStrictEqual } from "node:util";
 
 import {
   eveConversation,
@@ -29,6 +31,53 @@ const hasConflictingCost = (
   incoming: string | null
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
+
+const modelEvidence = z
+  .object({
+    eventId: z.string(),
+    ownerId: z.string(),
+    sessionId: z.string(),
+    turnId: z.string().optional(),
+    modelId: z.string(),
+    provider: z.string(),
+    state: z.enum(["pending", "returned"]),
+  })
+  .loose();
+
+const mergeModelEvidence = (stored: unknown, incoming: unknown): unknown => {
+  if (stored === null || stored === undefined) {
+    return incoming;
+  }
+  if (incoming === undefined) {
+    return stored;
+  }
+  const previous = modelEvidence.safeParse(stored);
+  const next = modelEvidence.safeParse(incoming);
+  if (!previous.success || !next.success) {
+    if (!isDeepStrictEqual(stored, incoming)) {
+      throw new Error("Model evidence identity conflict.");
+    }
+    return stored;
+  }
+  const { state: previousState, ...previousFields } = previous.data;
+  const { state: nextState, ...nextFields } = next.data;
+  for (const key of [
+    "eventId",
+    "ownerId",
+    "sessionId",
+    "turnId",
+    "modelId",
+    "provider",
+  ]) {
+    if (previousFields[key] !== nextFields[key]) {
+      throw new Error("Model evidence identity conflict.");
+    }
+  }
+  if (previousState === "returned" && nextState === "pending") {
+    return stored;
+  }
+  return { ...previousFields, ...nextFields, state: nextState };
+};
 
 const debitTurnUsage = async (
   tx: UsageTransaction,
@@ -84,6 +133,7 @@ const recordEveUsage = async (input: {
   readonly ownerId: string;
   readonly costUsd?: number;
   readonly generationId?: string;
+  readonly modelAttempt?: unknown;
 }): Promise<boolean> => {
   if (
     !input.eventId ||
@@ -107,7 +157,11 @@ const recordEveUsage = async (input: {
       )
     );
   const hasSettledUsage = Boolean(settled);
-  if (hasSettledUsage) {
+  if (
+    hasSettledUsage &&
+    input.modelAttempt === undefined &&
+    input.generationId === undefined
+  ) {
     const incoming =
       input.costUsd === undefined
         ? null
@@ -157,12 +211,24 @@ const recordEveUsage = async (input: {
           "Eve usage amount changed; reconcile provider evidence."
         );
       }
-      if (existing.costUsd === null && costUsd !== null) {
-        await tx
-          .update(eveUsage)
-          .set({ costUsd, generationId: input.generationId })
-          .where(eq(eveUsage.eventId, input.eventId));
+      if (
+        existing.generationId !== null &&
+        input.generationId !== undefined &&
+        existing.generationId !== input.generationId
+      ) {
+        throw new Error("Eve usage generation identity conflict.");
       }
+      await tx
+        .update(eveUsage)
+        .set({
+          costUsd: existing.costUsd ?? costUsd,
+          generationId: input.generationId ?? existing.generationId,
+          modelAttempt: mergeModelEvidence(
+            existing.modelAttempt,
+            input.modelAttempt
+          ),
+        })
+        .where(eq(eveUsage.eventId, input.eventId));
     } else {
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
