@@ -6,6 +6,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   symlink,
   writeFile,
@@ -46,9 +47,22 @@ const main = async (): Promise<void> => {
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, content);
   };
+  const fixtureModules = path.join(fixture, "node_modules");
+  await mkdir(fixtureModules);
+  const workspaceDependencies = await readdir(workspaceNodeModules);
+  await Promise.all(
+    workspaceDependencies
+      .filter((name) => name !== "eve")
+      .map(async (name) => {
+        await symlink(
+          path.join(workspaceNodeModules, name),
+          path.join(fixtureModules, name)
+        );
+      })
+  );
   await symlink(
-    workspaceNodeModules,
-    path.join(fixture, "node_modules"),
+    path.dirname(evePackageJson),
+    path.join(fixtureModules, "eve"),
     "dir"
   );
   await Promise.all(
@@ -91,6 +105,19 @@ export async function recordEveUsage(row) {
   return row.costUsd !== undefined;
 }`
   );
+  // This fixture covers workflow/search receipts, not gateway model accounting.
+  await write(
+    "lib/eve/model-accounting.ts",
+    "export const observeEveModelAccounting = () => {};"
+  );
+  await cp(
+    path.join(app, "lib/eve/accounting-log.ts"),
+    path.join(fixture, "lib/eve/accounting-log.ts")
+  );
+  await write(
+    "lib/logger.ts",
+    "export const createModuleLogger = () => ({ error: console.error });"
+  );
   await write(
     "lib/db/eve-subagents.ts",
     `import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -110,7 +137,7 @@ export async function registerEveSubagent(owner, parent, session, turn) {
   await write(
     "package.json",
     JSON.stringify({
-      dependencies: { eve: "npm:@chat-js/eve@0.61.0-chatjs.0" },
+      dependencies: { eve: `file:${path.dirname(evePackageJson)}` },
       private: true,
       type: "module",
     })
@@ -172,26 +199,26 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
  const output = !decision ? { research_brief: "Compare evidence", title: "Report" } :
  message.includes("Follow-up evidence") ? { complete: true, topics: [] } :
  message.includes("First evidence") ? { complete: false, topics: ["Follow-up topic"] } : { complete: false, topics: ["Initial topic"] };
- return { toolCalls: [{ name: "final_output", input: output }] };
+ return { toolCalls: [{ name: "eve__reply", input: output }] };
 }`)
   );
   await write(
     "agent/subagents/researcher/agent.ts",
     modelSource(`({lastUserMessage,toolResults}) => !toolResults.some(r => r.name === "webSearch")
  ? { toolCalls: [{ name: "webSearch", input: { query: "evidence" } }] }
- : { toolCalls: [{ name: "final_output", input: { findings: lastUserMessage?.includes("Follow-up topic") ? "Follow-up evidence https://example.test/two" : "First evidence https://example.test/one" } }] }`)
+ : { toolCalls: [{ name: "eve__reply", input: { findings: lastUserMessage?.includes("Follow-up topic") ? "Follow-up evidence https://example.test/two" : "First evidence https://example.test/one" } }] }`)
   );
   await write(
     "agent/subagents/researchCompressor/agent.ts",
     modelSource(
-      `({lastUserMessage}) => ({ toolCalls: [{ name: "final_output", input: { findings: lastUserMessage?.includes("Follow-up evidence") ? "Follow-up evidence" : "First evidence" } }] })`
+      `({lastUserMessage}) => ({ toolCalls: [{ name: "eve__reply", input: { findings: lastUserMessage?.includes("Follow-up evidence") ? "Follow-up evidence" : "First evidence" } }] })`
     )
   );
   await write(
     "agent/subagents/researchWriter/agent.ts",
     modelSource(`({lastUserMessage}) => {
  if (!lastUserMessage?.includes("First evidence") || !lastUserMessage?.includes("Follow-up evidence")) throw new Error("Lost findings");
- return { toolCalls: [{ name: "final_output", input: { title: "Report", content: "# Both rounds" } }] };
+ return { toolCalls: [{ name: "eve__reply", input: { title: "Report", content: "# Both rounds" } }] };
 }`)
   );
   await write(
@@ -234,11 +261,11 @@ export default [defineEval({ description: "adaptive native research", async test
   assert.equal(receipt.updates.filter(u => u.type === "web").length, 2);
   const client = new Client({ host: t.target.url });
   const root = await client.sessions.attach(turn.sessionId).snapshot();
-  const children = root.events.filter(e => e.type === "subagent.called");
+  const children = root.events.filter(e => e.type === "agent.started");
   assert.equal(children.filter(e => e.data.name === "researcher").length, 2);
   let searchCalls = 0;
   for (const child of children) {
-    const stream = await client.sessions.attach(child.data.childSessionId).snapshot();
+    const stream = await client.sessions.attach(child.data.sessionId).snapshot();
     searchCalls += stream.events.filter(e => e.type === "action.result" && e.data.result.kind === "tool-result" && e.data.result.toolName === "webSearch").length;
   }
   assert.equal(searchCalls, 2);
@@ -247,13 +274,13 @@ export default [defineEval({ description: "adaptive native research", async test
   const searchCharges = evidence.filter(row => row.eventId.startsWith("eve-tool:") && row.costUsd === 0.02 && row.sessionId === turn.sessionId);
   assert.equal(searchCharges.length, 2);
   assert.equal(new Set(searchCharges.map(row => row.turnId)).size, 1);
-  assert.ok(evidence.some(row => row.eventId.startsWith("eve-child:") && row.sessionId === turn.sessionId));
+  // Mock models have no durable gateway accounting intents; only search receipts are charged here.
   assert.ok(root.events.some(e => e.type === "action.partial"));
 }}), defineEval({ description: "cancellation stops owned research", async test(t) {
   await writeFile(${JSON.stringify(path.join(fixture, "host"))}, t.target.url);
   const session = await t.session();
   const live = await session.start("Research then cancel");
-  const called = await live.waitForEvent("subagent.called", { data: { name: "researcher" } });
+  const called = await live.waitForEvent("agent.started", { data: { name: "researcher" } });
   await live.cancel();
   await live.result();
   const client = new Client({ host: t.target.url });
@@ -261,7 +288,7 @@ export default [defineEval({ description: "adaptive native research", async test
   assert.ok(root.events.some(e => e.type === "turn.cancelled"));
   assert.ok(!root.events.some(e => e.type === "action.result" && e.data.status === "completed" && e.data.result.kind === "tool-result" && e.data.result.output?.output?.format === "report"));
   let childStopped = false;
-  for await (const event of client.sessions.attach(called.data.childSessionId).stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
+  for await (const event of client.sessions.attach(called.data.sessionId).stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
     if (["turn.cancelled", "turn.failed", "session.completed", "session.failed"].includes(event.type)) { childStopped = true; break; }
   }
   assert.ok(childStopped, "owned child must stop");

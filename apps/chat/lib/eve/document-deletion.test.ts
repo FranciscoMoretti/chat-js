@@ -4,6 +4,7 @@ import {
   executeDocumentDeletion,
   requestDocumentDeletion,
 } from "../../tools/chatjs/delete-document/execute";
+import { deleteDocument } from "../../tools/chatjs/delete-document/tool";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
@@ -126,5 +127,45 @@ it("rechecks kind availability after approval", async () => {
       approval: { requestId: "approval", responder: identity },
     })
   ).rejects.toThrow("disabled for this kind");
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it("authorizes native deletion responses from the current owner principal only", async () => {
+  const { approval } = deleteDocument;
+  if (!approval || typeof approval === "function" || !approval.response) {
+    throw new Error("Missing deletion response policy");
+  }
+  const principal = { ...identity, attributes: {} };
+  const response = {
+    auth: {
+      getToken: vi.fn(),
+      requireAuth: () => {
+        throw new Error("Unexpected approval credential access");
+      },
+    },
+    request: {
+      callId: "call",
+      requestId: "approval",
+      principal,
+      toolName: "deleteDocument",
+      toolInput: input,
+    },
+    response: { decision: "approve", principal },
+    session: {
+      id: context.session.id,
+      initiator: principal,
+      turn: context.session.turn,
+    },
+  } satisfies Parameters<typeof approval.response>[0];
+  expect(await approval.response(response)).toEqual({ status: "allowed" });
+  expect(
+    await approval.response({
+      ...response,
+      response: {
+        decision: "approve",
+        principal: { ...principal, principalId: "other" },
+      },
+    })
+  ).toMatchObject({ status: "rejected" });
   expect(mocks.remove).not.toHaveBeenCalled();
 });

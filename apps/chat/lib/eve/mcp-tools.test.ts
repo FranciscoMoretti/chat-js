@@ -439,16 +439,23 @@ it("registers native per-call approval restricted to the session owner", async (
         throw new Error("Unexpected auth");
       },
     },
-    request: { callId: "call", requestId: "request", toolName: "server__echo" },
-    responder: initiator,
-    response: { decision: "approve" as const },
+    request: {
+      callId: "call",
+      requestId: "request",
+      toolName: "server__echo",
+      principal: initiator,
+    },
+    response: { decision: "approve" as const, principal: initiator },
     session: { id: "session", initiator, turn: context.session.turn },
   };
   expect(await approval.response(response)).toEqual({ status: "allowed" });
   expect(
     await approval.response({
       ...response,
-      responder: { ...initiator, principalId: "other" },
+      response: {
+        ...response.response,
+        principal: { ...initiator, principalId: "other" },
+      },
     })
   ).toMatchObject({ status: "rejected" });
   expect(execute).not.toHaveBeenCalled();

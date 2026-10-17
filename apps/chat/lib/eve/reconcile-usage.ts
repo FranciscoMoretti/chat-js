@@ -76,11 +76,11 @@ const reconcileEveSubagentUsage = async (
         childUnresolved = true;
       }
       if (
-        event.type === "subagent.called" &&
+        event.type === "agent.started" &&
         !event.data.remote &&
-        !discovered.has(event.data.childSessionId)
+        !discovered.has(event.data.sessionId)
       ) {
-        const nested = await getEveSubagent(ownerId, event.data.childSessionId);
+        const nested = await getEveSubagent(ownerId, event.data.sessionId);
 
         if (nested === null || nested.rootSessionId !== sessionId) {
           throw new Error("Delegated usage requires an owned root binding.");

@@ -16,6 +16,16 @@ Guest TypeScript and `eve build --skip-sandbox-prewarm` passed. The request poli
 
 The app-owned strict input response schema preserves the previous requestId, optional optionId/text shape, including both/neither, and rejects unknown fields. PR848's published mock assertion lost two trailing undefined arguments during autofix after its earlier green run. The integrated route test restores them with a scoped lint exemption; PR848 itself is stale, not merge-ready.
 
+## Authenticated native consumer checkpoint
+
+The integrated source uses `response.principal` for approval response policies; execution still verifies `approval.responder` and current ownership/policy/revision. The MCP/deletion suites pass 36 cases. No credential capability is substituted for responder identity.
+
+Research opens a fresh native agent session for each invocation, sends the structured request with its cancellation signal, awaits the turn result, and rejects failed or empty replies. Native structured output is `eve__reply`; the real runtime check caught the stale `final_output` prompt that type checks could not detect. Native `agent.started` carries the exact owning call ID and child `sessionId`, used for research evidence and independent billing discovery. Remote children and prefix-lookalike call IDs remain excluded.
+
+The six adapter suites pass 74 tests. `bun run --cwd apps/chat test:research:native` passes both native scenarios (adaptive research and active child cancellation). This existing harness copies the production research tool, search progress reader, usage consumer and billing hook into a disposable native worker using the app's exact candidate package. Model responses, document persistence, auth, and search provider are fixture adapters. Two separate search receipts are charged to the owning root turn; orchestration costs zero. Gateway model accounting observation is stubbed because mock models have no real gateway intents. This does not prove production model accounting or full authenticated app startup. Final native log: `native-research-result.txt`.
+
+The actual authenticated source compiler now reports 31 diagnostics, down from 47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
+
 ## Reproduction
 
 Use Node 24 and Bun 1.3.11. Set a disposable worktree slot, run `bun dev:info --json`, then start through root `bun dev`. In the ignored `.env.worktree.local`, set `PLAYWRIGHT=1`, `EVE_MOCK_AUTHORED_MODELS=0`, dummy AUTH_SECRET/EVE_GATEWAY_SECRET values, `AI_GATEWAY_API_KEY=disposable-mock-key`, `DATABASE_URL=postgresql://postgres@127.0.0.1:1/unused`, and `NODE_OPTIONS=--import <absolute-path-to-mock-gateway.ts>`. Temporarily select only guest in Next's agents map until authenticated integration compiles; restore the normal map after testing. Do not commit that isolation.

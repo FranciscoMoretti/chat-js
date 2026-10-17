@@ -50,7 +50,7 @@ const getEveSubagent = async (
 /**
  * Registers a native child session under an owned root conversation or subagent.
  * Existing lineage is checked after insertion so conflicting ownership fails.
- * Call only with native hook lineage or a trusted EVE subagent.called event.
+ * Call only with native hook lineage or a trusted EVE agent.started event.
  * @param {string} ownerId Owner of the root conversation.
  * @param {string} parentSessionId Native session ID of the root or parent subagent.
  * @param {string} sessionId Native session ID of the child being registered.

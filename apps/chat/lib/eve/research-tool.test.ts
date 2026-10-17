@@ -1,4 +1,8 @@
-import type { WorkflowToolContext } from "eve/tools";
+import type {
+  AgentMessageResult,
+  AgentSession,
+  WorkflowToolContext,
+} from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import type {
@@ -30,7 +34,14 @@ const researchStream = (context: WorkflowToolContext) => {
   }
   return result;
 };
-const agent = vi.fn<WorkflowToolContext["agent"]>();
+const agent =
+  vi.fn<
+    (
+      name: string,
+      options: { message: string; outputSchema?: unknown; signal?: AbortSignal }
+    ) => Promise<unknown>
+  >();
+const nativeResult = vi.fn<(data: unknown) => AgentMessageResult>();
 let controller: AbortController;
 let context: WorkflowToolContext;
 const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
@@ -44,10 +55,21 @@ const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  nativeResult.mockImplementation((data) => ({ status: "waiting", data }));
   controller = new AbortController();
   context = {
     ...testToolContext({ abortSignal: controller.signal }),
-    agent,
+    agent: (name) => ({
+      send: vi
+        .fn<AgentSession["send"]>()
+        // oxlint-disable-next-line typescript/promise-function-async -- The native send fixture returns a response before result() awaits the independently controlled child turn.
+        .mockImplementation((message, options) =>
+          Promise.resolve({
+            result: async () =>
+              nativeResult(await agent(name, { message, ...options })),
+          })
+        ),
+    }),
     agents: {},
     ask: vi.fn(),
   };
@@ -118,17 +140,15 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
 it("bounds adaptive decisions even when the supervisor never finishes", async () => {
   agent.mockImplementation(
     // oxlint-disable-next-line typescript/promise-function-async -- This Promise-only agent fixture keeps supervisor decisions unfinished while returning valid writer/researcher outputs; a constant result loses role validation, and eslint/require-await rejects an immediate async factory.
-    (name: string): ReturnType<WorkflowToolContext["agent"]> => {
+    (name: string): ReturnType<typeof agent> => {
       if (name === "researchPlanner") {
-        return Promise.resolve<
-          Awaited<ReturnType<WorkflowToolContext["agent"]>>
-        >(
+        return Promise.resolve<Awaited<ReturnType<typeof agent>>>(
           agent.mock.calls.length === 1
             ? { research_brief: "Brief", title: "Report" }
             : { complete: false, topics: ["Topic"] }
         );
       }
-      return Promise.resolve<Awaited<ReturnType<WorkflowToolContext["agent"]>>>(
+      return Promise.resolve<Awaited<ReturnType<typeof agent>>>(
         name === "researchWriter"
           ? { content: "Content", title: "Report" }
           : { findings: "Evidence" }
@@ -174,8 +194,7 @@ it("returns clarification without starting research or saving a document", async
 
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
   const cancellation = new Error("Cancelled");
-  const research =
-    Promise.withResolvers<Awaited<ReturnType<WorkflowToolContext["agent"]>>>();
+  const research = Promise.withResolvers<Awaited<ReturnType<typeof agent>>>();
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
@@ -247,5 +266,26 @@ it("publishes completed searches when a researcher fails without masking the fai
   };
   await expect(consume()).rejects.toBe(error);
   expect(outputs.at(-1)?.updates).toContainEqual(search);
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
+it("rejects failed or cancelled native child turns before saving or starting more work", async () => {
+  agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
+  nativeResult.mockReturnValue({
+    status: "failed",
+    error: { message: "Child failed" },
+  });
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "Child failed"
+  );
+  expect(agent).toHaveBeenCalledOnce();
+  expect(mocks.save).not.toHaveBeenCalled();
+  agent.mockClear();
+  nativeResult.mockReturnValue({ status: "waiting" });
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "without structured output"
+  );
+  expect(agent).toHaveBeenCalledOnce();
+  expect(agent.mock.calls[0][1].signal).toBe(controller.signal);
   expect(mocks.save).not.toHaveBeenCalled();
 });

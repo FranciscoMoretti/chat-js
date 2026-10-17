@@ -37,7 +37,7 @@ export default defineHook({
           parent.turn.id
         );
       }
-      if (!["action.result", "subagent.called"].includes(event.type)) {
+      if (!["action.result", "agent.started"].includes(event.type)) {
         return;
       }
       const binding = await getEveSubagent(ownerId, context.session.id);

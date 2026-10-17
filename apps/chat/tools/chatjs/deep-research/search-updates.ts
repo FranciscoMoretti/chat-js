@@ -15,20 +15,17 @@ type Snapshot = Awaited<
   ReturnType<ReturnType<Client["sessions"]["attach"]>["snapshot"]>
 >;
 type StreamEvent = Snapshot["events"][number];
-type InvocationData = Extract<StreamEvent, { type: "subagent.called" }>["data"];
+type InvocationData = Extract<StreamEvent, { type: "agent.started" }>["data"];
 type InvocationEventView =
   | Readonly<{
-      type: "subagent.called";
+      type: "agent.started";
       data: Readonly<
-        Pick<
-          InvocationData,
-          "callId" | "childSessionId" | "name" | "turnId"
-        > & {
+        Pick<InvocationData, "callId" | "sessionId" | "name" | "turnId"> & {
           remote?: Readonly<NonNullable<InvocationData["remote"]>>;
         }
       >;
     }>
-  | Readonly<{ type: Exclude<StreamEvent["type"], "subagent.called"> }>;
+  | Readonly<{ type: Exclude<StreamEvent["type"], "agent.started"> }>;
 type ActionResult = Extract<
   StreamEvent,
   { type: "action.result" }
@@ -72,14 +69,14 @@ export async function researchSearchUpdates(
     .snapshot(options);
   const children = root.events.flatMap((event: InvocationEventView) => {
     if (
-      event.type === "subagent.called" &&
+      event.type === "agent.started" &&
       !event.data.remote &&
       event.data.name === "researcher" &&
       event.data.turnId === context.session.turn.id &&
-      // EVE prefixes workflow agent invocation IDs with their owning tool call ID.
-      event.data.callId.startsWith(`${context.callId}:`)
+      // Native agent.started carries the exact owning workflow tool call ID.
+      event.data.callId === context.callId
     ) {
-      return [event.data.childSessionId];
+      return [event.data.sessionId];
     }
     return [];
   });

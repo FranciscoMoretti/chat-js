@@ -5,14 +5,16 @@ import type { recordEveUsage } from "../db/eve-billing";
 import { ingestEveUsage } from "./usage";
 
 const record = vi.hoisted(() => vi.fn<typeof recordEveUsage>());
+const register = vi.hoisted(() => vi.fn());
 const logError = vi.hoisted(() => vi.fn());
 vi.mock("../logger", () => ({
   createModuleLogger: () => ({ error: logError }),
 }));
-vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
+vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: register }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => {
   record.mockReset();
+  register.mockReset();
 });
 it.each(["step.completed", "step.failed", "compaction.completed"] as const)(
   "never charges model event %s through replay",
@@ -201,5 +203,28 @@ it("permits cursor advancement for events without a billable tool receipt", asyn
       meta: { at: "2026-10-13T00:00:00Z", id: "completion" },
     })
   ).toBe(true);
+  expect(record).not.toHaveBeenCalled();
+});
+
+it("registers native local child sessions for independent charging and ignores remote sessions", async () => {
+  const event = {
+    type: "agent.started",
+    meta: { id: "child-started", at: "2026-10-17T12:00:00Z" },
+    data: { turnId: "turn", sessionId: "child", remote: undefined },
+  } satisfies Parameters<typeof ingestEveUsage>[2];
+  await expect(ingestEveUsage("owner", "parent", event)).resolves.toBe(true);
+  expect(register).toHaveBeenCalledExactlyOnceWith(
+    "owner",
+    "parent",
+    "child",
+    "turn"
+  );
+  await expect(
+    ingestEveUsage("owner", "parent", {
+      ...event,
+      data: { ...event.data, remote: { url: "https://remote.test" } },
+    })
+  ).resolves.toBe(true);
+  expect(register).toHaveBeenCalledOnce();
   expect(record).not.toHaveBeenCalled();
 });

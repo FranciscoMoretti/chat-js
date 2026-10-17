@@ -38,9 +38,9 @@ interface UsageEventData {
           "kind"
         >;
   };
-  "subagent.called": Pick<
-    Extract<MessageStreamEvent, { type: "subagent.called" }>["data"],
-    "remote" | "childSessionId" | "turnId"
+  "agent.started": Pick<
+    Extract<MessageStreamEvent, { type: "agent.started" }>["data"],
+    "remote" | "sessionId" | "turnId"
   >;
 }
 
@@ -104,11 +104,11 @@ export const ingestEveUsage = async (
   event: UsageEventReader,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
 ): Promise<boolean> => {
-  if (event.type === "subagent.called" && !event.data.remote) {
+  if (event.type === "agent.started" && !event.data.remote) {
     await registerEveSubagent(
       ownerId,
       sessionId,
-      event.data.childSessionId,
+      event.data.sessionId,
       event.data.turnId
     );
     return true;

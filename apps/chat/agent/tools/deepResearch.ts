@@ -23,7 +23,7 @@ import {
 } from "@/tools/chatjs/deep-research/schemas";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import type { ToolResult } from "@/lib/eve/tool-result";
-import type { WorkflowToolContext } from "eve/tools";
+import type { AgentSession, WorkflowToolContext } from "eve/tools";
 import { createToolResult } from "@/lib/eve/tool-result";
 import type { researchOutput } from "@/tools/chatjs/deep-research/schemas";
 import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
@@ -38,10 +38,34 @@ type ResearchWorkflowContext = Readonly<
 >;
 
 const structuredMessage = (message: string): string =>
-  `${message}\n\nDeliver the requested fields through the final_output tool. Put any Markdown inside its string fields; do not return prose or JSON text instead of calling the tool.`;
+  `${message}\n\nDeliver the requested fields through the eve__reply tool. Put any Markdown inside its string fields; do not return prose or JSON text instead of calling the tool.`;
 
 const outputSchema = (schema: z.ZodType): Record<string, z.JSONType> =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
+
+const researchReply = async (
+  agent: Readonly<AgentSession>,
+  options: Readonly<{
+    message: string;
+    outputSchema: Record<string, z.JSONType>;
+    signal: AbortSignal;
+  }>
+): Promise<unknown> => {
+  options.signal.throwIfAborted();
+  const response = await agent.send(options.message, {
+    outputSchema: options.outputSchema,
+    signal: options.signal,
+  });
+  const result = await response.result();
+  options.signal.throwIfAborted();
+  if (result.status === "failed") {
+    throw new Error(result.error?.message ?? "Research agent failed");
+  }
+  if (result.data === undefined) {
+    throw new Error("Research agent ended without structured output");
+  }
+  return result.data;
+};
 
 const ORCHESTRATION_COST_USD = 0;
 const INITIAL_RESEARCH_ROUND = 0;
@@ -71,7 +95,8 @@ export default defineWorkflowTool({
       );
     if (config.allow_clarification) {
       const clarification = researchClarification.parse(
-        await context.agent("researchPlanner", {
+        await researchReply(context.agent("researchPlanner"), {
+          signal: context.abortSignal,
           message: structuredMessage(
             clarifyWithUserInstructions({ date, messages })
           ),
@@ -102,7 +127,8 @@ export default defineWorkflowTool({
     );
     yield progress();
     const brief = researchBrief.parse(
-      await context.agent("researchPlanner", {
+      await researchReply(context.agent("researchPlanner"), {
+        signal: context.abortSignal,
         message: structuredMessage(
           transformMessagesIntoResearchTopicPrompt({ date, messages })
         ),
@@ -134,7 +160,8 @@ export default defineWorkflowTool({
       context.abortSignal.throwIfAborted();
       const decision = decisionSchema.parse(
         // oxlint-disable-next-line no-await-in-loop -- Each decision consumes the findings added by the preceding round.
-        await context.agent("researchPlanner", {
+        await researchReply(context.agent("researchPlanner"), {
+          signal: context.abortSignal,
           message: structuredMessage(
             `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
           ),
@@ -164,7 +191,8 @@ export default defineWorkflowTool({
         try {
           raw = researchFindings.parse(
             // oxlint-disable-next-line no-await-in-loop -- Publish each topic's progress and finish its child before advancing; failure must prevent later topics from starting.
-            await context.agent("researcher", {
+            await researchReply(context.agent("researcher"), {
+              signal: context.abortSignal,
               message: structuredMessage(
                 `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`
               ),
@@ -188,7 +216,8 @@ export default defineWorkflowTool({
         yield progress();
         const compressed = researchFindings.parse(
           // oxlint-disable-next-line no-await-in-loop -- Commit this topic's compressed notes before the next topic and supervisor decision.
-          await context.agent("researchCompressor", {
+          await researchReply(context.agent("researchCompressor"), {
+            signal: context.abortSignal,
             message: structuredMessage(
               `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`
             ),
@@ -215,7 +244,8 @@ export default defineWorkflowTool({
     });
     yield progress();
     const report = researchReport.parse(
-      await context.agent("researchWriter", {
+      await researchReply(context.agent("researchWriter"), {
+        signal: context.abortSignal,
         message: structuredMessage(
           `${finalReportGenerationPrompt({ date, findings: notes.map((note: Readonly<(typeof notes)[number]>): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
         ),
