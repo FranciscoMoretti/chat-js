@@ -1,17 +1,15 @@
 import type { ToolContext } from "eve/tools";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 const unexpected = () => {
   throw new Error("Unexpected native resource access in test");
 };
 export const testToolContext = (
-  overrides: ReadonlyNativeSurface<Partial<ToolContext>> = {}
+  overrides: Readonly<Partial<ToolContext>> = {}
 ): ToolContext => ({
   abortSignal: new AbortController().signal,
   callId: "test",
+  messages: [],
   getSandbox: unexpected,
-  getSkill: unexpected,
   getToken: unexpected,
   requireAuth: unexpected,
   session: {

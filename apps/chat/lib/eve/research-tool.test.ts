@@ -1,6 +1,6 @@
 import type {
   AgentMessageResult,
-  AgentSession,
+  AgentSendOptions,
   WorkflowToolContext,
 } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -55,15 +55,19 @@ const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
-  nativeResult.mockImplementation((data) => ({ status: "waiting", data }));
+  nativeResult.mockImplementation((data) => ({
+    status: "waiting",
+    data,
+    message: undefined,
+  }));
   controller = new AbortController();
   context = {
     ...testToolContext({ abortSignal: controller.signal }),
     agent: (name) => ({
       send: vi
-        .fn<AgentSession["send"]>()
+        .fn()
         // oxlint-disable-next-line typescript/promise-function-async -- The native send fixture returns a response before result() awaits the independently controlled child turn.
-        .mockImplementation((message, options) =>
+        .mockImplementation((message: string, options?: AgentSendOptions) =>
           Promise.resolve({
             result: async () =>
               nativeResult(await agent(name, { message, ...options })),
@@ -273,6 +277,8 @@ it("rejects failed or cancelled native child turns before saving or starting mor
   agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
   nativeResult.mockReturnValue({
     status: "failed",
+    data: undefined,
+    message: undefined,
     error: { message: "Child failed" },
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
@@ -281,7 +287,11 @@ it("rejects failed or cancelled native child turns before saving or starting mor
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
   agent.mockClear();
-  nativeResult.mockReturnValue({ status: "waiting" });
+  nativeResult.mockReturnValue({
+    status: "waiting",
+    data: undefined,
+    message: undefined,
+  });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
     "without structured output"
   );

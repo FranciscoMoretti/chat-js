@@ -30,6 +30,10 @@ const input = {
   title: "Orchard notes",
 };
 const identity = {
+  attributes: {},
+  getToken: () => {
+    throw new Error("Unexpected receipt credential access");
+  },
   authenticator: "test",
   principalId: "owner",
   principalType: "user",
@@ -90,7 +94,6 @@ it("requires an owner receipt before performing the conditional deletion", async
     executeDocumentDeletion(input, {
       ...context,
       approval: {
-        requestId: "approval",
         responder: { ...identity, principalId: "other" },
       },
     })
@@ -98,7 +101,7 @@ it("requires an owner receipt before performing the conditional deletion", async
   expect(mocks.remove).not.toHaveBeenCalled();
   await executeDocumentDeletion(input, {
     ...context,
-    approval: { requestId: "approval", responder: identity },
+    approval: { responder: identity },
   });
   expect(mocks.remove).toHaveBeenCalledExactlyOnceWith(
     input,
@@ -124,7 +127,7 @@ it("rechecks kind availability after approval", async () => {
   await expect(
     executeDocumentDeletion(input, {
       ...context,
-      approval: { requestId: "approval", responder: identity },
+      approval: { responder: identity },
     })
   ).rejects.toThrow("disabled for this kind");
   expect(mocks.remove).not.toHaveBeenCalled();

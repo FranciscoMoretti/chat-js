@@ -63,8 +63,11 @@ const connector = {
 const context = {
   abortSignal: new AbortController().signal,
   approval: {
-    requestId: "request",
     responder: {
+      attributes: {},
+      getToken: () => {
+        throw new Error("Unexpected receipt credential access");
+      },
       authenticator: "test",
       principalId: "owner",
       principalType: "user",
@@ -422,9 +425,6 @@ it("registers native per-call approval restricted to the session owner", async (
       callId: "call",
       getSandbox: () => {
         throw new Error("Unexpected sandbox");
-      },
-      getSkill: () => {
-        throw new Error("Unexpected skill");
       },
       session: context.session,
       toolInput: { text: "write" },
