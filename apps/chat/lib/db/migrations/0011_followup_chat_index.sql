@@ -1,0 +1,1 @@
+CREATE INDEX "EveFollowup_chat" ON "EveFollowup" USING btree ("chatId");

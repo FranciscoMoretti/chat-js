@@ -8,5 +8,4 @@ CREATE TABLE "EveFollowup" (
 	CONSTRAINT "EveFollowup_sessionId_turnId_unique" UNIQUE("sessionId","turnId")
 );
 --> statement-breakpoint
-ALTER TABLE "EveFollowup" ADD CONSTRAINT "EveFollowup_chatId_ownerId_EveChat_id_ownerId_fk" FOREIGN KEY ("chatId","ownerId") REFERENCES "public"."EveChat"("id","ownerId") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "EveFollowup_chat" ON "EveFollowup" USING btree ("chatId");
+ALTER TABLE "EveFollowup" ADD CONSTRAINT "EveFollowup_chatId_ownerId_EveChat_id_ownerId_fk" FOREIGN KEY ("chatId","ownerId") REFERENCES "public"."EveChat"("id","ownerId") ON DELETE cascade ON UPDATE no action;
