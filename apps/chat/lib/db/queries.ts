@@ -1,4 +1,4 @@
-import "server-only";
+// Shared by Next.js and the standalone EVE server; env guards server credentials.
 import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import type { User, UserModelPreference } from "./schema";
 import { and, desc, eq, or, sql } from "drizzle-orm";
