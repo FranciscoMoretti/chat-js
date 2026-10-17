@@ -21,7 +21,7 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import type { EveCopySeed } from "../lib/eve/copy-journal-contract";
+import type { EveCopySeed } from "../lib/eve/copy-seed";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { EveModelUnavailableError } from "../lib/eve/model-selection";
 import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";

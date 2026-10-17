@@ -8,7 +8,7 @@ import {
   keyFromFileUrl,
 } from "@/lib/file-url";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
-import type { EveChannelInput } from "eve/channels/eve";
+import type { EveCopySeed } from "./copy-seed";
 import type {
   ReadonlyEveMessagePart,
   ReadonlyEveMessageMetadata,
@@ -19,9 +19,7 @@ import { eveDocumentOperations } from "./document-contracts";
 import { sharedEveMessages } from "./shared-messages";
 import { z } from "zod";
 
-type Seed = NonNullable<
-  Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
->;
+type Seed = EveCopySeed;
 type SeedPart = Seed["messages"][number]["parts"][number];
 const MIN_FILE_URL_LENGTH = 1;
 const EMPTY_CONTENT_LENGTH = 0;

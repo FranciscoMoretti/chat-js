@@ -1,4 +1,5 @@
-import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+import type { EveCopySeed } from "@/lib/eve/copy-seed";
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {

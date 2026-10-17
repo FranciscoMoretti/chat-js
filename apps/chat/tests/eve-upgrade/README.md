@@ -29,8 +29,25 @@ provenance and text tool-output semantics independently of native Eve message
 types. The sharing/tool-selection suites pass 17 cases. This changes reader
 types, not native event production or seed acceptance.
 
-The actual authenticated source compiler now reports 21 diagnostics, down from
-31 before the imported metadata type separation, 47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
+Before copy-plan validation moved into the app, the authenticated source compiler
+reported 21 diagnostics, down from 31 before the imported metadata type separation,
+47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
+
+## Copy-plan validation checkpoint
+
+`copy-seed.ts` now owns strict validation of the server-prepared copy transcript.
+The production plan preparer and copy journal use it directly, and stored seed
+and search-input types no longer depend on the missing native `resolveSeed`
+return type. No database shape or ownership/revision validation changed.
+The authenticated source compiler now reports 11 remaining diagnostics.
+Two focused tests exercise the real plan preparer, stable display-text search
+keys, retained model/text-tool provenance, detached data and rejection of live
+or incomplete parts, source sandbox URLs and oversized payloads.
+
+Native seed admission, history event production, checkpoints and sandbox/file
+isolation remain incomplete. No legacy reader union or unused history normalizer
+was added. Full lint/types were run and remain red on outstanding runtime
+contracts; these tests do not establish a working copy lifecycle.
 
 ## Reproduction
 

@@ -1,8 +1,4 @@
-import type { EveChannelInput } from "eve/channels/eve";
-
-type EveCopySeed = NonNullable<
-  Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
->;
+import type { EveCopySeed } from "./copy-seed";
 
 /** Server-prepared immutable intent. Never accept this payload from a browser. */
 interface EveCopyPlan {
@@ -47,4 +43,4 @@ interface EveCopyPlan {
     }[];
   }[];
 }
-export type { EveCopyPlan, EveCopySeed };
+export type { EveCopyPlan };

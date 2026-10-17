@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
 import { createHash } from "node:crypto";
-import { parseSessionTranscriptSeed } from "eve/transcript";
+import { parseEveCopySeed } from "@/lib/eve/copy-seed";
 import { z } from "zod";
 
 import { eveCopyResources } from "@/lib/eve/copy-transcript";
@@ -374,7 +374,7 @@ const validateCopiedDocuments = (plan: CopyPlanReader): void => {
 };
 
 const validateCopyPlan = (plan: CopyPlanReader): void => {
-  parseSessionTranscriptSeed(plan.seed);
+  parseEveCopySeed(plan.seed);
   const keys = new Set<string>();
   const sourceKeys = new Set(
     plan.files.flatMap(

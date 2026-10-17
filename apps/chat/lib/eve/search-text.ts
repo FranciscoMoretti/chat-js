@@ -1,14 +1,13 @@
 import type { MessageStreamEvent } from "eve/client";
+import type { EveCopySeed } from "./copy-seed";
 
 /** SDK fields this reader does not inspect remain optional and opaque. */
 type IgnoredSdkFields<Value> = Value extends object
   ? { readonly [Key in keyof Value]?: unknown }
   : unknown;
 
-type SeedMessage = Extract<
-  MessageStreamEvent,
-  { type: "history.seeded" }
->["data"]["messages"][number];
+// Accepted copy plans are indexed before native session binding.
+type SeedMessage = EveCopySeed["messages"][number];
 type IncomingMessage = Extract<
   MessageStreamEvent,
   { type: "message.received" }

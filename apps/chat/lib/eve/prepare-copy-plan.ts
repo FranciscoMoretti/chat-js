@@ -1,4 +1,4 @@
-import { parseSessionTranscriptSeed } from "eve/transcript";
+import { parseEveCopySeed } from "./copy-seed";
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
@@ -97,7 +97,7 @@ export const prepareEveCopyPlan = async (
     origin
   );
   return {
-    seed: parseSessionTranscriptSeed(seed),
+    seed: parseEveCopySeed(seed),
     files,
     documentCheckpoints: checkpoints.map((checkpoint) => ({
       messageIndex: checkpoint.messageIndex,
