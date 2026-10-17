@@ -28,7 +28,7 @@ ownership/authority policy was added to make the probes pass.
 1. **App adaptation:** replace the removed input-response schema import with an
    app-owned exact input validator or supported native schema. Preserve the existing
    accepted option/text shapes. This is the guest's first compiler blocker.
-2. **App adaptation:** approval response policies now read `auth.principal`, while
+2. **App adaptation:** approval response policies now read `response.principal`, while
    accepted execution receipts still expose `approval.responder`. Adapt MCP/deletion
    wrappers without requester fallback; prove actual consumer ownership/current policy.
    Native tool schema inference and the six progress-call signatures also need updates.
