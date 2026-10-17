@@ -26,7 +26,7 @@ export const sendCommand = async (
       throw sendError;
     }
   });
-  // Eve 0.52.2 can end a send reader at the preceding cancellation boundary.
+  // Reconnect past a preceding cancellation without dispatching another message.
   if (afterCancellation) {
     const deadline = Date.now() + RECONCILIATION_TIMEOUT_MS;
     do {

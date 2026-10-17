@@ -98,7 +98,7 @@ test("browser credentials cannot create, fork, read checkpoints or submit tools,
   await Promise.all(
     [
       "session/session-owned/checkpoint",
-      "session/session-owned/sandbox-identity",
+      "session/session-owned/local-resources",
       "operation/owned",
     ].map(async (path) => {
       expect(

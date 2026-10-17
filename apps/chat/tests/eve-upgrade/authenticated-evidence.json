@@ -276,5 +276,55 @@
       "/tmp/eve080-browser-attachment-edit.mjs",
       "/tmp/eve080-attachment-foreign-proof.mjs"
     ]
+  },
+  "finalLocalCandidate": {
+    "eveCommit": "efe221c7",
+    "tarball": ".eve-upgrade/eve-0.80.1-efe221c7.tgz",
+    "sha256": "3c7be9eb1e6b9b3a71633dfe31d565f1922c44fba107937977210e051db22fa9",
+    "nativeTypeTasks": 60,
+    "appTypeTasks": 8,
+    "focusedAppTests": 71,
+    "rootLint": "passed",
+    "nativeLint": "passed with existing template warnings"
+  },
+  "sourceOwnerActualVm": {
+    "appRoot": "/tmp/eve080-owner-vm-Sftm8A",
+    "sourceSessionId": "wrun_01M55E7C3WRFG06V8RHDN96YDT",
+    "copySessionId": "wrun_01M55E7E1WDZXGZK3X7CJBC4EY",
+    "checkpointId": "original",
+    "beforeTurnId": "turn_1",
+    "sourceFileAtCheckpoint": "original",
+    "sourceFileAfterAdvance": "advanced",
+    "copyRead": "original",
+    "sourceReadAfterShutdownAndResume": "after-copy",
+    "foreignCheckpointStatus": 403,
+    "finalCleanupRemaining": 0,
+    "transport": "deterministic authored mock model; actual native worker, source owner and local SDK 0.6.18 VMs; separate from authenticated ChatJS document flow",
+    "evidence": [
+      "/tmp/eve080-owner-vm-persisted-final.log",
+      "/tmp/eve080-owner-vm-events.json",
+      "/tmp/eve080-owner-vm-metadata.json",
+      "/tmp/eve080-owner-vm-resumed.json",
+      "/tmp/eve080-owner-vm-final-cleanup.log"
+    ],
+    "limits": [
+      "No mid-checkpoint-commit process kill",
+      "Early failing shutdown fixtures with missing ownership or unknown allocation are retained, not automatically reconciled"
+    ]
+  },
+  "finalAppSmoke": {
+    "created": {
+      "operationId": "b820ff42-3177-46dc-8b6c-40e94846d3df",
+      "status": 200,
+      "body": {
+        "id": "e6fb4fe7-3b1b-4210-bd13-dae9c2e56f71",
+        "sessionId": "wrun_01M55EDK1H4GP64FX7NGE4C1J9"
+      }
+    },
+    "completed": true,
+    "sharedStatus": 200,
+    "sharedText": "New Chat\nCmd+Shift+O\nSearch chats\nCmd+K\nDE\nHello from the actual ChatJS guest\nShared\nFinal candidate shared selection probe\nCopy\nAssistant\n\nHello from the actual ChatJS guest agent.\n\nSave to your chats",
+    "visibilityRestored": "private",
+    "screenshot": "/tmp/eve080-final-shared.png"
   }
 }

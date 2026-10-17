@@ -106,7 +106,7 @@
         "drizzle-orm": "^0.45.1",
         "echarts": "6.0.0",
         "echarts-for-react": "^3.0.2",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-efe221c7.tgz",
         "fast-deep-equal": "^3.1.3",
         "files-sdk": "2.5.0",
         "guarded-fetch": "^0.1.4",
@@ -261,7 +261,7 @@
         "@types/react": "19.2.7",
         "@types/react-dom": "19.2.3",
         "@uiverify/vitest": "^1.5.0",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-efe221c7.tgz",
         "motion": "^12.23.24",
         "next": "16.3.0",
         "nuqs": "^2.8.5",
@@ -376,7 +376,7 @@
         "drizzle-orm": "^0.45.1",
         "echarts": "6.0.0",
         "echarts-for-react": "^3.0.2",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-efe221c7.tgz",
         "files-sdk": "2.5.0",
         "geist": "^1.7.2",
         "guarded-fetch": "^0.1.4",
@@ -2746,7 +2746,7 @@
 
     "etag": ["etag@1.8.1", "", {}, "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg=="],
 
-    "eve": ["eve@../../.eve-upgrade/eve-0.80.1-6c40195d.tgz", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.10.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.137", "braintrust": "^3.0.0", "chat": "^4.42.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.6.18" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "chat", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "./bin/eve.js" } }, "sha512-KUa8XIKlMZnuWFnuYxSrCy14tcrTWK79518LfPsggPORop+HbpDtQ00/mw6l9M5rdSRUoZlXzm9B3p2an7ul9Q=="],
+    "eve": ["eve@../../.eve-upgrade/eve-0.80.1-efe221c7.tgz", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.10.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.137", "braintrust": "^3.0.0", "chat": "^4.42.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.6.18" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "chat", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "./bin/eve.js" } }, "sha512-NbRA6JvDo3F0ylOLoQHBOcACpsDmr1M7NAouztjs/1QGIa+NBou3Lv2NLx1iTZOQJvhyuVIXzIDRMYLkTEuGUg=="],
 
     "event-target-shim": ["event-target-shim@5.0.1", "", {}, "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ=="],
 
@@ -3734,7 +3734,7 @@
 
     "pako": ["pako@1.0.11", "", {}, "sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw=="],
 
-    "papaparse": ["papaparse@5.5.3", "", {}, "sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A=="],
+    "papaparse": ["papaparse@5.7.0", "", {}, "sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA=="],
 
     "parent-module": ["parent-module@1.0.1", "", { "dependencies": { "callsites": "^3.0.0" } }, "sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g=="],
 
@@ -5483,8 +5483,6 @@
     "jszip/readable-stream": ["readable-stream@2.3.8", "", { "dependencies": { "core-util-is": "~1.0.0", "inherits": "~2.0.3", "isarray": "~1.0.0", "process-nextick-args": "~2.0.0", "safe-buffer": "~5.1.1", "string_decoder": "~1.1.1", "util-deprecate": "~1.0.1" } }, "sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA=="],
 
     "just-bash/guarded-fetch": ["guarded-fetch@0.1.3", "", { "dependencies": { "ipaddr.js": "2.2.0", "undici": "7.29.0" } }, "sha512-PSaNyJk8VJlUVEhMHPXT/Z/WgNrLBh43WaYQJiu1qvyCuPQA+kgFMNmAOxI3GU3uXrCkO/xRW11XjcswrksYOA=="],
-
-    "just-bash/papaparse": ["papaparse@5.7.0", "", {}, "sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA=="],
 
     "just-bash/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
