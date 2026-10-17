@@ -1,5 +1,5 @@
 {
-  "id": "576a18a8-11c6-4bea-bd32-68ec719640ec",
+  "id": "8a4dc345-6542-4f91-8a48-b81638d10ed9",
   "prevId": "608e6038-558f-45f2-97ab-be921e124e46",
   "version": "7",
   "dialect": "postgresql",
@@ -1464,7 +1464,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "EveFollowup_chat": {
+          "name": "EveFollowup_chat",
+          "columns": [
+            {
+              "expression": "chatId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "EveFollowup_chatId_ownerId_EveChat_id_ownerId_fk": {
           "name": "EveFollowup_chatId_ownerId_EveChat_id_ownerId_fk",

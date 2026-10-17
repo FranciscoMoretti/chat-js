@@ -722,6 +722,7 @@ const eveFollowup = pgTable(
     suggestions: jsonb("suggestions").$type<readonly string[]>(),
   },
   (table) => [
+    index("EveFollowup_chat").on(table.chatId),
     unique().on(table.sessionId, table.turnId),
     foreignKey({
       columns: [table.chatId, table.ownerId],
