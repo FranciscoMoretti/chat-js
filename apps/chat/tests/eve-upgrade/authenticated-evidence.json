@@ -148,5 +148,38 @@
     "postBoundaryEventsInRestoredPrefix": 0,
     "newCompletedTurns": 1,
     "limit": "Interruption after durable checkpoint, not within its commit window."
+  },
+  "displayMetadata": {
+    "send": {
+      "operationId": "7d78a27d-c25b-4410-a36a-579086ed3812",
+      "status": 200,
+      "body": {
+        "ok": true,
+        "status": "accepted",
+        "sessionId": "wrun_01M556H12CF9FEQANA3N31HNR6",
+        "deliveryId": "96c53c3c-2939-4bf1-8cae-81c41b2e1d95"
+      }
+    },
+    "sendEditRestoredTool": "webSearch",
+    "initialCreate": {
+      "operationId": "5d0949c8-53c9-4b13-b8da-6dd99feba20c",
+      "status": 200,
+      "body": {
+        "id": "6985200a-fd22-49dd-8ccc-5d715bf5453b",
+        "sessionId": "wrun_01M558204B8NA19DBEP76GXAGK"
+      }
+    },
+    "initialAppReceipt": [
+      {
+        "kind": "initial",
+        "selectedTool": "webSearch"
+      }
+    ],
+    "initialNativeStartEventId": "evt_01M558207X8VJSY8F1591BSYG8",
+    "initialNativeMessageEventId": "evt_01M55820841V6X2RVYCRGJYS32",
+    "initialNativeDeliveryIds": ["e9555936-e5dc-4258-91c2-d36379e76177"],
+    "initialEditRestoredTool": "webSearch",
+    "foreignInitialReceipts": [],
+    "creationResponseContainsDeliveryId": false
   }
 }

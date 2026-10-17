@@ -33,6 +33,7 @@ vi.mock("./client", () => {
     });
   return { db: database };
 });
+
 vi.mock("../env", () => ({ env: {} }));
 const {
   dispatchEveOnce,
@@ -208,11 +209,54 @@ it("exposes only a known send receipt for the exact owner and session", async ()
     )
   ).rejects.toThrow("Lost response");
   expect(await getEveSendReceipt("owner", "source", unknownId)).toBeNull();
-  expect(await getEveMessageDisplayReceipts("owner", "source")).toEqual([
-    { deliveryId: "receipt-delivery", selectedTool: "webSearch" },
-  ]);
+  expect(await getEveMessageDisplayReceipts("owner", "source")).toContainEqual({
+    kind: "send",
+    deliveryId: "receipt-delivery",
+    selectedTool: "webSearch",
+  });
   expect(await getEveMessageDisplayReceipts("foreign", "source")).toEqual([]);
   expect(await getEveMessageDisplayReceipts("owner", "other-session")).toEqual(
     []
   );
+});
+
+it("exposes an initial selection only for a bound nonempty creation", async () => {
+  const { createEveConversation } = await import("./eve-queries");
+  const operationId = "00000000-0000-4000-8000-000000000071";
+  const create = vi.fn().mockResolvedValue("initial-session");
+  const options = {
+    initialRequest: { message: "Initial message", selectedTool: "webSearch" },
+  };
+  await createEveConversation(
+    "owner",
+    operationId,
+    "Initial message",
+    create,
+    options
+  );
+  await createEveConversation(
+    "owner",
+    operationId,
+    "Initial message",
+    create,
+    options
+  );
+  expect(create).toHaveBeenCalledOnce();
+  expect(
+    await getEveMessageDisplayReceipts("owner", "initial-session")
+  ).toEqual([{ kind: "initial", selectedTool: "webSearch" }]);
+  expect(
+    await getEveMessageDisplayReceipts("foreign", "initial-session")
+  ).toEqual([]);
+  await dispatchEveOnce(
+    {
+      ...input,
+      operationId: "00000000-0000-4000-8000-000000000072",
+      kind: "create",
+      intent: { message: "", selectedTool: "webSearch" },
+    },
+    async () => await Promise.resolve({ sessionId: "source" })
+  );
+  const display = await getEveMessageDisplayReceipts("owner", "source");
+  expect(display.filter((receipt) => receipt.kind === "initial")).toEqual([]);
 });

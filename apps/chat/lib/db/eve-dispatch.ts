@@ -1,21 +1,26 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { isDeepStrictEqual } from "node:util";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch } from "./schema";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
+import { eveMessageInput } from "@/lib/eve/message-input";
 
 const hasRow: (row: unknown) => boolean = Boolean;
 
-/** Display-only fields from known sends; unknown and foreign bindings are omitted. */
+/** Display-only fields from known message bindings; unknown and foreign bindings are omitted. */
 export const getEveMessageDisplayReceipts = async (
   ownerId: string,
   sessionId: string
 ): Promise<EveMessageDisplayReceipt[]> => {
   const rows = await db
-    .select({ deliveryId: eveDispatch.deliveryId, intent: eveDispatch.intent })
+    .select({
+      kind: eveDispatch.kind,
+      deliveryId: eveDispatch.deliveryId,
+      intent: eveDispatch.intent,
+    })
     .from(eveDispatch)
     .innerJoin(
       eveConversation,
@@ -28,17 +33,27 @@ export const getEveMessageDisplayReceipts = async (
       and(
         eq(eveDispatch.ownerId, ownerId),
         eq(eveDispatch.sessionId, sessionId),
-        eq(eveDispatch.kind, "send"),
+        inArray(eveDispatch.kind, ["create", "send"]),
         eq(eveConversation.sessionId, sessionId),
         eq(eveConversation.state, "bound")
       )
     );
-  return rows.flatMap((row) => {
+  return rows.flatMap((row): EveMessageDisplayReceipt[] => {
     const intent = z
-      .object({ selectedTool: frontendToolsSchema.nullable() })
+      .object({ selectedTool: frontendToolsSchema.nullish() })
       .safeParse(row.intent);
-    return isNonEmptyString(row.deliveryId) && intent.success
-      ? [{ deliveryId: row.deliveryId, selectedTool: intent.data.selectedTool }]
+    if (!intent.success) {
+      return [];
+    }
+    const selectedTool = intent.data.selectedTool ?? null;
+    if (row.kind === "create") {
+      return z.object({ message: eveMessageInput }).safeParse(row.intent)
+        .success
+        ? [{ kind: "initial", selectedTool }]
+        : [];
+    }
+    return isNonEmptyString(row.deliveryId)
+      ? [{ kind: "send", deliveryId: row.deliveryId, selectedTool }]
       : [];
   });
 };
