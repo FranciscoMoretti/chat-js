@@ -878,7 +878,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 import {tools} from "./tools/chatjs/tools";
 import type { ToolContext } from "eve/tools";
 const unavailable = () => { throw new Error("Unexpected resource access"); };
-const context: ToolContext = { callId: "fixture", toolName: "fixture", abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getSkill: unavailable, getToken: unavailable, requireAuth: unavailable };
+const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable };
 const tool = tools.codeExecution;
 assert.ok(tool.execute);
 const result = await tool.execute({command: "echo hello"}, context);
