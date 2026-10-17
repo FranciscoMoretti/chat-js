@@ -326,5 +326,80 @@
     "sharedText": "New Chat\nCmd+Shift+O\nSearch chats\nCmd+K\nDE\nHello from the actual ChatJS guest\nShared\nFinal candidate shared selection probe\nCopy\nAssistant\n\nHello from the actual ChatJS guest agent.\n\nSave to your chats",
     "visibilityRestored": "private",
     "screenshot": "/tmp/eve080-final-shared.png"
+  },
+  "ownerRejectCancel": {
+    "candidate": "efe221c7",
+    "conversationId": "18370eef-c76a-4393-b20c-5888635c56d3",
+    "sessionId": "wrun_01M55ENY8NCCZEADCD691QS4PD",
+    "documentId": "0efbc926-1656-8a23-859d-2920bdfa676d",
+    "ownerChoice": {
+      "uiLabel": "Cancel",
+      "outcome": "denied"
+    },
+    "pendingTurnCancel": {
+      "httpStatus": 202,
+      "outcome": "cancelled",
+      "turnId": "turn_2"
+    },
+    "documentPreserved": true,
+    "evidence": "/tmp/eve080-owner-reject-cancel.json",
+    "events": [
+      {
+        "data": {
+          "resolutions": [
+            {
+              "kind": "tool-approval",
+              "outcome": "denied",
+              "requestId": "aitxt-DuQFUUgeUn1dYD0cdZ0kB4NY",
+              "response": {
+                "optionId": "cancel",
+                "requestId": "aitxt-DuQFUUgeUn1dYD0cdZ0kB4NY"
+              }
+            }
+          ],
+          "sequence": 1,
+          "stepIndex": 0,
+          "turnId": "turn_1"
+        },
+        "type": "input.resolved",
+        "meta": {
+          "at": "2026-10-17T17:31:18.575Z",
+          "id": "evt_01M55EP15FEDB84ZQ6ST27TGPV",
+          "deliveryIds": ["cb45e9c1-463b-496e-b905-9d69df41a201"]
+        }
+      },
+      {
+        "data": {
+          "resolutions": [
+            {
+              "kind": "tool-approval",
+              "outcome": "cancelled",
+              "requestId": "aitxt-5BKDU0T8TqCx43HIPUsOYPhl"
+            }
+          ],
+          "sequence": 2,
+          "stepIndex": 0,
+          "turnId": "turn_2"
+        },
+        "type": "input.resolved",
+        "meta": {
+          "at": "2026-10-17T17:31:19.193Z",
+          "id": "evt_01M55EP1RS045HJ029FR959MYM",
+          "deliveryIds": ["c9b0440a-978a-48a7-baa6-a39d74f951c3"]
+        }
+      },
+      {
+        "data": {
+          "sequence": 2,
+          "turnId": "turn_2"
+        },
+        "type": "turn.cancelled",
+        "meta": {
+          "at": "2026-10-17T17:31:19.193Z",
+          "id": "evt_01M55EP1RS045HJ029FR959MYN",
+          "deliveryIds": ["c9b0440a-978a-48a7-baa6-a39d74f951c3"]
+        }
+      }
+    ]
   }
 }
