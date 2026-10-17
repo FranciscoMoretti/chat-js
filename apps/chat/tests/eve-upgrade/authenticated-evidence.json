@@ -626,5 +626,30 @@
       "/tmp/eve080-auth-mcp-closure.json",
       "/tmp/eve080-auth-mcp-closure.log"
     ]
+  },
+  "ciRepair": {
+    "runtimeCommit": "8fb9d3597e5727349462fdaaeb948ab3d1d41d7b",
+    "artifact": ".eve-upgrade/eve-0.80.1-8fb9d359.tgz",
+    "sha256": "559964f080e818519965f63d1f58bd10a1b17614665e930f97226a584fee2079",
+    "integrationCheckpoint": "efe221c703cc57e9f165d6d7ceae82f112492a15",
+    "changes": [
+      "Hosted Microsandbox helper imports dev-environment directly, bypassing optional installer pruning",
+      "CLI vendors exact local archive into standalone generated apps",
+      "Visual workspace shares root Vitest/provider peer context under isolated installs",
+      "Unit expectation includes errorName; no-file copy plan fixture does not load real storage/database"
+    ],
+    "validation": {
+      "cliUnitTests": 229,
+      "isolatedAppTypeTasks": 8,
+      "nativeTypeTasks": 60,
+      "hostedBuild": "passed with --skip-sandbox-prewarm; no deployment or cloud VM creation",
+      "hostedRegression": "failed before direct import fix; passed after"
+    },
+    "logs": [
+      "/tmp/eve080-ci-hosted-build-green.log",
+      "/tmp/eve080-ci-hosted-regression-green.log",
+      "/tmp/eve080-ci-cli-unit.log",
+      "/tmp/eve080-ci-final-isolated-types.log"
+    ]
   }
 }

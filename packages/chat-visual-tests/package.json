@@ -17,17 +17,14 @@
     "@types/node": "22.13.10",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "@uiverify/vitest": "^1.5.0",
-    "eve": "file:../../.eve-upgrade/eve-0.80.1-efe221c7.tgz",
+    "eve": "file:../../.eve-upgrade/eve-0.80.1-8fb9d359.tgz",
     "motion": "^12.23.24",
     "next": "16.3.0",
     "nuqs": "^2.8.5",
-    "playwright": "^1.59.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
-    "typescript": "6.0.2",
-    "vitest": "^4.1.11"
+    "typescript": "6.0.2"
   }
 }

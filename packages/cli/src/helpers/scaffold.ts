@@ -1,3 +1,4 @@
+import { vendorLocalPackageArchive } from "./vendor-local-package-archive";
 import {
   access,
   cp,
@@ -194,6 +195,11 @@ const applyChatTemplateSourceTransforms = async (
     `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
   );
 
+  await vendorLocalPackageArchive({
+    destination,
+    sourceDir: pathModule.join(getRepoRoot(), "apps", "chat"),
+    packageName: "eve",
+  });
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(

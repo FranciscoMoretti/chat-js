@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "eve": "file:../../../.eve-upgrade/eve-0.80.1-efe221c7.tgz"
+    "eve": "file:../../../.eve-upgrade/eve-0.80.1-8fb9d359.tgz"
   }
 }

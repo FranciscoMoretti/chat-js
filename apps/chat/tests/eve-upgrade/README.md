@@ -1,6 +1,6 @@
 # Integrated eve 0.80.1 evidence
 
-Current local candidate: fork `43e9d7d3`, `.eve-upgrade/eve-0.80.1-43e9d7d3.tgz`, SHA-256 `7bfc872afa7f8069103e6ad25a76060d6804baca78551d34cc93439524ba5c85`. The sections below preserve chronological checkpoints; the latest cleanup slice is at the end. This remains an integration branch, not a production cutover.
+Current review candidate: signed fork `8fb9d3597e5727349462fdaaeb948ab3d1d41d7b`, `.eve-upgrade/eve-0.80.1-8fb9d359.tgz`, SHA-256 `559964f080e818519965f63d1f58bd10a1b17614665e930f97226a584fee2079`. The sections below preserve chronological checkpoints. Full authenticated/VM integration evidence is tied to `efe221c7`; the new candidate corrects a hosted import and has targeted build verification. This remains a draft, not a production cutover.
 
 Original guest-checkpoint app base: `c0ab1c0504bb3da73ca0f3625f66c47bf69e042e`. Candidate: `6869c3500831cc713ca43bd4f801c8c3512870bb` (fork PR9). Local tarball SHA-256: `a00bf75e61af0115d8bd57b2e3abd3313b9e0354df43be71b2321ba02a7196d6`.
 
@@ -346,3 +346,13 @@ Transport setup is explicit: loopback is correctly rejected by the production SS
 After verification, both temporary VM sessions were retired through the native local resource manager; dependency-ordered purge reported zero remaining resources for both. The disposable MCP connector and foreign login session were removed. Temporary sandbox and MCP transport source edits are absent from the draft.
 
 Closure validation: root lint passed and all eight app type tasks passed. Logs: `/tmp/eve080-integrated-closure-lint.log` and `/tmp/eve080-integrated-closure-types.log`. No runtime implementation change or new candidate artifact was needed; the committed model fixture now permits the disposable MCP tool name.
+
+## CI failure diagnosis and repaired review candidate
+
+Published CI at app `ec381a867` exposed four issues. The unit assertion omitted eve 0.80.1's `errorName`; the no-file copy-seed unit test accidentally loaded database environment validation through its storage dependency; scaffold templates preserved an unusable repository-relative candidate path; and the chat visual workspace's separate Vitest peer instance lacked the registry provider's command-context augmentation under an isolated install. The assertions/mock now match their boundaries, both template preparation paths vendor the exact candidate bytes, and the private visual workspace shares root test tooling with the registry.
+
+Vercel's actual build log reported `MISSING_EXPORT: isEveDevEnvironment` in the Microsandbox runtime. A focused real Rolldown regression and a local hosted eve build reproduced it. Signed fork `8fb9d359` imports that helper directly from `dev-environment`, independently of the hosted optional-installer stub. The same regression and `VERCEL=1 eve build --skip-sandbox-prewarm` now pass. Prewarming was deliberately skipped; this generated output is not deployable evidence and no deployment was performed.
+
+All four consumers select the new committed tarball. Only this current archive is tracked; earlier archive identities remain available in their historical commits. Verify `shasum -a 256 .eve-upgrade/eve-0.80.1-8fb9d359.tgz` against the digest at the top, then `bun install --frozen-lockfile`. Standalone CLI templates copy those exact bytes to `vendor/eve-0.80.1-8fb9d359.tgz` and use that local path. No registry package was published.
+
+Validation: 229 CLI unit tests (including synced-template and source-fallback scaffolds), the two formerly failing app unit files, all eight app type tasks in a clean isolated install, and root lint. Native validation includes 60 type tasks, lint, invariant/docs checks, the new hosted bundler regression and package build. Existing authenticated copy/MCP/VM scenarios were not rerun because the runtime fix changes only the helper's import path. Logs: `/tmp/eve080-ci-{cli-unit,unit-green,final-isolated-types,app-lint,hosted-build-red,hosted-build-green,hosted-regression-red,hosted-regression-green,fork-types}.log`.

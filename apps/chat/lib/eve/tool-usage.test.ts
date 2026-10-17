@@ -114,6 +114,7 @@ test("EVE projects normalized failures into failed actions and model error text"
   } satisfies Parameters<typeof createRuntimeToolResultFromToolError>[0];
   expect(createRuntimeToolResultFromToolError(toolError)).toEqual({
     callId: "call-1",
+    errorName: "Error",
     isError: true,
     kind: "tool-result",
     output: "Unexpected tool failure.",

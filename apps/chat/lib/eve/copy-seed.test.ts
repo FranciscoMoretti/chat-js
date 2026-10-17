@@ -1,8 +1,14 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import { parseEveCopySeed } from "./copy-seed";
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { eveSeedSearchText } from "./search-text";
+
+vi.mock("@/lib/file-storage", () => ({
+  createFileId: (): never => {
+    throw new Error("This copy has no files to allocate");
+  },
+}));
 
 it("validates the actual prepared copy plan without losing settled tool output or model provenance", async () => {
   const seed = parseEveCopySeed({

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { vendorLocalPackageArchive } from "../packages/cli/src/helpers/vendor-local-package-archive";
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import {
   normalizeScaffoldContent,
@@ -114,6 +115,11 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   await normalizeScaffoldContent(destination);
   await removeTemplateReferences(destination);
   await rewriteTemplateStyles(destination);
+  await vendorLocalPackageArchive({
+    destination,
+    sourceDir,
+    packageName: "eve",
+  });
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
