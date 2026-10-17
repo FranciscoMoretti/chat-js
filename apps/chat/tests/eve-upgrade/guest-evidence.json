@@ -1,0 +1,278 @@
+{
+  "appBase": "c0ab1c0504bb3da73ca0f3625f66c47bf69e042e",
+  "cancelStatus": 202,
+  "candidate": "6869c3500831cc713ca43bd4f801c8c3512870bb",
+  "creationStatus": 200,
+  "events": [
+    {
+      "data": {
+        "runtime": {
+          "agentId": "guest-runtime",
+          "agentName": "guest-runtime",
+          "eveVersion": "0.80.1"
+        },
+        "trace": {
+          "decision": {
+            "action": "record",
+            "recordInputs": true,
+            "recordOutputs": true
+          },
+          "spanId": "eee5ee16f5076c5b",
+          "traceFlags": 1,
+          "traceId": "86bd386d97c8f57450507cd31b7e0550"
+        }
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.613Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FGNQRTTNSBVT4T4BWRN"
+      },
+      "type": "session.started"
+    },
+    {
+      "data": {
+        "sequence": 0,
+        "trace": {
+          "decision": {
+            "action": "record",
+            "recordInputs": true,
+            "recordOutputs": true
+          },
+          "spanId": "eee5ee16f5076c5b",
+          "traceFlags": 1,
+          "traceId": "86bd386d97c8f57450507cd31b7e0550"
+        },
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.615Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FGQ3PQN4Z1WE7CGKZ1Z"
+      },
+      "type": "turn.started"
+    },
+    {
+      "data": {
+        "message": "Reply briefly with hello from the actual guest agent.",
+        "parts": [
+          {
+            "text": "Reply briefly with hello from the actual guest agent.",
+            "type": "text"
+          }
+        ],
+        "sequence": 0,
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.615Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FGQ3PQN4Z1WE7CGKZ20"
+      },
+      "type": "message.received"
+    },
+    {
+      "data": {
+        "modelId": "gateway/openai/gpt-5-nano",
+        "sequence": 0,
+        "stepIndex": 0,
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.674Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FJJ3SVR8Y2Y8TKQZ4CB"
+      },
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "messageDelta": "Hello from the actual ChatJS guest agent.",
+        "sequence": 0,
+        "stepIndex": 0,
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.684Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FJWKR6F5A1ZW7XCD9SC"
+      },
+      "type": "message.appended"
+    },
+    {
+      "data": {
+        "finishReason": "stop",
+        "message": "Hello from the actual ChatJS guest agent.",
+        "sequence": 0,
+        "stepIndex": 0,
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.786Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FP28JSKCQFDR78EKJGF"
+      },
+      "type": "message.completed"
+    },
+    {
+      "data": {
+        "finishReason": "stop",
+        "sequence": 0,
+        "stepIndex": 0,
+        "turnId": "turn_0",
+        "usage": {
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "inputTokens": 8,
+          "outputTokens": 5
+        }
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.788Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FP4HJ5M607XW7H988AW"
+      },
+      "type": "step.completed"
+    },
+    {
+      "data": {
+        "sequence": 0,
+        "turnId": "turn_0"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.793Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FP92MY9P2RDBJ9W460A"
+      },
+      "type": "turn.completed"
+    },
+    {
+      "data": {
+        "continuationToken": "wrun_01M54W6FDPN136EJ5SETNZP5A4",
+        "usage": {
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "inputTokens": 8,
+          "outputTokens": 5
+        },
+        "wait": "next-user-message"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.794Z",
+        "deliveryIds": ["5aa3adc7-cd6c-45ec-ad06-450c5b821f1a"],
+        "id": "evt_01M54W6FPAQKM2R1TWEHASQECX"
+      },
+      "type": "session.waiting"
+    },
+    {
+      "data": {
+        "sequence": 1,
+        "trace": {
+          "decision": {
+            "action": "record",
+            "recordInputs": true,
+            "recordOutputs": true
+          },
+          "spanId": "f80e7c589764da33",
+          "traceFlags": 1,
+          "traceId": "f80e7c589764da33e12eb9993e65aa9f"
+        },
+        "turnId": "turn_1"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.911Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FSZFS89R5J3PKN81K39"
+      },
+      "type": "turn.started"
+    },
+    {
+      "data": {
+        "message": "cancel-this-turn after the response starts",
+        "parts": [
+          {
+            "text": "cancel-this-turn after the response starts",
+            "type": "text"
+          }
+        ],
+        "sequence": 1,
+        "turnId": "turn_1"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.911Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FSZFS89R5J3PKN81K3A"
+      },
+      "type": "message.received"
+    },
+    {
+      "data": {
+        "modelId": "gateway/openai/gpt-5-nano",
+        "sequence": 1,
+        "stepIndex": 0,
+        "turnId": "turn_1"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.911Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FSZFS89R5J3PKN81K3B"
+      },
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "messageDelta": "Hello from the actual ChatJS guest agent.",
+        "sequence": 1,
+        "stepIndex": 0,
+        "turnId": "turn_1"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.914Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FT2ZH13J1WF1QBDJCKV"
+      },
+      "type": "message.appended"
+    },
+    {
+      "data": {
+        "sequence": 1,
+        "turnId": "turn_1"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.988Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FWC8AT13DJGWGE86SAT"
+      },
+      "type": "turn.cancelled"
+    },
+    {
+      "data": {
+        "continuationToken": "wrun_01M54W6FDPN136EJ5SETNZP5A4",
+        "usage": {
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "inputTokens": 8,
+          "outputTokens": 5
+        },
+        "wait": "next-user-message"
+      },
+      "meta": {
+        "at": "2026-10-17T12:08:14.988Z",
+        "deliveryIds": ["4691d5cd-a3d4-4344-ba99-076eede1c8f1"],
+        "id": "evt_01M54W6FWC8AT13DJGWGE86SAV"
+      },
+      "type": "session.waiting"
+    }
+  ],
+  "exactCursorReconnect": {
+    "eventCount": 5,
+    "matched": true,
+    "startIndex": 4
+  },
+  "foreignSessionStatus": 401,
+  "initialEventCount": 9,
+  "postCancelHistoryStatus": 200,
+  "sendStatus": 202,
+  "sessionId": "wrun_01M54W6FDPN136EJ5SETNZP5A4",
+  "streamStatus": 200,
+  "unknownQueryStatus": 401
+}

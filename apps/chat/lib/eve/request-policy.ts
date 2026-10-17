@@ -1,5 +1,4 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { inputResponseSchema } from "eve/client";
 import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
@@ -35,7 +34,6 @@ const respond = z
             text: z.string().optional(),
           })
           .strict()
-          .refine((value) => inputResponseSchema.safeParse(value).success)
       )
       .min(MIN_INPUT_RESPONSES)
       .max(MAX_INPUT_RESPONSES),
@@ -94,8 +92,9 @@ const safeStreamQuery = (
       }
     } else if (
       !(
-        (key === "includeTailIndex" || key === "streamControlVersion") &&
-        value === "1"
+        ((key === "includeTailIndex" || key === "streamControlVersion") &&
+          value === "1") ||
+        (key === "follow" && value === "false")
       )
     ) {
       return null;

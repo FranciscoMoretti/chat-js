@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "eve": "npm:@chat-js/eve@0.61.0-chatjs.0"
+    "eve": "file:../../../.eve-upgrade/eve-0.80.1-6869c350.tgz"
   }
 }
