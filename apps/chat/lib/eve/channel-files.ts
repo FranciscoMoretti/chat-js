@@ -3,7 +3,9 @@ import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 
-type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
+type FileContext = NonNullable<
+  Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1]
+>;
 
 /** Interpret owned storage keys locally; never fetch the URL's hostname.
  * @param {string} url Attachment URL used only to extract a recognized stored-file identity.
@@ -12,7 +14,14 @@ type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
  */
 export const fetchEveChannelFile = async (
   url: string,
-  context?: FileContext
+  context?: {
+    readonly session?: {
+      readonly auth: Pick<
+        NonNullable<FileContext["session"]>["auth"],
+        "current"
+      >;
+    };
+  }
 ): Promise<{ bytes: Buffer; mediaType: string } | null> => {
   const key = keyFromFileUrl(url);
   if (key === null) {

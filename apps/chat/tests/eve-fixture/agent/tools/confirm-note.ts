@@ -7,8 +7,8 @@ import { filterEveTools } from "../../../../lib/eve/turn-tools";
 const confirmNote = defineTool({
   approval: {
     request: always(),
-    response: ({ responder, session }) => {
-      if (responder.principalId === session.initiator?.principalId) {
+    response: ({ response, session }) => {
+      if (response.principal.principalId === session.initiator?.principalId) {
         return { status: "allowed" };
       }
       return { reason: "Only the owner may respond", status: "rejected" };

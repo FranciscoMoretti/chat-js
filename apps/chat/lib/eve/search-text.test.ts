@@ -29,7 +29,6 @@ it("projects visible text with stable keys for live events and restored history"
     data: {
       beforeTurnId: "turn_1",
       events: [received, completed],
-      sourceSessionId: "source",
     },
     meta: { at: received.meta.at, id: "history" },
     type: "history.restored",
@@ -71,6 +70,6 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
       },
       meta: received.meta,
       type: "history.seeded",
-    })
+    } satisfies MessageStreamEvent)
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });

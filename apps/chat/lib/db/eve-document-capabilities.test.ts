@@ -11,6 +11,8 @@ import {
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
+  eveNamedDocumentCheckpoint,
+  eveNamedDocumentCheckpointEntry,
   eveDocumentRevision,
   user,
 } from "./schema";
@@ -373,4 +375,90 @@ it("snapshots native turn checkpoints and rejects absent published boundaries", 
       },
     ])
   ).rejects.toThrow("Published document boundary is unavailable.");
+});
+
+it("runs the app checkpoint hook with durable immutable document snapshots across retries", async () => {
+  const { default: conversation } =
+    await import("../../agent/hooks/conversation");
+  const conversationId = crypto.randomUUID();
+  await seedConversation(conversationId);
+  const first = await saveEveDocumentRevision(
+    revisionInput(conversationId, crypto.randomUUID())
+  );
+  const checkpoint = {
+    checkpointId: crypto.randomUUID(),
+    beforeTurnId: "turn_1",
+  };
+  const context = {
+    agent: { name: "chatjs" },
+    channel: {},
+    getSandbox: (): never => {
+      throw new Error("Unexpected sandbox access");
+    },
+    getSkill: (): never => {
+      throw new Error("Unexpected skill access");
+    },
+    session: {
+      id: conversationId,
+      turn: { id: "turn_1", sequence: 1 },
+      auth: {
+        current: null,
+        initiator: {
+          authenticator: "test",
+          principalId: "document-owner",
+          principalType: "user",
+          attributes: {},
+        },
+      },
+    },
+  };
+  // A failed application commit rejects the actual hook and leaves no named receipt.
+  await postgres.exec(`CREATE FUNCTION reject_named_checkpoint() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'checkpoint store unavailable'; END $$;
+    CREATE TRIGGER reject_named_checkpoint BEFORE INSERT ON "EveNamedDocumentCheckpoint" FOR EACH ROW EXECUTE FUNCTION reject_named_checkpoint();`);
+  try {
+    await expect(
+      conversation.checkpoint?.(checkpoint, context)
+    ).rejects.toThrow("Failed query");
+    expect(
+      await database
+        .select()
+        .from(eveNamedDocumentCheckpoint)
+        .where(
+          eq(eveNamedDocumentCheckpoint.checkpointId, checkpoint.checkpointId)
+        )
+    ).toHaveLength(0);
+  } finally {
+    await postgres.exec(
+      'DROP TRIGGER reject_named_checkpoint ON "EveNamedDocumentCheckpoint"; DROP FUNCTION reject_named_checkpoint();'
+    );
+  }
+  await conversation.checkpoint?.(checkpoint, context);
+  // Model a lost native receipt after the app commit, followed by a manual edit.
+  const second = await saveEveDocumentRevision(
+    {
+      ...revisionInput(conversationId, first.documentId),
+      expectedRevisionId: first.id,
+      operationId: crypto.randomUUID(),
+      content: "Later manual edit",
+      turnIndex: null,
+    },
+    undefined,
+    [0, 1]
+  );
+  await conversation.checkpoint?.(checkpoint, context);
+  const entries = await database
+    .select()
+    .from(eveNamedDocumentCheckpointEntry)
+    .where(
+      eq(eveNamedDocumentCheckpointEntry.checkpointId, checkpoint.checkpointId)
+    );
+  expect(entries).toHaveLength(1);
+  expect(entries[0]?.revisionId).toBe(first.id);
+  expect(second.id).not.toBe(first.id);
+  await expect(
+    conversation.checkpoint?.(
+      { ...checkpoint, beforeTurnId: "turn_2" },
+      context
+    )
+  ).rejects.toThrow("different source turn");
 });

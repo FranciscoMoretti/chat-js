@@ -55,11 +55,11 @@ const startTurn = async (selectedTool?: string, principalType = "user") =>
     {
       agent: { name: "chatjs" },
       channel: {},
+      cancel: (): never => {
+        throw new Error("Unexpected cancellation");
+      },
       getSandbox: () => {
         throw new Error("Unexpected sandbox access");
-      },
-      getSkill: () => {
-        throw new Error("Unexpected skill access");
       },
       session: {
         auth: {

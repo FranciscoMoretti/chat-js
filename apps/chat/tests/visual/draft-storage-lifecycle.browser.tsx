@@ -108,11 +108,12 @@ const DeliveryProbe = ({
   useLayoutEffect(() => {
     if (earlyAck) {
       accept({
-        type: "message.received",
-        data: { metadata: { chatjs: { operationId: earlyOperationId } } },
+        sessionId,
+        operationId: earlyOperationId,
+        deliveryId: "fixture-delivery",
       });
     }
-  }, [earlyAck, earlyOperationId, accept]);
+  }, [earlyAck, earlyOperationId, accept, sessionId]);
   return (
     <section>
       <output>{delivery.pending?.message ?? "empty"}</output>
@@ -120,8 +121,9 @@ const DeliveryProbe = ({
         type="button"
         onClick={() => {
           delivery.accept({
-            type: "message.received",
-            data: { metadata: { chatjs: { operationId: baseRevisionId } } },
+            sessionId,
+            operationId: baseRevisionId,
+            deliveryId: "fixture-delivery",
           });
         }}
       >
@@ -131,8 +133,9 @@ const DeliveryProbe = ({
         type="button"
         onClick={() => {
           delivery.accept({
-            type: "message.received",
-            data: { metadata: { chatjs: { operationId } } },
+            sessionId,
+            operationId,
+            deliveryId: "fixture-delivery",
           });
         }}
       >

@@ -236,47 +236,7 @@ const GuestConversation = ({
     }
   };
   const latestTurn = agent.events.findLast(
-    (event: {
-      readonly type:
-        | "history.seeded"
-        | "hook.result"
-        | "history.restored"
-        | "action.input.appended"
-        | "approval.candidate"
-        | "approval.settled"
-        | "context.cleared"
-        | "compaction.completed"
-        | "compaction.usage"
-        | "compaction.requested"
-        | "authorization.completed"
-        | "authorization.required"
-        | "message.appended"
-        | "message.completed"
-        | "message.received"
-        | "reasoning.appended"
-        | "session.completed"
-        | "session.failed"
-        | "session.started"
-        | "session.waiting"
-        | "result.completed"
-        | "subagent.called"
-        | "subagent.event"
-        | "subagent.completed"
-        | "subagent.started"
-        | "actions.requested"
-        | "input.requested"
-        | "input.resolved"
-        | "action.partial"
-        | "action.result"
-        | "reasoning.completed"
-        | "step.completed"
-        | "step.failed"
-        | "step.started"
-        | "turn.cancelled"
-        | "turn.completed"
-        | "turn.failed"
-        | "turn.started";
-    }) =>
+    (event) =>
       event.type === "turn.started" ||
       event.type === "turn.failed" ||
       event.type === "turn.completed" ||

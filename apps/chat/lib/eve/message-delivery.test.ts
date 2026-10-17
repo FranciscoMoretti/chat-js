@@ -1,10 +1,6 @@
-import type { MessageStreamEvent } from "eve/client";
 import { describe, expect, it } from "vitest";
 
-import {
-  eveMessageDelivery,
-  eveMessageDeliveryMetadata,
-} from "./message-delivery";
+import { eveMessageDelivery } from "./message-delivery";
 
 const memoryStorage = () => {
   const values = new Map<string, string>();
@@ -19,18 +15,10 @@ const memoryStorage = () => {
   };
 };
 
-const received = (
-  message: string,
-  operationId: string
-): MessageStreamEvent => ({
-  data: {
-    message,
-    metadata: eveMessageDeliveryMetadata(operationId, null),
-    sequence: 1,
-    turnId: "turn_1",
-  },
-  meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
-  type: "message.received",
+const received = (_message: string, operationId: string) => ({
+  sessionId: "session",
+  operationId,
+  deliveryId: `native-${operationId}`,
 });
 
 describe("Eve message delivery recovery", () => {
@@ -73,7 +61,7 @@ describe("Eve message delivery recovery", () => {
     ).toBe(true);
     expect(eveMessageDelivery.read(storage, "session")).toBeNull();
 
-    // Replayed stream events are harmless after the first acknowledgement.
+    // Repeated positive receipts are harmless after the first acknowledgement.
     expect(
       eveMessageDelivery.acknowledge(
         storage,

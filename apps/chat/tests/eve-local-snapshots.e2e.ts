@@ -7,7 +7,6 @@ import path from "node:path";
 import { Sandbox, Snapshot } from "microsandbox";
 import { expect, test } from "vitest";
 
-import { fenceLocalEveSandboxMutations } from "../lib/eve/local-sandbox-fence";
 import { purgeLocalEveSandboxes } from "../lib/eve/purge-local-sandbox";
 
 // This provider acceptance test touches only newly named local fixture resources.
@@ -172,161 +171,134 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
   }
 }, 120_000);
 
-test("EVE checkpoint capture records real provider resources for retryable cleanup", async () => {
-  const { microsandbox } = await import("eve/sandbox/microsandbox");
-  const backend = microsandbox({
-    image: "ghcr.io/vercel/eve:0.52.2",
+// Exercise the installed current provider; app erasure still requires its own positive ownership proof.
+test("current provider cleanup preserves independent checkpoint copies and permits final artifact reclamation", async () => {
+  if (process.env.MSB_BACKEND !== "local") {
+    throw new Error(
+      "This disposable provider test requires MSB_BACKEND=local."
+    );
+  }
+  const { createMicrosandboxSandboxProvider } =
+    await import("@eve-test/dist/src/execution/sandbox/bindings/microsandbox.js");
+  const provider = createMicrosandboxSandboxProvider({
+    image: "debian:bookworm-slim",
+    memoryMiB: 256,
     setup: { autoInstall: false },
   });
-  const appRoot = await mkdtemp(path.join(tmpdir(), "eve-backend-capture-"));
-  const sessionKey = `eve-acceptance-${randomBytes(16).toString("hex")}`;
-  const sessionDirectory = path.join(
-    appRoot,
-    ".eve",
-    "sandbox-cache",
-    "microsandbox",
-    "sessions",
-    sessionKey
+  type Context = Parameters<typeof provider.start>[0];
+  const host: Context["host"] = {
+    resolveProjectPath: (p) => p,
+    loadOptionalPackage: async (input) => await input.importModule(),
+  };
+  const storagePath = await mkdtemp(
+    path.join(tmpdir(), "eve-current-provider-")
   );
-  await mkdir(sessionDirectory, { recursive: true });
-  await writeFile(
-    path.join(sessionDirectory, "owner.json"),
-    JSON.stringify({
-      backendName: "microsandbox",
-      sessionId: sessionKey,
-      sessionKey,
-      version: 1,
-    })
-  );
-  const handle = await backend.create({
-    runtimeContext: { appRoot },
-    sessionKey,
-    templateKey: null,
+  const context = (id: string): Context => ({
+    host,
+    storagePath,
+    session: {
+      id,
+      auth: { current: null, initiator: null },
+      turn: { id: "turn_0", sequence: 0 },
+    },
   });
-  let child: Awaited<ReturnType<typeof backend.create>> | undefined;
-  const inputs = [{ sessionDirectory, sessionKey }];
-  try {
-    await handle.session.writeTextFile({
-      content: "at turn zero",
-      path: "checkpoint.txt",
-    });
-    const checkpoint = await handle.captureForkCheckpoint?.("turn_0");
-    expect(checkpoint).toBeDefined();
-    if (typeof checkpoint?.snapshotName !== "string") {
-      throw new TypeError("EVE did not return a fork snapshot identity.");
-    }
-
-    const manifest: unknown = JSON.parse(
-      await readFile(
-        path.join(
-          sessionDirectory,
-          "fork-checkpoints",
-          `${checkpoint.snapshotName}.json`
+  const id = `eve-current-${randomBytes(16).toString("hex")}`;
+  const artifact = await provider.prepare({
+    host,
+    storagePath,
+    sourceRevision: id,
+    resources: { source: { kind: "none" } },
+    files: {
+      list: async () => await Promise.resolve([]),
+      read: async () =>
+        await Promise.reject(
+          Object.assign(new Error("No fixture files"), { code: "ENOENT" })
         ),
-        "utf-8"
-      )
-    );
-    expect(manifest).toMatchObject({
-      optionsHash: checkpoint.optionsHash,
-      sessionKey,
-      snapshotName: checkpoint.snapshotName,
-      version: 1,
+      readText: async () =>
+        await Promise.reject(
+          Object.assign(new Error("No fixture files"), { code: "ENOENT" })
+        ),
+    },
+  });
+  let source: Awaited<ReturnType<typeof provider.start>> | undefined;
+  let child: Awaited<ReturnType<typeof provider.start>> | undefined;
+  let checkpoint:
+    | Awaited<ReturnType<NonNullable<typeof provider.fork>["capture"]>>
+    | undefined;
+  const { fork } = provider;
+  if (fork === undefined) {
+    throw new Error("Missing checkpoint capability");
+  }
+  try {
+    source = await provider.start(context(`${id}-source`), undefined, artifact);
+    await source.handle.sandbox.writeTextFile({
+      path: "copy.txt",
+      content: "retained boundary",
     });
-    await Snapshot.get(checkpoint.snapshotName);
-    expect(await handle.captureForkCheckpoint?.("turn_0")).toEqual(checkpoint);
-    await handle.session.writeTextFile({
-      content: "later parent edit",
-      path: "checkpoint.txt",
+    checkpoint = await fork.capture(source.handle, "boundary");
+    expect(await fork.capture(source.handle, "boundary")).toEqual(checkpoint);
+    await source.handle.sandbox.writeTextFile({
+      path: "copy.txt",
+      content: "later source",
     });
-    const childKey = `${sessionKey}-child`;
-    const childDirectory = path.join(
-      appRoot,
-      ".eve",
-      "sandbox-cache",
-      "microsandbox",
-      "sessions",
-      childKey
+    child = await fork.restore(
+      context(`${id}-child`),
+      undefined,
+      artifact,
+      checkpoint
     );
-    await mkdir(childDirectory, { recursive: true });
-    await writeFile(
-      path.join(childDirectory, "owner.json"),
-      JSON.stringify({
-        backendName: "microsandbox",
-        sessionId: childKey,
-        sessionKey: childKey,
-        version: 1,
-      })
+    expect(child.state.sessionIdentity).not.toBe(source.state.sessionIdentity);
+    expect(await child.handle.sandbox.readTextFile({ path: "copy.txt" })).toBe(
+      "retained boundary"
     );
-    child = await backend.create({
-      forkCheckpoint: checkpoint,
-      runtimeContext: { appRoot },
-      sessionKey: childKey,
-      templateKey: null,
-    });
-    inputs.push({
-      sessionDirectory: path.join(
-        appRoot,
-        ".eve",
-        "sandbox-cache",
-        "microsandbox",
-        "sessions",
-        childKey
+    await source.handle.onSandboxDelete();
+    source = undefined;
+    expect(await child.handle.sandbox.readTextFile({ path: "copy.txt" })).toBe(
+      "retained boundary"
+    );
+    await child.handle.onSandboxStop();
+    child = {
+      ...child,
+      handle: await provider.resume(
+        context(`${id}-child`),
+        artifact,
+        child.state
       ),
-      sessionKey: childKey,
-    });
-    expect(await child.session.readTextFile({ path: "checkpoint.txt" })).toBe(
-      "at turn zero"
+    };
+    expect(await child.handle.sandbox.readTextFile({ path: "copy.txt" })).toBe(
+      "retained boundary"
     );
-    expect(await handle.session.readTextFile({ path: "checkpoint.txt" })).toBe(
-      "later parent edit"
+    await child.handle.onSandboxDelete();
+    child = undefined;
+    child = await fork.restore(
+      context(`${id}-later-copy`),
+      undefined,
+      artifact,
+      checkpoint
     );
-    await handle.captureState();
-    await child.captureState();
-    // Simulate losing the final metadata write: pre-creation records still own
-    // the child VM and state snapshot, so cleanup must not need reattachment.
-    await rm(path.join(inputs[1].sessionDirectory, "metadata.json"));
-    await child.shutdown();
-    await handle.shutdown();
-    await fenceLocalEveSandboxMutations(appRoot, [sessionKey, childKey]);
-    await expect(handle.captureForkCheckpoint?.("turn_1")).rejects.toThrow(
-      "pending deletion"
+    expect(await child.handle.sandbox.readTextFile({ path: "copy.txt" })).toBe(
+      "retained boundary"
     );
-    await expect(
-      backend.create({
-        runtimeContext: { appRoot },
-        sessionKey,
-        templateKey: null,
-      })
-    ).rejects.toThrow("pending deletion");
-    const resources = await purgeLocalEveSandboxes(inputs);
-    expect(resources[0].snapshotNames).toContain(checkpoint.snapshotName);
-    await expect(Snapshot.get(checkpoint.snapshotName)).rejects.toThrow(
+    await child.handle.onSandboxDelete();
+    child = undefined;
+    // All disposable consumers are gone; reclaim only this test's exact retained artifact.
+    const snapshot = z.object({ snapshotName: z.string() }).parse(checkpoint);
+    await Snapshot.remove(snapshot.snapshotName);
+    await expect(Snapshot.get(snapshot.snapshotName)).rejects.toThrow(
       "snapshot not found"
     );
-    expect(resources).toHaveLength(2);
-    await Promise.all(
-      resources.map(async (resource) => {
-        await Promise.all(
-          resource.sandboxNames.map(async (name) => {
-            await expect(Sandbox.get(name)).rejects.toMatchObject({
-              code: "sandboxNotFound",
-            });
-          })
-        );
-        await Promise.all(
-          resource.snapshotNames.map(async (snapshot) => {
-            await expect(Snapshot.get(snapshot)).rejects.toThrow(
-              "snapshot not found"
-            );
-          })
-        );
-      })
-    );
-    expect(await purgeLocalEveSandboxes(inputs)).toEqual(resources);
+    checkpoint = undefined;
   } finally {
-    await child?.shutdown();
-    await handle.shutdown();
-    await purgeLocalEveSandboxes(inputs);
-    await rm(appRoot, { force: true, recursive: true });
+    await source?.handle.onSandboxDelete();
+    await child?.handle.onSandboxDelete();
+    if (checkpoint !== undefined) {
+      await Snapshot.remove(
+        z.object({ snapshotName: z.string() }).parse(checkpoint).snapshotName
+      );
+    }
+    await Snapshot.remove(
+      z.object({ snapshotName: z.string() }).parse(artifact).snapshotName
+    );
+    await rm(storagePath, { recursive: true, force: true });
   }
-}, 60_000);
+}, 120_000);

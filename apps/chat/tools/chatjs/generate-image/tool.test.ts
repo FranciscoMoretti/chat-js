@@ -1,6 +1,5 @@
 import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { generateImageResult } from "./schemas";
 import { generateImageTool } from "./tool";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
@@ -66,9 +65,7 @@ vi.mock("@/lib/url", () => ({
 }));
 
 const execute = async (
-  context: ReadonlyNativeSurface<
-    ReturnType<typeof testToolContext>
-  > = testToolContext()
+  context: ReturnType<typeof testToolContext> = testToolContext()
 ): Promise<ReturnType<typeof toolResultSchema.parse>> =>
   toolResultSchema.parse(
     await generateImageTool.execute({ prompt: "Blue sky" }, context)

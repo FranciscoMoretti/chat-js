@@ -242,7 +242,6 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
             turnId: `turn_${turn}`,
           },
         })),
-        sourceSessionId: source.sessionId ?? "source",
       },
       meta: { at: new Date().toISOString(), id: "restored" },
       type: "history.restored",

@@ -113,3 +113,51 @@ export const dispatchEveOnce = async (
   }
   return binding;
 };
+
+/** Returns only a positively bound send receipt owned by the current principal. */
+export const getEveSendReceipt = async (
+  ownerId: string,
+  sessionId: string,
+  operationId: string
+): Promise<{
+  sessionId: string;
+  operationId: string;
+  deliveryId: string;
+} | null> => {
+  const [row] = await db
+    .select({
+      sessionId: eveDispatch.sessionId,
+      operationId: eveDispatch.operationId,
+      deliveryId: eveDispatch.deliveryId,
+    })
+    .from(eveDispatch)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.ownerId, eveConversation.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveDispatch.ownerId, ownerId),
+        eq(eveDispatch.operationId, operationId),
+        eq(eveDispatch.kind, "send"),
+        eq(eveDispatch.sessionId, sessionId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  if (
+    !hasRow(row) ||
+    !isNonEmptyString(row.sessionId) ||
+    !isNonEmptyString(row.deliveryId)
+  ) {
+    return null;
+  }
+  return {
+    sessionId: row.sessionId,
+    operationId: row.operationId,
+    deliveryId: row.deliveryId,
+  };
+};

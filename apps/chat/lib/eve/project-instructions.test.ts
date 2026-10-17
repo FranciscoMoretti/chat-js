@@ -57,11 +57,11 @@ const hookContext = (
 ): HookContext => ({
   agent: { name: "chatjs" },
   channel: {},
+  cancel: (): never => {
+    throw new Error("Unexpected cancellation");
+  },
   getSandbox: (): never => {
     throw new Error("Unexpected sandbox access");
-  },
-  getSkill: (): never => {
-    throw new Error("Unexpected skill access");
   },
   session: {
     auth: {
@@ -175,21 +175,9 @@ test("loads root project context for descendants without writing child checkpoin
   expect(mocks.checkpoint).not.toHaveBeenCalled();
 });
 
-test("does not project a child's waiting checkpoint into the root branch", async () => {
-  const waiting = {
-    data: {
-      checkpoint: { beforeTurnId: "turn_1", checkpointId: "child-checkpoint" },
-      continuationToken: "continuation",
-    },
-    meta: { at: "2026-09-11T12:00:00Z", id: "waiting-event" },
-    type: "session.waiting",
-  };
-  await conversation.events?.["session.waiting"]?.(
-    {
-      ...waiting,
-      data: { ...waiting.data, wait: "next-user-message" },
-      type: "session.waiting",
-    },
+test("does not project a child's checkpoint into the root branch", async () => {
+  await conversation.checkpoint?.(
+    { beforeTurnId: "turn_1", checkpointId: "child-checkpoint" },
     hookContext(0, {
       callId: "child-call",
       rootSessionId: "root-native",

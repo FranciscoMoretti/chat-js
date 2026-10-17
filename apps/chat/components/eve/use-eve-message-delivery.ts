@@ -2,11 +2,11 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 
-import {
-  eveMessageDelivery,
-  eveMessageOperationId,
+import { eveMessageDelivery } from "@/lib/eve/message-delivery";
+import type {
+  DeliveryReceipt,
+  PendingEveMessage,
 } from "@/lib/eve/message-delivery";
-import type { PendingEveMessage } from "@/lib/eve/message-delivery";
 
 const createDeliveryStore = (sessionId: string) => {
   let pending: PendingEveMessage | null = null;
@@ -67,8 +67,8 @@ export const useEveMessageDelivery = (sessionId: string) => {
   const { pendingRef, acknowledge, hasAcknowledged, setPending } = store;
 
   const accept = useCallback(
-    (event: Parameters<typeof eveMessageOperationId>[0]) => {
-      const operationId = eveMessageOperationId(event);
+    (receipt: DeliveryReceipt) => {
+      const { operationId } = receipt;
       if (!(typeof operationId === "string" && operationId !== "")) {
         return;
       }
@@ -84,7 +84,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
           sessionStorage,
           sessionId,
           current,
-          event
+          receipt
         )
       ) {
         return;

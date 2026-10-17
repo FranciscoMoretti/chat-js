@@ -34,7 +34,7 @@ vi.mock("./client", () => {
   return { db: database };
 });
 vi.mock("../env", () => ({ env: {} }));
-const { dispatchEveOnce, EveDispatchUnknownError } =
+const { dispatchEveOnce, EveDispatchUnknownError, getEveSendReceipt } =
   await import("./eve-dispatch");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const input = {
@@ -170,4 +170,31 @@ it("keeps the creation fence committed when its binding transaction rolls back",
     )
   ).rejects.toBeInstanceOf(EveDispatchUnknownError);
   expect(dispatch).toHaveBeenCalledTimes(1);
+});
+
+it("exposes only a known send receipt for the exact owner and session", async () => {
+  const operationId = "00000000-0000-4000-8000-000000000061";
+  const dispatch = vi
+    .fn()
+    .mockResolvedValue({ sessionId: "source", deliveryId: "receipt-delivery" });
+  expect(await getEveSendReceipt("owner", "source", operationId)).toBeNull();
+  await dispatchEveOnce({ ...input, operationId }, dispatch);
+  expect(await getEveSendReceipt("owner", "source", operationId)).toEqual({
+    sessionId: "source",
+    deliveryId: "receipt-delivery",
+    operationId,
+  });
+  expect(await getEveSendReceipt("foreign", "source", operationId)).toBeNull();
+  expect(
+    await getEveSendReceipt("owner", "foreign-session", operationId)
+  ).toBeNull();
+  expect(dispatch).toHaveBeenCalledTimes(1);
+  const unknownId = "00000000-0000-4000-8000-000000000062";
+  await expect(
+    dispatchEveOnce(
+      { ...input, operationId: unknownId },
+      async () => await Promise.reject(new Error("Lost response"))
+    )
+  ).rejects.toThrow("Lost response");
+  expect(await getEveSendReceipt("owner", "source", unknownId)).toBeNull();
 });

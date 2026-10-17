@@ -69,7 +69,7 @@ test.afterEach(
     ) {
       await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
         .attach(conversation.sessionId)
-        .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
+        .cancel({ signal: AbortSignal.timeout(15_000) });
     }
   }
 );

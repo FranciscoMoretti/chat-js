@@ -77,7 +77,7 @@ const eveSeedSearchText = (
       readonly type: string;
       readonly text?: string;
     } & IgnoredSdkFields<SeedMessage["parts"][number]>)[];
-  } & IgnoredSdkFields<SeedMessage>)[]
+  } & IgnoredSdkFields<SeedMessage> & { readonly id?: string })[]
 ): EveSearchText[] =>
   messages.flatMap((message, index) => {
     const text = message.parts

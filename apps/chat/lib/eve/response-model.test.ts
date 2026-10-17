@@ -25,7 +25,6 @@ it("preserves the response selection across reload and restored ancestor history
           data: {
             beforeTurnId: "turn_1",
             events: [step],
-            sourceSessionId: "source",
           },
           meta: { at: step.meta.at, id: "history" },
           type: "history.restored",

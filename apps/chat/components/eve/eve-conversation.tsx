@@ -1,5 +1,7 @@
 "use client";
 
+import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
+
 import { useEveFollowups } from "./use-eve-followups";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
@@ -7,7 +9,7 @@ import { withTaskCleanup } from "@/components/task-cleanup";
 import { hasText } from "@/components/text-value";
 
 import type { useEveAgent } from "eve/react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
 import {
@@ -508,12 +510,11 @@ const EveConversation = ({
   if (!agent) {
     throw new Error("Native observer is not ready.");
   }
-  const acceptDelivery = delivery.accept;
-  useEffect(() => {
-    for (const event of agent.events) {
-      acceptDelivery(event);
-    }
-  }, [agent.events, acceptDelivery]);
+  const refreshDeliveryReceipt = useEveDeliveryReceipt(
+    sessionId,
+    pendingMessage,
+    delivery.accept
+  );
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -621,6 +622,7 @@ const EveConversation = ({
           },
         });
       }, pending.operationId);
+      await refreshDeliveryReceipt();
     } catch (error) {
       if (isEveCommandRejection(error)) {
         delivery.reject(pending, error.message, isEveAdmissionBusy(error));

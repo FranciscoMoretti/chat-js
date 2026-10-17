@@ -1,3 +1,4 @@
+import { conversationReducer } from "eve/client";
 import type { EveMessage } from "eve/client";
 import { describe, expect, it, vi } from "vitest";
 
@@ -43,6 +44,7 @@ const agent = (
   cancel: vi
     .fn<NativeChatAgent["cancel"]>()
     .mockRejectedValue(new Error("unused")),
+  conversation: conversationReducer.initial(),
   data: { messages },
   error: undefined,
   events: [],

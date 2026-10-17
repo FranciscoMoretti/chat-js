@@ -70,7 +70,7 @@ const main = async (): Promise<void> => {
 agent/subagents/researcher/tools/webSearch.ts
  tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
  tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
- lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts tools/chatjs/deep-research/prompts.ts`
+ lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts lib/eve/operation-token.ts lib/eve/operation-lookup-route.ts tools/chatjs/deep-research/prompts.ts`
       .split(/\s+/u)
       .map(async (name) => {
         await mkdir(path.dirname(path.join(fixture, name)), {
@@ -94,7 +94,8 @@ agent/subagents/researcher/tools/webSearch.ts
     "agent/channels/eve.ts",
     `import { eveChannel } from "eve/channels/eve";
 import { parseEveCopySeed } from "../../lib/eve/copy-seed";
-export default eveChannel({
+import { eveOperationLookupRoute } from "../../lib/eve/operation-lookup-route";
+const channel = eveChannel({
   auth: () => ({ principalId: "owner", principalType: "user", authenticator: "fixture", attributes: {} }),
   resolveSeed: ({ auth, operationId }) => {
     if (auth.principalId !== "owner" || operationId !== "accepted-copy") throw new Error("Unaccepted destination");
@@ -104,7 +105,12 @@ export default eveChannel({
     ] });
     return { ...seed, attachments: "channel" };
   },
-});`
+});
+export default { ...channel, routes: [...channel.routes, eveOperationLookupRoute] };`
+  );
+  await write(
+    "lib/eve/gateway-auth.ts",
+    'export const authenticateEveGateway = () => ({ principalId: "owner", principalType: "user", authenticator: "fixture", attributes: {} });'
   );
   await write(
     "lib/db/eve-billing.ts",

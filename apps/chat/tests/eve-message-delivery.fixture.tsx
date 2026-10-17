@@ -1,19 +1,12 @@
-import type { MessageStreamEvent } from "eve/client";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
-import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
 
-const event = (operationId: string): MessageStreamEvent => ({
-  data: {
-    message: "same text",
-    metadata: eveMessageDeliveryMetadata(operationId, null),
-    sequence: 1,
-    turnId: "turn_1",
-  },
-  meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
-  type: "message.received",
+const event = (operationId: string) => ({
+  sessionId: "fixture-session",
+  operationId,
+  deliveryId: `native-${operationId}`,
 });
 
 const Fixture = (): React.JSX.Element => {

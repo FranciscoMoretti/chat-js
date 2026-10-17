@@ -24,80 +24,29 @@ Research opens a fresh native agent session for each invocation, sends the struc
 
 The six adapter suites pass 74 tests. `bun run --cwd apps/chat test:research:native` passes both native scenarios (adaptive research and active child cancellation). This existing harness copies the production research tool, search progress reader, usage consumer and billing hook into a disposable native worker using the app's exact candidate package. Model responses, document persistence, auth, and search provider are fixture adapters. Two separate search receipts are charged to the owning root turn; orchestration costs zero. Gateway model accounting observation is stubbed because mock models have no real gateway intents. This does not prove production model accounting or full authenticated app startup. Final native log: `native-research-result.txt`.
 
-App-owned imported message fields now retain custom display metadata, model
-provenance and text tool-output semantics independently of native Eve message
-types. The sharing/tool-selection suites pass 17 cases. This changes reader
-types, not native event production or seed acceptance.
+App-owned imported message fields now retain custom display metadata, model provenance and text tool-output semantics independently of native Eve message types. The sharing/tool-selection suites pass 17 cases. This changes reader types, not native event production or seed acceptance.
 
-Before copy-plan validation moved into the app, the authenticated source compiler
-reported 21 diagnostics, down from 31 before the imported metadata type separation,
-47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
+Before copy-plan validation moved into the app, the authenticated source compiler reported 21 diagnostics, down from 31 before the imported metadata type separation, 47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
 
 ## Copy-plan validation checkpoint
 
-`copy-seed.ts` now owns strict validation of the server-prepared copy transcript.
-The production plan preparer and copy journal use it directly, and stored seed
-and search-input types no longer depend on the missing native `resolveSeed`
-return type. No database shape or ownership/revision validation changed.
-The authenticated source compiler now reports 11 remaining diagnostics.
-Two focused tests exercise the real plan preparer, stable display-text search
-keys, retained model/text-tool provenance, detached data and rejection of live
-or incomplete parts, source sandbox URLs and oversized payloads.
+`copy-seed.ts` now owns strict validation of the server-prepared copy transcript. The production plan preparer and copy journal use it directly, and stored seed and search-input types no longer depend on the missing native `resolveSeed` return type. No database shape or ownership/revision validation changed. The authenticated source compiler now reports 11 remaining diagnostics. Two focused tests exercise the real plan preparer, stable display-text search keys, retained model/text-tool provenance, detached data and rejection of live or incomplete parts, source sandbox URLs and oversized payloads.
 
-Native seed admission, history event production, checkpoints and sandbox/file
-isolation remain incomplete. No legacy reader union or unused history normalizer
-was added. Full lint/types were run and remain red on outstanding runtime
-contracts; these tests do not establish a working copy lifecycle.
+Native seed admission, history event production, checkpoints and sandbox/file isolation remain incomplete. No legacy reader union or unused history normalizer was added. Full lint/types were run and remain red on outstanding runtime contracts; these tests do not establish a working copy lifecycle.
 
 ## Trusted seed runtime checkpoint
 
-Current local fork candidate: `91a2864b14f2a3a740684120543565560e250f88`.
-The app and guest select `.eve-upgrade/eve-0.80.1-91a2864b.tgz`, SHA-256
-`82a1c260450b37aa6899e6053ba999fcf0881bec9ad35ac03016f731101d75d8`.
-Build and pack that exact fork commit to reproduce this dependency; production
-pins are unchanged. The browser guest evidence above remains evidence for its
-original candidate, not a rerun against this one.
+Current local fork candidate: `91a2864b14f2a3a740684120543565560e250f88`. The app and guest select `.eve-upgrade/eve-0.80.1-91a2864b.tgz`, SHA-256 `82a1c260450b37aa6899e6053ba999fcf0881bec9ad35ac03016f731101d75d8`. Build and pack that exact fork commit to reproduce this dependency; production pins are unchanged. The browser guest evidence above remains evidence for its original candidate, not a rerun against this one.
 
-The native seed route resolves an accepted destination reservation under the
-current authenticated principal. Workflow initialization installs structured
-history before processing the first message and emits `history.seeded`; copied
-tools remain historical data. Destination files require channel authorization,
-successful sandbox storage and matching bytes on later model hydration, including
-after compaction. No legacy history importer is exported.
+The native seed route resolves an accepted destination reservation under the current authenticated principal. Workflow initialization installs structured history before processing the first message and emits `history.seeded`; copied tools remain historical data. Destination files require channel authorization, successful sandbox storage and matching bytes on later model hydration, including after compaction. No legacy history importer is exported.
 
-Fork validation: 215 affected unit tests, two focused integration tests, package
-TypeScript, targeted lint, docs validation and build passed. The app's five
-copy/sharing/search suites pass 56 tests; proxy/request-policy suites pass 26.
-The guest build also passes against this candidate.
-The existing native harness now passes three real-worker cases: research,
-cancellation, and trusted seed creation/continuation (`native-seed-result.txt`).
-The seed case checks idle creation without a model/tool turn, stable display IDs,
-retained tool history in the first model prompt, no historical tool execution and
-lookup of the same session. Its resolver uses the production app seed validator
-with a fixture-owned accepted reservation; this is not a database acceptance or
-crash/replay proof. Sandbox failure checks use the native in-memory runtime;
-end-to-end checkpoint/resource isolation remains outstanding.
+Fork validation: 215 affected unit tests, two focused integration tests, package TypeScript, targeted lint, docs validation and build passed. The app's five copy/sharing/search suites pass 56 tests; proxy/request-policy suites pass 26. The guest build also passes against this candidate. The existing native harness now passes three real-worker cases: research, cancellation, and trusted seed creation/continuation (`native-seed-result.txt`). The seed case checks idle creation without a model/tool turn, stable display IDs, retained tool history in the first model prompt, no historical tool execution and lookup of the same session. Its resolver uses the production app seed validator with a fixture-owned accepted reservation; this is not a database acceptance or crash/replay proof. Sandbox failure checks use the native in-memory runtime; end-to-end checkpoint/resource isolation remains outstanding.
 
-The authenticated-source compiler reports seven remaining diagnostics, covering
-`authorizeFork`, waiting checkpoints and `history.restored`. Full app lint/types
-remain red. The app still fails closed on an unresolved copy lookup; durable
-admission/recovery is pending separately. This checkpoint does not establish a
-working complete save-copy/fork lifecycle.
+The authenticated-source compiler reports seven remaining diagnostics, covering `authorizeFork`, waiting checkpoints and `history.restored`. Full app lint/types remain red. The app still fails closed on an unresolved copy lookup; durable admission/recovery is pending separately. This checkpoint does not establish a working complete save-copy/fork lifecycle.
 
 ## Registry dependency alignment
 
-The registry and visual-test workspace now select the same local `91a2864b`
-candidate as the app and guest. Registry approval, research and tool-context
-consumers use the current native contracts, matching the integrated app sources.
-Registry unit tests pass 159 cases and package lint passes. Registry type checking
-now reports only two imported app errors for the missing `history.restored`
-contract. Root `bun lint` and `bun test:types` were rerun and remain red; no
-full-repository or visual-runtime pass is claimed. These are integration-branch
-dependency selections, not a production release or pin cutover.
-After dependency hoisting, the real-worker harness was rerun: research,
-cancellation and seeded continuation all pass (three cases, two research gates).
-The saved output is `native-registry-result.txt`; the same fixture limitations
-described above apply.
+The registry and visual-test workspace now select the same local `91a2864b` candidate as the app and guest. Registry approval, research and tool-context consumers use the current native contracts, matching the integrated app sources. Registry unit tests pass 159 cases and package lint passes. Registry type checking now reports only two imported app errors for the missing `history.restored` contract. Root `bun lint` and `bun test:types` were rerun and remain red; no full-repository or visual-runtime pass is claimed. These are integration-branch dependency selections, not a production release or pin cutover. After dependency hoisting, the real-worker harness was rerun: research, cancellation and seeded continuation all pass (three cases, two research gates). The saved output is `native-registry-result.txt`; the same fixture limitations described above apply.
 
 ## Reproduction
 
@@ -264,37 +213,22 @@ Open `/eve/guest/v1/health` in a worktree-scoped agent-browser session with `--r
 
 ## App-owned admission decision
 
-The accepted product contract allows lost-response sends to remain unknown
-permanently. There is no automatic resend of an uncertain native operation and
-no claim of universally exact recovery. `EveDispatch` commits the immutable
-owner/operation/conversation/kind/intent before dispatch; a successful native
-response records its exact session and delivery identity. Concurrent requests
-and later requests against an unknown row cannot dispatch again. Creation and
-trusted-copy records retain their existing ownership, source revision, policy,
-and independent billing checks. The new migration is generated locally only.
+The accepted product contract allows lost-response sends to remain unknown permanently. There is no automatic resend of an uncertain native operation and no claim of universally exact recovery. `EveDispatch` commits the immutable owner/operation/conversation/kind/intent before dispatch; a successful native response records its exact session and delivery identity. Concurrent requests and later requests against an unknown row cannot dispatch again. Creation and trusted-copy records retain their existing ownership, source revision, policy, and independent billing checks. The new migration is generated locally only.
 
-The fork's custom GET operation endpoint is removed in source. ChatJS now owns
-that positive-only application route using native `resolveSession`. Its small
-`operation-token.ts` adapter deliberately depends on **upstream 0.80.1's internal,
-unexported create-token format**. It is not a public native lookup API. A parity
-test imports the installed candidate's actual derivation, covering ordinary and
-trusted-seed namespaces. Gateway authentication supplies the current principal;
-callers cannot select a foreign principal. Existing tool-scope reconciliation
-needs this positive lookup when the native owner starts before the application
-receives and binds the creation response. A missing alias remains unknown; the
-route cannot create, send, or retry an operation. Alias loss and prebinding
-allocation gaps remain limitations.
+The fork's custom GET operation endpoint is removed in source. ChatJS now owns that positive-only application route using native `resolveSession`. Its small `operation-token.ts` adapter deliberately depends on **upstream 0.80.1's internal, unexported create-token format**. It is not a public native lookup API. A parity test imports the installed candidate's actual derivation, covering ordinary and trusted-seed namespaces. Gateway authentication supplies the current principal; callers cannot select a foreign principal. Existing tool-scope reconciliation needs this positive lookup when the native owner starts before the application receives and binds the creation response. A missing alias remains unknown; the route cannot create, send, or retry an operation. Alias loss and prebinding allocation gaps remain limitations.
 
-Evidence: direct journal tests use an isolated PGlite database with the generated
-migrations, including concurrent dispatch fencing, lost response, successful
-binding, changed intent and foreign ownership. Separate proxy tests exercise the
-actual POST handler and journal with a mocked native transport. The real creation database path also verifies that a failed binding transaction
-rolls back while its previously committed dispatch fence survives. These are not
-real native acceptance or abrupt-process-crash tests. The candidate remains
-`91a2864b` until the integrated fork source is built and repackaged; the installed
-package still contains the older native lookup implementation. Full lint/types
-remain red on pending upgrade contracts and unrelated fixtures. Checkpoint
-restoration and final app/runtime validation are still outstanding.
+Evidence: direct journal tests use an isolated PGlite database with the generated migrations, including concurrent dispatch fencing, lost response, successful binding, changed intent and foreign ownership. Separate proxy tests exercise the actual POST handler and journal with a mocked native transport. The real creation database path also verifies that a failed binding transaction rolls back while its previously committed dispatch fence survives. These are not real native acceptance or abrupt-process-crash tests. The candidate remains `91a2864b` until the integrated fork source is built and repackaged; the installed package still contains the older native lookup implementation. Full lint/types remain red on pending upgrade contracts and unrelated fixtures. Checkpoint restoration and final app/runtime validation are still outstanding.
 
-The seven focused journal/lookup/creation/proxy suites pass 53 tests. Root lint
-and type checks were rerun; their existing upgrade blockers remain.
+The seven focused journal/lookup/creation/proxy suites pass 53 tests. Root lint and type checks were rerun; their existing upgrade blockers remain.
+
+## Current checkpoint and receipt integration
+
+Current local candidate is `7ba35c10`, selected by app, guest, registry and visual-test packages. Tarball SHA-256: `9a5e8860d25265af10b7ec92434c690e50e42c5050e1a43e3277490591a9359a`. Rebuild and pack that commit to reproduce the ignored `.eve-upgrade/eve-0.80.1-7ba35c10.tgz` dependency.
+
+Application document snapshots now commit through the required checkpoint callback. Native readiness follows the durable private receipt append; restored history carries its exact before-turn boundary. The app reads positive send receipts from its durable journal for the exact owner, session and operation. Bounded browser polling cannot dispatch or infer that an unknown send was rejected.
+
+Validation on this candidate: 58 targeted app tests, 9 local Chromium tests, 5 native-worker approval-consumer cases, and all 8 repository type-check tasks pass. Approval tests execute the production MCP and deletion consumers behind a local native-worker bridge; persistence and external MCP transport are fixture adapters, and token capabilities are deliberately unavailable at that serialization boundary. Native checkpoint integration passes 6 cases.
+
+A disposable local microsandbox test also passed source-deletion isolation, destination stop/resume, a later copy from the retained artifact, and exact artifact removal after all fixture consumers were deleted. This is real provider cleanup, not app deletion orchestration or a process-crash proof. The old private approval-receipt-map test was replaced by the native-worker cases. The obsolete provider-create checkpoint test was replaced by the current provider lifecycle test.
+
+Remaining integration gates include app resource ownership/reclamation, retained-artifact references, abrupt process failure, live display metadata correlation and full authenticated startup. In particular, native terminal status is not positive cleanup evidence: finalization logs sandbox cleanup failures. Production app cleanup still needs replacement of its old cache/identity/fence assumptions before it can claim current resource erasure. No live resources or database migrations were used.
