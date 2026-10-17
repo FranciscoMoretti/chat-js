@@ -232,3 +232,35 @@ Validation on this candidate: 58 targeted app tests, 9 local Chromium tests, 5 n
 A disposable local microsandbox test also passed source-deletion isolation, destination stop/resume, a later copy from the retained artifact, and exact artifact removal after all fixture consumers were deleted. This is real provider cleanup, not app deletion orchestration or a process-crash proof. The old private approval-receipt-map test was replaced by the native-worker cases. The obsolete provider-create checkpoint test was replaced by the current provider lifecycle test.
 
 Remaining integration gates include app resource ownership/reclamation, retained-artifact references, abrupt process failure, live display metadata correlation and full authenticated startup. In particular, native terminal status is not positive cleanup evidence: finalization logs sandbox cleanup failures. Production app cleanup still needs replacement of its old cache/identity/fence assumptions before it can claim current resource erasure. No live resources or database migrations were used.
+
+## Authenticated runtime and app process interruption
+
+`authenticated-evidence.json` records the real authenticated Next.js/worker/proxy run against candidate `7ba35c10` and app base `11899bf33`, with the subsequent Turbo environment and unknown-response wording fixes. Unlike the earlier guest fixture, set `PLAYWRIGHT=False`: that flag intentionally bypasses server-side session resolution and cannot establish authenticated-layout coverage. Use Node 24, Bun and agent-browser 0.37.0; derive the URL with `bun dev:info --json`.
+
+To reproduce, initialize a new loopback PostgreSQL 17 cluster under a fresh temporary directory with `initdb -A trust -U eve_fixture`, start it on a freshly reserved loopback port, and create separate `chatjs_auth` and `eve_auth` databases. Set only this worktree's ignored environment to their `DATABASE_URL` and `WORKFLOW_POSTGRES_URL`; use new random auth/gateway secrets and dummy optional provider credentials. A dummy MCP key must be 32 random bytes encoded as base64. Point `LANGFUSE_BASE_URL` at loopback. Set `NODE_OPTIONS=--import <absolute-path>/tests/eve-upgrade/mock-gateway.ts` and `EVE_MOCK_AUTHORED_MODELS=0`. The preload mocks gateway HTTP transport and rejects other external fetches. Run the real `lib/db/migrate.ts` and `scripts/eve-setup.ts` only against these fresh databases, then start through root `bun dev`. This run required adding the installed Langfuse variables to Turbo's environment allowlist.
+
+Navigate a worktree-scoped browser to `/api/dev-login`, create a fresh chat, send another message and check that the exact owner/session/operation journal receipt clears the pending draft. Send `cancel-this-turn` and press Stop while the mock stream is delayed; verify native `turn.cancelled` and Ready in the browser. Read the stream through the authenticated proxy, request a named checkpoint at its current before-turn boundary, then create a fork referencing that exact checkpoint. The recorded run restored 26 events at `turn_3` and completed its new turn. A second fixture user/session, seeded only in this disposable database and signed with the same local auth cookie scheme as dev-login, received 404 for both the first user's conversation and stream. No ownership was inferred from displayed text.
+
+For the app crash window, install this trigger **only in that disposable app database** before sending operation `00000000-0000-4000-8000-000000000080` once through the authenticated proxy:
+
+```sql
+CREATE FUNCTION eve080_pause_receipt_binding() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW."operationId" = '00000000-0000-4000-8000-000000000080'
+     AND NEW.kind = 'send' AND NEW."sessionId" IS NOT NULL THEN
+    PERFORM pg_sleep(120);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER eve080_pause_receipt BEFORE UPDATE ON "EveDispatch"
+FOR EACH ROW EXECUTE FUNCTION eve080_pause_receipt_binding();
+```
+
+Wait until a separate connection sees the committed intent with null binding and `pg_stat_activity` shows the receipt UPDATE in `PgSleep`. Locate the Next.js listener for this worktree's port with `lsof`, verify its process identity, and send that process SIGKILL. The browser must see a network failure. Terminate only the fixture's sleeping UPDATE backend, drop `eve080_pause_receipt` and `eve080_pause_receipt_binding`, and restart root `bun dev` with the same disposable databases. Retry the same operation ID and unchanged body: expect HTTP 502 with `chatjs_delivery_unknown`, no new dispatch, and a still-unbound journal row. The recorded native history contained exactly one test probe after retry. The unique fixture message is a test count assertion, not a production receipt-recovery mechanism.
+
+Saved host logs: `/tmp/eve080-auth-next.log`, `/tmp/eve080-auth-next-restart.log`, `/tmp/eve080-crash-before.txt`, `/tmp/eve080-crash-browser-loss.txt`, `/tmp/eve080-crash-after.txt`, and `/tmp/eve080-crash-native-after.json`. The narrow trigger and function were removed. This is SIGKILL/restart evidence for the app dispatch fence; it does not claim a native-owner crash at the checkpoint commit window. Unknown still means unknown. The UI retains its draft and explicitly distinguishes a new manually submitted message from retrying the fenced operation.
+
+A separate native-worker restart check sent SIGKILL to the verified chat worker PID 25089 (loopback port 57738), observed proxy connection refusal, then restarted the root development command with the same disposable databases. The exact retained checkpoint remained ready after the source had advanced. A new copy restored the original 26 events before `turn_3`, excluded subsequent source events and completed one fresh turn. See `nativeRestart` in the evidence JSON and `/tmp/eve080-native-restart-{checkpoint,copy,stream}.json`. This proves persistence across native process restart after checkpoint commit; it does not prove interruption within the checkpoint commit window.
+
+The unknown-response slice passes 15 proxy tests, the updated local Chromium recovery capture (visually inspected), all 8 type-check tasks and root lint. Lint and type generation must run sequentially: their generated Next type files otherwise race.

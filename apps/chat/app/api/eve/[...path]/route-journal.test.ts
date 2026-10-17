@@ -106,6 +106,11 @@ it("keeps a real proxy dispatch unknown after response loss, with no second nati
   const repeated = await send(operationId);
   expect(first.status).toBe(502);
   expect(repeated.status).toBe(502);
+  expect(await repeated.json()).toEqual({
+    code: "chatjs_delivery_unknown",
+    error:
+      "Message delivery is unknown. This operation will not be sent again.",
+  });
   expect(mocks.eveRequest).toHaveBeenCalledTimes(1);
 });
 it("replays the exact successful proxy binding and rejects changed intent before native dispatch", async () => {

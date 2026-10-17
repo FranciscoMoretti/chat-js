@@ -319,10 +319,20 @@ const handle = async (
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);
     }
+    if (error instanceof EveDispatchUnknownError) {
+      return Response.json(
+        {
+          code: "chatjs_delivery_unknown",
+          error:
+            "Message delivery is unknown. This operation will not be sent again.",
+        },
+        { status: 502, headers: { "cache-control": "no-store" } }
+      );
+    }
     return Response.json(
       {
         error:
-          "The agent connection was interrupted. Reconnect before retrying.",
+          "The agent connection was interrupted. Reconnect to check its status; delivery may remain unknown.",
       },
       { status: 502 }
     );

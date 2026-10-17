@@ -94,7 +94,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
     await expect
       .element(
         page.getByText(
-          "Message delivery is unconfirmed. Your draft is saved in this tab.",
+          "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab.",
           { exact: true }
         )
       )

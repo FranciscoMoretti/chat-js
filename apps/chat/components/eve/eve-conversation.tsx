@@ -301,7 +301,7 @@ const EveDeliveryRecovery = ({
     <p>
       {hasText(pendingMessage.rejection)
         ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-        : "Message delivery is unconfirmed. Your draft is saved in this tab."}
+        : "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab."}
     </p>
     <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
     <AttachmentList attachments={pendingMessage.attachments} />
@@ -344,7 +344,7 @@ const EveDeliveryRecovery = ({
             hasText(pendingMessage.rejection)
               ? undefined
               : new Error(
-                  "Delivery is unconfirmed. Check the conversation before sending this message again."
+                  "The original operation remains unresolved. Sending this restored draft creates a new message and may duplicate it."
                 )
           );
         }}
@@ -580,7 +580,7 @@ const EveConversation = ({
           setCommandFailure(
             error instanceof Error
               ? error
-              : new Error("Request failed. Reconnect before retrying.")
+              : new Error("Request failed. Reconnect to check its status.")
           );
         }
       },

@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-17",
+  "appCommit": "11899bf33",
+  "eveCommit": "7ba35c10",
+  "runtime": {
+    "next": "16.3.0",
+    "browser": "agent-browser 0.37.0 / Chromium",
+    "appOrigin": "http://localhost:3980",
+    "database": "disposable loopback PostgreSQL 17, new app and workflow databases",
+    "playwrightBypass": false,
+    "transport": "mock-gateway.ts preload; real app/worker/proxy; no live provider credentials"
+  },
+  "freshSession": {
+    "sessionId": "wrun_01M556H12CF9FEQANA3N31HNR6",
+    "conversationId": "ddaa1a22-bc5c-4a74-9c02-179551ce2420",
+    "createStatus": 200,
+    "secondSendStatus": 200,
+    "secondSendOperationId": "1bf6e52e-923d-4498-afbd-3c6f6a476097",
+    "secondSendDeliveryId": "7da65970-bbdc-438f-995b-08fea5c053af",
+    "pendingDraftClearedAfterReceipt": true,
+    "cancelStatus": 202,
+    "cancelledTurnId": "turn_2"
+  },
+  "checkpoint": {
+    "checkpointId": "eb81519d-2b5c-4995-8373-b242a1627782",
+    "status": 200,
+    "body": {
+      "conversationId": "ddaa1a22-bc5c-4a74-9c02-179551ce2420",
+      "ready": true,
+      "beforeTurnId": "turn_3",
+      "checkpointId": "eb81519d-2b5c-4995-8373-b242a1627782"
+    }
+  },
+  "copy": {
+    "operationId": "99bc74bb-788c-4ceb-b1aa-56bea517891c",
+    "status": 200,
+    "body": {
+      "id": "a46e2f41-0e20-4187-9fc6-9069c3dc0616",
+      "sessionId": "wrun_01M556N5XFCK3QV96NHPJNH0EH"
+    }
+  },
+  "copyEvents": {
+    "status": 200,
+    "restored": [
+      {
+        "beforeTurnId": "turn_3",
+        "eventCount": 26
+      }
+    ],
+    "received": [
+      {
+        "message": "Continue from exact retained boundary",
+        "parts": [
+          {
+            "text": "Continue from exact retained boundary",
+            "type": "text"
+          }
+        ],
+        "sequence": 3,
+        "turnId": "turn_3"
+      }
+    ],
+    "completed": 1
+  },
+  "foreignAccess": {
+    "actor": "Foreign fixture",
+    "results": [
+      {
+        "url": "/api/eve/v1/session/wrun_01M556H12CF9FEQANA3N31HNR6/stream?streamControlVersion=1&includeTailIndex=1",
+        "status": 404
+      },
+      {
+        "url": "/api/agent-conversations/ddaa1a22-bc5c-4a74-9c02-179551ce2420",
+        "status": 404
+      }
+    ]
+  },
+  "appCrash": {
+    "operationId": "00000000-0000-4000-8000-000000000080",
+    "signal": "SIGKILL",
+    "killedPid": 20816,
+    "interruptionPoint": "Native response received; exact-operation receipt UPDATE paused; immutable intent already committed.",
+    "browserLoss": {
+      "state": "network-error",
+      "message": "Failed to fetch"
+    },
+    "retryBeforeErrorCopyFix": {
+      "status": 502,
+      "body": {
+        "error": "The agent connection was interrupted. Reconnect before retrying."
+      }
+    },
+    "nativeAfter": {
+      "status": 200,
+      "probeCount": 1,
+      "probe": [
+        {
+          "id": "evt_01M556RV2STK75NFZ1RA2ZXD4C",
+          "deliveryIds": ["123224d6-41d7-4230-b985-c20f30b2c7a7"],
+          "turnId": "turn_3"
+        }
+      ],
+      "cancelled": ["turn_2"],
+      "checkpointPreserved": true
+    },
+    "journalAfter": {
+      "sessionId": null,
+      "deliveryId": null
+    },
+    "faultInjectionRemoved": true,
+    "remainingLimits": [
+      "No native-owner process interruption claimed here.",
+      "No exact binding recovery for the lost-response send; outcome remains unknown.",
+      "Provider cleanup proof is separate from app deletion orchestration."
+    ],
+    "retryAfterErrorCopyFix": {
+      "status": 502,
+      "body": {
+        "code": "chatjs_delivery_unknown",
+        "error": "Message delivery is unknown. This operation will not be sent again."
+      }
+    }
+  },
+  "nativeRestart": {
+    "signal": "SIGKILL",
+    "killedPid": 25089,
+    "oldWorkerPort": 57738,
+    "checkpoint": {
+      "status": 200,
+      "body": {
+        "conversationId": "ddaa1a22-bc5c-4a74-9c02-179551ce2420",
+        "ready": true,
+        "beforeTurnId": "turn_3",
+        "checkpointId": "eb81519d-2b5c-4995-8373-b242a1627782"
+      }
+    },
+    "copy": {
+      "operationId": "d624804e-fa46-446e-8d2c-81a923207bfd",
+      "status": 200,
+      "body": {
+        "id": "79132579-6399-44e9-8f3d-de2add1dc6b9",
+        "sessionId": "wrun_01M5577PV29PY9QV9X7APVY1XQ"
+      }
+    },
+    "streamStatus": 200,
+    "restoredBeforeTurnId": "turn_3",
+    "restoredEventCount": 26,
+    "postBoundaryEventsInRestoredPrefix": 0,
+    "newCompletedTurns": 1,
+    "limit": "Interruption after durable checkpoint, not within its commit window."
+  }
+}
