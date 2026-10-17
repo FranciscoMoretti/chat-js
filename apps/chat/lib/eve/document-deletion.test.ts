@@ -1,10 +1,8 @@
+import type { ToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 
-import {
-  executeDocumentDeletion,
-  requestDocumentDeletion,
-} from "../../tools/chatjs/delete-document/execute";
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import { deleteDocument } from "@/tools/chatjs/delete-document/tool";
 
 const mocks = vi.hoisted(() => ({
   kinds: new Set(["code", "text"]),
@@ -40,6 +38,21 @@ const context = testToolContext({
     turn: { id: "turn", sequence: 1 },
   },
 });
+
+const requestDocumentDeletion = async (
+  toolInput: Readonly<typeof input>,
+  toolContext: Readonly<ToolContext>
+): Promise<unknown> => {
+  const { approval } = deleteDocument;
+  if (!approval || typeof approval === "function") {
+    throw new Error("Deletion must own both request and response policies.");
+  }
+  return await approval.request({
+    ...toolContext,
+    approvedTools: new Set<string>(),
+    toolInput,
+  });
+};
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -82,11 +95,11 @@ it("requests native approval only for the current owned title and revision", asy
 });
 
 it("requires an owner receipt before performing the conditional deletion", async () => {
-  await expect(executeDocumentDeletion(input, context)).rejects.toThrow(
+  await expect(deleteDocument.execute(input, context)).rejects.toThrow(
     "owner's approval"
   );
   await expect(
-    executeDocumentDeletion(input, {
+    deleteDocument.execute(input, {
       ...context,
       approval: {
         requestId: "approval",
@@ -95,7 +108,7 @@ it("requires an owner receipt before performing the conditional deletion", async
     })
   ).rejects.toThrow("owner's approval");
   expect(mocks.remove).not.toHaveBeenCalled();
-  await executeDocumentDeletion(input, {
+  await deleteDocument.execute(input, {
     ...context,
     approval: { requestId: "approval", responder: identity },
   });
@@ -110,7 +123,7 @@ it("rejects absent document implementations before requesting approval or execut
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "unavailable"
   );
-  await expect(executeDocumentDeletion(input, context)).rejects.toThrow(
+  await expect(deleteDocument.execute(input, context)).rejects.toThrow(
     "unavailable"
   );
   expect(mocks.remove).not.toHaveBeenCalled();
@@ -121,7 +134,7 @@ it("rechecks kind availability after approval", async () => {
     "Document not found."
   );
   await expect(
-    executeDocumentDeletion(input, {
+    deleteDocument.execute(input, {
       ...context,
       approval: { requestId: "approval", responder: identity },
     })
