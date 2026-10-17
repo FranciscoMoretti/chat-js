@@ -5,6 +5,7 @@ import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
+  eveFollowup,
   eveChatProject,
   eveCodeSandbox,
   eveConversation,
@@ -276,6 +277,7 @@ const completeEveConversationDeletion = async (
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));
+    await tx.delete(eveFollowup).where(eq(eveFollowup.chatId, identity.chatId));
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)

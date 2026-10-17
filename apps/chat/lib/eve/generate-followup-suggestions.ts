@@ -1,4 +1,4 @@
-import type { TurnCompletedHookResult } from "eve/hooks";
+import { claimEveFollowup, finishEveFollowup } from "@/lib/db/queries";
 import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
 import { config } from "@/lib/config";
@@ -11,11 +11,11 @@ import { resolveEveModel } from "./model-selection";
 const FOLLOWUP_TIMEOUT_MS = 15_000;
 const log = createModuleLogger("eve.followup-suggestions");
 
-/** Attempt receipt persistence before parsing; optional suggestions never fail the answer. */
+/** Optional generation is claimed once; failures never fail the completed answer. */
 export const generateEveFollowupSuggestions = async (
   context: FollowupContext,
-  scope: ModelCallScope
-): Promise<TurnCompletedHookResult | undefined> => {
+  scope: ModelCallScope & { readonly turnId: string; readonly eventId: string }
+): Promise<void> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
   ) {
@@ -23,6 +23,15 @@ export const generateEveFollowupSuggestions = async (
   }
   const modelId = config.ai.tools.followupSuggestions.default;
   try {
+    const chatId = await claimEveFollowup(
+      scope.ownerId,
+      scope.sessionId,
+      scope.turnId,
+      scope.eventId
+    );
+    if (chatId === null) {
+      return;
+    }
     const resolved = accountEveModel(await resolveEveModel(modelId), scope);
     const result = await generateText({
       model: resolved.model,
@@ -42,19 +51,19 @@ export const generateEveFollowupSuggestions = async (
       ],
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
-    // Receipt capture precedes output parsing: malformed JSON can still cost money.
-    return {
-      responseMetadata: eveFollowupSuggestions.parse(result.output),
-    };
+    // Attempt receipt capture before parsing: malformed JSON can still cost money.
+    await finishEveFollowup(scope.ownerId, chatId, scope.eventId, [
+      ...new Set(eveFollowupSuggestions.parse(result.output).suggestions),
+    ]);
   } catch (error) {
     log.error(
       {
+        eventId: scope.eventId,
         errorType: error instanceof Error ? error.name : "unknown",
         sessionId: scope.sessionId,
         turnId: scope.turnId,
       },
-      "Follow-up generation failed"
+      "Follow-up generation or storage failed"
     );
-    return undefined;
   }
 };

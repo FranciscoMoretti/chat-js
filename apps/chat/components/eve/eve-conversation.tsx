@@ -1,5 +1,7 @@
 "use client";
 
+import { useEveFollowups } from "./use-eve-followups";
+
 import { withTaskCleanup } from "@/components/task-cleanup";
 
 import { hasText } from "@/components/text-value";
@@ -531,6 +533,7 @@ const EveConversation = ({
     snapshot,
     conversationId
   );
+  const suggestions = useEveFollowups(conversationId, agent.events, messages);
   const editingMessageId =
     fork.editingMessageId ??
     messages.find(
@@ -724,6 +727,7 @@ const EveConversation = ({
                   <EveInitialMessage message={initialMessage} />
                 )}
               <EveMessages
+                suggestions={suggestions}
                 actionsDisabled={actionLocks.transcript}
                 conversationId={conversationId}
                 disabled={busy || commandPending}

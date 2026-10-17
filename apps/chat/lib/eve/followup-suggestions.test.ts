@@ -1,38 +1,8 @@
 import { expect, it } from "vitest";
 
 import { followupContext } from "./followup-context";
-import { messageFollowupSuggestions } from "./followup-suggestions";
 
 const meta = { at: "2026-09-12T00:00:00Z", id: "event" };
-const suggestions = [
-  "What is next?",
-  "Why is this useful?",
-  "Can you show an example?",
-];
-it("reads only the dedicated annotation and ignores malformed optional content", () => {
-  expect(
-    messageFollowupSuggestions({
-      metadata: { annotations: { "followup-suggestions": { suggestions } } },
-    })
-  ).toEqual(suggestions);
-  expect(
-    messageFollowupSuggestions({
-      metadata: { custom: { "followup-suggestions": { suggestions } } },
-    })
-  ).toEqual([]);
-  expect(
-    messageFollowupSuggestions({
-      metadata: {
-        annotations: {
-          "followup-suggestions": {
-            suggestions: ["x".repeat(81), ...suggestions],
-          },
-        },
-      },
-    })
-  ).toEqual([]);
-  expect(messageFollowupSuggestions({})).toEqual([]);
-});
 it("keeps only bounded current-turn text and excludes tool-call preambles", () => {
   const blank = followupContext(
     { assistant: "Previous answer", user: "Previous" },

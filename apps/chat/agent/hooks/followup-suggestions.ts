@@ -24,7 +24,10 @@ export default defineHook({
       );
     },
     "turn.completed": (
-      event: { readonly data: { readonly turnId: string } },
+      event: {
+        readonly data: { readonly turnId: string };
+        readonly meta: { readonly id: string };
+      },
       hookContext: {
         readonly session: Readonly<
           Pick<HookContext["session"], "parent" | "id" | "auth">
@@ -39,6 +42,7 @@ export default defineHook({
         ownerId: hookContext.session.auth.initiator?.principalId ?? "",
         sessionId: hookContext.session.id,
         turnId: event.data.turnId,
+        eventId: event.meta.id,
       });
     },
     "turn.started": (event: Parameters<typeof followupContext>[1]) => {

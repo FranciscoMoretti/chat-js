@@ -25,6 +25,12 @@ const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
   finish: vi.fn(),
   logError: vi.fn(),
+  claim: vi.fn(),
+  finishSuggestions: vi.fn(),
+}));
+vi.mock("../db/queries", () => ({
+  claimEveFollowup: mocks.claim,
+  finishEveFollowup: mocks.finishSuggestions,
 }));
 vi.mock("../logger", () => ({
   createModuleLogger: () => ({ error: mocks.logError }),
@@ -51,6 +57,8 @@ vi.mock("./model-selection", () => ({
 // vi.mock factories are hoisted, but the resolved model is configured after this module initializes it.
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.claim.mockResolvedValue("chat");
+  mocks.finishSuggestions.mockResolvedValue(null);
   mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
   mocks.begin.mockReset();
   mocks.finish.mockReset();
@@ -69,11 +77,15 @@ vi.mock("../config", () => ({
 }));
 
 it("the real AI SDK delivers usage before rejecting invalid structured suggestions", async () => {
-  const result = await generateEveFollowupSuggestions(
+  await generateEveFollowupSuggestions(
     { assistant: "Because.", user: "Why?" },
-    { ownerId: "owner", sessionId: "session", turnId: "turn" }
+    {
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn",
+      eventId: "completion",
+    }
   );
-  expect(result).toBeUndefined();
   expect(mocks.begin).toHaveBeenCalledOnce();
   expect(mocks.finish).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -98,12 +110,15 @@ it("leaves a rejected provider attempt unpriced without retrying or inventing a 
     model: failedModel,
     modelOptions: {},
   });
-  expect(
-    await generateEveFollowupSuggestions(
-      { assistant: "Because.", user: "Why?" },
-      { ownerId: "owner", sessionId: "session", turnId: "turn" }
-    )
-  ).toBeUndefined();
+  await generateEveFollowupSuggestions(
+    { assistant: "Because.", user: "Why?" },
+    {
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn",
+      eventId: "completion",
+    }
+  );
   expect(mocks.begin).toHaveBeenCalledOnce();
   expect(mocks.finish).not.toHaveBeenCalled();
   expect(failedModel.doGenerateCalls).toHaveLength(1);
@@ -132,12 +147,21 @@ it("returns valid suggestions despite a failed receipt write", async () => {
     model: successfulModel,
     modelOptions: {},
   });
-  expect(
-    await generateEveFollowupSuggestions(
-      { assistant: "Because.", user: "Why?" },
-      { ownerId: "owner", sessionId: "session", turnId: "turn" }
-    )
-  ).toEqual({ responseMetadata: { suggestions } });
+  await generateEveFollowupSuggestions(
+    { assistant: "Because.", user: "Why?" },
+    {
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn",
+      eventId: "completion",
+    }
+  );
+  expect(mocks.finishSuggestions).toHaveBeenCalledWith(
+    "owner",
+    "chat",
+    "completion",
+    suggestions
+  );
   expect(successfulModel.doGenerateCalls).toHaveLength(1);
   expect(mocks.finish).toHaveBeenCalledOnce();
   expect(mocks.logError).toHaveBeenCalledWith(

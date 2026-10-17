@@ -139,15 +139,6 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
   for (const sessionId of ["root", "root"]) {
     await ingestEveUsage("owner", sessionId, {
       data: {
-        hookId: "followups",
-        responseMetadata: { followupSuggestions: ["Next question"] },
-        turnId: "turn_1",
-      },
-      meta: { at: "2026-10-12T00:00:00Z", id: "replayed-hook" },
-      type: "hook.result",
-    });
-    await ingestEveUsage("owner", sessionId, {
-      data: {
         finishReason: "stop",
         sequence: 0,
         turnId: "turn_1",
@@ -311,11 +302,11 @@ it("separates maintenance and preserves missing or crash-lost receipts without b
   await eveModelLedger.finish(maintenance, { usage: receipt.usage });
   await ingestEveUsage("owner", "root", {
     data: {
-      hookId: "followups",
+      sequence: 2,
       turnId: "turn_2",
     },
-    meta: { at: "2026-10-12T00:00:00Z", id: "failed-hook" },
-    type: "hook.result",
+    meta: { at: "2026-10-12T00:00:00Z", id: "completion" },
+    type: "turn.completed",
   });
 
   const rows = await postgres.query(

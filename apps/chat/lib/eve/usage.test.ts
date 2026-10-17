@@ -14,21 +14,19 @@ vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => {
   record.mockReset();
 });
-it.each([
-  "hook.result",
-  "step.completed",
-  "step.failed",
-  "compaction.completed",
-] as const)("never charges model event %s through replay", async (type) => {
-  await expect(
-    ingestEveUsage("owner", "session", {
-      type,
-      meta: { id: "event", at: "2026-10-13T00:00:00Z" },
-      data: { usage: { costUsd: 4 } },
-    })
-  ).resolves.toBe(true);
-  expect(record).not.toHaveBeenCalled();
-});
+it.each(["step.completed", "step.failed", "compaction.completed"] as const)(
+  "never charges model event %s through replay",
+  async (type) => {
+    await expect(
+      ingestEveUsage("owner", "session", {
+        type,
+        meta: { id: "event", at: "2026-10-13T00:00:00Z" },
+        data: { usage: { costUsd: 4 } },
+      })
+    ).resolves.toBe(true);
+    expect(record).not.toHaveBeenCalled();
+  }
+);
 const toolEvent = (
   output: unknown,
   id = "event-one",

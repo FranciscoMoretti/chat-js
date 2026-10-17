@@ -22,7 +22,6 @@ import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
-import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import type {
   ReadonlyEveMessage,
@@ -242,6 +241,7 @@ interface EveMessagesProps {
   readonly isReadonly: boolean;
   readonly actionsDisabled?: boolean;
   readonly onEdit?: (message: ReadonlyEveMessage) => void;
+  readonly suggestions?: readonly string[];
   readonly onSuggestion?: (suggestion: string) => void;
   readonly onRegenerate?: (
     message: ReadonlyEveMessage,
@@ -415,6 +415,8 @@ const EveMessageActions = ({
   );
 };
 
+const EMPTY_SUGGESTIONS: readonly string[] = [];
+
 const EveMessageRow = ({
   message,
   userMessage,
@@ -428,6 +430,7 @@ const EveMessageRow = ({
   onEdit,
   onRegenerate,
   onSuggestion,
+  suggestions = EMPTY_SUGGESTIONS,
   editor,
   renderVersions,
   renderResponses,
@@ -525,7 +528,7 @@ const EveMessageRow = ({
           config.ai.tools.followupSuggestions.enabled && (
             <FollowUpSuggestionsView
               onSelect={onSuggestion}
-              suggestions={messageFollowupSuggestions(message)}
+              suggestions={suggestions}
             />
           )}
       </MessageContent>

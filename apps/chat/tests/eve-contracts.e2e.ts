@@ -747,7 +747,7 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
   });
 });
 
-test("auxiliary model calls settle once per actual attempt independently of display annotations", async () => {
+test("auxiliary model calls settle once per actual attempt independently of completion events", async () => {
   const conversation = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -789,11 +789,11 @@ test("auxiliary model calls settle once per actual attempt independently of disp
   );
   const event: MessageStreamEvent = {
     data: {
-      hookId: "followup-suggestions",
+      sequence: 0,
       turnId: "turn_0",
     },
     meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-    type: "hook.result",
+    type: "turn.completed",
   };
   await Promise.all(
     Array.from(

@@ -14,6 +14,7 @@ import { searchEveConversations } from "@/lib/db/eve-search";
 import {
   assignEveConversationProject,
   getEveMessageVotes,
+  getEveFollowup,
 } from "@/lib/db/queries";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
@@ -60,6 +61,30 @@ const eveOwnedProcedure = publicProcedure.use(
 );
 
 export const eveRouter = createTRPCRouter({
+  followup: eveOwnedProcedure
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        eventId: z.string().min(1).max(512),
+      })
+    )
+    .query(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: {
+          readonly conversationId: string;
+          readonly eventId: string;
+        };
+      }) =>
+        await getEveFollowup(
+          ctx.eveOwnerId,
+          input.conversationId,
+          input.eventId
+        )
+    ),
   assignProject: eveProcedure
     .input(
       z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })

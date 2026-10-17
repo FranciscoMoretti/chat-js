@@ -210,11 +210,11 @@ test("unpriced model attempts remain durable while later work continues", async 
     turnId: "turn_0",
   };
   await eveModelLedger.begin(attempt);
-  transport.stream.mockImplementation(function* streamDisplayResult() {
+  transport.stream.mockImplementation(function* streamCompletion() {
     yield {
-      data: { hookId: "followup-suggestions", turnId: "turn_0" },
+      data: { sequence: 0, turnId: "turn_0" },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-      type: "hook.result",
+      type: "turn.completed",
     };
   });
   await reconcileEveUsage(owner, id);

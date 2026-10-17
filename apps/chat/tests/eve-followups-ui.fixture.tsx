@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import { EveMessages } from "../components/eve/eve-messages";
+
 import { FollowUpSuggestionsView } from "../components/followup-suggestions-view";
 
 const suggestions = [
@@ -13,9 +15,22 @@ const Fixture = (): React.JSX.Element => {
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
       <section aria-label="Completed answer">
-        <p>A completed assistant response.</p>
-        <FollowUpSuggestionsView
-          onSelect={setSelected}
+        <EveMessages
+          messages={[
+            {
+              id: "completion:assistant",
+              role: "assistant",
+              parts: [
+                { type: "text", text: "A completed assistant response." },
+              ],
+            },
+          ]}
+          isReadonly={false}
+          disabled={false}
+          respond={() => {
+            /* No input requests in this display fixture. */
+          }}
+          onSuggestion={setSelected}
           suggestions={suggestions}
         />
       </section>

@@ -35,12 +35,9 @@ type ReadonlyEveMessageInput =
 
 // Preserve the full public message shape; JSON namespaces are opaque to rendering readers.
 type ReadonlyEveMessageMetadata = Readonly<
-  Omit<EveMessageMetadata, "custom" | "annotations">
+  Omit<EveMessageMetadata, "custom">
 > & {
   readonly custom?: Readonly<Record<string, unknown>>;
-  readonly annotations?: Readonly<
-    Record<string, Readonly<Record<string, unknown>>>
-  >;
 };
 type ReadonlyEveMessage = Readonly<Omit<EveMessage, "parts" | "metadata">> & {
   readonly parts: readonly ReadonlyEveMessagePart[];
