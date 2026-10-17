@@ -1,5 +1,6 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
+import type { EveMessageDisplayReceipt } from "./message-display";
 import type { MessageStreamEvent } from "eve/client";
 import {
   FILES_PATH,
@@ -289,10 +290,12 @@ const copyAssistantSeedMessage = (message: {
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
  * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
+ * @param {readonly EveMessageDisplayReceipt[]} receipts Owner-scoped positive bindings for display-only selection metadata.
  * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
-  events: readonly MessageStreamEvent[]
+  events: readonly MessageStreamEvent[],
+  receipts: readonly EveMessageDisplayReceipt[] = []
 ): {
   seed: Seed;
   projectionHash: string;
@@ -308,7 +311,7 @@ const prepareEveCopyTranscript = (
   ) {
     throw new EveCopyNotReadyError();
   }
-  const messages: Seed["messages"] = sharedEveMessages(events).map(
+  const messages: Seed["messages"] = sharedEveMessages(events, receipts).map(
     (message: {
       readonly role: string;
       readonly parts: readonly ReadonlyEveMessagePart[];

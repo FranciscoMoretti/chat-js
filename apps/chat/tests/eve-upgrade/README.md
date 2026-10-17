@@ -279,6 +279,8 @@ Actual authenticated create/reconnect/Edit restored Search for `wrun_01M558204B8
 
 ## Worker-owned local resource cleanup
 
+Shared transcripts and public copy seeds also apply the ownership-scoped display receipts before sanitization. Only exact native delivery bindings supply selection metadata; unmatched receipts remain absent and private delivery identifiers are not disclosed. The projection/copy suites pass 55 tests, and all eight type-check tasks pass (`/tmp/eve080-shared-display-{tests,types}.log`).
+
 Fork `6c40195d` retains the smallest provider-owned facts needed for cleanup: exact VM/state/fork snapshot names, session/cache ownership, borrowed snapshot provenance and allocating/live/removing/removed phases in the existing session metadata. A per-session cache lock and retirement marker fence first allocation and later materialization. Unknown allocation is not retried or reconciled from an empty SDK listing. Failed removal remains pending until exact absence is confirmed. The old 0.52 owner.json, sandbox-identity and local mutation-fence helpers and their obsolete tests have been removed.
 
 The app route authenticates deletion credentials and authorizes the exact owner or fenced native descendant. It receives cache authority from the worker's route context; the requested root only verifies that authority. All covered sessions retire before removal. Consumer resources are removed before source snapshots; bounded progress passes handle snapshot dependency order. The existing app owner lock fences copy admission while preparing/accepted copy references are checked. Bound transcript copies own independent seeds, documents and files; provider borrower facts separately retain live native sandbox copies.

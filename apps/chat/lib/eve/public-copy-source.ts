@@ -1,3 +1,4 @@
+import { getEveMessageDisplayReceipts } from "@/lib/db/eve-dispatch";
 import { Client } from "eve/client";
 import { assertEveConfigured } from "./server";
 import { eveCopyBoundaries } from "./copy-boundaries";
@@ -28,6 +29,10 @@ export const readPublicEveCopySource = async (
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS) });
+  const receipts = await getEveMessageDisplayReceipts(
+    row.ownerId,
+    row.sessionId
+  );
   const current = await getPublicEveConversation(id);
   if (
     !current ||
@@ -41,7 +46,7 @@ export const readPublicEveCopySource = async (
     boundaries: eveCopyBoundaries(snapshot.events),
     id: row.id,
     ownerId: row.ownerId,
-    projection: prepareEveCopyTranscript(snapshot.events),
+    projection: prepareEveCopyTranscript(snapshot.events, receipts),
     sessionId: row.sessionId,
     title:
       row.title ??

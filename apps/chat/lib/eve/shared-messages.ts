@@ -12,6 +12,8 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { defaultMessageReducer } from "eve/client";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
+import { projectEveMessageDisplay } from "./message-display";
+import type { EveMessageDisplayReceipt } from "./message-display";
 import { responseModelReferences } from "./response-model";
 
 interface SharedEveMessage {
@@ -173,7 +175,8 @@ const sharedEvePart = (
 };
 
 const sharedEveMessages = (
-  events: readonly MessageStreamEvent[]
+  events: readonly MessageStreamEvent[],
+  receipts: readonly EveMessageDisplayReceipt[] = []
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
@@ -181,6 +184,7 @@ const sharedEveMessages = (
   for (const event of events) {
     state = reduceEvent(state, event);
   }
+  state = projectEveMessageDisplay(state, events, receipts);
   const models = responseModelReferences(events);
   return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);

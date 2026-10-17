@@ -1,3 +1,4 @@
+import { getEveMessageDisplayReceipts } from "@/lib/db/eve-dispatch";
 import { Client } from "eve/client";
 import { assertEveConfigured } from "./server";
 import { getEveConnectionOptions } from "./connection-options";
@@ -24,13 +25,17 @@ export const getPublicEveTranscript = async (
   const snapshot = await client.sessions.attach(row.sessionId).snapshot({
     signal: AbortSignal.timeout(PUBLIC_TRANSCRIPT_SNAPSHOT_TIMEOUT_MS),
   });
+  const receipts = await getEveMessageDisplayReceipts(
+    row.ownerId,
+    row.sessionId
+  );
   // A revocation during a slow snapshot read must take effect before disclosure.
   if (!(await getPublicEveConversation(id))) {
     return null;
   }
   return {
     id: row.id,
-    messages: sharedEveMessages(snapshot.events),
+    messages: sharedEveMessages(snapshot.events, receipts),
     title:
       row.title ??
       row.firstMessage.slice(
