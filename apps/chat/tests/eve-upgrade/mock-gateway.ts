@@ -10,6 +10,7 @@ const fixtureTool = z.object({
     "editTextDocument",
     "deleteDocument",
     "readDocument",
+    "evefixture__read_token",
   ]),
   input: z.record(z.string(), z.unknown()),
 });

@@ -401,5 +401,230 @@
         }
       }
     ]
+  },
+  "authenticatedCombinedVmCopy": {
+    "owner": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+    "key": "2kHo8-ZkJ59w8C6SH5hRU2-U",
+    "source": {
+      "id": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+      "sessionId": "wrun_01M55FGEC2YXRP2WWWHAXXJG7H"
+    },
+    "checkpoint": {
+      "status": 200,
+      "body": {
+        "conversationId": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+        "ready": true,
+        "beforeTurnId": "turn_1",
+        "checkpointId": "c1709970-6afb-431f-b55c-6a247480c88c"
+      }
+    },
+    "checkpointId": "c1709970-6afb-431f-b55c-6a247480c88c",
+    "fork": {
+      "status": 200,
+      "body": {
+        "id": "cb542442-6e5a-476d-bb1c-24fdfa493bc5",
+        "sessionId": "wrun_01M55FGGYNBA4P3N8BDHDANAG7"
+      }
+    },
+    "copy": {
+      "status": 200,
+      "body": {
+        "id": "7d71e38e-5c07-443a-953d-e5bb69fcb066",
+        "sessionId": "wrun_01M55FJ4VNEZSN3AP2W0TKZ8AE"
+      }
+    },
+    "heads": [
+      {
+        "conversationId": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+        "documentId": "97db6b2c-82db-8789-aa02-b2ef245ea3d3",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+        "revisionId": "8da053fe-16dd-47ea-a9db-2429a9baa2e5"
+      },
+      {
+        "conversationId": "cb542442-6e5a-476d-bb1c-24fdfa493bc5",
+        "documentId": "97db6b2c-82db-8789-aa02-b2ef245ea3d3",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+        "revisionId": "c61a5ce7-c423-48be-946e-d939bc1ea21f"
+      }
+    ],
+    "refs": [
+      {
+        "conversationId": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+        "key": "2kHo8-ZkJ59w8C6SH5hRU2-U",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b"
+      },
+      {
+        "conversationId": "cb542442-6e5a-476d-bb1c-24fdfa493bc5",
+        "key": "2kHo8-ZkJ59w8C6SH5hRU2-U",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b"
+      }
+    ],
+    "reservations": [
+      {
+        "id": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+        "state": "bound",
+        "sessionId": "wrun_01M55FGEC2YXRP2WWWHAXXJG7H"
+      },
+      {
+        "id": "cb542442-6e5a-476d-bb1c-24fdfa493bc5",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+        "state": "bound",
+        "sessionId": "wrun_01M55FGGYNBA4P3N8BDHDANAG7"
+      }
+    ],
+    "copyJournal": {
+      "acceptedAt": "2026-10-17T16:46:39.843Z",
+      "conversationId": "7d71e38e-5c07-443a-953d-e5bb69fcb066",
+      "documentsReady": true,
+      "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+      "phase": "bound",
+      "plan": null,
+      "planHash": "b31739d17fb95500df9858a93f6f1a2a0684ae05cfbcde7c9fefca93c10b5697",
+      "projectionHash": "2e9df99ff05d0f1b224e77690106119f243d2083739215c3d4c942d1181da1e7",
+      "seed": null,
+      "sourceConversationId": "6fc620f8-cd2f-4b46-918c-d9a9181d91ee",
+      "sourceOwnerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+      "sourceSessionId": "wrun_01M55FGEC2YXRP2WWWHAXXJG7H"
+    },
+    "copiedHeads": [
+      {
+        "conversationId": "7d71e38e-5c07-443a-953d-e5bb69fcb066",
+        "documentId": "296109a2-f966-4e5b-ba7c-528b00504f31",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b",
+        "revisionId": "fc9edc1c-db77-4977-8b35-4a08db1f0e51"
+      }
+    ],
+    "copiedRefs": [
+      {
+        "conversationId": "7d71e38e-5c07-443a-953d-e5bb69fcb066",
+        "key": "tN4RtQdcEKA7nxp77POftkE7",
+        "ownerId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b"
+      }
+    ],
+    "checks": [
+      "authenticated fork binds owner reservation, exact document checkpoint, inherited owned file, and native session",
+      "saved public copy settles real copy journal with independently owned document and file allocations",
+      "actual VM fork has distinct native identity, exact checkpoint attachment bytes, and survives subsequent source VM mutation"
+    ],
+    "vmProof": {
+      "sourceId": "local:210",
+      "forkId": "local:211",
+      "path": "/workspace/.eve/attachments/27e63057e51ba6a3/fixture-pixel.png",
+      "checkpointSnapshot": "eve-sbx-fork-0b6d164c06eae1d1c4150e63b2ee5434",
+      "attachmentSha256": "27e63057e51ba6a302fb6280624d05065c645f0ed10abf56454a3a2a85505b90",
+      "childUnaffectedBySourceWrite": true,
+      "metadata": [
+        {
+          "image": "debian:bookworm-slim",
+          "networkPolicy": "deny-all",
+          "optionsHash": "748361e8099891949afe",
+          "sandboxName": "eve-sbx-ses-36162bfbb7c6ef568b546d1f53a58aca",
+          "version": 2,
+          "resources": {
+            "version": 1,
+            "authority": "/Users/fran/.codex/worktrees/eve080-integrated-upgrade/chat-js/apps/chat/.eve/sandbox-cache/microsandbox",
+            "sessionId": "wrun_01M55FGGYNBA4P3N8BDHDANAG7",
+            "borrowedForkSnapshot": "eve-sbx-fork-0b6d164c06eae1d1c4150e63b2ee5434",
+            "entries": [
+              {
+                "kind": "fork-snapshot",
+                "name": "eve-sbx-fork-8f0169dd0c0986d91bc5529553c923c7",
+                "phase": "live",
+                "nativeId": "sha256:ff91cf76f21adeac463d79f492f2e080fb7216032acf24b0b56df5dae7ba5e0d",
+                "nativePath": "/Users/fran/.microsandbox/snapshots/eve-sbx-fork-8f0169dd0c0986d91bc5529553c923c7"
+              },
+              {
+                "kind": "fork-snapshot",
+                "name": "eve-sbx-fork-5065eb547127677ecf050e6e10c6681d",
+                "phase": "live",
+                "nativeId": "sha256:26b948b9cb1d2d4ea53a17b738b0005d789cd32c07af71769590545bdc62e5f4",
+                "nativePath": "/Users/fran/.microsandbox/snapshots/eve-sbx-fork-5065eb547127677ecf050e6e10c6681d"
+              },
+              {
+                "kind": "sandbox",
+                "name": "eve-sbx-ses-36162bfbb7c6ef568b546d1f53a58aca",
+                "phase": "live",
+                "nativeId": "local:211"
+              }
+            ]
+          }
+        },
+        {
+          "image": "debian:bookworm-slim",
+          "networkPolicy": "deny-all",
+          "optionsHash": "748361e8099891949afe",
+          "sandboxName": "eve-sbx-ses-a7b72479db57508d9968702d214cc459",
+          "version": 2,
+          "resources": {
+            "version": 1,
+            "authority": "/Users/fran/.codex/worktrees/eve080-integrated-upgrade/chat-js/apps/chat/.eve/sandbox-cache/microsandbox",
+            "sessionId": "wrun_01M55FGEC2YXRP2WWWHAXXJG7H",
+            "entries": [
+              {
+                "kind": "fork-snapshot",
+                "name": "eve-sbx-fork-81219272ee1a23a50aff28b9b0e01f70",
+                "phase": "live",
+                "nativeId": "sha256:5f0ad4b412a17ed8dc578b0211fbd93391e0bb2ece7cf1a75720daf88d59262f",
+                "nativePath": "/Users/fran/.microsandbox/snapshots/eve-sbx-fork-81219272ee1a23a50aff28b9b0e01f70"
+              },
+              {
+                "kind": "fork-snapshot",
+                "name": "eve-sbx-fork-0b6d164c06eae1d1c4150e63b2ee5434",
+                "phase": "live",
+                "nativeId": "sha256:03a0e49fdacaaa591a8b7ed1441d2f7a62c602773789e0e680a8aa2150df8a5c",
+                "nativePath": "/Users/fran/.microsandbox/snapshots/eve-sbx-fork-0b6d164c06eae1d1c4150e63b2ee5434"
+              },
+              {
+                "kind": "sandbox",
+                "name": "eve-sbx-ses-a7b72479db57508d9968702d214cc459",
+                "phase": "live",
+                "nativeId": "local:210"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "fixtureScope": "Actual authenticated app routes, application/workflow databases and Microsandbox local VMs. Temporary agent/sandbox.ts selected debian:bookworm-slim with deny-all; removed after verification. Model and Blob transports are disposable. Named fork uses immutable VM snapshot and exact document revision; public saved copy uses independent seed/documents/files, not VM fork.",
+    "logs": [
+      "/tmp/eve080-app-vm-closure.json",
+      "/tmp/eve080-app-copy-resume.log",
+      "/tmp/eve080-vm-digests.log"
+    ],
+    "cleanup": {
+      "sourceRemaining": 0,
+      "forkRemaining": 0,
+      "retired": true,
+      "log": "/tmp/eve080-app-vm-cleanup.log"
+    }
+  },
+  "authenticatedMcpConnector": {
+    "connectorId": "f7658f2e-6ca8-4bd8-85b3-04eecb56b445",
+    "source": {
+      "id": "832ba97b-193f-42d3-a130-490fec84e87d",
+      "sessionId": "wrun_01M55FKK8SGREJJVQ1EJ8VMP3J"
+    },
+    "tightened": {
+      "id": "046306c2-3f0c-4dd8-9ee3-c780665246c9",
+      "sessionId": "wrun_01M55FM01W7GXXEWP5YFVBC0TN"
+    },
+    "checks": [
+      "foreign approval 404 and zero remote calls",
+      "real owner approval executes remote tool exactly once",
+      "database disable after request fences owner-approved execution",
+      "database approval policy tightened after request rejects execution without receipt"
+    ],
+    "finalPolicy": {
+      "enabled": true,
+      "requireApproval": true,
+      "userId": "174afb94-28f3-4f6f-8bfd-78d8df7d239b"
+    },
+    "remoteCalls": 1,
+    "fixtureScope": "Real encrypted connector row, auth, native approval receipt, DB policy reads and authenticated mcp.update. Disposable HTTP server reuses eve-mcp.e2e.ts protocol. Temporary mcpFetch options fetch:globalThis.fetch and dispatcher:null directed transport to exact fixture URL through preload; guardedFetch URL check retained, socket transport substituted. Temporary options removed. This verifies current DB policy/responder boundaries, not SSRF/DNS-pinning or live OAuth/provider behavior.",
+    "logs": [
+      "/tmp/eve080-auth-mcp-closure.json",
+      "/tmp/eve080-auth-mcp-closure.log"
+    ]
   }
 }
