@@ -272,6 +272,9 @@ describe("scaffoldFromTemplate", (): void => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
     for (const file of [
+      "app/api/eve/[...path]/route-journal.test.ts",
+      "lib/db/eve-dispatch.test.ts",
+      "lib/eve/operation-token.test.ts",
       "tests/visual",
       "uiverify-archive",
       "tests/ui-primitives.visual.e2e.ts",
