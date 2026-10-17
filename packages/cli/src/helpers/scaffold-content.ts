@@ -40,6 +40,8 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
+  "lib/db/eve-followup.test.ts",
+  "lib/eve/followup-runtime.test.ts",
   "lib/db/eve-subagents.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",

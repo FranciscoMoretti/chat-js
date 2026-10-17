@@ -286,6 +286,8 @@ describe("scaffoldFromTemplate", (): void => {
       "tsconfig.tsbuildinfo",
       "lib/db/migrations/eve-runtime-migration.test.ts",
       "lib/db/eve-search.test.ts",
+      "lib/db/eve-followup.test.ts",
+      "lib/eve/followup-runtime.test.ts",
       "playwright.eve.config.ts",
       "playwright.guest.config.ts",
       "vitest.eve.config.ts",
