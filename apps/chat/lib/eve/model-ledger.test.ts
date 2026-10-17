@@ -264,11 +264,70 @@ it("retains response identifiers when a stream ends before its finish receipt", 
   const streamed = await wrapped.doStream({ prompt: [] });
   const reader = streamed.stream.getReader();
   expect(await reader.read()).toEqual({ done: false, value: response });
-  expect(store.observe).toHaveBeenCalledWith(
-    expect.objectContaining(scope),
-    response
-  );
+  expect(store.observe).toHaveBeenCalledWith(expect.objectContaining(scope), {
+    id: response.id,
+    modelId: response.modelId,
+  });
   const end = await reader.read();
   expect(end.done).toBe(true);
   expect(store.finish).not.toHaveBeenCalled();
+});
+
+it("persists generated response identifiers and cost in one receipt write", async () => {
+  const store = { ...ledger(), observe: vi.fn() };
+  const response = {
+    id: "generated-id",
+    timestamp: new Date(),
+    modelId: "mock",
+  };
+  const generated = {
+    ...result,
+    response: { ...response, body: { private: true } },
+  };
+  const generate = vi.fn(async () => await Promise.resolve(generated));
+  await wrapEveModel(model(generate), scope, store).doGenerate({ prompt: [] });
+  expect(store.observe).not.toHaveBeenCalled();
+  expect(store.finish).toHaveBeenCalledWith(expect.objectContaining(scope), {
+    ...result,
+    response,
+  });
+});
+
+it("retains the final cost receipt after an early metadata write fails", async () => {
+  const store = {
+    ...ledger(),
+    observe: vi.fn().mockRejectedValue(new Error("transient storage failure")),
+  };
+  const response = { id: "stream-id", modelId: "mock", timestamp: new Date() };
+  const finish: LanguageModelV4StreamPart = {
+    type: "finish",
+    finishReason: result.finishReason,
+    usage: result.usage,
+    providerMetadata: result.providerMetadata,
+  };
+  const provider: LanguageModelV4 = {
+    ...model(),
+    doStream: async () =>
+      await Promise.resolve({
+        stream: new ReadableStream<LanguageModelV4StreamPart>({
+          start(controller) {
+            controller.enqueue({ ...response, type: "response-metadata" });
+            controller.enqueue(finish);
+            controller.close();
+          },
+        }),
+      }),
+  };
+  const streamed = await wrapEveModel(provider, scope, store).doStream({
+    prompt: [],
+  });
+  const reader = streamed.stream.getReader();
+  await reader.read();
+  expect(await reader.read()).toEqual({ done: false, value: finish });
+  expect(store.finish).toHaveBeenCalledWith(expect.objectContaining(scope), {
+    ...finish,
+    response,
+  });
+  const end = await reader.read();
+  expect(end.done).toBe(true);
 });

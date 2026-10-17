@@ -6,6 +6,7 @@ import type {
 import { wrapLanguageModel } from "ai";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createModuleLogger } from "@/lib/logger";
 
 interface ModelCallScope {
   readonly ownerId: string;
@@ -20,6 +21,7 @@ interface ModelAttempt extends ModelCallScope {
 }
 
 interface ModelReceipt {
+  readonly response?: ModelResponse;
   readonly usage: {
     readonly inputTokens: Readonly<LanguageModelV4Usage["inputTokens"]>;
     readonly outputTokens: Readonly<LanguageModelV4Usage["outputTokens"]>;
@@ -52,6 +54,7 @@ interface ModelLedger {
 // A wrapper is scoped to a single resolved session/turn. Refuse accidental nesting.
 const MINIMUM_COST = 0;
 const accountedModels = new WeakSet<LanguageModelV4>();
+const log = createModuleLogger("eve.model-ledger");
 
 const receiptStream = (
   stream: ReadableStream<LanguageModelV4StreamPart>,
@@ -60,6 +63,7 @@ const receiptStream = (
 ): ReadableStream<LanguageModelV4StreamPart> => {
   const reader = stream.getReader();
   let finished = false;
+  let response: ModelResponse | undefined;
   const cancel = async (reason: unknown): Promise<void> => {
     try {
       await reader.cancel(reason);
@@ -83,13 +87,23 @@ const receiptStream = (
             return;
           }
           if (next.value.type === "response-metadata") {
-            await observe(next.value);
+            const { id, modelId, timestamp } = next.value;
+            response = { id, modelId, timestamp };
+            try {
+              await observe(response);
+            } catch (error) {
+              // Keep consuming: the final receipt can still persist this evidence.
+              log.error(
+                { errorType: error instanceof Error ? error.name : "unknown" },
+                "Could not persist early model response metadata"
+              );
+            }
           }
           if (next.value.type === "finish") {
             if (finished) {
               throw new Error("Model stream returned more than one receipt.");
             }
-            await finish(next.value);
+            await finish({ ...next.value, response });
             finished = true;
           }
           controller.enqueue(next.value);
@@ -131,11 +145,21 @@ const wrapEveModel = (
       async wrapGenerate({ doGenerate }) {
         const attempt = await begin();
         const result = await doGenerate();
-        if (result.response !== undefined) {
-          await ledger.observe?.(attempt, result.response);
-        }
         // Persist before the SDK parses structured output or EVE validates a summary.
-        await ledger.finish(attempt, result);
+        // Generate already has the response and receipt; persist them atomically.
+        const { response } = result;
+        await ledger.finish(attempt, {
+          ...result,
+          ...(response === undefined
+            ? {}
+            : {
+                response: {
+                  id: response.id,
+                  modelId: response.modelId,
+                  timestamp: response.timestamp,
+                },
+              }),
+        });
         return result;
       },
       async wrapStream({ doStream }) {

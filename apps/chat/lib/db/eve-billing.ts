@@ -44,6 +44,30 @@ const modelEvidence = z
   })
   .loose();
 
+const evidenceFields = z.record(z.string(), z.unknown());
+const mergeEvidenceFields = (stored: unknown, incoming: unknown): unknown => {
+  if (stored === undefined) {
+    return incoming;
+  }
+  if (incoming === undefined || isDeepStrictEqual(stored, incoming)) {
+    return stored;
+  }
+  const previous = evidenceFields.safeParse(stored);
+  const next = evidenceFields.safeParse(incoming);
+  if (!(previous.success && next.success)) {
+    throw new Error("Model receipt evidence conflict.");
+  }
+  return {
+    ...previous.data,
+    ...Object.fromEntries(
+      Object.entries(next.data).map(([key, value]) => [
+        key,
+        mergeEvidenceFields(previous.data[key], value),
+      ])
+    ),
+  };
+};
+
 const mergeModelEvidence = (stored: unknown, incoming: unknown): unknown => {
   if (stored === null || stored === undefined) {
     return incoming;
@@ -52,7 +76,9 @@ const mergeModelEvidence = (stored: unknown, incoming: unknown): unknown => {
     return stored;
   }
   const previous = modelEvidence.safeParse(stored);
-  const next = modelEvidence.safeParse(incoming);
+  // Compare against the same JSON representation persisted by the database (Dates included).
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- JSON serialization must match jsonb; structuredClone preserves Dates instead.
+  const next = modelEvidence.safeParse(JSON.parse(JSON.stringify(incoming)));
   if (!previous.success || !next.success) {
     if (!isDeepStrictEqual(stored, incoming)) {
       throw new Error("Model evidence identity conflict.");
@@ -76,7 +102,10 @@ const mergeModelEvidence = (stored: unknown, incoming: unknown): unknown => {
   if (previousState === "returned" && nextState === "pending") {
     return stored;
   }
-  return { ...previousFields, ...nextFields, state: nextState };
+  return {
+    ...evidenceFields.parse(mergeEvidenceFields(previousFields, nextFields)),
+    state: nextState,
+  };
 };
 
 const debitTurnUsage = async (

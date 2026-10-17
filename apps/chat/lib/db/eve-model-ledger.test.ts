@@ -240,6 +240,72 @@ it("keeps independent tool receipts billable alongside model receipts and replay
   expect(rows.rows).toEqual([{ costUsd: "0.020000000000" }]);
 });
 
+it("preserves receipt evidence across enrichment and rejects conflicting replay", async () => {
+  const call = attempt("immutable-receipt");
+  const response = {
+    id: "response-id",
+    timestamp: new Date("2026-10-17T00:00:00Z"),
+  };
+  await eveModelLedger.begin(call);
+  await eveModelLedger.observe?.(call, response);
+  await eveModelLedger.finish(call, { usage: receipt.usage, response });
+  const enriched = {
+    ...receipt,
+    providerMetadata: {
+      gateway: { ...receipt.providerMetadata.gateway, route: "original" },
+    },
+    response,
+  };
+  await eveModelLedger.finish(call, enriched);
+  await eveModelLedger.finish(call, enriched);
+  await expect(
+    eveModelLedger.finish(call, {
+      ...receipt,
+      usage: {
+        ...receipt.usage,
+        outputTokens: { ...receipt.usage.outputTokens, total: 999 },
+      },
+    })
+  ).rejects.toThrow("evidence conflict");
+  await expect(
+    eveModelLedger.finish(call, {
+      ...receipt,
+      providerMetadata: {
+        gateway: {
+          ...receipt.providerMetadata.gateway,
+          cost: "0.004",
+          generationId: "provider-id",
+          changed: true,
+        },
+      },
+      response: { id: "different-response" },
+    })
+  ).rejects.toThrow("evidence conflict");
+  await expect(
+    eveModelLedger.finish(call, {
+      ...enriched,
+      providerMetadata: {
+        gateway: { ...enriched.providerMetadata.gateway, route: "changed" },
+      },
+    })
+  ).rejects.toThrow("evidence conflict");
+  const rows = await postgres.query(
+    'SELECT "modelAttempt", "chargedCents" FROM "EveUsage" WHERE "eventId" = $1',
+    [call.eventId]
+  );
+  expect(rows.rows).toEqual([
+    {
+      chargedCents: 0,
+      modelAttempt: {
+        ...call,
+        ...enriched,
+        response: { ...response, timestamp: response.timestamp.toISOString() },
+        state: "returned",
+      },
+    },
+  ]);
+});
+
 it("separates maintenance from the next user turn and blocks missing or crash-lost receipts", async () => {
   const maintenance = { ...attempt("maintenance"), turnId: undefined };
   await eveModelLedger.begin(maintenance);

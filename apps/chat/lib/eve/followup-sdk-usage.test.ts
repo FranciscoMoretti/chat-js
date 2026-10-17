@@ -1,7 +1,7 @@
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type { ModelCallScope } from "./model-ledger";
 import { MockLanguageModelV4 } from "ai/test";
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
@@ -23,6 +23,10 @@ const mocks = vi.hoisted(() => ({
   resolveEveModel: vi.fn(),
   begin: vi.fn(),
   finish: vi.fn(),
+  logError: vi.fn(),
+}));
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
 }));
 vi.mock("./model-accounting", async () => {
   const { wrapEveModel } = await import("./model-ledger");
@@ -43,7 +47,12 @@ vi.mock("./model-selection", () => ({
   resolveEveModel: mocks.resolveEveModel,
 }));
 // vi.mock factories are hoisted, but the resolved model is configured after this module initializes it.
-mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
+  mocks.begin.mockReset();
+  mocks.finish.mockReset();
+});
 vi.mock("../config", () => ({
   config: {
     ai: {
@@ -77,4 +86,38 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
     })
   );
   expect(model.doGenerateCalls).toHaveLength(1);
+});
+
+it("leaves a rejected provider attempt unpriced without retrying or inventing a receipt", async () => {
+  const failedModel = new MockLanguageModelV4({
+    doGenerate: vi.fn().mockRejectedValue(new Error("provider unavailable")),
+  });
+  mocks.resolveEveModel.mockResolvedValue({
+    model: failedModel,
+    modelOptions: {},
+  });
+  expect(
+    await generateEveFollowupSuggestions(
+      { assistant: "Because.", user: "Why?" },
+      { ownerId: "owner", sessionId: "session", turnId: "turn" }
+    )
+  ).toBeUndefined();
+  expect(mocks.begin).toHaveBeenCalledOnce();
+  expect(mocks.finish).not.toHaveBeenCalled();
+  expect(failedModel.doGenerateCalls).toHaveLength(1);
+});
+
+it("reports a failed receipt write while keeping suggestions optional", async () => {
+  mocks.finish.mockRejectedValue(new Error("receipt storage unavailable"));
+  expect(
+    await generateEveFollowupSuggestions(
+      { assistant: "Because.", user: "Why?" },
+      { ownerId: "owner", sessionId: "session", turnId: "turn" }
+    )
+  ).toBeUndefined();
+  expect(mocks.finish).toHaveBeenCalledOnce();
+  expect(mocks.logError).toHaveBeenCalledWith(
+    { errorType: "Error", sessionId: "session", turnId: "turn" },
+    "Follow-up generation or receipt persistence failed"
+  );
 });

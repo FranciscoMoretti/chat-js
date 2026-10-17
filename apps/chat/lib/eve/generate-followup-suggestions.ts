@@ -2,12 +2,14 @@ import type { TurnCompletedHookResult } from "eve/hooks";
 import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
 import { config } from "@/lib/config";
+import { createModuleLogger } from "@/lib/logger";
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { accountEveModel } from "./model-accounting";
 import type { ModelCallScope } from "./model-ledger";
 import { resolveEveModel } from "./model-selection";
 
 const FOLLOWUP_TIMEOUT_MS = 15_000;
+const log = createModuleLogger("eve.followup-suggestions");
 
 /** Auxiliary receipts are durable before output parsing; suggestion failure never fails the answer. */
 export const generateEveFollowupSuggestions = async (
@@ -47,7 +49,15 @@ export const generateEveFollowupSuggestions = async (
     return {
       responseMetadata: eveFollowupSuggestions.parse(result.output),
     };
-  } catch {
+  } catch (error) {
+    log.error(
+      {
+        errorType: error instanceof Error ? error.name : "unknown",
+        sessionId: scope.sessionId,
+        turnId: scope.turnId,
+      },
+      "Follow-up generation or receipt persistence failed"
+    );
     return undefined;
   }
 };

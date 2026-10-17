@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   generate: vi.fn(),
   model: vi.fn(),
   account: vi.fn(),
+  logError: vi.fn(),
 }));
 vi.mock("ai", () => ({
   Output: { object: vi.fn() },
@@ -13,6 +14,9 @@ vi.mock("ai", () => ({
 }));
 vi.mock("./model-selection", () => ({ resolveEveModel: mocks.model }));
 vi.mock("./model-accounting", () => ({ accountEveModel: mocks.account }));
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
+}));
 vi.mock("../config", () => ({
   config: { ai: { tools: { followupSuggestions: mocks.feature } } },
 }));
@@ -42,9 +46,13 @@ it("uses an owned accounting wrapper and returns only display metadata", async (
     expect.objectContaining({ model: "accounted", maxRetries: 0 })
   );
 });
-it("does not fail the answer or manufacture a zero price on auxiliary failure", async () => {
+it("reports auxiliary failure without failing the answer or logging provider details", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
   expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
+  expect(mocks.logError).toHaveBeenCalledWith(
+    { errorType: "Error", sessionId: "session", turnId: "turn" },
+    "Follow-up generation or receipt persistence failed"
+  );
 });
 it("does not call a provider when disabled, empty, or accounting binding fails", async () => {
   mocks.feature.enabled = false;

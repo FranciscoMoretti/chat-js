@@ -122,6 +122,7 @@ const eveModelLedger: ModelLedger = {
       modelAttempt: {
         ...identity,
         providerMetadata: receipt.providerMetadata,
+        response: receipt.response,
         state: "returned",
         usage: receipt.usage,
       },
