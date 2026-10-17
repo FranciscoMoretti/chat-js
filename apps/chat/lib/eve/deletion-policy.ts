@@ -1,5 +1,5 @@
 const deletionSessionPath =
-  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/(?<operation>reset|stream|sandbox-identity)$/u;
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/(?<operation>reset|stream|local-resources)$/u;
 
 const SESSION_ID_GROUP_INDEX = 1;
 const OPERATION_GROUP_INDEX = 2;
@@ -18,10 +18,10 @@ export const parseDeletionSessionRequest = (
 
   if (
     match &&
-    ((match[OPERATION_GROUP_INDEX] === "reset" && method === "POST") ||
-      ((match[OPERATION_GROUP_INDEX] === "stream" ||
-        match[OPERATION_GROUP_INDEX] === "sandbox-identity") &&
-        method === "GET"))
+    (((match[OPERATION_GROUP_INDEX] === "reset" ||
+      match[OPERATION_GROUP_INDEX] === "local-resources") &&
+      method === "POST") ||
+      (match[OPERATION_GROUP_INDEX] === "stream" && method === "GET"))
   ) {
     return match[SESSION_ID_GROUP_INDEX];
   }

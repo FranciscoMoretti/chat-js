@@ -1,3 +1,4 @@
+import { eveLocalResourceRoute } from "../../lib/eve/local-resource-route";
 import { eveOperationLookupRoute } from "../../lib/eve/operation-lookup-route";
 import { eveChannel } from "eve/channels/eve";
 
@@ -27,5 +28,5 @@ const channel = eveChannel({
 
 export default {
   ...channel,
-  routes: [...channel.routes, eveOperationLookupRoute],
+  routes: [...channel.routes, eveOperationLookupRoute, eveLocalResourceRoute],
 };

@@ -1,13 +1,12 @@
-import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
-import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
-import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
-import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
+import {
+  manageEveLocalResources,
+  verifyLocalEveFamilyCoverage,
+} from "./verify-local-coverage";
 
-const NO_UNATTRIBUTED_DIRECTORIES = 0;
 const NO_CONVERSATIONS = 0;
 
 const purgeOwnedLocalSandboxResources = async (
@@ -21,19 +20,44 @@ const purgeOwnedLocalSandboxResources = async (
     }[];
   }
 ): Promise<void> => {
-  await fenceLocalEveSandboxMutations(appRoot, family.runIds);
-  await verifyLocalEveFamilyCoverage(
+  const scope = await verifyLocalEveFamilyCoverage(
     ownerId,
     appRoot,
     family.nativeInventories
   );
-  const inventory = await readLocalEveSandboxInventory(appRoot, family.runIds);
-  if (inventory.unattributedDirectories.length > NO_UNATTRIBUTED_DIRECTORIES) {
-    throw new Error(
-      "Resolve unattributed local sandbox resources before cleanup."
+  // Remove every consumer VM before releasing any shared source artifact.
+  for (const session of scope.sessions) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize provider removals because sibling sessions can share retained snapshot dependencies.
+    await manageEveLocalResources(
+      ownerId,
+      scope.appRoot,
+      session,
+      "purge",
+      false
     );
   }
-  await purgeLocalEveSandboxes(inventory.owned);
+  let previousRemaining = Number.POSITIVE_INFINITY;
+  for (let pass = 0; pass <= scope.sessions.length; pass += 1) {
+    let remaining = 0;
+    for (const session of scope.sessions) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Reclaim dependency leaves before reconsidering sources, with bounded passes and progress checks.
+      remaining += await manageEveLocalResources(
+        ownerId,
+        scope.appRoot,
+        session,
+        "purge",
+        true
+      );
+    }
+    if (remaining === 0) {
+      return;
+    }
+    if (remaining >= previousRemaining) {
+      break;
+    }
+    previousRemaining = remaining;
+  }
+  throw new Error("Local sandbox resources are still retained.");
 };
 
 const purgeExternalEveFamilyResources = async (

@@ -49,8 +49,8 @@ const authorizeDeletionRequest = async (
   }
   const workflowPostgresUrl = env.WORKFLOW_POSTGRES_URL;
   return (
-    path.endsWith("/sandbox-identity") &&
-    request.method === "GET" &&
+    path.endsWith("/local-resources") &&
+    request.method === "POST" &&
     resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
     typeof workflowPostgresUrl === "string" &&
     workflowPostgresUrl !== "" &&

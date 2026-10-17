@@ -181,5 +181,41 @@
     "initialEditRestoredTool": "webSearch",
     "foreignInitialReceipts": [],
     "creationResponseContainsDeliveryId": false
+  },
+  "localResourceCleanup": {
+    "eveCommit": "6c40195d",
+    "scope": "local development host, MSB_BACKEND=local, worker-owned canonical cache and HOME/MSB_HOME binding",
+    "fixture": "real SDK 0.6.18 VM/snapshot, disposable app PostgreSQL reservation rows, actual authenticated worker route; no live database",
+    "application": {
+      "conversation": "8ebb0588-0b16-4445-a49d-132b11119cb0",
+      "copy": "5f7e3bb7-0f29-47ee-9e93-ce873995bcfd",
+      "sessionId": "cleanup-aced68d3-5d19-4edb-9c3e-ede87d390cb1",
+      "checks": [
+        "oversized body rejected",
+        "foreign owner denied",
+        "wrong cache rejected",
+        "worker retired exact owned VM and snapshot",
+        "preparing copy retains actual snapshot",
+        "accepted pending copy retains actual snapshot",
+        "bound independent copy permits exact snapshot removal"
+      ]
+    },
+    "providerProof": "research/chatjs-native-checkpoints/verify-resource-cleanup.mjs in the eve fork",
+    "providerChecks": [
+      "retirement before first allocation",
+      "retirement during actual VM allocation with lost response",
+      "uncertain allocation retained and never resent",
+      "source VM removal preserves live child",
+      "failed snapshot removal remains pending and retries to confirmed absence",
+      "stable VM identity rejects replacement under the same name",
+      "snapshot digest and recorded path preserve substituted artifacts",
+      "immutable fork restore rejects a substituted snapshot"
+    ],
+    "logs": [
+      "/tmp/eve080-resource-digest-actual-final.log",
+      "/tmp/eve080-resource-identity-app-proof.log",
+      "/tmp/eve080-resource-app-proof.json"
+    ],
+    "sha256": "a4586a74f8afa8b40b7be2df0362c2c21f5892b0bc701c7b44e62d9ee7b8838c"
   }
 }

@@ -106,7 +106,7 @@
         "drizzle-orm": "^0.45.1",
         "echarts": "6.0.0",
         "echarts-for-react": "^3.0.2",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-7ba35c10.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
         "fast-deep-equal": "^3.1.3",
         "files-sdk": "2.5.0",
         "guarded-fetch": "^0.1.4",
@@ -260,7 +260,7 @@
         "@types/react": "19.2.7",
         "@types/react-dom": "19.2.3",
         "@uiverify/vitest": "^1.5.0",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-7ba35c10.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
         "motion": "^12.23.24",
         "next": "16.3.0",
         "nuqs": "^2.8.5",
@@ -375,7 +375,7 @@
         "drizzle-orm": "^0.45.1",
         "echarts": "6.0.0",
         "echarts-for-react": "^3.0.2",
-        "eve": "file:../../.eve-upgrade/eve-0.80.1-7ba35c10.tgz",
+        "eve": "file:../../.eve-upgrade/eve-0.80.1-6c40195d.tgz",
         "files-sdk": "2.5.0",
         "geist": "^1.7.2",
         "guarded-fetch": "^0.1.4",
@@ -2735,7 +2735,7 @@
 
     "etag": ["etag@1.8.1", "", {}, "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg=="],
 
-    "eve": ["eve@../../.eve-upgrade/eve-0.80.1-7ba35c10.tgz", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.10.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.137", "braintrust": "^3.0.0", "chat": "^4.42.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.6.18" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "chat", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "./bin/eve.js" } }, "sha512-Wepm/PCOSMWTfPYp1S7CZUBNqNdenXUxB5q4b5vmoXWrxPHBs1ecjHNZUT4PF/U2aWsaqb7MxlujT+wXOSYZlA=="],
+    "eve": ["eve@../../.eve-upgrade/eve-0.80.1-6c40195d.tgz", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.10.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.137", "braintrust": "^3.0.0", "chat": "^4.42.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.6.18" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "chat", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "./bin/eve.js" } }, "sha512-KUa8XIKlMZnuWFnuYxSrCy14tcrTWK79518LfPsggPORop+HbpDtQ00/mw6l9M5rdSRUoZlXzm9B3p2an7ul9Q=="],
 
     "event-target-shim": ["event-target-shim@5.0.1", "", {}, "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ=="],
 
