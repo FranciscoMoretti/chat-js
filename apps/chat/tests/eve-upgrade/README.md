@@ -94,6 +94,10 @@ now reports only two imported app errors for the missing `history.restored`
 contract. Root `bun lint` and `bun test:types` were rerun and remain red; no
 full-repository or visual-runtime pass is claimed. These are integration-branch
 dependency selections, not a production release or pin cutover.
+After dependency hoisting, the real-worker harness was rerun: research,
+cancellation and seeded continuation all pass (three cases, two research gates).
+The saved output is `native-registry-result.txt`; the same fixture limitations
+described above apply.
 
 ## Reproduction
 

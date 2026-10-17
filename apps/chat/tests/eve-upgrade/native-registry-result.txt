@@ -1,0 +1,20 @@
+$ bun tests/native-research-runtime.ts
+Native research fixture: /tmp/chatjs-native-research-HtWosm
+
+EVALS 3
+target http://127.0.0.1:64822/
+
+[research/0000] workflow run id (primary session): wrun_01M54ZF82MFGN9THNCSDQABGZK
+✓  research/0000  gates 2/2
+[workflow-sdk] Step execution already in flight in this process; awaiting its settlement instead of executing again
+  run    wrun_01M54ZFCC133BTVPS5AHCPB7V7
+  step   step_01M54ZFCC1VPV703EPFFD3FJ9H
+[research/0001] workflow run id (primary session): wrun_01M54ZFBR744G71GJFQ26SVV5T
+✓  research/0001
+✓  research/0002
+
+Results: 3 passed (3 total)
+Gates: 2 passed
+
+Completed in 4.9s
+
