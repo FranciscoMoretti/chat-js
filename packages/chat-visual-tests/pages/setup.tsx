@@ -187,7 +187,7 @@ vi.mock("eve/react", () => {
         resume: idle,
         send: idle,
         session: initialSession,
-        status: "ready",
+        status: route.agentStatus,
       };
       agents.set(messages, agent);
       return agent;

@@ -181,6 +181,11 @@ const conversationStatus = (
   return label;
 };
 
+const isInputResponseDisabled = (
+  status: string | undefined,
+  commandPending: boolean
+): boolean => commandPending || status === "submitted" || status === "resuming";
+
 const isExecutionBusy = (status: string | undefined): boolean =>
   status === "streaming" || status === "submitted" || status === "resuming";
 
@@ -733,6 +738,10 @@ const EveConversation = ({
                 actionsDisabled={actionLocks.transcript}
                 conversationId={conversationId}
                 disabled={busy || commandPending}
+                inputDisabled={isInputResponseDisabled(
+                  agent.status,
+                  commandPending
+                )}
                 isReadonly={false}
                 messages={messages}
 

@@ -145,15 +145,15 @@ const Part = ({
   messageId,
   isReadonly,
   part,
-  disabled,
   respond,
+  inputDisabled,
   previewDocument = false,
 }: {
   readonly previewDocument?: boolean;
   readonly messageId: string;
   readonly isReadonly: boolean;
   readonly part: ReadonlyEveMessagePart;
-  readonly disabled: boolean;
+  readonly inputDisabled: boolean;
   readonly respond: (response: InputResponse) => void;
 }): React.JSX.Element | null => {
   if (part.type === "text") {
@@ -222,7 +222,7 @@ const Part = ({
       )}
       {part.state === "approval-requested" && request ? (
         <PendingInput
-          disabled={disabled}
+          disabled={inputDisabled}
           key={request.requestId}
           request={request}
           respond={respond}
@@ -262,6 +262,7 @@ interface EveMessagesProps {
     message: ReadonlyEveMessage
   ) => string | undefined;
   readonly disabled: boolean;
+  readonly inputDisabled?: boolean;
   readonly respond: (response: InputResponse) => void;
 }
 
@@ -417,6 +418,12 @@ const EveMessageActions = ({
 
 const EMPTY_SUGGESTIONS: readonly string[] = [];
 
+const responseDisabled = (
+  readonly: boolean,
+  busy: boolean,
+  override: boolean | undefined
+): boolean => readonly || (override ?? busy);
+
 const EveMessageRow = ({
   message,
   userMessage,
@@ -426,6 +433,7 @@ const EveMessageRow = ({
   isReadonly,
   disabled,
   actionsDisabled,
+  inputDisabled,
   respond,
   onEdit,
   onRegenerate,
@@ -508,7 +516,11 @@ const EveMessageRow = ({
           .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
           .map((part): React.JSX.Element => (
             <Part
-              disabled={disabled}
+              inputDisabled={responseDisabled(
+                isReadonly,
+                disabled,
+                inputDisabled
+              )}
               isReadonly={isReadonly}
               key={nextPartKey(part)}
               messageId={message.id}

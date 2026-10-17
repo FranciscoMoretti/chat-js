@@ -241,6 +241,7 @@ export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
 };
 
 export const invoicesTrpc = {
+  "eve.messageDisplay": [],
   ...signedInTrpc,
   "eve.branches": {
     branches: [

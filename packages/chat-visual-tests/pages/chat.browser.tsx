@@ -191,3 +191,51 @@ test("shared conversation, signed in", async () => {
     .element(page.getByRole("region", { name: "Save shared conversation" }))
     .toBeVisible();
 });
+
+test("owner can answer approval while the native turn stays open", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    transcripts: {
+      [invoicesConversation.sessionId ?? ""]: [
+        {
+          id: "approval-message",
+          role: "assistant",
+          parts: [
+            {
+              type: "dynamic-tool",
+              toolName: "deleteDocument",
+              toolCallId: "delete-call",
+              state: "approval-requested",
+              approval: { id: "delete-request" },
+              input: { title: "Invoice notes" },
+              toolMetadata: {
+                eve: {
+                  kind: "tool-call",
+                  name: "deleteDocument",
+                  inputRequest: {
+                    requestId: "delete-request",
+                    kind: "tool-approval",
+                    prompt: "Approve Delete document?",
+                    allowFreeform: false,
+                    display: "confirmation",
+                    options: [
+                      { id: "approve", label: "Approve" },
+                      { id: "cancel", label: "Cancel" },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByRole("button", { name: "Approve", exact: true }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByRole("button", { name: "Cancel", exact: true }))
+    .toBeEnabled();
+});

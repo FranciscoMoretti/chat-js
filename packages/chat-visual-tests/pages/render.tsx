@@ -54,6 +54,7 @@ export const renderRoute = async (
   disableAutoSnapshot();
   Object.assign(route, {
     agentError: null,
+    agentStatus: "ready",
     cookies: {},
     lastLoginMethod: null,
     missingFixtures: new Set(),

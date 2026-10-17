@@ -23,6 +23,7 @@ export interface ServerData {
 export const route: {
   /** The error the replayed EVE session reports, as when the last reply failed. */
   agentError: string | null;
+  agentStatus: "ready" | "streaming";
   cookies: Record<string, string>;
   /** The sign-in method this browser remembers using last. */
   lastLoginMethod: string | null;
@@ -39,6 +40,7 @@ export const route: {
   trpc: Record<string, unknown>;
 } = {
   agentError: null,
+  agentStatus: "ready",
   cookies: {},
   lastLoginMethod: null,
   missingFixtures: new Set(),

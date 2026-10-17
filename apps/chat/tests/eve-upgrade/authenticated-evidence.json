@@ -217,5 +217,34 @@
       "/tmp/eve080-resource-app-proof.json"
     ],
     "sha256": "a4586a74f8afa8b40b7be2df0362c2c21f5892b0bc701c7b44e62d9ee7b8838c"
+  },
+  "authenticatedDocuments": {
+    "eveCommit": "6c40195d",
+    "conversationId": "5056f230-f669-4fb1-ad5e-7e14e51b6a92",
+    "sessionId": "wrun_01M55BRD7Q9ZCK7B064DG5P8DA",
+    "documentId": "7194e66c-44bf-852e-b7a1-9f4c96ce0b66",
+    "initialRevisionId": "f7371ec2-9ae5-42da-83f0-754f3ea20c38",
+    "editedRevisionId": "233cdd21-e266-4fe1-819b-2d87ca5728bc",
+    "approvalRequestId": "aitxt-IGUJZpqmXkSnt76RKpTs2OnE",
+    "foreignApprovalStatus": 404,
+    "ownerApprovalOutcome": "approved",
+    "deleteToolStatus": "success",
+    "checks": [
+      "real authored create and edit tools persisted document revisions",
+      "stale revision rejected without replacing current content",
+      "authenticated editor displayed current revision",
+      "foreign owner cannot answer approval",
+      "owner clicked enabled Approve in actual UI; native deletion and turn completed"
+    ],
+    "fixture": "Only external gateway HTTP model responses are mocked; actual authenticated app, worker, tools, database and browser.",
+    "logs": [
+      "/tmp/eve080-document-create-stream.json",
+      "/tmp/eve080-document-results.json",
+      "/tmp/eve080-document-stale-results.json",
+      "/tmp/eve080-document-foreign-approval.json",
+      "/tmp/eve080-document-approved-events.json",
+      "/tmp/eve080-document-editor.png"
+    ],
+    "visualComparison": "Nine local chat route cases pass, including approval at streaming; four viewport/theme captures each. Fleet comparison unavailable: UIVERIFY_API_KEY missing."
   }
 }
