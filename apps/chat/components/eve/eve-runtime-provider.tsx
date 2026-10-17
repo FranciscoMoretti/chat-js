@@ -20,6 +20,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
+import { projectEveMessageDisplay } from "@/lib/eve/message-display";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
@@ -48,6 +49,7 @@ const NativeObserver = ({
 }): null => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
+  const display = useQuery(trpc.eve.messageDisplay.queryOptions({ sessionId }));
   const agent = useEveAgent({
     host: "/api",
     initialSession: { sessionId, streamIndex: 0 },
@@ -83,6 +85,9 @@ const NativeObserver = ({
         void queryClient.invalidateQueries({
           queryKey: trpc.eve.list.pathKey(),
         });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.eve.messageDisplay.queryKey({ sessionId }),
+        });
       }
       if (
         event.type === "action.result" &&
@@ -98,9 +103,20 @@ const NativeObserver = ({
     },
     resume: true,
   });
+  const displayedAgent = useMemo(
+    () => ({
+      ...agent,
+      data: projectEveMessageDisplay(
+        agent.data,
+        agent.events,
+        display.data ?? []
+      ),
+    }),
+    [agent, display.data]
+  );
   useEffect(() => {
-    controller.observe(conversationId, agent);
-  }, [agent, controller, conversationId]);
+    controller.observe(conversationId, displayedAgent);
+  }, [displayedAgent, controller, conversationId]);
   return null;
 };
 

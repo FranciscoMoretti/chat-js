@@ -17,7 +17,6 @@ import type { UserContent } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import { eveConversationTitleFallback } from "./conversation-title";
 import { eveCreationContentHash } from "./creation-content-hash";
-import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageFileKeys } from "./file-references";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
@@ -170,10 +169,6 @@ export const executeEveConversationCreation = async (
             body: JSON.stringify({
               fork,
               message: preparedMessage,
-              messageMetadata: eveMessageDeliveryMetadata(
-                input.operationId,
-                input.selectedTool
-              ),
               operationId,
             }),
             method: "POST",

@@ -3,8 +3,45 @@ import { isDeepStrictEqual } from "node:util";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch } from "./schema";
+import { z } from "zod";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
 
 const hasRow: (row: unknown) => boolean = Boolean;
+
+/** Display-only fields from known sends; unknown and foreign bindings are omitted. */
+export const getEveMessageDisplayReceipts = async (
+  ownerId: string,
+  sessionId: string
+): Promise<EveMessageDisplayReceipt[]> => {
+  const rows = await db
+    .select({ deliveryId: eveDispatch.deliveryId, intent: eveDispatch.intent })
+    .from(eveDispatch)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.ownerId, eveConversation.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveDispatch.ownerId, ownerId),
+        eq(eveDispatch.sessionId, sessionId),
+        eq(eveDispatch.kind, "send"),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  return rows.flatMap((row) => {
+    const intent = z
+      .object({ selectedTool: frontendToolsSchema.nullable() })
+      .safeParse(row.intent);
+    return isNonEmptyString(row.deliveryId) && intent.success
+      ? [{ deliveryId: row.deliveryId, selectedTool: intent.data.selectedTool }]
+      : [];
+  });
+};
 
 export class EveDispatchUnknownError extends Error {
   constructor() {

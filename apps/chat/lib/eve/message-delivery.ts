@@ -3,11 +3,9 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
-import type { UiToolName } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { draftAttachment } from "./draft";
-import { eveToolMetadata } from "./message-tool-selection";
 
 type DeliveryReceipt = Readonly<{
   sessionId: string;
@@ -143,29 +141,5 @@ const eveMessageDelivery = {
   },
 };
 
-/**
- * The proxy owns this metadata so caller input cannot forge an acknowledgement.
- * @param {string} operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
- * @param {UiToolName | null | undefined} selectedTool App UI tool selection, normalized to null when no tool is selected.
- * @returns {{ chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & { operationId: string; }; }} The app namespace containing the operation acknowledgement and display-safe tool selection.
- */
-const eveMessageDeliveryMetadata = (
-  operationId: string,
-  selectedTool: UiToolName | null | undefined
-): {
-  chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & {
-    operationId: string;
-  };
-} => ({
-  chatjs: {
-    ...eveToolMetadata(selectedTool).chatjs,
-    operationId: z.uuid().parse(operationId),
-  },
-});
-
-export {
-  EVE_MESSAGE_OPERATION_HEADER,
-  eveMessageDelivery,
-  eveMessageDeliveryMetadata,
-};
+export { EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery };
 export type { ActivePendingEveMessage, PendingEveMessage, DeliveryReceipt };

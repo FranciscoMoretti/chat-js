@@ -34,8 +34,12 @@ vi.mock("./client", () => {
   return { db: database };
 });
 vi.mock("../env", () => ({ env: {} }));
-const { dispatchEveOnce, EveDispatchUnknownError, getEveSendReceipt } =
-  await import("./eve-dispatch");
+const {
+  dispatchEveOnce,
+  EveDispatchUnknownError,
+  getEveSendReceipt,
+  getEveMessageDisplayReceipts,
+} = await import("./eve-dispatch");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const input = {
   ownerId: "owner",
@@ -178,7 +182,14 @@ it("exposes only a known send receipt for the exact owner and session", async ()
     .fn()
     .mockResolvedValue({ sessionId: "source", deliveryId: "receipt-delivery" });
   expect(await getEveSendReceipt("owner", "source", operationId)).toBeNull();
-  await dispatchEveOnce({ ...input, operationId }, dispatch);
+  await dispatchEveOnce(
+    {
+      ...input,
+      operationId,
+      intent: { ...input.intent, selectedTool: "webSearch" },
+    },
+    dispatch
+  );
   expect(await getEveSendReceipt("owner", "source", operationId)).toEqual({
     sessionId: "source",
     deliveryId: "receipt-delivery",
@@ -197,4 +208,11 @@ it("exposes only a known send receipt for the exact owner and session", async ()
     )
   ).rejects.toThrow("Lost response");
   expect(await getEveSendReceipt("owner", "source", unknownId)).toBeNull();
+  expect(await getEveMessageDisplayReceipts("owner", "source")).toEqual([
+    { deliveryId: "receipt-delivery", selectedTool: "webSearch" },
+  ]);
+  expect(await getEveMessageDisplayReceipts("foreign", "source")).toEqual([]);
+  expect(await getEveMessageDisplayReceipts("owner", "other-session")).toEqual(
+    []
+  );
 });

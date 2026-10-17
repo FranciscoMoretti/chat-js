@@ -1,4 +1,7 @@
-import { getEveSendReceipt } from "@/lib/db/eve-dispatch";
+import {
+  getEveSendReceipt,
+  getEveMessageDisplayReceipts,
+} from "@/lib/db/eve-dispatch";
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
@@ -62,6 +65,12 @@ const eveOwnedProcedure = publicProcedure.use(
 );
 
 export const eveRouter = createTRPCRouter({
+  messageDisplay: eveOwnedProcedure
+    .input(z.object({ sessionId: z.string().min(1).max(200) }))
+    .query(
+      async ({ ctx, input }) =>
+        await getEveMessageDisplayReceipts(ctx.eveOwnerId, input.sessionId)
+    ),
   sendReceipt: eveOwnedProcedure
     .input(
       z.object({ sessionId: z.string().min(1).max(200), operationId: z.uuid() })

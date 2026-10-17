@@ -1,6 +1,6 @@
 "use client";
 
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useTRPC } from "@/trpc/react";
 import type {
@@ -18,6 +18,7 @@ export const useEveDeliveryReceipt = (
   accept: (receipt: DeliveryReceipt) => void
 ) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const receipt = useQuery({
     ...trpc.eve.sendReceipt.queryOptions(
       pending !== null && typeof pending.operationId === "string"
@@ -34,7 +35,10 @@ export const useEveDeliveryReceipt = (
   useEffect(() => {
     if (receipt.data) {
       accept(receipt.data);
+      void queryClient.invalidateQueries({
+        queryKey: trpc.eve.messageDisplay.queryKey({ sessionId }),
+      });
     }
-  }, [receipt.data, accept]);
+  }, [receipt.data, accept, queryClient, trpc, sessionId]);
   return receipt.refetch;
 };

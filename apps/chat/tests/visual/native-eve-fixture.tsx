@@ -190,6 +190,13 @@ const createRequestResponders = (
       },
     ],
     [
+      "eve.messageDisplay",
+      (_op: FixtureOperation, observer: Observer): void => {
+        observer.next({ result: { data: [] } });
+        observer.complete();
+      },
+    ],
+    [
       "eve.sendReceipt",
       (_op: FixtureOperation, observer: Observer): void => {
         observer.next({ result: { data: null } });

@@ -45,19 +45,8 @@ interface LogicalChatSnapshot {
   error?: string;
 }
 
-const logicalNativeId = (sessionId: string, message: EveMessage): string => {
-  const custom = message.metadata?.custom?.chatjs;
-  if (
-    message.role === "user" &&
-    typeof custom === "object" &&
-    custom !== null &&
-    "operationId" in custom &&
-    typeof custom.operationId === "string"
-  ) {
-    return JSON.stringify([sessionId, "operation", custom.operationId, "user"]);
-  }
-  return JSON.stringify([sessionId, message.id]);
-};
+const logicalNativeId = (sessionId: string, message: EveMessage): string =>
+  JSON.stringify([sessionId, message.id]);
 
 const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);

@@ -102,7 +102,7 @@ test("requires a message operation ID before dispatch", async () => {
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
 
-test("stamps the validated operation into server-owned durable metadata", async () => {
+test("keeps app correlation out of the native message body", async () => {
   const response = await POST(
     request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
     { params: Promise.resolve({ path: ["v1", "session", "native"] }) }
@@ -115,12 +115,6 @@ test("stamps the validated operation into server-owned durable metadata", async 
     expect.objectContaining({
       body: JSON.stringify({
         message: "prepared",
-        messageMetadata: {
-          chatjs: {
-            selectedTool: "createTextDocument",
-            operationId,
-          },
-        },
       }),
       method: "POST",
     }),

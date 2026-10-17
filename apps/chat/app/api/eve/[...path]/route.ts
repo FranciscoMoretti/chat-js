@@ -21,10 +21,7 @@ import {
   admitGuestMessage,
   settleGuestMessage,
 } from "@/lib/eve/guest-message-admission";
-import {
-  EVE_MESSAGE_OPERATION_HEADER,
-  eveMessageDeliveryMetadata,
-} from "@/lib/eve/message-delivery";
+import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -180,10 +177,6 @@ const readCommand = async (
         );
         body = JSON.stringify({
           message: await prepareEveMessage(input.data.message, modelId),
-          messageMetadata: eveMessageDeliveryMetadata(
-            operationId.data,
-            selectedTool
-          ),
         });
       } catch (error) {
         return rejectEveCommand(
