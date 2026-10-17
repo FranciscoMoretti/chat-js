@@ -1,3 +1,4 @@
+import { dispatchEveOnce } from "./eve-dispatch";
 import {
   and,
   desc,
@@ -972,47 +973,65 @@ const createEveConversation = async (
       await initializeEveForkDocuments(ownerId, reservation.id);
     }
     await referenceEveFiles(ownerId, reservation.id, fileKeys);
-    return await db.transaction(async (tx: CreationTransactionView) => {
-      // The reservation is already committed so native hooks can find it.
-      // Transaction locks release on worker death; creating rows need no manual repair.
-      const [lock] = await tx.execute<{
-        locked: boolean;
-      }>(
-        sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
-      );
-      if (!lock?.locked) {
-        throw new CreationConflictError(
-          "Creation is still in progress. Retry the same operation shortly.",
-          { code: "creation_in_progress" }
-        );
-      }
-      const [current] = await tx
-        .select()
-        .from(eveConversation)
-        .where(eq(eveConversation.id, reservation.id));
-      const binding = boundConversation(current);
-      if (binding) {
-        return binding;
-      }
-      if (
-        !(
-          hasQueryRow(current) &&
-          current.creationKind === "message" &&
-          (current.state === "creating" || current.state === "uncertain")
-        )
-      ) {
-        throw new CreationConflictError(
-          "This conversation can no longer be created."
-        );
-      }
-      const sessionId = await create(reservation.id);
-      return await bindConversationSession(
-        tx,
+    const dispatched = await dispatchEveOnce(
+      {
         ownerId,
-        reservation.id,
-        sessionId
-      );
-    });
+        operationId: reservation.id,
+        conversationId: reservation.id,
+        kind: "create",
+        intent: initialRequest ?? {
+          message,
+          initialModelId,
+          initialContentHash,
+          initialProjectId,
+          fork,
+          forkKind,
+        },
+      },
+      async () =>
+        await db.transaction(async (tx: CreationTransactionView) => {
+          // The reservation is already committed so native hooks can find it.
+          // Transaction locks release on worker death; creating rows need no manual repair.
+          const [lock] = await tx.execute<{
+            locked: boolean;
+          }>(
+            sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
+          );
+          if (!lock?.locked) {
+            throw new CreationConflictError(
+              "Creation is still in progress. Retry the same operation shortly.",
+              { code: "creation_in_progress" }
+            );
+          }
+          const [current] = await tx
+            .select()
+            .from(eveConversation)
+            .where(eq(eveConversation.id, reservation.id));
+          const binding = boundConversation(current);
+          if (binding) {
+            return binding;
+          }
+          if (
+            !(
+              hasQueryRow(current) &&
+              current.creationKind === "message" &&
+              (current.state === "creating" || current.state === "uncertain")
+            )
+          ) {
+            throw new CreationConflictError(
+              "This conversation can no longer be created."
+            );
+          }
+          const sessionId = await create(reservation.id);
+          return await bindConversationSession(
+            tx,
+            ownerId,
+            reservation.id,
+            sessionId
+          );
+        })
+    );
+    return { id: reservation.id, sessionId: dispatched.sessionId };
   } catch (error) {
     if (error instanceof CreationConflictError) {
       throw error;

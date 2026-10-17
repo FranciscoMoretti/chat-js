@@ -473,6 +473,35 @@ const eveConversation = pgTable(
 );
 
 /** Temporary copy preparation is discarded once native history is bound. */
+const eveDispatch = pgTable(
+  "EveDispatch",
+  {
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    operationId: uuid("operationId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    kind: text("kind", { enum: ["create", "copy", "send"] }).notNull(),
+    intent: jsonb("intent").$type<unknown>().notNull(),
+    sessionId: text("sessionId"),
+    deliveryId: text("deliveryId"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.operationId] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveDispatch_conversation_owner_fk",
+    }),
+    check("EveDispatch_kind", sql`${table.kind} in ('create', 'copy', 'send')`),
+    check(
+      "EveDispatch_binding",
+      sql`${table.deliveryId} is null or ${table.sessionId} is not null`
+    ),
+  ]
+);
+
 const eveConversationCopy = pgTable(
   "EveConversationCopy",
   {
@@ -1033,6 +1062,7 @@ const eveSearchText = pgTable(
 );
 
 export {
+  eveDispatch,
   account,
   eveChat,
   eveChatProject,

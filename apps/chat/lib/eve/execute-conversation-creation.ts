@@ -30,7 +30,6 @@ type PreparedContentPart<Part> = {
 };
 
 const logger = createModuleLogger("eve/creation");
-const OPERATION_LOOKUP_TIMEOUT_MS = 15_000;
 const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
@@ -107,7 +106,7 @@ const creationFailure = (cause: unknown): Response => {
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
  * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
- * @param {z.infer<typeof createConversationInput>} input Original creation request reused when an uncertain dispatch is retried.
+ * @param {z.infer<typeof createConversationInput>} input Immutable original creation request retained when dispatch is unresolved.
  * @param {string | undefined} guestReservationId Optional admission reservation attached to the created conversation.
  * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
  * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
@@ -124,73 +123,45 @@ export const executeEveConversationCreation = async (
   try {
     let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
 
-    if (!((await getEveCreation(ownerId, input.operationId)) !== undefined)) {
+    const existing = await getEveCreation(ownerId, input.operationId);
+    if (existing === undefined) {
       const resolved = await resolveFork(ownerId, input.fork);
       if (resolved instanceof Response) {
         return resolved;
       }
       fork = resolved;
     }
+    if (existing?.state !== "bound") {
+      if (input.fork && !fork) {
+        const resolved = await resolveFork(ownerId, input.fork);
+        if (resolved instanceof Response) {
+          throw new CreationConflictError("Source conversation not found.");
+        }
+        fork = resolved;
+      }
+      if (
+        fork &&
+        "beforeTurnId" in fork &&
+        typeof fork.beforeTurnId === "string" &&
+        fork.beforeTurnId !== ""
+      ) {
+        await waitForEveCheckpoint(
+          ownerId,
+          fork.sessionId,
+          fork.beforeTurnId,
+          fork.checkpointId
+        );
+      }
+      if (preparedMessage === undefined) {
+        await loadEveModelDefinition(input.modelId);
+        preparedMessage = await prepareEveMessage(input.message, input.modelId);
+      }
+    }
     const binding = await createEveConversation(
       ownerId,
       input.operationId,
       eveMessageTitle(input.message),
       async (operationId) => {
-        const existing = await requestEveCreation(
-          "lookup",
-          ownerId,
-          `/eve/chat/v1/operation/${operationId}`,
-          {
-            signal: AbortSignal.timeout(OPERATION_LOOKUP_TIMEOUT_MS),
-          }
-        );
-        if (existing.ok) {
-          return z
-            .object({
-              sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
-            })
-            .parse(await existing.json()).sessionId;
-        }
-        const lookupFailure = z
-          .object({ code: z.literal("eve_operation_not_found") })
-          .safeParse(
-            await existing.json().catch((): void => {
-              // The missing-operation schema rejects an absent JSON body.
-            })
-          );
-        if (existing.status !== HTTP_NOT_FOUND || !lookupFailure.success) {
-          throw new EveCreationTransportError("lookup", existing.status);
-        }
-        // Accepted operations recover independently of their former source.
-        if (input.fork && !fork) {
-          const resolved = await resolveFork(ownerId, input.fork);
-          if (resolved instanceof Response) {
-            throw new CreationConflictError("Source conversation not found.");
-          }
-          fork = resolved;
-        }
-        if (
-          fork &&
-          "beforeTurnId" in fork &&
-          typeof fork.beforeTurnId === "string" &&
-          fork.beforeTurnId !== ""
-        ) {
-          await waitForEveCheckpoint(
-            ownerId,
-            fork.sessionId,
-            fork.beforeTurnId,
-            fork.checkpointId
-          );
-        }
-        // Uncertain reservations may have reached Eve before their reply was lost.
-        // Reuse the same operation with the original input; never dispatch an empty turn.
-        if (preparedMessage === undefined) {
-          await loadEveModelDefinition(input.modelId);
-          preparedMessage = await prepareEveMessage(
-            input.message,
-            input.modelId
-          );
-        }
         const result = await requestEveCreation(
           "dispatch",
           ownerId,

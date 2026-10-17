@@ -88,7 +88,7 @@ it("uses the existing reverse binding for sessions created before the attribute 
   expect(mocks.request).not.toHaveBeenCalled();
 });
 it.each([
-  [404, { code: "eve_operation_not_found" }, "receipt_pending"],
+  [409, { code: "eve_operation_unresolved" }, "receipt_unavailable"],
   [503, {}, "receipt_unavailable"],
   [200, {}, "receipt_unavailable"],
 ])(

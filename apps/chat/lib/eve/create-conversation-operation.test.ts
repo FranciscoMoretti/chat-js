@@ -78,14 +78,7 @@ beforeEach(() => {
       sessionId: await dispatch(operationId),
     })
   );
-  // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only request fixture returns fresh consumable bodies for lookup and dispatch routes; a static Response loses routing or body freshness, and eslint/require-await rejects an immediate async factory.
-  mocks.request.mockImplementation((_owner, path) =>
-    Promise.resolve(
-      path.startsWith("/eve/chat/v1/operation/")
-        ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
-        : Response.json({ sessionId: "child" })
-    )
-  );
+  mocks.request.mockResolvedValue(Response.json({ sessionId: "child" }));
 });
 
 it("does not allocate a native child before the initial checkpoint is ready", async () => {
@@ -98,7 +91,7 @@ it("does not allocate a native child before the initial checkpoint is ready", as
     mocks.request.mock.calls.map(
       (call: Readonly<(typeof mocks.request.mock.calls)[number]>) => call[1]
     )
-  ).toEqual([`/eve/chat/v1/operation/${input.operationId}`]);
+  ).toEqual([]);
   mocks.readiness.mockResolvedValue();
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
@@ -142,14 +135,12 @@ it("preserves conflict error identity and response codes", async () => {
   });
 });
 it("recovers an already allocated native operation without needing its checkpoint again", async () => {
-  mocks.creation.mockResolvedValue({ state: "reserved" });
-  mocks.request.mockResolvedValue(
-    Response.json({ sessionId: "existing-child" })
-  );
+  mocks.creation.mockResolvedValue({ state: "bound" });
+  mocks.reserve.mockResolvedValue({ sessionId: "existing-child" });
   const resolvedResult1 = await createEveConversationOperation("owner", input);
   expect(await resolvedResult1.json()).toEqual({ sessionId: "existing-child" });
   expect(mocks.readiness).not.toHaveBeenCalled();
-  expect(mocks.request).toHaveBeenCalledOnce();
+  expect(mocks.request).not.toHaveBeenCalled();
 });
 it("refuses a foreign or deleted source before reservation or checkpoint access", async () => {
   mocks.source.mockResolvedValue(null);
@@ -281,16 +272,14 @@ it("journals the complete creation command before dispatch so another tab can re
 it("recovers an accepted fork after the source was deleted", async () => {
   mocks.creation.mockResolvedValue({
     creationKind: "message",
-    state: "uncertain",
+    state: "bound",
   });
-  mocks.request.mockResolvedValue(
-    Response.json({ sessionId: "accepted-child" })
-  );
+  mocks.reserve.mockResolvedValue({ sessionId: "accepted-child" });
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ sessionId: "accepted-child" });
   expect(mocks.source).not.toHaveBeenCalled();
-  expect(mocks.request).toHaveBeenCalledTimes(1);
+  expect(mocks.request).not.toHaveBeenCalled();
 });
 
 it("preserves creation identity when billing recovery is busy", async () => {

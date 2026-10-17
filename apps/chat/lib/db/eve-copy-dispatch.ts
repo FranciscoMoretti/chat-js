@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import { dispatchEveOnce } from "./eve-dispatch";
 import { and, eq, sql } from "drizzle-orm";
 
 import { eveSeedSearchText } from "@/lib/eve/search-text";
@@ -43,74 +45,101 @@ const dispatchEveCopy = async (
   create: (operationId: string) => Promise<string>
 ): Promise<{ id: string; sessionId: string }> => {
   try {
-    return await db.transaction(
-      async (
-        tx: Readonly<
-          Pick<typeof db, "execute" | "insert" | "select" | "update">
-        >
-      ) => {
-        const [lock] = await tx.execute<{
-          locked: boolean;
-        }>(
-          sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
-        );
-        if (!lock?.locked) {
-          throw new CreationConflictError(
-            "Copy creation is still in progress. Retry the same operation."
-          );
-        }
-        const { copy, conversation } = await readEveCopy(
-          tx,
-          ownerId,
-          conversationId
-        );
-        if (
-          copy.phase === "bound" &&
-          conversation.state === "bound" &&
-          conversation.sessionId !== null &&
-          conversation.sessionId !== ""
-        ) {
-          return { id: conversation.id, sessionId: conversation.sessionId };
-        }
-        if (
-          copy.phase !== "accepted" ||
-          !copy.seed ||
-          !["creating", "uncertain"].includes(conversation.state)
-        ) {
-          throw new CreationConflictError(
-            "This saved copy cannot be dispatched."
-          );
-        }
-        const sessionId = await create(conversation.id);
-        if (!sessionId) {
-          throw new Error("Copy creation did not return a native session.");
-        }
-        await tx
-          .update(eveConversation)
-          .set({ sessionId, state: "bound" })
-          .where(eq(eveConversation.id, conversation.id));
-        await tx
-          .update(eveChat)
-          .set({ activeConversationId: conversation.id, updatedAt: new Date() })
-          .where(
-            and(
-              eq(eveChat.id, conversation.chatId),
-              eq(eveChat.ownerId, ownerId)
-            )
-          );
-        await writeEveSearchText(
-          tx,
-          ownerId,
-          conversation.id,
-          eveSeedSearchText(copy.seed.messages)
-        );
-        await tx
-          .update(eveConversationCopy)
-          .set({ phase: "bound", seed: null })
-          .where(eq(eveConversationCopy.conversationId, conversation.id));
-        return { id: conversation.id, sessionId };
-      }
+    const accepted = await readEveCopy(db, ownerId, conversationId);
+    if (
+      accepted.conversation.state === "bound" &&
+      isNonEmptyString(accepted.conversation.sessionId)
+    ) {
+      return { id: conversationId, sessionId: accepted.conversation.sessionId };
+    }
+    if (accepted.copy.phase !== "accepted" || !accepted.copy.seed) {
+      throw new CreationConflictError("This saved copy cannot be dispatched.");
+    }
+    const binding = await dispatchEveOnce(
+      {
+        ownerId,
+        operationId: conversationId,
+        conversationId,
+        kind: "copy",
+        intent: {
+          modelId: accepted.conversation.initialModelId,
+          seed: accepted.copy.seed,
+        },
+      },
+      async () =>
+        await db.transaction(
+          async (
+            tx: Readonly<
+              Pick<typeof db, "execute" | "insert" | "select" | "update">
+            >
+          ) => {
+            const [lock] = await tx.execute<{
+              locked: boolean;
+            }>(
+              sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
+            );
+            if (!lock?.locked) {
+              throw new CreationConflictError(
+                "Copy creation is still in progress. Retry the same operation."
+              );
+            }
+            const { copy, conversation } = await readEveCopy(
+              tx,
+              ownerId,
+              conversationId
+            );
+            if (
+              copy.phase === "bound" &&
+              conversation.state === "bound" &&
+              conversation.sessionId !== null &&
+              conversation.sessionId !== ""
+            ) {
+              return { id: conversation.id, sessionId: conversation.sessionId };
+            }
+            if (
+              copy.phase !== "accepted" ||
+              !copy.seed ||
+              !["creating", "uncertain"].includes(conversation.state)
+            ) {
+              throw new CreationConflictError(
+                "This saved copy cannot be dispatched."
+              );
+            }
+            const sessionId = await create(conversation.id);
+            if (!sessionId) {
+              throw new Error("Copy creation did not return a native session.");
+            }
+            await tx
+              .update(eveConversation)
+              .set({ sessionId, state: "bound" })
+              .where(eq(eveConversation.id, conversation.id));
+            await tx
+              .update(eveChat)
+              .set({
+                activeConversationId: conversation.id,
+                updatedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(eveChat.id, conversation.chatId),
+                  eq(eveChat.ownerId, ownerId)
+                )
+              );
+            await writeEveSearchText(
+              tx,
+              ownerId,
+              conversation.id,
+              eveSeedSearchText(copy.seed.messages)
+            );
+            await tx
+              .update(eveConversationCopy)
+              .set({ phase: "bound", seed: null })
+              .where(eq(eveConversationCopy.conversationId, conversation.id));
+            return { id: conversation.id, sessionId };
+          }
+        )
     );
+    return { id: conversationId, sessionId: binding.sessionId };
   } catch (error) {
     if (!(error instanceof CreationConflictError)) {
       await db

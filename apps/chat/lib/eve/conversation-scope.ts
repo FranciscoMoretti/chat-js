@@ -33,13 +33,6 @@ const assertNativeReceipt = async (
   const body: unknown = await response.json().catch((): void => {
     // The required receipt schemas below reject an absent JSON body.
   });
-  if (
-    response.status === 404 &&
-    z.object({ code: z.literal("eve_operation_not_found") }).safeParse(body)
-      .success
-  ) {
-    throw new EveSessionMappingError("receipt_pending");
-  }
   const receipt = z.object({ sessionId: z.string().min(1) }).safeParse(body);
   if (!response.ok || !receipt.success) {
     throw new EveSessionMappingError("receipt_unavailable");

@@ -21,6 +21,13 @@ const mocks = vi.hoisted(() => ({
   referenceFiles: vi.fn(),
 }));
 
+vi.mock("@/lib/db/eve-dispatch", () => ({
+  dispatchEveOnce: async (
+    _input: unknown,
+    dispatch: () => Promise<{ sessionId: string; deliveryId: string }>
+  ) => await dispatch(),
+  EveDispatchUnknownError: class extends Error {},
+}));
 vi.mock("@/lib/db/credits", () => ({ canSpend: mocks.canSpend }));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
@@ -70,7 +77,11 @@ beforeEach(() => {
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.eveRequest.mockResolvedValue(
     Response.json(
-      { sessionId: "native", status: "accepted" },
+      {
+        sessionId: "native",
+        deliveryId: "accepted-delivery",
+        status: "accepted",
+      },
       {
         headers: { "x-eve-session-id": "native" },
         status: HTTP_STATUS.accepted,
@@ -97,7 +108,7 @@ test("stamps the validated operation into server-owned durable metadata", async 
     { params: Promise.resolve({ path: ["v1", "session", "native"] }) }
   );
 
-  expect(response.status).toBe(HTTP_STATUS.accepted);
+  expect(response.status).toBe(200);
   expect(mocks.eveRequest).toHaveBeenCalledExactlyOnceWith(
     "owner",
     "/eve/chat/v1/session/native",

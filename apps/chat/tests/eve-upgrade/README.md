@@ -261,3 +261,40 @@ Open `/eve/guest/v1/health` in a worktree-scoped agent-browser session with `--r
   };
 })();
 ```
+
+## App-owned admission decision
+
+The accepted product contract allows lost-response sends to remain unknown
+permanently. There is no automatic resend of an uncertain native operation and
+no claim of universally exact recovery. `EveDispatch` commits the immutable
+owner/operation/conversation/kind/intent before dispatch; a successful native
+response records its exact session and delivery identity. Concurrent requests
+and later requests against an unknown row cannot dispatch again. Creation and
+trusted-copy records retain their existing ownership, source revision, policy,
+and independent billing checks. The new migration is generated locally only.
+
+The fork's custom GET operation endpoint is removed in source. ChatJS now owns
+that positive-only application route using native `resolveSession`. Its small
+`operation-token.ts` adapter deliberately depends on **upstream 0.80.1's internal,
+unexported create-token format**. It is not a public native lookup API. A parity
+test imports the installed candidate's actual derivation, covering ordinary and
+trusted-seed namespaces. Gateway authentication supplies the current principal;
+callers cannot select a foreign principal. Existing tool-scope reconciliation
+needs this positive lookup when the native owner starts before the application
+receives and binds the creation response. A missing alias remains unknown; the
+route cannot create, send, or retry an operation. Alias loss and prebinding
+allocation gaps remain limitations.
+
+Evidence: direct journal tests use an isolated PGlite database with the generated
+migrations, including concurrent dispatch fencing, lost response, successful
+binding, changed intent and foreign ownership. Separate proxy tests exercise the
+actual POST handler and journal with a mocked native transport. The real creation database path also verifies that a failed binding transaction
+rolls back while its previously committed dispatch fence survives. These are not
+real native acceptance or abrupt-process-crash tests. The candidate remains
+`91a2864b` until the integrated fork source is built and repackaged; the installed
+package still contains the older native lookup implementation. Full lint/types
+remain red on pending upgrade contracts and unrelated fixtures. Checkpoint
+restoration and final app/runtime validation are still outstanding.
+
+The seven focused journal/lookup/creation/proxy suites pass 53 tests. Root lint
+and type checks were rerun; their existing upgrade blockers remain.

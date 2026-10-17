@@ -1,4 +1,8 @@
 import {
+  dispatchEveOnce,
+  EveDispatchUnknownError,
+} from "@/lib/db/eve-dispatch";
+import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "@/lib/eve/usage-reconciliation-busy";
@@ -253,26 +257,64 @@ const handle = async (
     if (admission instanceof Response) {
       return admission;
     }
-    const result = await eveRequest(
-      principal.ownerId,
-      `/eve/chat/${path.join("/")}${query.size > NO_QUERY_PARAMETERS ? `?${query}` : ""}`,
-      {
-        body,
-        method: request.method,
-        // Closing the reader must not cancel a validated command before Eve
-        // can durably accept it. Streaming reads still follow browser lifetime.
-        signal:
-          request.method === "GET"
-            ? request.signal
-            : AbortSignal.timeout(COMMAND_TIMEOUT_MS),
-      },
-      modelId,
-      selectedTool
-    );
-    if (admission) {
-      await settleGuestMessage(result, principal.ownerId, admission);
+    const dispatch = async (): Promise<Response> => {
+      const result = await eveRequest(
+        principal.ownerId,
+        `/eve/chat/${path.join("/")}${query.size > NO_QUERY_PARAMETERS ? `?${query}` : ""}`,
+        {
+          body,
+          method: request.method,
+          // Closing the reader must not cancel a validated command before Eve
+          // can durably accept it. Streaming reads still follow browser lifetime.
+          signal:
+            request.method === "GET"
+              ? request.signal
+              : AbortSignal.timeout(COMMAND_TIMEOUT_MS),
+        },
+        modelId,
+        selectedTool
+      );
+      if (admission) {
+        await settleGuestMessage(result, principal.ownerId, admission);
+      }
+      return result;
+    };
+    if (command.isNewMessage) {
+      const operationId = z
+        .uuid()
+        .parse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
+      const binding = await dispatchEveOnce(
+        {
+          ownerId,
+          operationId,
+          conversationId: conversation.id,
+          kind: "send",
+          intent: {
+            sessionId: policy.sessionId,
+            message: command.message,
+            modelId: modelId ?? null,
+            selectedTool: selectedTool ?? null,
+          },
+        },
+        async () => {
+          const result = await dispatch();
+          if (!result.ok) {
+            throw new EveDispatchUnknownError();
+          }
+          return z
+            .object({
+              sessionId: z.literal(policy.sessionId),
+              deliveryId: z.string().min(1),
+            })
+            .parse(await result.json());
+        }
+      );
+      return Response.json(
+        { ok: true, status: "accepted", ...binding },
+        { headers: { "cache-control": "no-store" } }
+      );
     }
-    return relayResponse(result);
+    return relayResponse(await dispatch());
   } catch (error) {
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);

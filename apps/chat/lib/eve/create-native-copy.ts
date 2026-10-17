@@ -2,46 +2,21 @@ import { z } from "zod";
 
 import { eveRequest } from "./server";
 
-const SEED_LOOKUP_TIMEOUT_MS = 15_000;
 const SEED_CREATION_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
-const HTTP_NOT_FOUND = 404;
 
 /**
- * Resolves or creates the native seed session for the same durable copy operation.
- * @param {string} ownerId Owner authorized to look up and create the native session.
- * @param {string} operationId Stable seed operation identity reused after uncertain creation replies.
- * @param {string} modelId Model sent only when a missing seed session must be created.
- * @returns {Promise<string>} The validated native session ID from lookup or creation; unresolved replies throw.
+ * Sends a trusted copy request after the database owner has committed its dispatch fence.
+ * @param {string} ownerId Owner authorized to create the native session.
+ * @param {string} operationId Stable seed identity whose dispatch is fenced by the application journal.
+ * @param {string} modelId Model selected in the accepted copy intent.
+ * @returns {Promise<string>} The validated native session ID from a successful response; unresolved replies throw.
  */
 export const createNativeEveCopy = async (
   ownerId: string,
   operationId: string,
   modelId: string
 ): Promise<string> => {
-  const existing = await eveRequest(
-    ownerId,
-    `/eve/chat/v1/operation/${operationId}?kind=seed`,
-    {
-      signal: AbortSignal.timeout(SEED_LOOKUP_TIMEOUT_MS),
-    }
-  );
-  const session = z.object({
-    sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
-  });
-  if (existing.ok) {
-    return session.parse(await existing.json()).sessionId;
-  }
-  const missing = z
-    .object({ code: z.literal("eve_operation_not_found") })
-    .safeParse(
-      await existing.json().catch((): void => {
-        // The missing-operation schema rejects an absent JSON body.
-      })
-    );
-  if (existing.status !== HTTP_NOT_FOUND || !missing.success) {
-    throw new Error("Native copy lookup is unavailable.");
-  }
   const result = await eveRequest(
     ownerId,
     "/eve/chat/v1/session",
@@ -55,5 +30,9 @@ export const createNativeEveCopy = async (
   if (!result.ok) {
     throw new Error("Native copy creation is unresolved.");
   }
-  return session.parse(await result.json()).sessionId;
+  return z
+    .object({
+      sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+    })
+    .parse(await result.json()).sessionId;
 };
