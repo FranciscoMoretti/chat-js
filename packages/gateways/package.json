@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/gateways",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Gateway contracts and shared runtime utilities for ChatJS registry extensions",
   "license": "Apache-2.0",
   "repository": {
