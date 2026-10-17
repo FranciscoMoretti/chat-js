@@ -13,10 +13,13 @@ type DeleteDocumentRequestContext = Readonly<
   }
 >;
 type DeleteDocumentPrincipal = Readonly<
-  Pick<ApprovalResponseContext<DeleteDocumentInput>["responder"], "principalId">
+  Pick<
+    ApprovalResponseContext<DeleteDocumentInput>["response"]["principal"],
+    "principalId"
+  >
 >;
 type DeleteDocumentResponseContext = Readonly<
-  Pick<ApprovalResponseContext<DeleteDocumentInput>, "responder"> & {
+  Pick<ApprovalResponseContext<DeleteDocumentInput>, "response"> & {
     session: Readonly<{
       initiator: DeleteDocumentPrincipal | null;
     }>;
@@ -27,8 +30,10 @@ export const deleteDocument = defineTool({
   approval: {
     request: async (context: DeleteDocumentRequestContext) =>
       await requestDocumentDeletion(context.toolInput, context),
-    response: ({ responder, session }: DeleteDocumentResponseContext) => {
-      if (responder.principalId === (session.initiator ?? {}).principalId) {
+    response: ({ response, session }: DeleteDocumentResponseContext) => {
+      if (
+        response.principal.principalId === (session.initiator ?? {}).principalId
+      ) {
         return { status: "allowed" };
       }
       return {

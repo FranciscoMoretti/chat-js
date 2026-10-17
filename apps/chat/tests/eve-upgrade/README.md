@@ -84,6 +84,17 @@ remain red. The app still fails closed on an unresolved copy lookup; durable
 admission/recovery is pending separately. This checkpoint does not establish a
 working complete save-copy/fork lifecycle.
 
+## Registry dependency alignment
+
+The registry and visual-test workspace now select the same local `91a2864b`
+candidate as the app and guest. Registry approval, research and tool-context
+consumers use the current native contracts, matching the integrated app sources.
+Registry unit tests pass 159 cases and package lint passes. Registry type checking
+now reports only two imported app errors for the missing `history.restored`
+contract. Root `bun lint` and `bun test:types` were rerun and remain red; no
+full-repository or visual-runtime pass is claimed. These are integration-branch
+dependency selections, not a production release or pin cutover.
+
 ## Reproduction
 
 Use Node 24 and Bun 1.3.11. Set a disposable worktree slot, run `bun dev:info --json`, then start through root `bun dev`. In the ignored `.env.worktree.local`, set `PLAYWRIGHT=1`, `EVE_MOCK_AUTHORED_MODELS=0`, dummy AUTH_SECRET/EVE_GATEWAY_SECRET values, `AI_GATEWAY_API_KEY=disposable-mock-key`, `DATABASE_URL=postgresql://postgres@127.0.0.1:1/unused`, and `NODE_OPTIONS=--import <absolute-path-to-mock-gateway.ts>`. Temporarily select only guest in Next's agents map until authenticated integration compiles; restore the normal map after testing. Do not commit that isolation.

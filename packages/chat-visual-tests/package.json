@@ -18,7 +18,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@uiverify/vitest": "^1.5.0",
-    "eve": "npm:@chat-js/eve@0.61.0-chatjs.0",
+    "eve": "file:../../.eve-upgrade/eve-0.80.1-91a2864b.tgz",
     "motion": "^12.23.24",
     "next": "16.3.0",
     "nuqs": "^2.8.5",

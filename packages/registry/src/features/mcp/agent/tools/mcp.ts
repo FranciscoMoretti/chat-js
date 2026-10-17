@@ -67,15 +67,20 @@ export default defineDynamic({
                 approvalContext
               ),
             response: ({
-              responder,
+              response,
               session,
             }: {
-              readonly responder: Readonly<{ principalId: string }>;
+              readonly response: Readonly<{
+                principal: Readonly<{ principalId: string }>;
+              }>;
               readonly session: Readonly<{
                 initiator: Readonly<{ principalId: string }> | null;
               }>;
             }) => {
-              if (responder.principalId === session.initiator?.principalId) {
+              if (
+                response.principal.principalId ===
+                session.initiator?.principalId
+              ) {
                 return { status: "allowed" };
               }
               return {
