@@ -25,7 +25,6 @@ const INITIAL_STREAM_INDEX = 0;
 const STREAM_EVENT_INCREMENT = 1;
 const STREAM_READ_TIMEOUT_MS = 15_000;
 const MAX_CONCURRENT_USAGE_READS = 4;
-const NO_UNPRICED_SESSIONS = 0;
 
 /**
  * Settle native descendants before admission or erasing a root session.
@@ -282,11 +281,15 @@ const reconcileEveOwnerUsage = async (
   await withManagedUsageReconciliation(
     ownerId,
     async (sweepDue, unpricedSessions: Readonly<ReadonlySet<string>>) => {
-      if (sweepDue || unpricedSessions.size > NO_UNPRICED_SESSIONS) {
-        // Tool receipts may be missing despite a previous successful sweep.
+      if (sweepDue) {
+        // Retry missing tool receipts at the durable sweep interval.
         await reconcileAllOwnerUsage(ownerId, unpricedSessions);
-      } else if (typeof sessionId === "string" && sessionId !== "") {
-        // The conversation receiving new work is never covered by the cooldown.
+      } else if (
+        typeof sessionId === "string" &&
+        sessionId !== "" &&
+        !unpricedSessions.has(sessionId)
+      ) {
+        // Fresh tails remain eligible; unresolved history waits for the next sweep.
         await reconcileEveUsage(ownerId, sessionId);
       }
     }

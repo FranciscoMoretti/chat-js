@@ -229,7 +229,7 @@ it("does not bypass managed reconciliation failures", async () => {
     "Unpriced usage"
   );
 });
-it("replays historical unpriced evidence even when its stream cursor already advanced", async () => {
+it("rate-limits unpriced history, then replays it when the managed sweep is due", async () => {
   mocks.env.VERCEL = "1";
   mocks.bindings.mockResolvedValue([
     { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
@@ -237,6 +237,11 @@ it("replays historical unpriced evidence even when its stream cursor already adv
   mocks.cursor.mockResolvedValue(20);
   mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
     await reconcile(false, new Set(["failed-attempt"]));
+  });
+  await reconcileEveOwnerUsage("owner", "failed-attempt");
+  expect(mocks.read).not.toHaveBeenCalled();
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(true, new Set(["failed-attempt"]));
   });
   await reconcileEveOwnerUsage("owner", "failed-attempt");
   expect(mocks.streamOptions).toHaveBeenCalledWith(
