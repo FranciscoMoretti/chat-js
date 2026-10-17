@@ -38,12 +38,14 @@ import { vendorPatchedPackage } from "./vendor-patched-package";
 const JSON_INDENTATION_SPACES = 2;
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
+  "@mongodb-js/zstd",
   "cbor-extract",
   "electron",
   "electron-winstaller",
   "esbuild",
   "fs-xattr",
   "macos-alias",
+  "node-liblzma",
   "sharp",
 ] as const;
 
@@ -125,13 +127,16 @@ const writePnpmWorkspaceConfig = async (
   options: { readonly blockExoticSubdeps?: boolean } = {}
 ): Promise<void> => {
   const packageLines = ["packages:", "  - ."];
+  const buildPackages = PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) =>
+    name.startsWith("@") ? JSON.stringify(name) : name
+  );
   const pnpm10Lines = [
     "onlyBuiltDependencies:",
-    ...PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) => `  - ${name}`),
+    ...buildPackages.map((name) => `  - ${name}`),
   ];
   const pnpm11Lines = [
     "allowBuilds:",
-    ...PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) => `  ${name}: true`),
+    ...buildPackages.map((name) => `  ${name}: true`),
   ];
   let supplyChainLines: string[] = [];
   if (typeof options.blockExoticSubdeps === "boolean") {

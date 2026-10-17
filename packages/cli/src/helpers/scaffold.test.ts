@@ -604,6 +604,8 @@ describe("scaffoldFromTemplate", (): void => {
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
     expect(workspaceConfig).not.toContain("better-sqlite3");
+    expect(workspaceConfig).toContain('"@mongodb-js/zstd": true');
+    expect(workspaceConfig).toContain("node-liblzma: true");
     expect(workspaceConfig).toContain("cbor-extract: true");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
