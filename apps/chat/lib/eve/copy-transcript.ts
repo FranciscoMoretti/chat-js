@@ -1,6 +1,6 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import {
   FILES_PATH,
   createFileUrl,
@@ -9,7 +9,10 @@ import {
 } from "@/lib/file-url";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import type { EveChannelInput } from "eve/channels/eve";
-import type { ReadonlyEveMessagePart } from "./readonly-message-types";
+import type {
+  ReadonlyEveMessagePart,
+  ReadonlyEveMessageMetadata,
+} from "./readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 import { eveDocumentOperations } from "./document-contracts";
@@ -255,7 +258,7 @@ const transcriptResources = (seed: {
 const copyUserSeedMessage = (message: {
   readonly role: string;
   readonly parts: readonly ReadonlyEveMessagePart[];
-  readonly metadata?: EveMessage["metadata"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
 }): Seed["messages"][number] => {
   const selectedTool = eveMessageTool(message);
   return {
@@ -275,7 +278,7 @@ const copyUserSeedMessage = (message: {
 
 const copyAssistantSeedMessage = (message: {
   readonly parts: readonly ReadonlyEveMessagePart[];
-  readonly metadata?: EveMessage["metadata"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
 }): Seed["messages"][number] => ({
   role: "assistant",
 
@@ -311,7 +314,7 @@ const prepareEveCopyTranscript = (
     (message: {
       readonly role: string;
       readonly parts: readonly ReadonlyEveMessagePart[];
-      readonly metadata?: EveMessage["metadata"];
+      readonly metadata?: ReadonlyEveMessageMetadata;
     }): Seed["messages"][number] => {
       if (message.role === "user") {
         return copyUserSeedMessage(message);

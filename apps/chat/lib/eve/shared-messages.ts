@@ -1,11 +1,11 @@
 import type {
-  EveDynamicToolPart,
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
 import type {
   ReadonlyEveMessage,
+  ReadonlyEveMessageMetadata,
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -25,10 +25,7 @@ interface SharedEveMessage {
 
 const sharedModelId = (
   message: Pick<EveMessage, "role"> & {
-    readonly metadata?: Pick<
-      NonNullable<EveMessage["metadata"]>,
-      "modelId" | "turnId"
-    >;
+    readonly metadata?: Pick<ReadonlyEveMessageMetadata, "modelId" | "turnId">;
   },
   models: Readonly<Pick<ReadonlyMap<string, string>, "get">>
 ): string => {
@@ -48,7 +45,7 @@ const sharedModelId = (
  * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
  */
 const sharedTool = (
-  part: ReadonlyNativeSurface<EveDynamicToolPart>
+  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
 ): EveMessagePart => {
   const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
     {

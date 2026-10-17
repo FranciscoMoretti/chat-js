@@ -28,16 +28,26 @@ type ReadonlyMessagePartData<Value> = Value extends
           }
         : Value;
 
-type ReadonlyEveMessagePart = ReadonlyMessagePartData<EveMessagePart>;
+// Imported transcripts retain model-facing text output without changing native tool parts.
+type ImportedPartMetadata<Part> = Part extends {
+  readonly state: "output-available";
+}
+  ? Part & { readonly outputType?: "text" }
+  : Part;
+type ReadonlyEveMessagePart = ReadonlyMessagePartData<
+  ImportedPartMetadata<EveMessagePart>
+>;
 type ReadonlyEveMessageInput =
   | string
   | readonly Readonly<Exclude<EveMessageInput, string>[number]>[];
 
-// Preserve the full public message shape; JSON namespaces are opaque to rendering readers.
+// Native lifecycle fields plus app-owned imported provenance and display metadata.
+// These fields are not runtime authorization or billing evidence.
 type ReadonlyEveMessageMetadata = Readonly<
   Omit<EveMessageMetadata, "custom">
 > & {
   readonly custom?: Readonly<Record<string, unknown>>;
+  readonly modelId?: string;
 };
 type ReadonlyEveMessage = Readonly<Omit<EveMessage, "parts" | "metadata">> & {
   readonly parts: readonly ReadonlyEveMessagePart[];

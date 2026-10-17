@@ -24,7 +24,13 @@ Research opens a fresh native agent session for each invocation, sends the struc
 
 The six adapter suites pass 74 tests. `bun run --cwd apps/chat test:research:native` passes both native scenarios (adaptive research and active child cancellation). This existing harness copies the production research tool, search progress reader, usage consumer and billing hook into a disposable native worker using the app's exact candidate package. Model responses, document persistence, auth, and search provider are fixture adapters. Two separate search receipts are charged to the owning root turn; orchestration costs zero. Gateway model accounting observation is stubbed because mock models have no real gateway intents. This does not prove production model accounting or full authenticated app startup. Final native log: `native-research-result.txt`.
 
-The actual authenticated source compiler now reports 31 diagnostics, down from 47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
+App-owned imported message fields now retain custom display metadata, model
+provenance and text tool-output semantics independently of native Eve message
+types. The sharing/tool-selection suites pass 17 cases. This changes reader
+types, not native event production or seed acceptance.
+
+The actual authenticated source compiler now reports 21 diagnostics, down from
+31 before the imported metadata type separation, 47 after approval adaptation and 41 after child-session calls. Remaining errors are copy/seed/projection contracts; full repository lint/types remain blocked. No required capability has been removed to make these checks pass.
 
 ## Reproduction
 
