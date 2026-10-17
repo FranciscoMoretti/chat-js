@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 
 import { modelReceiptCost } from "@/lib/eve/model-ledger";
@@ -11,7 +11,6 @@ import { eveConversation, eveUsage } from "./schema";
 
 // Maintenance has no user turn. Never assign it the next EVE turn ID.
 const MAINTENANCE_TURN = "chatjs:maintenance";
-const SINGLE_MATCH = 1;
 const FIRST_MATCH = 0;
 const storedAttempt = z.object({
   eventId: z.string(),
@@ -92,6 +91,9 @@ const readModelIntent = async (attempt: ModelAttempt) => {
 };
 
 const eveModelLedger: ModelLedger = {
+  async authorize(attempt) {
+    await modelBillingIdentity(attempt);
+  },
   async begin(attempt) {
     const identity = await modelBillingIdentity(attempt);
     await recordEveUsage({
@@ -130,17 +132,4 @@ const eveModelLedger: ModelLedger = {
   },
 };
 
-const assertEveModelCostsKnown = async (ownerId: string): Promise<void> => {
-  const unpriced = await db
-    .select({ id: eveUsage.eventId })
-    .from(eveUsage)
-    .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
-    .limit(SINGLE_MATCH);
-  if (unpriced.at(FIRST_MATCH)) {
-    throw new Error(
-      "Model usage needs provider cost reconciliation before starting more work."
-    );
-  }
-};
-
-export { assertEveModelCostsKnown, eveModelLedger };
+export { eveModelLedger };

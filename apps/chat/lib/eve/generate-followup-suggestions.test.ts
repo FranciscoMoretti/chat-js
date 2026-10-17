@@ -34,7 +34,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.feature.enabled = true;
   mocks.model.mockResolvedValue({ model: "unwrapped" });
-  mocks.account.mockResolvedValue({ model: "accounted", modelOptions: {} });
+  mocks.account.mockReturnValue({ model: "accounted", modelOptions: {} });
 });
 it("uses an owned accounting wrapper and returns only display metadata", async () => {
   mocks.generate.mockResolvedValue({ output: { suggestions } });
@@ -51,7 +51,7 @@ it("reports auxiliary failure without failing the answer or logging provider det
   expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
   expect(mocks.logError).toHaveBeenCalledWith(
     { errorType: "Error", sessionId: "session", turnId: "turn" },
-    "Follow-up generation or receipt persistence failed"
+    "Follow-up generation failed"
   );
 });
 it("does not call a provider when disabled, empty, or accounting binding fails", async () => {
@@ -61,7 +61,9 @@ it("does not call a provider when disabled, empty, or accounting binding fails",
   expect(
     await generateEveFollowupSuggestions({ ...exchange, assistant: "" }, scope)
   ).toBeUndefined();
-  mocks.account.mockRejectedValue(new Error("unprepared"));
+  mocks.account.mockImplementation(() => {
+    throw new Error("unprepared");
+  });
   expect(await generateEveFollowupSuggestions(exchange, scope)).toBeUndefined();
   expect(mocks.generate).not.toHaveBeenCalled();
 });

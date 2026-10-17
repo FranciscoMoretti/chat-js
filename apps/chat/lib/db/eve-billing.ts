@@ -376,23 +376,17 @@ const withManagedUsageReconciliation = async (
       const unpricedSessions = await tx
         .selectDistinct({ sessionId: eveUsage.sessionId })
         .from(eveUsage)
-        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)));
+        .where(
+          and(
+            eq(eveUsage.ownerId, ownerId),
+            isNull(eveUsage.costUsd),
+            isNull(eveUsage.modelAttempt)
+          )
+        );
       await reconcile(
         owner.sweepDue,
         new Set(unpricedSessions.map((row) => row.sessionId))
       );
-      // A recorded but unpriced hook must block admission even during the cooldown.
-      const [unpriced] = await tx
-        .select({ id: eveUsage.eventId })
-        .from(eveUsage)
-        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
-        .limit(SINGLE_USAGE_MATCH_LIMIT);
-      const hasUnpricedUsage = Boolean(unpriced);
-      if (hasUnpricedUsage) {
-        throw new Error(
-          "Completed usage needs provider cost reconciliation before starting more work."
-        );
-      }
       if (owner.sweepDue) {
         // The now() function uses transaction start: a long sweep cannot buy another minute of stale evidence.
         await tx

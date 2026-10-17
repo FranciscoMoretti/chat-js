@@ -37,8 +37,7 @@ vi.mock("./client", () => {
   return { db: database };
 });
 vi.mock("../env", () => ({ env: {} }));
-const { eveModelLedger, assertEveModelCostsKnown } =
-  await import("./eve-model-ledger");
+const { eveModelLedger } = await import("./eve-model-ledger");
 const { reserveEveGuestMessage } = await import("./eve-guests");
 const { recordEveUsage } = await import("./eve-billing");
 const { registerEveSubagent } = await import("./eve-subagents");
@@ -110,9 +109,10 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
     {
       async doGenerate() {
         calls += 1;
-        await expect(assertEveModelCostsKnown("owner")).rejects.toThrow(
-          "reconciliation"
+        const pending = await postgres.query(
+          'SELECT count(*)::int AS count FROM "EveUsage" WHERE "costUsd" IS NULL'
         );
+        expect(pending.rows).toEqual([{ count: 1 }]);
         return {
           ...receipt,
           content: [{ text: "summary", type: "text" }],
@@ -173,7 +173,6 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
     'SELECT sum("chargedCents")::int AS cents, count(*)::int AS calls FROM "EveUsage"'
   );
   expect(totals.rows).toEqual([{ calls: 2, cents: 1 }]);
-  await expect(assertEveModelCostsKnown("owner")).resolves.toBeUndefined();
 });
 
 it("settles each distinct descendant attempt against the root turn and reingests receipts once", async () => {
@@ -306,7 +305,7 @@ it("preserves receipt evidence across enrichment and rejects conflicting replay"
   ]);
 });
 
-it("separates maintenance from the next user turn and blocks missing or crash-lost receipts", async () => {
+it("separates maintenance and preserves missing or crash-lost receipts without blocking calls", async () => {
   const maintenance = { ...attempt("maintenance"), turnId: undefined };
   await eveModelLedger.begin(maintenance);
   await eveModelLedger.finish(maintenance, { usage: receipt.usage });
@@ -318,9 +317,7 @@ it("separates maintenance from the next user turn and blocks missing or crash-lo
     meta: { at: "2026-10-12T00:00:00Z", id: "failed-hook" },
     type: "hook.result",
   });
-  await expect(assertEveModelCostsKnown("owner")).rejects.toThrow(
-    "reconciliation"
-  );
+
   const rows = await postgres.query(
     'SELECT "turnId", "costUsd", "modelAttempt"->>\'state\' AS state FROM "EveUsage" WHERE "eventId" = $1',
     [maintenance.eventId]
@@ -331,15 +328,13 @@ it("separates maintenance from the next user turn and blocks missing or crash-lo
   await eveModelLedger.finish(maintenance, receipt);
   const lost = attempt("provider-returned-process-crashed");
   await eveModelLedger.begin(lost);
-  await expect(assertEveModelCostsKnown("owner")).rejects.toThrow(
-    "reconciliation"
-  );
+
   await expect(
     eveModelLedger.finish(attempt("no-intent"), receipt)
   ).rejects.toThrow("no durable intent");
 });
 
-it("blocks stored-guest quota admission on unknown model cost without granting monetary credit", async () => {
+it("admits unknown costs while enforcing stored-guest quota without monetary credit", async () => {
   await postgres.exec(`
     INSERT INTO "user" (id,name,email) VALUES ('guest','guest','guest');
     INSERT INTO "EveGuest" ("ownerId","tokenHash","expiresAt","messageLimit","remainingMessages")
@@ -360,21 +355,22 @@ it("blocks stored-guest quota admission on unknown model cost without granting m
     sessionId: "guest-root",
     turnId: "turn_0",
   });
-  await expect(reserveEveGuestMessage(input)).rejects.toThrow("reconciliation");
-  const quota = await postgres.query(
-    'SELECT "remainingMessages" FROM "EveGuest" WHERE "ownerId" = \'guest\''
-  );
-  expect(quota.rows).toEqual([{ remainingMessages: 5 }]);
-  await recordEveUsage({
-    costUsd: 0,
-    eventId: "guest-unknown",
-    ownerId: "guest",
-    sessionId: "guest-root",
-    turnId: "turn_0",
-  });
   expect(await reserveEveGuestMessage(input)).toMatchObject({
     status: "reserved",
   });
+  const quota = await postgres.query(
+    'SELECT "remainingMessages" FROM "EveGuest" WHERE "ownerId" = \'guest\''
+  );
+  expect(quota.rows).toEqual([{ remainingMessages: 4 }]);
+  await postgres.exec(
+    'UPDATE "EveGuest" SET "remainingMessages" = 0 WHERE "ownerId" = \'guest\''
+  );
+  expect(
+    await reserveEveGuestMessage({
+      ...input,
+      operationId: "00000000-0000-4000-8000-000000000004",
+    })
+  ).toMatchObject({ status: "exhausted" });
   const credit = await postgres.query(
     'SELECT * FROM "UserCredit" WHERE "userId" = \'guest\''
   );

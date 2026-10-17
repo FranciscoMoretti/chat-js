@@ -21,6 +21,7 @@ const model = new MockLanguageModelV4({
 });
 const mocks = vi.hoisted(() => ({
   resolveEveModel: vi.fn(),
+  authorize: vi.fn(),
   begin: vi.fn(),
   finish: vi.fn(),
   logError: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock("./model-accounting", async () => {
     ) => ({
       ...resolved,
       model: wrapEveModel(resolved.model, scope, {
+        authorize: mocks.authorize,
         begin: mocks.begin,
         finish: mocks.finish,
       }),
@@ -107,17 +109,44 @@ it("leaves a rejected provider attempt unpriced without retrying or inventing a 
   expect(failedModel.doGenerateCalls).toHaveLength(1);
 });
 
-it("reports a failed receipt write while keeping suggestions optional", async () => {
+it("returns valid suggestions despite a failed receipt write", async () => {
   mocks.finish.mockRejectedValue(new Error("receipt storage unavailable"));
+  const suggestions = [
+    "What comes next?",
+    "Why does that happen?",
+    "Can you explain more?",
+  ];
+  const successfulModel = new MockLanguageModelV4({
+    doGenerate: vi.fn().mockResolvedValue({
+      content: [{ text: JSON.stringify({ suggestions }), type: "text" }],
+      finishReason: { raw: "stop", unified: "stop" },
+      providerMetadata: { gateway: { cost: "0.001" } },
+      usage: {
+        inputTokens: { total: 1, noCache: 1 },
+        outputTokens: { total: 1, text: 1 },
+      },
+      warnings: [],
+    }),
+  });
+  mocks.resolveEveModel.mockResolvedValue({
+    model: successfulModel,
+    modelOptions: {},
+  });
   expect(
     await generateEveFollowupSuggestions(
       { assistant: "Because.", user: "Why?" },
       { ownerId: "owner", sessionId: "session", turnId: "turn" }
     )
-  ).toBeUndefined();
+  ).toEqual({ responseMetadata: { suggestions } });
+  expect(successfulModel.doGenerateCalls).toHaveLength(1);
   expect(mocks.finish).toHaveBeenCalledOnce();
   expect(mocks.logError).toHaveBeenCalledWith(
-    { errorType: "Error", sessionId: "session", turnId: "turn" },
-    "Follow-up generation or receipt persistence failed"
+    expect.objectContaining({
+      errorType: "error",
+      stage: "receipt",
+      sessionId: "session",
+      turnId: "turn",
+    }),
+    "Eve accounting requires review"
   );
 });

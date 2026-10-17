@@ -1,4 +1,3 @@
-import { assertEveModelCostsKnown } from "@/lib/db/eve-model-ledger";
 import { Client } from "eve/client";
 import {
   advanceEveSubagentUsageCursor,
@@ -20,6 +19,7 @@ import { ingestEveUsage } from "./usage";
 import { listEveOwnerBindings } from "@/lib/db/eve-queries";
 import { recoverEveCreations } from "./recover-creations";
 import { resolveWorkflowWorld } from "./world-config";
+import { tryEveAccountingWrite } from "./accounting-log";
 
 const INITIAL_STREAM_INDEX = 0;
 const STREAM_EVENT_INCREMENT = 1;
@@ -94,7 +94,17 @@ const reconcileEveSubagentUsage = async (
       unresolved = true;
     } else if (childIndex > start) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
-      await advanceEveSubagentUsageCursor(ownerId, child.sessionId, childIndex);
+      await tryEveAccountingWrite(
+        { ownerId, sessionId: child.sessionId },
+        "cursor",
+        async () => {
+          await advanceEveSubagentUsageCursor(
+            ownerId,
+            child.sessionId,
+            childIndex
+          );
+        }
+      );
     }
   }
   return !unresolved;
@@ -143,12 +153,13 @@ const reconcileEveUsage = async (
     await ingestEveActivity(ownerId, sessionId, latestActivity);
   }
   if (unresolved) {
-    throw new Error(
-      "Completed usage needs provider cost reconciliation before starting more work."
-    );
+    // Keep replay available for missing tool receipts without blocking admission.
+    return;
   }
   if (streamIndex > startIndex) {
-    await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
+    await tryEveAccountingWrite({ ownerId, sessionId }, "cursor", async () => {
+      await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
+    });
   }
 };
 
@@ -264,7 +275,6 @@ const reconcileEveOwnerUsage = async (
   await recoverEveCreations(ownerId);
   if (resolveWorkflowWorld(env) !== "vercel") {
     await reconcileAllOwnerUsage(ownerId);
-    await assertEveModelCostsKnown(ownerId);
     return;
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
@@ -281,7 +291,6 @@ const reconcileEveOwnerUsage = async (
       }
     }
   );
-  await assertEveModelCostsKnown(ownerId);
 };
 
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };

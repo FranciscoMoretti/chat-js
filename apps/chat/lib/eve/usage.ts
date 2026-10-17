@@ -5,6 +5,10 @@ import { registerEveSubagent } from "@/lib/db/eve-subagents";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
+import {
+  reportEveAccountingIssue,
+  tryEveAccountingWrite,
+} from "./accounting-log";
 
 /** Native evidence fields consumed by billing; tool output stays unknown until receipt validation. */
 interface UsageEventData {
@@ -71,14 +75,26 @@ const ingestToolUsage = async (
     return true;
   }
   const recordedCost = result.success ? result.data.usage.costUsd : undefined;
-  return await recordEveUsage({
-    costUsd:
-      event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
+  const scope = {
     eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
     ownerId,
     sessionId: billingSession,
     turnId: attribution?.turnId ?? event.data.turnId,
-  });
+  };
+  const priced = await tryEveAccountingWrite(
+    scope,
+    "tool-receipt",
+    async () =>
+      await recordEveUsage({
+        costUsd:
+          event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
+        ...scope,
+      })
+  );
+  if (priced === false) {
+    reportEveAccountingIssue(scope, "missing-cost");
+  }
+  return priced ?? false;
 };
 
 /** Returns whether this event permits the usage cursor to advance. Unpriced completed calls return false. */

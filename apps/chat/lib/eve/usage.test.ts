@@ -5,9 +5,15 @@ import type { recordEveUsage } from "../db/eve-billing";
 import { ingestEveUsage } from "./usage";
 
 const record = vi.hoisted(() => vi.fn<typeof recordEveUsage>());
+const logError = vi.hoisted(() => vi.fn());
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: logError }),
+}));
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
-beforeEach(() => record.mockReset());
+beforeEach(() => {
+  record.mockReset();
+});
 it.each([
   "hook.result",
   "step.completed",
@@ -99,6 +105,34 @@ it("requires reconciliation for unpriced tool executions", async () => {
     sessionId: "session",
     turnId: "turn_1",
   });
+});
+
+it("retains replay eligibility and logs tool receipt storage failure without failing work", async () => {
+  record.mockRejectedValue(new Error("private storage connection string"));
+  logError.mockClear();
+  const event = toolEvent({
+    kind: "chatjs.tool-result",
+    version: 1,
+    status: "success",
+    output: null,
+    usage: { costUsd: 0.02 },
+  });
+  expect(await ingestEveUsage("owner", "session", event)).toBe(false);
+  expect(record).toHaveBeenCalledOnce();
+  expect(logError).toHaveBeenCalledWith(
+    {
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn_1",
+      eventId: "eve-tool:session:call-external",
+      stage: "tool-receipt",
+      errorType: "error",
+    },
+    "Eve accounting requires review"
+  );
+  expect(JSON.stringify(logError.mock.calls)).not.toContain(
+    "connection string"
+  );
 });
 
 it.each([{}, { costUsd: -1 }])(

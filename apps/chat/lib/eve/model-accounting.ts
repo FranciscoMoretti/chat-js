@@ -3,11 +3,8 @@ import type { MessageStreamEvent } from "eve/client";
 import { defineState } from "eve/context";
 import { z } from "zod";
 
-import {
-  assertEveModelCostsKnown,
-  eveModelLedger,
-} from "@/lib/db/eve-model-ledger";
-import { getEveSubagent, registerEveSubagent } from "@/lib/db/eve-subagents";
+import { eveModelLedger } from "@/lib/db/eve-model-ledger";
+import { registerEveSubagent } from "@/lib/db/eve-subagents";
 
 import { resolveEveConversationScope } from "./conversation-scope";
 import { wrapEveModel } from "./model-ledger";
@@ -66,22 +63,13 @@ const observeEveModelAccounting = (
   }
 };
 
-const accountEveModel = async (
+const accountEveModel = (
   resolved: Awaited<ReturnType<typeof resolveEveModel>>,
   scope: ModelCallScope
-): Promise<Awaited<ReturnType<typeof resolveEveModel>>> => {
-  const child = await getEveSubagent(scope.ownerId, scope.sessionId);
-  if (
-    typeof child?.rootSessionId !== "string" &&
-    typeof scope.turnId !== "string"
-  ) {
-    await assertEveModelCostsKnown(scope.ownerId);
-  }
-  return {
-    ...resolved,
-    model: wrapEveModel(resolved.model, scope, eveModelLedger),
-  };
-};
+): Awaited<ReturnType<typeof resolveEveModel>> => ({
+  ...resolved,
+  model: wrapEveModel(resolved.model, scope, eveModelLedger),
+});
 const resolveAccountedEveModel = async (
   requestedId: string | undefined,
   rawEvent: unknown,
@@ -111,7 +99,7 @@ const resolveAccountedEveModel = async (
         context.abortSignal ?? AbortSignal.timeout(BINDING_TIMEOUT_MS),
         context.session.auth.initiator?.attributes.chatjsReservationId
       ));
-  return await accountEveModel(await resolveEveModel(requestedId), {
+  return accountEveModel(await resolveEveModel(requestedId), {
     ownerId,
     sessionId: context.session.id,
     ...(state.openTurns.includes(event.data.turnId)

@@ -134,3 +134,18 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
+
+test("still rejects a known insufficient balance before dispatch", async () => {
+  mocks.canSpend.mockResolvedValue(false);
+  const response = await POST(
+    request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
+    {
+      params: Promise.resolve({ path: ["v1", "session", "native"] }),
+    }
+  );
+  expect(response.status).toBe(402);
+  expect(await response.json()).toMatchObject({
+    error: "Insufficient credits",
+  });
+  expect(mocks.eveRequest).not.toHaveBeenCalled();
+});

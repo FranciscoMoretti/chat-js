@@ -1,4 +1,4 @@
-import { and, eq, isNull, or, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
 import { randomUUID } from "node:crypto";
@@ -10,7 +10,6 @@ import {
   eveGuest,
   eveGuestMessage,
   eveGuestRate,
-  eveUsage,
   user,
 } from "./schema";
 
@@ -282,16 +281,6 @@ const reserveMessage = async (
       reservationId: existing.reservationId,
       status: "replay",
     } as const;
-  }
-  const unpriced = await tx
-    .select({ id: eveUsage.eventId })
-    .from(eveUsage)
-    .where(and(eq(eveUsage.ownerId, input.ownerId), isNull(eveUsage.costUsd)))
-    .limit(SINGLE_REQUEST);
-  if (unpriced.at(0)) {
-    throw new Error(
-      "Model accounting needs reconciliation before starting more work."
-    );
   }
   if (guest.remainingMessages === EMPTY_QUOTA) {
     return { status: "exhausted" } as const;

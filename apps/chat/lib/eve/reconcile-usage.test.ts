@@ -23,11 +23,6 @@ const mocks = vi.hoisted(() => ({
   recover: vi.fn(),
   streamOptions: vi.fn(),
 }));
-vi.mock("../db/eve-model-ledger", () => ({
-  assertEveModelCostsKnown: vi.fn(async () => {
-    await Promise.resolve();
-  }),
-}));
 vi.mock("../db/eve-subagents", () => ({
   advanceEveSubagentUsageCursor: mocks.advanceChild,
   getEveSubagent: mocks.child,
@@ -289,7 +284,7 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
   expect(mocks.advanceChild).toHaveBeenCalledWith("owner", "child", 3);
 });
 
-it("blocks admission without advancing child progress when a completed child charge remains unknown", async () => {
+it("admits work without advancing child progress when a completed child charge remains unknown", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 0 },
   ]);
@@ -326,9 +321,7 @@ it("blocks admission without advancing child progress when a completed child cha
     },
   ]);
   mocks.ingest.mockResolvedValue(false);
-  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
-    "Completed usage needs provider cost reconciliation"
-  );
+  await expect(reconcileEveOwnerUsage("owner")).resolves.toBeUndefined();
   expect(mocks.advanceChild).not.toHaveBeenCalled();
 });
 it("settles newly discovered descendants before admitting the next turn", async () => {

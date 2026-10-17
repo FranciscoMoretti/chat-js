@@ -6,7 +6,10 @@ import type {
 import { wrapLanguageModel } from "ai";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { createModuleLogger } from "@/lib/logger";
+import {
+  reportEveAccountingIssue,
+  tryEveAccountingWrite,
+} from "./accounting-log";
 
 interface ModelCallScope {
   readonly ownerId: string;
@@ -40,6 +43,8 @@ type ModelResponse = Readonly<
 >;
 
 interface ModelLedger {
+  // Ownership is required even when accounting storage is best-effort.
+  readonly authorize: (attempt: ModelAttempt) => Promise<void>;
   readonly observe?: (
     attempt: ModelAttempt,
     response: ModelResponse
@@ -54,17 +59,34 @@ interface ModelLedger {
 // A wrapper is scoped to a single resolved session/turn. Refuse accidental nesting.
 const MINIMUM_COST = 0;
 const accountedModels = new WeakSet<LanguageModelV4>();
-const log = createModuleLogger("eve.model-ledger");
+
+const modelReceiptCost = (receipt: ModelReceipt): number | undefined => {
+  const raw = receipt.providerMetadata?.gateway?.cost;
+  const cost =
+    typeof raw === "number" || (typeof raw === "string" && raw.trim() !== "")
+      ? Number(raw)
+      : Number.NaN;
+  return Number.isFinite(cost) && cost >= MINIMUM_COST ? cost : undefined;
+};
 
 const receiptStream = (
   stream: ReadableStream<LanguageModelV4StreamPart>,
   finish: (receipt: ModelReceipt) => Promise<void>,
-  observe: (response: ModelResponse) => Promise<void>
+  observe: (response: ModelResponse) => Promise<void>,
+  missingReceipt: () => void
 ): ReadableStream<LanguageModelV4StreamPart> => {
   const reader = stream.getReader();
   let finished = false;
   let response: ModelResponse | undefined;
+  let reportedMissing = false;
+  const reportMissing = (): void => {
+    if (!finished && !reportedMissing) {
+      reportedMissing = true;
+      missingReceipt();
+    }
+  };
   const cancel = async (reason: unknown): Promise<void> => {
+    reportMissing();
     try {
       await reader.cancel(reason);
     } finally {
@@ -82,6 +104,7 @@ const receiptStream = (
         try {
           const next = await reader.read();
           if (next.done) {
+            reportMissing();
             reader.releaseLock();
             controller.close();
             return;
@@ -89,15 +112,7 @@ const receiptStream = (
           if (next.value.type === "response-metadata") {
             const { id, modelId, timestamp } = next.value;
             response = { id, modelId, timestamp };
-            try {
-              await observe(response);
-            } catch (error) {
-              // Keep consuming: the final receipt can still persist this evidence.
-              log.error(
-                { errorType: error instanceof Error ? error.name : "unknown" },
-                "Could not persist early model response metadata"
-              );
-            }
+            await observe(response);
           }
           if (next.value.type === "finish") {
             if (finished) {
@@ -112,7 +127,7 @@ const receiptStream = (
           try {
             await cancel(error);
           } catch {
-            // Preserve the original provider/storage error when cancellation also fails.
+            // Preserve the original provider error when cancellation also fails.
           }
         }
       },
@@ -129,6 +144,17 @@ const wrapEveModel = (
   if (accountedModels.has(model)) {
     throw new Error("A model must have exactly one accounting wrapper.");
   }
+  const finish = async (
+    attempt: ModelAttempt,
+    receipt: ModelReceipt
+  ): Promise<void> => {
+    if (modelReceiptCost(receipt) === undefined) {
+      reportEveAccountingIssue(attempt, "missing-cost");
+    }
+    await tryEveAccountingWrite(attempt, "receipt", async () => {
+      await ledger.finish(attempt, receipt);
+    });
+  };
   const begin = async (): Promise<ModelAttempt> => {
     const attempt = {
       ...scope,
@@ -136,7 +162,10 @@ const wrapEveModel = (
       modelId: model.modelId,
       provider: model.provider,
     };
-    await ledger.begin(attempt);
+    await ledger.authorize(attempt);
+    await tryEveAccountingWrite(attempt, "intent", async () => {
+      await ledger.begin(attempt);
+    });
     return attempt;
   };
   const wrapped = wrapLanguageModel({
@@ -144,11 +173,16 @@ const wrapEveModel = (
       specificationVersion: "v4",
       async wrapGenerate({ doGenerate }) {
         const attempt = await begin();
-        const result = await doGenerate();
-        // Persist before the SDK parses structured output or EVE validates a summary.
+        const result = await Promise.resolve()
+          .then(doGenerate)
+          .catch((error: unknown) => {
+            reportEveAccountingIssue(attempt, "missing-receipt");
+            throw error;
+          });
+        // Attempt persistence before the SDK parses output or EVE validates a summary.
         // Generate already has the response and receipt; persist them atomically.
         const { response } = result;
-        await ledger.finish(attempt, {
+        await finish(attempt, {
           ...result,
           ...(response === undefined
             ? {}
@@ -164,16 +198,26 @@ const wrapEveModel = (
       },
       async wrapStream({ doStream }) {
         const attempt = await begin();
-        const result = await doStream();
+        const result = await Promise.resolve()
+          .then(doStream)
+          .catch((error: unknown) => {
+            reportEveAccountingIssue(attempt, "missing-receipt");
+            throw error;
+          });
         return {
           ...result,
           stream: receiptStream(
             result.stream,
             async (receipt) => {
-              await ledger.finish(attempt, receipt);
+              await finish(attempt, receipt);
             },
             async (response) => {
-              await ledger.observe?.(attempt, response);
+              await tryEveAccountingWrite(attempt, "response", async () => {
+                await ledger.observe?.(attempt, response);
+              });
+            },
+            () => {
+              reportEveAccountingIssue(attempt, "missing-receipt");
             }
           ),
         };
@@ -183,15 +227,6 @@ const wrapEveModel = (
   });
   accountedModels.add(wrapped);
   return wrapped;
-};
-
-const modelReceiptCost = (receipt: ModelReceipt): number | undefined => {
-  const raw = receipt.providerMetadata?.gateway?.cost;
-  const cost =
-    typeof raw === "number" || (typeof raw === "string" && raw.trim() !== "")
-      ? Number(raw)
-      : Number.NaN;
-  return Number.isFinite(cost) && cost >= MINIMUM_COST ? cost : undefined;
 };
 
 export { modelReceiptCost, wrapEveModel };

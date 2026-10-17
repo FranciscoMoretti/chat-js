@@ -11,7 +11,7 @@ import { resolveEveModel } from "./model-selection";
 const FOLLOWUP_TIMEOUT_MS = 15_000;
 const log = createModuleLogger("eve.followup-suggestions");
 
-/** Auxiliary receipts are durable before output parsing; suggestion failure never fails the answer. */
+/** Attempt receipt persistence before parsing; optional suggestions never fail the answer. */
 export const generateEveFollowupSuggestions = async (
   context: FollowupContext,
   scope: ModelCallScope
@@ -23,10 +23,7 @@ export const generateEveFollowupSuggestions = async (
   }
   const modelId = config.ai.tools.followupSuggestions.default;
   try {
-    const resolved = await accountEveModel(
-      await resolveEveModel(modelId),
-      scope
-    );
+    const resolved = accountEveModel(await resolveEveModel(modelId), scope);
     const result = await generateText({
       model: resolved.model,
       ...resolved.modelOptions,
@@ -45,7 +42,7 @@ export const generateEveFollowupSuggestions = async (
       ],
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
-    // Usage is captured before reading output: malformed JSON can still cost money.
+    // Receipt capture precedes output parsing: malformed JSON can still cost money.
     return {
       responseMetadata: eveFollowupSuggestions.parse(result.output),
     };
@@ -56,7 +53,7 @@ export const generateEveFollowupSuggestions = async (
         sessionId: scope.sessionId,
         turnId: scope.turnId,
       },
-      "Follow-up generation or receipt persistence failed"
+      "Follow-up generation failed"
     );
     return undefined;
   }

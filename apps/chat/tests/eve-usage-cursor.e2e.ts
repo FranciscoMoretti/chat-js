@@ -8,14 +8,12 @@ import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   recordEveUsage,
+  withManagedUsageReconciliation,
 } from "../lib/db/eve-billing";
 import { createEveConversation } from "../lib/db/eve-queries";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
-import {
-  assertEveModelCostsKnown,
-  eveModelLedger,
-} from "../lib/db/eve-model-ledger";
+import { eveModelLedger } from "../lib/db/eve-model-ledger";
 import { createToolResult } from "../lib/eve/tool-result";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -160,9 +158,11 @@ test("missing tool cost blocks cursor advancement until its exact receipt is rec
       yield event;
     }
   });
-  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-    "provider cost reconciliation"
-  );
+  await expect(reconcileEveUsage(owner, id)).resolves.toBeUndefined();
+  await withManagedUsageReconciliation(owner, async (_due, unpriced) => {
+    expect(unpriced.has(id)).toBe(true);
+    await Promise.resolve();
+  });
   expect(await getEveUsageCursor(owner, id)).toBe(0);
   await recordEveUsage({
     costUsd: 0.03,
@@ -199,7 +199,7 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
   );
 });
 
-test("unpriced model attempts block admission independently of the event cursor", async () => {
+test("unpriced model attempts remain durable while later work continues", async () => {
   const id = await session();
   const attempt = {
     eventId: crypto.randomUUID(),
@@ -219,9 +219,21 @@ test("unpriced model attempts block admission independently of the event cursor"
   });
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
-  await expect(assertEveModelCostsKnown(owner)).rejects.toThrow(
-    "provider cost reconciliation"
-  );
+  await eveModelLedger.begin({
+    ...attempt,
+    eventId: crypto.randomUUID(),
+    turnId: "turn_1",
+  });
+  const [unpriced] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, attempt.eventId));
+  expect(unpriced.costUsd).toBeNull();
+  await withManagedUsageReconciliation(owner, async (_due, toolSessions) => {
+    // Runtime replay can repair tool receipts, not application-owned model intents.
+    expect(toolSessions.has(id)).toBe(false);
+    await Promise.resolve();
+  });
   await eveModelLedger.finish(attempt, {
     usage: {
       inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -229,5 +241,9 @@ test("unpriced model attempts block admission independently of the event cursor"
     },
     providerMetadata: { gateway: { cost: "0.001" } },
   });
-  await expect(assertEveModelCostsKnown(owner)).resolves.toBeUndefined();
+  const [settled] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, attempt.eventId));
+  expect(settled.costUsd).toBe("0.001000000000");
 });

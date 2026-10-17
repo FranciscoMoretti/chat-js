@@ -11,6 +11,11 @@ import { z } from "zod";
 import { modelReceiptCost, wrapEveModel } from "./model-ledger";
 import type { ModelLedger } from "./model-ledger";
 
+const logError = vi.hoisted(() => vi.fn());
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: logError }),
+}));
+
 const scope = { ownerId: "owner", sessionId: "session", turnId: "turn_1" };
 const result: LanguageModelV4GenerateResult = {
   content: [{ text: "invalid JSON", type: "text" }],
@@ -23,6 +28,9 @@ const result: LanguageModelV4GenerateResult = {
   warnings: [],
 };
 const ledger = (): ModelLedger => ({
+  authorize: vi.fn(async () => {
+    await Promise.resolve();
+  }),
   begin: vi.fn(async () => {
     /* Durable intent mock */
     await Promise.resolve();
@@ -61,14 +69,64 @@ it("records cost before structured-output validation rejects a paid response", a
   );
 });
 
-it("fails closed before the provider when intent persistence fails", async () => {
+it("continues once when intent persistence fails", async () => {
   const store = ledger();
   const generate = vi.fn(async () => await Promise.resolve(result));
   vi.mocked(store.begin).mockRejectedValue(new Error("storage unavailable"));
   await expect(
     wrapEveModel(model(generate), scope, store).doGenerate({ prompt: [] })
-  ).rejects.toThrow("storage unavailable");
+  ).resolves.toEqual(result);
+  expect(generate).toHaveBeenCalledOnce();
+  expect(store.finish).toHaveBeenCalledOnce();
+});
+
+it("preserves ownership failures before provider execution", async () => {
+  const store = ledger();
+  const denied = new Error("owner mismatch");
+  vi.mocked(store.authorize).mockRejectedValue(denied);
+  const generate = vi.fn(async () => await Promise.resolve(result));
+  await expect(
+    wrapEveModel(model(generate), scope, store).doGenerate({ prompt: [] })
+  ).rejects.toBe(denied);
+  expect(store.begin).not.toHaveBeenCalled();
   expect(generate).not.toHaveBeenCalled();
+});
+
+it("logs missing cost without inventing a zero receipt or exposing provider data", async () => {
+  logError.mockClear();
+  const store = ledger();
+  const unpriced = {
+    ...result,
+    providerMetadata: { private: { secret: "never-log-me" } },
+  };
+  const generate = vi.fn(async () => await Promise.resolve(unpriced));
+  const wrapped = wrapEveModel(model(generate), scope, store);
+  await wrapped.doGenerate({ prompt: [] });
+  await wrapped.doGenerate({ prompt: [] });
+  expect(generate).toHaveBeenCalledTimes(2);
+  expect(store.finish).toHaveBeenCalledWith(
+    expect.objectContaining(scope),
+    unpriced
+  );
+  expect(logError).toHaveBeenCalledWith(
+    expect.objectContaining({ ...scope, stage: "missing-cost" }),
+    "Eve accounting requires review"
+  );
+  expect(JSON.stringify(logError.mock.calls)).not.toContain("never-log-me");
+});
+
+it("preserves provider rejection even when intent storage also fails", async () => {
+  const store = ledger();
+  vi.mocked(store.begin).mockRejectedValue(new Error("storage"));
+  const failure = new Error("provider business failure");
+  const generate = vi
+    .fn(async () => await Promise.resolve(result))
+    .mockRejectedValue(failure);
+  await expect(
+    wrapEveModel(model(generate), scope, store).doGenerate({ prompt: [] })
+  ).rejects.toBe(failure);
+  expect(generate).toHaveBeenCalledOnce();
+  expect(store.finish).not.toHaveBeenCalled();
 });
 
 it("gives retries distinct intents and does not fabricate a zero-cost receipt for failures", async () => {
@@ -205,7 +263,7 @@ it("leaves an intent unresolved on stream errors and rejected receipt writes", a
   vi.mocked(store.finish).mockRejectedValue(new Error("lost receipt"));
   await expect(
     wrapEveModel(model(), scope, store).doGenerate({ prompt: [] })
-  ).rejects.toThrow("lost receipt");
+  ).resolves.toEqual(result);
   expect(store.begin).toHaveBeenCalledTimes(2);
 });
 
@@ -293,41 +351,55 @@ it("persists generated response identifiers and cost in one receipt write", asyn
   });
 });
 
-it("retains the final cost receipt after an early metadata write fails", async () => {
-  const store = {
-    ...ledger(),
-    observe: vi.fn().mockRejectedValue(new Error("transient storage failure")),
-  };
-  const response = { id: "stream-id", modelId: "mock", timestamp: new Date() };
-  const finish: LanguageModelV4StreamPart = {
-    type: "finish",
-    finishReason: result.finishReason,
-    usage: result.usage,
-    providerMetadata: result.providerMetadata,
-  };
-  const provider: LanguageModelV4 = {
-    ...model(),
-    doStream: async () =>
-      await Promise.resolve({
-        stream: new ReadableStream<LanguageModelV4StreamPart>({
-          start(controller) {
-            controller.enqueue({ ...response, type: "response-metadata" });
-            controller.enqueue(finish);
-            controller.close();
-          },
+it.each([false, true])(
+  "delivers stream completion after metadata failure, receipt failure=%s",
+  async (receiptFailure) => {
+    const store = {
+      ...ledger(),
+      observe: vi
+        .fn()
+        .mockRejectedValue(new Error("transient storage failure")),
+    };
+    if (receiptFailure) {
+      vi.mocked(store.finish).mockRejectedValue(
+        new Error("receipt unavailable")
+      );
+    }
+    const response = {
+      id: "stream-id",
+      modelId: "mock",
+      timestamp: new Date(),
+    };
+    const finish: LanguageModelV4StreamPart = {
+      type: "finish",
+      finishReason: result.finishReason,
+      usage: result.usage,
+      providerMetadata: result.providerMetadata,
+    };
+    const provider: LanguageModelV4 = {
+      ...model(),
+      doStream: async () =>
+        await Promise.resolve({
+          stream: new ReadableStream<LanguageModelV4StreamPart>({
+            start(controller) {
+              controller.enqueue({ ...response, type: "response-metadata" });
+              controller.enqueue(finish);
+              controller.close();
+            },
+          }),
         }),
-      }),
-  };
-  const streamed = await wrapEveModel(provider, scope, store).doStream({
-    prompt: [],
-  });
-  const reader = streamed.stream.getReader();
-  await reader.read();
-  expect(await reader.read()).toEqual({ done: false, value: finish });
-  expect(store.finish).toHaveBeenCalledWith(expect.objectContaining(scope), {
-    ...finish,
-    response,
-  });
-  const end = await reader.read();
-  expect(end.done).toBe(true);
-});
+    };
+    const streamed = await wrapEveModel(provider, scope, store).doStream({
+      prompt: [],
+    });
+    const reader = streamed.stream.getReader();
+    await reader.read();
+    expect(await reader.read()).toEqual({ done: false, value: finish });
+    expect(store.finish).toHaveBeenCalledWith(expect.objectContaining(scope), {
+      ...finish,
+      response,
+    });
+    const end = await reader.read();
+    expect(end.done).toBe(true);
+  }
+);

@@ -7,7 +7,7 @@ import {
 } from "./model-accounting";
 
 const mocks = vi.hoisted(() => ({
-  assertKnown: vi.fn(),
+  authorize: vi.fn(),
   begin: vi.fn(),
   child: vi.fn(),
   finish: vi.fn(),
@@ -33,8 +33,11 @@ vi.mock("eve/context", () => ({
   },
 }));
 vi.mock("../db/eve-model-ledger", () => ({
-  assertEveModelCostsKnown: mocks.assertKnown,
-  eveModelLedger: { begin: mocks.begin, finish: mocks.finish },
+  eveModelLedger: {
+    authorize: mocks.authorize,
+    begin: mocks.begin,
+    finish: mocks.finish,
+  },
 }));
 vi.mock("../db/eve-subagents", () => ({
   getEveSubagent: mocks.child,
@@ -173,12 +176,9 @@ it("fails closed before resolving a provider when the lifecycle or ownership bin
   expect(mocks.begin).not.toHaveBeenCalled();
 });
 
-it("blocks manual compaction after an unresolved receipt", async () => {
-  mocks.assertKnown.mockRejectedValue(
-    new Error("provider cost reconciliation")
-  );
-  await expect(
-    resolveAccountedEveModel("selected", step, context)
-  ).rejects.toThrow("reconciliation");
-  expect(mocks.begin).not.toHaveBeenCalled();
+it("authorizes maintenance without querying prior costs", async () => {
+  const manual = await resolveAccountedEveModel("selected", step, context);
+  await manual.model.doGenerate({ prompt: [] });
+  expect(mocks.authorize).toHaveBeenCalledOnce();
+  expect(mocks.begin).toHaveBeenCalledOnce();
 });
