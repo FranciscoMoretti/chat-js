@@ -1,0 +1,409 @@
+{
+  "eve": "0.80.1",
+  "app": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/eve080-consumers-CmIlF5",
+  "audit": [
+    {
+      "kind": "mcp",
+      "phase": "request",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V00XFGE370H1KGPZ619AX",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "request",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V00XFGE370H1KGPZ619AX",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "execute",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V00XFGE370H1KGPZ619AX",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        },
+        "approval": {
+          "responder": {
+            "principalId": "owner",
+            "principalType": "user",
+            "authenticator": "consumer-fixture",
+            "attributes": {}
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "request",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V016V66D14F4JWAAHMGWT",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "request",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V016V66D14F4JWAAHMGWT",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "request",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01BEEVB4X3100K0GG43A",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "mcp",
+      "phase": "execute",
+      "input": {
+        "text": "original"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01BEEVB4X3100K0GG43A",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "deletion",
+      "phase": "request",
+      "input": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "expectedRevisionId": "00000000-0000-4000-8000-000000000002",
+        "title": "Document"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01EFPZ7XXV4BGRG30P37",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "deletion",
+      "phase": "request",
+      "input": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "expectedRevisionId": "00000000-0000-4000-8000-000000000002",
+        "title": "Document"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01EFPZ7XXV4BGRG30P37",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "deletion",
+      "phase": "execute",
+      "input": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "expectedRevisionId": "00000000-0000-4000-8000-000000000002",
+        "title": "Document"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01EFPZ7XXV4BGRG30P37",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        },
+        "approval": {
+          "responder": {
+            "principalId": "owner",
+            "principalType": "user",
+            "authenticator": "consumer-fixture",
+            "attributes": {}
+          }
+        }
+      }
+    },
+    {
+      "kind": "deletion",
+      "phase": "request",
+      "input": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "expectedRevisionId": "00000000-0000-4000-8000-000000000002",
+        "title": "Document"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01JH65TMMAPBAE2F8ZDY",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "deletion",
+      "phase": "request",
+      "input": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "expectedRevisionId": "00000000-0000-4000-8000-000000000002",
+        "title": "Document"
+      },
+      "context": {
+        "callId": "mock-tool-call-1-0-1",
+        "session": {
+          "id": "wrun_01M54V01JH65TMMAPBAE2F8ZDY",
+          "auth": {
+            "current": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            },
+            "initiator": {
+              "principalId": "owner",
+              "principalType": "user",
+              "authenticator": "consumer-fixture",
+              "attributes": {}
+            }
+          },
+          "turn": {
+            "id": "turn_0",
+            "sequence": 0
+          }
+        }
+      }
+    }
+  ],
+  "failures": [
+    "MCP connector is unavailable.",
+    "MCP tools require an owner approval receipt.",
+    "Document changed. Read it again before requesting deletion."
+  ]
+}

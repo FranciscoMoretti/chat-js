@@ -1,0 +1,47 @@
+--- a/apps/chat/agent/tools/mcp.ts
++++ b/apps/chat/agent/tools/mcp.ts
+@@ -67,15 +67,15 @@
+                 approvalContext
+               ),
+             response: ({
+-              responder,
++              response,
+               session,
+             }: {
+-              readonly responder: Readonly<{ principalId: string }>;
++              readonly response: Readonly<{ principal: Readonly<{ principalId: string }> }>;
+               readonly session: Readonly<{
+                 initiator: Readonly<{ principalId: string }> | null;
+               }>;
+             }) => {
+-              if (responder.principalId === session.initiator?.principalId) {
++              if (response.principal.principalId === session.initiator?.principalId) {
+                 return { status: "allowed" };
+               }
+               return {
+--- a/apps/chat/tools/chatjs/delete-document/tool.ts
++++ b/apps/chat/tools/chatjs/delete-document/tool.ts
+@@ -13,10 +13,10 @@
+   }
+ >;
+ type DeleteDocumentPrincipal = Readonly<
+-  Pick<ApprovalResponseContext<DeleteDocumentInput>["responder"], "principalId">
++  Pick<ApprovalResponseContext<DeleteDocumentInput>["response"]["principal"], "principalId">
+ >;
+ type DeleteDocumentResponseContext = Readonly<
+-  Pick<ApprovalResponseContext<DeleteDocumentInput>, "responder"> & {
++  Pick<ApprovalResponseContext<DeleteDocumentInput>, "response"> & {
+     session: Readonly<{
+       initiator: DeleteDocumentPrincipal | null;
+     }>;
+@@ -27,8 +27,8 @@
+   approval: {
+     request: async (context: DeleteDocumentRequestContext) =>
+       await requestDocumentDeletion(context.toolInput, context),
+-    response: ({ responder, session }: DeleteDocumentResponseContext) => {
+-      if (responder.principalId === (session.initiator ?? {}).principalId) {
++    response: ({ response, session }: DeleteDocumentResponseContext) => {
++      if (response.principal.principalId === (session.initiator ?? {}).principalId) {
+         return { status: "allowed" };
+       }
+       return {
