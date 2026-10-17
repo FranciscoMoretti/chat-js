@@ -1,0 +1,9 @@
+{
+  "eve": "0.80.1",
+  "node": "24.20.0",
+  "host": "http://127.0.0.1:56410",
+  "sessionId": "wrun_01M54T6Z4E0344015PZV381R2V",
+  "app": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/eve080-stream-UDyunA",
+  "passed": true,
+  "scope": "Actual GET handler and relay; fixture principal/database/transport routing; real native HTTP backend. No full app pin or deployment."
+}
