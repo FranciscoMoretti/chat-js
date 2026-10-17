@@ -30,7 +30,9 @@ if (
 }
 const manifestPaths = [
   "apps/chat/package.json",
+  "apps/chat/guest/package.json",
   "apps/chat/tests/eve-fixture/package.json",
+  "packages/registry/package.json",
 ];
 const originals = await Promise.all(
   [...manifestPaths, "bun.lock"].map(async (file) => ({
@@ -67,6 +69,7 @@ try {
       "tools/platform/deep-research",
       "tests/eve-mcp-native-approval.test.ts",
       "lib/db/eve-sandbox-run-coverage.test.ts",
+      "lib/db/eve-model-ledger.test.ts",
     ],
     path.join(root, "apps/chat")
   );

@@ -140,10 +140,7 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
     await ingestEveUsage("owner", sessionId, {
       data: {
         hookId: "followups",
-        modelCalls: [
-          { modelId: "mock", usage: { costUsd: 9 } },
-          { modelId: "missing" },
-        ],
+        responseMetadata: { followupSuggestions: ["Next question"] },
         turnId: "turn_1",
       },
       meta: { at: "2026-10-12T00:00:00Z", id: "replayed-hook" },
@@ -168,7 +165,7 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
         usage: { costUsd: 9 },
       },
       meta: { at: "2026-10-12T00:00:00Z", id: "replayed-compaction" },
-      type: "compaction.usage",
+      type: "compaction.completed",
     });
   }
   /* oxlint-enable no-await-in-loop */
@@ -250,7 +247,6 @@ it("separates maintenance from the next user turn and blocks missing or crash-lo
   await ingestEveUsage("owner", "root", {
     data: {
       hookId: "followups",
-      modelCalls: [{ failed: true, modelId: "mock" }],
       turnId: "turn_2",
     },
     meta: { at: "2026-10-12T00:00:00Z", id: "failed-hook" },

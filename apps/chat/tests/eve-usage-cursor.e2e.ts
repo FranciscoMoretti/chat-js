@@ -12,6 +12,11 @@ import {
 import { createEveConversation } from "../lib/db/eve-queries";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
+import {
+  assertEveModelCostsKnown,
+  eveModelLedger,
+} from "../lib/db/eve-model-ledger";
+import { createToolResult } from "../lib/eve/tool-result";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -59,15 +64,23 @@ const session = async (): Promise<string> => {
   }
   return row.sessionId;
 };
-const step = (costUsd?: number) => ({
-  data: { turnId: "turn_0", usage: { costUsd } },
+const tool = (costUsd?: number) => ({
+  data: {
+    turnId: "turn_0",
+    status: "completed",
+    result: {
+      kind: "tool-result",
+      callId: crypto.randomUUID(),
+      output: createToolResult("result", costUsd),
+    },
+  },
   meta: { id: crypto.randomUUID() },
-  type: "step.completed",
+  type: "action.result",
 });
 
 test("settled prefixes are not downloaded again and appended charges are ingested", async () => {
   const id = await session();
-  const events = [step(0.05)];
+  const events = [tool(0.05)];
   const delivered: string[] = [];
   transport.stream.mockImplementation(function* streamUsageEventsFromCursor({
     startIndex,
@@ -81,7 +94,7 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
   });
   await reconcileEveUsage(owner, id);
   await reconcileEveUsage(owner, id);
-  events.push(step(0.02));
+  events.push(tool(0.02));
   await reconcileEveUsage(owner, id);
   expect(
     transport.stream.mock.calls.map(
@@ -110,7 +123,7 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
 
 test("a transport failure after a debit retains the cursor and retry does not charge twice", async () => {
   const id = await session();
-  const event = step(0.05);
+  const event = tool(0.05);
   transport.stream.mockImplementationOnce(function* streamThenFailAfterYield() {
     yield event;
     throw new Error("lost tail");
@@ -137,60 +150,29 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows[0].chargedCents).toBe(5);
 });
 
-test.each(["step.completed", "compaction.usage"])(
-  "missing %s cost blocks cursor advancement until durable provider reconciliation",
-  async (type) => {
-    const id = await session();
-    const event = { ...step(), type };
-    transport.stream.mockImplementation(function* streamMissingCostEvent({
-      startIndex,
-    }) {
-      if (startIndex === 0) {
-        yield event;
-      }
-    });
-    await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-      "provider cost reconciliation"
-    );
-    expect(await getEveUsageCursor(owner, id)).toBe(0);
-    await recordEveUsage({
-      costUsd: 0.03,
-      eventId: event.meta.id,
-      ownerId: owner,
-      sessionId: id,
-      turnId: "turn_0",
-    });
-    await reconcileEveUsage(owner, id);
-    expect(await getEveUsageCursor(owner, id)).toBe(1);
-  }
-);
-
-test("compaction attempts share per-turn rounding and replay does not double-charge", async () => {
+test("missing tool cost blocks cursor advancement until its exact receipt is reconciled", async () => {
   const id = await session();
-  const events = [
-    step(0.004),
-    { ...step(0.003), type: "compaction.usage" },
-    { ...step(0.004), type: "compaction.usage" },
-  ];
-  transport.stream.mockImplementation(function* streamUsageEventsFromCursor({
+  const event = tool();
+  transport.stream.mockImplementation(function* streamMissingCostEvent({
     startIndex,
   }) {
-    yield* events.slice(startIndex);
+    if (startIndex === 0) {
+      yield event;
+    }
+  });
+  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
+    "provider cost reconciliation"
+  );
+  expect(await getEveUsageCursor(owner, id)).toBe(0);
+  await recordEveUsage({
+    costUsd: 0.03,
+    eventId: `eve-tool:${id}:${event.data.result.callId}`,
+    ownerId: owner,
+    sessionId: id,
+    turnId: "turn_0",
   });
   await reconcileEveUsage(owner, id);
-  await reconcileEveUsage(owner, id);
-  const rows = await db
-    .select()
-    .from(eveUsage)
-    .where(eq(eveUsage.sessionId, id));
-  expect(rows).toHaveLength(3);
-  expect(
-    rows.reduce(
-      (sum, row: { readonly chargedCents: number }) => sum + row.chargedCents,
-      0
-    )
-  ).toBe(2);
-  expect(await getEveUsageCursor(owner, id)).toBe(3);
+  expect(await getEveUsageCursor(owner, id)).toBe(1);
 });
 
 test("cursor writes are monotonic, owner scoped, and fenced after retirement", async () => {
@@ -217,35 +199,35 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
   );
 });
 
-test("unpriced auxiliary usage retains the unread cursor until its exact attempt is reconciled", async () => {
+test("unpriced model attempts block admission independently of the event cursor", async () => {
   const id = await session();
-  const event = {
-    data: {
-      hookId: "followup-suggestions",
-      modelCalls: [{ modelId: "model" }],
-      turnId: "turn_0",
-    },
-    meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-    type: "hook.result",
-  };
-  transport.stream.mockImplementation(function* streamAuxiliaryUsageEvent({
-    startIndex,
-  }) {
-    if (startIndex === 0) {
-      yield event;
-    }
-  });
-  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-    "provider cost reconciliation"
-  );
-  expect(await getEveUsageCursor(owner, id)).toBe(0);
-  await recordEveUsage({
-    costUsd: 0.001,
-    eventId: `${event.meta.id}:model-call:0`,
+  const attempt = {
+    eventId: crypto.randomUUID(),
+    modelId: "model",
+    provider: "mock",
     ownerId: owner,
     sessionId: id,
     turnId: "turn_0",
+  };
+  await eveModelLedger.begin(attempt);
+  transport.stream.mockImplementation(function* streamDisplayResult() {
+    yield {
+      data: { hookId: "followup-suggestions", turnId: "turn_0" },
+      meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
+      type: "hook.result",
+    };
   });
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
+  await expect(assertEveModelCostsKnown(owner)).rejects.toThrow(
+    "provider cost reconciliation"
+  );
+  await eveModelLedger.finish(attempt, {
+    usage: {
+      inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
+      outputTokens: { total: 1, text: 1, reasoning: 0 },
+    },
+    providerMetadata: { gateway: { cost: "0.001" } },
+  });
+  await expect(assertEveModelCostsKnown(owner)).resolves.toBeUndefined();
 });

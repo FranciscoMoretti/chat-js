@@ -150,36 +150,23 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
       { intervals: [1000], timeout: 90_000 }
     )
     .toBe(true);
-  const compacted = await session.snapshot();
-  const compactionUsage = compacted.events.filter(
-    (
-      event: Readonly<Pick<MessageStreamEvent, "type">>
-    ): event is Extract<MessageStreamEvent, { type: "compaction.usage" }> =>
-      event.type === "compaction.usage"
+  const compactionUsage = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, sessionId));
+  const maintenance = compactionUsage.filter(
+    (row) => row.turnId === "chatjs:maintenance" && row.modelAttempt !== null
   );
-  expect(compactionUsage.length).toBeGreaterThan(0);
-  await Promise.all(
-    compactionUsage.map(async (event) => {
-      expect(event.meta.id.startsWith("evt_")).toBe(true);
-      expect(event.data.sessionId).toBe(sessionId);
-      expect(event.data.usage?.costUsd).toBeGreaterThan(0);
-      // No reconciliation before this read: the authored billing hook must have
-      // received and recorded the same event delivered by the public client.
-      const [recorded] = await db
-        .select()
-        .from(eveUsage)
-        .where(eq(eveUsage.eventId, event.meta.id));
-      expect(recorded?.sessionId).toBe(sessionId);
-      expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
-    })
-  );
-  const rewind = await client.sessions.attach(sessionId).snapshot();
-  expect(
-    rewind.events.filter(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-        event.type === "compaction.usage"
-    )
-  ).toEqual(compactionUsage);
+  expect(maintenance.length).toBeGreaterThan(0);
+  for (const recorded of maintenance) {
+    expect(recorded.ownerId).toBe(ownerId);
+    expect(Number(recorded.costUsd)).toBeGreaterThan(0);
+    expect(recorded.modelAttempt).toMatchObject({
+      ownerId,
+      sessionId,
+      state: "returned",
+    });
+  }
   const beforeReplay = await db
     .select()
     .from(eveUsage)

@@ -7,6 +7,7 @@ import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
+import { eveModelLedger } from "../lib/db/eve-model-ledger";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
@@ -746,15 +747,49 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
   });
 });
 
-test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
-  const sessionId = crypto.randomUUID();
+test("auxiliary model calls settle once per actual attempt independently of display annotations", async () => {
+  const conversation = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Followup billing",
+    createEveTestSession
+  );
+  const { sessionId } = conversation;
+  if (!sessionId) {
+    throw new Error("Missing bound session");
+  }
+  await Promise.all(
+    [0.002, 0.003].map(async (cost) => {
+      const attempt = {
+        eventId: crypto.randomUUID(),
+        modelId: "mock-followup-model",
+        provider: "mock",
+        ownerId: owner,
+        sessionId,
+        turnId: "turn_0",
+      };
+      await eveModelLedger.begin(attempt);
+      await Promise.all(
+        Array.from({ length: 4 }, async () => {
+          await eveModelLedger.finish(attempt, {
+            usage: {
+              inputTokens: {
+                total: 1,
+                noCache: 1,
+                cacheRead: 0,
+                cacheWrite: 0,
+              },
+              outputTokens: { total: 1, text: 1, reasoning: 0 },
+            },
+            providerMetadata: { gateway: { cost: String(cost) } },
+          });
+        })
+      );
+    })
+  );
   const event: MessageStreamEvent = {
     data: {
       hookId: "followup-suggestions",
-      modelCalls: [
-        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.002 } },
-        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.003 } },
-      ],
       turnId: "turn_0",
     },
     meta: { at: new Date().toISOString(), id: crypto.randomUUID() },

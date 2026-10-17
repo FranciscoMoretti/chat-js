@@ -304,12 +304,25 @@ it("blocks admission without advancing child progress when a completed child cha
   mocks.events.set("child", [
     {
       data: {
-        hookId: "auxiliary",
-        modelCalls: [{ modelId: "model" }],
+        result: {
+          kind: "tool-result",
+          callId: "unpriced-tool",
+          toolName: "paid-tool",
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: null,
+            usage: {},
+          },
+        },
+        status: "completed",
+        sequence: 0,
+        stepIndex: 0,
         turnId: "turn_0",
       },
       meta: { at: "2026-09-28T00:00:00Z", id: "unpriced" },
-      type: "hook.result",
+      type: "action.result",
     },
   ]);
   mocks.ingest.mockResolvedValue(false);

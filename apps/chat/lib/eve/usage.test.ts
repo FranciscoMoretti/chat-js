@@ -12,7 +12,7 @@ it.each([
   "hook.result",
   "step.completed",
   "step.failed",
-  "compaction.usage",
+  "compaction.completed",
 ] as const)("never charges model event %s through replay", async (type) => {
   await expect(
     ingestEveUsage("owner", "session", {
