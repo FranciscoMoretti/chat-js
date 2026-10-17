@@ -1,0 +1,30 @@
+{
+  "chatjs_sha": "c0ab1c0504bb3da73ca0f3625f66c47bf69e042e",
+  "eve_sha": "aab691297a59cc8c325b8f8c584a472495aed9ce",
+  "production_eve_pin_changed": false,
+  "eve": "0.80.1",
+  "typescript": "6.0.2",
+  "fixture": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/eve080-compiler-9fz4wr_y",
+  "checks": [
+    {
+      "agent": "authenticated",
+      "check": "types",
+      "exit_code": 2
+    },
+    {
+      "agent": "authenticated",
+      "check": "build",
+      "exit_code": 1
+    },
+    {
+      "agent": "guest",
+      "check": "types",
+      "exit_code": 2
+    },
+    {
+      "agent": "guest",
+      "check": "build",
+      "exit_code": 1
+    }
+  ]
+}

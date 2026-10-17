@@ -1,0 +1,3 @@
+Failed to evaluate authored module:
+  /private<fixture>/apps/chat/guest/agent/channels/eve.ts
+  Caused by: The requested module '/private<fixture>/node_modules/eve/dist/src/client/index.js' does not provide an export named 'inputResponseSchema'

@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "files": [
+    "lib/eve/model-ledger.test.ts",
+    "lib/eve/mcp-adapter.test.ts",
+    "app/api/eve/[...path]/route.test.ts"
+  ]
+}

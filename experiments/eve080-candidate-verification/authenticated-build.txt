@@ -1,0 +1,16 @@
+Failed to bundle authored module "/private<fixture>/apps/chat/agent/channels/eve.ts".
+Build failed with 1 error:
+
+[plugin eve-runtime-loader-package-boundary]
+Error: Package subpath './transcript' is not defined by "exports" in /private<fixture>/node_modules/eve/package.json imported from /private<fixture>/node_modules/eve/dist/src/internal/application/package.js
+Error [PLUGIN_ERROR]: Package subpath './transcript' is not defined by "exports" in /private<fixture>/node_modules/eve/package.json imported from /private<fixture>/node_modules/eve/dist/src/internal/application/package.js
+    at exportsNotFound (node:internal/modules/esm/resolve:315:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:663:9)
+    at resolveExpansion (node:internal/modules/cjs/loader:719:34)
+    at trySelf (node:internal/modules/cjs/loader:676:10)
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1548:24)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at require.resolve (node:internal/modules/helpers:175:31)
+    at resolvePackageDependencyPath (file:///private<fixture>/node_modules/eve/dist/src/internal/application/package.js:1:3879)
+    at resolveRuntimeLoaderFrameworkImport (file:///private<fixture>/node_modules/eve/dist/src/internal/authored-package-boundary.js:1:6005)

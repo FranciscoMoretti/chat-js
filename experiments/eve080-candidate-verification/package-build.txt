@@ -1,0 +1,22 @@
+• turbo 2.10.12
+
+   • Packages in scope: @eve/catalog, @vercel/agent-runs, eve
+   • Running build in 3 packages
+   • Remote caching disabled, using shared worktree cache
+
+@vercel/agent-runs:build: cache miss, executing c69e85365624f91b
+@eve/catalog:build: cache miss, executing 4380d3a68f1c3e6e
+@vercel/agent-runs:build: $ tsc -p tsconfig.build.json
+@eve/catalog:build: $ pnpm run clean && tsc -p tsconfig.build.json
+@eve/catalog:build: $ rm -rf dist
+eve:build: cache miss, executing 9d6e548e38a39ecd
+eve:build: $ pnpm run check:bin-runtime-dependencies && pnpm run build:js && node ./scripts/copy-docs.mjs && node ./scripts/stamp-version-tokens.mjs
+eve:build: $ node ./scripts/check-bin-runtime-dependencies.mjs
+eve:build: [eve:check-bin-runtime-dependencies] ok
+eve:build: $ node ./scripts/build-js.mjs
+eve:build: Updated compiled vendor modules: .generated/compiled/@agentclientprotocol/sdk, .generated/compiled/@ai-sdk/anthropic, .generated/compiled/@cfworker/json-schema, .generated/compiled/@ai-sdk/code-mode, .generated/compiled/chat, .generated/compiled/@chat-adapter/slack, .generated/compiled/@chat-adapter/state-memory, .generated/compiled/@chat-adapter/twilio, .generated/compiled/@clack/core, .generated/compiled/chokidar, .generated/compiled/commander, .generated/compiled/eventsource-parser/stream, .generated/compiled/env-runner, .generated/compiled/@eve/catalog, .generated/compiled/@ai-sdk/google, .generated/compiled/jose, .generated/compiled/js-yaml, .generated/compiled/jsonc-parser, .generated/compiled/json-schema, .generated/compiled/just-secrets, .generated/compiled/marked, .generated/compiled/@ai-sdk/mcp, .generated/compiled/@modelcontextprotocol/server, .generated/compiled/@ai-sdk/openai, .generated/compiled/@opentelemetry/api, .generated/compiled/@opentelemetry/otlp-transformer, .generated/compiled/@ai-sdk/otel, .generated/compiled/@photon-ai/chat-adapter-imessage, .generated/compiled/@linqapp/chat-sdk-adapter, .generated/compiled/picocolors, .generated/compiled/@ai-sdk/provider, .generated/compiled/@ai-sdk/provider-utils, .generated/compiled/semver, .generated/compiled/shadcn-registry, .generated/compiled/@standard-schema/spec, .generated/compiled/turndown, .generated/compiled/@vercel/agent-runs, .generated/compiled/@vercel/blob, .generated/compiled/@vercel/connect, .generated/compiled/@vercel/detect-agent, .generated/compiled/@vercel/oidc, .generated/compiled/@vercel/otel, .generated/compiled/@vercel/queue, .generated/compiled/@vercel/sandbox, .generated/compiled/@vercel/sdk, .generated/compiled/@vercel/schedules, .generated/compiled/@workflow/core, .generated/compiled/@workflow/errors, .generated/compiled/@workflow/serde, .generated/compiled/@workflow/world, .generated/compiled/@workflow/world-local, .generated/compiled/@workflow/world-vercel, .generated/compiled/zod, .generated/compiled/zod-validation-error
+
+ Tasks:    3 successful, 3 total
+Cached:    0 cached, 3 total
+  Time:    4.092s 
+

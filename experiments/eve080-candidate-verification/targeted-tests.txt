@@ -1,0 +1,14 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /private<fixture>/apps/chat
+
+ ✓ lib/eve/mcp-adapter.test.ts (2 tests) 3ms
+ ✓ app/api/eve/[...path]/route.test.ts (4 tests) 12ms
+ ✓ lib/eve/model-ledger.test.ts (24 tests) 2088ms
+   ✓ gives retries distinct intents and does not fabricate a zero-cost receipt for failures  2002ms
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  12:41:12
+   Duration  2.23s (transform 114ms, setup 0ms, import 279ms, tests 2.10s, environment 0ms)
+

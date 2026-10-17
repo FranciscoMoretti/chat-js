@@ -1,0 +1,13 @@
+{
+  "eve_sha": "aab691297a59cc8c325b8f8c584a472495aed9ce",
+  "chatjs_sha": "c0ab1c0504bb3da73ca0f3625f66c47bf69e042e",
+  "tarball_sha256": "a00bf75e61af0115d8bd57b2e3abd3313b9e0354df43be71b2321ba02a7196d6",
+  "build_tasks": {
+    "@eve/catalog": "pass",
+    "@vercel/agent-runs": "pass",
+    "eve": "pass"
+  },
+  "pack": "pass",
+  "node": "24.20.0",
+  "pnpm": "12.7.0"
+}

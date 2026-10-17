@@ -1,0 +1,17 @@
+. prepack$ pnpm run build && node ../../scripts/copy-package-license.mjs .
+. prepack: $ pnpm run check:bin-runtime-dependencies && pnpm run build:js && node ./scripts/copy-docs.mjs && node ./scripts/stamp-version-tokens.mjs
+. prepack: $ node ./scripts/check-bin-runtime-dependencies.mjs
+. prepack: [eve:check-bin-runtime-dependencies] ok
+. prepack: $ node ./scripts/build-js.mjs
+. prepack: Compiled vendor modules are already up to date.
+. prepack: Copied LICENSE to packages/eve/LICENSE
+. prepack: Copied NOTICE to packages/eve/NOTICE
+. prepack: Done
+package: eve@0.80.1
+Tarball Contents
+bin/eve.d.ts
+bin/eve.js
+CHANGELOG.md
+README.md
+Tarball Details
+/tmp/eve080-candidate-package/eve-0.80.1.tgz
