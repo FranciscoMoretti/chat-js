@@ -42,11 +42,17 @@ it("projects visible text with stable keys for live events and restored history"
     { key: "event:user-1", text: "saffron rice" },
   ]);
 });
-it("indexes seeded display text while excluding reasoning, tools and system-authored input", () => {
+it("indexes seeded display text while excluding reasoning, tools and model lifecycle events", () => {
   expect(
     eveEventSearchText({
-      ...received,
-      data: { ...received.data, kind: "execution.background_task" },
+      type: "step.started",
+      data: {
+        turnId: "turn_0",
+        stepIndex: 0,
+        sequence: 0,
+        modelId: "gateway/private-model",
+      },
+      meta: received.meta,
     })
   ).toEqual([]);
   expect(

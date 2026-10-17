@@ -1,8 +1,8 @@
 # Integrated Eve 0.80.1 guest checkpoint
 
-App base: `c0ab1c0504bb3da73ca0f3625f66c47bf69e042e`. Candidate: `6869c3500831cc713ca43bd4f801c8c3512870bb` (fork PR9). Local tarball SHA-256: `a00bf75e61af0115d8bd57b2e3abd3313b9e0354df43be71b2321ba02a7196d6`.
+Original guest-checkpoint app base: `c0ab1c0504bb3da73ca0f3625f66c47bf69e042e`. Candidate: `6869c3500831cc713ca43bd4f801c8c3512870bb` (fork PR9). Local tarball SHA-256: `a00bf75e61af0115d8bd57b2e3abd3313b9e0354df43be71b2321ba02a7196d6`.
 
-The app and guest package manifests explicitly select the ignored local tarball. Reproduce it by checking out that candidate in FranciscoMoretti/eve, building `turbo run build --filter=eve...`, and packing `packages/eve` into the local `.eve-upgrade/eve-0.80.1-6869c350.tgz` path before `bun install`. This is an integration checkpoint, not a production dependency cutover.
+The original guest checkpoint selected that ignored local tarball. The current integration now selects the seed candidate described below. Reproduce it by checking out that candidate in FranciscoMoretti/eve, building `turbo run build --filter=eve...`, and packing `packages/eve` into the local `.eve-upgrade/eve-0.80.1-6869c350.tgz` path before `bun install`. This is an integration checkpoint, not a production dependency cutover.
 
 ## Runtime boundary and results
 
@@ -48,6 +48,41 @@ Native seed admission, history event production, checkpoints and sandbox/file
 isolation remain incomplete. No legacy reader union or unused history normalizer
 was added. Full lint/types were run and remain red on outstanding runtime
 contracts; these tests do not establish a working copy lifecycle.
+
+## Trusted seed runtime checkpoint
+
+Current local fork candidate: `91a2864b14f2a3a740684120543565560e250f88`.
+The app and guest select `.eve-upgrade/eve-0.80.1-91a2864b.tgz`, SHA-256
+`82a1c260450b37aa6899e6053ba999fcf0881bec9ad35ac03016f731101d75d8`.
+Build and pack that exact fork commit to reproduce this dependency; production
+pins are unchanged. The browser guest evidence above remains evidence for its
+original candidate, not a rerun against this one.
+
+The native seed route resolves an accepted destination reservation under the
+current authenticated principal. Workflow initialization installs structured
+history before processing the first message and emits `history.seeded`; copied
+tools remain historical data. Destination files require channel authorization,
+successful sandbox storage and matching bytes on later model hydration, including
+after compaction. No legacy history importer is exported.
+
+Fork validation: 215 affected unit tests, two focused integration tests, package
+TypeScript, targeted lint, docs validation and build passed. The app's five
+copy/sharing/search suites pass 56 tests; proxy/request-policy suites pass 26.
+The guest build also passes against this candidate.
+The existing native harness now passes three real-worker cases: research,
+cancellation, and trusted seed creation/continuation (`native-seed-result.txt`).
+The seed case checks idle creation without a model/tool turn, stable display IDs,
+retained tool history in the first model prompt, no historical tool execution and
+lookup of the same session. Its resolver uses the production app seed validator
+with a fixture-owned accepted reservation; this is not a database acceptance or
+crash/replay proof. Sandbox failure checks use the native in-memory runtime;
+end-to-end checkpoint/resource isolation remains outstanding.
+
+The authenticated-source compiler reports seven remaining diagnostics, covering
+`authorizeFork`, waiting checkpoints and `history.restored`. Full app lint/types
+remain red. The app still fails closed on an unresolved copy lookup; durable
+admission/recovery is pending separately. This checkpoint does not establish a
+working complete save-copy/fork lifecycle.
 
 ## Reproduction
 

@@ -33,14 +33,7 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
       }
     | {
         readonly type: "message.received";
-        readonly data: Parameters<
-          typeof incomingMessageSearchText
-        >[0]["data"] & {
-          readonly kind?: Extract<
-            MessageStreamEvent,
-            { type: "message.received" }
-          >["data"]["kind"];
-        };
+        readonly data: Parameters<typeof incomingMessageSearchText>[0]["data"];
         readonly meta: { readonly id: string } & IgnoredSdkFields<
           MessageStreamEvent["meta"]
         >;
@@ -140,7 +133,7 @@ const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
   if (event.type === "history.restored") {
     return event.data.events.flatMap(eveEventSearchText);
   }
-  if (event.type === "message.received" && !event.data.kind) {
+  if (event.type === "message.received") {
     return incomingMessageSearchText(event);
   }
   if (

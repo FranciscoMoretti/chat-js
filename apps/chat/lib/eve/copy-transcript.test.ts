@@ -1,5 +1,4 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
-import { createSessionHistorySeed } from "eve/transcript";
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -708,36 +707,7 @@ it("preserves selected tools in copies without publishing unrelated custom metad
   });
 });
 
-it("preserves imported text tool results through the ChatJS shared-copy projection", () => {
-  const imported = createSessionHistorySeed([
-    { content: "Read the file", role: "user" },
-    {
-      content: [
-        {
-          input: { path: "notes.txt" },
-          toolCallId: "original",
-          toolName: "readFile",
-          type: "tool-call",
-        },
-      ],
-      role: "assistant",
-    },
-    {
-      content: [
-        {
-          output: { type: "text", value: "plain text" },
-          toolCallId: "original",
-          toolName: "readFile",
-          type: "tool-result",
-        },
-      ],
-      role: "tool",
-    },
-  ]);
-  const tool = imported.seed.messages[1]?.parts[0];
-  if (tool?.type !== "dynamic-tool" || tool.state !== "output-available") {
-    throw new Error("Expected settled imported tool");
-  }
+it("preserves native seeded text tool results through the ChatJS shared-copy projection", () => {
   const messages: EveMessage[] = [
     {
       id: "seed_message_0",
@@ -746,7 +716,17 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
     },
     {
       id: "seed_message_1",
-      parts: [{ ...tool, toolCallId: "seed_tool_0" }],
+      parts: [
+        {
+          type: "dynamic-tool",
+          toolName: "readFile",
+          toolCallId: "seed_tool_0",
+          input: { path: "notes.txt" },
+          state: "output-available",
+          output: "plain text",
+          outputType: "text",
+        },
+      ],
       role: "assistant",
     },
   ];

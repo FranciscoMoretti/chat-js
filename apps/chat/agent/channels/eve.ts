@@ -10,6 +10,16 @@ export default eveChannel({
   authorizeFork: async ({ auth, sourceSessionId }): Promise<boolean> =>
     await ownsEveSession(auth.principalId, sourceSessionId),
   fetchFile: fetchEveChannelFile,
-  resolveSeed: async ({ auth, operationId }) =>
-    await resolveAcceptedEveCopySeed(auth.principalId, operationId),
+  resolveSeed: async ({ auth, operationId }) => {
+    const seed = await resolveAcceptedEveCopySeed(
+      auth.principalId,
+      operationId
+    );
+    if (seed.attachments !== "channel") {
+      throw new Error(
+        "Accepted copies require destination channel attachments."
+      );
+    }
+    return { ...seed, attachments: seed.attachments };
+  },
 });
