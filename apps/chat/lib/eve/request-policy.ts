@@ -94,8 +94,9 @@ const safeStreamQuery = (
       }
     } else if (
       !(
-        (key === "includeTailIndex" || key === "streamControlVersion") &&
-        value === "1"
+        ((key === "includeTailIndex" || key === "streamControlVersion") &&
+          value === "1") ||
+        (key === "follow" && value === "false")
       )
     ) {
       return null;
