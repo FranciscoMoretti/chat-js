@@ -28,7 +28,6 @@ const checkpointLookupPath =
 const namedCheckpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/iu;
 
-const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
@@ -211,10 +210,7 @@ export const authenticateEveGateway = async (
       return null;
     }
   } else if (
-    !(
-      (path === "/eve/v1/session" && request.method === "POST") ||
-      (operationLookupPath.test(path) && request.method === "GET")
-    )
+    !(path === "/eve/v1/session" && request.method === "POST")
   ) {
     const policy = gatewaySessionPolicy(path, request.method);
     if (
