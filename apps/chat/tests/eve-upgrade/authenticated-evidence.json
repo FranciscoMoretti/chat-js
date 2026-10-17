@@ -246,5 +246,35 @@
       "/tmp/eve080-document-editor.png"
     ],
     "visualComparison": "Nine local chat route cases pass, including approval at streaming; four viewport/theme captures each. Fleet comparison unavailable: UIVERIFY_API_KEY missing."
+  },
+  "authenticatedAttachments": {
+    "eveCommit": "6c40195d",
+    "conversationId": "793e0000-00df-434e-9b06-28d85674a2b4",
+    "sessionId": "wrun_01M55D0YJ4K3HFN9303DXPSA61",
+    "originalFileId": "2kHo8-ZkJ59w8C6SH5hRU2-U",
+    "restoredFileId": "xn8R5Tc9B86QJ_zbMBwZvx0y",
+    "restoredDigest": "27e63057e51ba6a302fb6280624d05065c645f0ed10abf56454a3a2a85505b90",
+    "checks": [
+      "authenticated multipart upload through real storage SDK",
+      "owned file route emits signed redirect; fixture supplies 68 PNG bytes",
+      "native history retains stable application URL; turn completes",
+      "Edit restores a fresh owned upload through authenticated tRPC",
+      "foreign download404 and foreign submission400 before dispatch"
+    ],
+    "fixture": "Disposable Undici Blob API/private download/signed-token transport and browser redirect bytes; actual storage SDK, app authorization, channel fetch resolver, native worker, database and browser. No live Blob store.",
+    "logs": [
+      "/tmp/eve080-attachment-upload.json",
+      "/tmp/eve080-attachment-url-create.json",
+      "/tmp/eve080-attachment-url-events.json",
+      "/tmp/eve080-attachment-edit-proof.json",
+      "/tmp/eve080-attachment-foreign.json",
+      "/tmp/eve080-attachment-edit.png"
+    ],
+    "fixtureScripts": [
+      "/tmp/eve080-blob-preload.mjs",
+      "/tmp/eve080-integration-preload.mjs",
+      "/tmp/eve080-browser-attachment-edit.mjs",
+      "/tmp/eve080-attachment-foreign-proof.mjs"
+    ]
   }
 }

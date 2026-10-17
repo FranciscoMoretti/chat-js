@@ -175,6 +175,7 @@
     "@types/react-dom": "19.2.3",
     "@types/react-test-renderer": "19.1.0",
     "drizzle-kit": "^0.31.9",
+    "just-bash": "^3.6.0",
     "microsandbox": "^0.6.18",
     "oxfmt": "0.71.0",
     "oxlint": "1.87.0",

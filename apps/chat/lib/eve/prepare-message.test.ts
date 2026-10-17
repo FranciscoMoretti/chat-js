@@ -4,6 +4,7 @@ import { prepareEveMessage } from "./prepare-message";
 
 const mocks = vi.hoisted(() => ({ download: vi.fn(), model: vi.fn() }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
+vi.mock("../url", () => ({ getBaseUrl: () => "https://chat.example.com" }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
 vi.mock("../config", () => ({
   config: { attachments: { maxBytes: 1024 }, features: { attachments: true } },
@@ -42,7 +43,7 @@ test("reads verified bytes from storage and rejects mismatched types and unsuppo
   const input = eveMessageInput.parse([attachment]);
   await expect(prepareEveMessage(input, "vision")).resolves.toEqual([
     {
-      data: "data:image/png;base64,aW1hZ2UgYnl0ZXM=",
+      data: "https://chat.example.com/api/files/abcdefghijklmnopqrstuvwx.png",
       filename: "image.png",
       mediaType: "image/png",
       type: "file",
