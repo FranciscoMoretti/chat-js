@@ -225,7 +225,7 @@ describe("buildConfigTs", (): void => {
 });
 
 describe("scaffoldFromTemplate", (): void => {
-  it("ships local runtime archives with standalone paths and unchanged candidate bytes", async (): Promise<void> => {
+  it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
     const manifestSource = await readFile(
@@ -236,21 +236,7 @@ describe("scaffoldFromTemplate", (): void => {
     const manifest = z
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
-    expect(manifest.dependencies.eve).toBe(
-      "file:vendor/eve-0.80.1-8fb9d359.tgz"
-    );
-    expect(
-      await readFile(
-        pathModule.join(destination, "vendor/eve-0.80.1-8fb9d359.tgz")
-      )
-    ).toEqual(
-      await readFile(
-        pathModule.resolve(
-          import.meta.dirname,
-          "../../../../.eve-upgrade/eve-0.80.1-8fb9d359.tgz"
-        )
-      )
-    );
+    expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@0.80.1-chatjs.0");
     const archives = {
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
@@ -725,7 +711,7 @@ describe("scaffoldFromTemplate", (): void => {
       ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
       expect(packageJson.dependencies.eve).toBe(
-        "file:vendor/eve-0.80.1-8fb9d359.tgz"
+        "npm:@chat-js/eve@0.80.1-chatjs.0"
       );
       expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
       expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(

@@ -93,7 +93,5 @@ packages/chat-visual-tests/uiverify-archive/
 packages/chat-visual-tests/**/__screenshots__/
 apps/chat/tests/visual/**/__screenshots__/
 
-# Local integration candidate built from the declared fork commit
-.eve-upgrade/
 apps/chat/guest/.eve/
 apps/chat/guest/.output/
