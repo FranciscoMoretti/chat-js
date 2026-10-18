@@ -458,6 +458,10 @@ describe("useEveFork", () => {
         await required(fork).submit();
       });
 
+      expect(mocks.resolveCreationRequest.mock.calls[0]?.[2]).toMatchObject({
+        fork: { conversationId, beforeMessageId: "seed_message_0" },
+        forkKind: "edit",
+      });
       expect(mocks.openRuntime).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "11111111-1111-4111-8111-111111111114",

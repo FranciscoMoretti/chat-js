@@ -75,7 +75,7 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   ).toBeLessThan(2);
   await expect(
     firstUser.getByRole("button", {
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
   ).toBeVisible();
   await expect(
@@ -184,7 +184,7 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   await expect(readonly.getByTestId("message-content").first()).toBeVisible();
   await expect(
     readonly.getByRole("button", {
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
   ).toHaveCount(0);
   await expect(
@@ -229,7 +229,7 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(
     firstUser.getByRole("button", {
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
   ).toBeVisible();
   await expect(

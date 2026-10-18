@@ -74,7 +74,8 @@ export const initializeEveCurrentCopy = async (
       ownerId,
       source.sessionId,
       dispatches,
-      receipts
+      receipts,
+      target.forkMessageId ?? undefined
     );
     const heads = await tx
       .select()

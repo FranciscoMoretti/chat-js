@@ -80,7 +80,7 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .nth(1)
       .click();

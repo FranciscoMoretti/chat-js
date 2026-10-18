@@ -77,16 +77,13 @@ test("display receipts settle with a fresh native agent wrapper", async () => {
     .toBeVisible();
 });
 
-test("copy conversation with an edited prompt uses a fresh sandbox", async () => {
+test("edit replaces the selected message in a fresh sandbox", async () => {
   await renderRoute(conversation, request);
-  await page
-    .getByRole("button", { name: "Copy conversation with edited prompt" })
-    .first()
-    .click();
+  await page.getByRole("button", { name: "Edit message" }).first().click();
   await expect
     .element(
       page.getByText(
-        "Copy the completed conversation and send this as a new prompt. The copy starts with a fresh sandbox."
+        "Replace this message in a new branch. Later messages are not included. The branch starts with a fresh sandbox."
       )
     )
     .toBeVisible();

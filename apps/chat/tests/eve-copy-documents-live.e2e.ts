@@ -269,7 +269,7 @@ test("copied document history survives source deletion and supports native editi
   await page
     .getByRole("button", {
       exact: true,
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
     .nth(1)
     .click();
@@ -304,8 +304,9 @@ test("copied document history survives source deletion and supports native editi
   );
   await editor.getByRole("button", { exact: true, name: "Send" }).click();
   const { input: forkInput, binding: forked } = await forkReply.promise;
-  expect(forkInput.fork).toEqual({
+  expect(forkInput.fork).toMatchObject({
     conversationId: destination.id,
+    beforeMessageId: expect.any(String),
   });
   await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`, "u"));
   const [forkHead] = await db

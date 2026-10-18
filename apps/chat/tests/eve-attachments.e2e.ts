@@ -145,7 +145,7 @@ test("ChatJS upload remains durable through creation retries and message editing
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .click();
     const editor = page.getByRole("dialog");

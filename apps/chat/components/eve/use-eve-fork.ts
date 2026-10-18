@@ -94,6 +94,11 @@ const operationModelSelection = (
   return undefined;
 };
 
+const editBoundary = (
+  regeneration: boolean,
+  messageId: string
+): string | undefined => (regeneration ? undefined : messageId);
+
 export const useEveFork = (
   ownerId: string,
   conversationId: string,
@@ -338,7 +343,10 @@ export const useEveFork = (
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
-      const fork = { conversationId };
+      const fork = {
+        conversationId,
+        beforeMessageId: editBoundary(Boolean(regeneration), boundary),
+      };
       const text = message.parts
         .filter((part: ReadonlyEveMessagePart) => part.type === "text")
         .map((part) => part.text)

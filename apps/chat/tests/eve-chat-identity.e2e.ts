@@ -75,7 +75,7 @@ test("generated chat identity stays selected across edited branch paths", async 
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .click();
     const editor = page

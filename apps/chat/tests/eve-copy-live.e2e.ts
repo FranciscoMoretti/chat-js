@@ -494,7 +494,7 @@ for (const attachment of [
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .first()
       .click();
@@ -559,8 +559,9 @@ for (const attachment of [
         const input = createConversationInput.parse(
           route.request().postDataJSON()
         );
-        expect(input.fork).toEqual({
+        expect(input.fork).toMatchObject({
           conversationId: destination.id,
+          beforeMessageId: expect.any(String),
         });
         expect(input.modelId).toBe(attachment.modelId);
         if (typeof input.message === "string") {
@@ -598,9 +599,9 @@ for (const attachment of [
     await expect(
       page.getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
-    ).toHaveCount(2);
+    ).toHaveCount(1);
     await page.reload();
     await expect(
       page.getByRole("log").getByText(editedAnswer).last()

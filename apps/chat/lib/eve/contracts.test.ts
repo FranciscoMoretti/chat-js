@@ -215,7 +215,7 @@ it("allows a project for new conversations while forks inherit their existing pr
   ).toBe(false);
 });
 
-it("rejects all historical copy boundaries", () => {
+it("accepts message edit boundaries but rejects historical runtime checkpoints", () => {
   const input = {
     fork: {
       conversationId: crypto.randomUUID(),
@@ -224,12 +224,19 @@ it("rejects all historical copy boundaries", () => {
     operationId: crypto.randomUUID(),
   };
   expect(createConversationInput.parse(input)).toEqual(input);
+  for (const beforeMessageId of ["seed_message_0", "evt_native:user"]) {
+    const edit = {
+      ...input,
+      forkKind: "edit",
+      fork: { ...input.fork, beforeMessageId },
+    };
+    expect(createConversationInput.parse(edit)).toEqual(edit);
+  }
   for (const fork of [
     { ...input.fork, beforeTurnId: "turn_0" },
     { ...input.fork, checkpointId: crypto.randomUUID() },
-    { ...input.fork, beforeMessageId: "seed_message_02" },
-    { ...input.fork, beforeMessageId: "seed_message_10000" },
-    { ...input.fork, beforeMessageId: "message_2" },
+    { ...input.fork, beforeMessageId: "" },
+    { ...input.fork, beforeMessageId: "x".repeat(513) },
   ]) {
     expect(createConversationInput.safeParse({ ...input, fork }).success).toBe(
       false

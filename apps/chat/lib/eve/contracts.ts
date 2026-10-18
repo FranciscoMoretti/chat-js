@@ -6,7 +6,10 @@ import { z } from "zod";
 const MIN_IDENTIFIER_LENGTH = 1;
 const MAX_MODEL_IDENTIFIER_LENGTH = 200;
 
-const eveForkInput = z.strictObject({ conversationId: z.uuid() });
+const eveForkInput = z.strictObject({
+  conversationId: z.uuid(),
+  beforeMessageId: z.string().min(1).max(512).optional(),
+});
 
 type EveForkInput = z.infer<typeof eveForkInput>;
 

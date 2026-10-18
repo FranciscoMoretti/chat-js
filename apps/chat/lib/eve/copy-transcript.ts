@@ -293,11 +293,13 @@ const copyAssistantSeedMessage = (message: {
  * Prepares a sanitized completed transcript without model calls or storage access.
  * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
  * @param {readonly EveMessageDisplayReceipt[]} receipts Owner-scoped positive bindings for display-only selection metadata.
+ * @param {string} beforeMessageId Optional user message to replace; only the preceding transcript is seeded.
  * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
   events: readonly MessageStreamEvent[],
-  receipts: readonly EveMessageDisplayReceipt[] = []
+  receipts: readonly EveMessageDisplayReceipt[] = [],
+  beforeMessageId?: string
 ): {
   seed: Seed;
   projectionHash: string;
@@ -322,20 +324,36 @@ const prepareEveCopyTranscript = (
   if (latestTurnOutcome && latestTurnOutcome.type !== "turn.completed") {
     throw new EveCopyNotReadyError();
   }
-  const messages: Seed["messages"] = sharedEveMessages(events, receipts).map(
-    (message: {
-      readonly role: string;
-      readonly parts: readonly ReadonlyEveMessagePart[];
-      readonly metadata?: ReadonlyEveMessageMetadata;
-    }): Seed["messages"][number] => {
-      if (message.role === "user") {
-        return copyUserSeedMessage(message);
-      }
-      return copyAssistantSeedMessage(message);
-    }
-  );
+  const transcript = sharedEveMessages(events, receipts);
+  const boundaryIndex =
+    beforeMessageId === undefined
+      ? transcript.length
+      : transcript.findIndex((message) => message.id === beforeMessageId);
   if (
-    messages.length === EMPTY_CONTENT_LENGTH ||
+    beforeMessageId !== undefined &&
+    (boundaryIndex < 0 || transcript[boundaryIndex]?.role !== "user")
+  ) {
+    throw new Error(
+      "The edited message is not a user message in this conversation."
+    );
+  }
+  const messages: Seed["messages"] = transcript
+    .slice(0, boundaryIndex)
+    .map(
+      (message: {
+        readonly role: string;
+        readonly parts: readonly ReadonlyEveMessagePart[];
+        readonly metadata?: ReadonlyEveMessageMetadata;
+      }): Seed["messages"][number] => {
+        if (message.role === "user") {
+          return copyUserSeedMessage(message);
+        }
+        return copyAssistantSeedMessage(message);
+      }
+    );
+  if (
+    (beforeMessageId === undefined &&
+      messages.length === EMPTY_CONTENT_LENGTH) ||
     messages.some(
       (message: { readonly parts: readonly unknown[] }) =>
         message.parts.length === EMPTY_CONTENT_LENGTH

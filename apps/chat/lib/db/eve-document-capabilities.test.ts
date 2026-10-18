@@ -130,6 +130,8 @@ it("captures current document heads once and keeps retries independent of later 
       parentConversationId: source,
       chatId: source,
       rootConversationId: source,
+      forkMessageId: "evt_source:user",
+      forkKind: "edit",
     })
     .where(eq(eveConversation.id, target));
   const first = await saveEveDocumentRevision(
@@ -155,6 +157,7 @@ it("captures current document heads once and keeps retries independent of later 
       .where(eq(eveDocumentHead.conversationId, target))
   ).toEqual([]);
   await initializeEveCurrentCopy("document-owner", target);
+  expect(capture.mock.calls.at(-1)?.[4]).toBe("evt_source:user");
   await saveEveDocumentRevision({
     ...revisionInput(source, documentId),
     operationId: "later",

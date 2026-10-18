@@ -9,7 +9,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const sourceModelId = "openai/gpt-5-nano";
 
-test("edit recovery and ask-again retain completed histories inside ChatJS", async ({
+test("edit recovery replaces the selected message while ask-again copies history", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -45,7 +45,7 @@ test("edit recovery and ask-again retain completed histories inside ChatJS", asy
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .click();
     const userMessage = page.getByRole("log").locator(".is-user").first();
@@ -104,7 +104,9 @@ test("edit recovery and ask-again retain completed histories inside ChatJS", asy
     await expect(
       page.getByRole("log").locator(".is-user").last()
     ).toContainText("cobalt");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
+    await expect(page.getByRole("log")).not.toContainText("amber");
+    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(1);
     await page.getByRole("log").screenshot({
       animations: "disabled",
       path: testInfo.outputPath("edited-messages.png"),
@@ -160,7 +162,7 @@ test("edit recovery and ask-again retain completed histories inside ChatJS", asy
     await expect(
       page.getByRole("log").locator(".is-user").last()
     ).toContainText("cobalt");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(3);
+    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
     await page
       .getByRole("log")
       .locator(".is-user")
@@ -178,7 +180,7 @@ test("edit recovery and ask-again retain completed histories inside ChatJS", asy
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy conversation with edited prompt",
+        name: "Edit message",
       })
       .click();
     await editor

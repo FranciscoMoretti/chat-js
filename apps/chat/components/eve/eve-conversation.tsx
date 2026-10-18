@@ -233,8 +233,8 @@ const EveConversationEditor = ({
   return (
     <div className="w-full">
       <p className="text-muted-foreground mb-2 text-sm">
-        Copy the completed conversation and send this as a new prompt. The copy
-        starts with a fresh sandbox.
+        Replace this message in a new branch. Later messages are not included.
+        The branch starts with a fresh sandbox.
       </p>
       <EveComposer
         autoFocus

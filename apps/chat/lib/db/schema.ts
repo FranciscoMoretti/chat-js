@@ -458,7 +458,7 @@ const eveConversation = pgTable(
       (
         (${table.forkTurnId} is null and ${table.forkMessageId} is null) or
         (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
-        (${table.forkMessageId} is not null and ${table.forkMessageId} ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and ${table.forkTurnId} is null)
+        (${table.forkMessageId} is not null and length(${table.forkMessageId}) between 1 and 512 and ${table.forkTurnId} is null)
       ) and
       ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
     )`

@@ -93,7 +93,7 @@ test("logical chat keeps its URL and native observers across first send, retry, 
   await page
     .getByRole("button", {
       exact: true,
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
     .last()
     .click();

@@ -16,7 +16,8 @@ export const readCompletedEveCopyTranscript = async (
     readonly sessionId: string | null;
     readonly deliveryId: string | null;
   }[],
-  receipts: readonly EveMessageDisplayReceipt[]
+  receipts: readonly EveMessageDisplayReceipt[],
+  beforeMessageId?: string
 ): Promise<ReturnType<typeof prepareEveCopyTranscript>> => {
   if (
     dispatches.some(
@@ -43,5 +44,5 @@ export const readCompletedEveCopyTranscript = async (
   ) {
     throw new EveCopyNotReadyError();
   }
-  return prepareEveCopyTranscript(snapshot.events, receipts);
+  return prepareEveCopyTranscript(snapshot.events, receipts, beforeMessageId);
 };

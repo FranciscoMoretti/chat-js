@@ -154,7 +154,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await page
     .getByRole("button", {
       exact: true,
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
     .first()
     .click();

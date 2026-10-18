@@ -764,3 +764,38 @@ it("copies explicit file identities alongside their stable URLs", () => {
     imageUrl: copiedUrl,
   });
 });
+
+it("branches before an edited user message and rejects invalid boundaries", () => {
+  const events = history([
+    {
+      id: "first",
+      role: "user",
+      parts: [{ type: "text", text: "Original first" }],
+    },
+    {
+      id: "answer",
+      role: "assistant",
+      parts: [{ type: "text", text: "Old answer", state: "done" }],
+    },
+    {
+      id: "later",
+      role: "user",
+      parts: [{ type: "text", text: "Later prompt" }],
+    },
+  ]);
+  expect(prepareEveCopyTranscript(events, [], "first").seed.messages).toEqual(
+    []
+  );
+  const prefix = prepareEveCopyTranscript(events, [], "later").seed.messages;
+  expect(prefix.map((message) => message.role)).toEqual(["user", "assistant"]);
+  expect(JSON.stringify(prefix)).not.toContain("Later prompt");
+  expect(prepareEveCopyTranscript(events).seed.messages).toHaveLength(3);
+  for (const invalid of ["missing", "answer"]) {
+    expect(() => prepareEveCopyTranscript(events, [], invalid)).toThrow(
+      "not a user message"
+    );
+  }
+  expect(() =>
+    prepareEveCopyTranscript(events.slice(0, 1), [], "first")
+  ).toThrow(EveCopyNotReadyError);
+});
