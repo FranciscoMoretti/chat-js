@@ -1,6 +1,9 @@
 import path from "node:path";
+import { config } from "dotenv";
 import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 import { spawnSync } from "node:child_process";
+
+config({ path: [".env.local", ".env"], quiet: true });
 
 const PROCESS_SUCCESS_STATUS = 0;
 

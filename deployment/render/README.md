@@ -90,47 +90,34 @@ No hosted deployment, real Render restart, remote lifecycle erasure or complete 
 
 ### Setup resumed (2026-10-18)
 
-The Render account is authenticated. A web-service form is prepared for the public
-ChatJS repository in Frankfurt, with free compute selected; no service has been
-created. Free compute sleeps when idle and cannot establish production worker
-availability. Paid production sizing remains a separate deployment decision.
+The Render account is authenticated. A web-service form is prepared for the public ChatJS repository in Frankfurt, with free compute selected; no service has been created. Free compute sleeps when idle and cannot establish production worker availability. Paid production sizing remains a separate deployment decision.
 
-The existing `chatjs-hosting-verification` Supabase project was resumed. Its
-dashboard still reports restoration in progress and disables database and storage
-access. Fresh credentialed checks are blocked until restoration completes; the
-October 5 results above are historical evidence only.
+The existing `chatjs-hosting-verification` Supabase project was resumed. Its dashboard still reports restoration in progress and disables database and storage access. Fresh credentialed checks are blocked until restoration completes; the October 5 results above are historical evidence only.
 
-Against main `210cce474` (EVE `0.80.1-chatjs.2`), the Supabase adapter now normalizes
-explicit storage object-not-found errors to the Files SDK `NotFound` contract.
-Permission, network and ambiguous provider failures remain errors. Generated app
-builds also invoke `scripts/build-eve.ts` so both authenticated and guest workers
-are compiled. Repository lint, all eight workspace type tasks, and 26 focused
-scaffold/storage tests passed. No hosted runtime acceptance is claimed.
+Against main `210cce474` (EVE `0.80.1-chatjs.2`), the Supabase adapter now normalizes explicit storage object-not-found errors to the Files SDK `NotFound` contract. Permission, network and ambiguous provider failures remain errors. Generated app builds also invoke `scripts/build-eve.ts` so both authenticated and guest workers are compiled. Repository lint, all eight workspace type tasks, and 26 focused scaffold/storage tests passed. No hosted runtime acceptance is claimed.
 
-Once the project is available, the opt-in storage probe can run with
-`SUPABASE_ACCEPTANCE_URL`, `SUPABASE_ACCEPTANCE_KEY`, and
-`SUPABASE_ACCEPTANCE_BUCKET` supplied through an ignored local environment:
+Once the project is available, the opt-in storage probe can run with `SUPABASE_ACCEPTANCE_URL`, `SUPABASE_ACCEPTANCE_KEY`, and `SUPABASE_ACCEPTANCE_BUCKET` supplied through an ignored local environment:
 
 ```sh
 bun packages/registry/scripts/check-supabase-storage.ts
 ```
 
-It requires an existing private bucket and creates only uniquely named disposable
-probe objects. Database credentials, selected provider installation, OAuth callback
-configuration, Render deployment, and the hosted acceptance gates above remain
-unfinished.
+It requires an existing private bucket and creates only uniquely named disposable probe objects. Database credentials, selected provider installation, OAuth callback configuration, Render deployment, and the hosted acceptance gates above remain unfinished.
 
 ### Restored project storage verification (2026-10-18)
 
-After restoration, the Supabase dashboard reports Healthy. The committed opt-in
-storage probe passed against the existing private `chatjs-staging` bucket using
-the existing server credential. It verified upload, authenticated and signed
-reads, unsigned public-read denial, copy, deletion with the copy intact,
-missing-object detection, and repeated cleanup. All probe objects were removed.
-This is direct adapter acceptance, not application-level two-user isolation.
+After restoration, the Supabase dashboard reports Healthy. The committed opt-in storage probe passed against the existing private `chatjs-staging` bucket using the existing server credential. It verified upload, authenticated and signed reads, unsigned public-read denial, copy, deletion with the copy intact, missing-object detection, and repeated cleanup. All probe objects were removed. This is direct adapter acceptance, not application-level two-user isolation.
 
-The 15 database-health, worker-health and world-selection tests also passed.
-Database integration and Render runtime checks still require the project's
-PostgreSQL password; the dashboard only provides a placeholder. The existing
-service-role storage key is not a PostgreSQL password. No credential reset or
-Render service creation was performed.
+The 15 database-health, worker-health and world-selection tests also passed. Database integration and Render runtime checks still require the project's PostgreSQL password; the dashboard only provides a placeholder. The existing service-role storage key is not a PostgreSQL password. No credential reset or Render service creation was performed.
+
+### Deployment branch validation (2026-10-18)
+
+`codex/render-supabase-deploy-oct18` selects the existing private Supabase bucket in the reference app. It retains the app's AI Gateway and tool providers; it does not claim a Vercel-free tool configuration. Explicit just-bash environments provide EVE's internal virtual workspace without requiring a local VM daemon. This is separate from the configured ChatJS code-execution tool.
+
+The saved database password was URL-encoded. Verified TLS uses the public Supabase Root 2021 certificate downloaded from Database Settings and saved as `deployment/render/supabase-ca.crt`. Session-pooler login, two-connection LISTEN/NOTIFY, workflow readiness, backend identity, and application migrations passed against the restored project. Production build and all eight workspace type checks passed. Nine application storage regression tests passed.
+
+The production server at worktree slot 85 returned health 200 with both workers. Terminating its guest worker produced 503; restarting the whole server restored 200. This is local production-process evidence against Supabase, not Render-edge or in-flight conversation recovery evidence.
+
+The worker build now loads `.env.local` before spawning its backend check, fixing a reproduced build failure. Root lint passes formatting, static analysis and docs checks, then fails the canonical demo synchronization check because this deployment branch intentionally selects Supabase instead of the canonical Vercel Blob demo. Do not merge this provider selection into main or weaken the canonical-demo guard.
+
+For this deployment branch use `bash deployment/render/build.sh` and `bash deployment/render/start.sh`, with Node 24.20.0, Bun 1.3.1, the production HTTPS APP_URL, and the scoped provider secrets supplied by Render. The build installs node-gyp for native workspace dependencies. Remote credentials must never be committed. The Render launch, OAuth, streaming, two-user isolation and restart recovery checks remain pending.
