@@ -74,7 +74,9 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     Math.abs(restoredReadyBox.height - legacyReadyBox.height)
   ).toBeLessThan(2);
   await expect(
-    firstUser.getByRole("button", { name: "Edit message" })
+    firstUser.getByRole("button", {
+      name: "Copy conversation with edited prompt",
+    })
   ).toBeVisible();
   await expect(
     firstUser.getByRole("button", { name: "Previous version" })
@@ -93,11 +95,15 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
       .getByRole("button", { name: "Next version" })
   ).toBeDisabled();
   await expect(
-    firstAssistant.getByRole("button", { name: "Retry" })
+    firstAssistant.getByRole("button", {
+      name: "Copy completed conversation and ask again",
+    })
   ).toBeVisible();
   await expect(firstAssistant.getByText("model-a")).toBeVisible();
   await expect(
-    secondAssistant.getByRole("button", { name: "Retry" })
+    secondAssistant.getByRole("button", {
+      name: "Copy completed conversation and ask again",
+    })
   ).toBeVisible();
   await expect(
     firstUser.getByTestId("inline-response-cards").getByRole("button")
@@ -161,7 +167,9 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     "edit:user-1"
   );
 
-  await secondAssistant.getByRole("button", { name: "Retry" }).click();
+  await secondAssistant
+    .getByRole("button", { name: "Copy completed conversation and ask again" })
+    .click();
   await expect(page.getByTestId("interaction-log")).toContainText(
     "retry:user-2->assistant-2"
   );
@@ -175,7 +183,9 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   ).toHaveCount(0);
   await expect(readonly.getByTestId("message-content").first()).toBeVisible();
   await expect(
-    readonly.getByRole("button", { name: "Edit message" })
+    readonly.getByRole("button", {
+      name: "Copy conversation with edited prompt",
+    })
   ).toHaveCount(0);
   await expect(readonly.getByRole("button", { name: "Copy" })).toHaveCount(4);
   const [restoredReadonlyBox, legacyReadonlyBox] = await Promise.all([
@@ -216,11 +226,15 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   });
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(
-    firstUser.getByRole("button", { name: "Edit message" })
+    firstUser.getByRole("button", {
+      name: "Copy conversation with edited prompt",
+    })
   ).toBeVisible();
   await expect(firstUser.getByRole("button", { name: "Copy" })).toBeVisible();
   await expect(
-    legacyUser.getByRole("button", { name: "Edit message" })
+    legacyUser.getByRole("button", {
+      name: "Copy conversation with edited prompt",
+    })
   ).toBeVisible();
   const [restoredMobileBox, legacyMobileBox] = await Promise.all([
     firstUser.boundingBox(),

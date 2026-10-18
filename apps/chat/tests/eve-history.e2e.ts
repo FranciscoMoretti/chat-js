@@ -145,7 +145,12 @@ test("history pages and searches older conversations without exposing other owne
       path: "tests/eve-results/screenshots/eve-history-error.png",
     });
     await page.unroute("**/api/trpc/eve.list**");
-    await page.getByRole("button", { exact: true, name: "Retry" }).click();
+    await page
+      .getByRole("button", {
+        exact: true,
+        name: "Copy completed conversation and ask again",
+      })
+      .click();
     await expect(
       page.getByText("No matching conversations.", { exact: true })
     ).toBeVisible();

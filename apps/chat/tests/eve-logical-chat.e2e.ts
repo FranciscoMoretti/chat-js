@@ -50,14 +50,25 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     timeout: 90_000,
   });
   await expect(
-    page.getByRole("button", { exact: true, name: "Retry" }).last()
+    page
+      .getByRole("button", {
+        exact: true,
+        name: "Copy completed conversation and ask again",
+      })
+      .last()
   ).toBeEnabled();
   const retryAccepted = page.waitForResponse(
     (response: Readonly<Pick<Response, "request" | "url">>) =>
       response.url().endsWith("/api/agent-conversations") &&
       response.request().method() === "POST"
   );
-  await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
+  await page
+    .getByRole("button", {
+      exact: true,
+      name: "Copy completed conversation and ask again",
+    })
+    .last()
+    .click();
   const acceptedRetryResponse = await retryAccepted;
   expect(acceptedRetryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -80,7 +91,10 @@ test("logical chat keeps its URL and native observers across first send, retry, 
   await expect(page.getByRole("log")).toContainText(second);
 
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Copy conversation with edited prompt",
+    })
     .last()
     .click();
   const editor = page

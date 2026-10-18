@@ -93,7 +93,7 @@ test("copied responses regenerate with their original model after reload", async
   await expect(page.getByRole("log").getByText(answer)).toBeVisible();
   const regenerate = page.getByRole("button", {
     exact: true,
-    name: "Retry",
+    name: "Copy completed conversation and ask again",
   });
   await expect(regenerate).toBeEnabled();
   await page.getByRole("log").screenshot({
@@ -108,7 +108,6 @@ test("copied responses regenerate with their original model after reload", async
         route.request().postDataJSON()
       );
       expect(input.fork).toEqual({
-        beforeMessageId: "seed_message_0",
         conversationId: destination.id,
       });
       expect(input.modelId).toBe(originalModel);
@@ -122,14 +121,17 @@ test("copied responses regenerate with their original model after reload", async
   await regenerate.click();
   await expect.poll(() => regenerated?.id, { timeout: 95_000 }).toBeTruthy();
   await expect(page).toHaveURL(`${origin}/chat/${regenerated?.id}`);
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
+  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
     timeout: 45_000,
   });
   await expect(
-    page.getByRole("button", { exact: true, name: "Retry" })
-  ).toHaveCount(1);
+    page.getByRole("button", {
+      exact: true,
+      name: "Copy completed conversation and ask again",
+    })
+  ).toHaveCount(2);
   await page.reload();
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
+  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
     timeout: 30_000,
   });
 });

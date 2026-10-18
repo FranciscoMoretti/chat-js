@@ -87,7 +87,12 @@ test("moves native conversations from sidebar and project rows with recoverable 
       style: screenshotStyle,
     });
     await page.unroute(projectsRoute);
-    await dialog.getByRole("button", { exact: true, name: "Retry" }).click();
+    await dialog
+      .getByRole("button", {
+        exact: true,
+        name: "Copy completed conversation and ask again",
+      })
+      .click();
     await expect(
       dialog.getByRole("combobox", { exact: true, name: "Project" })
     ).toBeEnabled();

@@ -78,7 +78,10 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
       timeout: 90_000,
     });
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Copy conversation with edited prompt",
+      })
       .nth(1)
       .click();
     const editor = page.getByRole("dialog");

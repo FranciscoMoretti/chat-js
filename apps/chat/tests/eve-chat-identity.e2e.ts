@@ -73,7 +73,10 @@ test("generated chat identity stays selected across edited branch paths", async 
     await expect(activeChat).toHaveText(chat.title);
     const chatHref = await activeChat.getAttribute("href");
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Copy conversation with edited prompt",
+      })
       .click();
     const editor = page
       .getByRole("log")
@@ -105,11 +108,7 @@ test("generated chat identity stays selected across edited branch paths", async 
       animations: "disabled",
       path: testInfo.outputPath("same-chat-edited-branch.png"),
     });
-    await page
-      .getByRole("log")
-      .locator(".is-user")
-      .getByRole("button", { exact: true, name: "Previous version" })
-      .click();
+    await page.goto(`/chat/${source.id}`);
     await expect(page.getByRole("log")).toContainText("trail-ready");
     await expect(activeChat).toHaveAttribute("href", chatHref ?? "");
     await expect(title).toHaveText(chat.title);

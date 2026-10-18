@@ -492,10 +492,15 @@ for (const attachment of [
 
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Copy conversation with edited prompt",
+      })
       .first()
       .click();
-    const editor = page.getByRole("dialog");
+    const editor = page
+      .getByRole("log")
+      .getByRole("group", { name: "Message composer" });
     await expect(
       editor.getByRole("button", { exact: true, name: attachment.name })
     ).toBeVisible();
@@ -555,7 +560,6 @@ for (const attachment of [
           route.request().postDataJSON()
         );
         expect(input.fork).toEqual({
-          beforeMessageId: "seed_message_0",
           conversationId: destination.id,
         });
         expect(input.modelId).toBe(attachment.modelId);
@@ -586,14 +590,21 @@ for (const attachment of [
       timeout: 120_000,
     });
     const editedAnswer = new RegExp(`^${attachment.answer}\\.?$`, "iu");
-    await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({
+    await expect(
+      page.getByRole("log").getByText(editedAnswer).last()
+    ).toBeVisible({
       timeout: 45_000,
     });
     await expect(
-      page.getByRole("button", { exact: true, name: "Edit message" })
-    ).toHaveCount(1);
+      page.getByRole("button", {
+        exact: true,
+        name: "Copy conversation with edited prompt",
+      })
+    ).toHaveCount(2);
     await page.reload();
-    await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({
+    await expect(
+      page.getByRole("log").getByText(editedAnswer).last()
+    ).toBeVisible({
       timeout: 30_000,
     });
     const originalCopyFile = await page.request.get(copiedUrl);

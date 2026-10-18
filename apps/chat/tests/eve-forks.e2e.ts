@@ -74,7 +74,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
     const operation = {
-      fork: { beforeTurnId: "turn_1", conversationId: source.id },
+      fork: { conversationId: source.id },
       message:
         "What token did I ask you to remember? Reply only with the token. Do not call tools.",
       modelId,
@@ -89,7 +89,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     expect(branch.sessionId).not.toBe(source.sessionId);
     await page.goto(`/chat/${branch.id}`);
     await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(
-      2,
+      3,
       {
         timeout: 90_000,
       }
@@ -98,12 +98,12 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       page.getByRole("log").locator(".is-assistant").last()
     ).toContainText("CEDAR-PINE", { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
-    await expect(page.getByRole("log")).not.toContainText(
+    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(3);
+    await expect(page.getByRole("log")).toContainText(
       "original-second-response"
     );
     await page.reload();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
+    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(3);
     await expect(
       page.getByRole("log").locator(".is-assistant").last()
     ).toContainText("CEDAR-PINE");
@@ -116,7 +116,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     const changed = await page.request.post("/api/agent-conversations", {
       data: {
         ...operation,
-        fork: { ...operation.fork, beforeTurnId: "turn_0" },
+        message: "A different copied prompt.",
       },
       headers,
     });
@@ -129,7 +129,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     // branch turn may be billed; copied ancestor turns must not be charged again.
     expect(
       new Set(usage.map((entry: { readonly turnId: string }) => entry.turnId))
-    ).toEqual(new Set(["turn_1"]));
+    ).toEqual(new Set(["turn_0"]));
     expect(
       usage.filter(
         (entry: { readonly eventId: string }) =>
@@ -176,7 +176,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       const raw = await page.request.post("/api/agent-conversations", {
         data: {
           ...operation,
-          fork: { beforeTurnId: "turn_1", sessionId: source.sessionId },
+          fork: { sessionId: source.sessionId },
         },
         headers,
       });

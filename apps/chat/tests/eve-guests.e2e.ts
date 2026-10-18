@@ -583,7 +583,7 @@ test("comparison persistence failure rolls back guest identity and every quota r
   owners.push(ownerId);
   const first = request(ownerId);
   const input = {
-    fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
+    fork: { conversationId: crypto.randomUUID() },
     message: "hello",
     modelIds: ["cheap", "cheap"],
     operationId: crypto.randomUUID(),

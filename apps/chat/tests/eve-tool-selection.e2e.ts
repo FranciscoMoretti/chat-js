@@ -152,10 +152,15 @@ test("Canvas selection survives native history and edits while later turns reset
   });
   await page.reload();
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Copy conversation with edited prompt",
+    })
     .first()
     .click();
-  const editor = page.getByRole("dialog");
+  const editor = page
+    .getByRole("log")
+    .getByRole("group", { name: "Message composer" });
   await expect(
     editor.getByRole("button", { exact: true, name: "Clear Canvas tool" })
   ).toBeVisible();

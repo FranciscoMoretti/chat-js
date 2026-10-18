@@ -189,13 +189,7 @@ test("copied document history survives source deletion and supports native editi
       .where(
         eq(eveImportedDocumentCheckpointEntry.conversationId, destination.id)
       )
-  ).toEqual([
-    {
-      documentId: head.documentId,
-      messageIndex: 2,
-      revisionId: head.revisionId,
-    },
-  ]);
+  ).toEqual([]);
   expect(
     revisions.find(
       (revision: Readonly<{ id: string }>) =>
@@ -273,10 +267,15 @@ test("copied document history survives source deletion and supports native editi
     )
   ).toBe(true);
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Copy conversation with edited prompt",
+    })
     .nth(1)
     .click();
-  const editor = page.getByRole("dialog");
+  const editor = page
+    .getByRole("log")
+    .getByRole("group", { name: "Message composer" });
   await editor
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
@@ -306,7 +305,6 @@ test("copied document history survives source deletion and supports native editi
   await editor.getByRole("button", { exact: true, name: "Send" }).click();
   const { input: forkInput, binding: forked } = await forkReply.promise;
   expect(forkInput.fork).toEqual({
-    beforeMessageId: "seed_message_2",
     conversationId: destination.id,
   });
   await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`, "u"));
@@ -328,7 +326,7 @@ test("copied document history survives source deletion and supports native editi
     ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
       event.type === "history.seeded"
   );
-  expect(seed?.data.messages).toHaveLength(2);
+  expect(seed?.data.messages.length).toBeGreaterThanOrEqual(4);
   expect(
     forkSnapshot.events.some(
       (event: ActionResultEventReader) =>
@@ -345,7 +343,7 @@ test("copied document history survives source deletion and supports native editi
   const changed = await page.request.post("/api/agent-conversations", {
     data: {
       ...forkInput,
-      fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
+      message: "A different copied prompt.",
     },
     headers: { origin },
   });

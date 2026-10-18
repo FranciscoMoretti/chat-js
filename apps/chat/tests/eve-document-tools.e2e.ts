@@ -205,13 +205,12 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .from(eveDocumentCheckpoint)
     .where(eq(eveDocumentCheckpoint.conversationId, binding.id))
     .orderBy(eveDocumentCheckpoint.turnIndex);
-  expect(checkpoints.map((checkpoint) => checkpoint.turnIndex)).toEqual([0, 1]);
+  expect(checkpoints).toEqual([]);
   const checkpointEntries = await db
     .select()
     .from(eveDocumentCheckpointEntry)
     .where(eq(eveDocumentCheckpointEntry.conversationId, binding.id));
-  expect(checkpointEntries).toHaveLength(3);
-  expect(checkpointEntries.every((entry) => entry.turnIndex === 1)).toBe(true);
+  expect(checkpointEntries).toEqual([]);
   await page.reload();
   await page
     .getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })

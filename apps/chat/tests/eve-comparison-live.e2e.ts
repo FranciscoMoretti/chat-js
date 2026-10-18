@@ -125,7 +125,10 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     );
     await page
       .getByRole("log")
-      .getByRole("button", { exact: true, name: "Retry" })
+      .getByRole("button", {
+        exact: true,
+        name: "Copy completed conversation and ask again",
+      })
       .click();
     const regeneration = await regenerationResponse;
     expect(regeneration.ok()).toBe(true);

@@ -143,7 +143,10 @@ test("ChatJS upload remains durable through creation retries and message editing
     });
     expect(external.status()).toBe(400);
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Copy conversation with edited prompt",
+      })
       .click();
     const editor = page.getByRole("dialog");
     await expect(

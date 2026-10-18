@@ -53,21 +53,9 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  const checkpointId = crypto.randomUUID();
-  const checkpoint = await page.request.post(
-    `/api/agent-conversations/${first.conversationId}/checkpoint`,
-    {
-      data: { beforeTurnId: "turn_1", checkpointId },
-      headers: { origin },
-      timeout: 45_000,
-    }
-  );
-  expect(checkpoint.ok(), await checkpoint.text()).toBe(true);
   const later = await page.request.post("/api/agent-response-groups", {
     data: {
       fork: {
-        beforeTurnId: "turn_1",
-        checkpointId,
         conversationId: first.conversationId,
       },
       message: "Do not use tools. Reply with exactly cobalt.",
@@ -93,7 +81,13 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
       value.url().endsWith("/api/agent-conversations") &&
       value.request().method() === "POST"
   );
-  await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
+  await page
+    .getByRole("button", {
+      exact: true,
+      name: "Copy completed conversation and ask again",
+    })
+    .last()
+    .click();
   const retryResponse = await retry;
   expect(retryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -106,7 +100,10 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     path: testInfo.outputPath("nested-comparisons.png"),
   });
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Copy conversation with edited prompt",
+    })
     .last()
     .click();
   const editor = page

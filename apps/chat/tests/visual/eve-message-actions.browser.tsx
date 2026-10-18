@@ -81,7 +81,10 @@ test("message actions retain their user boundary and readonly behavior", async (
     expect(modelForMessage).toHaveBeenCalledWith(messages[0]);
     await act(async () => {
       await page
-        .getByRole("button", { name: "Retry", exact: true })
+        .getByRole("button", {
+          name: "Copy completed conversation and ask again",
+          exact: true,
+        })
         .nth(1)
         .click();
     });
@@ -91,7 +94,10 @@ test("message actions retain their user boundary and readonly behavior", async (
     );
     await act(async () => {
       await page
-        .getByRole("button", { name: "Edit message", exact: true })
+        .getByRole("button", {
+          name: "Copy conversation with edited prompt",
+          exact: true,
+        })
         .nth(1)
         .click();
     });
@@ -100,10 +106,20 @@ test("message actions retain their user boundary and readonly behavior", async (
     await page.elementLocator(fixture.container).screenshot();
     await renderRoot(fixture.root, render(true));
     await expect
-      .element(page.getByRole("button", { name: "Retry", exact: true }))
+      .element(
+        page.getByRole("button", {
+          name: "Copy completed conversation and ask again",
+          exact: true,
+        })
+      )
       .not.toBeInTheDocument();
     await expect
-      .element(page.getByRole("button", { name: "Edit message", exact: true }))
+      .element(
+        page.getByRole("button", {
+          name: "Copy conversation with edited prompt",
+          exact: true,
+        })
+      )
       .not.toBeInTheDocument();
     expect(fixture.container.textContent).toContain("Second answer");
   } finally {
