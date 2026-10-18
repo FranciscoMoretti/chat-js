@@ -135,3 +135,15 @@ For comparison, the same Node 24.20.0 production build with capped heaps and poo
 No public HTTPS health pass was obtained. OAuth login, authenticated streaming, two-user application file isolation, cancellation, and in-flight restart recovery remain unverified on Render. Direct Supabase storage/TLS/LISTEN-NOTIFY checks and local worker failure/restart checks passed as recorded above. Two disposable test users and their sessions were removed; the pending HTTP probes never created files or model conversations. The local production process was stopped.
 
 All eight workspace type checks pass. Root lint still fails only the intentional canonical-demo synchronization check described above. Shell syntax checks pass. Keep this deployment branch separate from the canonical reference app; do not treat the failed free-compute experiment as hosting certification.
+
+### Next.js 16.4.2 comparison (2026-10-18)
+
+The isolated deployment app was upgraded from Next.js 16.3.0 to the npm `latest` release, 16.4.2, with its lockfile updated. Other workspace apps and the canonical registry template were not upgraded. Node 24.20.0, the Supabase provider selection, and the bounded database pools were retained.
+
+The production build, all eight workspace type checks, and 43 focused hosting/storage/health/world-selection tests passed. Root lint still fails only the intentional canonical-demo synchronization check described above. Local production health returned 200 both with the previous 128 MiB old-space / 4 MiB semi-space limits and with default Node heap sizing; the default-heap homepage also returned 200.
+
+Render deployment `dep-dbachr6q1p3s73b5i0rg` (commit `946b909`) repeated the capped-heap trial on free compute. It built successfully and briefly became live at 14:33 London time. At 14:34, its Next.js 16.4.2 process recorded `Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`, followed by exit status 134 and repeated instance failures. The upgrade did not resolve that memory failure.
+
+Deployment `dep-dbacm1m7bikc73e4cgdg` (commit `e124f50`) removed the experimental heap limits. Its build passed and both workers started, but it remained in progress without reaching Render readiness for the observed 12 minutes 37 seconds from deployment start (approximately seven minutes after runtime startup). It was manually canceled, not reported by Render as an out-of-memory failure. Public homepage/health requests intermittently returned 200 and 502 while the previous capped deployment was still the live revision; these cannot establish readiness of the default-heap candidate. The service was suspended again to stop the unsuccessful experiment.
+
+Next.js 16.4.2 and default heap sizing remain on this isolated branch. Stable free-compute hosting is still unverified, and the hosted OAuth, streaming, file-isolation and recovery acceptance gates remain open. No paid resources were created.
