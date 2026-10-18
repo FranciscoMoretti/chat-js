@@ -71,8 +71,7 @@ beforeAll(async () => {
   const journal = z
     .object({ entries: z.array(entrySchema) })
     .parse(JSON.parse(journalFile));
-  // Apply dependent schema migrations in journal order.
-  /* oxlint-disable no-await-in-loop */
+  /* oxlint-disable no-await-in-loop -- Apply dependent schema migrations in journal order. */
   for (const entry of journal.entries) {
     await postgres.exec(
       await readFile(
@@ -134,8 +133,7 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
   await wrapped.doGenerate({ prompt: [] });
   await wrapped.doGenerate({ prompt: [] });
   expect(calls).toBe(2);
-  // Replay must follow the first ingestion to exercise cursor-independent deduplication.
-  /* oxlint-disable no-await-in-loop */
+  /* oxlint-disable no-await-in-loop -- Replay must follow the first ingestion to exercise cursor-independent deduplication. */
   for (const sessionId of ["root", "root"]) {
     await ingestEveUsage("owner", sessionId, {
       data: {
@@ -199,8 +197,7 @@ it("settles each distinct descendant attempt against the root turn and reingests
 });
 
 it("keeps independent tool receipts billable alongside model receipts and replay", async () => {
-  // Replay the same call after its first durable charge.
-  /* oxlint-disable no-await-in-loop */
+  /* oxlint-disable no-await-in-loop -- Replay the same call after its first durable charge. */
   for (const eventId of ["tool-live", "tool-replay"]) {
     await ingestEveUsage("owner", "root", {
       data: {

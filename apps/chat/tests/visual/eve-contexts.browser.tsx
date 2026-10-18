@@ -63,13 +63,9 @@ test("native route loading and identity failure", async () => {
     await expect.poll(() => state.requests.includes("eve.get")).toBe(true);
     await takeSnapshot("route-loading");
 
-    await act(
-      /* oxlint-disable eslint/require-await -- React 19 async act retains the update scope while the synchronous observer error schedules React Query/provider microtasks, then flushes their rendering. */
-      async () => {
-        state.rejectIdentity();
-      }
-      /* oxlint-enable eslint/require-await */
-    );
+    await act<undefined>(() => {
+      state.rejectIdentity();
+    });
     await expect
       .element(page.getByRole("alert"))
       .toHaveTextContent("Fixture unavailable");

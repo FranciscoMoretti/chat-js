@@ -22,6 +22,7 @@ import { gatewayMetadata } from "../../registry/src/gateways/metadata";
 import cliPackage from "../package.json";
 import { GATEWAYS } from "../src/types";
 import { externalGatewayFixture } from "./external-gateway";
+import { cleanupGatewayFixture } from "./gateway-cleanup";
 import {
   nativeToolFixture,
   verifyNativeToolRuntime,
@@ -52,7 +53,7 @@ const archive = nodePath.join(
   `chat-js-gateways-${gatewayPackage.version}.tgz`
 );
 
-afterAll(async () => {
+const removeFixtureFiles = async (): Promise<void> => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const cleanupTimeout = Promise.withResolvers<never>();
   try {
@@ -66,7 +67,7 @@ afterAll(async () => {
   } finally {
     clearTimeout(timeout);
   }
-});
+};
 
 const executionDefinition = {
   codeExecutionCapabilities: {
@@ -434,12 +435,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await registryServer.stop(true);
-  if (originalRegistryUrl === undefined) {
-    delete process.env.CHATJS_REGISTRY_URL;
-  } else {
-    process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
-  }
+  await cleanupGatewayFixture({
+    environment: process.env,
+    originalRegistryUrl,
+    removeFiles: removeFixtureFiles,
+    server: registryServer,
+  });
 });
 
 const gatewaySource = (gateway: string): string => {

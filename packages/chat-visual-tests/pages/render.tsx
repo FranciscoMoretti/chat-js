@@ -133,8 +133,7 @@ export const captureVariants = async () => {
     return;
   }
   const { root, ui, viewports } = mounted;
-  // Sequential on purpose: each variant resizes the one page and settles before its capture.
-  /* oxlint-disable eslint/no-await-in-loop */
+  /* oxlint-disable eslint/no-await-in-loop -- Each variant resizes and renders the same page; settle and capture it before the next variant changes that shared state. */
   for (const viewport of viewports) {
     const size = VIEWPORTS[viewport];
     await page.viewport(size.width, size.height);

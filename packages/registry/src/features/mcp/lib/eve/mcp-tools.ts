@@ -249,7 +249,7 @@ const discoverEveMcpTools = async (
                     // MCP output and approval policies are adapted explicitly below.
                     const { toModelOutput: _outputAdapter, ...definition } =
                       tool;
-                    // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
+                    // oxlint-disable-next-line no-await-in-loop -- Resolve one tool schema at a time and check cancellation before starting the next conversion within this connector's discovery window.
                     const description = await describeMcpTool(definition);
                     connectorSignal.throwIfAborted();
                     connectorDescriptions.push({

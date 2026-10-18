@@ -142,36 +142,32 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
 });
 
 it("bounds adaptive decisions even when the supervisor never finishes", async () => {
-  agent.mockImplementation(
-    // oxlint-disable-next-line typescript/promise-function-async -- This Promise-only agent fixture keeps supervisor decisions unfinished while returning valid writer/researcher outputs; a constant result loses role validation, and eslint/require-await rejects an immediate async factory.
-    (name: string): ReturnType<typeof agent> => {
-      if (name === "researchPlanner") {
-        return Promise.resolve<Awaited<ReturnType<typeof agent>>>(
-          agent.mock.calls.length === 1
-            ? { research_brief: "Brief", title: "Report" }
-            : { complete: false, topics: ["Topic"] }
-        );
-      }
-      return Promise.resolve<Awaited<ReturnType<typeof agent>>>(
-        name === "researchWriter"
-          ? { content: "Content", title: "Report" }
-          : { findings: "Evidence" }
-      );
-    }
-  );
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce({ content: "Content", title: "Report" });
   await Array.fromAsync(researchStream(context));
-  expect(
-    agent.mock.calls.filter(
-      ([name]: Readonly<(typeof agent.mock.calls)[number]>) =>
-        name === "researchPlanner"
-    )
-  ).toHaveLength(4);
-  expect(
-    agent.mock.calls.filter(
-      ([name]: Readonly<(typeof agent.mock.calls)[number]>) =>
-        name === "researcher"
-    )
-  ).toHaveLength(3);
+  expect(agent.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
+    "researchPlanner",
+    "researchPlanner",
+    "researcher",
+    "researchCompressor",
+    "researchPlanner",
+    "researcher",
+    "researchCompressor",
+    "researchPlanner",
+    "researcher",
+    "researchCompressor",
+    "researchWriter",
+  ]);
   expect(mocks.save).toHaveBeenCalledOnce();
 });
 

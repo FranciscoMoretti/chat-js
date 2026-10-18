@@ -69,13 +69,13 @@ interface BuildHarness {
   events: string[];
   operations: {
     openDatabase: (url: string) => {
-      close: () => Promise<void>;
+      close: () => void | Promise<void>;
       execute: (query: string) => Promise<void>;
     };
     run: (
       command: "db:migrate" | "build",
       env: Readonly<NodeJS.ProcessEnv>
-    ) => Promise<void>;
+    ) => void | Promise<void>;
   };
 }
 type BuildConnection = ReturnType<BuildHarness["operations"]["openDatabase"]>;
@@ -109,10 +109,8 @@ const harness = ({
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
-          // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only driver fixture records cleanup and injects failures that must not mask migration errors; its immediate close has no work to await under eslint/require-await.
-          close: (): Promise<void> => {
+          close: (): void => {
             step("close");
-            return Promise.resolve();
           },
           execute: async (query: string): Promise<void> => {
             step(query);
@@ -123,14 +121,12 @@ const harness = ({
           },
         };
       },
-      // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only subprocess fixture records command/env and injects phase failures without launching a process; eslint/require-await rejects an immediate async callback.
       run: (
         command: "db:migrate" | "build",
         env: Readonly<NodeJS.ProcessEnv>
-      ): Promise<void> => {
+      ): void => {
         commands.push({ command, env });
         step(command);
-        return Promise.resolve();
       },
     },
   };

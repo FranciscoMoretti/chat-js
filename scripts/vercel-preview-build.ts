@@ -14,13 +14,13 @@ const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
 
 interface BuildOperations {
   openDatabase: (url: string) => {
-    close: () => Promise<void>;
+    close: () => void | Promise<void>;
     execute: (query: string) => Promise<void>;
   };
   run: (
     command: "db:migrate" | "build",
     env: Readonly<NodeJS.ProcessEnv>
-  ) => Promise<void>;
+  ) => void | Promise<void>;
 }
 
 const formatBuildFailure = (phase: string, error: unknown): string => {
