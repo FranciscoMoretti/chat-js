@@ -5,6 +5,7 @@ export default defineConfig({
   ...config,
   testMatch: [
     "eve-logical-chat.e2e.ts",
+    "eve-branching-regression.e2e.ts",
     "eve-chat-identity.e2e.ts",
     "eve-optimistic-create.e2e.ts",
     "eve-copy-live.e2e.ts",

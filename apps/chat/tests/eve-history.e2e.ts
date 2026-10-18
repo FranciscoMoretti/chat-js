@@ -148,7 +148,7 @@ test("history pages and searches older conversations without exposing other owne
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy completed conversation and ask again",
+        name: "Regenerate response",
       })
       .click();
     await expect(

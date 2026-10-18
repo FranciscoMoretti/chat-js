@@ -96,13 +96,13 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   ).toBeDisabled();
   await expect(
     firstAssistant.getByRole("button", {
-      name: "Copy completed conversation and ask again",
+      name: "Regenerate response",
     })
   ).toBeVisible();
   await expect(firstAssistant.getByText("model-a")).toBeVisible();
   await expect(
     secondAssistant.getByRole("button", {
-      name: "Copy completed conversation and ask again",
+      name: "Regenerate response",
     })
   ).toBeVisible();
   await expect(
@@ -168,7 +168,7 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
   );
 
   await secondAssistant
-    .getByRole("button", { name: "Copy completed conversation and ask again" })
+    .getByRole("button", { name: "Regenerate response" })
     .click();
   await expect(page.getByTestId("interaction-log")).toContainText(
     "retry:user-2->assistant-2"

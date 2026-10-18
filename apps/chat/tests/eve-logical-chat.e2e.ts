@@ -53,7 +53,7 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     page
       .getByRole("button", {
         exact: true,
-        name: "Copy completed conversation and ask again",
+        name: "Regenerate response",
       })
       .last()
   ).toBeEnabled();
@@ -65,7 +65,7 @@ test("logical chat keeps its URL and native observers across first send, retry, 
   await page
     .getByRole("button", {
       exact: true,
-      name: "Copy completed conversation and ask again",
+      name: "Regenerate response",
     })
     .last()
     .click();

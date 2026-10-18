@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  hasPendingCreation,
   moveRejectedProjectCreation,
   prepareCreation,
   readCreation,
@@ -85,4 +86,15 @@ describe("rejected project draft recovery", () => {
       )
     ).toThrow("saved request changed");
   });
+});
+
+it("keeps owner-scoped unresolved forks discoverable, including damaged drafts", () => {
+  const storage = storageFixture();
+  const conversationId = crypto.randomUUID();
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(false);
+  prepareCreation(storage, "owner", "edit", undefined, { conversationId });
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
+  expect(hasPendingCreation(storage, "other", { conversationId })).toBe(false);
+  storage.setItem(`chatjs.eve.pending:owner:fork:${conversationId}`, "damaged");
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
 });

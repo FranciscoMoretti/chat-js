@@ -32,6 +32,15 @@ const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
 
+const hasPendingCreation = (
+  storage: StorageAccess,
+  ownerId: string,
+  scope?: Readonly<CreationScope>
+): boolean => {
+  const stored = storage.getItem(keyFor(ownerId, scope));
+  return stored !== null && stored !== "";
+};
+
 const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
@@ -215,6 +224,7 @@ const moveRejectedProjectCreation = (
   return next;
 };
 export {
+  hasPendingCreation,
   finishCreation,
   moveRejectedProjectCreation,
   prepareCreation,

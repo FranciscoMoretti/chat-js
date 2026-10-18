@@ -21,6 +21,7 @@ import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
+import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
@@ -52,6 +53,9 @@ const NativeObserver = ({
   const display = useQuery(trpc.eve.messageDisplay.queryOptions({ sessionId }));
   const agent = useEveAgent({
     host: "/api",
+    // Every branch has an observer. Release idle HTTP connections so completed
+    // histories cannot starve creation/navigation requests; send/resume reconnect.
+    followIdle: false,
     initialSession: { sessionId, streamIndex: 0 },
     onEvent: (
       event:
@@ -238,9 +242,22 @@ const EveRuntimeProvider = ({
         staleTime: 0,
       });
       const existing = registry.current.get(identity.chatId);
+      // Keep unresolved requests visible on their source after a reload, even
+      // when the server already created a newer branch before the response was lost.
+      const pendingSource = navigate
+        ? undefined
+        : family.branches.find((branch) =>
+            hasPendingCreation(sessionStorage, request.ownerId, {
+              conversationId: branch.id,
+            })
+          );
       const controller =
         existing?.controller ??
-        new LogicalChat(identity.chatId, request.id, !navigate);
+        new LogicalChat(
+          identity.chatId,
+          pendingSource?.id ?? request.id,
+          !navigate && !pendingSource
+        );
       controller.setBranches(family.branches);
       if (existing && navigate) {
         controller.selectBranch(request.id);

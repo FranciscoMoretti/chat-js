@@ -148,7 +148,10 @@ test("ChatJS upload remains durable through creation retries and message editing
         name: "Edit message",
       })
       .click();
-    const editor = page.getByRole("dialog");
+    const editor = page
+      .getByRole("log")
+      .getByRole("group", { name: "Message composer", exact: true });
+    const sourceChatUrl = page.url();
     await expect(
       editor.getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
@@ -233,8 +236,11 @@ test("ChatJS upload remains durable through creation retries and message editing
     const retainedFile = await page.request.get(retained.data);
     expect(retainedFile.ok()).toBe(true);
     expect(await retainedFile.body()).toEqual(redPng);
-    const edited = z.object({ id: z.uuid() }).parse(forkResponse.body);
-    await expect(page).toHaveURL(new RegExp(`/chat/${edited.id}$`, "u"));
+    z.object({ id: z.uuid() }).parse(forkResponse.body);
+    await expect(page).toHaveURL(sourceChatUrl);
+    await expect(page.locator(".is-user")).toContainText(
+      "Look at the attached square again"
+    );
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });

@@ -84,7 +84,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await page
     .getByRole("button", {
       exact: true,
-      name: "Copy completed conversation and ask again",
+      name: "Regenerate response",
     })
     .last()
     .click();

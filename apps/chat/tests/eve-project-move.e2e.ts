@@ -90,7 +90,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await dialog
       .getByRole("button", {
         exact: true,
-        name: "Copy completed conversation and ask again",
+        name: "Regenerate response",
       })
       .click();
     await expect(

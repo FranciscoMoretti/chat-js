@@ -82,7 +82,7 @@ test("message actions retain their user boundary and readonly behavior", async (
     await act(async () => {
       await page
         .getByRole("button", {
-          name: "Copy completed conversation and ask again",
+          name: "Regenerate response",
           exact: true,
         })
         .nth(1)
@@ -108,7 +108,7 @@ test("message actions retain their user boundary and readonly behavior", async (
     await expect
       .element(
         page.getByRole("button", {
-          name: "Copy completed conversation and ask again",
+          name: "Regenerate response",
           exact: true,
         })
       )

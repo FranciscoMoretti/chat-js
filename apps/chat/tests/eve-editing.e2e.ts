@@ -9,7 +9,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const sourceModelId = "openai/gpt-5-nano";
 
-test("edit recovery replaces the selected message while ask-again copies history", async ({
+test("edit recovery and regeneration replace the selected turn", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -93,7 +93,7 @@ test("edit recovery replaces the selected message while ask-again copies history
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`, "u"), {
+    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
       timeout: 60_000,
     });
     await expect(
@@ -136,7 +136,7 @@ test("edit recovery replaces the selected message while ask-again copies history
     await page
       .getByRole("button", {
         exact: true,
-        name: "Copy completed conversation and ask again",
+        name: "Regenerate response",
       })
       .last()
       .click();
@@ -148,12 +148,9 @@ test("edit recovery replaces the selected message while ask-again copies history
         .looseObject({ modelId: z.string() })
         .parse(regeneration.request().postDataJSON()).modelId
     ).toBe(sourceModelId);
-    await expect(page).not.toHaveURL(
-      new RegExp(`/chat/${accepted?.id}$`, "u"),
-      {
-        timeout: 60_000,
-      }
-    );
+    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
+      timeout: 60_000,
+    });
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
     ).toBeVisible({
@@ -162,7 +159,7 @@ test("edit recovery replaces the selected message while ask-again copies history
     await expect(
       page.getByRole("log").locator(".is-user").last()
     ).toContainText("cobalt");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
     await page
       .getByRole("log")
       .locator(".is-user")
@@ -171,7 +168,12 @@ test("edit recovery replaces the selected message while ask-again copies history
         animations: "disabled",
         path: testInfo.outputPath("version-navigation.png"),
       });
-    await page.goto(`/chat/${source.id}`);
+    await page
+      .getByRole("log")
+      .locator(".is-user")
+      .first()
+      .getByRole("button", { name: "Previous version", exact: true })
+      .click();
     await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"));
     await expect(
       page.getByRole("log").locator(".is-user").last()

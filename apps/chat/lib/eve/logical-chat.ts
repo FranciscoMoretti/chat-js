@@ -91,16 +91,56 @@ const latestMessageTime = (
   return time;
 };
 
+/** The immutable message boundary determines which copied seed positions are inherited. */
+const branchPrefix = (
+  branch: LogicalBranch,
+  paths: ReadonlyMap<string, readonly string[]>,
+  aliases: ReadonlyMap<string, string>
+): { prefix: readonly string[]; replaced?: string } => {
+  if (
+    !isNonEmptyString(branch.parentConversationId) ||
+    !isNonEmptyString(branch.forkMessageId)
+  ) {
+    return { prefix: [] };
+  }
+  const source = paths.get(branch.parentConversationId) ?? [];
+  const boundary = aliases.get(
+    aliasKey(branch.parentConversationId, branch.forkMessageId)
+  );
+  const index = boundary === undefined ? -1 : source.indexOf(boundary);
+  if (index < 0) {
+    throw new Error("The saved branch message is not available in its source.");
+  }
+  return { prefix: source.slice(0, index), replaced: boundary };
+};
+
+const inheritedSeedId = (
+  message: EveMessage,
+  prefix: readonly string[],
+  nodes: ReadonlyMap<string, LogicalNode>
+): string | undefined => {
+  const match = /^seed_message_(?<index>\d+)$/u.exec(message.id);
+  const id = match === null ? undefined : prefix[Number(match.groups?.index)];
+  if (id !== undefined && nodes.get(id)?.message.role !== message.role) {
+    throw new Error(
+      "Copied message roles do not match the saved branch prefix."
+    );
+  }
+  return id;
+};
+
 const projectBranch = (
   branch: LogicalBranch,
   agent: NativeChatAgent,
   nodes: Map<string, LogicalNode>,
-  aliases: Map<string, string>
+  aliases: Map<string, string>,
+  paths: ReadonlyMap<string, readonly string[]>
 ): { hasLocalMessage: boolean; path: string[] } => {
   const messages = agent.data.messages.filter(
     (message) =>
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
+  const inherited = branchPrefix(branch, paths, aliases);
   const path: string[] = [];
   let hasPrompt = false;
   for (const message of messages) {
@@ -111,10 +151,17 @@ const projectBranch = (
     if (firstUser) {
       hasPrompt = true;
     }
+    const inheritedId = inheritedSeedId(message, inherited.prefix, nodes);
+    const replacementId =
+      firstUser && branch.forkKind === "regenerate"
+        ? inherited.replaced
+        : undefined;
     const id =
-      firstUser && isNonEmptyString(branch.responseGroupId)
+      inheritedId ??
+      replacementId ??
+      (firstUser && isNonEmptyString(branch.responseGroupId)
         ? `group:${branch.responseGroupId}:user`
-        : logicalNativeId(branch.sessionId ?? branch.id, message);
+        : logicalNativeId(branch.sessionId ?? branch.id, message));
     if (!nodes.has(id)) {
       nodes.set(id, {
         conversationId: branch.id,
@@ -373,7 +420,8 @@ class LogicalChat {
             branch,
             agent,
             stagedNodes,
-            stagedAliases
+            stagedAliases,
+            paths
           );
           for (const [key, node] of stagedNodes) {
             nodes.set(key, node);

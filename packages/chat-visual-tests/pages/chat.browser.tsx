@@ -302,3 +302,44 @@ test("owner can answer approval while the native turn stays open", async () => {
     .element(page.getByRole("button", { name: "Cancel", exact: true }))
     .toBeEnabled();
 });
+
+test("lost branch response keeps source recovery visible instead of selecting the newest branch", async () => {
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Replacement awaiting recovery",
+    invoicesConversation.initialModelId ?? undefined,
+    {
+      conversationId: invoicesConversation.id,
+      fork: { conversationId: invoicesConversation.id },
+      forkKind: "edit",
+    }
+  );
+  const [source] = invoicesTrpc["eve.branches"].branches;
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: {
+      ...invoicesTranscripts,
+      ses_newer: Object.values(invoicesTranscripts)[0],
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "eve.branches": {
+        ...invoicesTrpc["eve.branches"],
+        branches: [
+          source,
+          {
+            ...source,
+            id: "59b3709e-a5d7-4654-a52e-59b27302e30c",
+            sessionId: "ses_newer",
+            parentConversationId: source.id,
+            createdAt: new Date("2027-01-01"),
+          },
+        ],
+      },
+    },
+  });
+  await expect
+    .element(page.getByRole("button", { name: "Recover version" }))
+    .toBeVisible();
+});

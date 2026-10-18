@@ -318,3 +318,82 @@ it("registration before the URL transition does not revoke initial follow", () =
     chat.logicalId("root", "turn_0:assistant")
   );
 });
+
+it("places edit and regenerated versions at the selected message, preserving prefix identity", () => {
+  const chat = new LogicalChat("chat", "root");
+  chat.setBranches([
+    branch("root"),
+    branch("edit", {
+      parentConversationId: "root",
+      forkKind: "edit",
+      forkMessageId: "u2",
+    }),
+    branch("retry", {
+      parentConversationId: "root",
+      forkKind: "regenerate",
+      forkMessageId: "u2",
+    }),
+  ]);
+  chat.observe(
+    "edit",
+    agent([
+      ...seededPrefix,
+      message("edited", "user", "turn_0"),
+      message("edited-answer", "assistant", "turn_0"),
+    ])
+  );
+  chat.observe(
+    "retry",
+    agent([
+      ...seededPrefix,
+      message("retried", "user", "turn_0", "u2"),
+      message("retried-answer", "assistant", "turn_0"),
+    ])
+  );
+  chat.observe("root", agent(original));
+  const snapshot = chat.getSnapshot();
+  const root = snapshot.paths.get("root") ?? [];
+  const edit = snapshot.paths.get("edit") ?? [];
+  const retry = snapshot.paths.get("retry") ?? [];
+  expect(edit.slice(0, 2)).toEqual(root.slice(0, 2));
+  expect(retry.slice(0, 3)).toEqual(root.slice(0, 3));
+  expect(snapshot.children.get(root[1])).toEqual([root[2], edit[2]]);
+  expect(snapshot.children.get(root[2])).toEqual([root[3], retry[3]]);
+  expect(chat.logicalId("edit", "seed_message_0")).toBe(root[0]);
+});
+
+it("resolves edits of inherited seed messages through their source aliases", () => {
+  const chat = new LogicalChat("chat", "nested");
+  chat.setBranches([
+    branch("root"),
+    branch("edit", {
+      parentConversationId: "root",
+      forkKind: "edit",
+      forkMessageId: "u2",
+    }),
+    branch("nested", {
+      parentConversationId: "edit",
+      forkKind: "edit",
+      forkMessageId: "seed_message_0",
+    }),
+  ]);
+  chat.observe(
+    "nested",
+    agent([
+      message("replacement", "user", "turn_0"),
+      message("answer", "assistant", "turn_0"),
+    ])
+  );
+  chat.observe(
+    "edit",
+    agent([...seededPrefix, message("changed", "user", "turn_0")])
+  );
+  chat.observe("root", agent(original));
+  const snapshot = chat.getSnapshot();
+  expect(snapshot.error).toBeUndefined();
+  expect(snapshot.paths.get("nested")).toHaveLength(2);
+  expect(snapshot.children.get(null)).toHaveLength(2);
+  expect(
+    snapshot.nodes.get(snapshot.paths.get("edit")?.[0] ?? "")?.conversationId
+  ).toBe("root");
+});
