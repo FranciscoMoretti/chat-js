@@ -1,4 +1,4 @@
-import { EveForkBoundaryError } from "@/lib/eve/fork-boundary-error";
+import { markEveCreationFailure } from "./eve-creation-failure";
 import { dispatchEveOnce } from "./eve-dispatch";
 import {
   and,
@@ -1039,17 +1039,7 @@ const createEveConversation = async (
     if (error instanceof CreationConflictError) {
       throw error;
     }
-    await db
-      .update(eveConversation)
-      .set({
-        state: error instanceof EveForkBoundaryError ? "deleted" : "uncertain",
-      })
-      .where(
-        and(
-          eq(eveConversation.id, reservation.id),
-          inArray(eveConversation.state, ["creating", "uncertain"])
-        )
-      );
+    await markEveCreationFailure(reservation.id, error);
     throw error;
   }
 };

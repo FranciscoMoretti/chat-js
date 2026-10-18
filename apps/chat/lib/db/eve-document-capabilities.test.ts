@@ -1,3 +1,4 @@
+import { EveForkBoundaryError } from "@/lib/eve/fork-boundary-error";
 import { readFile, readdir } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
@@ -5,7 +6,14 @@ import { drizzle } from "drizzle-orm/pglite";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import { eveChat, eveConversation, eveDocumentHead, user } from "./schema";
+import {
+  eveChat,
+  eveConversation,
+  eveDocumentHead,
+  eveFileReference,
+  eveStoredFile,
+  user,
+} from "./schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
@@ -21,6 +29,7 @@ const { getEveDocumentRevision, saveEveDocumentRevision } =
 
 const { snapshotPublicEveCopyDocuments } = await import("./eve-copy-documents");
 const { initializeEveCurrentCopy } = await import("./eve-current-copy");
+const { markEveCreationFailure } = await import("./eve-creation-failure");
 const capture = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/eve/completed-copy-source", () => ({
   readCompletedEveCopyTranscript: capture,
@@ -196,4 +205,52 @@ it("captures public current heads inside an existing transaction", async () => {
       )
   );
   expect(result.documents[0]?.headRevisionId).toBe(saved.id);
+});
+
+it("releases only rejected reservation references and preserves unknown deliveries", async () => {
+  const source = crypto.randomUUID();
+  const target = crypto.randomUUID();
+  const key = crypto.randomUUID();
+  await seedConversation(source);
+  await seedConversation(target);
+  await database
+    .update(eveConversation)
+    .set({ state: "creating", sessionId: null })
+    .where(eq(eveConversation.id, target));
+  await database
+    .insert(eveStoredFile)
+    .values({ key, ownerId: "document-owner" });
+  await database.insert(eveFileReference).values(
+    [source, target].map((conversationId) => ({
+      conversationId,
+      key,
+      ownerId: "document-owner",
+    }))
+  );
+  await markEveCreationFailure(target, new Error("Lost response"));
+  expect(
+    await database
+      .select()
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, key))
+  ).toHaveLength(2);
+  await markEveCreationFailure(target, new EveForkBoundaryError());
+  expect(
+    await database
+      .select({ conversationId: eveFileReference.conversationId })
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, key))
+  ).toEqual([{ conversationId: source }]);
+  const [row] = await database
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, target));
+  expect(row.state).toBe("deleted");
+  await markEveCreationFailure(source, new EveForkBoundaryError());
+  expect(
+    await database
+      .select()
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, key))
+  ).toHaveLength(1);
 });
