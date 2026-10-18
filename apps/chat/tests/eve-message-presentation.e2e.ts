@@ -187,7 +187,9 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
       name: "Copy conversation with edited prompt",
     })
   ).toHaveCount(0);
-  await expect(readonly.getByRole("button", { name: "Copy" })).toHaveCount(4);
+  await expect(
+    readonly.getByRole("button", { exact: true, name: "Copy" })
+  ).toHaveCount(4);
   const [restoredReadonlyBox, legacyReadonlyBox] = await Promise.all([
     readonly.locator('[data-message-id="user-1"]').boundingBox(),
     legacyReadonly.locator('[data-message-id="legacy-user-1"]').boundingBox(),
@@ -230,10 +232,12 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
       name: "Copy conversation with edited prompt",
     })
   ).toBeVisible();
-  await expect(firstUser.getByRole("button", { name: "Copy" })).toBeVisible();
+  await expect(
+    firstUser.getByRole("button", { exact: true, name: "Copy" })
+  ).toBeVisible();
   await expect(
     legacyUser.getByRole("button", {
-      name: "Copy conversation with edited prompt",
+      name: "Edit message",
     })
   ).toBeVisible();
   const [restoredMobileBox, legacyMobileBox] = await Promise.all([
