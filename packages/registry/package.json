@@ -67,6 +67,7 @@
     "@mendable/firecrawl-js": "1.29.1",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@openrouter/ai-sdk-provider": "3.0.0",
+    "@supabase/storage-js": "2.117.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.104.1",
     "@tavily/core": "^0.3.3",

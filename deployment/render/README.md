@@ -87,3 +87,35 @@ No hosted deployment, real Render restart, remote lifecycle erasure or complete 
 - [Render Blueprint specification](https://render.com/docs/blueprint-spec)
 - [Render Bun version selection](https://render.com/docs/bun-version)
 - [Supabase connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres)
+
+### Setup resumed (2026-10-18)
+
+The Render account is authenticated. A web-service form is prepared for the public
+ChatJS repository in Frankfurt, with free compute selected; no service has been
+created. Free compute sleeps when idle and cannot establish production worker
+availability. Paid production sizing remains a separate deployment decision.
+
+The existing `chatjs-hosting-verification` Supabase project was resumed. Its
+dashboard still reports restoration in progress and disables database and storage
+access. Fresh credentialed checks are blocked until restoration completes; the
+October 5 results above are historical evidence only.
+
+Against main `210cce474` (EVE `0.80.1-chatjs.2`), the Supabase adapter now normalizes
+explicit storage object-not-found errors to the Files SDK `NotFound` contract.
+Permission, network and ambiguous provider failures remain errors. Generated app
+builds also invoke `scripts/build-eve.ts` so both authenticated and guest workers
+are compiled. Repository lint, all eight workspace type tasks, and 26 focused
+scaffold/storage tests passed. No hosted runtime acceptance is claimed.
+
+Once the project is available, the opt-in storage probe can run with
+`SUPABASE_ACCEPTANCE_URL`, `SUPABASE_ACCEPTANCE_KEY`, and
+`SUPABASE_ACCEPTANCE_BUCKET` supplied through an ignored local environment:
+
+```sh
+bun packages/registry/scripts/check-supabase-storage.ts
+```
+
+It requires an existing private bucket and creates only uniquely named disposable
+probe objects. Database credentials, selected provider installation, OAuth callback
+configuration, Render deployment, and the hosted acceptance gates above remain
+unfinished.

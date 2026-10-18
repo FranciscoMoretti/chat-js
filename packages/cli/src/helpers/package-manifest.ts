@@ -102,9 +102,9 @@ const configureChatAppScripts = (scripts: ScriptMap): void => {
   scripts.dev = "tsx scripts/check-env.ts && next dev";
   scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
   scripts.build =
-    "tsx lib/db/migrate.ts --deployment && eve build && next build";
+    "tsx lib/db/migrate.ts --deployment && tsx scripts/build-eve.ts && next build";
   scripts.prod =
-    "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && eve build && next build && next start";
+    "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && tsx scripts/build-eve.ts && next build && next start";
   scripts.lint =
     "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error";
   scripts.format = "oxfmt --write .";

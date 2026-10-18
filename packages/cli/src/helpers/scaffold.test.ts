@@ -425,7 +425,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(packageJson.scripts?.build).toBe(
-      "tsx lib/db/migrate.ts --deployment && eve build && next build"
+      "tsx lib/db/migrate.ts --deployment && tsx scripts/build-eve.ts && next build"
     );
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
     expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();

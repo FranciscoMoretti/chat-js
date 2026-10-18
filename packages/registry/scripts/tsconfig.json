@@ -4,6 +4,7 @@
     "types": ["node", "bun"]
   },
   "include": [
+    "check-supabase-storage.ts",
     "demo-sync.ts",
     "../test/demo-check.test.ts",
     "../src/demo-sync.test.ts",
