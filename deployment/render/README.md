@@ -121,3 +121,17 @@ The production server at worktree slot 85 returned health 200 with both workers.
 The worker build now loads `.env.local` before spawning its backend check, fixing a reproduced build failure. Root lint passes formatting, static analysis and docs checks, then fails the canonical demo synchronization check because this deployment branch intentionally selects Supabase instead of the canonical Vercel Blob demo. Do not merge this provider selection into main or weaken the canonical-demo guard.
 
 For this deployment branch use `bash deployment/render/build.sh` and `bash deployment/render/start.sh`, with Node 24.20.0, Bun 1.3.1, the production HTTPS APP_URL, and the scoped provider secrets supplied by Render. The build installs node-gyp for native workspace dependencies. Remote credentials must never be committed. The Render launch, OAuth, streaming, two-user isolation and restart recovery checks remain pending.
+
+### Free Render result (2026-10-18)
+
+The free `chatjs-hosting-verification` service was created in Frankfurt with automatic deployments disabled. Its URL is `https://chatjs-hosting-verification.onrender.com` and service ID is `srv-dbabv53bc2fs73aqp15g`. No paid compute, disk or cron service was provisioned. After the failed verification, the service was suspended to stop automatic restarts; its configuration remains available for later work.
+
+The hosted build passed. The initial runtime never passed readiness: direct worker probes returned 200 but Next.js `/api/health` timed out, while cgroup memory remained near the 512 MiB limit. A runtime-only trial of 128 MiB old-space / 4 MiB semi-space limits per Node process also failed. Render deployment `dep-dbac9dks728c739lqifg` explicitly recorded `JavaScript heap out of memory` in Next.js and exit status 134. Free compute is not accepted for this three-process configuration. Temporary probes and the unsuccessful heap limits were removed from the branch after collecting evidence.
+
+A separate deployment exposed Supabase's 15-client session-pool limit (`EMAXCONNSESSION`). The Render scripts now default application pools to one connection and workflow pools to two, overridable through environment variables. A subsequent hosted build and a fresh session-pool connection passed. These small pools are acceptance settings, not production throughput certification.
+
+For comparison, the same Node 24.20.0 production build with capped heaps and pools returned health 200 locally. The three macOS processes had approximately 685 MiB summed RSS (233504, 291648 and 175952 KiB). Summed RSS can count shared pages more than once and is not a Linux sizing guarantee; the actual Render out-of-memory failure is the acceptance evidence.
+
+No public HTTPS health pass was obtained. OAuth login, authenticated streaming, two-user application file isolation, cancellation, and in-flight restart recovery remain unverified on Render. Direct Supabase storage/TLS/LISTEN-NOTIFY checks and local worker failure/restart checks passed as recorded above. Two disposable test users and their sessions were removed; the pending HTTP probes never created files or model conversations. The local production process was stopped.
+
+All eight workspace type checks pass. Root lint still fails only the intentional canonical-demo synchronization check described above. Shell syntax checks pass. Keep this deployment branch separate from the canonical reference app; do not treat the failed free-compute experiment as hosting certification.
