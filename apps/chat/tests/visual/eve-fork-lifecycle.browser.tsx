@@ -188,7 +188,7 @@ describe("useEveFork", () => {
     pendingStorage.setItem(
       `chatjs.eve.pending:${ownerId}:fork:${conversationId}`,
       JSON.stringify({
-        fork: { beforeMessageId: "seed_message_0", conversationId },
+        fork: { conversationId },
         forkKind: "edit",
         message: "Find the answer",
         modelIds: ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
@@ -227,12 +227,12 @@ describe("useEveFork", () => {
       });
     }
   });
-  it("keeps a restored edit associated with its message after rejection", async () => {
+  it("keeps a restored copy prompt after rejection without a historical boundary", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
       `chatjs.eve.pending:${ownerId}:fork:${conversationId}`,
       JSON.stringify({
-        fork: { beforeMessageId: "seed_message_0", conversationId },
+        fork: { conversationId },
         forkKind: "edit",
         message: "Find the answer",
         modelId: "anthropic/claude-sonnet-4",
@@ -266,7 +266,7 @@ describe("useEveFork", () => {
       });
 
       expect(required(fork).draft).toBe("Find the answer");
-      expect(required(fork).editingBoundary).toBe("seed_message_0");
+      expect(required(fork).editingBoundary).toBeUndefined();
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
@@ -557,11 +557,10 @@ describe("useEveFork", () => {
     try {
       let request: Promise<void> | undefined;
       act(() => {
-        request = required(fork).compare(
-          "Compare this request",
-          ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
-          "turn_1"
-        );
+        request = required(fork).compare("Compare this request", [
+          "openai/gpt-4.1",
+          "anthropic/claude-sonnet-4",
+        ]);
       });
       await flushEffects();
 
@@ -618,11 +617,10 @@ describe("useEveFork", () => {
 
     try {
       await act(async () => {
-        await required(fork).compare(
-          "Keep the operation",
-          ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
-          "turn_1"
-        );
+        await required(fork).compare("Keep the operation", [
+          "openai/gpt-4.1",
+          "anthropic/claude-sonnet-4",
+        ]);
       });
       const original = required(required(fork).pending);
 

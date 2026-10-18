@@ -164,12 +164,12 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   expect(resume).toHaveBeenCalledTimes(2);
 });
 
-it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
+it("accepts current conversation copies and rejects native identities or historical turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
@@ -190,7 +190,7 @@ it("accepts conversation-based forks and rejects raw native identities or invali
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
       forkKind: "regenerate",
     }).success
   ).toBe(true);
@@ -215,10 +215,9 @@ it("allows a project for new conversations while forks inherit their existing pr
   ).toBe(false);
 });
 
-it("accepts exactly one canonical imported fork boundary", () => {
+it("rejects all historical copy boundaries", () => {
   const input = {
     fork: {
-      beforeMessageId: "seed_message_2",
       conversationId: crypto.randomUUID(),
     },
     message: "Replacement question",

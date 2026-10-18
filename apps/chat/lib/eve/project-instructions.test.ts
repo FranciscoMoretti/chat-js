@@ -130,7 +130,6 @@ test("refreshes project instructions for each turn and clears them after detachm
   expect(readInstructions()).toEqual({
     content: "Project instructions:\nFirst instruction",
   });
-  expect(mocks.checkpoint).toHaveBeenCalledWith("owner", "conversation", 0);
   mocks.project.mockResolvedValueOnce({ instructions: "Edited instruction" });
   await startTurn(1);
   expect(readInstructions()).toEqual({
@@ -145,7 +144,6 @@ test("propagates required context failures and removes the previous turn's instr
   mocks.state.content = "Stale instructions";
   mocks.project.mockRejectedValueOnce(new Error("Database unavailable"));
   await expect(startTurn(1)).rejects.toThrow("Database unavailable");
-  expect(mocks.checkpoint).not.toHaveBeenCalled();
   expect(readInstructions()).toBeNull();
   mocks.resolve.mockRejectedValueOnce(new Error("Unbound session"));
   await expect(startTurn(2)).rejects.toThrow("Unbound session");
@@ -172,7 +170,6 @@ test("loads root project context for descendants without writing child checkpoin
   expect(readInstructions()).toEqual({
     content: "Project instructions:\nRoot project instruction",
   });
-  expect(mocks.checkpoint).not.toHaveBeenCalled();
 });
 
 test("does not project a child's checkpoint into the root branch", async () => {

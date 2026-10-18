@@ -1,6 +1,6 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { isDeepStrictEqual } from "node:util";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch } from "./schema";
 import { z } from "zod";
@@ -13,9 +13,10 @@ const hasRow: (row: unknown) => boolean = Boolean;
 /** Display-only fields from known message bindings; unknown and foreign bindings are omitted. */
 export const getEveMessageDisplayReceipts = async (
   ownerId: string,
-  sessionId: string
+  sessionId: string,
+  database: Pick<typeof db, "select"> = db
 ): Promise<EveMessageDisplayReceipt[]> => {
-  const rows = await db
+  const rows = await database
     .select({
       kind: eveDispatch.kind,
       deliveryId: eveDispatch.deliveryId,
@@ -132,11 +133,17 @@ export const dispatchEveOnce = async (
   }
   // oxlint-disable-next-line unicorn/prefer-structured-clone -- Match JSON persistence semantics, including omission of undefined object fields.
   const intent: unknown = JSON.parse(JSON.stringify(input.intent));
-  const [claimed] = await db
-    .insert(eveDispatch)
-    .values({ ...input, intent })
-    .onConflictDoNothing()
-    .returning();
+  const [claimed] = await db.transaction(async (tx) => {
+    // Copy capture holds this same lock while reading the native transcript and documents.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
+    );
+    return await tx
+      .insert(eveDispatch)
+      .values({ ...input, intent })
+      .onConflictDoNothing()
+      .returning();
+  });
   const identity = and(
     eq(eveDispatch.ownerId, input.ownerId),
     eq(eveDispatch.operationId, input.operationId)
@@ -213,3 +220,15 @@ export const getEveSendReceipt = async (
     deliveryId: row.deliveryId,
   };
 };
+
+/** Serialize short native controls against completed-conversation capture. */
+export const withEveCopyCaptureFence = async <Result>(
+  ownerId: string,
+  action: () => Promise<Result>
+): Promise<Result> =>
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    return await action();
+  });

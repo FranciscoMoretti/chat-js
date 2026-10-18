@@ -1,19 +1,20 @@
 import { getEveMessageDisplayReceipts } from "@/lib/db/eve-dispatch";
-import { Client } from "eve/client";
 import { assertEveConfigured } from "./server";
-import { eveCopyBoundaries } from "./copy-boundaries";
-import { getEveConnectionOptions } from "./connection-options";
+import { and, eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { eveConversation, eveDispatch } from "@/lib/db/schema";
+import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+import { readCompletedEveCopyTranscript } from "./completed-copy-source";
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
-import { prepareEveCopyTranscript } from "./copy-transcript";
+import type { prepareEveCopyTranscript } from "./copy-transcript";
 
-const PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS = 15_000;
 const PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH = 100;
 const TITLE_PREVIEW_START = 0;
 
 export const readPublicEveCopySource = async (
   id: string
 ): Promise<{
-  boundaries: ReturnType<typeof eveCopyBoundaries>;
+  documents: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>;
   id: string;
   ownerId: string;
   projection: ReturnType<typeof prepareEveCopyTranscript>;
@@ -24,35 +25,69 @@ export const readPublicEveCopySource = async (
   if (!row || typeof row.sessionId !== "string" || row.sessionId === "") {
     throw new Error("Shared conversation is unavailable.");
   }
+  const { sessionId } = row;
   assertEveConfigured();
-  const client = new Client(getEveConnectionOptions(row.ownerId));
-  const snapshot = await client.sessions
-    .attach(row.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS) });
-  const receipts = await getEveMessageDisplayReceipts(
-    row.ownerId,
-    row.sessionId
-  );
-  const current = await getPublicEveConversation(id);
-  if (
-    !current ||
-    typeof current.sessionId !== "string" ||
-    current.sessionId !== row.sessionId ||
-    current.ownerId !== row.ownerId
-  ) {
-    throw new Error("Shared conversation is unavailable.");
-  }
-  return {
-    boundaries: eveCopyBoundaries(snapshot.events),
-    id: row.id,
-    ownerId: row.ownerId,
-    projection: prepareEveCopyTranscript(snapshot.events, receipts),
-    sessionId: row.sessionId,
-    title:
-      row.title ??
-      row.firstMessage.slice(
-        TITLE_PREVIEW_START,
-        PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH
-      ),
-  };
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${row.ownerId}`}, 0))`
+    );
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
+    );
+    const [current] = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, id),
+          eq(eveConversation.ownerId, row.ownerId),
+          eq(eveConversation.sessionId, sessionId),
+          eq(eveConversation.state, "bound"),
+          eq(eveConversation.visibility, "public")
+        )
+      )
+      .for("share");
+    if (current === undefined) {
+      throw new Error("Shared conversation is unavailable.");
+    }
+    const dispatches = await tx
+      .select()
+      .from(eveDispatch)
+      .where(
+        and(
+          eq(eveDispatch.ownerId, row.ownerId),
+          eq(eveDispatch.conversationId, id)
+        )
+      );
+    const receipts = await getEveMessageDisplayReceipts(
+      row.ownerId,
+      sessionId,
+      tx
+    );
+    const projection = await readCompletedEveCopyTranscript(
+      row.ownerId,
+      sessionId,
+      dispatches,
+      receipts
+    );
+    const documents = await snapshotPublicEveCopyDocuments(
+      id,
+      sessionId,
+      projection.resources,
+      tx
+    );
+    return {
+      documents,
+      id: row.id,
+      ownerId: row.ownerId,
+      projection,
+      sessionId,
+      title:
+        row.title ??
+        row.firstMessage.slice(
+          TITLE_PREVIEW_START,
+          PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH
+        ),
+    };
+  });
 };

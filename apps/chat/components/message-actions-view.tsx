@@ -65,7 +65,9 @@ export const MessageActionsView = ({
           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
           disabled={editDisabled}
           onClick={isEditing ? onCancelEdit : onStartEdit}
-          tooltip={isEditing ? "Cancel edit" : "Edit message"}
+          tooltip={
+            isEditing ? "Cancel edit" : "Copy conversation with edited prompt"
+          }
         >
           {isEditing ? (
             <PencilOff className="h-3.5 w-3.5" />

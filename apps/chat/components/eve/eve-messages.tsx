@@ -22,7 +22,6 @@ import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
-import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
@@ -313,7 +312,7 @@ const AssistantFeedback = ({
             hasText(message.metadata?.turnId) ||
             hasText(message.metadata?.modelId)
           ) ||
-          !(userMessage && hasText(eveUserForkBoundary(userMessage)))
+          !(userMessage && hasText(userMessage.id))
         }
         onRetry={() => {
           if (userMessage) {
@@ -368,9 +367,7 @@ const EveMessageActions = ({
       editDisabled={
         editing
           ? editing.disabled
-          : actionsDisabled ||
-            Boolean(editor) ||
-            !hasText(eveUserForkBoundary(message))
+          : actionsDisabled || Boolean(editor) || !hasText(message.id)
       }
       isEditing={Boolean(editing)}
       isLoading={disabled && isLast && !editing}
@@ -450,7 +447,7 @@ const EveMessageRow = ({
     onEdit !== undefined &&
     !actionsDisabled &&
     !editor &&
-    hasText(eveUserForkBoundary(message));
+    hasText(message.id);
   const text = message.parts
     .filter((part: ReadonlyEveMessagePart) => part.type === "text")
     .map((part) => part.text)

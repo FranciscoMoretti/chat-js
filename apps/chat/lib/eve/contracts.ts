@@ -3,33 +3,10 @@ import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
 
-const MAX_FORK_TURN_ID_LENGTH = 64;
 const MIN_IDENTIFIER_LENGTH = 1;
 const MAX_MODEL_IDENTIFIER_LENGTH = 200;
 
-const eveForkInput = z.union([
-  z
-    .object({
-      conversationId: z.uuid(),
-      checkpointId: z.uuid().optional(),
-      beforeTurnId: z
-        .string()
-        .max(MAX_FORK_TURN_ID_LENGTH)
-        .regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u),
-      beforeMessageId: z.never().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      conversationId: z.uuid(),
-      beforeMessageId: z
-        .string()
-        .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u),
-      beforeTurnId: z.never().optional(),
-      checkpointId: z.never().optional(),
-    })
-    .strict(),
-]);
+const eveForkInput = z.strictObject({ conversationId: z.uuid() });
 
 type EveForkInput = z.infer<typeof eveForkInput>;
 

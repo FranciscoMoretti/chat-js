@@ -226,6 +226,7 @@ export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
   initialModelId: "google/gemini-2.5-flash-lite",
   initialProjectId: null,
   initialRequest: null,
+  initialSeed: null,
   isPinned: false,
   operationId: "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",
   ownerId,

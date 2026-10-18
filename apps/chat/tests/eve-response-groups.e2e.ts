@@ -1,3 +1,10 @@
+import {
+  eveDispatch,
+  eveConversation,
+  eveResponseGroup,
+  user,
+} from "../lib/db/schema";
+import "./eve-native-session.fixture";
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -14,7 +21,6 @@ import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
 } from "../lib/db/eve-response-groups";
-import { eveConversation, eveResponseGroup, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import { eveMessageTitle } from "../lib/eve/message-input";
@@ -39,6 +45,7 @@ await db.insert(user).values({
 });
 
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveResponseGroup).where(eq(eveResponseGroup.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
@@ -103,13 +110,12 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   ).toBe(true);
   expect(new Set(nativeCalls).size).toBe(3);
   expect(nativeCalls).toHaveLength(3);
-  const root = await getEveCreation(owner, left.candidates[0].operationId);
   await Promise.all(
     left.candidates.slice(1).map(async (candidate) => {
       const child = await getEveCreation(owner, candidate.operationId);
-      expect(child?.parentConversationId).toBe(root?.id);
-      expect(child?.rootConversationId).toBe(root?.id);
-      expect(child?.forkTurnId).toBe("turn_0");
+      expect(child?.parentConversationId).toBeNull();
+      expect(child?.rootConversationId).toBeNull();
+      expect(child?.forkTurnId).toBeNull();
     })
   );
 });
@@ -131,7 +137,7 @@ test("unconfirmed initial creation never starts independent secondary roots", as
   expect(createEveConversationOperation).toHaveBeenCalledTimes(1);
 });
 
-test("continuation candidates share one source checkpoint and reject inaccessible sources", async () => {
+test("continuation candidates copy the current completed source and reject inaccessible sources", async () => {
   const source = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -152,7 +158,7 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
       );
       return Response.json(binding);
     });
-  const fork = { beforeTurnId: "turn_0", conversationId: source.id };
+  const fork = { conversationId: source.id };
   const input = {
     fork,
     message: "Continue",
@@ -167,7 +173,7 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
     result.candidates.map(async (candidate) => {
       const row = await getEveCreation(owner, candidate.operationId);
       expect(row?.parentConversationId).toBe(source.id);
-      expect(row?.forkTurnId).toBe(fork.beforeTurnId);
+      expect(row?.forkTurnId).toBeNull();
     })
   );
   await expect(
@@ -234,7 +240,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   );
   const forkInput = {
     ...input,
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     operationId: crypto.randomUUID(),
   };
   const pendingFork = await reserveEveResponseGroup(owner, forkInput);
@@ -270,7 +276,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       group.candidates[1].operationId,
       input.message,
       vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create"),
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow();
   await expect(
@@ -298,7 +304,7 @@ test("group reservation racing retirement cannot leave an active unstarted group
     (id) => `session-${id}`
   );
   const input = {
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     message: "Concurrent",
     modelIds: ["model-a", "model-b"],
     operationId: crypto.randomUUID(),
@@ -339,7 +345,7 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     (id) => `session-${id}`
   );
   const input = {
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     message: "Preserved",
     modelIds: ["model-a", "model-b"],
     operationId: crypto.randomUUID(),

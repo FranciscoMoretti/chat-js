@@ -1,3 +1,10 @@
+import {
+  eveDispatch,
+  eveConversation,
+  eveFileReference,
+  eveStoredFile,
+  user,
+} from "../lib/db/schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq, inArray, sql } from "drizzle-orm";
@@ -26,12 +33,6 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-import {
-  eveConversation,
-  eveFileReference,
-  eveStoredFile,
-  user,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 
@@ -48,6 +49,9 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  await db
+    .delete(eveDispatch)
+    .where(inArray(eveDispatch.ownerId, [owner, stranger]));
   await db
     .delete(eveFileReference)
     .where(inArray(eveFileReference.ownerId, [owner, stranger]));
@@ -150,7 +154,7 @@ test("fork reservation retains the source file references before dispatch", asyn
       dispatched = true;
       return crypto.randomUUID();
     },
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   expect(dispatched).toBe(true);
   expect(

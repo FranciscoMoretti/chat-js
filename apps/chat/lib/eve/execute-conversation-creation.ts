@@ -1,17 +1,19 @@
-import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import {
+  dispatchEveOnce,
+  EveDispatchUnknownError,
+} from "@/lib/db/eve-dispatch";
 
 import {
   CreationConflictError,
   CreationProjectNotFoundError,
   createEveConversation,
-  getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
-import type { EveForkInput, createConversationInput } from "./contracts";
+import type { createConversationInput } from "./contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { UserContent } from "ai";
 import { createModuleLogger } from "@/lib/logger";
@@ -21,7 +23,6 @@ import { eveMessageFileKeys } from "./file-references";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import { z } from "zod";
 
 type PreparedContentPart<Part> = {
@@ -31,54 +32,6 @@ type PreparedContentPart<Part> = {
 const logger = createModuleLogger("eve/creation");
 const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
-const HTTP_NOT_FOUND = 404;
-
-const resolveFork = async (
-  ownerId: string,
-  input: EveForkInput | undefined
-): Promise<
-  | Response
-  | { beforeMessageId: string; sessionId: string }
-  | {
-      checkpointId?: string;
-      beforeTurnId: string | undefined;
-      sessionId: string;
-      beforeMessageId?: undefined;
-    }
-  | undefined
-> => {
-  if (!input) {
-    return undefined;
-  }
-  const source = await getEveConversation(ownerId, input.conversationId);
-  if (
-    !source ||
-    typeof source.sessionId !== "string" ||
-    source.sessionId === "" ||
-    source.state !== "bound"
-  ) {
-    return Response.json(
-      { creationRejected: true, error: "Source conversation not found." },
-      { status: HTTP_NOT_FOUND }
-    );
-  }
-
-  if (isNonEmptyString(input.beforeMessageId)) {
-    return {
-      beforeMessageId: input.beforeMessageId,
-      sessionId: source.sessionId,
-    };
-  }
-  return {
-    beforeTurnId: input.beforeTurnId,
-    sessionId: source.sessionId,
-
-    ...(isNonEmptyString(input.checkpointId)
-      ? { checkpointId: input.checkpointId }
-      : {}),
-  };
-};
-
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
     return Response.json(
@@ -120,41 +73,13 @@ export const executeEveConversationCreation = async (
 ): Promise<Response> => {
   let preparedMessage = initialPreparedMessage;
   try {
-    let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
-
     const existing = await getEveCreation(ownerId, input.operationId);
-    if (existing === undefined) {
-      const resolved = await resolveFork(ownerId, input.fork);
-      if (resolved instanceof Response) {
-        return resolved;
-      }
-      fork = resolved;
-    }
-    if (existing?.state !== "bound") {
-      if (input.fork && !fork) {
-        const resolved = await resolveFork(ownerId, input.fork);
-        if (resolved instanceof Response) {
-          throw new CreationConflictError("Source conversation not found.");
-        }
-        fork = resolved;
-      }
-      if (
-        fork &&
-        "beforeTurnId" in fork &&
-        typeof fork.beforeTurnId === "string" &&
-        fork.beforeTurnId !== ""
-      ) {
-        await waitForEveCheckpoint(
-          ownerId,
-          fork.sessionId,
-          fork.beforeTurnId,
-          fork.checkpointId
-        );
-      }
-      if (preparedMessage === undefined) {
-        await loadEveModelDefinition(input.modelId);
-        preparedMessage = await prepareEveMessage(input.message, input.modelId);
-      }
+    if (
+      (existing?.state !== "bound" || input.fork) &&
+      preparedMessage === undefined
+    ) {
+      await loadEveModelDefinition(input.modelId);
+      preparedMessage = await prepareEveMessage(input.message, input.modelId);
     }
     const binding = await createEveConversation(
       ownerId,
@@ -167,8 +92,7 @@ export const executeEveConversationCreation = async (
           "/eve/chat/v1/session",
           {
             body: JSON.stringify({
-              fork,
-              message: preparedMessage,
+              ...(input.fork ? { seed: true } : { message: preparedMessage }),
               operationId,
             }),
             method: "POST",
@@ -201,6 +125,45 @@ export const executeEveConversationCreation = async (
         initialTitle: eveConversationTitleFallback(input.message),
       }
     );
+    if (input.fork) {
+      await dispatchEveOnce(
+        {
+          ownerId,
+          operationId: input.operationId,
+          conversationId: binding.id,
+          kind: "send",
+          intent: {
+            sessionId: binding.sessionId,
+            message: input.message,
+            modelId: input.modelId ?? null,
+            selectedTool: input.selectedTool ?? null,
+          },
+        },
+        async () => {
+          const result = await requestEveCreation(
+            "dispatch",
+            ownerId,
+            `/eve/chat/v1/session/${binding.sessionId}`,
+            {
+              body: JSON.stringify({ message: preparedMessage }),
+              method: "POST",
+              signal: AbortSignal.timeout(SESSION_DISPATCH_TIMEOUT_MS),
+            },
+            input.modelId,
+            input.selectedTool
+          );
+          if (!result.ok) {
+            throw new EveDispatchUnknownError();
+          }
+          return z
+            .object({
+              sessionId: z.literal(binding.sessionId),
+              deliveryId: z.string().min(1),
+            })
+            .parse(await result.json());
+        }
+      );
+    }
     return Response.json(binding);
   } catch (error) {
     logger.error(

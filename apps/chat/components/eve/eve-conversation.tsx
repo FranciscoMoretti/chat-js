@@ -28,7 +28,6 @@ import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
@@ -77,24 +76,6 @@ const sameComposerDraft = (
   draft.attachments.every(
     (file, index) => file.url === sent.attachments[index]?.url
   );
-
-const nextTurnBoundary = (
-  event: ReturnType<typeof useEveAgent>["events"][number] | undefined
-): string => {
-  if (
-    !(
-      event &&
-      (event.type === "turn.completed" ||
-        event.type === "turn.failed" ||
-        event.type === "turn.cancelled")
-    )
-  ) {
-    throw new Error(
-      "Wait for the conversation to finish restoring before comparing responses."
-    );
-  }
-  return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
-};
 
 const useConversationInput = (
   ownerId: string,
@@ -251,6 +232,10 @@ const EveConversationEditor = ({
   const handleEditToolChange = fork.setSelectedTool;
   return (
     <div className="w-full">
+      <p className="text-muted-foreground mb-2 text-sm">
+        Copy the completed conversation and send this as a new prompt. The copy
+        starts with a fresh sandbox.
+      </p>
       <EveComposer
         autoFocus
         status={fork.busy ? "submitted" : "ready"}
@@ -435,6 +420,12 @@ const EveConversationComposer = ({
   const handleDraftChange = composerDraft.setText;
   return (
     <>
+      {input.modelIds.length > 1 && (
+        <p className="text-muted-foreground mb-2 text-xs">
+          Each model receives a copy of the current completed conversation and a
+          fresh sandbox.
+        </p>
+      )}
       <EveComposer
         status={status === "resuming" ? "submitted" : status}
         disabled={
@@ -544,8 +535,7 @@ const EveConversation = ({
     fork.editingMessageId ??
     messages.find(
       (message) =>
-        eveUserForkBoundary(message) === fork.editingBoundary &&
-        Boolean(fork.editingBoundary)
+        message.id === fork.editingBoundary && Boolean(fork.editingBoundary)
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (
@@ -834,7 +824,6 @@ const EveConversation = ({
                       ? fork.compare(
                           draftMessage(suggestion, []),
                           modelIds,
-                          nextTurnBoundary(latestTurn),
                           composerDraft.selectedTool ?? undefined,
                           false
                         )
@@ -913,7 +902,6 @@ const EveConversation = ({
                     ? fork.compare(
                         draftMessage(draft, files.attachments),
                         modelIds,
-                        nextTurnBoundary(latestTurn),
                         composerDraft.selectedTool ?? undefined
                       )
                     : submitMessage(

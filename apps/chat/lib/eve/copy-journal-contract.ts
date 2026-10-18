@@ -3,13 +3,6 @@ import type { EveCopySeed } from "./copy-seed";
 /** Server-prepared immutable intent. Never accept this payload from a browser. */
 interface EveCopyPlan {
   readonly seed: EveCopySeed;
-  readonly documentCheckpoints: readonly {
-    readonly messageIndex: number;
-    readonly heads: readonly {
-      readonly documentId: string;
-      readonly revisionId: string;
-    }[];
-  }[];
   readonly sourceHeads: readonly {
     readonly documentId: string;
     readonly revisionId: string;

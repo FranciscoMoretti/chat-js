@@ -1,10 +1,20 @@
+import { LogicalCommands } from "./logical-commands";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
-import type { EveBranchReference } from "./fork-source";
-import { LogicalCommands } from "./logical-commands";
+import type { EveForkKind } from "./contracts";
+
+interface EveBranchReference {
+  forkKind?: EveForkKind | null;
+  forkMessageId?: string | null;
+  forkTurnId: string | null;
+  id: string;
+  parentConversationId: string | null;
+  responseGroupId?: string | null;
+  responseGroupIndex?: number | null;
+}
 
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
 
@@ -81,114 +91,37 @@ const latestMessageTime = (
   return time;
 };
 
-const sourcePrefix = (
-  branch: LogicalBranch,
-  source: readonly string[],
-  aliases: ReadonlyMap<string, string>,
-  sourceAgent?: NativeChatAgent
-): { prefix: string[]; replaced: string | undefined } => {
-  if (!isNonEmptyString(branch.parentConversationId)) {
-    return { prefix: [], replaced: undefined };
-  }
-  const sourceId = branch.parentConversationId;
-  const boundaryId = isNonEmptyString(branch.forkMessageId)
-    ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
-    : aliases.get(
-        aliasKey(
-          sourceId,
-          sourceAgent?.data.messages.find(
-            (message) =>
-              message.role === "user" &&
-              message.metadata?.turnId === branch.forkTurnId
-          )?.id ?? ""
-        )
-      );
-  const index = isNonEmptyString(boundaryId) ? source.indexOf(boundaryId) : -1;
-  // Named idle checkpoints have no following user yet: the entire source is inherited.
-  if (index < 0 && branch.forkKind === "comparison") {
-    return { prefix: [...source], replaced: undefined };
-  }
-  if (index < 0) {
-    throw new Error(
-      "The saved fork boundary is not available yet. Reconnect to restore its source."
-    );
-  }
-  return { prefix: source.slice(0, index), replaced: boundaryId };
-};
-
-const assertInheritedMessage = (
-  id: string,
-  message: NativeChatAgent["data"]["messages"][number],
-  branch: LogicalBranch,
-  nodes: ReadonlyMap<string, LogicalNode>,
-  aliases: ReadonlyMap<string, string>
-): void => {
-  const origin = nodes.get(id);
-  if (!origin || origin.message.role !== message.role) {
-    throw new Error(
-      "Inherited message identities do not match the saved fork."
-    );
-  }
-  // Both native checkpoints and imported user-boundary forks preserve the
-  // retained prefix IDs. Never guess a new alias from position or text.
-  if (message.id !== origin.message.id) {
-    const inherited = aliases.get(
-      aliasKey(branch.parentConversationId ?? "", message.id)
-    );
-    if (inherited !== id) {
-      throw new Error("Unknown inherited message identity.");
-    }
-  }
-};
-
 const projectBranch = (
   branch: LogicalBranch,
   agent: NativeChatAgent,
-  paths: ReadonlyMap<string, string[]>,
   nodes: Map<string, LogicalNode>,
-  aliases: Map<string, string>,
-  sourceAgent?: NativeChatAgent
+  aliases: Map<string, string>
 ): { hasLocalMessage: boolean; path: string[] } => {
-  const source = paths.get(branch.parentConversationId ?? "") ?? [];
-  const { prefix, replaced } = sourcePrefix(
-    branch,
-    source,
-    aliases,
-    sourceAgent
-  );
   const messages = agent.data.messages.filter(
     (message) =>
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
-  if (messages.length < prefix.length) {
-    throw new Error("Restoring inherited messages…");
-  }
   const path: string[] = [];
-  for (const [index, message] of messages.entries()) {
-    let id = prefix[index];
-    if (id) {
-      assertInheritedMessage(id, message, branch, nodes, aliases);
-    } else {
-      const firstUser = index === prefix.length && message.role === "user";
-      if (
-        firstUser &&
-        branch.forkKind === "regenerate" &&
-        isNonEmptyString(replaced)
-      ) {
-        id = replaced;
-      } else if (firstUser && isNonEmptyString(branch.responseGroupId)) {
-        id = `group:${branch.responseGroupId}:user`;
-      } else {
-        id = logicalNativeId(branch.sessionId ?? branch.id, message);
-      }
-      if (!nodes.has(id)) {
-        nodes.set(id, {
-          conversationId: branch.id,
-          id,
-          message,
-          parentId: path.at(-1) ?? null,
-        });
-      }
+  let hasPrompt = false;
+  for (const message of messages) {
+    const firstUser =
+      !hasPrompt &&
+      message.role === "user" &&
+      !message.id.startsWith("seed_message_");
+    if (firstUser) {
+      hasPrompt = true;
+    }
+    const id =
+      firstUser && isNonEmptyString(branch.responseGroupId)
+        ? `group:${branch.responseGroupId}:user`
+        : logicalNativeId(branch.sessionId ?? branch.id, message);
+    if (!nodes.has(id)) {
+      nodes.set(id, {
+        conversationId: branch.id,
+        id,
+        message,
+        parentId: path.at(-1) ?? null,
+      });
     }
     aliases.set(aliasKey(branch.id, message.id), id);
     if (!path.includes(id)) {
@@ -201,12 +134,12 @@ const projectBranch = (
   if (needsResponse) {
     return {
       hasLocalMessage: messages
-        .slice(prefix.length)
+        .filter((message) => !message.id.startsWith("seed_message_"))
         .some((message) => message.role === "assistant"),
       path,
     };
   }
-  return { hasLocalMessage: messages.length > prefix.length, path };
+  return { hasLocalMessage: hasPrompt, path };
 };
 
 /**
@@ -439,10 +372,8 @@ class LogicalChat {
           const projection = projectBranch(
             branch,
             agent,
-            paths,
             stagedNodes,
-            stagedAliases,
-            this.agents.get(branch.parentConversationId ?? "")
+            stagedAliases
           );
           for (const [key, node] of stagedNodes) {
             nodes.set(key, node);

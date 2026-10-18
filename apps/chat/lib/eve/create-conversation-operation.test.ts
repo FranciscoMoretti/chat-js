@@ -1,3 +1,4 @@
+import type * as DispatchModule from "@/lib/db/eve-dispatch";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import type { readEveGuestOwner } from "../db/eve-guests";
@@ -15,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   prepareMessage: vi.fn<() => Promise<string>>(),
   creation: vi.fn(),
   guest: vi.fn<typeof readEveGuestOwner>(),
-  readiness: vi.fn<() => Promise<void>>(),
+  send: vi.fn<typeof DispatchModule.dispatchEveOnce>(),
   reconcile: vi.fn(),
   request: vi.fn<typeof eveRequest>(),
   reserve:
@@ -30,9 +31,12 @@ vi.mock("./server", () => ({
   assertEveConfigured: vi.fn(),
   eveRequest: mocks.request,
 }));
-vi.mock("./checkpoint-readiness", () => ({
-  waitForEveCheckpoint: mocks.readiness,
+vi.mock("@/lib/db/eve-dispatch", async (original) => ({
+  ...(await original<typeof DispatchModule>()),
+  dispatchEveOnce: mocks.send,
 }));
+vi.mock("@/lib/db/client", () => ({ db: {} }));
+vi.mock("@/lib/env", () => ({ env: {} }));
 vi.mock("@/lib/db/eve-queries", () => ({
   CreationConflictError,
   CreationProjectNotFoundError,
@@ -61,7 +65,7 @@ vi.mock("./conversation-title", () => ({
 }));
 
 const input = {
-  fork: { beforeTurnId: "turn_0", conversationId: "source-chat" },
+  fork: { conversationId: "source-chat" },
   message: "compare",
   modelId: "openai/gpt-4o",
   operationId: "ba1d7f02-597b-47a7-a8de-20f700500f0d",
@@ -78,41 +82,34 @@ beforeEach(() => {
       sessionId: await dispatch(operationId),
     })
   );
-  mocks.request.mockResolvedValue(Response.json({ sessionId: "child" }));
+  mocks.send.mockResolvedValue({ sessionId: "child", deliveryId: "delivery" });
+  // oxlint-disable-next-line eslint/require-await -- Each transport mock call needs a fresh consumable response.
+  mocks.request.mockImplementation(async (_owner, path) =>
+    Response.json(
+      path.endsWith("/child")
+        ? { sessionId: "child", deliveryId: "delivery" }
+        : { sessionId: "child" }
+    )
+  );
 });
 
-it("does not allocate a native child before the initial checkpoint is ready", async () => {
-  mocks.readiness.mockRejectedValue(new Error("pending"));
+it("creates an idle seed then journals the first send separately", async () => {
+  mocks.send.mockImplementation(async (_input, dispatch) => await dispatch());
   const response = await createEveConversationOperation("owner", input);
-  expect(response.status).toBe(409);
-  expect(await response.json()).not.toHaveProperty("creationRejected");
-
+  expect(response.status).toBe(200);
   expect(
-    mocks.request.mock.calls.map(
-      (call: Readonly<(typeof mocks.request.mock.calls)[number]>) => call[1]
-    )
-  ).toEqual([]);
-  mocks.readiness.mockResolvedValue();
-  const retry = await createEveConversationOperation("owner", input);
-  expect(await retry.json()).toEqual({ sessionId: "child" });
-  expect(mocks.prepareMessage).toHaveBeenLastCalledWith(
-    input.message,
-    input.modelId
-  );
+    JSON.parse(z.string().parse(mocks.request.mock.calls[0]?.[2]?.body))
+  ).toEqual({ operationId: input.operationId, seed: true });
   expect(
-    JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
-  ).toMatchObject({
-    message: "prepared comparison",
+    JSON.parse(z.string().parse(mocks.request.mock.calls[1]?.[2]?.body))
+  ).toEqual({ message: "prepared comparison" });
+  expect(mocks.send.mock.calls[0]?.[0]).toMatchObject({
+    kind: "send",
+    operationId: input.operationId,
   });
-  expect(mocks.request.mock.calls.at(-1)?.[2]?.body).toContain(
-    input.operationId
-  );
-  expect(mocks.request.mock.calls.at(-1)?.[2]?.body).toContain(
-    '"beforeTurnId":"turn_0"'
-  );
 });
 it("maps project admission errors to not-found responses", async () => {
-  mocks.readiness.mockRejectedValue(
+  mocks.reserve.mockRejectedValue(
     new CreationProjectNotFoundError("Project not found.")
   );
   const response = await createEveConversationOperation("owner", input);
@@ -124,7 +121,7 @@ it("maps project admission errors to not-found responses", async () => {
   });
 });
 it("preserves conflict error identity and response codes", async () => {
-  mocks.readiness.mockRejectedValue(
+  mocks.reserve.mockRejectedValue(
     new CreationConflictError("Creation is unresolved.")
   );
   const response = await createEveConversationOperation("owner", input);
@@ -134,49 +131,13 @@ it("preserves conflict error identity and response codes", async () => {
     error: "Creation is unresolved.",
   });
 });
-it("recovers an already allocated native operation without needing its checkpoint again", async () => {
+it("recovers an already allocated native operation without redispatching its create", async () => {
   mocks.creation.mockResolvedValue({ state: "bound" });
   mocks.reserve.mockResolvedValue({ sessionId: "existing-child" });
   const resolvedResult1 = await createEveConversationOperation("owner", input);
   expect(await resolvedResult1.json()).toEqual({ sessionId: "existing-child" });
-  expect(mocks.readiness).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
-it("refuses a foreign or deleted source before reservation or checkpoint access", async () => {
-  mocks.source.mockResolvedValue(null);
-  const resolvedResult2 = await createEveConversationOperation(
-    "stranger",
-    input
-  );
-  expect(resolvedResult2.status).toBe(404);
-  expect(mocks.reserve).not.toHaveBeenCalled();
-  expect(mocks.readiness).not.toHaveBeenCalled();
-  expect(mocks.request).not.toHaveBeenCalled();
-});
-
-it("passes the same named checkpoint to readiness and native fork allocation", async () => {
-  const checkpointId = crypto.randomUUID();
-  const named = { ...input, fork: { ...input.fork, checkpointId } };
-  const resolvedResult3 = await createEveConversationOperation("owner", named);
-  expect(resolvedResult3.status).toBe(200);
-  expect(mocks.readiness).toHaveBeenCalledWith(
-    "owner",
-    "source",
-    "turn_0",
-    checkpointId
-  );
-  const body = z
-    .object({ fork: z.unknown() })
-    .parse(
-      JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
-    );
-  expect(body.fork).toEqual({
-    beforeTurnId: "turn_0",
-    checkpointId,
-    sessionId: "source",
-  });
-});
-
 it("persists fork intent without forwarding ChatJS metadata to Eve", async () => {
   const regeneration = {
     ...input,
@@ -200,40 +161,6 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
   expect(await response.json()).toMatchObject({ creationRejected: true });
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
-});
-
-it("dispatches imported forks by message identity without requiring an execution checkpoint", async () => {
-  const imported = {
-    ...input,
-    fork: { beforeMessageId: "seed_message_2", conversationId: "source-chat" },
-  };
-  const resolvedResult4 = await createEveConversationOperation(
-    "owner",
-    imported
-  );
-  expect(resolvedResult4.status).toBe(200);
-  expect(mocks.readiness).not.toHaveBeenCalled();
-  expect(
-    z
-      .object({ fork: z.unknown() })
-      .parse(
-        JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
-      ).fork
-  ).toEqual({
-    beforeMessageId: "seed_message_2",
-    sessionId: "source",
-  });
-  mocks.creation.mockResolvedValue({ state: "uncertain" });
-  mocks.request
-    .mockClear()
-    .mockResolvedValue(Response.json({ sessionId: "existing-child" }));
-  const resolvedResult5 = await createEveConversationOperation(
-    "owner",
-    imported
-  );
-  expect(await resolvedResult5.json()).toEqual({ sessionId: "existing-child" });
-  expect(mocks.request).toHaveBeenCalledOnce();
-  expect(mocks.readiness).not.toHaveBeenCalled();
 });
 
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {

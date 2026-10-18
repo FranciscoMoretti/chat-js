@@ -1,3 +1,4 @@
+import "./eve-native-session.fixture";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test, vi } from "vitest";
@@ -88,7 +89,7 @@ const fixture = async (parentId?: string) => {
     vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
     parentId === undefined || parentId === null || parentId === ""
       ? undefined
-      : { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
+      : { fork: { conversationId: parentId } }
   );
   return { ...conversation, sessionId };
 };

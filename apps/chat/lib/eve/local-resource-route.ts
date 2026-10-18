@@ -1,13 +1,11 @@
 import { POST } from "eve/channels";
 import { manageLocalMicrosandboxResources } from "eve/sandbox/microsandbox";
 import { z } from "zod";
-import { withEveResourceReclamation } from "@/lib/db/eve-resource-retention";
 import { authenticateEveGateway } from "./gateway-auth";
 
 const resourceRequest = z.strictObject({
   expectedAppRoot: z.string().min(1).max(4096),
   action: z.enum(["retire", "purge"]),
-  releaseForkSnapshots: z.boolean(),
 });
 
 const MAX_RESOURCE_REQUEST_BYTES = 8192;
@@ -65,14 +63,10 @@ export const eveLocalResourceRoute = POST(
     if (input === null) {
       return Response.json({ error: "Invalid request" }, { status: 400 });
     }
-    const run = async () =>
-      await manageLocalMicrosandboxResources(context, { ...input, sessionId });
-    const rootSessionId =
-      request.headers.get("x-chatjs-deletion-root") ?? sessionId;
-    const result =
-      input.action === "purge" && input.releaseForkSnapshots
-        ? await withEveResourceReclamation(auth.principalId, rootSessionId, run)
-        : await run();
+    const result = await manageLocalMicrosandboxResources(context, {
+      ...input,
+      sessionId,
+    });
     return Response.json(result, { headers: { "cache-control": "no-store" } });
   }
 );

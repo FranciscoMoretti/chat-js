@@ -21,7 +21,6 @@ import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
-import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import {
@@ -176,11 +175,7 @@ export const useEveFork = (
               modelSelectionValue: operationModelSelection(operation),
               selectedTool: operation.selectedTool ?? null,
               source: operation.fork,
-              editingBoundary:
-                operation.forkKind === "edit"
-                  ? (operation.fork.beforeTurnId ??
-                    operation.fork.beforeMessageId)
-                  : undefined,
+              editingBoundary: undefined,
               draft: restored.text,
             };
           } catch {
@@ -326,7 +321,7 @@ export const useEveFork = (
     editContext?: EditContext
   ): Promise<void> => {
     await run(async () => {
-      const boundary = eveUserForkBoundary(message);
+      const boundary = message.id;
       if (
         pending ||
         hasText(editingMessageId) ||
@@ -343,11 +338,7 @@ export const useEveFork = (
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
-      const fork = resolveForkSource(
-        conversationId,
-        boundary,
-        family.data.branches
-      );
+      const fork = { conversationId };
       const text = message.parts
         .filter((part: ReadonlyEveMessagePart) => part.type === "text")
         .map((part) => part.text)
@@ -418,7 +409,6 @@ export const useEveFork = (
     compare: async (
       message: ReadonlyEveMessageInput,
       modelIds: readonly string[],
-      beforeTurnId: string,
       requestedTool?: UiToolName,
       clearComposer = true
     ) => {
@@ -434,8 +424,6 @@ export const useEveFork = (
           {
             conversationId,
             fork: {
-              beforeTurnId,
-              checkpointId: crypto.randomUUID(),
               conversationId,
             },
           },

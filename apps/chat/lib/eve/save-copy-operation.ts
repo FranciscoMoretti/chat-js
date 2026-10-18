@@ -1,5 +1,4 @@
 import { dispatchEveCopy } from "@/lib/db/eve-copy-dispatch";
-import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 import {
   EveCopySourceChangedError,
   getEveCopyOperation,
@@ -40,15 +39,9 @@ const prepareCopyReservation = async (
     throw error;
   }
   const source = await readPublicEveCopySource(input.sourceConversationId);
-  const documents = await snapshotPublicEveCopyDocuments(
-    source.id,
-    source.sessionId,
-    source.projection.resources,
-    source.boundaries
-  );
   const plan = await prepareEveCopyPlan(
     source.projection,
-    documents,
+    source.documents,
     async (key) => await readPublicEveCopyFile(source, key, downloadFile),
     origin
   );

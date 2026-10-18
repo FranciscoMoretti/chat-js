@@ -28,13 +28,7 @@ const purgeOwnedLocalSandboxResources = async (
   // Remove every consumer VM before releasing any shared source artifact.
   for (const session of scope.sessions) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize provider removals because sibling sessions can share retained snapshot dependencies.
-    await manageEveLocalResources(
-      ownerId,
-      scope.appRoot,
-      session,
-      "purge",
-      false
-    );
+    await manageEveLocalResources(ownerId, scope.appRoot, session, "purge");
   }
   let previousRemaining = Number.POSITIVE_INFINITY;
   for (let pass = 0; pass <= scope.sessions.length; pass += 1) {
@@ -45,8 +39,7 @@ const purgeOwnedLocalSandboxResources = async (
         ownerId,
         scope.appRoot,
         session,
-        "purge",
-        true
+        "purge"
       );
     }
     if (remaining === 0) {

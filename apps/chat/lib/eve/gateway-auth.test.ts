@@ -113,35 +113,17 @@ it("ordinary requests still require a bound session and cannot reset it", async 
     principalId: "owner",
   });
 });
-it("checkpoint readiness and capture require the source owner", async () => {
+it("rejects removed checkpoint endpoints even for the source owner", async () => {
+  mocks.owns.mockResolvedValue(true);
   const read = request(
     "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0",
     "GET"
   );
   read.headers.delete("x-chatjs-deletion");
   expect(await authenticateEveGateway(read)).toBeNull();
-  mocks.owns.mockResolvedValue(true);
-  expect(await authenticateEveGateway(read)).toMatchObject({
-    principalId: "owner",
-  });
-  expect(mocks.owns).toHaveBeenCalledWith("owner", "source");
   const write = request("/eve/v1/session/source/checkpoint", "POST");
   write.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(write)).toMatchObject({
-    principalId: "owner",
-  });
-  mocks.owns.mockResolvedValue(false);
   expect(await authenticateEveGateway(write)).toBeNull();
-  const named = request(
-    `/eve/v1/session/source/checkpoint/${crypto.randomUUID()}?beforeTurnId=turn_1`,
-    "GET"
-  );
-  named.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(named)).toBeNull();
-  mocks.owns.mockResolvedValue(true);
-  expect(await authenticateEveGateway(named)).toMatchObject({
-    principalId: "owner",
-  });
 });
 
 it("internal compaction requires a gateway credential and the bound owner", async () => {

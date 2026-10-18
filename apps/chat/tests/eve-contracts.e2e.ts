@@ -1,3 +1,12 @@
+import { dispatchEveOnce } from "../lib/db/eve-dispatch";
+import {
+  eveDispatch,
+  eveChat,
+  eveConversation,
+  eveUsage,
+  user,
+  userCredit,
+} from "../lib/db/schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -23,13 +32,6 @@ import {
   recordEveConversationActivity,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-import {
-  eveChat,
-  eveConversation,
-  eveUsage,
-  user,
-  userCredit,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createToolResult } from "../lib/eve/tool-result";
 import { ingestEveUsage } from "../lib/eve/usage";
@@ -43,6 +45,7 @@ await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
@@ -139,28 +142,20 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
   ).rejects.toThrow("different");
 });
 
-test("a lost create reply is recovered through the same native operation", async () => {
+test("a lost create reply stays unresolved and never redispatches", async () => {
   const operation = crypto.randomUUID();
-  const nativeSession = `test-${crypto.randomUUID()}`;
   const start = vi
-    .fn<(id: string) => Promise<string>>()
-    .mockRejectedValueOnce(new Error("lost reply"))
-    .mockResolvedValue(nativeSession);
+    .fn<() => Promise<string>>()
+    .mockRejectedValue(new Error("lost reply"));
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
-  const recovered = await createEveConversation(
-    owner,
-    operation,
-    "uncertain",
-    start
-  );
-  expect(recovered.sessionId).toBe(nativeSession);
-  expect(start.mock.calls).toEqual([[recovered.id], [recovered.id]]);
-  expect(
-    await createEveConversation(owner, operation, "uncertain", start)
-  ).toEqual(recovered);
-  expect(start).toHaveBeenCalledTimes(2);
+  await expect(
+    createEveConversation(owner, operation, "uncertain", start)
+  ).rejects.toThrow("outcome is unknown");
+  expect(start).toHaveBeenCalledTimes(1);
+  const unresolved = await getEveCreation(owner, operation);
+  expect(unresolved?.state).toBe("uncertain");
 });
 
 test("a stopped creator's reservation can be resumed without changing its identity", async () => {
@@ -238,7 +233,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     start
   );
   const operation = crypto.randomUUID();
-  const fork = { beforeTurnId: "turn_1", conversationId: root.id };
+  const fork = { conversationId: root.id };
   const branch = await createEveConversation(
     owner,
     operation,
@@ -254,12 +249,12 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(starts).toBe(2);
   await expect(
     createEveConversation(owner, operation, "replacement", start, {
-      fork: { ...fork, beforeTurnId: "turn_2" },
+      fork: { conversationId: crypto.randomUUID() },
     })
-  ).rejects.toThrow("source turn");
+  ).rejects.toThrow("source conversation");
   await expect(
     createEveConversation(owner, operation, "replacement", start)
-  ).rejects.toThrow("source turn");
+  ).rejects.toThrow("source conversation");
   expect(starts).toBe(2);
 
   const nested = await createEveConversation(
@@ -267,12 +262,12 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     crypto.randomUUID(),
     "nested replacement",
     start,
-    { fork: { beforeTurnId: "turn_2", conversationId: branch.id } }
+    { fork: { conversationId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
   expect(row?.rootConversationId).toBe(root.id);
   expect(row?.parentConversationId).toBe(branch.id);
-  expect(row?.forkTurnId).toBe("turn_2");
+  expect(row?.forkTurnId).toBeNull();
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
   expect(family?.rootId).toBe(root.id);
@@ -470,7 +465,7 @@ test.each(["deleting", "deleted"] as const)(
     ).rejects.toThrow("can no longer be created");
     await expect(
       createEveConversation(owner, crypto.randomUUID(), "fork", start, {
-        fork: { beforeTurnId: "turn_0", conversationId: bound.id },
+        fork: { conversationId: bound.id },
       })
     ).rejects.toThrow("not available");
     expect(starts).toBe(1);
@@ -495,7 +490,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     crypto.randomUUID(),
     "child",
     createEveTestSession,
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
   expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
@@ -546,7 +541,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       crypto.randomUUID(),
       "late fork",
       start,
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      { fork: { conversationId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
     release.resolve();
@@ -574,7 +569,7 @@ test("unresolved creation prevents a partial family deletion", async () => {
       crypto.randomUUID(),
       "uncertain child",
       vi.fn<() => Promise<string>>().mockRejectedValue(new Error("offline")),
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
   await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
@@ -598,7 +593,7 @@ test("final application deletion erases family content, preserves accounting and
     crypto.randomUUID(),
     "Child text",
     start,
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   const unrelated = await createEveConversation(
     owner,
@@ -820,4 +815,65 @@ test("auxiliary model calls settle once per actual attempt independently of comp
       0
     )
   ).toBe(1);
+});
+
+test("completed-copy capture fences a concurrent send until its source snapshot commits", async () => {
+  const source = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Source",
+    createEveTestSession
+  );
+  const { readCompletedEveCopyTranscript } =
+    await import("../lib/eve/completed-copy-source");
+  const entered = Promise.withResolvers<null>();
+  const release = Promise.withResolvers<null>();
+  vi.mocked(readCompletedEveCopyTranscript).mockImplementationOnce(async () => {
+    entered.resolve(null);
+    await release.promise;
+    return {
+      seed: {
+        messages: [
+          {
+            role: "user",
+            parts: [{ type: "text", text: "Captured before send" }],
+          },
+        ],
+      },
+      projectionHash: "captured",
+      resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+    };
+  });
+  const copying = createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Copy",
+    createEveTestSession,
+    { fork: { conversationId: source.id } }
+  );
+  await entered.promise;
+  const send = vi
+    .fn<() => Promise<{ sessionId: string; deliveryId: string }>>()
+    .mockResolvedValue({
+      sessionId: source.sessionId,
+      deliveryId: crypto.randomUUID(),
+    });
+  const sending = dispatchEveOnce(
+    {
+      ownerId: owner,
+      operationId: crypto.randomUUID(),
+      conversationId: source.id,
+      kind: "send",
+      intent: { message: "Concurrent" },
+    },
+    send
+  );
+  try {
+    await delay(30);
+    expect(send).not.toHaveBeenCalled();
+  } finally {
+    release.resolve(null);
+  }
+  await Promise.all([copying, sending]);
+  expect(send).toHaveBeenCalledOnce();
 });

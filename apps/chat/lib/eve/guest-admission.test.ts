@@ -162,7 +162,7 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   expect(
     await admitGuestCreation(request, principal, {
       ...input,
-      fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
     })
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
@@ -178,7 +178,7 @@ it("checks a comparison's shared ownership once and each distinct guest model be
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
   await expect(
     admitGuestResponseGroup(request, principal, {
-      fork: { beforeTurnId: "turn_1", conversationId: sourceId },
+      fork: { conversationId: sourceId },
       message: input.message,
       modelIds: ["cheap", "other-cheap", "cheap"],
       operationId: input.operationId,
@@ -235,7 +235,7 @@ it("does not reserve a comparison when any model, source, or attachment is unava
     await admitGuestResponseGroup(request, principal, {
       ...groupInput,
       modelIds: ["cheap", "cheap"],
-      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
     })
   ).toBeInstanceOf(Response);
   expect(mocks.group).not.toHaveBeenCalled();

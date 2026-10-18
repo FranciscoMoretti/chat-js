@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
@@ -39,6 +39,37 @@ test("conversation", async () => {
     .toBeVisible();
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
+    .toBeVisible();
+});
+
+test("copy conversation with an edited prompt uses a fresh sandbox", async () => {
+  await renderRoute(conversation, request);
+  await page
+    .getByRole("button", { name: "Copy conversation with edited prompt" })
+    .first()
+    .click();
+  await expect
+    .element(
+      page.getByText(
+        "Copy the completed conversation and send this as a new prompt. The copy starts with a fresh sandbox."
+      )
+    )
+    .toBeVisible();
+});
+
+test("comparison explains its current history and fresh sandboxes", async () => {
+  await renderRoute(conversation, request);
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+  await userEvent.keyboard("{Escape}");
+  await expect
+    .element(
+      page.getByText(
+        "Each model receives a copy of the current completed conversation and a fresh sandbox."
+      )
+    )
     .toBeVisible();
 });
 

@@ -62,13 +62,17 @@ const prefix = [
   message("u1", "user", "turn_0"),
   message("turn_0:assistant", "assistant", "turn_0"),
 ];
+const seededPrefix = prefix.map((entry, index) => ({
+  ...entry,
+  id: `seed_message_${index}`,
+}));
 const original = [
   ...prefix,
   message("u2", "user", "turn_1"),
   message("turn_1:assistant", "assistant", "turn_1"),
 ];
 describe("logical chat over native sessions", () => {
-  it("reconstructs retry aliases and edit siblings independently of replay order", () => {
+  it("keeps complete copied histories independent across replay order", () => {
     const chat = new LogicalChat("chat", "root");
     chat.setBranches([
       branch("root"),
@@ -100,14 +104,14 @@ describe("logical chat over native sessions", () => {
       ])
     );
     chat.observe("root", agent(original));
-    expect(chat.logicalId("retry", "retry-user")).toBe(
+    expect(chat.logicalId("retry", "retry-user")).not.toBe(
       chat.logicalId("root", "u2")
     );
     expect(chat.logicalId("edit", "edited-user")).not.toBe(
       chat.logicalId("root", "u2")
     );
-    expect(chat.siblings("root", "turn_1:assistant").ids).toHaveLength(2);
-    expect(chat.siblings("root", "u2").ids).toHaveLength(2);
+    expect(chat.siblings("root", "turn_1:assistant").ids).toHaveLength(1);
+    expect(chat.siblings("root", "u2").ids).toHaveLength(1);
     chat.selectNode(chat.logicalId("retry", "turn_1:assistant") ?? "missing");
     expect(chat.getSnapshot().conversationId).toBe("retry");
     const reload = new LogicalChat("chat", "retry");
@@ -188,11 +192,11 @@ describe("logical chat over native sessions", () => {
     });
     chat.selectNode(chat.logicalId("root", "u2") ?? "missing");
     expect(chat.getSnapshot().cursorId).toBe(
-      chat.logicalId("retry", "turn_2:assistant")
+      chat.logicalId("root", "turn_1:assistant")
     );
     unsubscribe();
   });
-  it("protects canonical writers and rejects unknown prefix identities", () => {
+  it("keeps source content unchanged when copies use independent identities", () => {
     const chat = new LogicalChat("chat", "root");
     chat.setBranches([
       branch("root"),
@@ -223,8 +227,8 @@ describe("logical chat over native sessions", () => {
         message("ru", "user", "turn_1"),
       ])
     );
-    expect(chat.getSnapshot().error).toContain("Unknown inherited");
-    expect(chat.getSnapshot().paths.has("retry")).toBe(false);
+    expect(chat.getSnapshot().error).toBeUndefined();
+    expect(chat.getSnapshot().paths.has("retry")).toBe(true);
   });
 });
 
@@ -241,7 +245,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
   chat.observe("root", agent(original));
   chat.observe(
     "retry",
-    agent([...prefix, message("retry-u", "user", "turn_1")], "streaming")
+    agent([...seededPrefix, message("retry-u", "user", "turn_1")], "streaming")
   );
   chat.selectBranch("retry");
   expect(chat.getSnapshot().conversationId).toBe("root");
@@ -249,7 +253,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
     "retry",
     agent(
       [
-        ...prefix,
+        ...seededPrefix,
         message("retry-u", "user", "turn_1"),
         message("turn_1:assistant", "assistant", "turn_1"),
       ],

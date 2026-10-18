@@ -1,18 +1,12 @@
-import { Client } from "eve/client";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "@/lib/db/eve-documents";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { assertEveConfigured } from "./server";
-import { documentHistoryTurns } from "./document-history";
 import { eveManualDocumentInput } from "./document-contracts";
-import { getEveConnectionOptions } from "./connection-options";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 import type { z } from "zod";
-
-const documentSnapshotTimeoutMs = 15_000;
 
 type SavedDocumentReceipt = Pick<
   Awaited<ReturnType<typeof saveEveDocumentRevision>>,
@@ -77,27 +71,14 @@ export const saveManualEveDocument = async (
   value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
 ): Promise<SavedDocumentReceipt> => {
   const input = eveManualDocumentInput.parse(value);
-  const { conversation, previous } = await resolveManualDocumentContext(
+  const { previous } = await resolveManualDocumentContext(ownerId, input);
+  const saved = await saveEveDocumentRevision({
+    ...input,
+    fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
+    kind: previous.kind,
+    operationId: `manual:${input.operationId}`,
     ownerId,
-    input
-  );
-  assertEveConfigured();
-  const client = new Client(getEveConnectionOptions(ownerId));
-  const snapshot = await client.sessions
-    .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(documentSnapshotTimeoutMs) });
-  const turns = documentHistoryTurns(snapshot.events);
-  const saved = await saveEveDocumentRevision(
-    {
-      ...input,
-      fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
-      kind: previous.kind,
-      operationId: `manual:${input.operationId}`,
-      ownerId,
-      turnIndex: null,
-    },
-    undefined,
-    turns
-  );
+    turnIndex: null,
+  });
   return savedDocumentReceipt(saved);
 };

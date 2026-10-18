@@ -5,37 +5,26 @@ import { drizzle } from "drizzle-orm/pglite";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import {
-  eveChat,
-  eveConversation,
-  eveDocumentCheckpoint,
-  eveDocumentCheckpointEntry,
-  eveDocumentHead,
-  eveNamedDocumentCheckpoint,
-  eveNamedDocumentCheckpointEntry,
-  eveDocumentRevision,
-  user,
-} from "./schema";
+import { eveChat, eveConversation, eveDocumentHead, user } from "./schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const FIRST_TURN_INDEX = 0;
 const FIRST_INPUT_INDEX = 0;
-const NEXT_TURN_INDEX = 1;
-const ABSENT_TURN_INDEX = 2;
 
 vi.mock("./client", (): { db: typeof database } => ({ db: database }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-const {
-  captureEveDocumentCheckpoint,
-  getEveDocumentRevision,
-  initializeEveForkDocuments,
-  saveEveDocumentRevision,
-} = await import("./eve-documents");
+const { getEveDocumentRevision, saveEveDocumentRevision } =
+  await import("./eve-documents");
 
 const { snapshotPublicEveCopyDocuments } = await import("./eve-copy-documents");
+const { initializeEveCurrentCopy } = await import("./eve-current-copy");
+const capture = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/eve/completed-copy-source", () => ({
+  readCompletedEveCopyTranscript: capture,
+}));
 
 beforeAll(async (): Promise<void> => {
   const migrationDirectory = new URL("migrations/", import.meta.url);
@@ -99,211 +88,6 @@ const revisionInput = (
   turnIndex: FIRST_TURN_INDEX,
 });
 
-it("backfills each document's native history before adding a manual revision", async () => {
-  const conversationId = crypto.randomUUID();
-  await seedConversation(conversationId);
-  const first = await saveEveDocumentRevision(
-    revisionInput(conversationId, crypto.randomUUID())
-  );
-  const second = await saveEveDocumentRevision(
-    revisionInput(conversationId, crypto.randomUUID())
-  );
-  await saveEveDocumentRevision(
-    {
-      ...revisionInput(conversationId, first.documentId),
-      expectedRevisionId: first.id,
-      operationId: crypto.randomUUID(),
-      turnIndex: null,
-    },
-    undefined,
-    [0, 1]
-  );
-  const checkpoints = await database
-    .select()
-    .from(eveDocumentCheckpoint)
-    .where(eq(eveDocumentCheckpoint.conversationId, conversationId));
-  expect(
-    checkpoints
-      .map((row) => row.turnIndex)
-      .toSorted((left, right) => left - right)
-  ).toEqual([0, 1]);
-  const entries = await database
-    .select()
-    .from(eveDocumentCheckpointEntry)
-    .where(eq(eveDocumentCheckpointEntry.conversationId, conversationId));
-  expect(
-    entries.map((row) => ({
-      documentId: row.documentId,
-      revisionId: row.revisionId,
-      turnIndex: row.turnIndex,
-    }))
-  ).toEqual(
-    expect.arrayContaining([
-      { documentId: first.documentId, revisionId: first.id, turnIndex: 1 },
-      { documentId: second.documentId, revisionId: second.id, turnIndex: 1 },
-    ])
-  );
-  expect(entries).toHaveLength(2);
-});
-
-it("initializes all legacy fork heads from their pre-turn ancestry", async () => {
-  const parentId = crypto.randomUUID();
-  const childId = crypto.randomUUID();
-  await seedConversation(parentId);
-  await seedConversation(childId);
-  const first = await saveEveDocumentRevision(
-    revisionInput(parentId, crypto.randomUUID())
-  );
-  const second = await saveEveDocumentRevision(
-    revisionInput(parentId, crypto.randomUUID())
-  );
-  await database
-    .update(eveConversation)
-    .set({
-      chatId: parentId,
-      parentConversationId: parentId,
-      rootConversationId: parentId,
-      forkTurnId: "turn_1",
-    })
-    .where(eq(eveConversation.id, childId));
-  await initializeEveForkDocuments("document-owner", childId);
-  const heads = await database
-    .select()
-    .from(eveDocumentHead)
-    .where(eq(eveDocumentHead.conversationId, childId));
-  expect(heads.map((row) => row.revisionId)).toEqual(
-    expect.arrayContaining([first.id, second.id])
-  );
-  expect(heads).toHaveLength(2);
-  await initializeEveForkDocuments("document-owner", childId);
-  const replayed = await database
-    .select()
-    .from(eveDocumentHead)
-    .where(eq(eveDocumentHead.conversationId, childId));
-  expect(replayed).toEqual(heads);
-});
-
-it("rolls back legacy fork head insertion when any ancestry contains a manual revision", async () => {
-  const parentId = crypto.randomUUID();
-  const childId = crypto.randomUUID();
-  await seedConversation(parentId);
-  await seedConversation(childId);
-  await saveEveDocumentRevision(revisionInput(parentId, crypto.randomUUID()));
-  const manualDocumentId = crypto.randomUUID();
-  const manual = await saveEveDocumentRevision(
-    revisionInput(parentId, manualDocumentId)
-  );
-  await saveEveDocumentRevision({
-    ...revisionInput(parentId, manualDocumentId),
-    expectedRevisionId: manual.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: NEXT_TURN_INDEX,
-  });
-  await database
-    .update(eveDocumentRevision)
-    .set({ turnIndex: null })
-    .where(eq(eveDocumentRevision.id, manual.id));
-  await database
-    .update(eveConversation)
-    .set({
-      chatId: parentId,
-      parentConversationId: parentId,
-      rootConversationId: parentId,
-      forkTurnId: "turn_1",
-    })
-    .where(eq(eveConversation.id, childId));
-  await expect(
-    initializeEveForkDocuments("document-owner", childId)
-  ).rejects.toThrow("Document checkpoint is not ready. Retry this fork.");
-  const heads = await database
-    .select()
-    .from(eveDocumentHead)
-    .where(eq(eveDocumentHead.conversationId, childId));
-  expect(heads).toEqual([]);
-});
-
-it("selects the nearest pre-turn legacy revision and omits documents created at the fork boundary", async () => {
-  const parentId = crypto.randomUUID();
-  const childId = crypto.randomUUID();
-  await seedConversation(parentId);
-  await seedConversation(childId);
-  const documentId = crypto.randomUUID();
-  const first = await saveEveDocumentRevision(
-    revisionInput(parentId, documentId)
-  );
-  const selected = await saveEveDocumentRevision({
-    ...revisionInput(parentId, documentId),
-    expectedRevisionId: first.id,
-    operationId: crypto.randomUUID(),
-  });
-  await saveEveDocumentRevision({
-    ...revisionInput(parentId, documentId),
-    expectedRevisionId: selected.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: NEXT_TURN_INDEX,
-  });
-  await saveEveDocumentRevision({
-    ...revisionInput(parentId, crypto.randomUUID()),
-    turnIndex: NEXT_TURN_INDEX,
-  });
-  await database
-    .update(eveConversation)
-    .set({
-      chatId: parentId,
-      parentConversationId: parentId,
-      rootConversationId: parentId,
-      forkTurnId: "turn_1",
-    })
-    .where(eq(eveConversation.id, childId));
-
-  await initializeEveForkDocuments("document-owner", childId);
-  const heads = await database
-    .select()
-    .from(eveDocumentHead)
-    .where(eq(eveDocumentHead.conversationId, childId));
-  expect(heads).toEqual([
-    expect.objectContaining({ documentId, revisionId: selected.id }),
-  ]);
-});
-
-it("rejects cyclic legacy ancestry without inserting any fork heads", async () => {
-  const parentId = crypto.randomUUID();
-  const childId = crypto.randomUUID();
-  await seedConversation(parentId);
-  await seedConversation(childId);
-  const revision = await saveEveDocumentRevision(
-    revisionInput(parentId, crypto.randomUUID())
-  );
-  const head = await saveEveDocumentRevision({
-    ...revisionInput(parentId, revision.documentId),
-    expectedRevisionId: revision.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: NEXT_TURN_INDEX,
-  });
-  await database
-    .update(eveDocumentRevision)
-    .set({ parentRevisionId: head.id })
-    .where(eq(eveDocumentRevision.id, revision.id));
-  await database
-    .update(eveConversation)
-    .set({
-      chatId: parentId,
-      parentConversationId: parentId,
-      rootConversationId: parentId,
-      forkTurnId: "turn_1",
-    })
-    .where(eq(eveConversation.id, childId));
-
-  await expect(
-    initializeEveForkDocuments("document-owner", childId)
-  ).rejects.toThrow("Document history could not be loaded.");
-  const heads = await database
-    .select()
-    .from(eveDocumentHead)
-    .where(eq(eveDocumentHead.conversationId, childId));
-  expect(heads).toEqual([]);
-});
-
 it("rejects a missing conversation before persisting a revision", async (): Promise<void> => {
   const conversationId = crypto.randomUUID();
   const documentId = crypto.randomUUID();
@@ -332,133 +116,81 @@ it("preserves replay identity and empty revision selection", async (): Promise<v
   ).rejects.toThrow("Document operation changed during replay.");
 });
 
-it("snapshots native turn checkpoints and rejects absent published boundaries", async (): Promise<void> => {
-  const conversationId = crypto.randomUUID();
+it("captures current document heads once and keeps retries independent of later source edits", async () => {
+  const source = crypto.randomUUID();
+  const target = crypto.randomUUID();
   const documentId = crypto.randomUUID();
-  await seedConversation(conversationId);
-  const saved = await saveEveDocumentRevision(
-    revisionInput(conversationId, documentId)
+  await seedConversation(source);
+  await seedConversation(target);
+  await database
+    .update(eveConversation)
+    .set({
+      state: "creating",
+      sessionId: null,
+      parentConversationId: source,
+      chatId: source,
+      rootConversationId: source,
+    })
+    .where(eq(eveConversation.id, target));
+  const first = await saveEveDocumentRevision(
+    revisionInput(source, documentId)
   );
-  await captureEveDocumentCheckpoint(
-    "document-owner",
-    conversationId,
-    NEXT_TURN_INDEX
-  );
-  const resources = { documentIds: [documentId], revisionIds: [saved.id] };
-  const snapshot = await snapshotPublicEveCopyDocuments(
-    conversationId,
-    conversationId,
-    resources,
-    [
-      {
-        messageIndex: NEXT_TURN_INDEX,
-        sourceIndex: NEXT_TURN_INDEX,
-        sourceKind: "turn",
-      },
-    ]
-  );
-  expect(snapshot.documents).toMatchObject([
-    { documentId, headRevisionId: saved.id, revisions: [{ id: saved.id }] },
-  ]);
-  expect(snapshot.checkpoints).toEqual([
-    {
-      heads: [{ documentId, revisionId: saved.id }],
-      messageIndex: NEXT_TURN_INDEX,
-    },
-  ]);
+  const seed = {
+    messages: [
+      { role: "user", parts: [{ type: "text", text: "Captured history" }] },
+    ],
+  };
+  capture.mockResolvedValue({ seed });
   await expect(
-    snapshotPublicEveCopyDocuments(conversationId, conversationId, resources, [
-      {
-        messageIndex: ABSENT_TURN_INDEX,
-        sourceIndex: ABSENT_TURN_INDEX,
-        sourceKind: "turn",
-      },
-    ])
-  ).rejects.toThrow("Published document boundary is unavailable.");
+    initializeEveCurrentCopy("foreign-owner", target)
+  ).rejects.toThrow("Copy conversation not found");
+  capture.mockRejectedValueOnce(new Error("Source still running"));
+  await expect(
+    initializeEveCurrentCopy("document-owner", target)
+  ).rejects.toThrow("Source still running");
+  expect(
+    await database
+      .select()
+      .from(eveDocumentHead)
+      .where(eq(eveDocumentHead.conversationId, target))
+  ).toEqual([]);
+  await initializeEveCurrentCopy("document-owner", target);
+  await saveEveDocumentRevision({
+    ...revisionInput(source, documentId),
+    operationId: "later",
+    expectedRevisionId: first.id,
+    content: "Later edit",
+  });
+  capture.mockClear();
+  await initializeEveCurrentCopy("document-owner", target);
+  expect(capture).not.toHaveBeenCalled();
+  const [head] = await database
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, target));
+  expect(head.revisionId).toBe(first.id);
+  const [copy] = await database
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, target));
+  expect(copy.initialSeed).toEqual({ ...seed, attachments: "channel" });
 });
 
-it("runs the app checkpoint hook with durable immutable document snapshots across retries", async () => {
-  const { default: conversation } =
-    await import("../../agent/hooks/conversation");
-  const conversationId = crypto.randomUUID();
-  await seedConversation(conversationId);
-  const first = await saveEveDocumentRevision(
-    revisionInput(conversationId, crypto.randomUUID())
+it("captures public current heads inside an existing transaction", async () => {
+  const source = crypto.randomUUID();
+  const documentId = crypto.randomUUID();
+  await seedConversation(source);
+  const saved = await saveEveDocumentRevision(
+    revisionInput(source, documentId)
   );
-  const checkpoint = {
-    checkpointId: crypto.randomUUID(),
-    beforeTurnId: "turn_1",
-  };
-  const context = {
-    agent: { name: "chatjs" },
-    channel: {},
-    getSandbox: (): never => {
-      throw new Error("Unexpected sandbox access");
-    },
-    getSkill: (): never => {
-      throw new Error("Unexpected skill access");
-    },
-    session: {
-      id: conversationId,
-      turn: { id: "turn_1", sequence: 1 },
-      auth: {
-        current: null,
-        initiator: {
-          authenticator: "test",
-          principalId: "document-owner",
-          principalType: "user",
-          attributes: {},
-        },
-      },
-    },
-  };
-  // A failed application commit rejects the actual hook and leaves no named receipt.
-  await postgres.exec(`CREATE FUNCTION reject_named_checkpoint() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'checkpoint store unavailable'; END $$;
-    CREATE TRIGGER reject_named_checkpoint BEFORE INSERT ON "EveNamedDocumentCheckpoint" FOR EACH ROW EXECUTE FUNCTION reject_named_checkpoint();`);
-  try {
-    await expect(
-      conversation.checkpoint?.(checkpoint, context)
-    ).rejects.toThrow("Failed query");
-    expect(
-      await database
-        .select()
-        .from(eveNamedDocumentCheckpoint)
-        .where(
-          eq(eveNamedDocumentCheckpoint.checkpointId, checkpoint.checkpointId)
-        )
-    ).toHaveLength(0);
-  } finally {
-    await postgres.exec(
-      'DROP TRIGGER reject_named_checkpoint ON "EveNamedDocumentCheckpoint"; DROP FUNCTION reject_named_checkpoint();'
-    );
-  }
-  await conversation.checkpoint?.(checkpoint, context);
-  // Model a lost native receipt after the app commit, followed by a manual edit.
-  const second = await saveEveDocumentRevision(
-    {
-      ...revisionInput(conversationId, first.documentId),
-      expectedRevisionId: first.id,
-      operationId: crypto.randomUUID(),
-      content: "Later manual edit",
-      turnIndex: null,
-    },
-    undefined,
-    [0, 1]
+  const result = await database.transaction(
+    async (tx) =>
+      await snapshotPublicEveCopyDocuments(
+        source,
+        source,
+        { documentIds: [documentId], revisionIds: [saved.id] },
+        tx
+      )
   );
-  await conversation.checkpoint?.(checkpoint, context);
-  const entries = await database
-    .select()
-    .from(eveNamedDocumentCheckpointEntry)
-    .where(
-      eq(eveNamedDocumentCheckpointEntry.checkpointId, checkpoint.checkpointId)
-    );
-  expect(entries).toHaveLength(1);
-  expect(entries[0]?.revisionId).toBe(first.id);
-  expect(second.id).not.toBe(first.id);
-  await expect(
-    conversation.checkpoint?.(
-      { ...checkpoint, beforeTurnId: "turn_2" },
-      context
-    )
-  ).rejects.toThrow("different source turn");
+  expect(result.documents[0]?.headRevisionId).toBe(saved.id);
 });

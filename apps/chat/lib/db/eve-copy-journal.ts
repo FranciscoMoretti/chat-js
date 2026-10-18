@@ -42,29 +42,11 @@ interface EveCopyOperation {
   copy: typeof eveConversationCopy.$inferSelect;
 }
 
-type CopyDocumentCheckpointPlan = Readonly<{
-  seed: Readonly<{
-    messages: readonly Readonly<{ role: string }>[];
-  }>;
-  documentCheckpoints: readonly Readonly<{
-    messageIndex: number;
-    heads: readonly Readonly<{
-      documentId: string;
-      revisionId: string;
-    }>[];
-  }>[];
-  documents: readonly Readonly<{
-    documentId: string;
-    revisions: readonly Readonly<{ id: string }>[];
-  }>[];
-}>;
-
 type CopyPlanReader = Readonly<{
   seed: Readonly<{
     messages: readonly Readonly<{ role: string }>[];
     attachments?: EveCopyPlan["seed"]["attachments"];
   }>;
-  documentCheckpoints: CopyDocumentCheckpointPlan["documentCheckpoints"];
   sourceHeads: readonly Readonly<{
     documentId: string;
     revisionId: string;
@@ -287,51 +269,6 @@ const getEveCopyOperation = async (
   }
   return await readEveCopy(db, ownerId, conversation.id);
 };
-const validateCopyDocumentCheckpoints = (
-  plan: CopyDocumentCheckpointPlan
-): void => {
-  const checkpoints = new Map(
-    plan.documentCheckpoints.map((checkpoint) => [
-      checkpoint.messageIndex,
-      checkpoint,
-    ])
-  );
-  const users = plan.seed.messages.flatMap((message, index) => {
-    if (message.role === "user") {
-      return [index];
-    }
-    return [];
-  });
-  if (
-    checkpoints.size !== plan.documentCheckpoints.length ||
-    checkpoints.size !== users.length ||
-    users.some((index) => !checkpoints.has(index))
-  ) {
-    throw new Error(
-      "Copied document boundaries must match imported user messages."
-    );
-  }
-  const revisionDocuments = new Map(
-    plan.documents.flatMap((document) =>
-      document.revisions.map((revision) => [revision.id, document.documentId])
-    )
-  );
-  for (const checkpoint of checkpoints.values()) {
-    const seen = new Set<string>();
-    for (const head of checkpoint.heads) {
-      if (
-        seen.has(head.documentId) ||
-        revisionDocuments.get(head.revisionId) !== head.documentId
-      ) {
-        throw new Error(
-          "Copied document boundary has invalid revision ownership."
-        );
-      }
-      seen.add(head.documentId);
-    }
-  }
-};
-
 const validateCopiedDocuments = (plan: CopyPlanReader): void => {
   const documentIds = new Set<string>();
   const revisionIds = new Set<string>();
@@ -422,7 +359,6 @@ const validateCopyPlan = (plan: CopyPlanReader): void => {
     throw new Error("Copies require compact channel attachments.");
   }
   validateCopiedDocuments(plan);
-  validateCopyDocumentCheckpoints(plan);
 };
 
 const assertSourceFiles = async (

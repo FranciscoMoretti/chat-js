@@ -1,5 +1,5 @@
-import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
 import type { EveCopySeed } from "@/lib/eve/copy-seed";
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
@@ -383,6 +383,7 @@ const eveConversation = pgTable(
     // Immutable creation intent; retained when the project is removed.
     initialProjectId: uuid("initialProjectId"),
     initialRequest: jsonb("initialRequest").$type<unknown>(),
+    initialSeed: jsonb("initialSeed").$type<unknown>(),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()
@@ -455,6 +456,7 @@ const eveConversation = pgTable(
     ) or (
       ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
       (
+        (${table.forkTurnId} is null and ${table.forkMessageId} is null) or
         (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
         (${table.forkMessageId} is not null and ${table.forkMessageId} ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and ${table.forkTurnId} is null)
       ) and

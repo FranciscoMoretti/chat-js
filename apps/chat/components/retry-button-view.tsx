@@ -24,7 +24,7 @@ export const RetryButtonView = ({
     )}
     disabled={disabled}
     onClick={onRetry}
-    tooltip="Retry"
+    tooltip="Copy completed conversation and ask again"
   >
     <RefreshCcw className="h-3.5 w-3.5" />
   </Action>

@@ -1,3 +1,10 @@
+import {
+  eveDispatch,
+  eveChatProject,
+  eveConversation,
+  project,
+  user,
+} from "../lib/db/schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq, inArray } from "drizzle-orm";
@@ -14,12 +21,6 @@ import {
   listEveConversations,
 } from "../lib/db/eve-queries";
 import { assignEveConversationProject } from "../lib/db/queries";
-import {
-  eveChatProject,
-  eveConversation,
-  project,
-  user,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -52,6 +53,9 @@ await db.insert(project).values([
 ]);
 afterAll(async () => {
   await db
+    .delete(eveDispatch)
+    .where(inArray(eveDispatch.ownerId, [owner, stranger]));
+  await db
     .delete(eveConversation)
     .where(inArray(eveConversation.ownerId, [owner, stranger]));
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
@@ -80,7 +84,7 @@ test("assignment, filtered history and removal retain native identity", async ()
     search: "",
   });
   expect(conversationsInProject.items).toEqual([
-    expect.objectContaining({ id: row.id, projectId: ownProject }),
+    expect.objectContaining({ conversationId: row.id, projectId: ownProject }),
   ]);
   const conversationsWithoutProject = await listEveConversations(owner, {
     projectId: null,
@@ -197,7 +201,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       operationId,
       "Fork fixture",
       createEveTestSession,
-      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
+      { fork: { conversationId: source.id } }
     );
   const fork = await createFork();
   const forkProject = await getEveConversationProject(owner, fork.id);
@@ -224,7 +228,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
   ).toEqual([]);
 });
 
-test("an unresolved fork retains its project route for creation recovery", async () => {
+test("an unresolved copy follows changes to its chat project", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
@@ -236,7 +240,7 @@ test("an unresolved fork retains its project route for creation recovery", async
       vi
         .fn<() => Promise<string>>()
         .mockRejectedValue(new Error("Lost creation reply")),
-      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
+      { fork: { conversationId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
@@ -248,7 +252,7 @@ test("an unresolved fork retains its project route for creation recovery", async
   expect(pendingProject?.id).toBe(ownProject);
   expect(
     await assignEveConversationProject(owner, pending.id, null)
-  ).toBeNull();
+  ).toMatchObject({ conversationId: pending.id, projectId: null });
 });
 
 test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {

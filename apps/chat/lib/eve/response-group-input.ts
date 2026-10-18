@@ -51,20 +51,7 @@ export const eveResponseGroupInput = z
           | "generateImage"
           | "generateVideo"
           | undefined;
-        fork?:
-          | {
-              conversationId: string;
-              beforeTurnId: string;
-              checkpointId?: string | undefined;
-              beforeMessageId?: undefined;
-            }
-          | {
-              conversationId: string;
-              beforeMessageId: string;
-              beforeTurnId?: undefined;
-              checkpointId?: undefined;
-            }
-          | undefined;
+        fork?: z.infer<typeof eveForkInput>;
         forkKind?: "edit" | "comparison" | undefined;
         projectId?: string | undefined;
       }> & { readonly message: ReadonlyEveMessageInput }

@@ -137,8 +137,7 @@ test("captures all accessible ancestors without private branches, unrelated docu
   const result = await snapshotPublicEveCopyDocuments(
     conversationId,
     sessionId,
-    resources,
-    []
+    resources
   );
   expect(result.documents).toHaveLength(1);
   expect(result.documents[0].headRevisionId).toBe(visibleRevision);
@@ -164,59 +163,38 @@ test("captures all accessible ancestors without private branches, unrelated docu
 
 test("rejects a referenced private revision or a missing document instead of partially copying", async () => {
   await expect(
-    snapshotPublicEveCopyDocuments(
-      conversationId,
-      sessionId,
-      {
-        ...resources,
-        revisionIds: [privateRevision],
-      },
-      []
-    )
+    snapshotPublicEveCopyDocuments(conversationId, sessionId, {
+      ...resources,
+      revisionIds: [privateRevision],
+    })
   ).rejects.toThrow("outside the accessible");
   await expect(
-    snapshotPublicEveCopyDocuments(
-      conversationId,
-      sessionId,
-      {
-        documentIds: [crypto.randomUUID()],
-        revisionIds: [],
-      },
-      []
-    )
+    snapshotPublicEveCopyDocuments(conversationId, sessionId, {
+      documentIds: [crypto.randomUUID()],
+      revisionIds: [],
+    })
   ).rejects.toThrow("no longer accessible");
   await expect(
     snapshotPublicEveCopyDocuments(
       conversationId,
       crypto.randomUUID(),
-      resources,
-      []
+      resources
     )
   ).rejects.toThrow("unavailable");
 });
 test("requires publication even for an empty resource manifest", async () => {
   await expect(
-    snapshotPublicEveCopyDocuments(
-      branchId,
-      sessionId,
-      {
-        documentIds: [],
-        revisionIds: [],
-      },
-      []
-    )
+    snapshotPublicEveCopyDocuments(branchId, sessionId, {
+      documentIds: [],
+      revisionIds: [],
+    })
   ).rejects.toThrow("unavailable");
   expect(
-    await snapshotPublicEveCopyDocuments(
-      conversationId,
-      sessionId,
-      {
-        documentIds: [],
-        revisionIds: [],
-      },
-      []
-    )
-  ).toEqual({ checkpoints: [], documents: [] });
+    await snapshotPublicEveCopyDocuments(conversationId, sessionId, {
+      documentIds: [],
+      revisionIds: [],
+    })
+  ).toEqual({ documents: [] });
 });
 test("observes revocation committed while preparation is waiting on the source row", async () => {
   const updated: PromiseWithResolvers<void> = Promise.withResolvers();
@@ -233,8 +211,7 @@ test("observes revocation committed while preparation is waiting on the source r
   const snapshot = snapshotPublicEveCopyDocuments(
     conversationId,
     sessionId,
-    resources,
-    []
+    resources
   );
   const rejected = expect(snapshot).rejects.toThrow("unavailable");
   release.resolve();
@@ -244,49 +221,4 @@ test("observes revocation committed while preparation is waiting on the source r
     .update(eveConversation)
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, conversationId));
-});
-
-test("snapshots native and imported boundaries independently of later document heads", async () => {
-  await db.insert(eveDocumentCheckpoint).values([
-    { conversationId, ownerId, turnIndex: 0 },
-    { conversationId, ownerId, turnIndex: 1 },
-  ]);
-  await db.insert(eveDocumentCheckpointEntry).values({
-    conversationId,
-    documentId,
-    ownerId,
-    revisionId: rootRevision,
-    turnIndex: 1,
-  });
-  await db
-    .insert(eveImportedDocumentCheckpoint)
-    .values({ conversationId, messageIndex: 2, ownerId });
-  await db.insert(eveImportedDocumentCheckpointEntry).values({
-    conversationId,
-    documentId,
-    messageIndex: 2,
-    ownerId,
-    revisionId: rootRevision,
-  });
-  const result = await snapshotPublicEveCopyDocuments(
-    conversationId,
-    sessionId,
-    resources,
-    [
-      { messageIndex: 0, sourceIndex: 0, sourceKind: "turn" },
-      { messageIndex: 2, sourceIndex: 1, sourceKind: "turn" },
-      { messageIndex: 4, sourceIndex: 2, sourceKind: "imported" },
-    ]
-  );
-  expect(result.documents[0].headRevisionId).toBe(visibleRevision);
-  expect(result.checkpoints).toEqual([
-    { heads: [], messageIndex: 0 },
-    { heads: [{ documentId, revisionId: rootRevision }], messageIndex: 2 },
-    { heads: [{ documentId, revisionId: rootRevision }], messageIndex: 4 },
-  ]);
-  await expect(
-    snapshotPublicEveCopyDocuments(conversationId, sessionId, resources, [
-      { messageIndex: 6, sourceIndex: 99, sourceKind: "turn" },
-    ])
-  ).rejects.toThrow("boundary is unavailable");
 });

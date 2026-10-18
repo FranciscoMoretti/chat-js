@@ -32,7 +32,7 @@ it("validates the actual prepared copy plan without losing settled tool output o
   });
   const plan = await prepareEveCopyPlan(
     { seed, resources: { fileKeys: [], documentIds: [], revisionIds: [] } },
-    { documents: [], checkpoints: [] },
+    { documents: [] },
     () => {
       throw new Error("No source file should be read");
     },

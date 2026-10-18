@@ -68,7 +68,6 @@ it("rechecks worker authority for every session even when workflow coverage was 
     JSON.stringify({
       expectedAppRoot: "/worker",
       action: "retire",
-      releaseForkSnapshots: false,
     })
   );
   expect(mocks.end).toHaveBeenCalledOnce();

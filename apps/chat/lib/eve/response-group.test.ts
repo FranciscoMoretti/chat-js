@@ -88,7 +88,7 @@ it("marks every multi-model edited candidate with the shared user intent", async
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {
     ...input,
-    fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
+    fork: { conversationId: crypto.randomUUID() },
     forkKind: "edit",
   });
   expect(mocks.create).toHaveBeenCalledTimes(2);

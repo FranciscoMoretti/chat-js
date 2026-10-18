@@ -1,30 +1,5 @@
-import { createEveTestSession } from "./eve-native-session.fixture";
-
-import assert from "node:assert/strict";
-
-import { and, eq, inArray, sql } from "drizzle-orm";
-import { afterAll, expect, test, vi } from "vitest";
-
-import { db } from "../lib/db/client";
-import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
-  captureEveDocumentCheckpoint,
-  captureEveNamedDocumentCheckpoint,
-  getAccessibleEveDocument,
-  getEveDocumentHistory,
-  getEveDocumentRevision,
-  initializeEveForkDocuments,
-  purgeEveFamilyDocuments,
-  removeEveDocumentFromConversation,
-  saveEveDocumentRevision,
-} from "../lib/db/eve-documents";
-import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
-import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
-import {
-  beginEveConversationDeletion,
-  createEveConversation,
-} from "../lib/db/eve-queries";
-import {
+  eveDispatch,
   eveConversation,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
@@ -38,18 +13,36 @@ import {
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
+import assert from "node:assert/strict";
+
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { afterAll, expect, test } from "vitest";
+
+import { db } from "../lib/db/client";
+import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+import {
+  getAccessibleEveDocument,
+  getEveDocumentHistory,
+  getEveDocumentRevision,
+  purgeEveFamilyDocuments,
+  removeEveDocumentFromConversation,
+  saveEveDocumentRevision,
+} from "../lib/db/eve-documents";
+import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
+import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
+import {
+  beginEveConversationDeletion,
+  createEveConversation,
+} from "../lib/db/eve-queries";
 import { env } from "../lib/env";
-import { documentHistoryTurns } from "../lib/eve/document-history";
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
-import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
-const rejectLostNativeReply = vi
-  .fn<() => Promise<never>>()
-  .mockRejectedValue(new Error("Lost native reply"));
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -58,6 +51,7 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db
     .delete(eveImportedDocumentCheckpointEntry)
     .where(eq(eveImportedDocumentCheckpointEntry.ownerId, owner));
@@ -114,13 +108,12 @@ test("document purge requires the owned family fence, erases inherited revisions
   const root = await conversation();
   const input = draft(root.id);
   const original = await saveEveDocumentRevision(input);
-  await captureEveDocumentCheckpoint(owner, root.id, 1);
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Purge fork",
     createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   await saveEveDocumentRevision({
     ...input,
@@ -129,7 +122,6 @@ test("document purge requires the owned family fence, erases inherited revisions
     expectedRevisionId: original.id,
     operationId: crypto.randomUUID(),
   });
-  await captureEveDocumentCheckpoint(owner, child.id, 2);
   const unrelated = await conversation();
   const surviving = await saveEveDocumentRevision(draft(unrelated.id));
 
@@ -146,12 +138,7 @@ test("document purge requires the owned family fence, erases inherited revisions
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await purgeEveFamilyDocuments(owner, deletion.rootId);
   await Promise.all(
-    [
-      eveDocumentCheckpointEntry,
-      eveDocumentCheckpoint,
-      eveDocumentHead,
-      eveDocumentRevision,
-    ].map(async (table) => {
+    [eveDocumentHead, eveDocumentRevision].map(async (table) => {
       expect(
         await db
           .select({ conversationId: table.conversationId })
@@ -183,7 +170,6 @@ test("an external document reference rolls back every purge step", async () => {
   const root = await conversation();
   const input = draft(root.id);
   const revision = await saveEveDocumentRevision(input);
-  await captureEveDocumentCheckpoint(owner, root.id, 1);
   const external = await conversation();
   // Model a reference outside the deletion family. Do not cascade it away.
   await db.insert(eveDocumentHead).values({
@@ -195,12 +181,7 @@ test("an external document reference rolls back every purge step", async () => {
   await beginEveConversationDeletion(owner, root.id);
   await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow();
   await Promise.all(
-    [
-      eveDocumentCheckpointEntry,
-      eveDocumentCheckpoint,
-      eveDocumentHead,
-      eveDocumentRevision,
-    ].map(async (table) => {
+    [eveDocumentHead, eveDocumentRevision].map(async (table) => {
       expect(
         await db
           .select({ conversationId: table.conversationId })
@@ -215,222 +196,6 @@ test("an external document reference rolls back every purge step", async () => {
       .from(eveDocumentHead)
       .where(eq(eveDocumentHead.conversationId, external.id))
   ).toHaveLength(1);
-});
-
-test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
-  const source = await conversation();
-  const input = draft(source.id);
-  const original = await saveEveDocumentRevision(input);
-  const child = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Old fork",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_2", conversationId: source.id } }
-  );
-  const turns = documentHistoryTurns([
-    {
-      data: {
-        beforeTurnId: "turn_2",
-        events: [0, 1].map((turn) => ({
-          type: "step.started" as const,
-          meta: { id: `step-${turn}`, at: new Date().toISOString() },
-          data: {
-            modelId: "gateway/test",
-            sequence: turn,
-            stepIndex: 0,
-            turnId: `turn_${turn}`,
-          },
-        })),
-      },
-      meta: { at: new Date().toISOString(), id: "restored" },
-      type: "history.restored",
-    },
-  ]);
-  await saveEveDocumentRevision(
-    {
-      ...input,
-      content: "Manual on old fork",
-      conversationId: child.id,
-      expectedRevisionId: original.id,
-      operationId: crypto.randomUUID(),
-      turnIndex: null,
-    },
-    undefined,
-    turns
-  );
-  const earlier = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Inherited boundary",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
-  );
-  const earlierBranchRevision = await getEveDocumentRevision(
-    owner,
-    earlier.id,
-    input.documentId
-  );
-  expect(earlierBranchRevision?.id).toBe(original.id);
-});
-
-test("manual edits backfill old native boundaries and stay isolated across nested forks", async () => {
-  const chat = await conversation();
-  const input = draft(chat.id);
-  const original = await saveEveDocumentRevision(input);
-  const manualInput = {
-    ...input,
-    content: "Manual content",
-    expectedRevisionId: original.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: null,
-  };
-  const manual = await saveEveDocumentRevision(manualInput, undefined, [0, 1]);
-  expect(manual.turnIndex).toBeNull();
-  await captureEveDocumentCheckpoint(owner, chat.id, 2);
-  const generated = await saveEveDocumentRevision({
-    ...input,
-    content: "Generated later",
-    expectedRevisionId: manual.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 2,
-  });
-  const manualReplayRevision = await saveEveDocumentRevision(
-    manualInput,
-    undefined,
-    [0, 1, 2]
-  );
-  expect(manualReplayRevision.id).toBe(manual.id);
-  const chatRevisionAfterManualEdit = await getEveDocumentRevision(
-    owner,
-    chat.id,
-    input.documentId
-  );
-  expect(chatRevisionAfterManualEdit?.id).toBe(generated.id);
-  const child = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Manual branch",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
-  );
-  const childRevisionAfterManualEdit = await getEveDocumentRevision(
-    owner,
-    child.id,
-    input.documentId
-  );
-  expect(childRevisionAfterManualEdit?.content).toBe("Manual content");
-  const earlier = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Before manual",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
-  );
-  const earlierNestedBranchRevision = await getEveDocumentRevision(
-    owner,
-    earlier.id,
-    input.documentId
-  );
-  expect(earlierNestedBranchRevision?.id).toBe(original.id);
-  await expect(
-    saveEveDocumentRevision(
-      {
-        ...manualInput,
-        expectedRevisionId: generated.id,
-        operationId: crypto.randomUUID(),
-      },
-      undefined,
-      [0, 1, 2, 3]
-    )
-  ).rejects.toThrow("checkpoint is not ready");
-  const chatHeadAfterRejectedReplay = await getEveDocumentRevision(
-    owner,
-    chat.id,
-    input.documentId
-  );
-  expect(chatHeadAfterRejectedReplay?.id).toBe(generated.id);
-  await expect(
-    saveEveDocumentRevision({
-      ...manualInput,
-      expectedRevisionId: generated.id,
-      operationId: crypto.randomUUID(),
-    })
-  ).rejects.toThrow("native history");
-});
-
-test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
-  const chat = await conversation();
-  await captureEveDocumentCheckpoint(owner, chat.id, 0);
-  const input = draft(chat.id);
-  const first = await saveEveDocumentRevision(input);
-  await Promise.all(
-    Array.from({ length: 5 }, async () => {
-      await captureEveDocumentCheckpoint(owner, chat.id, 1);
-    })
-  );
-  await saveEveDocumentRevision({
-    ...input,
-    content: "Later content",
-    expectedRevisionId: first.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 0,
-  });
-  await captureEveDocumentCheckpoint(owner, chat.id, 1);
-  await captureEveDocumentCheckpoint(owner, chat.id, 2);
-  const laterBranch = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Later branch",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
-  );
-  // Replaying fork initialization must leave inherited boundaries unchanged.
-  await initializeEveForkDocuments(owner, laterBranch.id);
-  const earlierBranch = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Earlier nested branch",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: laterBranch.id } }
-  );
-  const laterBranchRevision = await getEveDocumentRevision(
-    owner,
-    laterBranch.id,
-    input.documentId
-  );
-  expect(laterBranchRevision?.content).toBe("Later content");
-  const earlierBranchRevisionAtFork = await getEveDocumentRevision(
-    owner,
-    earlierBranch.id,
-    input.documentId
-  );
-  expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
-  await Promise.all(
-    ["turn_0", "turn_1"].map(async (beforeTurnId) => {
-      const child = await createEveConversation(
-        owner,
-        crypto.randomUUID(),
-        "Checkpoint fork",
-        createEveTestSession,
-        { fork: { beforeTurnId, conversationId: chat.id } }
-      );
-      const document = await getEveDocumentRevision(
-        owner,
-        child.id,
-        input.documentId
-      );
-      if (beforeTurnId === "turn_0") {
-        expect(document).toBeNull();
-      } else {
-        expect(document?.id).toBe(first.id);
-        expect(document?.content).toBe("Original");
-      }
-    })
-  );
-  await expect(
-    captureEveDocumentCheckpoint(stranger, chat.id, 2)
-  ).rejects.toThrow("not found");
 });
 
 test("a document save cancelled while waiting for its lock never writes", async () => {
@@ -502,7 +267,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     crypto.randomUUID(),
     "Public branch",
     createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
+    { fork: { conversationId: chat.id } }
   );
   await db
     .update(eveConversation)
@@ -515,11 +280,11 @@ test("document viewing respects visibility, revocation and fork ancestry without
   );
   expect(visible).toMatchObject({
     canEdit: false,
-    revision: { content: "Original", id: first.id },
+    revision: { content: "Private later version", id: later.id },
   });
   expect(visible?.revision).not.toHaveProperty("ownerId");
   expect(visible?.revision).not.toHaveProperty("operationId");
-  expect(visible?.history).toHaveLength(1);
+  expect(visible?.history).toHaveLength(2);
   expect(
     await getAccessibleEveDocument(
       undefined,
@@ -527,7 +292,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
       input.documentId,
       later.id
     )
-  ).toBeUndefined();
+  ).toMatchObject({ revision: { id: later.id } });
   await db
     .update(eveConversation)
     .set({ visibility: "private" })
@@ -710,85 +475,6 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
     })
   ).rejects.toThrow();
 });
-test("forks select the pre-turn revision and parent and child edits stay independent", async () => {
-  const chat = await conversation();
-  const input = draft(chat.id);
-  const first = await saveEveDocumentRevision(input);
-  const parentLater = await saveEveDocumentRevision({
-    ...input,
-    content: "Parent after fork point",
-    expectedRevisionId: first.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 1,
-  });
-  const child = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Fork",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
-  );
-  const childHistoryAtFork = await getEveDocumentHistory(
-    owner,
-    child.id,
-    input.documentId
-  );
-  expect(childHistoryAtFork.map((revision) => revision.id)).toEqual([first.id]);
-  const childEdit = await saveEveDocumentRevision({
-    ...input,
-    content: "Child",
-    conversationId: child.id,
-    expectedRevisionId: first.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 1,
-  });
-  await saveEveDocumentRevision({
-    ...input,
-    content: "Parent newest",
-    expectedRevisionId: parentLater.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 2,
-  });
-  await initializeEveForkDocuments(owner, child.id);
-  const childHistoryAfterEdit = await getEveDocumentHistory(
-    owner,
-    child.id,
-    input.documentId
-  );
-  expect(childHistoryAfterEdit.at(-1)?.id).toBe(childEdit.id);
-  const parentRevisionHistory = await getEveDocumentRevision(
-    owner,
-    chat.id,
-    input.documentId
-  );
-  expect(parentRevisionHistory?.content).toBe("Parent newest");
-  const nested = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Nested",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
-  );
-  const nestedBranchHistory = await getEveDocumentHistory(
-    owner,
-    nested.id,
-    input.documentId
-  );
-  expect(nestedBranchHistory.map((revision) => revision.id)).toEqual([
-    first.id,
-  ]);
-  expect(
-    await db
-      .select()
-      .from(eveDocumentRevision)
-      .where(
-        and(
-          eq(eveDocumentRevision.ownerId, owner),
-          eq(eveDocumentRevision.documentId, input.documentId)
-        )
-      )
-  ).toHaveLength(4);
-});
 
 test("history beyond 1000 revisions remains readable and forkable without loading all contents", async () => {
   const chat = await conversation();
@@ -838,17 +524,17 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     crypto.randomUUID(),
     "Long fork",
     createEveTestSession,
-    { fork: { beforeTurnId: "turn_500", conversationId: chat.id } }
+    { fork: { conversationId: chat.id } }
   );
   const longChildHistory = await getEveDocumentHistory(
     owner,
     child.id,
     input.documentId
   );
-  expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
+  expect(longChildHistory.at(-1)?.id).toBe(newest.id);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
-  ).toBeNull();
+  ).toMatchObject({ id: newest.id });
 });
 
 test("document references protect owned files across families and revision history", async () => {
@@ -897,381 +583,17 @@ test("document references protect owned files across families and revision histo
   expect(copiedDocumentRevision?.content).toBe(input.content);
 });
 
-test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
-  const chat = await conversation();
-  const input = draft(chat.id);
-  const original = await saveEveDocumentRevision(input);
-  await captureEveDocumentCheckpoint(owner, chat.id, 1);
-  const manual = await saveEveDocumentRevision(
-    {
-      ...input,
-      content: "Idle edit",
-      expectedRevisionId: original.id,
-      operationId: crypto.randomUUID(),
-      turnIndex: null,
-    },
-    undefined,
-    [0, 1]
-  );
-  const checkpointId = crypto.randomUUID();
-  await Promise.all([
-    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1),
-    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1),
-  ]);
-  await saveEveDocumentRevision(
-    {
-      ...input,
-      content: "Later edit",
-      expectedRevisionId: manual.id,
-      operationId: crypto.randomUUID(),
-      turnIndex: null,
-    },
-    undefined,
-    [0, 1]
-  );
-  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
-  const operationId = crypto.randomUUID();
-  const fork = {
-    beforeTurnId: "turn_1",
-    checkpointId,
-    conversationId: chat.id,
-  };
-  const child = await createEveConversation(
-    owner,
-    operationId,
-    "Named fork",
-    createEveTestSession,
-    { fork }
-  );
-  const namedChildRevision = await getEveDocumentRevision(
-    owner,
-    child.id,
-    input.documentId
-  );
-  expect(namedChildRevision?.id).toBe(manual.id);
-  const ordinary = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Turn fork",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
-  );
-  const ordinaryChildRevision = await getEveDocumentRevision(
-    owner,
-    ordinary.id,
-    input.documentId
-  );
-  expect(ordinaryChildRevision?.id).toBe(original.id);
-  await captureEveDocumentCheckpoint(owner, child.id, 1);
-  const grandchild = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Nested fork",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
-  );
-  const grandchildRevision = await getEveDocumentRevision(
-    owner,
-    grandchild.id,
-    input.documentId
-  );
-  expect(grandchildRevision?.id).toBe(manual.id);
-  await expect(
-    createEveConversation(
-      owner,
-      operationId,
-      "Named fork",
-      createEveTestSession,
-      { fork: { ...fork, checkpointId: crypto.randomUUID() } }
-    )
-  ).rejects.toThrow("different");
-});
-
-test("named checkpoints reject foreign owners, changed boundaries and deletion, and preserve empty manifests", async () => {
-  const chat = await conversation();
-  const checkpointId = crypto.randomUUID();
-  await expect(
-    captureEveNamedDocumentCheckpoint(stranger, chat.id, checkpointId, 1)
-  ).rejects.toThrow("not found");
-  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
-  await expect(
-    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 2)
-  ).rejects.toThrow("different source turn");
-  const input = draft(chat.id);
-  await saveEveDocumentRevision(input);
-  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
-  const child = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Empty fork",
-    createEveTestSession,
-    { fork: { beforeTurnId: "turn_1", checkpointId, conversationId: chat.id } }
-  );
-  expect(
-    await getEveDocumentRevision(owner, child.id, input.documentId)
-  ).toBeNull();
-  // Include a nonempty manifest to verify FK-safe family cleanup too.
-  await captureEveNamedDocumentCheckpoint(
-    owner,
-    chat.id,
-    crypto.randomUUID(),
-    1
-  );
-  const deletion = await beginEveConversationDeletion(owner, chat.id);
-  assert.ok(deletion);
-  await expect(
-    captureEveNamedDocumentCheckpoint(owner, chat.id, crypto.randomUUID(), 1)
-  ).rejects.toThrow("not found");
-  await purgeEveFamilyDocuments(owner, deletion.rootId);
-  await purgeEveFamilyDocuments(owner, deletion.rootId);
-  await Promise.all(
-    [eveNamedDocumentCheckpointEntry, eveNamedDocumentCheckpoint].map(
-      async (table) => {
-        expect(
-          await db.select().from(table).where(eq(table.conversationId, chat.id))
-        ).toEqual([]);
-      }
-    )
-  );
-});
-
-test("missing or mismatched named document boundaries stop native allocation", async () => {
-  const chat = await conversation();
-  const checkpointId = crypto.randomUUID();
-  const allocate = vi
-    .fn<() => Promise<string>>()
-    .mockResolvedValue(crypto.randomUUID());
-  const missing = {
-    beforeTurnId: "turn_1",
-    checkpointId,
-    conversationId: chat.id,
-  };
-  await expect(
-    createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "Missing checkpoint",
-      allocate,
-      { fork: missing }
-    )
-  ).rejects.toThrow("Named document checkpoint");
-  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 2);
-  await expect(
-    createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "Wrong boundary",
-      allocate,
-      { fork: missing }
-    )
-  ).rejects.toThrow("Named document checkpoint");
-  expect(allocate).not.toHaveBeenCalled();
-});
-
-test.each([false, true])(
-  "native descendants retain imported document boundaries, including empty ones (named=%s)",
-  async (named) => {
-    const root = await conversation();
-    const input = draft(root.id);
-    const original = await saveEveDocumentRevision(input);
-    await db.insert(eveImportedDocumentCheckpoint).values([
-      { conversationId: root.id, messageIndex: 0, ownerId: owner },
-      { conversationId: root.id, messageIndex: 2, ownerId: owner },
-    ]);
-    await db.insert(eveImportedDocumentCheckpointEntry).values({
-      conversationId: root.id,
-      documentId: input.documentId,
-      messageIndex: 2,
-      ownerId: owner,
-      revisionId: original.id,
-    });
-    await captureEveDocumentCheckpoint(owner, root.id, 1);
-    const checkpointId = named ? crypto.randomUUID() : undefined;
-    if (
-      checkpointId !== undefined &&
-      checkpointId !== null &&
-      checkpointId !== ""
-    ) {
-      await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
-    }
-    const child = await createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "Imported prefix descendant",
-      createEveTestSession,
-      {
-        fork: { beforeTurnId: "turn_1", checkpointId, conversationId: root.id },
-      }
-    );
-    await initializeEveForkDocuments(owner, child.id);
-    const headers = await db
-      .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
-      .from(eveImportedDocumentCheckpoint)
-      .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id))
-      .orderBy(eveImportedDocumentCheckpoint.messageIndex);
-    expect(headers).toEqual([{ messageIndex: 0 }, { messageIndex: 2 }]);
-    const entries = await db
-      .select()
-      .from(eveImportedDocumentCheckpointEntry)
-      .where(eq(eveImportedDocumentCheckpointEntry.conversationId, child.id));
-    expect(entries).toEqual([
-      {
-        conversationId: child.id,
-        documentId: input.documentId,
-        messageIndex: 2,
-        ownerId: owner,
-        revisionId: original.id,
-      },
-    ]);
-  }
-);
-
-test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
+test("approved deletion is scoped, revision-checked, retryable, and preserves independently copied heads", async () => {
   const root = await conversation();
   const input = draft(root.id);
   const original = await saveEveDocumentRevision(input);
-  const later = await saveEveDocumentRevision({
-    ...input,
-    content: "Later edit",
-    expectedRevisionId: original.id,
-    operationId: crypto.randomUUID(),
-    turnIndex: 1,
-  });
-  await db.insert(eveImportedDocumentCheckpoint).values(
-    [0, 2, 4].map((messageIndex) => ({
-      conversationId: root.id,
-      messageIndex,
-      ownerId: owner,
-    }))
-  );
-  await db.insert(eveImportedDocumentCheckpointEntry).values([
-    {
-      conversationId: root.id,
-      documentId: input.documentId,
-      messageIndex: 2,
-      ownerId: owner,
-      revisionId: original.id,
-    },
-    {
-      conversationId: root.id,
-      documentId: input.documentId,
-      messageIndex: 4,
-      ownerId: owner,
-      revisionId: later.id,
-    },
-  ]);
-  await Promise.all(
-    [0, 2, 6].map(async (index) => {
-      const [child] = await insertEveConversationFixtures({
-        firstMessage: "Imported edit",
-        forkMessageId: `seed_message_${index}`,
-        operationId: crypto.randomUUID(),
-        ownerId: owner,
-        parentConversationId: root.id,
-        rootConversationId: root.id,
-      });
-      await expect(
-        initializeEveForkDocuments(stranger, child.id)
-      ).rejects.toThrow("Fork conversation not found");
-      if (index === 6) {
-        await expect(
-          initializeEveForkDocuments(owner, child.id)
-        ).rejects.toThrow("Imported document boundary is unavailable");
-      } else {
-        await initializeEveForkDocuments(owner, child.id);
-        await initializeEveForkDocuments(owner, child.id);
-      }
-      const heads = await db
-        .select({ revisionId: eveDocumentHead.revisionId })
-        .from(eveDocumentHead)
-        .where(eq(eveDocumentHead.conversationId, child.id));
-      expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
-      const headers = await db
-        .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
-        .from(eveImportedDocumentCheckpoint)
-        .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
-      expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
-    })
-  );
-});
-
-test("imported fork reservations retain their boundary across uncertain creation and reject changed retries", async () => {
-  const root = await conversation();
-  await db.insert(eveImportedDocumentCheckpoint).values(
-    [0, 2].map((messageIndex) => ({
-      conversationId: root.id,
-      messageIndex,
-      ownerId: owner,
-    }))
-  );
-  const operationId = crypto.randomUUID();
-  const fork = { beforeMessageId: "seed_message_2", conversationId: root.id };
-  await expect(
-    createEveConversation(
-      owner,
-      operationId,
-      "Replacement",
-      rejectLostNativeReply,
-      { fork }
-    )
-  ).rejects.toThrow();
-  const [reserved] = await db
-    .select()
-    .from(eveConversation)
-    .where(eq(eveConversation.operationId, operationId));
-  expect(reserved).toMatchObject({
-    forkMessageId: "seed_message_2",
-    forkTurnId: null,
-    state: "uncertain",
-  });
-  const sessionId = crypto.randomUUID();
-  /* oxlint-disable eslint/no-await-in-loop -- Both changed intents replay the same operation ID; preserve sequential rejection checks. */
-  for (const changed of [
-    { beforeMessageId: "seed_message_0", conversationId: root.id },
-    { beforeTurnId: "turn_0", conversationId: root.id },
-  ]) {
-    await expect(
-      createEveConversation(
-        owner,
-        operationId,
-        "Replacement",
-        vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
-        { fork: changed }
-      )
-    ).rejects.toThrow("different");
-  }
-  /* oxlint-enable eslint/no-await-in-loop */
-  const bound = await createEveConversation(
-    owner,
-    operationId,
-    "Replacement",
-    vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
-    { fork }
-  );
-  expect(bound).toEqual({ id: reserved.id, sessionId });
-  expect(
-    await createEveConversation(
-      owner,
-      operationId,
-      "Replacement",
-      rejectLostNativeReply,
-      { fork }
-    )
-  ).toEqual(bound);
-});
-
-test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
-  const root = await conversation();
-  const input = draft(root.id);
-  const original = await saveEveDocumentRevision(input);
-  await captureEveDocumentCheckpoint(owner, root.id, 1);
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Retained fork",
     createEveTestSession,
     {
-      fork: { beforeTurnId: "turn_1", conversationId: root.id },
+      fork: { conversationId: root.id },
     }
   );
   const deletion = {
@@ -1317,14 +639,13 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     input.documentId
   );
   expect(childRevisionAfterDeletion?.id).toBe(original.id);
-  await captureEveDocumentCheckpoint(owner, root.id, 2);
   const later = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "After deletion",
     createEveTestSession,
     {
-      fork: { beforeTurnId: "turn_2", conversationId: root.id },
+      fork: { conversationId: root.id },
     }
   );
   expect(

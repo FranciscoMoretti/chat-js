@@ -36,6 +36,7 @@ const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
   "session.completed",
   "session.failed",
   "turn.started",
+  "turn.waiting",
   "message.received",
   "step.started",
   "input.requested",
@@ -58,7 +59,9 @@ const REVISION_FIELDS = new Set([
 
 class EveCopyNotReadyError extends Error {
   public constructor() {
-    super("Wait for the shared conversation to finish before saving a copy.");
+    super(
+      "Wait for the conversation to finish successfully before copying it."
+    );
     this.name = "EveCopyNotReadyError";
   }
 }
@@ -309,6 +312,15 @@ const prepareEveCopyTranscript = (
     boundary?.type !== "session.waiting" &&
     boundary?.type !== "session.completed"
   ) {
+    throw new EveCopyNotReadyError();
+  }
+  const latestTurnOutcome = events.findLast(
+    (event) =>
+      event.type === "turn.completed" ||
+      event.type === "turn.failed" ||
+      event.type === "turn.cancelled"
+  );
+  if (latestTurnOutcome && latestTurnOutcome.type !== "turn.completed") {
     throw new EveCopyNotReadyError();
   }
   const messages: Seed["messages"] = sharedEveMessages(events, receipts).map(

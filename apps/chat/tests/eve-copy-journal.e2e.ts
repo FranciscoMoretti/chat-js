@@ -1,3 +1,16 @@
+import {
+  eveDispatch,
+  eveConversation,
+  eveConversationCopy,
+  eveConversationCopyFile,
+  eveDocumentHead,
+  eveDocumentRevision,
+  eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
+  eveStoredFile,
+  user,
+} from "../lib/db/schema";
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -24,18 +37,6 @@ import {
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import { purgeEveFamilyDocuments } from "../lib/db/eve-documents";
 import { createEveConversation } from "../lib/db/eve-queries";
-import {
-  eveConversation,
-  eveConversationCopy,
-  eveConversationCopyFile,
-  eveDocumentHead,
-  eveDocumentRevision,
-  eveFileReference,
-  eveImportedDocumentCheckpoint,
-  eveImportedDocumentCheckpointEntry,
-  eveStoredFile,
-  user,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import type { EveCopyPlan } from "../lib/eve/copy-journal-contract";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
@@ -43,7 +44,6 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const invalidSeedError = /Too small|byte limit/u;
-const invalidBoundaryError = /boundaries must match imported user messages/u;
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
@@ -65,6 +65,7 @@ afterAll(async () => {
     eveDocumentRevision,
     eveFileReference,
     eveStoredFile,
+    eveDispatch,
     eveConversation,
   ]) {
     await db.delete(table).where(inArray(table.ownerId, owners));
@@ -119,7 +120,6 @@ const fixture = async () => {
     revisionId: sourceRevisionId,
   });
   const plan: EveCopyPlan = {
-    documentCheckpoints: [{ messageIndex: 0, heads: [] }],
     documents: [
       {
         documentId,
@@ -353,7 +353,7 @@ test("an uncertain file write retries the same allocated key and records complet
   ).toEqual([ctx.targetKey, ctx.targetKey]);
 });
 
-test("accepted copies recover after source revocation and a lost native reply, then discard temporary transcript data", async () => {
+test("a lost native copy response stays unresolved after source revocation and never redispatches", async () => {
   const ctx = await fixture();
   await prepare(ctx);
   await acceptEveCopy(ownerId, ctx.saved.conversation.id);
@@ -361,46 +361,45 @@ test("accepted copies recover after source revocation and a lost native reply, t
     .update(eveConversation)
     .set({ state: "deleting", visibility: "private" })
     .where(eq(eveConversation.id, ctx.sourceId));
-  const nativeId = crypto.randomUUID();
-  const lostReply = vi
-    .fn<(operation: string) => Promise<string>>()
+  const create = vi
+    .fn<() => Promise<string>>()
     .mockRejectedValue(new Error("Lost native response"));
   await expect(
-    dispatchEveCopy(ownerId, ctx.saved.conversation.id, lostReply)
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
   ).rejects.toThrow("Lost native");
-  const uncertain = await getEveCopyOperation(ownerId, ctx.input.operationId);
-  expect(uncertain?.conversation.state).toBe("uncertain");
+  await expect(
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
+  ).rejects.toThrow("outcome is unknown");
+  expect(create).toHaveBeenCalledTimes(1);
+  const unresolved = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  expect(unresolved?.conversation.state).toBe("uncertain");
   expect(
     await resolveAcceptedEveCopySeed(ownerId, ctx.saved.conversation.id)
   ).toEqual(ctx.input.plan.seed);
-  const recoveredReply = vi
-    .fn<(operation: string) => Promise<string>>()
-    .mockResolvedValue(nativeId);
+});
+
+test("a positively bound copy discards temporary transcript data and replays its binding", async () => {
+  const ctx = await fixture();
+  await prepare(ctx);
+  await acceptEveCopy(ownerId, ctx.saved.conversation.id);
+  const create = vi
+    .fn<() => Promise<string>>()
+    .mockResolvedValue(crypto.randomUUID());
   const bound = await dispatchEveCopy(
     ownerId,
     ctx.saved.conversation.id,
-    recoveredReply
+    create
   );
-  const noDispatch = vi
-    .fn<() => Promise<string>>()
-    .mockResolvedValue("duplicate");
   expect(
-    await dispatchEveCopy(ownerId, ctx.saved.conversation.id, noDispatch)
+    await dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
   ).toEqual(bound);
-  expect(noDispatch).not.toHaveBeenCalled();
-  expect([...lostReply.mock.calls, ...recoveredReply.mock.calls]).toEqual([
-    [ctx.saved.conversation.id],
-    [ctx.saved.conversation.id],
-  ]);
-  const journal = await getEveCopyOperation(ownerId, ctx.input.operationId);
-  expect(journal?.copy).toMatchObject({
+  expect(create).toHaveBeenCalledTimes(1);
+  const completed = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  expect(completed?.copy).toMatchObject({
     phase: "bound",
     plan: null,
     seed: null,
   });
-  await expect(
-    rejectUnacceptedEveCopy(ownerId, ctx.saved.conversation.id)
-  ).rejects.toThrow("Accepted copies");
 });
 
 test("revocation before acceptance prevents dispatch and permits a never-dispatched cleanup", async () => {
@@ -480,11 +479,10 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
   expect(ctx.storage.writeDestinationFile).not.toHaveBeenCalled();
 });
 
-test("invalid native seeds or document boundaries never reserve resources", async () => {
+test("invalid native seeds never reserve resources", async () => {
   await Promise.all(
     (
       [
-        { attachments: "channel", messages: [] },
         { attachments: "channel", messages: [{ parts: [], role: "user" }] },
         {
           attachments: "channel",
@@ -503,7 +501,6 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
           modelId: "google/gemini-2.5-flash-lite",
           operationId,
           plan: {
-            documentCheckpoints: [{ messageIndex: 0, heads: [] }],
             documents: [],
             files: [],
             seed,
@@ -515,9 +512,7 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
           sourceSessionId: crypto.randomUUID(),
           title: "Invalid seed",
         })
-      ).rejects.toThrow(
-        seed.messages.length > 0 ? invalidSeedError : invalidBoundaryError
-      );
+      ).rejects.toThrow(invalidSeedError);
       expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
     })
   );
@@ -565,46 +560,13 @@ test("concurrent accepted retries dispatch once and return the same binding", as
   try {
     await expect(
       dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
-    ).rejects.toThrow("Copy creation is still in progress");
+    ).rejects.toThrow("outcome is unknown");
   } finally {
-    finish.resolve("concurrent-native-session");
+    finish.resolve(crypto.randomUUID());
   }
   const bound = await first;
   expect(
     await dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
   ).toEqual(bound);
   expect(create).toHaveBeenCalledTimes(1);
-});
-
-test("commits an empty imported document boundary together with copied resources", async () => {
-  const ctx = await fixture();
-  await prepare(ctx);
-  expect(
-    await db
-      .select()
-      .from(eveImportedDocumentCheckpoint)
-      .where(
-        eq(
-          eveImportedDocumentCheckpoint.conversationId,
-          ctx.saved.conversation.id
-        )
-      )
-  ).toEqual([
-    {
-      conversationId: ctx.saved.conversation.id,
-      messageIndex: 0,
-      ownerId,
-    },
-  ]);
-  expect(
-    await db
-      .select()
-      .from(eveImportedDocumentCheckpointEntry)
-      .where(
-        eq(
-          eveImportedDocumentCheckpointEntry.conversationId,
-          ctx.saved.conversation.id
-        )
-      )
-  ).toEqual([]);
 });

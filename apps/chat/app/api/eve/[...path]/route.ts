@@ -1,5 +1,6 @@
 import {
   dispatchEveOnce,
+  withEveCopyCaptureFence,
   EveDispatchUnknownError,
 } from "@/lib/db/eve-dispatch";
 import {
@@ -307,7 +308,11 @@ const handle = async (
         { headers: { "cache-control": "no-store" } }
       );
     }
-    return relayResponse(await dispatch());
+    return relayResponse(
+      await (request.method === "GET"
+        ? dispatch()
+        : withEveCopyCaptureFence(ownerId, dispatch))
+    );
   } catch (error) {
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);

@@ -18,15 +18,13 @@ const resourceReceipt = z.strictObject({
  * @param {string} appRoot Expected canonical worker root, never a cache selector.
  * @param {{ sessionId: string; rootSessionId: string }} scope Fenced native descendant and its deleting app binding.
  * @param {"retire" | "purge"} action Retirement or exact owned resource removal.
- * @param {boolean} releaseForkSnapshots Whether the worker must also check app retention before releasing snapshots.
  * @returns {Promise<number>} Remaining retained resources; unknown operations reject.
  */
 export const manageEveLocalResources = async (
   ownerId: string,
   appRoot: string,
   scope: { readonly sessionId: string; readonly rootSessionId: string },
-  action: "retire" | "purge",
-  releaseForkSnapshots: boolean
+  action: "retire" | "purge"
 ): Promise<number> => {
   const response = await fetch(
     new URL(
@@ -47,7 +45,6 @@ export const manageEveLocalResources = async (
       body: JSON.stringify({
         expectedAppRoot: appRoot,
         action,
-        releaseForkSnapshots,
       }),
       signal: AbortSignal.timeout(60_000),
     }
@@ -95,8 +92,7 @@ export const verifyLocalEveFamilyCoverage = async (
             ownerId,
             canonicalRoot,
             { sessionId, rootSessionId: inventory.sessionId },
-            "retire",
-            false
+            "retire"
           );
         }
       );
@@ -107,13 +103,7 @@ export const verifyLocalEveFamilyCoverage = async (
     // Saved workflow coverage does not replace a current worker/cache check.
     for (const scope of sessions) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize local owner locks and finish all retirement before removal.
-      await manageEveLocalResources(
-        ownerId,
-        canonicalRoot,
-        scope,
-        "retire",
-        false
-      );
+      await manageEveLocalResources(ownerId, canonicalRoot, scope, "retire");
     }
     return { appRoot: canonicalRoot, sessions };
   } finally {

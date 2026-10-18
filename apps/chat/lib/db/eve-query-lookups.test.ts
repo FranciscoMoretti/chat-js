@@ -60,7 +60,12 @@ test("session mappings preserve exact identity and tombstones while absent ident
   });
   expectTypeOf(mapping).toEqualTypeOf<Pick<
     typeof eveConversation.$inferSelect,
-    "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+    | "creationKind"
+    | "id"
+    | "ownerId"
+    | "sessionId"
+    | "state"
+    | "parentConversationId"
   > | null>();
   expect(mapping).toMatchObject({ id: conversationId, state: "bound" });
   expect(await readEveSessionMapping({ sessionId: "native" })).toEqual(mapping);

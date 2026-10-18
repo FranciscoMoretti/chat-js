@@ -171,13 +171,7 @@ export const createEveResponseGroup = async (
     };
   }
   const candidates = await Promise.all(
-    rest.map(
-      async (candidate) =>
-        await dispatch(candidate, {
-          beforeTurnId: "turn_0",
-          conversationId: primary.conversationId,
-        })
-    )
+    rest.map(async (candidate) => await dispatch(candidate))
   );
   return { candidates: [primary, ...candidates], id: group.id };
 };

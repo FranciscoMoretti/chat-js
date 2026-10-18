@@ -16,8 +16,6 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
-  eveImportedDocumentCheckpoint,
-  eveImportedDocumentCheckpointEntry,
   eveStoredFile,
 } from "./schema";
 
@@ -124,7 +122,7 @@ const writeEveCopyFile = async (
 /**
  * All ancestry and heads commit together, before any copy can be accepted.
  * @param {string} ownerId Owner whose copy family lock authorizes the destination writes.
- * @param {string} conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
+ * @param {string} conversationId Allocated copy receiving revision ancestry and current document heads atomically.
  */
 const writeEveCopyDocuments = async (
   ownerId: string,
@@ -191,37 +189,6 @@ const writeEveCopyDocuments = async (
             })
           )
         );
-      }
-      if (copy.plan.documentCheckpoints.length > 0) {
-        await tx.insert(eveImportedDocumentCheckpoint).values(
-          copy.plan.documentCheckpoints.map(
-            (checkpoint: { readonly messageIndex: number }) => ({
-              conversationId,
-              messageIndex: checkpoint.messageIndex,
-              ownerId,
-            })
-          )
-        );
-        const entries = copy.plan.documentCheckpoints.flatMap(
-          (checkpoint: {
-            readonly messageIndex: number;
-            readonly heads: readonly {
-              readonly documentId: string;
-              readonly revisionId: string;
-            }[];
-          }) =>
-            checkpoint.heads.map(
-              (head: Readonly<{ documentId: string; revisionId: string }>) => ({
-                conversationId,
-                messageIndex: checkpoint.messageIndex,
-                ownerId,
-                ...head,
-              })
-            )
-        );
-        if (entries.length > 0) {
-          await tx.insert(eveImportedDocumentCheckpointEntry).values(entries);
-        }
       }
       await tx
         .update(eveConversationCopy)

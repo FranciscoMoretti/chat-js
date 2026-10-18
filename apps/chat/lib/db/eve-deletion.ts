@@ -287,6 +287,7 @@ const completeEveConversationDeletion = async (
         initialModelId: null,
         initialProjectId: null,
         initialRequest: null,
+        initialSeed: null,
         state: "deleted",
         visibility: "private",
       })
