@@ -308,12 +308,16 @@ test("copied document history survives source deletion and supports native editi
     conversationId: destination.id,
     beforeMessageId: expect.any(String),
   });
-  await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`, "u"));
+  await expect(page).toHaveURL(new RegExp(`/chat/${destination.id}$`, "u"));
   const [forkHead] = await db
     .select()
     .from(eveDocumentHead)
     .where(eq(eveDocumentHead.conversationId, forked.id));
-  expect(forkHead.revisionId).toBe(head.revisionId);
+  const [currentSourceHead] = await db
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, destination.id));
+  expect(forkHead.revisionId).toBe(currentSourceHead.revisionId);
   await page.goto(`/chat/${forked.id}`);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 45_000,
@@ -327,7 +331,13 @@ test("copied document history survives source deletion and supports native editi
     ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
       event.type === "history.seeded"
   );
-  expect(seed?.data.messages.length).toBeGreaterThanOrEqual(4);
+  expect(seed?.data.messages).toHaveLength(2);
+  expect(seed?.data.messages.map((message) => message.role)).toEqual([
+    "user",
+    "assistant",
+  ]);
+  expect(JSON.stringify(seed?.data.messages)).toContain("Amber apples.");
+  expect(JSON.stringify(seed?.data.messages)).not.toContain("Silver plums.");
   expect(
     forkSnapshot.events.some(
       (event: ActionResultEventReader) =>
