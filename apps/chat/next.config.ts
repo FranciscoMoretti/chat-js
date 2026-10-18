@@ -1,3 +1,4 @@
+import { eveAgents } from "./eve-runtime.config";
 import type { NextConfig } from "next";
 import { withEve } from "eve/next";
 
@@ -44,6 +45,6 @@ const nextConfig: NextConfig = {
 };
 
 export default withEve(nextConfig, {
-  agents: { chat: ".", guest: "./guest" },
+  agents: eveAgents,
   devServerTimeoutMs: 600_000,
 });

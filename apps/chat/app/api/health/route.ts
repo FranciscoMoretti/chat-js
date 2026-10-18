@@ -3,6 +3,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { z } from "zod";
 
 import { checkDatabase } from "@/lib/db/health";
+import { eveAgents } from "@/eve-runtime.config";
 import { env } from "@/lib/env";
 
 const MINIMUM_WORKFLOW_ID_LENGTH = 1;
@@ -17,13 +18,13 @@ const eveHealth = z.object({
 
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
-  // Both workers must be ready before the host sends traffic to this instance.
+  // Every configured worker must be ready before the host sends traffic.
   const timeout = new AbortController();
   try {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        ...["chat", "guest"].map(async (agent) => {
+        ...Object.keys(eveAgents).map(async (agent) => {
           const response = await fetch(
             new URL(`/eve/${agent}/v1/health`, env.EVE_INTERNAL_ORIGIN),
             {

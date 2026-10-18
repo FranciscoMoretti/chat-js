@@ -9,6 +9,11 @@ const HTTP_STATUS = {
   serviceUnavailable: 503,
 };
 
+const profile = vi.hoisted((): { eveAgents: Record<string, string> } => ({
+  eveAgents: { chat: ".", guest: "./guest" },
+}));
+vi.mock("@/eve-runtime.config", () => profile);
+
 const database = vi.hoisted(() => vi.fn<() => Promise<void>>());
 vi.mock("node:timers/promises", { spy: true });
 vi.mock("@/lib/db/health", () => ({ checkDatabase: database }));
@@ -20,6 +25,7 @@ vi.mock("@/lib/env", () => ({
 }));
 
 afterEach(() => {
+  profile.eveAgents = { chat: ".", guest: "./guest" };
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.resetAllMocks();
@@ -84,4 +90,19 @@ test("a failed guest worker makes the production instance unavailable", async ()
   const response = await GET();
   expect(response.status).toBe(unavailableStatus);
   expect(await response.json()).toEqual({ status: "unavailable" });
+});
+
+test("signed-in-only readiness checks the configured chat worker", async () => {
+  profile.eveAgents = { chat: "." };
+  database.mockResolvedValue();
+  const fetch = vi
+    .fn<(url: URL) => Response>()
+    .mockImplementation(() =>
+      Response.json({ ok: true, status: "ready", workflowId: "test" })
+    );
+  vi.stubGlobal("fetch", fetch);
+  const response = await GET();
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0]?.[0].pathname).toBe("/eve/chat/v1/health");
 });

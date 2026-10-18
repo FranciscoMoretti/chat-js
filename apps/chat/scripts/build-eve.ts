@@ -1,3 +1,4 @@
+import { eveAgents } from "../eve-runtime.config";
 import path from "node:path";
 import { config } from "dotenv";
 import { resolveWorkflowWorld } from "@/lib/eve/world-config";
@@ -24,7 +25,7 @@ if (backendCheck.status !== PROCESS_SUCCESS_STATUS) {
   );
 }
 
-for (const root of [".", "guest"]) {
+for (const root of Object.values(eveAgents)) {
   const result = spawnSync("bun", ["x", "eve", "build"], {
     cwd: path.resolve(process.cwd(), root),
     stdio: "inherit",

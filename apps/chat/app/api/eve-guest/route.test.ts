@@ -5,6 +5,9 @@ import { z } from "zod";
 
 import { POST } from "./route";
 
+const profile = vi.hoisted(() => ({ guestEnabled: true }));
+vi.mock("@/eve-runtime.config", () => profile);
+
 const HTTP_STATUS = {
   badGateway: 502,
   badRequest: 400,
@@ -60,6 +63,7 @@ vi.mock("@/lib/types/anonymous", () => ({
 }));
 
 beforeEach(() => {
+  profile.guestEnabled = true;
   vi.clearAllMocks();
   settings.VERCEL_URL = "";
   settings.APP_URL = "https://chat.example";
@@ -151,4 +155,15 @@ test("never sends a creation credential to a request-derived host", async () => 
   );
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("disabled guest chat issues no credential and never calls the worker", async () => {
+  profile.guestEnabled = false;
+  const response = await POST(request({ modelId: "guest-model" }));
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
+  expect(await response.json()).toEqual({
+    error: "Guest chat is unavailable on this deployment. Please sign in.",
+  });
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(mocks.model).not.toHaveBeenCalled();
 });

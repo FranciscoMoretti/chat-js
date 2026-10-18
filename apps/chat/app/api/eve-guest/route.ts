@@ -3,6 +3,7 @@ import {
   newGuestClaims,
 } from "@/lib/eve/disposable-guest";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { guestEnabled } from "@/eve-runtime.config";
 import { env } from "@/lib/env";
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
@@ -35,6 +36,14 @@ export const POST = async (
 ): Promise<Response> => {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
+  }
+  if (!guestEnabled) {
+    return Response.json(
+      {
+        error: "Guest chat is unavailable on this deployment. Please sign in.",
+      },
+      { status: 503 }
+    );
   }
   const value = input.safeParse(await request.json().catch(() => null));
   if (
