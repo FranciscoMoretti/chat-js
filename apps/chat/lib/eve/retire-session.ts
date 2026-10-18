@@ -11,7 +11,7 @@ import {
 import { assertEveConfigured } from "./server";
 import { getEveConnectionOptions } from "./connection-options";
 import { ingestEveUsage } from "./usage";
-import { reconcileEveSubagentUsage } from "./reconcile-usage";
+import { reconcileEveSubagentUsage } from "./reconcile-subagent-usage";
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
 
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;

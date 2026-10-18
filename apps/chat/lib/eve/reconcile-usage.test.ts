@@ -21,12 +21,20 @@ const mocks = vi.hoisted(() => ({
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
+  retire: vi.fn(),
+  settleRetired: vi.fn(),
   streamOptions: vi.fn(),
 }));
 vi.mock("../db/eve-subagents", () => ({
   advanceEveSubagentUsageCursor: mocks.advanceChild,
   getEveSubagent: mocks.child,
   listEveSubagents: mocks.children,
+}));
+vi.mock("./deletion-lifecycle", () => ({
+  requireEveDeletionLifecycle: () => ({ retire: mocks.retire }),
+}));
+vi.mock("./retire-session", () => ({
+  retireEveSessionForDeletion: mocks.settleRetired,
 }));
 vi.mock("./recover-creations", () => ({ recoverEveCreations: mocks.recover }));
 vi.mock("../db/eve-queries", () => ({
@@ -414,5 +422,59 @@ it("rejects a rewound child even when its parent is settled", async () => {
   await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
     "child stream is shorter"
   );
+  expect(mocks.read).not.toHaveBeenCalled();
+});
+
+it.each([false, true])(
+  "admits unrelated work without rereading deletion history (retirement receipt exists: %s)",
+  async (alreadyRetired) => {
+    mocks.bindings.mockResolvedValue([
+      { sessionId: "deleting", state: "deleting", usageStreamIndex: 20 },
+      { sessionId: "active", state: "bound", usageStreamIndex: 0 },
+    ]);
+    mocks.children.mockResolvedValueOnce([
+      {
+        rootSessionId: "deleting",
+        sessionId: "purged-child",
+        usageStreamIndex: 3,
+      },
+    ]);
+    mocks.positions.mockResolvedValue(new Map([["active", 1]]));
+    mocks.retire.mockImplementation(
+      async (ids: readonly string[], settle: (id: string) => Promise<void>) => {
+        if (!alreadyRetired) {
+          await Promise.all(ids.map(settle));
+        }
+      }
+    );
+    await reconcileEveOwnerUsage("owner");
+    expect(mocks.retire).toHaveBeenCalledWith(
+      ["deleting"],
+      expect.any(Function)
+    );
+    if (alreadyRetired) {
+      expect(mocks.settleRetired).not.toHaveBeenCalled();
+    } else {
+      expect(mocks.settleRetired).toHaveBeenCalledExactlyOnceWith(
+        "owner",
+        "deleting"
+      );
+    }
+    expect(mocks.positions.mock.calls).toEqual([[["active"]], [[]]]);
+    expect(mocks.read.mock.calls).toEqual([["active"]]);
+  }
+);
+
+it("keeps new work fenced if deletion usage cannot be settled", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "deleting", state: "deleting", usageStreamIndex: 20 },
+  ]);
+  mocks.retire.mockRejectedValue(
+    new Error("Deletion usage remains unresolved")
+  );
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "Deletion usage remains unresolved"
+  );
+  expect(mocks.positions).not.toHaveBeenCalled();
   expect(mocks.read).not.toHaveBeenCalled();
 });

@@ -5,7 +5,7 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
-vi.mock("./reconcile-usage", () => ({
+vi.mock("./reconcile-subagent-usage", () => ({
   reconcileEveSubagentUsage: vi.fn().mockResolvedValue(true),
 }));
 
