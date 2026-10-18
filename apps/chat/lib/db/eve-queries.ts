@@ -1,3 +1,4 @@
+import { EveForkBoundaryError } from "@/lib/eve/fork-boundary-error";
 import { dispatchEveOnce } from "./eve-dispatch";
 import {
   and,
@@ -1040,11 +1041,13 @@ const createEveConversation = async (
     }
     await db
       .update(eveConversation)
-      .set({ state: "uncertain" })
+      .set({
+        state: error instanceof EveForkBoundaryError ? "deleted" : "uncertain",
+      })
       .where(
         and(
           eq(eveConversation.id, reservation.id),
-          eq(eveConversation.state, "creating")
+          inArray(eveConversation.state, ["creating", "uncertain"])
         )
       );
     throw error;

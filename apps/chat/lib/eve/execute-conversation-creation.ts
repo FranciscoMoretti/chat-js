@@ -1,3 +1,4 @@
+import { EveForkBoundaryError } from "./fork-boundary-error";
 import {
   dispatchEveOnce,
   EveDispatchUnknownError,
@@ -33,6 +34,12 @@ const logger = createModuleLogger("eve/creation");
 const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const creationFailure = (cause: unknown): Response => {
+  if (cause instanceof EveForkBoundaryError) {
+    return Response.json(
+      { creationRejected: true, error: cause.message },
+      { status: 400 }
+    );
+  }
   if (cause instanceof CreationProjectNotFoundError) {
     return Response.json(
       {

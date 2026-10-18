@@ -315,6 +315,18 @@ test("lost branch response keeps source recovery visible instead of selecting th
       forkKind: "edit",
     }
   );
+  const otherId = "59b3709e-a5d7-4654-a52e-59b27302e30c";
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Other pending branch",
+    undefined,
+    {
+      conversationId: otherId,
+      fork: { conversationId: otherId },
+      forkKind: "edit",
+    }
+  );
   const [source] = invoicesTrpc["eve.branches"].branches;
   await renderRoute(conversation, {
     ...request,
@@ -327,14 +339,14 @@ test("lost branch response keeps source recovery visible instead of selecting th
       "eve.branches": {
         ...invoicesTrpc["eve.branches"],
         branches: [
-          source,
           {
             ...source,
-            id: "59b3709e-a5d7-4654-a52e-59b27302e30c",
+            id: otherId,
             sessionId: "ses_newer",
             parentConversationId: source.id,
             createdAt: new Date("2027-01-01"),
           },
+          source,
         ],
       },
     },
@@ -342,4 +354,7 @@ test("lost branch response keeps source recovery visible instead of selecting th
   await expect
     .element(page.getByRole("button", { name: "Recover version" }))
     .toBeVisible();
+  await expect
+    .element(page.getByRole("region", { name: "Version recovery" }))
+    .toHaveTextContent("Replacement awaiting recovery");
 });

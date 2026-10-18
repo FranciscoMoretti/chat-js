@@ -1,3 +1,4 @@
+import { EveForkBoundaryError } from "./fork-boundary-error";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveMessageDisplayReceipt } from "./message-display";
@@ -333,9 +334,7 @@ const prepareEveCopyTranscript = (
     beforeMessageId !== undefined &&
     (boundaryIndex < 0 || transcript[boundaryIndex]?.role !== "user")
   ) {
-    throw new Error(
-      "The edited message is not a user message in this conversation."
-    );
+    throw new EveForkBoundaryError();
   }
   const messages: Seed["messages"] = transcript
     .slice(0, boundaryIndex)

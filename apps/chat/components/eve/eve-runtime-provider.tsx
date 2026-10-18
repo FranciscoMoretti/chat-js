@@ -43,10 +43,12 @@ const NativeObserver = ({
   controller,
   conversationId,
   sessionId,
+  selected,
 }: {
   readonly controller: LogicalChat;
   readonly conversationId: string;
   readonly sessionId: string;
+  readonly selected: boolean;
 }): null => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -107,6 +109,35 @@ const NativeObserver = ({
     },
     resume: true,
   });
+  const { resume, status } = agent;
+  useEffect(() => {
+    const refreshSelected = async (): Promise<void> => {
+      if (
+        !selected ||
+        status !== "ready" ||
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
+      try {
+        await resume();
+      } catch {
+        // The native agent exposes the error in its snapshot for the UI.
+      }
+    };
+    const refresh = (): void => {
+      void refreshSelected();
+    };
+    // Refresh only the visible selected branch; do not retain idle streams.
+    const interval = globalThis.setInterval(refresh, 10_000);
+    globalThis.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      globalThis.clearInterval(interval);
+      globalThis.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [selected, status, resume]);
   // The native hook returns a fresh wrapper on render. Project only when its
   // contents change, otherwise observe() publishes a new snapshot indefinitely.
   const displayedData = useMemo(
@@ -181,6 +212,7 @@ const RuntimeSlot = ({
               controller={runtime.controller}
               conversationId={branch.id}
               sessionId={branch.sessionId}
+              selected={active && branch.id === snapshot.conversationId}
             />
           )
       )}
@@ -246,11 +278,16 @@ const EveRuntimeProvider = ({
       // when the server already created a newer branch before the response was lost.
       const pendingSource = navigate
         ? undefined
-        : family.branches.find((branch) =>
-            hasPendingCreation(sessionStorage, request.ownerId, {
-              conversationId: branch.id,
-            })
-          );
+        : family.branches
+            .toSorted(
+              (left, right) =>
+                Number(right.id === request.id) - Number(left.id === request.id)
+            )
+            .find((branch) =>
+              hasPendingCreation(sessionStorage, request.ownerId, {
+                conversationId: branch.id,
+              })
+            );
       const controller =
         existing?.controller ??
         new LogicalChat(

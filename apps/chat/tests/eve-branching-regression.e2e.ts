@@ -121,6 +121,9 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   const other = await context.newPage();
   await other.goto(url);
   await ready(other);
+  await send(other, "remote");
+  await expect(users(page).last()).toContainText("remote", { timeout: 20_000 });
+  await ready(page);
   await edit(page, 0, "saffron");
   await expect(users(page)).toHaveCount(1);
   await expect(page.getByRole("log")).not.toContainText("amber");
@@ -143,6 +146,23 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
     },
   });
   expect(changed.status()).toBe(409);
+  const invalidOperation = {
+    ...operation,
+    operationId: crypto.randomUUID(),
+    fork: { ...operation.fork, beforeMessageId: "missing-boundary" },
+  };
+  const invalid = await page.request.post("/api/agent-conversations", {
+    headers,
+    data: invalidOperation,
+  });
+  expect(invalid.status()).toBe(400);
+  expect(await invalid.json()).toMatchObject({ creationRejected: true });
+  const rejectedReplay = await page.request.post("/api/agent-conversations", {
+    headers,
+    data: invalidOperation,
+  });
+  expect(rejectedReplay.status()).toBe(404);
+  expect(await rejectedReplay.json()).toMatchObject({ creationRejected: true });
   await expect(users(page)).toHaveCount(1);
   expect(page.url()).toBe(url);
   await page.reload();
