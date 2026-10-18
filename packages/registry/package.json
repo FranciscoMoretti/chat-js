@@ -92,7 +92,7 @@
     "drizzle-orm": "^0.45.1",
     "echarts": "6.0.0",
     "echarts-for-react": "^3.0.2",
-    "eve": "npm:@chat-js/eve@0.80.1-chatjs.1",
+    "eve": "npm:@chat-js/eve@0.80.1-chatjs.2",
     "files-sdk": "2.5.0",
     "geist": "^1.7.2",
     "guarded-fetch": "^0.1.4",

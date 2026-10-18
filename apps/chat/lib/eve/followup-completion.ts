@@ -1,6 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 
-// Preserve native completion identity through replay and flattened fork history.
+// Preserve native completion identity through replay.
 type CompletionEvent =
   | {
       readonly type: "turn.completed";
@@ -12,17 +12,9 @@ type CompletionEvent =
       readonly data: { readonly turnId: string };
     }
   | {
-      readonly type: "history.restored";
-      readonly data: { readonly events: readonly CompletionEvent[] };
-    }
-  | {
       readonly type: Exclude<
         MessageStreamEvent["type"],
-        | "turn.completed"
-        | "history.restored"
-        | "turn.started"
-        | "turn.failed"
-        | "turn.cancelled"
+        "turn.completed" | "turn.started" | "turn.failed" | "turn.cancelled"
       >;
     };
 
@@ -32,12 +24,7 @@ export const followupCompletion = (
 ): string | undefined => {
   let id: string | undefined;
   for (const event of events) {
-    if (event.type === "history.restored") {
-      id = followupCompletion(event.data.events, turnId) ?? id;
-    } else if (
-      event.type === "turn.completed" &&
-      event.data.turnId === turnId
-    ) {
+    if (event.type === "turn.completed" && event.data.turnId === turnId) {
       ({ id } = event.meta);
     } else if (
       (event.type === "turn.started" ||

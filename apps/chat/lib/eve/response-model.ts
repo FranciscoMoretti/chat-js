@@ -17,23 +17,12 @@ type ModelReferenceEvent = IgnoredSdkFields<MessageStreamEvent> &
         >;
       }
     | {
-        readonly type: "history.restored";
-        readonly data: {
-          readonly events: readonly ModelReferenceEvent[];
-        } & IgnoredSdkFields<
-          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
-        >;
-      }
-    | {
-        readonly type: Exclude<
-          MessageStreamEvent["type"],
-          "step.started" | "history.restored"
-        >;
+        readonly type: Exclude<MessageStreamEvent["type"], "step.started">;
       }
   );
 
-/** First native model reference per turn, including inherited history.
- * @param {readonly MessageStreamEvent[]} events Native stream events whose live and inherited steps carry model provenance.
+/** First native model reference per turn, from the current session.
+ * @param {readonly MessageStreamEvent[]} events Native stream events whose steps carry model provenance.
  * @returns {Map<string, string>} The first recorded model reference for each native turn.
  */
 const responseModelReferences = (
@@ -41,15 +30,8 @@ const responseModelReferences = (
 ): Map<string, string> => {
   const models = new Map<string, string>();
   for (const event of events) {
-    const candidates =
-      event.type === "history.restored" ? event.data.events : [event];
-    for (const candidate of candidates) {
-      if (
-        candidate.type === "step.started" &&
-        !models.has(candidate.data.turnId)
-      ) {
-        models.set(candidate.data.turnId, candidate.data.modelId);
-      }
+    if (event.type === "step.started" && !models.has(event.data.turnId)) {
+      models.set(event.data.turnId, event.data.modelId);
     }
   }
   return models;

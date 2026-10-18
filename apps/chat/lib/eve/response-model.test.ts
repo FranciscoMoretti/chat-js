@@ -14,21 +14,14 @@ const step = {
   type: "step.started",
 } satisfies MessageStreamEvent;
 
-it("preserves the response selection across reload and restored ancestor history", () => {
+it("preserves the response selection across reload and subsequent turns", () => {
   expect(responseModel([step], "turn_0")).toBe(
     "anthropic/claude-sonnet-reasoning"
   );
   expect(
     responseModel(
       [
-        {
-          data: {
-            beforeTurnId: "turn_1",
-            events: [step],
-          },
-          meta: { at: step.meta.at, id: "history" },
-          type: "history.restored",
-        },
+        step,
         {
           ...step,
           data: {

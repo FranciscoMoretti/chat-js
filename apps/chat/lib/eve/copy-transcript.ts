@@ -42,7 +42,6 @@ const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
   "input.requested",
   "authorization.required",
   "history.seeded",
-  "history.restored",
 ]);
 const DOCUMENT_TOOLS = new Set([
   ...Object.keys(eveDocumentOperations),

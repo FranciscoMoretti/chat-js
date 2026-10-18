@@ -17,7 +17,7 @@
     "@types/node": "22.13.10",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "eve": "npm:@chat-js/eve@0.80.1-chatjs.1",
+    "eve": "npm:@chat-js/eve@0.80.1-chatjs.2",
     "motion": "^12.23.24",
     "next": "16.3.0",
     "nuqs": "^2.8.5",

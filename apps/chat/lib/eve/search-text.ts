@@ -24,14 +24,6 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
         >;
       }
     | {
-        readonly type: "history.restored";
-        readonly data: {
-          readonly events: readonly SearchTextEvent[];
-        } & IgnoredSdkFields<
-          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
-        >;
-      }
-    | {
         readonly type: "message.received";
         readonly data: Parameters<typeof incomingMessageSearchText>[0]["data"];
         readonly meta: { readonly id: string } & IgnoredSdkFields<
@@ -50,10 +42,7 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
     | {
         readonly type: Exclude<
           MessageStreamEvent["type"],
-          | "history.seeded"
-          | "history.restored"
-          | "message.received"
-          | "message.completed"
+          "history.seeded" | "message.received" | "message.completed"
         >;
       }
   );
@@ -122,16 +111,13 @@ const incomingMessageSearchText = (event: {
 };
 
 /**
- * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
+ * Immutable event identities make live delivery, seeded prefixes and backfills idempotent.
  * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
- * @returns {EveSearchText[]} Display text with stable event/seed keys, including restored history and excluding empty content.
+ * @returns {EveSearchText[]} Display text with stable event/seed keys, including seeded history and excluding empty content.
  */
 const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {
     return eveSeedSearchText(event.data.messages);
-  }
-  if (event.type === "history.restored") {
-    return event.data.events.flatMap(eveEventSearchText);
   }
   if (event.type === "message.received") {
     return incomingMessageSearchText(event);

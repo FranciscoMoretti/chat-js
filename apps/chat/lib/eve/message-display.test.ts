@@ -58,9 +58,9 @@ it("correlates a bound initial selection through native session-start delivery m
     ],
     [
       {
-        type: "history.restored",
+        type: "history.seeded",
         meta: { id: "restored", at: "2026-10-17T12:00:00Z" },
-        data: { beforeTurnId: "turn_1", events },
+        data: { messages: data.messages },
       },
       later,
     ],
@@ -113,9 +113,9 @@ it("does not decorate ambiguous deliveries or inherited events with a current-se
       data,
       [
         {
-          type: "history.restored",
+          type: "history.seeded",
           meta: { id: "restore", at: "2026-10-17T12:00:00Z" },
-          data: { beforeTurnId: "turn_1", events: [first] },
+          data: { messages: data.messages },
         },
       ],
       receipts

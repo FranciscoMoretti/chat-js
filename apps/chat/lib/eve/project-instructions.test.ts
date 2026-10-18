@@ -8,9 +8,7 @@ import instructions from "../../agent/instructions/project";
 const mocks = vi.hoisted(() => {
   const state: { content: string | null } = { content: null };
   return {
-    checkpoint: vi.fn(),
     followups: vi.fn(),
-    namedCheckpoint: vi.fn(),
     project: vi.fn(),
     resolve: vi.fn(),
     state,
@@ -45,10 +43,6 @@ vi.mock("./conversation-scope", () => ({
 }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversationProject: mocks.project,
-}));
-vi.mock("../db/eve-documents", () => ({
-  captureEveDocumentCheckpoint: mocks.checkpoint,
-  captureEveNamedDocumentCheckpoint: mocks.namedCheckpoint,
 }));
 
 const hookContext = (
@@ -151,7 +145,7 @@ test("propagates required context failures and removes the previous turn's instr
 });
 
 // A nested child must use the root branch, not the immediate parent's session.
-test("loads root project context for descendants without writing child checkpoints", async () => {
+test("loads root project context for descendants", async () => {
   mocks.project.mockResolvedValueOnce({
     instructions: "Root project instruction",
   });
@@ -170,20 +164,6 @@ test("loads root project context for descendants without writing child checkpoin
   expect(readInstructions()).toEqual({
     content: "Project instructions:\nRoot project instruction",
   });
-});
-
-test("does not project a child's checkpoint into the root branch", async () => {
-  await conversation.checkpoint?.(
-    { beforeTurnId: "turn_1", checkpointId: "child-checkpoint" },
-    hookContext(0, {
-      callId: "child-call",
-      rootSessionId: "root-native",
-      sessionId: "root-native",
-      turn: { id: "turn_7", sequence: 7 },
-    })
-  );
-  expect(mocks.resolve).not.toHaveBeenCalled();
-  expect(mocks.namedCheckpoint).not.toHaveBeenCalled();
 });
 
 test("generates user follow-up suggestions only for the root session", async () => {

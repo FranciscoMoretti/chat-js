@@ -28,8 +28,7 @@ export default defineHook({
         return;
       }
       const entries = eveEventSearchText(event);
-      const restoring =
-        event.type === "history.restored" || event.type === "history.seeded";
+      const restoring = event.type === "history.seeded";
       if (!restoring && event.type !== "turn.started" && entries.length === 0) {
         return;
       }

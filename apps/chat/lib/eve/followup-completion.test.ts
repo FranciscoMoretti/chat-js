@@ -1,19 +1,13 @@
 import { expect, it } from "vitest";
 import { followupCompletion } from "./followup-completion";
 
-it("uses the durable completion identity for replay and flattened inherited history", () => {
+it("uses the durable completion identity for replay", () => {
   const completed = {
     type: "turn.completed",
     data: { turnId: "turn_0" },
     meta: { id: "source-completion" },
   } satisfies Parameters<typeof followupCompletion>[0][number];
   expect(followupCompletion([completed], "turn_0")).toBe("source-completion");
-  expect(
-    followupCompletion(
-      [{ type: "history.restored", data: { events: [completed] } }],
-      "turn_0"
-    )
-  ).toBe("source-completion");
   expect(
     followupCompletion(
       [completed, { ...completed, meta: { id: "branch-completion" } }],
@@ -23,18 +17,9 @@ it("uses the durable completion identity for replay and flattened inherited hist
   expect(followupCompletion([completed], "turn_1")).toBeUndefined();
 });
 
-it("never displays inherited suggestions for a new or failed branch turn with the same number", () => {
+it("never displays seeded suggestions for a new or failed branch turn with the same number", () => {
   const inherited = {
-    type: "history.restored",
-    data: {
-      events: [
-        {
-          type: "turn.completed",
-          data: { turnId: "turn_0" },
-          meta: { id: "source-completion" },
-        },
-      ],
-    },
+    type: "history.seeded",
   } satisfies Parameters<typeof followupCompletion>[0][number];
   expect(
     followupCompletion(
