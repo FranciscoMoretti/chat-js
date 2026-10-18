@@ -4,6 +4,7 @@ import { withEve } from "eve/next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
+    preloadEntriesOnStart: false,
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
