@@ -42,6 +42,41 @@ test("conversation", async () => {
     .toBeVisible();
 });
 
+test("display receipts settle with a fresh native agent wrapper", async () => {
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null || sessionId === "") {
+    throw new Error("The conversation fixture must have a native session.");
+  }
+  await renderRoute(conversation, {
+    ...request,
+    events: {
+      [sessionId]: [
+        {
+          type: "message.received",
+          meta: {
+            id: "received",
+            at: "2026-10-18T10:00:00Z",
+            deliveryIds: ["delivery"],
+          },
+          data: { message: "Question", sequence: 0, turnId: "turn_0" },
+        },
+      ],
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "eve.messageDisplay": [
+        { kind: "send", deliveryId: "delivery", selectedTool: null },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toBeVisible();
+});
+
 test("copy conversation with an edited prompt uses a fresh sandbox", async () => {
   await renderRoute(conversation, request);
   await page

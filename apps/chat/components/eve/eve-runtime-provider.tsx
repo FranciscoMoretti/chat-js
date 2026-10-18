@@ -103,20 +103,16 @@ const NativeObserver = ({
     },
     resume: true,
   });
-  const displayedAgent = useMemo(
-    () => ({
-      ...agent,
-      data: projectEveMessageDisplay(
-        agent.data,
-        agent.events,
-        display.data ?? []
-      ),
-    }),
-    [agent, display.data]
+  // The native hook returns a fresh wrapper on render. Project only when its
+  // contents change, otherwise observe() publishes a new snapshot indefinitely.
+  const displayedData = useMemo(
+    () =>
+      projectEveMessageDisplay(agent.data, agent.events, display.data ?? []),
+    [agent.data, agent.events, display.data]
   );
   useEffect(() => {
-    controller.observe(conversationId, displayedAgent);
-  }, [displayedAgent, controller, conversationId]);
+    controller.observe(conversationId, { ...agent, data: displayedData });
+  }, [agent, displayedData, controller, conversationId]);
   return null;
 };
 

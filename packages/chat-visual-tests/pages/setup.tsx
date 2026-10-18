@@ -148,7 +148,7 @@ vi.mock("@/lib/eve/public-conversation", () => ({
 const idle = () => Promise.resolve();
 
 // EVE streams a session's events from its server; a page test replays a finished transcript. The
-// agent must keep its identity across renders, as the real hook's does, or each render republishes it to the runtime.
+// native data stays stable between events, but the real hook returns a new wrapper on every render.
 vi.mock("eve/react", () => {
   let agents = new WeakMap<readonly EveMessage[], object>();
   // One empty list per session, so a session with no transcript keeps its own agent across renders.
@@ -180,7 +180,7 @@ vi.mock("eve/react", () => {
         data: { messages },
         error:
           route.agentError === null ? undefined : new Error(route.agentError),
-        events: [],
+        events: route.events[sessionId] ?? [],
         prewarm: idle,
         reset: () => null,
         respond: idle,
@@ -190,7 +190,7 @@ vi.mock("eve/react", () => {
         status: route.agentStatus,
       };
       agents.set(messages, agent);
-      return agent;
+      return { ...agent };
     },
   };
 });
