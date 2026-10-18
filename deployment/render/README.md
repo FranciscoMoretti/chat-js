@@ -119,3 +119,18 @@ It requires an existing private bucket and creates only uniquely named disposabl
 probe objects. Database credentials, selected provider installation, OAuth callback
 configuration, Render deployment, and the hosted acceptance gates above remain
 unfinished.
+
+### Restored project storage verification (2026-10-18)
+
+After restoration, the Supabase dashboard reports Healthy. The committed opt-in
+storage probe passed against the existing private `chatjs-staging` bucket using
+the existing server credential. It verified upload, authenticated and signed
+reads, unsigned public-read denial, copy, deletion with the copy intact,
+missing-object detection, and repeated cleanup. All probe objects were removed.
+This is direct adapter acceptance, not application-level two-user isolation.
+
+The 15 database-health, worker-health and world-selection tests also passed.
+Database integration and Render runtime checks still require the project's
+PostgreSQL password; the dashboard only provides a placeholder. The existing
+service-role storage key is not a PostgreSQL password. No credential reset or
+Render service creation was performed.
