@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional; an app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional. An app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
 
 <Frame>
   <img
@@ -177,7 +177,7 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 The generic tool, renderer, schemas and descriptor live in `tools/chatjs/code-execution/`. Shared Python and JavaScript command wrappers live under `tools/chatjs/_shared/code-execution/`. Generated `tools/chatjs/code-executor.ts` exports the typed executor for ad-hoc and saved-document execution.
 
-`lib/sandbox/provider.ts` exports the selected provider factory, `adapter.ts` contains its SDK integration, and `options.ts` declares its identity and environment requirements. `lib/sandbox/runtime.ts` exposes `getSandboxProvider()` to consumers. `@chat-js/sandboxes/provider` defines the common command and provider interfaces; `@chat-js/sandboxes/runtime` provides `withSandbox`, which coordinates allocation, cancellation and confirmed cleanup with the consumer's durable ownership store.
+`lib/sandbox/provider.ts` exports the selected provider factory, `adapter.ts` contains its SDK integration, and `options.ts` declares its identity and environment requirements. `lib/sandbox/runtime.ts` exposes `getSandboxProvider()` to consumers. `@chat-js/sandboxes/provider` defines the common command and provider interfaces. `@chat-js/sandboxes/runtime` provides `withSandbox`, which coordinates allocation, cancellation and confirmed cleanup with the consumer's durable ownership store.
 
 In this repository, contracts and lifecycle code live in `packages/sandboxes`, provider implementations in `packages/registry/src/sandboxes/{vercel,daytona}`, and the generic tool in `packages/registry/src/tools/code-execution`.
 

@@ -1,3 +1,4 @@
+import { getSandboxProvider } from "../lib/sandbox/runtime";
 import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { eq } from "drizzle-orm";
@@ -35,7 +36,11 @@ for (const language of ["javascript", "python"] as const) {
     const name = eveCodeSandboxName({
       callId: language,
       ownerId: "local-sdk-fixture",
-      provider: auth,
+      provider: {
+        providerId: "vercel",
+        accountId: auth.teamId,
+        scopeId: auth.projectId,
+      },
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
@@ -156,7 +161,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
       ownerId,
       row.id,
       "orphan-fixture",
-      resolveSandboxAuth()
+      getSandboxProvider().scope
     );
     const orphan = await createSandbox(
       getSandboxImage("javascript"),

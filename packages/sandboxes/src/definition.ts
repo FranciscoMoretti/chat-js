@@ -27,6 +27,4 @@ const sandboxDefinitionSchema = z.object({
     )
     .default([]),
 });
-type SandboxDefinition = z.infer<typeof sandboxDefinitionSchema>;
 export { sandboxDefinitionSchema };
-export type { SandboxDefinition };

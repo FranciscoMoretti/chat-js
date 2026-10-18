@@ -60,15 +60,15 @@ describe("Daytona durable resource boundary", () => {
         { timeout: 60 },
       ],
     ]);
-    expect(adapter.cleanup.provider.teamId).toBe("daytona:org-a");
-    expect(adapter.cleanup.provider.projectId).toMatch(
+    expect(adapter.cleanup.scope.accountId).toBe("daytona:org-a");
+    expect(adapter.cleanup.scope.scopeId).toMatch(
       /^https:\/\/app.daytona.io\/api#[a-f0-9]{64}$/u
     );
     const rotated = createDaytonaProvider(
       { ...credentials, apiKey: "rotated-key" },
       resourceClient()
     );
-    expect(rotated.cleanup.provider).not.toEqual(adapter.cleanup.provider);
+    expect(rotated.cleanup.scope).not.toEqual(adapter.cleanup.scope);
   });
 
   test("refuses cross-organization cleanup and identity mismatches", async () => {

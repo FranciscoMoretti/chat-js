@@ -79,7 +79,7 @@ export const eveCodeSandboxOwnership = (context: {
         scope.ownerId,
         scope.conversationId,
         context.callId,
-        { teamId: provider.accountId, projectId: provider.scopeId }
+        provider
       );
       reservation = { ...scope, name };
       return name;

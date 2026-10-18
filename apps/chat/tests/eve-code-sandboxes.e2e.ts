@@ -21,7 +21,11 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
-const provider = { projectId: "fixture-project", teamId: "fixture-team" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "fixture-project",
+  accountId: "fixture-team",
+};
 const owner = crypto.randomUUID();
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
@@ -50,7 +54,7 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
   await expect(
     reserveEveCodeSandbox(owner, row.id, "call-1", {
       ...provider,
-      projectId: "other-project",
+      scopeId: "other-project",
     })
   ).rejects.toThrow("Reconcile");
   await beginEveConversationDeletion(owner, row.id);

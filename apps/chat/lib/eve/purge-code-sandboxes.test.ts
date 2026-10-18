@@ -24,7 +24,11 @@ vi.mock("../db/eve-code-sandboxes", () => ({
   recordEveCodeSandboxDeletion: mocks.record,
 }));
 
-const provider = { projectId: "project", teamId: "team" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "project",
+  accountId: "team",
+};
 const name = eveCodeSandboxName({
   callId: "call",
   ownerId: "owner",
@@ -47,8 +51,8 @@ beforeEach(() => {
     deleteAndConfirmAbsent: mocks.cleanup,
     scope: {
       providerId: "vercel",
-      accountId: provider.teamId,
-      scopeId: provider.projectId,
+      accountId: provider.accountId,
+      scopeId: provider.scopeId,
     },
   });
   mocks.list.mockResolvedValue([resource]);
@@ -94,7 +98,7 @@ test("changed provider scope cannot release a resource", async () => {
     deleteAndConfirmAbsent: mocks.cleanup,
     scope: {
       providerId: "vercel",
-      accountId: provider.teamId,
+      accountId: provider.accountId,
       scopeId: "another-project",
     },
   });

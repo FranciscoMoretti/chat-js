@@ -1,5 +1,6 @@
+import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
-import { resolveSandbox } from "#cli/registry/sandboxes";
+import type { resolveSandbox } from "#cli/registry/sandboxes";
 import {
   installPlan,
   plannedSourceTargets,
@@ -46,7 +47,7 @@ import { logger } from "#cli/utils/logger";
 import { observabilityItems } from "../../../registry/src/features/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
-import { planInstallation } from "#cli/utils/installation-plan";
+import type { planInstallation } from "#cli/utils/installation-plan";
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
@@ -409,16 +410,6 @@ const promptCreateSetup = async (
     assistantTools,
     selectedTools
   );
-  const sandboxSource =
-    options.sandboxProvider ??
-    (await promptSandbox(
-      options.yes,
-      selectedTools.some((tool) => tool.requiresSandbox)
-    ));
-  const sandbox =
-    typeof sandboxSource === "string" && sandboxSource !== ""
-      ? await resolveSandbox(sandboxSource, targetDir)
-      : undefined;
   const usesStorage =
     coreFeatures.attachments ||
     selectedTools.some(
@@ -440,7 +431,7 @@ const promptCreateSetup = async (
   const auth = await promptAuth(options.yes);
   const withElectron = await promptElectron(options.yes, options.electron);
 
-  const plan = await planInstallation(
+  const { plan, sandbox } = await planSandboxInstallation(
     targetDir,
     {
       features: [
@@ -449,14 +440,15 @@ const promptCreateSetup = async (
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,
-      sandbox: sandbox?.source,
       storage: {
         options: storage.options,
         source: storage.source,
       },
       tools: toolSources,
     },
-    { documents: options.documents, fresh: true }
+    { documents: options.documents, fresh: true },
+    async (required) =>
+      options.sandboxProvider ?? (await promptSandbox(options.yes, required))
   );
 
   return {
@@ -548,7 +540,7 @@ const installRegistryItems = async (
     await installPlan(
       project.targetDir,
       plan,
-      { fresh: true },
+      { fresh: true, managedTargets: ["lib/sandbox/options.ts"] },
       async (): Promise<void> => {
         await configureGatewayProvider(
           project.targetDir,

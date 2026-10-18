@@ -1,3 +1,4 @@
+import { planSandboxInstallation } from "../helpers/sandbox-installation";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -23,17 +24,44 @@ const fixture = async () => {
     hostname: "127.0.0.1",
     port: 0,
     fetch(request) {
-      const name = new URL(request.url).pathname.slice(1);
-      const item =
-        name === "code-execution"
-          ? codeExecutionItem
-          : builtInSandboxes.find((candidate) => candidate.name === name);
+      const name = new URL(request.url).pathname.slice(1).replace(".json", "");
+      const dependentItem = {
+        name: "dependent",
+        type: "registry:item",
+        meta: {
+          chatjs: {
+            contractVersion: 1,
+            id: "dependent",
+            kind: "tool",
+            requiresTools: ["codeExecution"],
+            tools: [{ toolExport: "dependent" }],
+          },
+        },
+      };
+      const items = [dependentItem, codeExecutionItem, ...builtInSandboxes];
+      const item = items.find((candidate) => candidate.name === name);
       return item
         ? Response.json({ ...item, registryDependencies: [] })
         : new Response("not found", { status: 404 });
     },
   });
   const address = (name: string) => `http://127.0.0.1:${server.port}/${name}`;
+  await writeFile(
+    path.join(root, "components.json"),
+    JSON.stringify({
+      style: "new-york",
+      rsc: true,
+      tsx: true,
+      tailwind: {
+        config: "",
+        css: "app/globals.css",
+        baseColor: "neutral",
+        cssVariables: true,
+      },
+      aliases: { components: "@/components", utils: "@/lib/utils" },
+      registries: { "@chatjs": address("{name}.json") },
+    })
+  );
   return { root, server, address };
 };
 
@@ -125,6 +153,56 @@ test("replacement requires --replace and the existing provider satisfies later c
     expect(replaced.providerChanges).toEqual([
       { kind: "sandbox", next: "daytona", previous: "vercel" },
     ]);
+  } finally {
+    await f.server.stop(true);
+  }
+});
+
+test("create requires a sandbox after resolving an indirect code-execution dependency", async () => {
+  const f = await fixture();
+  const requirements: boolean[] = [];
+  try {
+    const selected = await planSandboxInstallation(
+      f.root,
+      {
+        features: [],
+        tools: [f.address("dependent")],
+      },
+      { fresh: true },
+      async (required) => {
+        requirements.push(required);
+        return await Promise.resolve(f.address("daytona-sandbox"));
+      }
+    );
+    expect(requirements).toEqual([true]);
+    expect(selected.plan.expected.map((tool) => tool.id)).toEqual([
+      "dependent",
+      "code-execution",
+    ]);
+    expect(selected.sandbox?.definition.id).toBe("daytona");
+  } finally {
+    await f.server.stop(true);
+  }
+});
+
+test("create permits no sandbox when the resolved graph has no consumer", async () => {
+  const f = await fixture();
+  const requirements: boolean[] = [];
+  try {
+    const selected = await planSandboxInstallation(
+      f.root,
+      {
+        features: [],
+        tools: [],
+      },
+      { fresh: true },
+      async (required) => {
+        requirements.push(required);
+        await Promise.resolve();
+      }
+    );
+    expect(requirements).toEqual([false]);
+    expect(selected.sandbox).toBeUndefined();
   } finally {
     await f.server.stop(true);
   }

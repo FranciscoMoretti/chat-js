@@ -18,3 +18,5 @@ bunx @chat-js/cli add code-execution
 ```
 
 The first command installs infrastructure without a model tool. The second installs a consumer. Both can be combined in one command. Replace an existing provider using `--sandbox-provider vercel --replace`.
+
+This layout targets newly scaffolded apps. Earlier generated apps and allocation identities are not supported. Provider IDs, accounts and deployment scopes all participate in allocation identity.

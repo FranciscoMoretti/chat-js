@@ -13,11 +13,7 @@ export const createSandboxProvider = (): SandboxProvider => {
   });
   const provider = client;
   return {
-    scope: {
-      providerId: "daytona",
-      accountId: provider.cleanup.provider.teamId,
-      scopeId: provider.cleanup.provider.projectId,
-    },
+    scope: provider.cleanup.scope,
     async create({ name, runtime, signal }) {
       const resource = await provider.create(name, runtime);
       return { name: resource.name, ...commandSandbox(resource, signal) };

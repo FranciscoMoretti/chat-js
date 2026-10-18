@@ -50,7 +50,11 @@ if (
 
 assertEveTestDatabase(env.WORKFLOW_POSTGRES_URL);
 const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
-const provider = { projectId: "fixture-project", teamId: "fixture-team" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "fixture-project",
+  accountId: "fixture-team",
+};
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
 await db.insert(user).values({

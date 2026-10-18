@@ -1,3 +1,4 @@
+import type { SandboxScope } from "@chat-js/sandboxes/provider";
 import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "@/lib/eve/code-sandbox-name";
@@ -22,17 +23,14 @@ type CodeSandboxForDeletion = Pick<
  * @param {string} ownerId Owner whose conversation family is locked during reservation.
  * @param {string} conversationId Bound conversation that will own the sandbox.
  * @param {string} callId Tool call whose existing allocation must be reconciled before any retry.
- * @param {{ readonly teamId: string; readonly projectId: string; }} provider Vercel project and team identities used to derive the sandbox name.
+ * @param {SandboxScope} provider Sandbox provider coordinates used to derive the sandbox name.
  * @returns {Promise<string>} The durably reserved provider resource name.
  */
 const reserveEveCodeSandbox = async (
   ownerId: string,
   conversationId: string,
   callId: string,
-  provider: {
-    readonly teamId: string;
-    readonly projectId: string;
-  }
+  provider: SandboxScope
 ): Promise<string> =>
   await db.transaction(async (tx: SandboxTransaction) => {
     await tx.execute(

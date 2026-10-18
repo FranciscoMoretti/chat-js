@@ -2,6 +2,7 @@ import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
 import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 import type {
   SandboxProvider,
+  SandboxScope,
   Sandbox as ExecutionSandboxResource,
 } from "@chat-js/sandboxes/provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -9,7 +10,7 @@ import { createHash } from "node:crypto";
 
 interface CodeSandboxCleanupSession {
   deleteAndConfirmAbsent: SandboxProvider["deleteAndConfirmAbsent"];
-  provider: { teamId: string; projectId: string };
+  scope: SandboxScope;
 }
 type ExecutionSandbox = Pick<ExecutionSandboxResource, "runCommand">;
 
@@ -145,11 +146,12 @@ const cleanupSession = (
       throw new Error("Daytona sandbox remains available after deletion.");
     }
   },
-  provider: {
+  scope: {
+    providerId: "daytona",
     // API-key auth ignores organizationId in the SDK. Pin the credential scope
     // so replacing it cannot turn a foreign 404 into proof of prior deletion.
-    projectId: `${API_URL}#${createHash("sha256").update(credentials.apiKey).digest("hex")}`,
-    teamId: `daytona:${credentials.organizationId}`,
+    scopeId: `${API_URL}#${createHash("sha256").update(credentials.apiKey).digest("hex")}`,
+    accountId: `daytona:${credentials.organizationId}`,
   },
 });
 

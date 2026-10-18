@@ -83,6 +83,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/scaffold-prepared"
           bun pm --cwd packages/gateways pack --filename "$RUNNER_TEMP/scaffold-prepared/gateways.tgz"
+          bun pm --cwd packages/sandboxes pack --filename "$RUNNER_TEMP/scaffold-prepared/sandboxes.tgz"
           tar -czf "$RUNNER_TEMP/scaffold-prepared/workspace.tgz" packages/cli/dist packages/cli/templates packages/registry/dist
       - uses: actions/upload-artifact@v4
         with:
@@ -135,7 +136,7 @@ jobs:
         env:
           SCAFFOLD_PACKAGE_MANAGER: ${{ matrix.package-manager }}
           SCAFFOLD_ELECTRON: ${{ matrix.electron }}
-        run: bash packages/cli/scripts/test-scaffold.sh "$SCAFFOLD_PACKAGE_MANAGER" "$SCAFFOLD_ELECTRON" "$RUNNER_TEMP/scaffold-prepared/gateways.tgz"
+        run: bash packages/cli/scripts/test-scaffold.sh "$SCAFFOLD_PACKAGE_MANAGER" "$SCAFFOLD_ELECTRON" "$RUNNER_TEMP/scaffold-prepared/gateways.tgz" "$RUNNER_TEMP/scaffold-prepared/sandboxes.tgz"
 
   cli-scaffold:
     name: CLI Scaffold

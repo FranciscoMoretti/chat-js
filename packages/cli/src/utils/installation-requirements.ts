@@ -96,6 +96,15 @@ const validateMedia = (
   }
 };
 
+class SandboxRequiredError extends Error {
+  constructor() {
+    super(
+      "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
+    );
+    this.name = "SandboxRequiredError";
+  }
+}
+
 const validateProviderRequirements = async (
   cwd: string,
   target: {
@@ -109,9 +118,7 @@ const validateProviderRequirements = async (
   if (target.tools.some((tool) => tool.requiresSandbox)) {
     const sandbox = target.sandbox ?? (await readProviderId(cwd, "sandbox"));
     if (typeof sandbox !== "string" || sandbox === "") {
-      throw new Error(
-        "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
-      );
+      throw new SandboxRequiredError();
     }
   }
   const fileConsumers = [...target.tools, ...target.features].filter((item) =>
@@ -164,6 +171,7 @@ const validateRequestedKind = (
 };
 
 export {
+  SandboxRequiredError,
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,

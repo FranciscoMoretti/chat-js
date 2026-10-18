@@ -556,3 +556,30 @@ test("provider installation refuses inferred native dependency destinations befo
     await registry.stop(true);
   }
 }, 30_000);
+
+test("failed fresh registration restores the scaffold sandbox selection", async () => {
+  const root = await fixture();
+  const target = path.join(root, "lib/sandbox/options.ts");
+  const original = await readFile(target, "utf-8");
+  const plan = await planInstallation(
+    root,
+    { features: [], tools: [] },
+    { fresh: true }
+  );
+  await rejects(
+    installPlan(
+      root,
+      plan,
+      {
+        fresh: true,
+        managedTargets: ["lib/sandbox/options.ts"],
+      },
+      async () => {
+        await writeFile(target, 'export const sandboxId = "daytona";');
+        throw new Error("registration failed");
+      }
+    ),
+    /registration failed/u
+  );
+  expect(await readFile(target, "utf-8")).toBe(original);
+});

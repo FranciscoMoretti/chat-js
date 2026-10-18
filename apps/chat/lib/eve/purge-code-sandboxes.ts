@@ -35,10 +35,7 @@ const purgeConfirmedCodeSandbox = async (
     eveCodeSandboxName({
       callId: resource.callId,
       ownerId,
-      provider: {
-        teamId: cleanup.scope.accountId,
-        projectId: cleanup.scope.scopeId,
-      },
+      provider: cleanup.scope,
       sessionId: resource.sessionId ?? undefined,
     }) !== resource.name
   ) {

@@ -4,7 +4,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "bun --filter @chat-js/gateways build && bun run check-env",
+    "prebuild": "bun --filter @chat-js/gateways --filter @chat-js/sandboxes build && bun run check-env",
     "dev": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev",
     "dev:inspect": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev --inspect",
     "build": "tsx lib/db/migrate.ts --deployment && bun run eve:build && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next build",
