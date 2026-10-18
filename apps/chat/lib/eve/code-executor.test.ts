@@ -13,26 +13,15 @@ vi.mock("@/lib/logger", () => ({
 vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
   eveCodeSandboxOwnership: vi.fn(),
 }));
-vi.mock(
-  "../../../../packages/registry/src/tools/daytona-code-execution/sandbox",
-  () => ({
-    createDaytonaProvider: (): { cleanup: Record<string, never> } => ({
-      cleanup: {},
-    }),
-  })
-);
-vi.mock(
-  "../../../../packages/registry/src/tools/daytona-code-execution/execution",
-  () => ({ executeInDaytona: mocks.execute })
-);
+vi.mock("@/lib/sandbox/runtime", () => ({ getSandboxProvider: vi.fn() }));
+vi.mock("@chat-js/sandboxes/runtime", () => ({ withSandbox: mocks.execute }));
 
 beforeEach(() => {
   mocks.execute.mockReset();
 });
 
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
-  const { executeCode } =
-    await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
+  const { executeCode } = await import("@/tools/chatjs/code-execution/tool");
   mocks.execute.mockResolvedValue({ chart: "", message: "42" });
   const result = await executeCode(
     { code: "return 42", language: "javascript", title: "Answer" },
@@ -44,8 +33,7 @@ it("the selected typed executor returns exactly one completed usage receipt", as
   });
 });
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
-  const { executeCode } =
-    await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
+  const { executeCode } = await import("@/tools/chatjs/code-execution/tool");
   mocks.execute.mockRejectedValueOnce(new Error("cleanup failed"));
   const input = {
     code: "source",

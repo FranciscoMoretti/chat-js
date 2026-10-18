@@ -1,0 +1,58 @@
+{
+  "name": "@chat-js/sandboxes",
+  "version": "0.1.0",
+  "description": "Sandbox provider contracts and lifecycle runtime for ChatJS",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
+    "directory": "packages/sandboxes"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/*.test.ts",
+    "README.md"
+  ],
+  "type": "module",
+  "exports": {
+    "./provider": {
+      "types": "./dist/provider.d.ts",
+      "bun": "./src/provider.ts",
+      "development": "./src/provider.ts",
+      "default": "./dist/provider.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "bun": "./src/runtime.ts",
+      "development": "./src/runtime.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./definition": {
+      "types": "./dist/definition.d.ts",
+      "bun": "./src/definition.ts",
+      "development": "./src/definition.ts",
+      "default": "./dist/definition.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test:types": "bun run build && tsc --noEmit",
+    "test:unit": "vitest run",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write .",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "typescript": "6.0.2",
+    "vitest": "^4.0.0"
+  }
+}

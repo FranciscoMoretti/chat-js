@@ -1,3 +1,4 @@
+import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { eveCodeSandboxName } from "./code-sandbox-name";
@@ -6,21 +7,16 @@ import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 const mocks = vi.hoisted(() => ({
   capabilityInstalled: true,
   cleanup: vi.fn<(name: string) => Promise<void>>(),
-  createCleanupSession: vi.fn(),
+  createCleanupSession: vi.fn<() => SandboxProvider>(),
   list: vi.fn(),
   record: vi.fn<() => Promise<void>>(),
 }));
-vi.mock("../../tools/chatjs/tools", () => ({
-  tools: { codeExecution: {} },
-}));
-vi.mock("../ai/installed-tool-capabilities", () => ({
-  getCodeSandboxCleanup: ():
-    | { createCleanupSession: typeof mocks.createCleanupSession }
-    | undefined => {
-    if (mocks.capabilityInstalled) {
-      return { createCleanupSession: mocks.createCleanupSession };
+vi.mock("@/lib/sandbox/runtime", () => ({
+  getSandboxProvider: () => {
+    if (!mocks.capabilityInstalled) {
+      throw new Error("Select a sandbox provider");
     }
-    return undefined;
+    return mocks.createCleanupSession();
   },
 }));
 vi.mock("../db/eve-code-sandboxes", () => ({
@@ -47,8 +43,13 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.capabilityInstalled = true;
   mocks.createCleanupSession.mockReturnValue({
+    create: vi.fn(),
     deleteAndConfirmAbsent: mocks.cleanup,
-    provider,
+    scope: {
+      providerId: "vercel",
+      accountId: provider.teamId,
+      scopeId: provider.projectId,
+    },
   });
   mocks.list.mockResolvedValue([resource]);
 
@@ -89,8 +90,13 @@ test("provider failures retain ownership", async () => {
 });
 test("changed provider scope cannot release a resource", async () => {
   mocks.createCleanupSession.mockReturnValue({
+    create: vi.fn(),
     deleteAndConfirmAbsent: mocks.cleanup,
-    provider: { ...provider, projectId: "another-project" },
+    scope: {
+      providerId: "vercel",
+      accountId: provider.teamId,
+      scopeId: "another-project",
+    },
   });
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
     "provider scope"
@@ -108,7 +114,7 @@ test("zero resources need no installed provider capability", async () => {
 test("durable resources cannot be released without their provider capability", async () => {
   mocks.capabilityInstalled = false;
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
-    "Install the code execution tool"
+    "Select a sandbox provider"
   );
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();

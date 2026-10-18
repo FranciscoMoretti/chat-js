@@ -67,7 +67,7 @@ const DOCUMENT_TYPE_HINTS: Record<DocumentTypeKey, string> = {
 };
 
 const BUILT_IN_TOOL_LABELS: Record<BuiltInToolKey, string> = {
-  codeExecution: "Code Sandbox",
+  codeExecution: "Code Execution",
   deepResearch: "Deep Research",
   imageGeneration: "Image Generation",
   urlRetrieval: "URL Retrieval",
@@ -580,43 +580,30 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   handleCancel(address);
   return address.trim();
 };
-const promptCodeExecutionTool = async (
-  skipPrompt: boolean
-): Promise<string> => {
+const promptCodeExecutionTool = async (_skipPrompt: boolean): Promise<string> =>
+  await Promise.resolve("code-execution");
+const promptSandbox = async (
+  skipPrompt: boolean,
+  required: boolean
+): Promise<string | undefined> => {
   if (skipPrompt) {
-    return "vercel-code-execution";
+    if (required) {
+      throw new Error(
+        "Code execution requires --sandbox-provider vercel or daytona."
+      );
+    }
+    return undefined;
   }
   const choice = await select({
-    message: "Which code-execution tool should chat use?",
+    message: "Which sandbox provider should the app use?",
     options: [
-      {
-        hint: "Python and JavaScript; Vercel credentials required",
-        label: "Vercel Sandbox",
-        value: "vercel-code-execution",
-      },
-      {
-        hint: "Python and JavaScript; Daytona API key and organization required",
-        label: "Daytona",
-        value: "daytona-code-execution",
-      },
-      { label: "External registry item", value: "external" },
+      ...(required ? [] : [{ label: "None", value: "none" }]),
+      { label: "Vercel Sandbox", value: "vercel" },
+      { label: "Daytona", value: "daytona" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") {
-    return choice;
-  }
-  const address = await text({
-    message: "Code-execution tool registry address:",
-    validate: (value): "Enter an address" | undefined => {
-      if (typeof value !== "string" || value.trim() === "") {
-        return "Enter an address";
-      }
-      return undefined;
-    },
-  });
-  handleCancel(address);
-  return address.trim();
+  return choice === "none" ? undefined : choice;
 };
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
@@ -740,6 +727,7 @@ export {
   promptAssistantTools,
   promptAuth,
   promptCodeExecutionTool,
+  promptSandbox,
   promptCoreFeatures,
   promptDocumentTypes,
   promptElectron,

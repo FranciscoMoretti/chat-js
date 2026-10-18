@@ -395,7 +395,7 @@ const validateToolDependencies = (
     (!executor || (executor.codeExecutorExport ?? "") === "")
   ) {
     throw new Error(
-      "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
+      "Saved code execution requires a compatible codeExecution provider, such as code-execution."
     );
   }
 };

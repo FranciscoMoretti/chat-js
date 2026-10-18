@@ -1,3 +1,4 @@
+import sandboxPackage from "@chat-js/sandboxes/package.json";
 import { rejects } from "node:assert/strict";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import { requireJsonObject } from "../src/helpers/json-object";
@@ -33,6 +34,13 @@ const root = await mkdtemp(
 );
 const packageDirectory = nodePath.dirname(
   fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))
+);
+const sandboxDirectory = nodePath.dirname(
+  fileURLToPath(import.meta.resolve("@chat-js/sandboxes/package.json"))
+);
+const sandboxArchive = nodePath.join(
+  root,
+  `chat-js-sandboxes-${sandboxPackage.version}.tgz`
 );
 const cliDirectory = nodePath.join(import.meta.dir, "..");
 const cliEntry = nodePath.join(
@@ -285,6 +293,9 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         type: "registry:item",
       });
     }
+    if (path === "/sandboxes.tgz") {
+      return new Response(Bun.file(sandboxArchive));
+    }
     if (path === "/contracts.tgz") {
       return new Response(Bun.file(archive));
     }
@@ -339,6 +350,9 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         const item = registryResponseSchema.parse(await file.json());
         if (item.dependencies !== undefined) {
           item.dependencies = item.dependencies.map((dependency: string) => {
+            if (dependency.startsWith("@chat-js/sandboxes@")) {
+              return `@chat-js/sandboxes@http://127.0.0.1:${registryServer.port}/sandboxes.tgz`;
+            }
             if (dependency.startsWith("@chat-js/gateways@")) {
               return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
             }
@@ -355,6 +369,8 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
 });
 
 beforeAll(async () => {
+  await run(sandboxDirectory, ["bun", "run", "build"]);
+  await run(sandboxDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(packageDirectory, ["bun", "run", "build"]);
   await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(nodePath.join(cliDirectory, "../registry"), [
@@ -385,7 +401,20 @@ beforeAll(async () => {
     )
   ).toEqual(first);
   await run(cliDirectory, ["bun", "run", "build"]);
+  const templateManifest = nodePath.join(
+    cliDirectory,
+    "templates/chat-app/package.json"
+  );
+  const templateContent = await readFile(templateManifest, "utf-8");
+  await writeFile(
+    templateManifest,
+    templateContent.replace(
+      `"@chat-js/sandboxes": "${sandboxPackage.version}"`,
+      `"@chat-js/sandboxes": "http://127.0.0.1:${registryServer.port}/sandboxes.tgz"`
+    )
+  );
   await run(cliDirectory, ["bun", "pm", "pack", "--destination", root]);
+  await writeFile(templateManifest, templateContent);
   await mkdir(nodePath.join(root, "cli"));
   await writeFile(
     nodePath.join(root, "cli/package.json"),
@@ -393,7 +422,10 @@ beforeAll(async () => {
       dependencies: {
         "@chat-js/cli": `file:${nodePath.join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
       },
-      overrides: { "@chat-js/gateways": `file:${archive}` },
+      overrides: {
+        "@chat-js/gateways": `file:${archive}`,
+        "@chat-js/sandboxes": `file:${sandboxArchive}`,
+      },
       private: true,
     })
   );
@@ -500,7 +532,9 @@ const toolArguments = (gateway: string): string[] => {
       "--search-tool",
       "firecrawl-search",
       "--code-execution-tool",
-      "vercel-code-execution",
+      "code-execution",
+      "--sandbox-provider",
+      "vercel",
       "--url-retrieval-tool",
       "retrieve-url",
     ];
@@ -771,7 +805,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(true);
       expect(
         await readFile(nodePath.join(cwd, "tools/chatjs/providers.ts"), "utf-8")
-      ).toContain("vercel-code-execution/tool");
+      ).toContain("code-execution/tool");
       expect(dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(
@@ -863,7 +897,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).not.toContain("tool-webSearch");
       expect(
         await Bun.file(
-          nodePath.join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")
+          nodePath.join(cwd, "tools/chatjs/code-execution/tool.ts")
         ).exists()
       ).toBe(false);
       expect(
@@ -1083,13 +1117,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
         ).exists()
       ).toBe(true);
       expect(
-        await readFile(
-          nodePath.join(
-            cwd,
-            "tools/chatjs/vercel-code-execution/execution-sandbox.ts"
-          ),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "lib/sandbox/adapter.ts"), "utf-8")
       ).toContain('from "@/lib/env"');
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
@@ -1195,7 +1223,7 @@ ${originalSearch}`
       ).not.toContain("TAVILY_API_KEY=");
       expect(
         await Bun.file(
-          nodePath.join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")
+          nodePath.join(cwd, "tools/chatjs/code-execution/tool.ts")
         ).exists()
       ).toBe(true);
       await run(cwd, ["bun", "run", "format"]);
@@ -1502,83 +1530,44 @@ it(
       "--gateway",
       "openai",
       "--code-execution-tool",
-      "daytona-code-execution",
+      "code-execution",
+      "--sandbox-provider",
+      "daytona",
     ]);
+    const executorPath = nodePath.join(cwd, "tools/chatjs/code-executor.ts");
+    const executor = await readFile(executorPath, "utf-8");
+    expect(executor).toContain("code-execution/tool");
     expect(
-      await Bun.file(
-        nodePath.join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")
-      ).exists()
-    ).toBe(false);
-    expect(
-      await readFile(
-        nodePath.join(cwd, "tools/chatjs/code-executor.ts"),
-        "utf-8"
-      )
-    ).toContain("daytona-code-execution/tool");
-    await run(cwd, ["bun", "run", "test:types"]);
-    // Existing apps retain core files when a provider is installed or replaced.
-    const corePath = nodePath.join(cwd, "lib/eve/code-executor.ts");
-    const currentCore = await readFile(corePath, "utf-8");
-    const olderCore = `import type { ToolContext } from "eve/tools";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolOutput, ToolResult } from "./tool-result";
-type CodeExecutionInput = Readonly<{code: string; language: "python" | "javascript"; title: string}>;
-type CodeExecutionContext = Pick<ToolContext, "abortSignal" | "callId" | "session">;
-type CodeExecutionOutput = {chart: ToolOutput; message: string};
-export type CodeExecutor = (input: CodeExecutionInput, context: ReadonlyNativeSurface<CodeExecutionContext>) => Promise<ToolResult<CodeExecutionOutput>>;
-export type {CodeExecutionInput, CodeExecutionContext, CodeExecutionOutput};
-`;
-    await writeFile(corePath, olderCore);
-    const envSchemaPath = nodePath.join(cwd, "lib/env-schema.ts");
-    const currentEnvSchema = await readFile(envSchemaPath, "utf-8");
-    const olderEnvSchema = currentEnvSchema.replaceAll(
-      "VERCEL_SANDBOX_IMAGE_",
-      "VERCEL_SANDBOX_RUNTIME_"
-    );
-    await writeFile(envSchemaPath, olderEnvSchema);
-
-    await run(cwd, [
-      "node",
-      cliEntry,
-      "add",
-      "vercel-code-execution",
-      "--replace",
-      "--yes",
-    ]);
-    expect(
-      await Bun.file(
-        nodePath.join(cwd, "tools/chatjs/daytona-code-execution/tool.ts")
-      ).exists()
-    ).toBe(false);
-    expect(
-      await readFile(
-        nodePath.join(cwd, "tools/chatjs/code-executor.ts"),
-        "utf-8"
-      )
-    ).toContain("vercel-code-execution/tool");
+      await readFile(nodePath.join(cwd, "lib/sandbox/provider.ts"), "utf-8")
+    ).toContain("createDaytonaProvider");
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, [
       "node",
       cliEntry,
       "add",
-      "daytona-code-execution",
+      "--sandbox-provider",
+      "vercel",
       "--replace",
       "--yes",
     ]);
+    expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
-      await readFile(
-        nodePath.join(cwd, "tools/chatjs/code-executor.ts"),
-        "utf-8"
-      )
-    ).toContain("daytona-code-execution/tool");
+      await readFile(nodePath.join(cwd, "lib/sandbox/provider.ts"), "utf-8")
+    ).toContain("resolveSandboxAuth");
+    await run(cwd, ["bun", "run", "test:types"]);
+    await run(cwd, [
+      "node",
+      cliEntry,
+      "add",
+      "--sandbox-provider",
+      "daytona",
+      "--replace",
+      "--yes",
+    ]);
+    expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).toContain("DAYTONA_API_KEY");
-    expect(await readFile(corePath, "utf-8")).toBe(olderCore);
-    expect(await readFile(envSchemaPath, "utf-8")).toBe(olderEnvSchema);
-    await run(cwd, ["bun", "run", "test:types"]);
-    await writeFile(corePath, currentCore);
-    await run(cwd, ["bun", "run", "format"]);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);
   },

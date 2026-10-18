@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select Daytona or an external provider implementing the native EVE tool and typed `CodeExecutor` contracts. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional; an app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
 
 <Frame>
   <img
@@ -20,14 +20,14 @@ Select the tool when creating an app:
 
 ```bash
 npx @chat-js/cli@latest create my-app --yes \
-  --code-execution-tool vercel-code-execution
+  --code-execution-tool code-execution --sandbox-provider vercel
 ```
 
-This enables code execution, installs `@vercel/sandbox`, and copies the provider's source to `tools/chatjs/vercel-code-execution/`. An external item URL is also accepted:
+This installs the generic tool under `tools/chatjs/code-execution/` and the selected provider under `lib/sandbox/`. An external sandbox registry item URL is also accepted:
 
 ```bash
 npx @chat-js/cli@latest create my-app --yes \
-  --code-execution-tool https://example.com/r/my-sandbox.json
+  --code-execution-tool code-execution --sandbox-provider https://example.com/r/my-sandbox.json
 ```
 
 The fresh template includes only the selected implementation and dependencies. The CLI prints the selected item's credential requirements. Vercel Sandbox needs `VERCEL_OIDC_TOKEN` or the team/project/token credentials described below.
@@ -35,15 +35,15 @@ The fresh template includes only the selected implementation and dependencies. T
 For an existing app, use `add`. Replace an installed provider explicitly. Modified source requires `--overwrite` after review:
 
 ```bash
-bunx @chat-js/cli@latest add daytona-code-execution --replace
+bunx @chat-js/cli@latest add --sandbox-provider daytona --replace
 ```
 
-Installation selects the implementation. There is no `enabled` flag or central provider switch. Keep generated registrations intact and use `add` or `sync` to regenerate them. Drain existing sandbox resources before replacing the provider or rotating its credentials.
+To install infrastructure without exposing a model tool, use `add --sandbox-provider vercel`. To install both together, use `add code-execution --sandbox-provider daytona`. Replacing the provider leaves the tool unchanged. There is no `enabled` flag or central provider switch. Keep generated registrations intact and use `add` or `sync` to regenerate them. Drain existing sandbox resources before replacing the provider or rotating its credentials.
 
-Saved-code execution requires a compatible executor and code documents. The planner resolves these dependencies when you install it:
+Saved-code execution requires a compatible executor and code documents. The planner resolves these dependencies and reuses an existing sandbox selection. If none exists, select one explicitly:
 
 ```bash
-bunx @chat-js/cli@latest add saved-code-execution
+bunx @chat-js/cli@latest add saved-code-execution --sandbox-provider daytona
 ```
 
 ### Daytona credentials
@@ -52,7 +52,7 @@ To create an app using Daytona:
 
 ```bash
 bunx @chat-js/cli@latest create my-app --yes \
-  --code-execution-tool daytona-code-execution
+  --code-execution-tool code-execution --sandbox-provider daytona
 ```
 
 Configure your Daytona organization and its API key in `.env.local`:
@@ -175,11 +175,13 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 ### Tool Definition
 
-The installed Vercel implementation lives in `tools/chatjs/vercel-code-execution/`:
+The generic tool, renderer, schemas and descriptor live in `tools/chatjs/code-execution/`. Shared Python and JavaScript command wrappers live under `tools/chatjs/_shared/code-execution/`. Generated `tools/chatjs/code-executor.ts` exports the typed executor for ad-hoc and saved-document execution.
 
-The provider directory contains the tool, renderer, schemas, SDK adapter and `chatjs.json` descriptor. Shared Python and JavaScript command wrappers are installed under `tools/chatjs/_shared/code-execution/`. Generated `tools/chatjs/code-executor.ts` exports the selected typed executor. `tools.ts` and `ui.ts` register the tool and renderer.
+`lib/sandbox/provider.ts` exports the selected provider factory, `adapter.ts` contains its SDK integration, and `options.ts` declares its identity and environment requirements. `lib/sandbox/runtime.ts` exposes `getSandboxProvider()` to consumers. `@chat-js/sandboxes/provider` defines the common command and provider interfaces; `@chat-js/sandboxes/runtime` provides `withSandbox`, which coordinates allocation, cancellation and confirmed cleanup with the consumer's durable ownership store.
 
-Third-party providers use the [standard tool registration](../tools/authoring#feature-selections). Declare `codeExecutorExport`, `envRequirements`, and `codeExecutionCapabilities` in the descriptor. The executor contract requires Python and JavaScript, bounded execution, terminating cancellation, ephemeral files, durable allocation cleanup, and a single usage receipt. Incompatible declared capabilities fail descriptor validation before source installation. Capability metadata is a declaration, not evidence of live service behavior.
+In this repository, contracts and lifecycle code live in `packages/sandboxes`, provider implementations in `packages/registry/src/sandboxes/{vercel,daytona}`, and the generic tool in `packages/registry/src/tools/code-execution`.
+
+Third-party sandbox registry items use `kind: "sandbox"` metadata matching `@chat-js/sandboxes/definition` and install `lib/sandbox/provider.ts` exporting `createSandboxProvider`. Version 1 requires Python and JavaScript commands, terminating cancellation and durable allocation cleanup. Capability metadata is a declaration, not evidence of live service behavior. Custom code-execution tools can separately implement the [typed executor contract](../tools/authoring#feature-selections).
 
 ## Lifecycle and accounting
 
@@ -191,7 +193,7 @@ An uncertain create response remains an explicit reconciliation blocker. A singl
 
 Daytona API-key authentication does not honor a separate organization override. Cleanup therefore binds to a non-secret key fingerprint as well as the configured organization. Keep the original credentials until all resources are drained. Replacing the provider or key with outstanding intents fails closed and requires restoring the original provider scope or performing verified reconciliation.
 
-The application charges a fixed $0.05 for a completed built-in execution, independently of the provider's invoice. Daytona records zero application cost for infrastructure failure and charges only after output validation and confirmed cleanup. Native EVE cancellation and settlement retain their existing receipt behavior. Shared code wrappers can report user-code errors as completed executions. Provider compute costs may still accrue on failures, cancellation and uncertain creation.
+The application charges a fixed $0.05 for a completed built-in execution, independently of the provider's invoice. The shared executor records zero application cost for infrastructure failure and charges only after output validation and confirmed cleanup. Native EVE cancellation and settlement retain their existing receipt behavior. Shared code wrappers can report user-code errors as completed executions. Provider compute costs may still accrue on failures, cancellation and uncertain creation.
 
 ## Provider evaluation and validation
 

@@ -36,6 +36,7 @@
         "@better-auth/core": "1.6.2",
         "@better-auth/electron": "1.6.2",
         "@chat-js/gateways": "workspace:*",
+        "@chat-js/sandboxes": "workspace:*",
         "@codemirror/lang-javascript": "^6.2.2",
         "@codemirror/lang-python": "^6.1.6",
         "@codemirror/state": "^6.5.0",
@@ -279,6 +280,7 @@
       },
       "dependencies": {
         "@chat-js/gateways": "workspace:*",
+        "@chat-js/sandboxes": "workspace:*",
         "@clack/prompts": "^1.0.1",
         "commander": "^14.0.0",
         "files-sdk": "2.5.0",
@@ -332,6 +334,7 @@
         "@ai-sdk/openai-compatible": "3.0.44",
         "@ai-sdk/provider": "4.0.26",
         "@chat-js/gateways": "workspace:*",
+        "@chat-js/sandboxes": "workspace:*",
         "@codemirror/lang-javascript": "^6.2.2",
         "@codemirror/lang-python": "^6.1.6",
         "@codemirror/state": "^6.5.0",
@@ -400,6 +403,18 @@
         "ultracite": "8.0.0",
         "vite": "8.1.4",
         "zod": "4.5.4",
+      },
+    },
+    "packages/sandboxes": {
+      "name": "@chat-js/sandboxes",
+      "version": "0.1.0",
+      "dependencies": {
+        "zod": "4.5.4",
+      },
+      "devDependencies": {
+        "@types/node": "^22.8.6",
+        "typescript": "6.0.2",
+        "vitest": "^4.0.0",
       },
     },
     "packages/thread": {
@@ -728,6 +743,8 @@
     "@chat-js/gateways": ["@chat-js/gateways@workspace:packages/gateways"],
 
     "@chat-js/registry": ["@chat-js/registry@workspace:packages/registry"],
+
+    "@chat-js/sandboxes": ["@chat-js/sandboxes@workspace:packages/sandboxes"],
 
     "@chat-js/thread": ["@chat-js/thread@workspace:packages/thread"],
 

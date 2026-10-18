@@ -1,9 +1,9 @@
 import { rejects } from "node:assert/strict";
 
-import { commandSandbox, createDaytonaProvider } from "./sandbox";
+import { commandSandbox, createDaytonaProvider } from "./adapter";
 import { describe, expect, mock, test } from "bun:test";
 import { DaytonaNotFoundError } from "@daytona/sdk";
-import type { DaytonaResource } from "./sandbox";
+import type { DaytonaResource } from "./adapter";
 
 const NOT_FOUND_STATUS = 404;
 const DELETE_TIMEOUT_SECONDS = 60;

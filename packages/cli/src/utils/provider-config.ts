@@ -133,13 +133,17 @@ const activeProperty = (
 
 const readProviderId = async (
   cwd: string,
-  kind: "gateway" | "storage"
+  kind: "gateway" | "storage" | "sandbox"
 ): Promise<string | undefined> => {
   let file = "lib/storage-options.ts";
   let name = "storageId";
   if (kind === "gateway") {
     file = "lib/ai/gateway-model-defaults.ts";
     name = "gatewayType";
+  }
+  if (kind === "sandbox") {
+    file = "lib/sandbox/options.ts";
+    name = "sandboxId";
   }
   const source = await readFile(path.join(cwd, file), "utf-8").catch(
     (error: unknown): string => {

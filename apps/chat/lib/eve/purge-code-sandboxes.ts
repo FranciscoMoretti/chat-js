@@ -1,6 +1,5 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { getCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-import { tools } from "@/tools/chatjs/tools";
+import { getSandboxProvider } from "@/lib/sandbox/runtime";
 
 import {
   listEveCodeSandboxesForDeletion,
@@ -9,11 +8,7 @@ import {
 import { eveCodeSandboxName } from "./code-sandbox-name";
 
 const NO_RESOURCES = 0;
-const ENTRY_VALUE_INDEX = 1;
-
-type CodeSandboxCleanupSession = ReturnType<
-  NonNullable<ReturnType<typeof getCodeSandboxCleanup>>["createCleanupSession"]
->;
+type CodeSandboxCleanupSession = ReturnType<typeof getSandboxProvider>;
 
 type CodeSandboxDeletionResource = Awaited<
   ReturnType<typeof listEveCodeSandboxesForDeletion>
@@ -29,20 +24,6 @@ const assertNoUncertainCodeSandboxes = (
   }
 };
 
-const createCodeSandboxCleanupSession = (): CodeSandboxCleanupSession => {
-  const capability = getCodeSandboxCleanup(
-    Object.entries(tools).find(
-      ([name]: readonly [string, ...unknown[]]) => name === "codeExecution"
-    )?.[ENTRY_VALUE_INDEX]
-  );
-  if (!capability) {
-    throw new Error(
-      "Install the code execution tool to clean up its durable sandbox resources."
-    );
-  }
-  return capability.createCleanupSession();
-};
-
 const purgeConfirmedCodeSandbox = async (
   ownerId: string,
   resource: Readonly<
@@ -54,7 +35,10 @@ const purgeConfirmedCodeSandbox = async (
     eveCodeSandboxName({
       callId: resource.callId,
       ownerId,
-      provider: cleanup.provider,
+      provider: {
+        teamId: cleanup.scope.accountId,
+        projectId: cleanup.scope.scopeId,
+      },
       sessionId: resource.sessionId ?? undefined,
     }) !== resource.name
   ) {
@@ -88,7 +72,7 @@ export const purgeEveFamilyCodeSandboxes = async (
     assertNoUncertainCodeSandboxes(resources);
     return;
   }
-  const cleanup = createCodeSandboxCleanupSession();
+  const cleanup = getSandboxProvider();
   for (const resource of confirmedResources) {
     // Keep identity verification, provider absence, and durable release as one ordered unit per resource.
     // oxlint-disable-next-line eslint/no-await-in-loop -- The shared provider cleanup session verifies identity, proves absence, and durably releases one resource before the next; a failed resource must retain later ownership.

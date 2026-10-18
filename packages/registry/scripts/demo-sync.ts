@@ -1,3 +1,5 @@
+import { configureSandboxProvider } from "../../cli/src/helpers/sandbox-provider";
+import { resolveSandbox } from "../../cli/src/registry/sandboxes";
 import fs, {
   mkdir,
   mkdtemp,
@@ -203,7 +205,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
         '@import "tailwindcss";'
       ),
     ]);
-    const { gateway, storage } = demoInstallation;
+    const { gateway, storage, sandbox } = demoInstallation;
     if (!(typeof gateway === "string" && gateway !== "") || !storage) {
       throw new Error("Demo preset requires gateway and storage selections");
     }
@@ -211,6 +213,13 @@ const generateDemo = async (): Promise<Map<string, string>> => {
       fresh: true,
     });
     await installItems(plan.sources, temporary, true);
+    if (typeof sandbox === "string" && sandbox !== "") {
+      await configureSandboxProvider(
+        temporary,
+        await resolveSandbox(sandbox, temporary)
+      );
+    }
+
     await configureGatewayProvider(
       temporary,
       await resolveGateway(gateway, temporary)

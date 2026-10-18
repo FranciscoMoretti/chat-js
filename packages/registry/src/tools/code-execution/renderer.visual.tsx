@@ -65,8 +65,8 @@ const outputState = (
   ),
 });
 
-test("vercel-code-execution renders every state in the chat", async () => {
-  await captureChatStory("vercel-code-execution", [
+test("code-execution renders every state in the chat", async () => {
+  await captureChatStory("code-execution", [
     {
       label: "Streaming code",
       settle: async (section) => {

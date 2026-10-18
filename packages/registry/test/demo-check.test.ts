@@ -26,7 +26,7 @@ const verifyGatewayAndTool = (
     'chat: "google/gemini-2.5-flash-lite"'
   );
   expect(
-    required(expected, "tools/chatjs/vercel-code-execution/renderer.tsx")
+    required(expected, "tools/chatjs/code-execution/renderer.tsx")
   ).toContain('from "@/components/sandbox"');
 };
 
@@ -60,7 +60,7 @@ const verifyEnvironmentBoundaries = (
     "tools/chatjs/retrieve-url/tool.ts",
     "tools/chatjs/tavily-search/tool.ts",
     "lib/db/mcp-oauth-lock.ts",
-    "tools/chatjs/vercel-code-execution/execution-sandbox.ts",
+    "lib/sandbox/adapter.ts",
   ]) {
     expect(required(expected, file)).toContain('from "@/lib/env"');
     expect(required(expected, file)).not.toContain("@/features/langfuse/");

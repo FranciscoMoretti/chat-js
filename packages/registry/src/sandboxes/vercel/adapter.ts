@@ -1,11 +1,12 @@
-import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
+import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { env } from "@/lib/env";
 import { z } from "zod";
 import { createModuleLogger } from "@/lib/logger";
+
+type SupportedExecutionLanguage = "python" | "javascript";
 
 const JWT_PART_COUNT = 3;
 const JWT_PAYLOAD_INDEX = 1;
@@ -197,41 +198,36 @@ const findSandboxForCleanup = async (
   }
 };
 
-const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
-  createCleanupSession: () => {
-    const auth = resolveSandboxAuth();
-    const log = createModuleLogger("eve-code-sandbox-cleanup");
-    return {
-      async deleteAndConfirmAbsent(name): Promise<void> {
-        const sandbox = await findSandboxForCleanup(name, auth);
-        if (sandbox) {
-          if (sandbox.name !== name || sandbox.persistent) {
-            throw new Error(
-              "Code sandbox identity or persistence needs reconciliation."
-            );
-          }
-          await cleanupSandbox(sandbox, log, name);
-          if (await findSandboxForCleanup(name, auth)) {
-            throw new Error("Code sandbox remains available after deletion.");
-          }
+const createCleanupSession = (
+  auth: SandboxAuth = resolveSandboxAuth()
+): {
+  deleteAndConfirmAbsent: SandboxProvider["deleteAndConfirmAbsent"];
+  provider: SandboxAuth;
+} => {
+  const log = createModuleLogger("eve-code-sandbox-cleanup");
+  return {
+    async deleteAndConfirmAbsent(name): Promise<void> {
+      const sandbox = await findSandboxForCleanup(name, auth);
+      if (sandbox) {
+        if (sandbox.name !== name || sandbox.persistent) {
+          throw new Error(
+            "Code sandbox identity or persistence needs reconciliation."
+          );
         }
-      },
-      provider: auth,
-    };
-  },
+        await cleanupSandbox(sandbox, log, name);
+        if (await findSandboxForCleanup(name, auth)) {
+          throw new Error("Code sandbox remains available after deletion.");
+        }
+      }
+    },
+    provider: auth,
+  };
 };
 
-const getErrorMessage = (err: unknown): string => {
-  if (err instanceof Error) {
-    return err.message;
-  }
-  return "Unknown error";
-};
 export {
   cleanupSandbox,
-  codeSandboxCleanupCapability,
+  createCleanupSession,
   createSandbox,
-  getErrorMessage,
   getSandboxImage,
   getTokenAuth,
   resolveSandboxAuth,

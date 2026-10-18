@@ -51,6 +51,7 @@
     "@ai-sdk/openai-compatible": "3.0.44",
     "@ai-sdk/provider": "4.0.26",
     "@chat-js/gateways": "workspace:*",
+    "@chat-js/sandboxes": "workspace:*",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/state": "^6.5.0",

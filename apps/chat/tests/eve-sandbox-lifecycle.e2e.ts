@@ -23,8 +23,8 @@ import {
   createSandbox,
   getSandboxImage,
   resolveSandboxAuth,
-} from "../tools/chatjs/vercel-code-execution/execution-sandbox";
-import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
+} from "../lib/sandbox/adapter";
+import { codeExecution } from "../tools/chatjs/code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { testToolContext } from "./helpers/eve-tool-context";
 

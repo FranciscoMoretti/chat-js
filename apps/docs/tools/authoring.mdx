@@ -88,7 +88,7 @@ Items target files under `~/tools/chatjs/<id>/`. Declare npm packages in `depend
 
 The `saved-code-execution` bundle requires code documents and a `codeExecution` provider exporting a typed `CodeExecutor` from `lib/eve/code-executor.ts`. Declare its export name with `codeExecutorExport: "executeCode"` in the descriptor. Both native tools call this shared operation with exact `{ code, language, title }` input and the current call's session, call ID, and abort signal. The operation owns sandbox lifecycle and returns one ChatJS usage receipt containing `{ message, chart }`. It does not receive EVE approval or token-access functions, and does not invoke another tool definition. Authorization belongs to each native entry point; the saved-document entry point additionally checks document ownership. No older provider contract is adapted.
 
-`chat-js add saved-code-execution` reuses the installed compatible provider or installs `vercel-code-execution` when none is selected. An incompatible selected provider produces an error before installation. Its chart packages and Run UI are installed with the execution bundles.
+`chat-js add saved-code-execution` reuses an installed compatible executor or installs `code-execution`. The generic executor requires sandbox infrastructure: select `--sandbox-provider vercel` or `--sandbox-provider daytona` if the app has no sandbox provider yet. An incompatible selected executor produces an error before installation. Its chart packages and Run UI are installed with the execution bundles.
 
 For credentials, declare alternatives in the typed metadata:
 

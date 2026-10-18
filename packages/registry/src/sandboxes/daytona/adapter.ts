@@ -1,9 +1,17 @@
 import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
 import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
-import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
-import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
+import type {
+  SandboxProvider,
+  Sandbox as ExecutionSandboxResource,
+} from "@chat-js/sandboxes/provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
+
+interface CodeSandboxCleanupSession {
+  deleteAndConfirmAbsent: SandboxProvider["deleteAndConfirmAbsent"];
+  provider: { teamId: string; projectId: string };
+}
+type ExecutionSandbox = Pick<ExecutionSandboxResource, "runCommand">;
 
 const API_URL = "https://app.daytona.io/api";
 const REQUEST_TIMEOUT_MS = 30_000;

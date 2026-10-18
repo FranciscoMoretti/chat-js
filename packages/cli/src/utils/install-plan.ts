@@ -124,7 +124,7 @@ const plannedSourceTargets = sourceTargets;
 
 const hasProviderKind = (
   metadata: unknown,
-  kind: "gateway" | "storage"
+  kind: "gateway" | "storage" | "sandbox"
 ): boolean =>
   typeof metadata === "object" &&
   metadata !== null &&
@@ -189,7 +189,8 @@ const installPlan = async (
   const replacingShared = plan.items.some(
     (item: ReadonlyNative<Plan["items"][number]>): boolean =>
       hasProviderKind(item.meta?.chatjs, "gateway") ||
-      hasProviderKind(item.meta?.chatjs, "storage")
+      hasProviderKind(item.meta?.chatjs, "storage") ||
+      hasProviderKind(item.meta?.chatjs, "sandbox")
   );
   const overwrite =
     options.overwrite === true || options.fresh === true || replacingShared;

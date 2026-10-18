@@ -1,3 +1,4 @@
+import sandboxPackage from "@chat-js/sandboxes/package.json";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -56,6 +57,10 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
   "lib/eve/tool-usage.test.ts",
+  "lib/eve/code-executor.test.ts",
+  "lib/sandbox/sandbox.test.ts",
+  "lib/sandbox/sandbox-auth.test.ts",
+  "lib/sandbox/sandbox-test-environment.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
@@ -213,6 +218,13 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     await readFile(packagePath, "utf-8")
   );
   const dependencies = manifest.dependencies ?? {};
+  const sandboxVersion = dependencies["@chat-js/sandboxes"];
+  if (
+    typeof sandboxVersion === "string" &&
+    sandboxVersion.startsWith("workspace:")
+  ) {
+    dependencies["@chat-js/sandboxes"] = sandboxPackage.version;
+  }
   for (const name of Object.keys(dependencies).filter((dependencyName) =>
     isRepositoryOnlyDependency(dependencyName)
   )) {

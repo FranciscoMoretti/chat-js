@@ -63,6 +63,7 @@ const toolDefinitionBase = z.object({
   kind: z.literal("tool"),
   requiresGateway: z.array(z.enum(["image", "video"])).optional(),
   requiresStorage: z.literal(true).optional(),
+  requiresSandbox: z.literal(true).optional(),
   requiresTools: z.array(identifier).default([]),
   slot: z
     .enum([

@@ -1,3 +1,5 @@
+import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
+import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
 import {
   assertSupportedFeatureInstallation,
@@ -38,6 +40,7 @@ type FeatureInput = ReadonlyNative<InstallationPlan["features"][number]>;
 
 interface AddOptions {
   readonly gateway?: string;
+  readonly sandboxProvider?: string;
   readonly storageProvider?: string;
   readonly storageConfig?: string;
   readonly replace?: boolean;
@@ -53,6 +56,7 @@ interface AddSetup {
   gatewayChange: boolean;
   keepStorageOptions: boolean;
   plan: InstallationPlan;
+  selectedSandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
   selectedGateway: Awaited<ReturnType<typeof resolveGateway>> | undefined;
   selectedStorage: Awaited<ReturnType<typeof resolveStorage>> | undefined;
 }
@@ -61,7 +65,7 @@ const EMPTY_SELECTION_COUNT = 0;
 
 const hasProviderKind = (
   metadata: unknown,
-  kind: "gateway" | "storage"
+  kind: "gateway" | "storage" | "sandbox"
 ): boolean =>
   typeof metadata === "object" &&
   metadata !== null &&
@@ -71,18 +75,34 @@ const hasProviderKind = (
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
-const prepareAdd = async (
+const selectedSandboxForPlan = async (
   cwd: string,
+  plan: ReadonlyNative<InstallationPlan>,
+  sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined
+) => {
+  const sandboxItem = plan.items.find((item: RegistryItemInput) =>
+    hasProviderKind(item.meta?.chatjs, "sandbox")
+  );
+  const selectedSandbox =
+    sandbox ??
+    (sandboxItem
+      ? await resolveSandbox(plan.sources[plan.items.indexOf(sandboxItem)], cwd)
+      : undefined);
+  return selectedSandbox;
+};
+
+const validateAddSelection = (
   items: readonly string[],
   options: AddOptions
-): Promise<AddSetup> => {
+): void => {
   if (
     items.length === EMPTY_SELECTION_COUNT &&
     !hasNonEmptyValue(options.gateway) &&
+    !hasNonEmptyValue(options.sandboxProvider) &&
     !hasNonEmptyValue(options.storageProvider)
   ) {
     throw new Error(
-      "Select at least one tool, feature, gateway or storage provider."
+      "Select at least one tool, feature, gateway, sandbox or storage provider."
     );
   }
   if (
@@ -91,6 +111,17 @@ const prepareAdd = async (
   ) {
     throw new Error("--storage-config requires --storage-provider.");
   }
+};
+
+const prepareAdd = async (
+  cwd: string,
+  items: readonly string[],
+  options: AddOptions
+): Promise<AddSetup> => {
+  validateAddSelection(items, options);
+  const sandbox = hasNonEmptyValue(options.sandboxProvider)
+    ? await resolveSandbox(options.sandboxProvider, cwd)
+    : undefined;
   const gateway = hasNonEmptyValue(options.gateway)
     ? await resolveGateway(options.gateway, cwd)
     : undefined;
@@ -105,6 +136,7 @@ const prepareAdd = async (
     {
       features: [],
       gateway: gateway?.source,
+      sandbox: sandbox?.source,
       storage: storage
         ? { options: storage.options, source: storage.source }
         : undefined,
@@ -120,6 +152,7 @@ const prepareAdd = async (
   const storageItem = plan.items.find((item: RegistryItemInput): boolean =>
     hasProviderKind(item.meta?.chatjs, "storage")
   );
+  const selectedSandbox = await selectedSandboxForPlan(cwd, plan, sandbox);
   const selectedGateway =
     gateway ??
     (gatewayItem
@@ -156,12 +189,13 @@ const prepareAdd = async (
     keepStorageOptions,
     plan,
     selectedGateway,
+    selectedSandbox,
     selectedStorage,
   };
 };
 
 const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
-  const { plan, selectedGateway, selectedStorage } = setup;
+  const { plan, selectedGateway, selectedStorage, selectedSandbox } = setup;
   if (plan.features.some((feature: FeatureInput) => feature.id === "mcp")) {
     log.info(
       "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
@@ -176,6 +210,7 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
       (feature: FeatureInput) => feature.envRequirements ?? []
     ),
     ...(selectedGateway?.definition.envRequirements ?? []),
+    ...(selectedSandbox?.definition.envRequirements ?? []),
     ...(selectedStorage?.definition.envRequirements ?? []),
   ];
   for (const requirement of requirements) {
@@ -204,6 +239,10 @@ export const add = new Command("add")
     "authorize overwriting modified or untracked installed source",
     false
   )
+  .option(
+    "--sandbox-provider <item>",
+    "install or replace optional sandbox infrastructure"
+  )
   .option("--gateway <item>", "install or replace the AI gateway")
   .option("--storage-provider <item>", "install or replace file storage")
   .option("--storage-config <json>", "non-secret storage adapter options")
@@ -220,6 +259,7 @@ export const add = new Command("add")
         const {
           plan,
           selectedGateway,
+          selectedSandbox,
           selectedStorage,
           gatewayChange,
           configEdit,
@@ -271,12 +311,14 @@ export const add = new Command("add")
                   "--write",
                   "package.json",
                   ".chatjs/installed-dependencies.json",
+                  ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
                 ],
                 cwd
               );
             },
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
               ...(selectedStorage && !keepStorageOptions
                 ? ["lib/storage-options.ts"]
                 : []),
@@ -285,10 +327,15 @@ export const add = new Command("add")
             rollbackTargets: [
               ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
               ...(hasNonEmptyValue(configEdit) ? ["chat.config.ts"] : []),
-              ...(selectedGateway || selectedStorage ? [".env.example"] : []),
+              ...(selectedGateway || selectedStorage || selectedSandbox
+                ? [".env.example"]
+                : []),
             ],
           },
           async (): Promise<void> => {
+            if (selectedSandbox) {
+              await configureSandboxProvider(cwd, selectedSandbox);
+            }
             if (selectedGateway) {
               await configureGatewayProvider(cwd, selectedGateway);
             }

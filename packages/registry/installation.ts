@@ -12,6 +12,7 @@ const installationSelectionSchema = z.strictObject({
   features: z.array(registryAddressSchema).default([]),
   gateway: registryAddressSchema.optional(),
   storage: storageSelectionSchema.optional(),
+  sandbox: registryAddressSchema.optional(),
   tools: z.array(registryAddressSchema).default([]),
 });
 
@@ -27,6 +28,7 @@ const demoInstallation = installationSelectionSchema.parse({
     "langfuse",
   ],
   gateway: "vercel",
+  sandbox: "vercel",
   storage: { source: "vercel-blob" },
   tools: [
     "word-count",
@@ -35,7 +37,7 @@ const demoInstallation = installationSelectionSchema.parse({
     "generate-image",
     "generate-video",
     "tavily-search",
-    "vercel-code-execution",
+    "code-execution",
     "text-documents",
     "code-documents",
     "sheet-documents",

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { CodeExecution } from "./renderer";
-import { CodeExecution as RegistryCodeExecution } from "../../../../../packages/registry/src/tools/vercel-code-execution/renderer";
+import { CodeExecution as RegistryCodeExecution } from "../../../../../packages/registry/src/tools/code-execution/renderer";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

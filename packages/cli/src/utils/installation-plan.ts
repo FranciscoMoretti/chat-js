@@ -1,3 +1,4 @@
+import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
 import type {
   FeatureDefinition,
   ToolDefinition,
@@ -127,6 +128,10 @@ export const planInstallation = async (
         selectProvider(gateway);
         break;
       }
+      case "sandbox": {
+        selectProvider(sandboxDefinitionSchema.parse(metadata));
+        break;
+      }
       case "storage": {
         selectProvider(storageDefinitionSchema.parse(metadata));
         break;
@@ -153,13 +158,16 @@ export const planInstallation = async (
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
+    ...(typeof selection.sandbox === "string" && selection.sandbox !== ""
+      ? [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]
+      : []),
     ...(selection.storage
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
   ]);
   const providerChanges = await Promise.all(
     [...providers].map(async ([kind, next]: readonly [string, string]) => {
-      if (kind !== "gateway" && kind !== "storage") {
+      if (kind !== "gateway" && kind !== "storage" && kind !== "sandbox") {
         throw new Error("Invalid exclusive provider kind.");
       }
       const previous =
@@ -218,7 +226,7 @@ export const planInstallation = async (
   ];
   // ChatJS's two selectable execution dependencies have concrete default providers.
   for (const [slot, provider] of [
-    ["codeExecution", "vercel-code-execution"],
+    ["codeExecution", "code-execution"],
     ["webSearch", "tavily-search"],
   ] as const) {
     const definitions = target();
@@ -304,6 +312,7 @@ export const planInstallation = async (
     features: [...targetFeatures.values()],
     gateway,
     storage: providers.get("storage"),
+    sandbox: providers.get("sandbox"),
     tools: target(),
   });
   return {

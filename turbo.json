@@ -49,7 +49,9 @@
     "PLAYWRIGHT",
     "CI_PLAYWRIGHT",
     "PLAYWRIGHT_TEST_BASE_URL",
-    "TRUSTED_CLIENT_IP_HEADER"
+    "TRUSTED_CLIENT_IP_HEADER",
+    "DAYTONA_API_KEY",
+    "DAYTONA_ORGANIZATION_ID"
   ],
   "tasks": {
     "dev": {
@@ -174,6 +176,8 @@
         "$TURBO_ROOT$/packages/cli/package.json",
         "$TURBO_ROOT$/packages/gateways/src/**",
         "$TURBO_ROOT$/packages/gateways/package.json",
+        "$TURBO_ROOT$/packages/sandboxes/src/**",
+        "$TURBO_ROOT$/packages/sandboxes/package.json",
         "$TURBO_ROOT$/apps/chat/**",
         "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,playwright-report,test-results,eve-results}/**",
         "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}"
@@ -210,6 +214,8 @@
         "$TURBO_ROOT$/packages/cli/package.json",
         "$TURBO_ROOT$/packages/gateways/src/**",
         "$TURBO_ROOT$/packages/gateways/package.json",
+        "$TURBO_ROOT$/packages/sandboxes/src/**",
+        "$TURBO_ROOT$/packages/sandboxes/package.json",
         "$TURBO_ROOT$/package.json",
         "$TURBO_ROOT$/bun.lock",
         "$TURBO_ROOT$/patches/**",
@@ -223,6 +229,10 @@
     "@chat-js/registry#demo:sync": {
       "cache": false,
       "outputs": []
+    },
+    "@chat-js/sandboxes#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
     },
     "@chat-js/gateways#test:types": {
       "dependsOn": ["^test:types"],

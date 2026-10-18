@@ -23,7 +23,7 @@ const registryConfig = async (
 };
 const itemAddress = (
   source: string,
-  kind: "gateway" | "tool" | "storage"
+  kind: "gateway" | "tool" | "storage" | "sandbox"
 ): string => {
   if (/^[a-z][a-z0-9-]*$/u.test(source)) {
     const suffix =

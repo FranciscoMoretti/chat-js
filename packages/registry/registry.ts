@@ -1,8 +1,5 @@
-import {
-  codeExecutionItem,
-  codeExecutionRuntimeItem,
-  daytonaCodeExecutionItem,
-} from "./code-execution";
+import { builtInSandboxes } from "./src/sandboxes/catalog";
+import { codeExecutionItem, codeExecutionRuntimeItem } from "./code-execution";
 import {
   codeExecutionUiItem,
   documentItems,
@@ -194,6 +191,7 @@ const registry = registrySchema.parse({
     attachmentUploadsItem,
     ...observabilityItems,
     ...builtInGateways,
+    ...builtInSandboxes,
     ...builtInStorage,
     ...toolItems,
     ...documentItems,
@@ -203,7 +201,6 @@ const registry = registrySchema.parse({
     ...searchToolItems,
     codeExecutionItem,
     codeExecutionRuntimeItem,
-    daytonaCodeExecutionItem,
   ],
   name: "chatjs",
 });

@@ -393,6 +393,26 @@ const scaffoldFromTemplate = async (
   );
   // This is a new scaffold, so remove the reference app's selection before install.
   await rm(pathModule.join(destination, "lib/ai/gateway.ts"));
+  await rm(pathModule.join(destination, "lib/sandbox/adapter.ts"), {
+    force: true,
+  });
+  await writeFile(
+    pathModule.join(destination, "lib/sandbox/provider.ts"),
+    `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
+
+export const createSandboxProvider: (() => SandboxProvider) | undefined = undefined;
+`
+  );
+  await writeFile(
+    pathModule.join(destination, "lib/sandbox/options.ts"),
+    `import type { EnvRequirement } from "@/lib/config-requirements";
+
+const sandboxId = "";
+const sandboxEnvRequirements: EnvRequirement[] = [];
+export { sandboxId, sandboxEnvRequirements };
+`
+  );
+
   const manifest = parseJsonObject(
     await readFile(packageJsonPath, "utf-8"),
     "Template package.json"

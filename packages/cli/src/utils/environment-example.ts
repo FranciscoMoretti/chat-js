@@ -8,7 +8,11 @@ const startOfFile = 0;
 
 const replaceEnvironmentSection = (
   original: string,
-  section: "gateway-provider" | "storage-provider" | "installed-capabilities",
+  section:
+    | "gateway-provider"
+    | "storage-provider"
+    | "sandbox-provider"
+    | "installed-capabilities",
   variables: readonly string[]
 ): string => {
   const start = `# <chatjs-${section}>`;
@@ -18,7 +22,7 @@ const replaceEnvironmentSection = (
   // Each independently replaced section must retain its own shared credentials.
   // Only user-owned entries outside all managed sections can suppress duplicates.
   const preserved = original.replaceAll(
-    /^# <chatjs-(?<section>gateway-provider|storage-provider|installed-capabilities)>\r?\n[\s\S]*?^# <\/chatjs-\k<section>>\r?$/gmu,
+    /^# <chatjs-(?<section>gateway-provider|storage-provider|sandbox-provider|installed-capabilities)>\r?\n[\s\S]*?^# <\/chatjs-\k<section>>\r?$/gmu,
     ""
   );
   const entries = [...new Set(variables)]
@@ -37,7 +41,11 @@ const replaceEnvironmentSection = (
 
 export const updateEnvironmentExample = async (
   cwd: string,
-  section: "gateway-provider" | "storage-provider" | "installed-capabilities",
+  section:
+    | "gateway-provider"
+    | "storage-provider"
+    | "sandbox-provider"
+    | "installed-capabilities",
   variables: readonly string[]
 ): Promise<void> => {
   await preflight(cwd, [".env.example"]);

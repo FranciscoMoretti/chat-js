@@ -1,3 +1,4 @@
+import type { SandboxScope } from "@chat-js/sandboxes/provider";
 import {
   confirmEveCodeSandboxCreation,
   recordEveCodeSandboxDeletion,
@@ -11,7 +12,7 @@ interface CodeSandboxOwnership {
   created: (name: string) => Promise<void>;
   release: () => Promise<void>;
   reserve: (
-    provider: { readonly teamId: string; readonly projectId: string },
+    provider: SandboxScope,
     signal?: ReadonlyNativeSurface<AbortSignal>
   ) => Promise<string>;
 }
@@ -63,7 +64,7 @@ export const eveCodeSandboxOwnership = (context: {
       );
     },
     async reserve(
-      provider: { readonly teamId: string; readonly projectId: string },
+      provider: SandboxScope,
       signal?: ReadonlyNativeSurface<AbortSignal>
     ): Promise<string> {
       if (!context.session) {
@@ -78,7 +79,7 @@ export const eveCodeSandboxOwnership = (context: {
         scope.ownerId,
         scope.conversationId,
         context.callId,
-        provider
+        { teamId: provider.accountId, projectId: provider.scopeId }
       );
       reservation = { ...scope, name };
       return name;

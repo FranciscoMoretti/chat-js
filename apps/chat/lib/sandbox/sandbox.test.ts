@@ -107,20 +107,20 @@ const imageScenarios: readonly Readonly<{
 describe("getSandboxImage", () => {
   it("rejects an empty image override before provisioning", async () => {
     vi.stubEnv("VERCEL_SANDBOX_IMAGE_PYTHON", "");
-    const { getSandboxImage } = await import("./execution-sandbox");
+    const { getSandboxImage } = await import("./adapter");
     expect(() => getSandboxImage("python")).toThrow();
   });
   it.each(imageScenarios)("$name", async ({ language, overrides, image }) => {
     for (const [name, value] of Object.entries(overrides)) {
       vi.stubEnv(name, value);
     }
-    const { getSandboxImage } = await import("./execution-sandbox");
+    const { getSandboxImage } = await import("./adapter");
     expect(getSandboxImage(language)).toBe(image);
   });
 });
 
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
-  const { cleanupSandbox } = await import("./execution-sandbox");
+  const { cleanupSandbox } = await import("./adapter");
   const gate = Promise.withResolvers<never>();
   const { stop, log, remove } = createCleanupFixture();
   stop.mockReturnValue(gate.promise);
@@ -152,7 +152,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
 });
 
 it("creates an image-backed disposable sandbox with its scope and resource bounds", async () => {
-  const { createSandbox } = await import("./execution-sandbox");
+  const { createSandbox } = await import("./adapter");
   const create = vi
     .spyOn(Sandbox, "create")
     .mockRejectedValueOnce(new Error("fixture"));
@@ -196,8 +196,7 @@ it.each(["python", "javascript"] as const)(
       })
     );
     vi.stubGlobal("fetch", fetch);
-    const { createSandbox, getSandboxImage } =
-      await import("./execution-sandbox");
+    const { createSandbox, getSandboxImage } = await import("./adapter");
     const { signal } = new AbortController();
     const image = getSandboxImage(language);
     const sandbox = await createSandbox(image, signal, "owned");
@@ -225,7 +224,7 @@ it.each(["python", "javascript"] as const)(
 );
 
 it("does not report successful cleanup until deletion has completed", async () => {
-  const { cleanupSandbox } = await import("./execution-sandbox");
+  const { cleanupSandbox } = await import("./adapter");
   const gate = Promise.withResolvers<undefined>();
   const { stop, log, remove } = createCleanupFixture();
   remove.mockReturnValue(gate.promise);
@@ -239,7 +238,7 @@ it("does not report successful cleanup until deletion has completed", async () =
   await rejected;
 });
 
-it("codeSandboxCleanupCapability deletes an exact disposable sandbox and confirms provider absence", async () => {
+it("createCleanupSession deletes an exact disposable sandbox and confirms provider absence", async () => {
   const { sandbox, stop, remove, get } = createSandboxFixture({
     name: "owned",
     persistent: false,
@@ -248,9 +247,8 @@ it("codeSandboxCleanupCapability deletes an exact disposable sandbox and confirm
     .mockResolvedValueOnce(sandbox)
     .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
   try {
-    const { codeSandboxCleanupCapability } =
-      await import("./execution-sandbox");
-    const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+    const { createCleanupSession } = await import("./adapter");
+    const cleanup = createCleanupSession();
     expect(cleanup.provider).toMatchObject({
       projectId: "project",
       teamId: "team",
@@ -270,14 +268,13 @@ it.each([
   { name: "foreign", persistent: false },
   { name: "owned", persistent: true },
 ])(
-  "codeSandboxCleanupCapability refuses unsafe sandbox identity %#",
+  "createCleanupSession refuses unsafe sandbox identity %#",
   async (identity: Readonly<{ name: string; persistent: boolean }>) => {
     const { sandbox, stop, remove, get } = createSandboxFixture(identity);
     get.mockResolvedValue(sandbox);
     try {
-      const { codeSandboxCleanupCapability } =
-        await import("./execution-sandbox");
-      const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+      const { createCleanupSession } = await import("./adapter");
+      const cleanup = createCleanupSession();
       await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
         "identity or persistence"
       );

@@ -1,3 +1,4 @@
+import type { Sandbox } from "@chat-js/sandboxes/provider";
 import type { createModuleLogger } from "@/lib/logger";
 
 const supportedExecutionLanguages = ["python", "javascript"] as const;
@@ -9,13 +10,7 @@ interface CodeExecutionResult {
   message: string;
 }
 
-interface ExecutionSandbox {
-  runCommand: (command: Readonly<{ cmd: string; args: string[] }>) => Promise<{
-    exitCode: number;
-    stdout: () => Promise<string>;
-    stderr: () => Promise<string>;
-  }>;
-}
+type ExecutionSandbox = Pick<Sandbox, "runCommand">;
 
 interface CodeExecutionContext {
   code: string;

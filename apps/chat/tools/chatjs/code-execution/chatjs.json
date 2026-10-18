@@ -8,18 +8,10 @@
     "usage": "single-receipt"
   },
   "codeExecutorExport": "executeCode",
-  "envRequirements": [
-    {
-      "description": "Vercel OIDC or team/project/token credentials",
-      "options": [
-        ["VERCEL_OIDC_TOKEN"],
-        ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"]
-      ],
-      "runtimeAuth": "vercel-oidc"
-    }
-  ],
-  "id": "vercel-code-execution",
+  "envRequirements": [],
+  "id": "code-execution",
   "kind": "tool",
+  "requiresSandbox": true,
   "requiresTools": [],
   "slot": "codeExecution",
   "tools": [

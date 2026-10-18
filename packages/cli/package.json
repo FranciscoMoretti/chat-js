@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@chat-js/gateways": "workspace:*",
+    "@chat-js/sandboxes": "workspace:*",
     "@clack/prompts": "^1.0.1",
     "commander": "^14.0.0",
     "files-sdk": "2.5.0",

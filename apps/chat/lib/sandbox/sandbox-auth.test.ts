@@ -15,7 +15,7 @@ describe("resolveSandboxAuth", () => {
       get: () => ({ headers: { "x-vercel-oidc-token": token } }),
     });
     expect(getVercelOidcTokenSync()).toBe(token);
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
+    const { resolveSandboxAuth } = await import("./adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -26,7 +26,7 @@ describe("resolveSandboxAuth", () => {
   it("resolves the provider scope from an OIDC token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
     vi.stubEnv("VERCEL_OIDC_TOKEN", token);
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
+    const { resolveSandboxAuth } = await import("./adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -36,7 +36,7 @@ describe("resolveSandboxAuth", () => {
   });
   it("pins explicitly configured opaque credentials", async () => {
     configureSandboxCredentials();
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
+    const { resolveSandboxAuth } = await import("./adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -87,7 +87,7 @@ it.each([
     } else if (typeof token === "string") {
       vi.stubEnv("VERCEL_OIDC_TOKEN", token);
     }
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
+    const { resolveSandboxAuth } = await import("./adapter");
     expect(() => resolveSandboxAuth()).toThrow(error);
   }
 );
@@ -101,8 +101,8 @@ it("resolveSandboxAuth uses each request's token for execution and cleanup inste
   vi.stubGlobal(Symbol.for("@vercel/request-context"), {
     get: () => ({ headers: { "x-vercel-oidc-token": token } }),
   });
-  const { resolveSandboxAuth, codeSandboxCleanupCapability } =
-    await import("./execution-sandbox");
+  const { resolveSandboxAuth, createCleanupSession } =
+    await import("./adapter");
 
   expect(resolveSandboxAuth()).toEqual({
     projectId: "first",
@@ -110,7 +110,7 @@ it("resolveSandboxAuth uses each request's token for execution and cleanup inste
     token,
   });
   token = jwt({ owner_id: "team", project_id: "second" });
-  expect(codeSandboxCleanupCapability.createCleanupSession().provider).toEqual({
+  expect(createCleanupSession().provider).toEqual({
     projectId: "second",
     teamId: "team",
     token,
