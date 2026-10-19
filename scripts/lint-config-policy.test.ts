@@ -90,18 +90,25 @@ const runAgentHook = async (
   temporary: string,
   mode: "edit" | "start" | "check",
   payload: unknown,
-  env = fixtureEnv
+  env = fixtureEnv,
+  host?: "claude"
 ): Promise<{ exitCode: number; output: string; errors: string }> => {
+  const hostArgs: string[] = [];
+  if (host === "claude") {
+    hostArgs.push(host);
+  } else if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "conversation_id" in payload
+  ) {
+    hostArgs.push("cursor");
+  }
   const child = Bun.spawn(
     [
       "bash",
       path.join(temporary, "scripts/ai-post-codegen.sh"),
       mode,
-      ...(typeof payload === "object" &&
-      payload !== null &&
-      "conversation_id" in payload
-        ? ["cursor"]
-        : []),
+      ...hostArgs,
     ],
     {
       cwd: path.join(temporary, "scripts"),
@@ -130,10 +137,11 @@ const runAgentHook = async (
 
 const hookCommand = (
   mode: "start" | "edit" | "check",
-  rootCommand = '"$(git rev-parse --show-toplevel)"'
+  rootCommand = '"$(git rev-parse --show-toplevel)"',
+  host = ""
 ) => ({
   type: "command",
-  command: `${rootCommand}/scripts/ai-post-codegen.sh ${mode}`,
+  command: `${rootCommand}/scripts/ai-post-codegen.sh ${mode}${host ? ` ${host}` : ""}`,
 });
 
 test("agent configurations invoke the maintained hook modes", async () => {
@@ -156,15 +164,17 @@ test("agent configurations invoke the maintained hook modes", async () => {
   expect(claude).toMatchObject({
     hooks: {
       UserPromptSubmit: [
-        { hooks: [hookCommand("start", '"$CLAUDE_PROJECT_DIR"')] },
+        { hooks: [hookCommand("start", '"$CLAUDE_PROJECT_DIR"', "claude")] },
       ],
       PostToolUse: [
         {
           matcher: "Write|Edit|MultiEdit",
-          hooks: [hookCommand("edit", '"$CLAUDE_PROJECT_DIR"')],
+          hooks: [hookCommand("edit", '"$CLAUDE_PROJECT_DIR"', "claude")],
         },
       ],
-      Stop: [{ hooks: [hookCommand("check", '"$CLAUDE_PROJECT_DIR"')] }],
+      Stop: [
+        { hooks: [hookCommand("check", '"$CLAUDE_PROJECT_DIR"', "claude")] },
+      ],
     },
   });
   expect(cursor).toMatchObject({
@@ -215,7 +225,13 @@ test.each(["codex", "cursor", "claude"])(
         },
         cursor: { file_path: path.join(temporary, "edited.ts") },
       };
-      const result = await runAgentHook(temporary, "edit", payloads[host]);
+      const result = await runAgentHook(
+        temporary,
+        "edit",
+        payloads[host],
+        fixtureEnv,
+        host === "claude" ? "claude" : undefined
+      );
       expect(result.exitCode, result.errors).toBe(0);
       expect(await readFile(path.join(temporary, "edited.ts"), "utf-8")).toBe(
         "export const chosen = { answer: 42 };\n"
@@ -273,6 +289,51 @@ test(
       });
       expect(result.exitCode, result.errors).toBe(2);
       expect(result.errors).toContain("no-eval");
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+
+test.each(["start", "edit", "check"] as const)(
+  "Cursor skips imported Claude %s hooks",
+  async (mode) => {
+    const temporary = await mkdtemp(
+      path.join(tmpdir(), "chatjs-imported-hook-")
+    );
+    const untouched = "export  const untouched={answer:0}\n";
+    try {
+      await writeHookFixture(temporary);
+      await writeFile(path.join(temporary, "untouched.ts"), untouched);
+      const payload = {
+        conversation_id: "imported-fixture",
+        file_path: path.join(temporary, "untouched.ts"),
+        status: "completed",
+      };
+      const cursorEnv = { ...fixtureEnv, CURSOR_VERSION: "test" };
+      const imported = await runAgentHook(
+        temporary,
+        mode,
+        payload,
+        cursorEnv,
+        "claude"
+      );
+      expect(imported.exitCode).toBe(0);
+      expect(imported.errors).toBe("");
+      expect(imported.output.trim()).toBe(
+        mode === "start" ? '{"continue":true}' : "{}"
+      );
+      expect(
+        await readFile(path.join(temporary, "untouched.ts"), "utf-8")
+      ).toBe(untouched);
+      if (mode === "edit") {
+        const native = await runAgentHook(temporary, mode, payload, cursorEnv);
+        expect(native.exitCode, native.errors).toBe(0);
+        expect(
+          await readFile(path.join(temporary, "untouched.ts"), "utf-8")
+        ).toBe("export const untouched = { answer: 0 };\n");
+      }
     } finally {
       await rm(temporary, { force: true, recursive: true });
     }
@@ -378,6 +439,7 @@ test.each([
         : { ...payload, stop_hook_active: true };
       const foreignGitEnv = {
         ...fixtureEnv,
+        CURSOR_VERSION: cursor ? "test" : "",
         GIT_DIR: path.join(nested, ".git"),
         GIT_WORK_TREE: nested,
         GIT_INDEX_FILE: path.join(nested, ".git", "index"),
