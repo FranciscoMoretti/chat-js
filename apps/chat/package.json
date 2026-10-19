@@ -34,7 +34,7 @@
     "test:native": "vitest run --config vitest.eve-provider.config.ts",
     "test:research:native": "bun tests/native-research-runtime.ts",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
-    "test:worker-bundle": "bun scripts/check-worker-typescript.ts",
+    "test:worker-bundle": "node scripts/check-worker-typescript.ts",
     "ai:devtools": "bunx @ai-sdk/devtools",
     "fetch:models": "bun scripts/fetch-models.ts && bun format",
     "dev:neon": "bash scripts/with-db.sh bun dev",

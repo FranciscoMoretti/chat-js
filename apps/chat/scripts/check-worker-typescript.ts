@@ -4,6 +4,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { hasBundledTypeScriptCompiler } from "./worker-bundle-source.ts";
 
 // Run after eve:build. Exercise the emitted PostgreSQL/Graphile/cosmiconfig
 // loader, since importing the source dependency would miss bundler regressions.
@@ -20,7 +21,7 @@ const chunks = await Promise.all(
 const worldChunks: string[] = [];
 for (const { file, source } of chunks) {
   assert.ok(
-    !source.includes("function createSourceFile("),
+    !hasBundledTypeScriptCompiler(source),
     `TypeScript compiler is still bundled in ${file}`
   );
   if (source.includes('cosmiconfigSync)("graphile-worker")')) {
