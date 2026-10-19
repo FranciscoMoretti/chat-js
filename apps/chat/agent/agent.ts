@@ -16,7 +16,7 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
-  // Share Tavily/tokenizer code across the module map and step registration bundles.
+  // Share runtime dependencies across the module map and step registration bundles.
   build: {
     externalDependencies: [
       "pino",

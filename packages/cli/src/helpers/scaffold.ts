@@ -424,6 +424,11 @@ export { sandboxId, sandboxEnvRequirements };
   delete dependencies["@ai-sdk/gateway"];
   delete dependencies["@vercel/blob"];
   delete dependencies["@tavily/core"];
+  // A scaffold starts without the reference app's optional search provider.
+  // Keeping its build external would also prevent pruning it after replacement.
+  await replaceInFile(pathModule.join(destination, "agent", "agent.ts"), [
+    ['      "@tavily/core",\n', ""],
+  ]);
   delete dependencies["@mendable/firecrawl-js"];
   await rm(pathModule.join(destination, "tools/chatjs/generate-video"), {
     force: true,
