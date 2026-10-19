@@ -16,7 +16,15 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
-  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
+  // Share runtime dependencies across the module map and step registration bundles.
+  build: {
+    externalDependencies: [
+      "pino",
+      "pino-pretty",
+      "thread-stream",
+      "@tavily/core",
+    ],
+  },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
   experimental: { workflow: { world: resolveWorkflowWorld() } },

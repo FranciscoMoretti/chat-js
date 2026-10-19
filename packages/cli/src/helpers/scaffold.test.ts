@@ -605,6 +605,13 @@ describe("scaffoldFromTemplate", (): void => {
 
     await scaffoldFromTemplate(destination);
 
+    const agentSource = await readFile(
+      pathModule.join(destination, "agent", "agent.ts"),
+      "utf-8"
+    );
+    expect(agentSource).not.toContain("@tavily/core");
+    expect(agentSource).toContain('"thread-stream"');
+
     expect(
       existsSync(pathModule.join(destination, "agent/tools/deepResearch.ts"))
     ).toBe(false);
