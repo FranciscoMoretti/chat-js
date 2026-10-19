@@ -1,5 +1,5 @@
-// Signed-in-only profile for the isolated free Render acceptance deployment.
-export const guestEnabled = false;
+// Both isolated agents participate in the free Render memory acceptance trial.
+export const guestEnabled = true;
 export const eveAgents: Record<string, string> = guestEnabled
   ? { chat: ".", guest: "./guest" }
   : { chat: "." };
