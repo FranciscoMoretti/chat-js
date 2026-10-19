@@ -1,9 +1,22 @@
 {
   "version": 1,
   "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "bash scripts/ai-post-codegen.sh start cursor",
+        "timeout": 60
+      }
+    ],
     "afterFileEdit": [
       {
         "command": "bash scripts/ai-post-codegen.sh edit"
+      }
+    ],
+    "stop": [
+      {
+        "command": "bash scripts/ai-post-codegen.sh check cursor",
+        "timeout": 600,
+        "loop_limit": 1
       }
     ]
   }

@@ -11,10 +11,10 @@ case "${1:-}" in
     exec bun run ultracite fix --hook
     ;;
   start|check)
-    exec bun "$ROOT_DIR/scripts/ai-handoff.ts" "$1"
+    exec bun "$ROOT_DIR/scripts/ai-handoff.ts" "$@"
     ;;
   *)
-    echo "Usage: $0 {edit|start|check}" >&2
+    echo "Usage: $0 {edit|start|check} [cursor]" >&2
     exit 64
     ;;
 esac

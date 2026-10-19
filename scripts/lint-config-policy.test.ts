@@ -92,7 +92,16 @@ const runAgentHook = async (
   env = fixtureEnv
 ): Promise<{ exitCode: number; output: string; errors: string }> => {
   const child = Bun.spawn(
-    ["bash", path.join(temporary, "scripts/ai-post-codegen.sh"), mode],
+    [
+      "bash",
+      path.join(temporary, "scripts/ai-post-codegen.sh"),
+      mode,
+      ...(typeof payload === "object" &&
+      payload !== null &&
+      "conversation_id" in payload
+        ? ["cursor"]
+        : []),
+    ],
     {
       cwd: path.join(temporary, "scripts"),
       env,
@@ -145,17 +154,34 @@ test("agent configurations invoke the maintained hook modes", async () => {
   });
   expect(claude).toMatchObject({
     hooks: {
+      UserPromptSubmit: [
+        { hooks: [hookCommand("start", '"$CLAUDE_PROJECT_DIR"')] },
+      ],
       PostToolUse: [
         {
           matcher: "Write|Edit|MultiEdit",
           hooks: [hookCommand("edit", '"$CLAUDE_PROJECT_DIR"')],
         },
       ],
+      Stop: [{ hooks: [hookCommand("check", '"$CLAUDE_PROJECT_DIR"')] }],
     },
   });
   expect(cursor).toMatchObject({
     hooks: {
+      beforeSubmitPrompt: [
+        {
+          command: "bash scripts/ai-post-codegen.sh start cursor",
+          timeout: 60,
+        },
+      ],
       afterFileEdit: [{ command: "bash scripts/ai-post-codegen.sh edit" }],
+      stop: [
+        {
+          command: "bash scripts/ai-post-codegen.sh check cursor",
+          timeout: 600,
+          loop_limit: 1,
+        },
+      ],
     },
   });
 });
@@ -253,9 +279,47 @@ test(
   testDeadlineMs
 );
 
-test.each([null, "lint", "test:types"])(
-  "handoff hook reports %s failures without fixing files",
-  async (failingScript) => {
+const expectHookFailure = (
+  result: { exitCode: number; output: string; errors: string },
+  cursor: boolean,
+  message: string
+): void => {
+  expect(result.exitCode).toBe(cursor ? 0 : 2);
+  if (cursor) {
+    const response: unknown = JSON.parse(result.output);
+    expect(response).toHaveProperty("followup_message");
+    expect(result.output).toContain(message);
+  } else {
+    expect(result.errors).toContain(message);
+    expect(result.output).toBe("");
+  }
+};
+
+const expectHookNotice = (
+  result: { exitCode: number; output: string; errors: string },
+  cursor: boolean,
+  message: string
+): void => {
+  expect(result.exitCode).toBe(0);
+  expect(cursor ? result.errors : result.output).toContain(message);
+  if (cursor) {
+    expect(result.output).toBe("{}");
+  }
+};
+
+test.each([
+  ["codex", null],
+  ["codex", "lint"],
+  ["codex", "test:types"],
+  ["claude", null],
+  ["claude", "lint"],
+  ["claude", "test:types"],
+  ["cursor", null],
+  ["cursor", "lint"],
+  ["cursor", "test:types"],
+] as const)(
+  "%s handoff hook reports %s failures without fixing files",
+  async (host, failingScript) => {
     const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-check-hook-"));
     const untouched = "export  const untouched={answer:0}\n";
     try {
@@ -305,7 +369,12 @@ test.each([null, "lint", "test:types"])(
         env: fixtureEnv,
       });
       expect(embedded.exitCode).toBe(0);
-      const payload = { session_id: "check-fixture" };
+      const cursor = host === "cursor";
+      const sessionKey = cursor ? "conversation_id" : "session_id";
+      const payload = { [sessionKey]: "check-fixture" };
+      const retryPayload = cursor
+        ? { ...payload, loop_count: 1 }
+        : { ...payload, stop_hook_active: true };
       const foreignGitEnv = {
         ...fixtureEnv,
         GIT_DIR: path.join(nested, ".git"),
@@ -319,7 +388,7 @@ test.each([null, "lint", "test:types"])(
         foreignGitEnv
       );
       expect(started.exitCode).toBe(0);
-      expect(started.output).toBe("{}");
+      expect(started.output).toBe(cursor ? '{"continue":true}' : "{}");
       const discussion = await runAgentHook(temporary, "check", payload);
       expect(discussion.output).toBe("{}");
       expect(discussion.errors).toBe("");
@@ -332,20 +401,21 @@ test.each([null, "lint", "test:types"])(
       const steered = await runAgentHook(temporary, "start", payload);
       expect(steered.exitCode).toBe(0);
       const otherSession = await runAgentHook(temporary, "check", {
-        session_id: "different-session",
+        [sessionKey]: "different-session",
       });
-      expect(otherSession.exitCode).toBe(2);
-      expect(otherSession.errors).toContain("no prompt-start snapshot");
+      expectHookFailure(otherSession, cursor, "no prompt-start snapshot");
       const result = await runAgentHook(
         temporary,
         "check",
         payload,
         foreignGitEnv
       );
-      expect(result.exitCode, result.errors).toBe(
-        failingScript === null ? 0 : 2
-      );
-      expect(result.output).toBe(failingScript === null ? "{}" : "");
+      if (failingScript === null) {
+        expect(result.exitCode, result.errors).toBe(0);
+        expect(result.output).toBe("{}");
+      } else {
+        expectHookFailure(result, cursor, `bun ${failingScript}`);
+      }
       expect(result.errors).toContain(
         failingScript === "lint" ? "lint failed" : "lint checked"
       );
@@ -356,26 +426,27 @@ test.each([null, "lint", "test:types"])(
         await readFile(path.join(temporary, "untouched.ts"), "utf-8")
       ).toBe(untouched);
       const unchanged = await runAgentHook(temporary, "check", payload);
-      expect(unchanged.exitCode).toBe(0);
-      expect(unchanged.output).toContain(
-        failingScript === null ? "{}" : "previously failed"
-      );
-      expect(unchanged.errors).toBe("");
+      if (failingScript === null) {
+        expect(unchanged.exitCode).toBe(0);
+        expect(unchanged.output).toBe("{}");
+        expect(unchanged.errors).toBe("");
+      } else {
+        expectHookNotice(unchanged, cursor, "previously failed");
+      }
       await writeFile(
         path.join(temporary, "changed.ts"),
         "export const changed = false;\n"
       );
-      const continued = await runAgentHook(temporary, "check", {
-        ...payload,
-        stop_hook_active: true,
-      });
+      const continued = await runAgentHook(temporary, "check", retryPayload);
       expect(continued.exitCode).toBe(0);
       expect(continued.errors).toContain(
         failingScript === "lint" ? "lint failed" : "lint checked"
       );
-      expect(continued.output).toContain(
-        failingScript === null ? "{}" : "Automatic continuation stopped"
-      );
+      if (failingScript === null) {
+        expect(continued.output).toBe("{}");
+      } else {
+        expectHookNotice(continued, cursor, "Automatic continuation stopped");
+      }
       if (failingScript === null) {
         const staged = Bun.spawnSync(["git", "add", "--", "changed.ts"], {
           cwd: temporary,
@@ -420,16 +491,34 @@ test.each([null, "lint", "test:types"])(
       expect(nextDiscussion.output).toBe("{}");
       expect(nextDiscussion.errors).toBe("");
 
+      if (cursor) {
+        await runAgentHook(temporary, "start", payload);
+        await writeFile(path.join(temporary, "interrupted.ts"), "export {};\n");
+        const aborted = await runAgentHook(temporary, "check", {
+          ...payload,
+          status: "aborted",
+        });
+        expect(aborted.exitCode).toBe(0);
+        expect(aborted.output).toBe("{}");
+        expect(aborted.errors).toBe("");
+        await runAgentHook(temporary, "start", payload);
+        const afterAbort = await runAgentHook(temporary, "check", payload);
+        expect(afterAbort.errors).toBe("");
+        await runAgentHook(temporary, "start", payload);
+        await writeFile(path.join(temporary, "errored.ts"), "export {};\n");
+        const errored = await runAgentHook(temporary, "check", {
+          ...payload,
+          status: "error",
+        });
+        expect(errored.output).toBe("{}");
+        expect(errored.errors).toBe("");
+      }
+
       await rm(path.join(temporary, ".git", "HEAD"));
       const brokenSnapshot = await runAgentHook(temporary, "check", payload);
-      expect(brokenSnapshot.exitCode).toBe(2);
-      expect(brokenSnapshot.errors).toContain("Handoff check could not run");
-      const brokenRetry = await runAgentHook(temporary, "check", {
-        ...payload,
-        stop_hook_active: true,
-      });
-      expect(brokenRetry.exitCode).toBe(0);
-      expect(brokenRetry.output).toContain("Handoff check could not run");
+      expectHookFailure(brokenSnapshot, cursor, "Handoff check could not run");
+      const brokenRetry = await runAgentHook(temporary, "check", retryPayload);
+      expectHookNotice(brokenRetry, cursor, "Handoff check could not run");
     } finally {
       await rm(temporary, { force: true, recursive: true });
     }
