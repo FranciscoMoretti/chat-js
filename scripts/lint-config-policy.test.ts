@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
@@ -512,9 +513,34 @@ test.each([
         });
         expect(errored.output).toBe("{}");
         expect(errored.errors).toBe("");
+        await runAgentHook(temporary, "start", payload);
+        const activePath = path.join(
+          temporary,
+          ".git",
+          "agent-handoff",
+          `${createHash("sha256").update("check-fixture").digest("hex")}.active`
+        );
+        await rm(activePath);
+        await mkdir(activePath);
+        const failedCleanup = await runAgentHook(temporary, "check", {
+          ...payload,
+          status: "aborted",
+        });
+        expectHookNotice(failedCleanup, cursor, "Handoff check could not run");
       }
 
       await rm(path.join(temporary, ".git", "HEAD"));
+      if (cursor) {
+        const interruptedCheckout = await runAgentHook(temporary, "check", {
+          ...payload,
+          status: "error",
+        });
+        expectHookNotice(
+          interruptedCheckout,
+          cursor,
+          "Handoff check could not run"
+        );
+      }
       const brokenSnapshot = await runAgentHook(temporary, "check", payload);
       expectHookFailure(brokenSnapshot, cursor, "Handoff check could not run");
       const brokenRetry = await runAgentHook(temporary, "check", retryPayload);

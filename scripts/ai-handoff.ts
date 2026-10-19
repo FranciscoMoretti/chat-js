@@ -15,6 +15,7 @@ const checkoutEnv = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))
 );
 let stopHookActive = false;
+let interrupted = false;
 const cursor = process.argv[3] === "cursor";
 
 const git = (...args: string[]): Buffer => {
@@ -87,21 +88,19 @@ const parseInput = (input: unknown) => {
   stopHookActive =
     input.stop_hook_active === true ||
     (cursor && typeof input.loop_count === "number" && input.loop_count > 0);
+  interrupted =
+    cursor && (input.status === "aborted" || input.status === "error");
   const sessionKey = cursor ? "conversation_id" : "session_id";
   const sessionId = input[sessionKey];
   if (typeof sessionId !== "string" || sessionId.length === 0) {
     throw new Error(`Hook payload is missing ${sessionKey}.`);
   }
-  return {
-    interrupted:
-      cursor && (input.status === "aborted" || input.status === "error"),
-    sessionId,
-  };
+  return sessionId;
 };
 
 const run = async (): Promise<void> => {
   const input: unknown = JSON.parse(await Bun.stdin.text());
-  const { sessionId, interrupted } = parseInput(input);
+  const sessionId = parseInput(input);
   const session = createHash("sha256").update(sessionId).digest("hex");
   const directory = path.resolve(
     root,
@@ -186,7 +185,7 @@ try {
   await run();
 } catch (error) {
   const message = `Handoff check could not run: ${String(error)}`;
-  if (process.argv[2] === "check" && !stopHookActive) {
+  if (process.argv[2] === "check" && !stopHookActive && !interrupted) {
     requestCorrection(message);
   } else {
     output(message);
