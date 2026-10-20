@@ -40,5 +40,19 @@ export const useEveDeliveryReceipt = (
       });
     }
   }, [receipt.data, accept, queryClient, trpc, sessionId]);
-  return receipt.refetch;
+  return async (operationId: string): Promise<void> => {
+    // A stream acknowledgement may clear pending before send() settles. Refresh
+    // the operation that was sent, not the observer's now-disabled query.
+    const refreshed = await queryClient.query({
+      ...trpc.eve.sendReceipt.queryOptions({ sessionId, operationId }),
+      retry: false,
+      staleTime: 0,
+    });
+    if (refreshed) {
+      accept(refreshed);
+      await queryClient.invalidateQueries({
+        queryKey: trpc.eve.messageDisplay.queryKey({ sessionId }),
+      });
+    }
+  };
 };

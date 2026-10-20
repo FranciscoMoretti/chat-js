@@ -69,6 +69,19 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   context,
 }) => {
   test.setTimeout(240_000);
+  const disabledQueryErrors: string[] = [];
+  context.on("page", (tab) => {
+    tab.on("console", (message) => {
+      if (message.type() === "error" && message.text().includes("skipToken")) {
+        disabledQueryErrors.push(message.text());
+      }
+    });
+  });
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("skipToken")) {
+      disabledQueryErrors.push(message.text());
+    }
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-4.1-mini" },
@@ -207,4 +220,5 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   await ready(page);
   await expect(users(page)).toHaveCount(1);
   expect(lostBinding).toBeDefined();
+  expect(disabledQueryErrors).toEqual([]);
 });

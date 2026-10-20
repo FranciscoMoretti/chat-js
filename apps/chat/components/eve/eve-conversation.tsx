@@ -619,7 +619,7 @@ const EveConversation = ({
           },
         });
       }, pending.operationId);
-      await refreshDeliveryReceipt();
+      await refreshDeliveryReceipt(pending.operationId);
     } catch (error) {
       if (isEveCommandRejection(error)) {
         delivery.reject(pending, error.message, isEveAdmissionBusy(error));
