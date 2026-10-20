@@ -6,7 +6,6 @@ import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
-import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -75,10 +74,6 @@ export const EveChatPage = async ({
     );
   }
 
-  const copy =
-    selected?.creationKind === "copy"
-      ? await getEveCopyOperation(principal.ownerId, selected.operationId)
-      : undefined;
   let content = (
     <NewEveConversation key={principal.ownerId} ownerId={principal.ownerId} />
   );
@@ -93,15 +88,19 @@ export const EveChatPage = async ({
       />
     );
   }
-  if (copy && hasText(selected?.initialModelId)) {
+  if (
+    selected?.creationKind === "copy" &&
+    hasText(selected.parentConversationId) &&
+    hasText(selected.initialModelId)
+  ) {
     content = (
       <EveCopyButton
         recovery={{
           modelId: selected.initialModelId,
           operationId: selected.operationId,
-          sourceConversationId: copy.copy.sourceConversationId,
+          sourceConversationId: selected.parentConversationId,
         }}
-        sourceConversationId={copy.copy.sourceConversationId}
+        sourceConversationId={selected.parentConversationId}
       />
     );
   }

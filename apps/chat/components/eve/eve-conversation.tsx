@@ -234,7 +234,8 @@ const EveConversationEditor = ({
     <div className="w-full">
       <p className="text-muted-foreground mb-2 text-sm">
         Replace this message in a new branch. Later messages are not included.
-        The branch starts with a fresh sandbox.
+        All branches share workspace files and the installed environment.
+        Forking does not roll files back.
       </p>
       <EveComposer
         autoFocus
@@ -422,8 +423,9 @@ const EveConversationComposer = ({
     <>
       {input.modelIds.length > 1 && (
         <p className="text-muted-foreground mb-2 text-xs">
-          Each model receives a copy of the current completed conversation and a
-          fresh sandbox.
+          Each model receives its own conversation history in the shared
+          workspace. Turns run one at a time; changes to workspace files are
+          visible to every branch.
         </p>
       )}
       <EveComposer

@@ -30,17 +30,23 @@ const resultSchema = z.object({
 
 const EveDeleteDialogView = ({
   title,
+  scope = "group",
   phase,
   onClose,
   onDelete,
   onCheck,
 }: {
   title: string;
+  scope?: "conversation" | "group";
   phase: EveDeletionPhase;
   onClose: () => void;
   onDelete: () => void;
   onCheck: () => void;
 }): ReactJSX.Element => {
+  const deleteLabel =
+    scope === "conversation"
+      ? "Delete conversation"
+      : "Delete conversation and branches";
   const busy = phase === "deleting" || phase === "checking";
   return (
     <Dialog
@@ -54,12 +60,16 @@ const EveDeleteDialogView = ({
       <DialogContent showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle className="mr-6">
-            Delete conversation and branches?
+            {scope === "conversation"
+              ? "Delete this conversation?"
+              : "Delete conversation and branches?"}
           </DialogTitle>
           <DialogDescription>
-            “{title}” belongs to a conversation family. Deleting it permanently
-            removes the original conversation, all its branches, and their
-            files. This cannot be undone.
+            {scope === "conversation"
+              ? `Permanently delete this conversation in “${title}”. Other branches keep their history and shared workspace.`
+              : `Permanently delete “${title}” and all its branches.`}{" "}
+            The workspace is deleted only when its last conversation is removed.
+            This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         {phase === "not_started" && (
@@ -68,9 +78,7 @@ const EveDeleteDialogView = ({
             creation, then retry.
           </p>
         )}
-        {phase === "deleting" && (
-          <output>Deleting conversation and branches…</output>
-        )}
+        {phase === "deleting" && <output>Deleting conversation…</output>}
         {phase === "checking" && <output>Checking deletion status…</output>}
         {phase === "pending" && (
           <output>
@@ -104,9 +112,7 @@ const EveDeleteDialogView = ({
             phase === "pending" ||
             phase === "deleting") && (
             <Button disabled={busy} onClick={onDelete} variant="destructive">
-              {phase === "pending"
-                ? "Retry deletion"
-                : "Delete conversation and branches"}
+              {phase === "pending" ? "Retry deletion" : deleteLabel}
             </Button>
           )}
         </DialogFooter>
@@ -124,6 +130,7 @@ const EveDeleteDialog = ({
     readonly id: string;
     readonly title: string;
     readonly state: string;
+    readonly scope?: "conversation" | "group";
   };
   readonly onClose: () => void;
   readonly onChanged: (rootId: string) => Promise<void>;
@@ -179,6 +186,7 @@ const EveDeleteDialog = ({
       }}
       phase={phase}
       title={conversation.title}
+      scope={conversation.scope}
     />
   );
 };

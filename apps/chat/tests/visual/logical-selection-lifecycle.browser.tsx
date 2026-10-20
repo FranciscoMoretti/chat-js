@@ -61,7 +61,12 @@ vi.mock("@/providers/default-model-provider", () => ({
     vi.fn<(_id: string) => Promise<void>>().mockResolvedValue(),
 }));
 vi.mock("@/components/eve/eve-logical-group-recovery", () => ({
-  EveLogicalGroupRecovery: (): React.JSX.Element => <output>Recovering</output>,
+  EveLogicalGroupRecovery: ({
+    autoOnly,
+  }: {
+    readonly autoOnly?: boolean;
+  }): React.JSX.Element | null =>
+    autoOnly === true ? null : <output>Recovering</output>,
 }));
 vi.mock("@/components/eve/eve-response-group-cards", () => ({
   EveResponseGroupCards: ({

@@ -171,7 +171,8 @@ const EveChatHeader = ({
                         }}
                         onDelete={() => {
                           openDeletion({
-                            id: chatId,
+                            id: conversationId,
+                            scope: "conversation",
                             projectId: projectId ?? null,
                             state: "bound",
                             title,

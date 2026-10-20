@@ -1,11 +1,15 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
 import SharePage from "@/app/(chat)/share/[id]/page";
 
-import { prepareCreation } from "@/lib/eve/pending-create";
+import { retainResponseGroupDraft } from "@/lib/eve/create-response-group";
+import {
+  prepareResponseGroupCreation,
+  prepareCreation,
+} from "@/lib/eve/pending-create";
 
 import {
   history,
@@ -77,19 +81,34 @@ test("display receipts settle with a fresh native agent wrapper", async () => {
     .toBeVisible();
 });
 
-test("edit replaces the selected message in a fresh sandbox", async () => {
-  await renderRoute(conversation, request);
+test("edit replaces the selected history while sharing workspace", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: Object.fromEntries(
+      Object.entries(invoicesTranscripts).map(([id, messages]) => [
+        id,
+        messages.map((message) =>
+          message.role === "assistant"
+            ? {
+                ...message,
+                parts: [{ type: "text", text: "Add an index for this query." }],
+              }
+            : message
+        ),
+      ])
+    ),
+  });
   await page.getByRole("button", { name: "Edit message" }).first().click();
   await expect
     .element(
       page.getByText(
-        "Replace this message in a new branch. Later messages are not included. The branch starts with a fresh sandbox."
+        "Replace this message in a new branch. Later messages are not included. All branches share workspace files and the installed environment. Forking does not roll files back."
       )
     )
     .toBeVisible();
 });
 
-test("comparison explains its current history and fresh sandboxes", async () => {
+test("comparison explains shared workspace and serialized turns", async () => {
   await renderRoute(conversation, request);
   await page.getByTestId("model-selector").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
@@ -99,7 +118,7 @@ test("comparison explains its current history and fresh sandboxes", async () => 
   await expect
     .element(
       page.getByText(
-        "Each model receives a copy of the current completed conversation and a fresh sandbox."
+        "Each model receives its own conversation history in the shared workspace. Turns run one at a time; changes to workspace files are visible to every branch."
       )
     )
     .toBeVisible();
@@ -188,29 +207,16 @@ test("conversation whose creation is unconfirmed, with the request saved here", 
 });
 
 test("saved copy of a shared conversation that was not confirmed", async () => {
-  const copy = { ...unconfirmed, creationKind: "copy" as const };
+  const copy = {
+    ...unconfirmed,
+    creationKind: "copy" as const,
+    parentConversationId: "f1e2d3c4-b5a6-4978-8a6b-5c4d3e2f1a0b",
+  };
   await renderRoute(conversation, {
     ...request,
     server: {
       conversation: copy,
       conversations: history,
-      copyOperation: {
-        conversation: { ...copy, guestCleanupAttemptedAt: null },
-        copy: {
-          acceptedAt: null,
-          conversationId: copy.id,
-          documentsReady: false,
-          ownerId: session.user.id,
-          phase: "preparing",
-          plan: null,
-          planHash: "",
-          projectionHash: "",
-          seed: null,
-          sourceConversationId: "f1e2d3c4-b5a6-4978-8a6b-5c4d3e2f1a0b",
-          sourceOwnerId: "user_priya",
-          sourceSessionId: "ses_shared",
-        },
-      },
     },
   });
   await expect
@@ -236,7 +242,9 @@ test("shared conversation", async () => {
     .toBeVisible();
   await expect
     .element(
-      page.getByRole("link", { name: "Sign in to save this conversation" })
+      page.getByText(
+        "Shared conversations are read-only. Workspace access is private to the owner."
+      )
     )
     .toBeVisible();
 });
@@ -357,4 +365,124 @@ test("lost branch response keeps source recovery visible instead of selecting th
   await expect
     .element(page.getByRole("region", { name: "Version recovery" }))
     .toHaveTextContent("Replacement awaiting recovery");
+});
+
+test("shared conversation does not grant another account workspace access", async () => {
+  await renderRoute(shared, {
+    ...signedIn,
+    path: `/share/${invoicesConversation.id}`,
+    server: {
+      conversations: history,
+      transcript: { ...invoicesShared, ownerId: "another-owner" },
+    },
+  });
+  await expect
+    .element(
+      page.getByText(
+        "Shared conversations are read-only. Workspace access is private to the owner."
+      )
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("region", { name: "Save shared conversation" }))
+    .not.toBeInTheDocument();
+});
+
+test("deleting one branch preserves the shared workspace", async () => {
+  await renderRoute(conversation, request);
+  await page
+    .getByRole("button", { name: `Chat menu: ${invoicesConversation.title}` })
+    .click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await expect
+    .element(page.getByRole("heading", { name: "Delete this conversation?" }))
+    .toBeVisible();
+  await expect
+    .element(
+      page.getByText(
+        "Other branches keep their history and shared workspace.",
+        { exact: false }
+      )
+    )
+    .toBeVisible();
+});
+
+test("comparison waits for the shared workspace", async () => {
+  const groupId = "a1111111-2222-4333-8444-555555555555";
+  const waitingId = "b1111111-2222-4333-8444-555555555555";
+  const modelId = invoicesConversation.initialModelId ?? "openai/gpt-5-mini";
+  const saved = prepareResponseGroupCreation(
+    sessionStorage,
+    session.user.id,
+    invoicesConversation.firstMessage,
+    [modelId, modelId]
+  );
+  const result = {
+    id: groupId,
+    candidates: [
+      {
+        state: "bound" as const,
+        modelId,
+        operationId: invoicesConversation.operationId,
+        conversationId: invoicesConversation.id,
+        sessionId: invoicesConversation.sessionId ?? "",
+      },
+      { state: "waiting" as const, modelId, operationId: waitingId },
+    ],
+  };
+  retainResponseGroupDraft(sessionStorage, session.user.id, saved, result);
+  const originalFetch = globalThis.fetch;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (
+      (input instanceof Request ? input.url : input.toString()).includes(
+        "/api/agent-response-groups"
+      )
+    ) {
+      return Response.json(result);
+    }
+    return await originalFetch(input, init);
+  });
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: Object.fromEntries(
+      Object.entries(invoicesTranscripts).map(([id, messages]) => [
+        id,
+        messages.map((message) =>
+          message.role === "assistant"
+            ? {
+                ...message,
+                parts: [
+                  {
+                    type: "text",
+                    text: "The first model finished. The next response waits for this workspace.",
+                  },
+                ],
+              }
+            : message
+        ),
+      ])
+    ),
+    trpc: {
+      ...invoicesTrpc,
+      "eve.branches": {
+        ...invoicesTrpc["eve.branches"],
+        branches: invoicesTrpc["eve.branches"].branches.map((branch) => ({
+          ...branch,
+          responseGroupId: groupId,
+          responseGroupIndex: 0,
+          groupCandidates: result.candidates.map((candidate) => ({
+            modelId: candidate.modelId,
+            operationId: candidate.operationId,
+          })),
+        })),
+      },
+    },
+  });
+  await expect
+    .element(
+      page.getByText(
+        "Waiting for the shared workspace. Responses continue automatically in this tab."
+      )
+    )
+    .toBeVisible();
 });

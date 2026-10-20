@@ -209,6 +209,7 @@ export const invoicesTranscript: EveMessage[] = [
 ];
 
 export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
+  workspaceId: "11111111-2222-4333-8444-555555555555",
   chatId: invoicesChatId,
   createdAt: daysAgo(0, 14),
   creationKind: "message",
@@ -280,6 +281,7 @@ export const invoicesTrpc = {
 };
 
 export const invoicesShared: NonNullable<ServerData["transcript"]> = {
+  ownerId: session.user.id,
   id: invoicesChatId,
   messages: invoicesTranscript.map(({ id, metadata, parts, role }) => ({
     id,

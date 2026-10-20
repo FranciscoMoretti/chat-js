@@ -174,9 +174,11 @@ const EveLogicalResponses = ({
           }
         }}
       />
-      {unconfirmed && (
-        <EveLogicalGroupRecovery groupId={group.groupId} ownerId={ownerId} />
-      )}
+      <EveLogicalGroupRecovery
+        autoOnly={!unconfirmed}
+        groupId={group.groupId}
+        ownerId={ownerId}
+      />
     </>
   );
 };

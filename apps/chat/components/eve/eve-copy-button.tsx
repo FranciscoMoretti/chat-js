@@ -123,6 +123,10 @@ const EveCopyButton = ({
     <section
       aria-label={recovery ? "Saved copy recovery" : "Save shared conversation"}
     >
+      <p className="text-muted-foreground px-4 pt-4 text-sm">
+        The new branch shares this workspace, including its current files and
+        environment. Conversation history is independent.
+      </p>
       {recovery && (
         <output className="px-4 pt-4 text-sm">
           Saving is unconfirmed. Retry to finish the saved copy.

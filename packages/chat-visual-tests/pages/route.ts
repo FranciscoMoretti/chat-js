@@ -6,7 +6,6 @@ import type {
   getEveChatPageConversation,
   listEveConversations,
 } from "@/lib/db/eve-queries";
-import type { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import type { getProjectById } from "@/lib/db/queries";
 import type { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 
@@ -14,7 +13,6 @@ import type { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 export interface ServerData {
   conversation?: Awaited<ReturnType<typeof getEveChatPageConversation>>;
   conversations?: Awaited<ReturnType<typeof listEveConversations>>;
-  copyOperation?: Awaited<ReturnType<typeof getEveCopyOperation>>;
   project?: Awaited<ReturnType<typeof getProjectById>>;
   transcript?: Awaited<ReturnType<typeof getPublicEveTranscript>>;
 }

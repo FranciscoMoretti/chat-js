@@ -20,6 +20,7 @@ interface Conversation {
   readonly id: string;
   readonly title: string;
   readonly state: string;
+  readonly scope?: "conversation" | "group";
   readonly projectId?: string | null;
 }
 
@@ -84,6 +85,9 @@ const EveDeletionProvider = ({
       },
       async () => {
         await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
+        await cache.invalidateQueries({
+          queryKey: trpc.eve.branches.pathKey(),
+        });
         router.refresh();
       }
     );

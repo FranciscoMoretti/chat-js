@@ -132,10 +132,6 @@ vi.mock("@/lib/db/eve-queries", () => ({
   ) => Promise.resolve(chatsIn(route.server.conversations, input)),
 }));
 
-vi.mock("@/lib/db/eve-copy-journal", () => ({
-  getEveCopyOperation: () => Promise.resolve(route.server.copyOperation),
-}));
-
 vi.mock("@/lib/db/queries", () => ({
   getProjectById: () => Promise.resolve(route.server.project),
 }));
