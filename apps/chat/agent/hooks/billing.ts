@@ -1,4 +1,4 @@
-import { isGuestSession } from "../../lib/eve/session-policy";
+import { isGuestSession } from "../../lib/eve/session-identity";
 import {
   getEveSubagent,
   registerEveSubagent,

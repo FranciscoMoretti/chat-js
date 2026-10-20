@@ -1,4 +1,4 @@
-import { isGuestSession } from "../lib/eve/session-policy";
+import { isGuestSession } from "../lib/eve/session-identity";
 import { resolveGuestModel } from "../lib/eve/guest-model";
 import { defineAgent, defineDynamic } from "eve";
 import { configureWorkflowEnvironment } from "../lib/eve/environment";

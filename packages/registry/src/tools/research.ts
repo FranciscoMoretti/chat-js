@@ -34,6 +34,11 @@ const researchItem: RegistryItem = {
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
   files: [
+    {
+      path: "src/session-identity.ts",
+      target: "~/lib/eve/session-identity.ts",
+      type: "registry:file" as const,
+    },
     ...[
       "renderer.tsx",
       "search-updates.ts",

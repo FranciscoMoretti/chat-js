@@ -1,3 +1,4 @@
+import { isWorkflowTransactionPooler } from "../environment";
 import { createPostgresLifecycle } from "./postgres/provider";
 
 interface LifecycleResources {
@@ -81,6 +82,14 @@ const createEveLifecycleProvider = (options: {
       reason: "Native lifecycle requires a PostgreSQL connection URL.",
       supported: false,
       world: options.world,
+    };
+  }
+  if (isWorkflowTransactionPooler(databaseUrl)) {
+    return {
+      supported: false,
+      world: options.world,
+      reason:
+        "Native lifecycle requires direct or session-pooled PostgreSQL connections.",
     };
   }
   // Every operation verifies the exact provider schema and installed write/queue

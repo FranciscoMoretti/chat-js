@@ -100,6 +100,8 @@ const pinBetterAuthVersions = (
 const configureChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
+  scripts["dev:supervise"] =
+    "tsx --env-file-if-exists=.env.local scripts/dev-supervisor.mts";
   scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
   scripts.build =
     "tsx lib/db/migrate.ts --deployment && eve build && next build";

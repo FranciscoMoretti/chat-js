@@ -45,7 +45,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.unstubAllGlobals();
   calls.claim.mockResolvedValue(null);
-  calls.pending.mockResolvedValue(0);
+  calls.pending.mockResolvedValueOnce(1).mockResolvedValue(0);
   calls.complete.mockResolvedValue(true);
   calls.bind.mockResolvedValue(true);
   calls.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
@@ -110,10 +110,32 @@ test("replays interrupted creation with original operation identity before purge
 });
 
 test("cooldown-hidden deletion work remains pending even when no claim is available", async () => {
-  calls.pending.mockResolvedValue(2);
+  calls.pending.mockReset().mockResolvedValue(2);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
     deletedCount: 0,
     pendingCount: 2,
+    skipped: false,
+  });
+});
+
+test("empty expired inventory needs no provider mutation support", async () => {
+  calls.pending.mockReset().mockResolvedValue(0);
+  calls.check.mockRejectedValue(new Error("unsupported world"));
+  expect(await cleanupGuestRuntimeSessions()).toEqual({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
+  expect(calls.check).not.toHaveBeenCalled();
+  expect(calls.claim).not.toHaveBeenCalled();
+});
+
+test("unclaimed expired backlog remains visible after the batch limit", async () => {
+  calls.pending.mockReset().mockResolvedValueOnce(8).mockResolvedValue(3);
+  calls.claim.mockResolvedValue(guest);
+  expect(await cleanupGuestRuntimeSessions()).toEqual({
+    deletedCount: 5,
+    pendingCount: 3,
     skipped: false,
   });
 });

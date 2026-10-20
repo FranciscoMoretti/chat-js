@@ -1,5 +1,5 @@
 {
-  "id": "dccf1591-3f0b-4317-a29f-91c0c92acd78",
+  "id": "9935b84e-47ab-4ed7-85f5-fdda3ecd0be8",
   "prevId": "958c47eb-95d7-4704-8cde-a77b9d483556",
   "version": "7",
   "dialect": "postgresql",
@@ -2185,6 +2185,85 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.EvePersistentSandbox": {
+      "name": "EvePersistentSandbox",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerId": {
+          "name": "providerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scopeId": {
+          "name": "scopeId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EvePersistentSandbox_session": {
+          "name": "EvePersistentSandbox_session",
+          "columns": [
+            {
+              "expression": "sessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk": {
+          "name": "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk",
+          "tableFrom": "EvePersistentSandbox",
+          "tableTo": "EveSandboxSession",
+          "columnsFrom": [
+            "sessionId"
+          ],
+          "columnsTo": [
+            "sessionId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.EveResponseGroup": {
       "name": "EveResponseGroup",
       "schema": "",
@@ -2292,6 +2371,80 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveSandboxSession": {
+      "name": "EveSandboxSession",
+      "schema": "",
+      "columns": {
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "rootSessionId": {
+          "name": "rootSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "devRunId": {
+          "name": "devRunId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveSandboxSession_root": {
+          "name": "EveSandboxSession_root",
+          "columns": [
+            {
+              "expression": "rootSessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveSandboxSession_dev": {
+          "name": "EveSandboxSession_dev",
+          "columns": [
+            {
+              "expression": "devRunId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2774,219 +2927,6 @@
         "EveWorkflowBackend_singleton": {
           "name": "EveWorkflowBackend_singleton",
           "value": "\"EveWorkflowBackend\".\"id\" = 1"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.GuestRuntimeRate": {
-      "name": "GuestRuntimeRate",
-      "schema": "",
-      "columns": {
-        "ipHash": {
-          "name": "ipHash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "startsAt": {
-          "name": "startsAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "requests": {
-          "name": "requests",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "GuestRuntimeRate_ipHash_kind_startsAt_pk": {
-          "name": "GuestRuntimeRate_ipHash_kind_startsAt_pk",
-          "columns": [
-            "ipHash",
-            "kind",
-            "startsAt"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "GuestRuntimeRate_requests": {
-          "name": "GuestRuntimeRate_requests",
-          "value": "\"GuestRuntimeRate\".\"requests\" >= 0"
-        },
-        "GuestRuntimeRate_kind": {
-          "name": "GuestRuntimeRate_kind",
-          "value": "\"GuestRuntimeRate\".\"kind\" in ('session', 'message')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.GuestRuntimeSession": {
-      "name": "GuestRuntimeSession",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sessionId": {
-          "name": "sessionId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "modelId": {
-          "name": "modelId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ipHash": {
-          "name": "ipHash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "policyVersion": {
-          "name": "policyVersion",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "expiresAt": {
-          "name": "expiresAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now() + interval '24 hours'"
-        },
-        "credentialExpiresAt": {
-          "name": "credentialExpiresAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messageLimit": {
-          "name": "messageLimit",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messagesUsed": {
-          "name": "messagesUsed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "cleanupAttemptedAt": {
-          "name": "cleanupAttemptedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deletedAt": {
-          "name": "deletedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "GuestRuntimeSession_cleanup_idx": {
-          "name": "GuestRuntimeSession_cleanup_idx",
-          "columns": [
-            {
-              "expression": "state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "expiresAt",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "GuestRuntimeSession_ownerId_unique": {
-          "name": "GuestRuntimeSession_ownerId_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "ownerId"
-          ]
-        },
-        "GuestRuntimeSession_sessionId_unique": {
-          "name": "GuestRuntimeSession_sessionId_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "sessionId"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "GuestRuntimeSession_state": {
-          "name": "GuestRuntimeSession_state",
-          "value": "\"GuestRuntimeSession\".\"state\" in ('active', 'deleting', 'deleted')"
-        },
-        "GuestRuntimeSession_balance": {
-          "name": "GuestRuntimeSession_balance",
-          "value": "\"GuestRuntimeSession\".\"messagesUsed\" >= 0 and \"GuestRuntimeSession\".\"messagesUsed\" <= \"GuestRuntimeSession\".\"messageLimit\""
-        },
-        "GuestRuntimeSession_ip_hash": {
-          "name": "GuestRuntimeSession_ip_hash",
-          "value": "\"GuestRuntimeSession\".\"ipHash\" ~ '^[0-9a-f]{64}$'"
-        },
-        "GuestRuntimeSession_expiry": {
-          "name": "GuestRuntimeSession_expiry",
-          "value": "\"GuestRuntimeSession\".\"expiresAt\" = \"GuestRuntimeSession\".\"createdAt\" + interval '24 hours'"
         }
       },
       "isRLSEnabled": false

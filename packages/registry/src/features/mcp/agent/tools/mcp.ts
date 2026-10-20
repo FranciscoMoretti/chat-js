@@ -1,4 +1,4 @@
-import { isGuestSession } from "@/lib/eve/session-policy";
+import { isGuestSession } from "@/lib/eve/session-identity";
 import type { ToolDefinition, ToolModelOutput } from "eve/tools";
 import { defineDynamic, defineTool } from "eve/tools";
 import { parse, stringify } from "superjson";

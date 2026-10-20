@@ -163,6 +163,7 @@ test("cleanup claims expired guests only and fences completion to exact binding"
       expiresAt: sql`now() - interval '1 hour'`,
     })
     .where(eq(guestRuntimeSession.id, expired.id));
+  expect(await countPendingGuestRuntimeDeletions()).toBe(1);
   const claimed = await claimExpiredGuestRuntimeSession();
   expect(claimed?.id).toBe(expired.id);
   expect(await claimExpiredGuestRuntimeSession()).toBeNull();

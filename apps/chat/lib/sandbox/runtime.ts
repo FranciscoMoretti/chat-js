@@ -9,3 +9,11 @@ export const getSandboxProvider = () => {
   }
   return createSandboxProvider();
 };
+
+export const getPersistentSandboxProvider = () => {
+  const provider = getSandboxProvider();
+  if (!provider.persistent) {
+    throw new Error("Persistent sandbox provider is unavailable.");
+  }
+  return { scope: provider.scope, persistent: provider.persistent };
+};

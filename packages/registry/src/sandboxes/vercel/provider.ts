@@ -1,3 +1,4 @@
+import { createPersistentProvider } from "./persistent";
 import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 import {
   createCleanupSession,
@@ -10,6 +11,7 @@ export const createSandboxProvider = (): SandboxProvider => {
   const auth = resolveSandboxAuth();
   const cleanup = createCleanupSession(auth);
   return {
+    persistent: createPersistentProvider(auth),
     scope: {
       providerId: "vercel",
       accountId: auth.teamId,
@@ -20,3 +22,6 @@ export const createSandboxProvider = (): SandboxProvider => {
     deleteAndConfirmAbsent: cleanup.deleteAndConfirmAbsent,
   };
 };
+
+/** Available without resolving provider credentials. */
+export const supportsPersistentSandbox = true;

@@ -1,5 +1,5 @@
 import type { DynamicResolveContext } from "eve";
-import { isGuestSession } from "../../lib/eve/session-policy";
+import { isGuestSession } from "../../lib/eve/session-identity";
 import { defineDynamic } from "eve/tools";
 
 import { eveImageContext } from "../../lib/eve/image-context";

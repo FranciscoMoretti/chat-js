@@ -31,18 +31,21 @@ test("PostgreSQL requires a configured database and excludes sandbox erasure", (
   });
 });
 
-test.each(["https://localhost/native_test", "invalid-url"])(
-  "unsupported database configuration has no mutators: %s",
-  (databaseUrl) => {
-    const provider = createEveLifecycleProvider({
-      databaseUrl,
-      world: "@workflow/world-postgres",
-    });
-    expect(provider.supported).toBe(false);
-    expect(provider).not.toHaveProperty("retire");
-    expect(provider).not.toHaveProperty("purge");
-  }
-);
+test.each([
+  "https://localhost/native_test",
+  "invalid-url",
+  "postgres://ep-test-pooler.region.aws.neon.tech/chat",
+  "postgres://aws-0-region.pooler.supabase.com:6543/chat",
+  "postgres://db.example.com/chat?pool_mode=transaction",
+])("unsupported database configuration has no mutators: %s", (databaseUrl) => {
+  const provider = createEveLifecycleProvider({
+    databaseUrl,
+    world: "@workflow/world-postgres",
+  });
+  expect(provider.supported).toBe(false);
+  expect(provider).not.toHaveProperty("retire");
+  expect(provider).not.toHaveProperty("purge");
+});
 
 test("hosted PostgreSQL uses the same compatibility-checked lifecycle", () => {
   const provider = createEveLifecycleProvider({

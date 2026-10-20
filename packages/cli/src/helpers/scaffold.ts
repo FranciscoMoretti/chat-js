@@ -1,3 +1,4 @@
+import { copyDevelopmentSupervisor } from "./copy-development-supervisor";
 import {
   access,
   cp,
@@ -155,6 +156,7 @@ const writePnpmWorkspaceConfig = async (
 const applyChatTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
+  await copyDevelopmentSupervisor(getRepoRoot(), destination);
   await Promise.all(
     ["components/github-link.tsx", "components/docs-link.tsx"].map(
       async (file): Promise<void> => {
@@ -396,11 +398,15 @@ const scaffoldFromTemplate = async (
   await rm(pathModule.join(destination, "lib/sandbox/adapter.ts"), {
     force: true,
   });
+  await rm(pathModule.join(destination, "lib/sandbox/persistent.ts"), {
+    force: true,
+  });
   await writeFile(
     pathModule.join(destination, "lib/sandbox/provider.ts"),
     `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 
 export const createSandboxProvider: (() => SandboxProvider) | undefined = undefined;
+export const supportsPersistentSandbox = false;
 `
   );
   await writeFile(

@@ -30,7 +30,9 @@ vi.mock("../lib/eve/verify-local-coverage", () => ({
         sessions: [],
       })
   ),
-  manageEveLocalResources: vi.fn(async () => await Promise.resolve(0)),
+  manageEveLocalResources: vi.fn(async () => {
+    await Promise.resolve();
+  }),
 }));
 
 vi.mock("../lib/file-storage", () => ({

@@ -1537,6 +1537,39 @@ it(
     ]);
     const executorPath = nodePath.join(cwd, "tools/chatjs/code-executor.ts");
     const executor = await readFile(executorPath, "utf-8");
+    const appManifest = parsePackageJson(
+      await readFile(nodePath.join(cwd, "package.json"), "utf-8")
+    );
+    expect(appManifest.scripts?.["dev:supervise"]).toContain(
+      "scripts/dev-supervisor.mts"
+    );
+    await run(cwd, [
+      "node",
+      "--import=tsx",
+      "--input-type=module",
+      "-e",
+      `
+      import { supervise } from "./scripts/dev-supervisor.mts";
+      import { preparePersistentSandboxCleanup } from "./scripts/persistent-sandbox-cleanup.ts";
+      import { readFile, rm } from "node:fs/promises";
+      const runId = crypto.randomUUID();
+      await preparePersistentSandboxCleanup(runId);
+      const filename = \`.eve/chatjs-cleanup/\${runId}.json\`;
+      const saved = JSON.parse(await readFile(filename, "utf-8"));
+      if (saved.pid !== process.pid || typeof supervise !== "function") throw new Error("Invalid standalone supervisor");
+      await rm(filename);
+    `,
+    ]);
+    await rejects(
+      run(cwd, [
+        "env",
+        "APP_URL=https://example.invalid",
+        "node",
+        "--import=tsx",
+        "scripts/dev-supervisor.mts",
+      ]),
+      /local app URL/u
+    );
     expect(executor).toContain("code-execution/tool");
     expect(
       await readFile(nodePath.join(cwd, "lib/sandbox/provider.ts"), "utf-8")
@@ -1569,6 +1602,9 @@ it(
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).toContain("DAYTONA_API_KEY");
+    expect(
+      await Bun.file(nodePath.join(cwd, "lib/sandbox/persistent.ts")).exists()
+    ).toBe(false);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);
   },

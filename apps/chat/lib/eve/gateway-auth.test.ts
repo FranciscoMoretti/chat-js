@@ -5,7 +5,6 @@ import { authenticateEveGateway } from "./gateway-auth";
 const mocks = vi.hoisted(() => ({
   child: vi.fn(),
   deleting: vi.fn(),
-  descendant: vi.fn(),
   guest: vi.fn(),
   mapping: vi.fn(),
   model: vi.fn(),
@@ -30,9 +29,6 @@ vi.mock("../db/eve-queries", () => ({
   ownsEveSession: mocks.owns,
   readEveSessionMapping: mocks.mapping,
 }));
-vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
-  isFencedEveDescendant: mocks.descendant,
-}));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
 
@@ -45,7 +41,6 @@ beforeEach(() => {
     ownerId: "owner",
     state: "creating",
   });
-  mocks.descendant.mockResolvedValue(false);
   mocks.owns.mockResolvedValue(false);
   mocks.deleting.mockResolvedValue({ id: "conversation" });
 });
@@ -66,7 +61,6 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
 it.each([
   ["/eve/v1/session/session/reset", "POST"],
   ["/eve/v1/session/session/stream", "GET"],
-  ["/eve/v1/session/session/local-resources", "POST"],
 ])(
   "allows authenticated cleanup only for the deleting owner's session: %s",
   async (path, method) => {
@@ -86,6 +80,7 @@ it.each([
   ["/eve/v1/session/session/reset", "GET"],
   ["/eve/v1/session/session/stream", "POST"],
   ["/eve/v1/session/session/local-resources", "GET"],
+  ["/eve/v1/session/session/local-resources", "POST"],
   ["/eve/v1/operation/id", "GET"],
 ])(
   "cleanup credentials cannot start work or broaden access: %s",
@@ -153,37 +148,6 @@ it("ordinary owner access cannot manage internal sandbox resources", async () =>
   mocks.owns.mockResolvedValue(true);
   expect(await authenticateEveGateway(read)).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
-});
-it("only allows fenced descendants of an owner-matched deleting root", async () => {
-  const read = request("/eve/v1/session/child/local-resources", "POST");
-  read.headers.set("x-chatjs-deletion-root", "root");
-  expect(await authenticateEveGateway(read)).toBeNull();
-  mocks.descendant.mockResolvedValue(true);
-  expect(await authenticateEveGateway(read)).toMatchObject({
-    principalId: "owner",
-  });
-  expect(mocks.deleting).toHaveBeenCalledWith("owner", "root");
-  expect(mocks.descendant).toHaveBeenCalledWith(
-    "postgresql://local",
-    "root",
-    "child"
-  );
-  mocks.deleting.mockResolvedValue(null);
-  expect(await authenticateEveGateway(read)).toBeNull();
-});
-it("root proof headers cannot authorize descendant mutations or transcript reads", async () => {
-  mocks.descendant.mockResolvedValue(true);
-  await Promise.all(
-    [
-      ["reset", "POST"],
-      ["stream", "GET"],
-    ].map(async ([path, method]) => {
-      const read = request(`/eve/v1/session/child/${path}`, method);
-      read.headers.set("x-chatjs-deletion-root", "root");
-      expect(await authenticateEveGateway(read)).toBeNull();
-    })
-  );
-  expect(mocks.descendant).not.toHaveBeenCalled();
 });
 it("accepts only a known tool selection as a gateway attribute", async () => {
   const command = request("/eve/v1/session", "POST");

@@ -58,6 +58,10 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
   pendingCount: number;
   skipped: boolean;
 }> => {
+  if ((await countPendingGuestRuntimeDeletions()) === 0) {
+    await pruneGuestRuntimeRates();
+    return { deletedCount: 0, pendingCount: 0, skipped: false };
+  }
   const lifecycle = requireEveDeletionLifecycle();
   // Compatibility checks precede claims or retirement. Missing fences never
   // produce a successful cleanup report or erase the durable retry record.
@@ -70,9 +74,11 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
     if (!guest) {
       break;
     }
+    let phase = "reconcile-session";
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before native purge.
       const sessionId = await resolveCleanupSession(guest);
+      phase = "retire-and-purge";
       // oxlint-disable-next-line eslint/no-await-in-loop -- Native purge serializes durable retirement, fencing, queue drain and payload erasure.
       await lifecycle.purge(sessionId, async () => {
         const client = new Client(
@@ -100,6 +106,7 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
           throw new Error("Guest retirement is not terminal. Retry cleanup.");
         }
       });
+      phase = "complete-policy";
       // oxlint-disable-next-line eslint/no-await-in-loop -- Mark deleted only after the exact bound native session was purged.
       if (!(await completeGuestRuntimeDeletion(guest.id, sessionId))) {
         throw new Error("Guest deletion binding changed.");
@@ -109,6 +116,7 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
       pendingCount += 1;
       console.error("Guest runtime cleanup requires retry", {
         policyId: guest.id,
+        phase,
       });
     }
   }

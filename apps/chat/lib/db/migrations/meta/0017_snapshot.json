@@ -1,6 +1,6 @@
 {
-  "id": "14cd6caf-02f7-492b-801c-48b8608f62cc",
-  "prevId": "dccf1591-3f0b-4317-a29f-91c0c92acd78",
+  "id": "dccf1591-3f0b-4317-a29f-91c0c92acd78",
+  "prevId": "9935b84e-47ab-4ed7-85f5-fdda3ecd0be8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2916,13 +2916,6 @@
           "notNull": true,
           "default": 0
         },
-        "inputCharactersUsed": {
-          "name": "inputCharactersUsed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "cleanupAttemptedAt": {
           "name": "cleanupAttemptedAt",
           "type": "timestamp with time zone",
@@ -3713,6 +3706,159 @@
         }
       },
       "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EvePersistentSandbox": {
+      "name": "EvePersistentSandbox",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerId": {
+          "name": "providerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scopeId": {
+          "name": "scopeId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EvePersistentSandbox_session": {
+          "name": "EvePersistentSandbox_session",
+          "columns": [
+            {
+              "expression": "sessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk": {
+          "name": "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk",
+          "tableFrom": "EvePersistentSandbox",
+          "tableTo": "EveSandboxSession",
+          "columnsFrom": [
+            "sessionId"
+          ],
+          "columnsTo": [
+            "sessionId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveSandboxSession": {
+      "name": "EveSandboxSession",
+      "schema": "",
+      "columns": {
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "rootSessionId": {
+          "name": "rootSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "devRunId": {
+          "name": "devRunId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveSandboxSession_root": {
+          "name": "EveSandboxSession_root",
+          "columns": [
+            {
+              "expression": "rootSessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveSandboxSession_dev": {
+          "name": "EveSandboxSession_dev",
+          "columns": [
+            {
+              "expression": "devRunId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

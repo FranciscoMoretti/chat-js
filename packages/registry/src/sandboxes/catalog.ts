@@ -15,7 +15,11 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
         ]
       : [`@daytona/sdk@${registryPackage.devDependencies["@daytona/sdk"]}`]),
   ],
-  files: ["provider.ts", "adapter.ts"].map((file) => ({
+  files: [
+    "provider.ts",
+    "adapter.ts",
+    ...(id === "vercel" ? ["persistent.ts"] : []),
+  ].map((file) => ({
     path: `src/sandboxes/${id}/${file}`,
     target: `~/lib/sandbox/${file}`,
     type: "registry:file" as const,

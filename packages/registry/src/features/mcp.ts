@@ -42,11 +42,18 @@ const mcpDefinition = featureDefinitionSchema.parse({
 
 const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
-  files: mcpFiles.map((file) => ({
-    path: `src/features/mcp/${file}`,
-    target: `~/${file}`,
-    type: "registry:file",
-  })),
+  files: [
+    {
+      path: "src/session-identity.ts",
+      target: "~/lib/eve/session-identity.ts",
+      type: "registry:file" as const,
+    },
+    ...mcpFiles.map((file) => ({
+      path: `src/features/mcp/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  ],
   meta: {
     chatjs: mcpDefinition,
   },

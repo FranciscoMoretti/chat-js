@@ -44,7 +44,12 @@ const sleep = async (
   }
 };
 
-const fixture = () => {
+const fixture = (
+  cleanup: {
+    prepareSandboxCleanup?: (runId: string) => Promise<void>;
+    finishSandboxCleanup?: (runId: string) => Promise<void>;
+  } = {}
+) => {
   const shutdown = new AbortController();
   const children: FakeChild[] = [];
   const kill = vi.fn<(pid: number, signal: NodeJS.Signals) => void>();
@@ -54,6 +59,7 @@ const fixture = () => {
       `${LAUNCHER_PID} 1 launcher-start\n${WORKER_PID} ${LAUNCHER_PID} worker-start`
   );
   const completion = supervise("http://127.0.0.1", shutdown.signal, {
+    ...cleanup,
     health,
     kill,
     now: Date.now,
@@ -228,4 +234,52 @@ test("readiness recovery keeps failed-start grace and resets it after readiness"
   state.shutdown.abort();
   await vi.advanceTimersByTimeAsync(GRACE_MS);
   await state.completion;
+});
+
+test("persistent cleanup runs after worker termination and uses the prepared run", async () => {
+  const prepareSandboxCleanup = vi
+    .fn<(runId: string) => Promise<void>>()
+    .mockResolvedValue();
+  const finishSandboxCleanup = vi
+    .fn<(runId: string) => Promise<void>>()
+    .mockResolvedValue();
+  const state = fixture({ prepareSandboxCleanup, finishSandboxCleanup });
+  await vi.advanceTimersByTimeAsync(0);
+  state.shutdown.abort();
+  expect(finishSandboxCleanup).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(GRACE_MS);
+  await state.completion;
+  expect(finishSandboxCleanup).toHaveBeenCalledExactlyOnceWith(
+    prepareSandboxCleanup.mock.calls[0]?.[0]
+  );
+  expect(state.kill.mock.invocationCallOrder.at(-1)).toBeLessThan(
+    finishSandboxCleanup.mock.invocationCallOrder[0]
+  );
+});
+
+test("failed recovery prevents a replacement worker from starting", async () => {
+  const prepareSandboxCleanup = vi
+    .fn<(runId: string) => Promise<void>>()
+    .mockRejectedValue(new Error("cleanup unresolved"));
+  const state = fixture({ prepareSandboxCleanup });
+  await expect(state.completion).rejects.toThrow("cleanup unresolved");
+  expect(state.children).toHaveLength(0);
+});
+
+test("shutdown during cleanup preparation releases the intent without starting a worker", async () => {
+  const prepared = Promise.withResolvers<boolean>();
+  const prepareSandboxCleanup = vi
+    .fn<(runId: string) => Promise<void>>()
+    .mockImplementation(async () => {
+      await prepared.promise;
+    });
+  const finishSandboxCleanup = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const state = fixture({ prepareSandboxCleanup, finishSandboxCleanup });
+  state.shutdown.abort();
+  prepared.resolve(true);
+  await state.completion;
+  expect(state.children).toHaveLength(0);
+  expect(finishSandboxCleanup).toHaveBeenCalledExactlyOnceWith(
+    prepareSandboxCleanup.mock.calls[0]?.[0]
+  );
 });

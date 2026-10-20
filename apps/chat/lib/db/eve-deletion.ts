@@ -1,4 +1,4 @@
-import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, ne, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
@@ -8,6 +8,8 @@ import {
   eveFollowup,
   eveChatProject,
   eveCodeSandbox,
+  evePersistentSandbox,
+  eveSandboxSession,
   eveConversation,
   eveConversationCopy,
   eveConversationCopyFile,
@@ -227,6 +229,28 @@ const completeEveConversationDeletion = async (
     if (sandbox) {
       throw new Error("Code sandbox cleanup is incomplete.");
     }
+    const unresolvedPersistent = await tx
+      .select({ name: evePersistentSandbox.name })
+      .from(evePersistentSandbox)
+      .innerJoin(
+        eveSandboxSession,
+        eq(eveSandboxSession.sessionId, evePersistentSandbox.sessionId)
+      )
+      .innerJoin(
+        eveConversation,
+        eq(eveConversation.sessionId, eveSandboxSession.rootSessionId)
+      )
+      .where(
+        and(
+          inArray(eveConversation.id, ids),
+          ne(evePersistentSandbox.state, "deleted")
+        )
+      )
+      .limit(1);
+    if (unresolvedPersistent.length > 0) {
+      throw new Error("Persistent sandbox cleanup is incomplete.");
+    }
+
     const contentTables = [
       eveFileReference,
       eveImportedDocumentCheckpointEntry,

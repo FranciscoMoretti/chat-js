@@ -1,70 +1,41 @@
+import { getPersistentSandboxProvider } from "../sandbox/runtime";
+import {
+  readPersistentIdentity,
+  retirePersistentSession,
+  cleanupPersistentSession,
+} from "./persistent-sandbox-store";
 import { realpath } from "node:fs/promises";
 import postgres from "postgres";
-import { z } from "zod";
 import { env } from "@/lib/env";
 import { verifyEveSandboxCoverage } from "./lifecycle/postgres/eve-sandbox-coverage-proof";
 import { assertEveConfigured } from "./server";
 
-const resourceReceipt = z.strictObject({
-  appRoot: z.string(),
-  sessionId: z.string(),
-  retired: z.literal(true),
-  remaining: z.number().int().nonnegative(),
-});
-
-/**
- * Worker-authoritative local resource operation, after native and app retirement.
- * @param {string} ownerId Authorized deleting owner.
- * @param {string} appRoot Expected canonical worker root, never a cache selector.
- * @param {{ sessionId: string; rootSessionId: string }} scope Fenced native descendant and its deleting app binding.
- * @param {"retire" | "purge"} action Retirement or exact owned resource removal.
- * @returns {Promise<number>} Remaining retained resources; unknown operations reject.
- */
+/** Retire or delete the exact app-owned resources after native writer fencing. */
 export const manageEveLocalResources = async (
   ownerId: string,
-  appRoot: string,
   scope: { readonly sessionId: string; readonly rootSessionId: string },
   action: "retire" | "purge"
-): Promise<number> => {
-  const response = await fetch(
-    new URL(
-      `/eve/chat/v1/session/${encodeURIComponent(scope.sessionId)}/local-resources`,
-      env.EVE_INTERNAL_ORIGIN
-    ),
-    {
-      method: "POST",
-      cache: "no-store",
-      redirect: "error",
-      headers: {
-        authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
-        "content-type": "application/json",
-        "x-chatjs-deletion": "1",
-        "x-chatjs-deletion-root": scope.rootSessionId,
-        "x-chatjs-owner": ownerId,
-      },
-      body: JSON.stringify({
-        expectedAppRoot: appRoot,
-        action,
-      }),
-      signal: AbortSignal.timeout(60_000),
-    }
-  );
-  if (!response.ok) {
-    throw new Error("Local sandbox resource cleanup is unconfirmed.");
+): Promise<void> => {
+  const saved = await readPersistentIdentity(scope.sessionId);
+  const identity = saved ?? { ...scope, ownerId };
+  if (
+    identity.ownerId !== ownerId ||
+    identity.rootSessionId !== scope.rootSessionId
+  ) {
+    throw new Error("App-owned persistent sandbox coverage is unavailable.");
   }
-  const receipt = resourceReceipt.parse(await response.json());
-  if (receipt.appRoot !== appRoot || receipt.sessionId !== scope.sessionId) {
-    throw new Error("Local sandbox cleanup authority mismatch.");
+  await retirePersistentSession(identity);
+  if (action === "purge") {
+    await cleanupPersistentSession(identity, getPersistentSandboxProvider);
   }
-  return receipt.remaining;
 };
 
 /**
- * Cover every sandbox-owning native session and retire it in the actual worker.
+ * Cover every sandbox-owning native session and retire its app-owned resources.
  * @param {string} ownerId Owner of the deleting family.
  * @param {string} appRoot Expected worker application root.
  * @param {readonly { sessionId: string; runIds: readonly string[] }[]} inventories Complete native inventories retained under writer fences.
- * @returns {Promise<{ appRoot: string; sessions: { sessionId: string; rootSessionId: string }[] }>} Exact worker scope for subsequent removal; incomplete coverage rejects.
+ * @returns {Promise<{ appRoot: string; sessions: { sessionId: string; rootSessionId: string }[] }>} Verified session inventory for subsequent removal; incomplete coverage rejects.
  */
 export const verifyLocalEveFamilyCoverage = async (
   ownerId: string,
@@ -90,7 +61,6 @@ export const verifyLocalEveFamilyCoverage = async (
         async (sessionId) => {
           await manageEveLocalResources(
             ownerId,
-            canonicalRoot,
             { sessionId, rootSessionId: inventory.sessionId },
             "retire"
           );
@@ -100,10 +70,10 @@ export const verifyLocalEveFamilyCoverage = async (
         sessions.push({ sessionId, rootSessionId: inventory.sessionId });
       }
     }
-    // Saved workflow coverage does not replace a current worker/cache check.
+    // Retained workflow coverage does not replace current app ownership checks.
     for (const scope of sessions) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize local owner locks and finish all retirement before removal.
-      await manageEveLocalResources(ownerId, canonicalRoot, scope, "retire");
+      await manageEveLocalResources(ownerId, scope, "retire");
     }
     return { appRoot: canonicalRoot, sessions };
   } finally {

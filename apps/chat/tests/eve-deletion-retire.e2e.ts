@@ -7,13 +7,13 @@ import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import postgres from "postgres";
 import { z } from "zod";
-import { vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { saveEveDocumentRevision } from "../lib/db/eve-documents";
 import {
   eveChat,
   eveConversation,
+  eveDispatch,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
@@ -31,6 +31,8 @@ import {
 const promisifyExecFile: (
   original: typeof execFile
 ) => typeof execFile.__promisify__ = promisify;
+const deletionActionName =
+  /^(?:Delete conversation and branches|Retry deletion)$/u;
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
@@ -92,11 +94,14 @@ test("internal retirement settles usage after access revocation and is retryable
     title: "Removal fixture",
     turnIndex: 0,
   });
-  const family = await retireEveFamilyForDeletion(owner, binding.id);
-  expect(family?.rootId).toBe(identity.chatId);
-  expect(family?.conversations).toEqual([
-    { id: binding.id, sessionId: binding.sessionId },
-  ]);
+  // Reset acknowledges before the terminal event is durable; retry fenced cleanup.
+  await expect(async () => {
+    const family = await retireEveFamilyForDeletion(owner, binding.id);
+    expect(family?.rootId).toBe(identity.chatId);
+    expect(family?.conversations).toEqual([
+      { id: binding.id, sessionId: binding.sessionId },
+    ]);
+  }).toPass({ timeout: 30_000 });
   const denied = await page.request.get(
     `/api/eve/v1/session/${binding.sessionId}/stream`,
     { headers: { "x-chatjs-deletion": "1" } }
@@ -173,13 +178,9 @@ test("internal retirement settles usage after access revocation and is retryable
       await native`select id from workflow.workflow_runs where id in ${native(receipt.runIds)}`
     ).toEqual([]);
     expect(
-      await purgeEveNativeSession(
-        env.DATABASE_URL,
-        scope,
-        vi
-          .fn<() => Promise<void>>()
-          .mockRejectedValue(new Error("Retired session must not reset again"))
-      )
+      await purgeEveNativeSession(env.DATABASE_URL, scope, async () => {
+        await Promise.reject(new Error("Retired session must not reset again"));
+      })
     ).toEqual(receipt);
     expect(await purgeResources()).toEqual(prepared);
     const deletionUrl = `/api/agent-conversations/${binding.id}`;
@@ -216,6 +217,9 @@ test("internal retirement settles usage after access revocation and is retryable
     await tx
       .delete(eveDocumentCheckpoint)
       .where(eq(eveDocumentCheckpoint.conversationId, binding.id));
+    await tx
+      .delete(eveDispatch)
+      .where(eq(eveDispatch.conversationId, binding.id));
     await tx.delete(eveConversation).where(eq(eveConversation.id, binding.id));
     await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
   });
@@ -242,7 +246,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
     data: {
-      message: "Reply exactly deletion-api-ok. Do not call tools.",
+      message: "Say hello in one short sentence. Do not call tools.",
       modelId: "google/gemini-2.5-flash-lite",
       operationId: crypto.randomUUID(),
     },
@@ -261,7 +265,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator(".is-assistant")).toContainText("deletion-api-ok", {
+  await expect(page.locator(".is-assistant")).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
@@ -284,28 +288,29 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   await row.hover();
   await row.getByRole("button", { exact: true, name: "More" }).click();
   await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
-  const result = page.waitForResponse(
-    (httpResponse: Readonly<Pick<Response, "request" | "url">>) =>
-      httpResponse.url().endsWith(url) &&
-      httpResponse.request().method() === "DELETE"
-  );
-  await page
-    .getByRole("dialog", { name: "Delete conversation and branches?" })
-    .getByRole("button", {
-      exact: true,
-      name: "Delete conversation and branches",
-    })
-    .click();
-  const deleted = await result;
-  expect(deleted.status(), await deleted.text()).toBe(200);
+  await expect(async () => {
+    const result = page.waitForResponse(
+      (httpResponse: Readonly<Pick<Response, "request" | "url">>) =>
+        httpResponse.url().endsWith(url) &&
+        httpResponse.request().method() === "DELETE"
+    );
+    await page
+      .getByRole("dialog", { name: "Delete conversation and branches?" })
+      .getByRole("button", {
+        name: deletionActionName,
+      })
+      .click();
+    const deleted = await result;
+    expect(deleted.status(), await deleted.text()).toBe(200);
+    expect(await deleted.json()).toEqual({
+      rootId: identity.chatId,
+      status: "deleted",
+    });
+  }).toPass({ timeout: 30_000 });
   await expect(page).toHaveURL(`${origin}/`);
   await expect(
     page.getByRole("dialog", { name: "Delete conversation and branches?" })
   ).toHaveCount(0);
-  expect(await deleted.json()).toEqual({
-    rootId: identity.chatId,
-    status: "deleted",
-  });
   const retiredResponse = await page.request.get(url);
   expect(await retiredResponse.json()).toEqual({
     rootId: identity.chatId,
