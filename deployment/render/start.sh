@@ -6,4 +6,4 @@ export WORKFLOW_POSTGRES_MAX_POOL_SIZE="${WORKFLOW_POSTGRES_MAX_POOL_SIZE:-2}"
 export NODE_EXTRA_CA_CERTS="$PWD/deployment/render/supabase-ca.crt"
 export TRUSTED_CLIENT_IP_HEADER=cf-connecting-ip
 cd apps/chat
-exec node ../../node_modules/next/dist/bin/next start --hostname 0.0.0.0 --port "${PORT:-10000}"
+exec node "$(node -p 'require.resolve("next/dist/bin/next")')" start --hostname 0.0.0.0 --port "${PORT:-10000}"
