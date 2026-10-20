@@ -113,7 +113,10 @@ export const authenticateDisposableGuest = async (
       ? authorization.slice(BEARER_PREFIX.length)
       : null
   );
-  if (!claims || claims.modelId !== GUEST_POLICY.modelId) {
+  if (
+    !claims ||
+    (claims.purpose !== "cleanup" && claims.modelId !== GUEST_POLICY.modelId)
+  ) {
     return null;
   }
   const policy = await readGuestRuntimePolicy(claims.policyId, claims.ownerId);

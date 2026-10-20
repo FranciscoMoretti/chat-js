@@ -1,10 +1,10 @@
 import { getEveConnectionOptions } from "./connection-options";
 import { issueGuestCredential } from "./disposable-guest";
-import { GUEST_POLICY } from "./session-policy";
 
 /** Server-only cleanup authorization is valid only for a deletion-pending policy. */
 export const getGuestCleanupConnectionOptions = (input: {
   readonly policyId: string;
+  readonly modelId: string;
   readonly ownerId: string;
   readonly sessionId?: string;
 }): ReturnType<typeof getEveConnectionOptions> => ({
@@ -13,7 +13,6 @@ export const getGuestCleanupConnectionOptions = (input: {
     bearer: issueGuestCredential({
       ...input,
       expiresAt: Date.now() + 300_000,
-      modelId: GUEST_POLICY.modelId,
       purpose: "cleanup",
     }),
   },
