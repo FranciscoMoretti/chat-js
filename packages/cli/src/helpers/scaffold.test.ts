@@ -26,6 +26,8 @@ import { tmpdir } from "node:os";
 import ts from "typescript";
 import { z } from "zod";
 
+// These tests copy/package both maintained runtimes and launch real Node processes.
+const SCAFFOLD_INTEGRATION_TIMEOUT_MS = 30_000;
 const tempDirs: string[] = [];
 const SUCCESS_EXIT_CODE = 0;
 const FIRST_TEMP_DIRECTORY_INDEX = 0;
@@ -669,98 +671,102 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).not.toContain("GetWeatherRenderer");
   });
-  it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
-    const projectDir = makeTempDir("chat-app-fallback");
-    const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
-    const backupDir = pathModule.join(
-      tmpdir(),
-      `chat-js-cli-templates-${crypto.randomUUID()}`
-    );
+  it(
+    "falls back to repo source apps when synced templates are missing",
+    async (): Promise<void> => {
+      const projectDir = makeTempDir("chat-app-fallback");
+      const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
+      const backupDir = pathModule.join(
+        tmpdir(),
+        `chat-js-cli-templates-${crypto.randomUUID()}`
+      );
 
-    if (existsSync(templatesDir)) {
-      await rename(templatesDir, backupDir);
-    }
-
-    try {
-      await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
-      await scaffoldElectron(projectDir, {
-        packageManager: "npm",
-        projectName: "my-chat-app",
-      });
-      const electronTsconfig = await readFile(
-        pathModule.join(projectDir, "electron", "tsconfig.json"),
-        "utf-8"
-      );
-      expect(electronTsconfig).toContain('"../next-env.d.ts"');
-      expect(electronTsconfig).toContain('"../electron.d.ts"');
-      expect(electronTsconfig).not.toContain("../chat/");
-      expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
-        true
-      );
-      const lintConfig = await readFile(
-        pathModule.join(projectDir, "oxlint.config.ts"),
-        "utf-8"
-      );
-      expect(lintConfig.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
-        EXPECTED_SINGLE_ITEM_COUNT
-      );
-      const lintManifest: unknown = JSON.parse(
-        await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
-      );
-      expect(lintManifest).toMatchObject({
-        devDependencies: { "oxlint-tsgolint": "7.0.2004" },
-        scripts: {
-          lint: "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error",
-        },
-      });
-
-      const packageJsonSource = await readFile(
-        pathModule.join(projectDir, "package.json"),
-        "utf-8"
-      );
-      const packageJsonValue: unknown = JSON.parse(packageJsonSource);
-      const packageJson = z
-        .object({ dependencies: z.record(z.string(), z.string()) })
-        .parse(packageJsonValue);
-      const electronPackageJsonSource = await readFile(
-        pathModule.join(projectDir, "electron", "package.json"),
-        "utf-8"
-      );
-      const electronPackageJsonValue: unknown = JSON.parse(
-        electronPackageJsonSource
-      );
-      const electronPackageJson = z
-        .object({ devDependencies: z.record(z.string(), z.string()) })
-        .parse(electronPackageJsonValue);
-
-      expect(
-        existsSync(pathModule.join(projectDir, "tests/eve-browser.e2e.ts"))
-      ).toBe(false);
-      expect(
-        existsSync(
-          pathModule.join(
-            projectDir,
-            "lib/db/migrations/eve-runtime-migration.test.ts"
-          )
-        )
-      ).toBe(false);
-      expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
-      expect(packageJson.dependencies.eve).toBe(
-        "file:vendor/chat-js-eve-0.80.1-chatjs.2.tgz"
-      );
-      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
-      expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
-        "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
-      );
-      expect(electronPackageJson.devDependencies["@better-auth/electron"]).toBe(
-        "1.6.2"
-      );
-    } finally {
-      if (existsSync(backupDir)) {
-        await rename(backupDir, templatesDir);
+      if (existsSync(templatesDir)) {
+        await rename(templatesDir, backupDir);
       }
-    }
-  });
+
+      try {
+        await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
+        await scaffoldElectron(projectDir, {
+          packageManager: "npm",
+          projectName: "my-chat-app",
+        });
+        const electronTsconfig = await readFile(
+          pathModule.join(projectDir, "electron", "tsconfig.json"),
+          "utf-8"
+        );
+        expect(electronTsconfig).toContain('"../next-env.d.ts"');
+        expect(electronTsconfig).toContain('"../electron.d.ts"');
+        expect(electronTsconfig).not.toContain("../chat/");
+        expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
+          true
+        );
+        const lintConfig = await readFile(
+          pathModule.join(projectDir, "oxlint.config.ts"),
+          "utf-8"
+        );
+        expect(
+          lintConfig.match(/options: \{ typeAware: true \}/gu)
+        ).toHaveLength(EXPECTED_SINGLE_ITEM_COUNT);
+        const lintManifest: unknown = JSON.parse(
+          await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
+        );
+        expect(lintManifest).toMatchObject({
+          devDependencies: { "oxlint-tsgolint": "7.0.2004" },
+          scripts: {
+            lint: "next typegen . && ultracite check . --type-aware --report-unused-disable-directives-severity error",
+          },
+        });
+
+        const packageJsonSource = await readFile(
+          pathModule.join(projectDir, "package.json"),
+          "utf-8"
+        );
+        const packageJsonValue: unknown = JSON.parse(packageJsonSource);
+        const packageJson = z
+          .object({ dependencies: z.record(z.string(), z.string()) })
+          .parse(packageJsonValue);
+        const electronPackageJsonSource = await readFile(
+          pathModule.join(projectDir, "electron", "package.json"),
+          "utf-8"
+        );
+        const electronPackageJsonValue: unknown = JSON.parse(
+          electronPackageJsonSource
+        );
+        const electronPackageJson = z
+          .object({ devDependencies: z.record(z.string(), z.string()) })
+          .parse(electronPackageJsonValue);
+
+        expect(
+          existsSync(pathModule.join(projectDir, "tests/eve-browser.e2e.ts"))
+        ).toBe(false);
+        expect(
+          existsSync(
+            pathModule.join(
+              projectDir,
+              "lib/db/migrations/eve-runtime-migration.test.ts"
+            )
+          )
+        ).toBe(false);
+        expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
+        expect(packageJson.dependencies.eve).toBe(
+          "file:vendor/chat-js-eve-0.80.1-chatjs.2.tgz"
+        );
+        expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
+        expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
+          "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
+        );
+        expect(
+          electronPackageJson.devDependencies["@better-auth/electron"]
+        ).toBe("1.6.2");
+      } finally {
+        if (existsSync(backupDir)) {
+          await rename(backupDir, templatesDir);
+        }
+      }
+    },
+    SCAFFOLD_INTEGRATION_TIMEOUT_MS
+  );
 });
 
 describe("scaffoldFromGit", (): void => {
@@ -804,119 +810,125 @@ describe("scaffoldFromGit", (): void => {
 });
 
 describe("scaffoldElectron", (): void => {
-  it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
-    const projectDir = makeTempDir("electron-node-prebuild");
-    await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
-    await scaffoldElectron(projectDir, {
-      packageManager: "npm",
-      projectName: "my-chat-app",
-    });
-    const electronDir = pathModule.join(projectDir, "electron");
-    const nodeModules = pathModule.join(electronDir, "node_modules");
-    const resolveDependency = createRequire(import.meta.url).resolve;
-    await mkdir(pathModule.join(nodeModules, ".bin"), { recursive: true });
-    await Promise.all([
-      symlink(
-        resolveDependency("tsx/cli"),
-        pathModule.join(nodeModules, ".bin/tsx")
-      ),
-      symlink(
-        pathModule.dirname(resolveDependency("png2icons/package.json")),
-        pathModule.join(nodeModules, "png2icons"),
-        "dir"
-      ),
-    ]);
-    // Isolate app configuration so prebuild needs no environment credentials.
-    await writeFile(
-      pathModule.join(projectDir, "lib/config.ts"),
-      `export const config = {
+  it(
+    "runs generated Electron prebuild under Node and tsx",
+    async (): Promise<void> => {
+      const projectDir = makeTempDir("electron-node-prebuild");
+      await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
+      await scaffoldElectron(projectDir, {
+        packageManager: "npm",
+        projectName: "my-chat-app",
+      });
+      const electronDir = pathModule.join(projectDir, "electron");
+      const nodeModules = pathModule.join(electronDir, "node_modules");
+      const resolveDependency = createRequire(import.meta.url).resolve;
+      await mkdir(pathModule.join(nodeModules, ".bin"), { recursive: true });
+      await Promise.all([
+        symlink(
+          resolveDependency("tsx/cli"),
+          pathModule.join(nodeModules, ".bin/tsx")
+        ),
+        symlink(
+          pathModule.dirname(resolveDependency("png2icons/package.json")),
+          pathModule.join(nodeModules, "png2icons"),
+          "dir"
+        ),
+      ]);
+      // Isolate app configuration so prebuild needs no environment credentials.
+      await writeFile(
+        pathModule.join(projectDir, "lib/config.ts"),
+        `export const config = {
         appName: "Node Prebuild",
         appPrefix: "node-prebuild",
         appUrl: "http://localhost:3000",
         organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
       };`
-    );
-    const result = Bun.spawnSync(["npm", "run", "prebuild"], {
-      cwd: electronDir,
-      stderr: "pipe",
-      stdout: "pipe",
-    });
-    expect({
-      exitCode: result.exitCode,
-      stderr: result.stderr.toString(),
-    }).toEqual({ exitCode: 0, stderr: "" });
-    const branding: unknown = JSON.parse(
-      await readFile(pathModule.join(electronDir, "branding.json"), "utf-8")
-    );
-    expect(branding).toEqual({
-      appName: "Node Prebuild",
-      appPrefix: "node-prebuild",
-      appUrl: "http://localhost:3000",
-      orgEmail: "test@example.com",
-      orgName: "Test",
-    });
-    const icons = await Promise.all(
-      ["png", "icns", "ico"].map(
-        async (extension) =>
-          await readFile(
-            pathModule.join(electronDir, "build", `icon.${extension}`)
-          )
-      )
-    );
-    for (const icon of icons) {
-      expect(icon.length).toBeGreaterThan(MINIMUM_NONEMPTY_FILE_LENGTH);
-    }
-
-    await Promise.all([
-      rm(pathModule.join(electronDir, "branding.json")),
-      rm(pathModule.join(electronDir, "build"), { recursive: true }),
-    ]);
-    await Promise.all([
-      mkdir(pathModule.join(electronDir, "branding.json")),
-      writeFile(pathModule.join(electronDir, "build"), "blocked"),
-    ]);
-    for (const { script, errorCode } of [
-      { errorCode: "EISDIR", script: "write-branding.ts" },
-      { errorCode: "EEXIST", script: "generate-icons.ts" },
-    ]) {
-      const failed = Bun.spawnSync(
-        ["node", resolveDependency("tsx/cli"), `scripts/${script}`],
-        { cwd: electronDir, stderr: "pipe", stdout: "pipe" }
       );
-      expect(failed.exitCode).toBe(1);
-      expect(failed.stderr.toString()).toContain(errorCode);
-    }
+      const result = Bun.spawnSync(["npm", "run", "prebuild"], {
+        cwd: electronDir,
+        stderr: "pipe",
+        stdout: "pipe",
+      });
+      expect({
+        exitCode: result.exitCode,
+        stderr: result.stderr.toString(),
+      }).toEqual({ exitCode: 0, stderr: "" });
+      const branding: unknown = JSON.parse(
+        await readFile(pathModule.join(electronDir, "branding.json"), "utf-8")
+      );
+      expect(branding).toEqual({
+        appName: "Node Prebuild",
+        appPrefix: "node-prebuild",
+        appUrl: "http://localhost:3000",
+        orgEmail: "test@example.com",
+        orgName: "Test",
+      });
+      const icons = await Promise.all(
+        ["png", "icns", "ico"].map(
+          async (extension) =>
+            await readFile(
+              pathModule.join(electronDir, "build", `icon.${extension}`)
+            )
+        )
+      );
+      for (const icon of icons) {
+        expect(icon.length).toBeGreaterThan(MINIMUM_NONEMPTY_FILE_LENGTH);
+      }
 
-    // A branding write failure must stop prebuild before icon generation starts.
-    await rm(pathModule.join(electronDir, "build"));
-    const brandingFailure = Bun.spawnSync(["npm", "run", "prebuild"], {
-      cwd: electronDir,
-      stderr: "pipe",
-      stdout: "pipe",
-    });
-    expect(brandingFailure.exitCode).toBe(1);
-    expect(brandingFailure.stderr.toString()).toContain("EISDIR");
-    expect(brandingFailure.stdout.toString()).not.toContain(
-      "branding.json written:"
-    );
-    expect(existsSync(pathModule.join(electronDir, "build"))).toBe(false);
+      await Promise.all([
+        rm(pathModule.join(electronDir, "branding.json")),
+        rm(pathModule.join(electronDir, "build"), { recursive: true }),
+      ]);
+      await Promise.all([
+        mkdir(pathModule.join(electronDir, "branding.json")),
+        writeFile(pathModule.join(electronDir, "build"), "blocked"),
+      ]);
+      for (const { script, errorCode } of [
+        { errorCode: "EISDIR", script: "write-branding.ts" },
+        { errorCode: "EEXIST", script: "generate-icons.ts" },
+      ]) {
+        const failed = Bun.spawnSync(
+          ["node", resolveDependency("tsx/cli"), `scripts/${script}`],
+          { cwd: electronDir, stderr: "pipe", stdout: "pipe" }
+        );
+        expect(failed.exitCode).toBe(1);
+        expect(failed.stderr.toString()).toContain(errorCode);
+      }
 
-    // A missing input must also fail after the output directory is created.
-    await rm(pathModule.join(electronDir, "icon.png"));
-    const iconFailure = Bun.spawnSync(["npm", "run", "generate-icons"], {
-      cwd: electronDir,
-      stderr: "pipe",
-      stdout: "pipe",
-    });
-    expect(iconFailure.exitCode).toBe(1);
-    expect(iconFailure.stderr.toString()).toContain("ENOENT");
-    expect(iconFailure.stdout.toString()).not.toContain("Generated build/icon");
-    for (const extension of ["png", "icns", "ico"]) {
-      expect(
-        existsSync(pathModule.join(electronDir, "build", `icon.${extension}`))
-      ).toBe(false);
-    }
-  });
+      // A branding write failure must stop prebuild before icon generation starts.
+      await rm(pathModule.join(electronDir, "build"));
+      const brandingFailure = Bun.spawnSync(["npm", "run", "prebuild"], {
+        cwd: electronDir,
+        stderr: "pipe",
+        stdout: "pipe",
+      });
+      expect(brandingFailure.exitCode).toBe(1);
+      expect(brandingFailure.stderr.toString()).toContain("EISDIR");
+      expect(brandingFailure.stdout.toString()).not.toContain(
+        "branding.json written:"
+      );
+      expect(existsSync(pathModule.join(electronDir, "build"))).toBe(false);
+
+      // A missing input must also fail after the output directory is created.
+      await rm(pathModule.join(electronDir, "icon.png"));
+      const iconFailure = Bun.spawnSync(["npm", "run", "generate-icons"], {
+        cwd: electronDir,
+        stderr: "pipe",
+        stdout: "pipe",
+      });
+      expect(iconFailure.exitCode).toBe(1);
+      expect(iconFailure.stderr.toString()).toContain("ENOENT");
+      expect(iconFailure.stdout.toString()).not.toContain(
+        "Generated build/icon"
+      );
+      for (const extension of ["png", "icns", "ico"]) {
+        expect(
+          existsSync(pathModule.join(electronDir, "build", `icon.${extension}`))
+        ).toBe(false);
+      }
+    },
+    SCAFFOLD_INTEGRATION_TIMEOUT_MS
+  );
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
