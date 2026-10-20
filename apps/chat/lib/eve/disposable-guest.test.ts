@@ -228,3 +228,40 @@ test("cleanup credentials work only for deleting sessions and cannot send messag
     )
   ).toBeNull();
 });
+
+test("cleanup retires old gateway sessions without permitting new messages or other sessions", async () => {
+  const previous = {
+    ...claims(),
+    modelId: "gpt-5-nano",
+    purpose: "cleanup" as const,
+  };
+  store.read.mockResolvedValue({
+    id: previous.policyId,
+    modelId: previous.modelId,
+    sessionId: previous.sessionId,
+    state: "deleting",
+    policyVersion: 1,
+  });
+  const token = issueGuestCredential(previous);
+  expect(
+    await authenticateDisposableGuest(
+      request(token, "session/session-owned/reset", {
+        reason: "Guest retention expired",
+      })
+    )
+  ).not.toBeNull();
+  expect(
+    await authenticateDisposableGuest(
+      request(token, "session/session-owned", { message: "hello" })
+    )
+  ).toBeNull();
+  expect(
+    await authenticateDisposableGuest(request(token, "session/other/reset", {}))
+  ).toBeNull();
+  const mismatched = issueGuestCredential({ ...previous, modelId: "wrong" });
+  expect(
+    await authenticateDisposableGuest(
+      request(mismatched, "session/session-owned/reset", {})
+    )
+  ).toBeNull();
+});

@@ -16,6 +16,7 @@ const RETIRE_TIMEOUT_MS = 30_000;
 
 const resolveCleanupSession = async (guest: {
   readonly id: string;
+  readonly modelId: string;
   readonly ownerId: string;
   readonly sessionId: string | null;
 }): Promise<string> => {
@@ -26,6 +27,7 @@ const resolveCleanupSession = async (guest: {
   // session or creates one empty session, which this sweep immediately retires.
   const connection = getGuestCleanupConnectionOptions({
     ownerId: guest.ownerId,
+    modelId: guest.modelId,
     policyId: guest.id,
   });
   const response = await fetch(`${connection.host}/v1/session`, {
@@ -84,6 +86,7 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
         const client = new Client(
           getGuestCleanupConnectionOptions({
             ownerId: guest.ownerId,
+            modelId: guest.modelId,
             policyId: guest.id,
             sessionId,
           })
