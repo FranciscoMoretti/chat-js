@@ -32,4 +32,14 @@ No scheduled cleanup service exists in this verification workspace. The web depl
 
 Local screenshots: `/tmp/render-pr868-proof/guest-reply.png` and `/tmp/render-pr868-proof/registered-reply.png`.
 
-The deployment overlay passed workspace type checks and nine Supabase adapter tests. Formatting and oxlint passed; canonical demo-sync checking intentionally differs because this source-clone deployment replaces the reference storage adapter. The shell corrections passed bash syntax and git whitespace checks.
+The deployment overlay passed workspace type checks and nine Supabase adapter tests. Formatting and oxlint passed; the historical deployment differed from canonical demo-sync because it replaced the reference storage adapter. The reviewed opt-in profile keeps the repository default canonical. The shell corrections passed bash syntax and git whitespace checks.
+
+## Opt-in profile after review
+
+The repository keeps the canonical reference app provider selections. In a disposable source clone, set `SUPABASE_STORAGE_BUCKET` to your existing private bucket (the smoke test used `chatjs-staging`) and use `bash deployment/render/build.sh` / `bash deployment/render/start.sh` as the Render commands. The build invokes `node deployment/render/prepare.ts` to select the maintained Supabase adapter and override the shared agent and research subagents with JustBash. The script intentionally edits that checkout's source; do not run it in a development checkout containing edits to those provider files. It does not provision infrastructure or modify the default Blueprint.
+
+The checked-in Supabase peer dependency supports this opt-in build. The missing-object normalization and its tests live in the registry's Supabase provider, so generated Supabase installations also receive the fix. Other storage errors remain errors.
+
+Set `TRUSTED_CLIENT_IP_HEADER=cf-connecting-ip` only on the verified Cloudflare-fronted Render service. The startup script does not enable trust globally. JustBash applies to EVE's own workspace; ChatJS's installed tool execution provider remains separately configured. This profile does not certify persistent filesystem recovery or remote erasure.
+
+The source revision after review incorporates the app-owned sandbox lifecycle and renumbered guest migrations. Those changes have not been deployed by this PR. The earlier test database needs explicit migration reconciliation or replacement with a fresh verification database before rollout; automatic deployment remains disabled. The timings above are evidence for the recorded tested revision, not a benchmark of the revised profile.
