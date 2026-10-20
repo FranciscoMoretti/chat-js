@@ -9,6 +9,7 @@ import {
   eveConversation,
   eveGuest,
   guestRuntimeSession,
+  guestRuntimeRate,
   user,
 } from "./schema";
 
@@ -17,6 +18,7 @@ const database = drizzle(postgres);
 vi.mock("./client", () => ({ db: database }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 const {
+  pruneGuestRuntimeRates,
   createGuestRuntimeSession,
   bindGuestRuntimeSession,
   readGuestRuntimePolicy,
@@ -233,4 +235,17 @@ test("legacy read-only inventory ignores accounts and fully deleted guest famili
     .set({ state: "deleted" })
     .where(eq(eveConversation.id, conversationId));
   expect(await hasExpiredEveGuestFamilies()).toBe(false);
+});
+
+test("pruning drains more than one old rate batch and retains live limits", async () => {
+  await database.execute(
+    sql`insert into "GuestRuntimeRate" ("ipHash", "kind", "startsAt") select 'expired-' || n, 'session', now() - interval '3 days' from generate_series(1, 1001) n`
+  );
+  await database
+    .insert(guestRuntimeRate)
+    .values({ ipHash: "live-rate", kind: "session", startsAt: new Date() });
+  await pruneGuestRuntimeRates();
+  const rows = await database.select().from(guestRuntimeRate);
+  expect(rows.some((row) => row.ipHash.startsWith("expired-"))).toBe(false);
+  expect(rows.some((row) => row.ipHash === "live-rate")).toBe(true);
 });

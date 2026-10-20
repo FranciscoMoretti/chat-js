@@ -15,6 +15,7 @@ const PACKING_OUTPUT_LIMIT_BYTES = 8_388_608;
 
 interface VendorInput {
   readonly destination: string;
+  readonly dependencyName?: string;
   readonly packageDir: string;
   readonly packageName: string;
   readonly patchPath: string;
@@ -53,7 +54,11 @@ const readVendoringMetadata = async (
     !isTemplateManifest(manifest) ||
     !isInstalledManifest(installed) ||
     installed.name !== input.packageName ||
-    manifest.dependencies[input.packageName] !== installed.version
+    manifest.dependencies[input.dependencyName ?? input.packageName] !==
+      (input.dependencyName !== undefined &&
+      input.dependencyName !== input.packageName
+        ? `npm:${installed.name}@${installed.version}`
+        : installed.version)
   ) {
     throw new Error(
       `The template and installed ${input.packageName} versions must match.`
@@ -118,7 +123,8 @@ export const vendorPatchedPackage = async (
       recursive: true,
     });
     const archiveName = await packMaintainedArchive(staging, input, installed);
-    manifest.dependencies[input.packageName] = `file:vendor/${archiveName}`;
+    manifest.dependencies[input.dependencyName ?? input.packageName] =
+      `file:vendor/${archiveName}`;
     await writeFile(
       nodePath.join(input.destination, "package.json"),
       formattedManifest(manifest)

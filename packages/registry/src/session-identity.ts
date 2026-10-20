@@ -15,7 +15,7 @@ export const isGuestSession = (session: SessionIdentity): boolean =>
 
 /** A guest cannot acquire account capabilities through reconnect or current auth. */
 export const requireAccountSession = (session: SessionIdentity): void => {
-  if (isGuestSession(session)) {
+  if (!session.auth.initiator || isGuestSession(session)) {
     throw new Error("This operation requires an account session.");
   }
 };

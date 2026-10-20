@@ -30,11 +30,13 @@ const hasMatchingPackageManifest = async (
  * Resolve an installed package from the workspace that declares the dependency.
  * @param {string} packageName Package identifier to resolve through workspace dependencies.
  * @param {string} resolveFrom Workspace directory whose package.json anchors module resolution.
+ * @param {string} manifestName Published package name when resolving an npm alias.
  * @returns {Promise<string>} The ancestor directory with that package's matching manifest name.
  */
 export const resolvePackageDirectory = async (
   packageName: string,
-  resolveFrom: string
+  resolveFrom: string,
+  manifestName: string = packageName
 ): Promise<string> => {
   const resolveDependency = createRequire(
     pathModule.join(resolveFrom, "package.json")
@@ -44,7 +46,7 @@ export const resolvePackageDirectory = async (
 
   while (directory !== filesystemRoot) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect the current manifest before advancing to its parent; matches and non-missing errors stop traversal.
-    if (await hasMatchingPackageManifest(directory, packageName)) {
+    if (await hasMatchingPackageManifest(directory, manifestName)) {
       return directory;
     }
     directory = pathModule.dirname(directory);

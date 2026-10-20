@@ -214,6 +214,21 @@ const applyChatTemplateSourceTransforms = async (
       "workflow-world-postgres@5.0.0-beta.40.patch"
     ),
   });
+  await vendorPatchedPackage({
+    destination,
+    dependencyName: "eve",
+    packageDir: await resolvePackageDirectory(
+      "eve",
+      pathModule.join(getRepoRoot(), "apps", "chat"),
+      "@chat-js/eve"
+    ),
+    packageName: "@chat-js/eve",
+    patchPath: pathModule.join(
+      getRepoRoot(),
+      "patches",
+      "@chat-js%2Feve@0.80.1-chatjs.2.patch"
+    ),
+  });
 };
 
 const applyElectronTemplateSourceTransforms = async (
