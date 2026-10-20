@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-import { runHostedCleanup } from "./hosted-cleanup";
+import { runHostedCleanup } from "../apps/chat/scripts/cleanup";
 
 afterEach(() => vi.unstubAllGlobals());
 
