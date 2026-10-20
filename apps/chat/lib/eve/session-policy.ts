@@ -1,7 +1,12 @@
+import { config } from "../config";
+
+export const guestModelIdForGateway = (gateway: string): string =>
+  gateway === "openai" ? "gpt-5-nano" : "openai/gpt-5-nano";
+
 /** Server-owned guest policy. Public constants describe limits, never authorize them. */
 export const GUEST_POLICY = {
   version: "1",
-  modelId: "openai/gpt-5-nano",
+  modelId: guestModelIdForGateway(config.ai.gateway),
   messageLimit: 10,
   requestsPerMinute: 5,
   sessionsPerHour: 5,

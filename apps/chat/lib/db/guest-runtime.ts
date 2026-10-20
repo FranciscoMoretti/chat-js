@@ -261,7 +261,7 @@ export const completeGuestRuntimeDeletion = async (
 
 export const pruneGuestRuntimeRates = async (): Promise<void> => {
   await db.execute(
-    sql`delete from ${guestRuntimeRate} where ctid in (select ctid from ${guestRuntimeRate} where ${guestRuntimeRate.startsAt} <= now() - interval '2 days' limit 500)`
+    sql`delete from ${guestRuntimeRate} where ${guestRuntimeRate.startsAt} <= now() - interval '2 days'`
   );
 };
 

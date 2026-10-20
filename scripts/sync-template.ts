@@ -127,6 +127,13 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
       "workflow-world-postgres@5.0.0-beta.40.patch"
     ),
   });
+  await vendorPatchedPackage({
+    destination,
+    dependencyName: "eve",
+    packageDir: await resolvePackageDirectory("eve", sourceDir, "@chat-js/eve"),
+    packageName: "@chat-js/eve",
+    patchPath: join(rootDir, "patches", "@chat-js%2Feve@0.80.1-chatjs.2.patch"),
+  });
 
   await stampTemplateManifest(destination);
 };

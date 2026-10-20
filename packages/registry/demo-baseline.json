@@ -55,7 +55,7 @@
     "lib/db/mcp-queries.ts": "d56f9d746a140370894dfe02148a1352fdb9afb9b26e9cc69dbd92ec1c866871",
     "lib/eve/mcp-adapter.ts": "b85f1239951bc321c5d6445003978c578457623c3dd3a9d43c9898c7d86e19c2",
     "lib/eve/mcp-tools.ts": "b1749bba60a4e6ab302c2ee679978651ce675a05e2e0a4d75ae0eea9a9209b51",
-    "lib/eve/session-identity.ts": "99909f30a9605b97800f6662c486579912b8f1af15603254dd625b596925c23c",
+    "lib/eve/session-identity.ts": "91e825ce93046e05676ab7241496c092d41dceb781567949be983e770ff64629",
     "lib/nuqs/mcp-search-params.server.ts": "36dd15f4e013927b93a85a657d27351e3b50b8fb6b3502d4b8825ba9f4a2f8cb",
     "lib/nuqs/mcp-search-params.ts": "3ab71b61b7a78b785f228978a4bbd98c9e279161ad8efbc9e33dbc89858cd120",
     "lib/sandbox/adapter.ts": "6e5ec8c1c45969743366dae1b2b5c530e72c00b6478e0926bcd8baa393cdd55e",
