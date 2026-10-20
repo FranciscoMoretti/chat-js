@@ -30,7 +30,6 @@ if (
 }
 const manifestPaths = [
   "apps/chat/package.json",
-  "apps/chat/guest/package.json",
   "apps/chat/tests/eve-fixture/package.json",
   "packages/registry/package.json",
 ];

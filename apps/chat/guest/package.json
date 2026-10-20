@@ -1,8 +1,0 @@
-{
-  "name": "@chatjs/guest-runtime",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "eve": "npm:@chat-js/eve@0.80.1-chatjs.2"
-  }
-}

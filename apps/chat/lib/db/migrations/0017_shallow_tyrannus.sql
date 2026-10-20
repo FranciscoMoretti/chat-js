@@ -1,0 +1,1 @@
+ALTER TABLE "GuestRuntimeSession" ADD COLUMN "inputCharactersUsed" integer DEFAULT 0 NOT NULL;

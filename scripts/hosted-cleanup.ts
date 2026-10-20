@@ -5,17 +5,9 @@ const batchStep = 1;
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null;
 
-const deletedGuestCount = (result: unknown): number => {
+const verifiedDeletedCount = (guests: unknown): number => {
   if (
-    !isRecord(result) ||
-    result.success !== true ||
-    !isRecord(result.results) ||
-    !isRecord(result.results.expiredGuests)
-  ) {
-    throw new Error("Cleanup incomplete or unavailable; retry required.");
-  }
-  const guests = result.results.expiredGuests;
-  if (
+    !isRecord(guests) ||
     typeof guests.deletedCount !== "number" ||
     !Number.isSafeInteger(guests.deletedCount) ||
     guests.deletedCount < emptyCount ||
@@ -25,6 +17,20 @@ const deletedGuestCount = (result: unknown): number => {
     throw new Error("Cleanup inventory unavailable; retry required.");
   }
   return guests.deletedCount;
+};
+
+const deletedGuestCount = (result: unknown): number => {
+  if (
+    !isRecord(result) ||
+    result.success !== true ||
+    !isRecord(result.results)
+  ) {
+    throw new Error("Cleanup incomplete or unavailable; retry required.");
+  }
+  return (
+    verifiedDeletedCount(result.results.expiredGuests) +
+    verifiedDeletedCount(result.results.runtimeGuests)
+  );
 };
 
 const drainCleanup = async (

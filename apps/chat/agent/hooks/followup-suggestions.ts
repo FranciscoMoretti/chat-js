@@ -1,3 +1,4 @@
+import { isGuestSession } from "../../lib/eve/session-policy";
 import type { FollowupContext } from "../../lib/eve/followup-context";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
@@ -35,7 +36,7 @@ export default defineHook({
       }
     ): ReturnType<typeof generateEveFollowupSuggestions> | undefined => {
       // Suggestions are actions for the user-facing branch, not a background task.
-      if (hookContext.session.parent) {
+      if (isGuestSession(hookContext.session) || hookContext.session.parent) {
         return undefined;
       }
       return generateEveFollowupSuggestions(context.get(), {

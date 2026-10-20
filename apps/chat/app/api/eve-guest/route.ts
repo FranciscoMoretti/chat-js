@@ -1,3 +1,11 @@
+import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
+import { readGuestBody } from "@/lib/eve/guest-body";
+import {
+  createGuestRuntimeSession,
+  bindGuestRuntimeSession,
+} from "@/lib/db/guest-runtime";
+import { guestRequestIpHash } from "@/lib/eve/guest-admission";
+import { GUEST_POLICY } from "@/lib/eve/session-policy";
 import {
   issueGuestCredential,
   newGuestClaims,
@@ -8,7 +16,6 @@ import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { z } from "zod";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 const MINIMUM_MODEL_ID_LENGTH = 1;
 const GUEST_CREATION_TIMEOUT_MS = 60_000;
@@ -36,11 +43,8 @@ export const POST = async (
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
   }
-  const value = input.safeParse(await request.json().catch(() => null));
-  if (
-    !value.success ||
-    !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some((id) => id === value.data.modelId)
-  ) {
+  const value = input.safeParse(await readGuestBody(request));
+  if (!value.success || value.data.modelId !== GUEST_POLICY.modelId) {
     return Response.json(
       { error: "Choose an available guest model." },
       { status: 400 }
@@ -54,16 +58,53 @@ export const POST = async (
       { status: 503 }
     );
   }
+  try {
+    // Never admit temporary data unless this deployment can later erase it.
+    await requireEveDeletionLifecycle().check();
+  } catch {
+    return Response.json(
+      {
+        error:
+          "Guest retention is unavailable. Please sign in or try again later.",
+      },
+      { status: 503 }
+    );
+  }
   await loadEveModelDefinition(value.data.modelId);
-  const claims = newGuestClaims(value.data.modelId);
+  let ipHash: string;
+  try {
+    ipHash = guestRequestIpHash(request);
+  } catch {
+    return Response.json(
+      { error: "Guest admission is unavailable." },
+      { status: 503 }
+    );
+  }
+  const claims = newGuestClaims(GUEST_POLICY.modelId);
+  const admission = await createGuestRuntimeSession({
+    ownerId: claims.ownerId,
+    modelId: GUEST_POLICY.modelId,
+    ipHash,
+    credentialExpiresAt: new Date(claims.expiresAt),
+    messageLimit: GUEST_POLICY.messageLimit,
+    requestsPerMinute: GUEST_POLICY.requestsPerMinute,
+    sessionsPerHour: GUEST_POLICY.sessionsPerHour,
+  });
+  if (admission.status !== "ready") {
+    return Response.json(
+      { error: "Guest limit reached. Please try again later or sign in." },
+      { status: 429 }
+    );
+  }
+  claims.policyId = admission.guest.id;
   const connection = getEveConnectionOptions(
     claims.ownerId,
     new URL(host).origin
   );
   const response = await fetch(
-    new URL("/eve/guest/v1/session", connection.host),
+    new URL("/eve/chat/v1/session", connection.host),
     {
-      body: "{}",
+      body: JSON.stringify({ operationId: claims.policyId }),
       cache: "no-store",
       headers: {
         ...connection.headers,
@@ -82,6 +123,14 @@ export const POST = async (
     );
   }
   const { sessionId } = createdSession.parse(await response.json());
+  if (
+    !(await bindGuestRuntimeSession(claims.policyId, claims.ownerId, sessionId))
+  ) {
+    return Response.json(
+      { error: "Could not bind guest session. Please try again." },
+      { status: 502 }
+    );
+  }
   return Response.json(
     {
       credential: issueGuestCredential({ ...claims, sessionId }),

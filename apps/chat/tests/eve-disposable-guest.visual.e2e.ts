@@ -33,16 +33,9 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
       }
     );
   await expect(fixture).toHaveScreenshot("guest-welcome.png");
-  await fixture.getByRole("button", { name: /Guest fixture model/u }).click();
   await expect(
-    page.getByRole("combobox").filter({ hasNot: page.locator("option") })
-  ).toBeVisible();
-  const clip = await fixture.boundingBox();
-  if (!clip) {
-    throw new Error("Guest fixture has no visible bounds");
-  }
-  await expect(page).toHaveScreenshot("guest-picker.png", { clip });
-  await page.keyboard.press("Escape");
+    fixture.getByRole("button", { name: /Guest fixture model/u })
+  ).toBeDisabled();
   await fixture
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Preserve this draft");

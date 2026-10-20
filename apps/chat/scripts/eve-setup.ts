@@ -1,3 +1,4 @@
+import { assertPostgresLifecycleCompatibility } from "@/lib/eve/lifecycle/postgres/compatibility";
 import { config } from "dotenv";
 import { execFileSync } from "node:child_process";
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
@@ -97,10 +98,9 @@ const openReadinessConnection = (
 
 /**
  * Build the provider and optional local lifecycle table manifest in query order.
- * @param {boolean} local Whether this world owns local lifecycle fences.
  * @returns {string[]} A fresh ordered table manifest for the readiness query.
  */
-const requiredEveTables = (local: boolean): string[] => {
+const requiredEveTables = (): string[] => {
   const required = [
     "workflow.workflow_runs",
     "workflow.workflow_events",
@@ -110,38 +110,26 @@ const requiredEveTables = (local: boolean): string[] => {
     "workflow.workflow_waits",
     "workflow.workflow_stream_chunks",
     "graphile_worker._private_jobs",
+    "workflow.eve_resource_fences",
+    "workflow.eve_session_retirements",
+    "workflow.eve_queue_tasks",
   ];
-  if (local) {
-    required.push(
-      "workflow.eve_resource_fences",
-      "workflow.eve_session_retirements",
-      "workflow.eve_queue_tasks"
-    );
-  }
   return required;
 };
 
 /**
  * Reject incomplete schemas and report the supported readiness coverage.
  * @param {readonly unknown[]} missing Rows identifying requested tables missing from PostgreSQL.
- * @param {boolean} local Whether local lifecycle tables were included.
  * @returns {void} Reports readiness, or throws the command's actionable schema error.
  */
-const reportSchemaReadiness = (
-  missing: readonly unknown[],
-  local: boolean
-): void => {
+const reportSchemaReadiness = (missing: readonly unknown[]): void => {
   if (missing.length > NO_MISSING_TABLES) {
     throw new Error(
       "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
     );
   }
   console.log("EVE PostgreSQL connection and required tables are ready.");
-  if (!local) {
-    console.log(
-      "Hosted lifecycle/deletion verification remains required; this command checks provider schema readiness only."
-    );
-  }
+  console.log("EVE lifecycle schema and write fences are ready.");
 };
 
 const run = async (): Promise<void> => {
@@ -149,16 +137,16 @@ const run = async (): Promise<void> => {
   if (!setup.managed && mode !== "--validate") {
     const { connection, deadline } = openReadinessConnection(setup.databaseUrl);
     try {
-      if ((typeof mode !== "string" || mode === "") && setup.local) {
+      if (typeof mode !== "string" || mode === "") {
         await installEvePostgresResourceFence(connection);
         await installEvePostgresQueueFence(connection, "workflow_flows");
       }
+      await assertPostgresLifecycleCompatibility(connection);
       reportSchemaReadiness(
         await connection`
-          select name from unnest(${requiredEveTables(setup.local)}::text[]) as name
+          select name from unnest(${requiredEveTables()}::text[]) as name
           where to_regclass(name) is null
-        `,
-        setup.local
+        `
       );
     } finally {
       clearTimeout(deadline);

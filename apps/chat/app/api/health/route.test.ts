@@ -49,6 +49,10 @@ test("reports ready only with database and Eve available", async () => {
   );
   const resolvedResult2 = await GET();
   expect(resolvedResult2.status).toBe(HTTP_STATUS.ok);
+  expect(fetch).toHaveBeenCalledExactlyOnceWith(
+    new URL("http://localhost:3790/eve/chat/v1/health"),
+    expect.objectContaining({ cache: "no-store", redirect: "error" })
+  );
   expect(timeout.mock.calls[0]?.[2]?.signal?.aborted).toBe(true);
   database.mockRejectedValue(new Error("database disconnected"));
   const resolvedResult3 = await GET();
@@ -71,12 +75,12 @@ test("bounds a stalled database check", async () => {
 }, 10_000);
 
 const unavailableStatus = 503;
-test("a failed guest worker makes the production instance unavailable", async () => {
+test("a failed shared worker makes the production instance unavailable", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn((url: { readonly pathname: string }) => {
-      if (url.pathname === "/eve/guest/v1/health") {
-        throw new Error("guest process exited");
+      if (url.pathname === "/eve/chat/v1/health") {
+        throw new Error("shared process exited");
       }
       return Response.json({ ok: true, status: "ready", workflowId: "test" });
     })

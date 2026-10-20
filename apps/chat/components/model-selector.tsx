@@ -360,9 +360,7 @@ const PureModelSelector = ({
         (chatModel: ReadonlyNativeSurface<AppModelDefinition>) => ({
           disabled:
             isAnonymous &&
-            !(
-              ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-            ).includes(chatModel.id),
+            !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(chatModel.id),
           model: chatModel,
         })
       ),
@@ -450,9 +448,7 @@ const PureModelSelector = ({
       return {
         disabled:
           isAnonymous &&
-          !(
-            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-          ).includes(fallbackModel.id),
+          !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(fallbackModel.id),
         model: fallbackModel,
       } satisfies ModelItem;
     }

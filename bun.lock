@@ -451,6 +451,7 @@
     },
   },
   "patchedDependencies": {
+    "@chat-js/eve@0.80.1-chatjs.2": "patches/@chat-js%2Feve@0.80.1-chatjs.2.patch",
     "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch",
   },
   "overrides": {

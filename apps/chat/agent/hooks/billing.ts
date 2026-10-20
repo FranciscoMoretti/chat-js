@@ -1,3 +1,4 @@
+import { isGuestSession } from "../../lib/eve/session-policy";
 import {
   getEveSubagent,
   registerEveSubagent,
@@ -19,6 +20,9 @@ export default defineHook({
         >;
       }>
     ) => {
+      if (isGuestSession(context.session)) {
+        return;
+      }
       observeEveModelAccounting(event, context.session);
       const ownerId = context.session.auth.initiator?.principalId;
       if (typeof ownerId !== "string" || ownerId === "") {

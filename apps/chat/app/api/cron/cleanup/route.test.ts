@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => {
       }>
     >(),
     cleanupGuests: vi.fn(),
+    cleanupRuntimeGuests: vi.fn(),
     env,
   };
 });
@@ -44,9 +45,18 @@ vi.mock("@/lib/eve/cleanup-expired-guests", () => ({
   cleanupExpiredEveGuests: mocks.cleanupGuests,
 }));
 
+vi.mock("@/lib/eve/cleanup-guest-runtime", () => ({
+  cleanupGuestRuntimeSessions: mocks.cleanupRuntimeGuests,
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.CRON_SECRET = "fixture-secret";
+  mocks.cleanupRuntimeGuests.mockResolvedValue({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
   mocks.cleanupEve.mockResolvedValue({ deletedCount: 0, skipped: false });
   mocks.cleanupGuests.mockResolvedValue({
     deletedCount: 0,
@@ -182,6 +192,25 @@ test("guest inventory failure reports retry while attachment cleanup still runs"
     results: {
       expiredGuests: { error: "Guest cleanup failed; retry required." },
       orphanedAttachments: { deletedCount: 0, skipped: false },
+    },
+    success: false,
+  });
+});
+
+test("runtime guest cleanup failure is visible and does not skip other cleanup", async () => {
+  mocks.cleanupRuntimeGuests.mockRejectedValueOnce(
+    new Error("private database details")
+  );
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
+  expect(mocks.cleanupGuests).toHaveBeenCalledOnce();
+  expect(await response.json()).toMatchObject({
+    results: {
+      runtimeGuests: { error: "Guest runtime cleanup failed; retry required." },
     },
     success: false,
   });

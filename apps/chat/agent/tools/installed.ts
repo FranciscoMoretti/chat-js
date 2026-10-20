@@ -1,3 +1,5 @@
+import type { DynamicResolveContext } from "eve";
+import { isGuestSession } from "../../lib/eve/session-policy";
 import { defineDynamic } from "eve/tools";
 
 import { eveImageContext } from "../../lib/eve/image-context";
@@ -9,8 +11,14 @@ export default defineDynamic({
   events: {
     "step.started": (
       _event: unknown,
-      context: Readonly<{ messages: Parameters<typeof eveImageContext>[0] }>
+      context: Readonly<{
+        messages: Parameters<typeof eveImageContext>[0];
+        session: DynamicResolveContext["session"];
+      }>
     ) => {
+      if (isGuestSession(context.session)) {
+        return {};
+      }
       const images = eveImageContext(context.messages);
       eveToolImageContext.update(() => images);
       return filterEveTools(tools);

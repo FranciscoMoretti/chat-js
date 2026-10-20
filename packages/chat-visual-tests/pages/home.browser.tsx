@@ -12,11 +12,14 @@ const home = (
     <HomePage />
   </ChatLayout>
 );
-test("home for a guest", async () => {
+test("home for a guest with a fixed inexpensive model", async () => {
   await renderRoute(home);
   await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: /GPT-5 nano/u }))
+    .toBeDisabled();
   await expect
     .element(page.getByRole("button", { name: "Sign in" }).first())
     .toBeVisible();

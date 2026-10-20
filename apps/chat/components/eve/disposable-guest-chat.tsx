@@ -18,7 +18,7 @@ import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { Button } from "@/components/ui/button";
 import type { UiToolName } from "@/lib/ai/types";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
-import { useDefaultModel } from "@/providers/default-model-provider";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 import { EveComposer } from "./eve-composer";
 import { EveMessages } from "./eve-messages";
@@ -38,7 +38,7 @@ const retireGuest = async (
   binding: Readonly<Pick<Binding, "sessionId" | "credential">>
 ): Promise<void> => {
   try {
-    await fetch(`/eve/guest/v1/session/${binding.sessionId}/reset`, {
+    await fetch(`/eve/chat/v1/session/${binding.sessionId}/reset`, {
       body: "{}",
       headers: {
         authorization: `Bearer ${binding.credential}`,
@@ -48,7 +48,7 @@ const retireGuest = async (
       method: "POST",
     });
   } catch {
-    // Unload delivery is best effort. EVE's session timeout handles abandonment.
+    // Unload delivery is best effort. Scheduled cleanup handles abandoned sessions.
   }
 };
 
@@ -160,7 +160,7 @@ const GuestConversation = ({
   readonly binding: Binding;
 }): ReactJSX.Element => {
   const agent = useEveAgent({
-    agent: "guest",
+    agent: "chat",
     auth: { bearer: binding.credential },
     initialSession: { sessionId: binding.sessionId, streamIndex: 0 },
   });
@@ -271,7 +271,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
   const [draft, setDraft] = useState("");
   const files = useEveAttachments();
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
-  const modelId = useDefaultModel();
+  const [modelId] = ANONYMOUS_LIMITS.AVAILABLE_MODELS;
   const [busy, setBusy] = useState(false);
   const [commandError, setCommandError] = useState("");
   const pending = useRef(false);
@@ -351,6 +351,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
               )}
               <EveComposer
                 autoFocus
+                retainedModelId={modelId}
                 status={busy ? "submitted" : "ready"}
                 disabled={busy || !modelId}
                 draft={draft}

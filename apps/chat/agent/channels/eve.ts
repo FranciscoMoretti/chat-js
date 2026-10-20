@@ -1,3 +1,4 @@
+import { authenticateDisposableGuest } from "../../lib/eve/disposable-guest-auth";
 import { eveLocalResourceRoute } from "../../lib/eve/local-resource-route";
 import { eveChannel } from "eve/channels/eve";
 
@@ -8,7 +9,7 @@ import { resolveAcceptedEveCopySeed } from "../../lib/db/eve-copy-dispatch";
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 
 const channel = eveChannel({
-  auth: authenticateEveGateway,
+  auth: [authenticateEveGateway, authenticateDisposableGuest],
   fetchFile: fetchEveChannelFile,
   resolveSeed: async ({ auth, operationId }) => {
     const reservation = await readEveSessionMapping({

@@ -75,16 +75,17 @@ const createEveLifecycleProvider = (options: {
   const target = URL.parse(databaseUrl);
   if (
     target === null ||
-    !["postgres:", "postgresql:"].includes(target.protocol) ||
-    !["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)
+    !["postgres:", "postgresql:"].includes(target.protocol)
   ) {
     return {
-      reason:
-        "Native lifecycle setup and acceptance currently support only loopback PostgreSQL databases.",
+      reason: "Native lifecycle requires a PostgreSQL connection URL.",
       supported: false,
       world: options.world,
     };
   }
+  // Every operation verifies the exact provider schema and installed write/queue
+  // fences before mutating data. This applies equally to hosted PostgreSQL.
+  // The URL must provide direct or session-pooled connections (advisory locks).
   return createPostgresLifecycle(databaseUrl);
 };
 

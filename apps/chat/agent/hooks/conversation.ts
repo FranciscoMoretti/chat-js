@@ -1,3 +1,4 @@
+import { isGuestSession } from "../../lib/eve/session-policy";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
@@ -17,6 +18,9 @@ export default defineHook({
         >;
       }>
     ) => {
+      if (isGuestSession(context.session)) {
+        return;
+      }
       projectInstructions.update(() => ({ content: null }));
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,

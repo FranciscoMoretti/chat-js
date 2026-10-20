@@ -1,10 +1,11 @@
+import { GUEST_POLICY } from "../eve/session-policy";
 import { config } from "@/lib/config";
 
 const anonConfig = config.anonymous;
 
 export const ANONYMOUS_LIMITS = {
-  AVAILABLE_MODELS: config.ai.anonymousModels,
-  AVAILABLE_TOOLS: anonConfig.availableTools,
+  AVAILABLE_MODELS: [GUEST_POLICY.modelId] as readonly string[],
+  AVAILABLE_TOOLS: [] as readonly string[],
   CREDITS: anonConfig.credits,
   RATE_LIMIT: {
     REQUESTS_PER_MINUTE: anonConfig.rateLimit.requestsPerMinute,
