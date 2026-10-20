@@ -74,11 +74,7 @@ it("canonicalizes operation coordinates and returns only the owned binding", asy
     })
   );
   expect(response.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.save).toHaveBeenCalledWith(
-    "owner",
-    input,
-    "http://localhost:3790"
-  );
+  expect(mocks.save).toHaveBeenCalledWith("owner", input);
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
 
@@ -102,11 +98,10 @@ it("decodes a valid copy request across UTF-8 byte boundaries", async () => {
   };
   const response = await POST(new Request(request().url, init));
   expect(response.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.save).toHaveBeenCalledWith(
-    "owner",
-    { ...input, modelId: "model-ñ" },
-    "http://localhost:3790"
-  );
+  expect(mocks.save).toHaveBeenCalledWith("owner", {
+    ...input,
+    modelId: "model-ñ",
+  });
   expect(body.locked).toBe(false);
 });
 

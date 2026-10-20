@@ -222,3 +222,7 @@ it("preserves creation identity when billing recovery is busy", async () => {
   expect(body).not.toHaveProperty("creationRejected");
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+
+vi.mock("./reconcile-workspace-turn", () => ({
+  reconcileEveWorkspaceTurn: vi.fn(),
+}));

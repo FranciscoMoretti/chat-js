@@ -4,10 +4,14 @@ import { fetchEveChannelFile } from "./channel-files";
 
 const mocks = vi.hoisted(() => ({
   download: vi.fn(),
+  retain: vi.fn(),
   owned: vi.fn<typeof assertEveFilesOwned>(),
 }));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
+vi.mock("./workspace-attachments", () => ({
+  retainWorkspaceAttachment: mocks.retain,
+}));
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 const owner = {
@@ -19,7 +23,7 @@ const owner = {
   NonNullable<Parameters<typeof fetchEveChannelFile>[1]>["session"]
 >["auth"]["current"];
 const context = {
-  session: { auth: { current: owner, initiator: owner } },
+  session: { id: "native-session", auth: { current: owner, initiator: owner } },
   state: {},
 };
 beforeEach(() => {
@@ -45,6 +49,12 @@ it("checks the destination owner before reading local storage, regardless of the
   }
   expect(result.bytes.toString()).toBe("image bytes");
   expect(result.mediaType).toBe("image/png");
+  expect(mocks.retain).toHaveBeenCalledWith({
+    ownerId: owner.principalId,
+    sessionId: "native-session",
+    fileKey: key,
+    content: Buffer.from("image bytes"),
+  });
 });
 
 it("never reads a foreign or deleted file after an ownership rejection", async () => {

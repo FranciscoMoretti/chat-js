@@ -21,8 +21,8 @@ export const markEveCreationFailure = async (
       )
       .returning({ id: eveConversation.id });
     if (error instanceof EveForkBoundaryError && changed.length > 0) {
-      // Reservation inherits references before source validation. No native
-      // dispatch or resource allocation occurred; release only this reservation.
+      // A rejected boundary has no native dispatch or allocation. Remove only
+      // this reservation's references; workspace retention is independent.
       await tx
         .delete(eveFileReference)
         .where(eq(eveFileReference.conversationId, conversationId));

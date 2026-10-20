@@ -10,7 +10,9 @@ import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
 import { createEveConversation } from "../lib/db/eve-queries";
 import {
   eveConversation,
+  eveDispatch,
   eveChat,
+  eveWorkspace,
   eveFileReference,
   eveStoredFile,
   user,
@@ -116,8 +118,10 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db
       .delete(eveFileReference)
       .where(eq(eveFileReference.ownerId, owner));
+    await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
     await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
     await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, owner));
+    await db.delete(eveWorkspace).where(eq(eveWorkspace.ownerId, owner));
     await db.delete(user).where(eq(user.id, owner));
   }
 });
@@ -148,7 +152,11 @@ test("a multi-owner fence waits for family writers and rechecks references befor
       ownerId: owners[1],
       title: "Retain attachment",
     });
+    await db
+      .insert(eveWorkspace)
+      .values({ id: conversationId, ownerId: owners[1] });
     await db.insert(eveConversation).values({
+      workspaceId: conversationId,
       chatId: conversationId,
       id: conversationId,
       ownerId: owners[1],
@@ -220,6 +228,7 @@ test("a multi-owner fence waits for family writers and rechecks references befor
     await db
       .delete(eveStoredFile)
       .where(inArray(eveStoredFile.ownerId, owners));
+    await db.delete(eveWorkspace).where(inArray(eveWorkspace.ownerId, owners));
     await db.delete(user).where(inArray(user.id, owners));
     await query.end();
   }

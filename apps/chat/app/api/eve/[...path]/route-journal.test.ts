@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 const postgres = new PGlite();
@@ -73,8 +73,9 @@ beforeAll(async () => {
   /* oxlint-enable no-await-in-loop */
   await postgres.exec(`INSERT INTO "user" (id,name,email) VALUES ('owner','owner','owner');
     INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${conversationId}','owner','Test');
-    INSERT INTO "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state)
-    VALUES ('${conversationId}','${conversationId}','owner','${conversationId}','Test','native','bound');`);
+    INSERT INTO "EveWorkspace" (id, "ownerId") VALUES ('${conversationId}', 'owner');
+    INSERT INTO "EveConversation" ("workspaceId", id,"chatId","ownerId","operationId","firstMessage","sessionId",state)
+    VALUES ('${conversationId}','${conversationId}','${conversationId}','owner','${conversationId}','Test','native','bound');`);
   mocks.bound.mockResolvedValue({ id: conversationId });
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.canSpend.mockResolvedValue(true);
@@ -133,3 +134,10 @@ it("replays the exact successful proxy binding and rejects changed intent before
   expect(conflict.status).toBe(502);
   expect(mocks.eveRequest).toHaveBeenCalledTimes(1);
 });
+
+beforeEach(async () => {
+  await postgres.exec('UPDATE "EveWorkspace" SET "activeOperationId" = NULL');
+});
+vi.mock("@/lib/eve/reconcile-workspace-turn", () => ({
+  reconcileEveWorkspaceTurn: vi.fn(),
+}));

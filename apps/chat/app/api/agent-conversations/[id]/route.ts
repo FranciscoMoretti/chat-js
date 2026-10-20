@@ -1,8 +1,6 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
-import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
 import { env } from "@/lib/env";
 import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
@@ -130,13 +128,6 @@ const DELETE = async (
     );
   }
   try {
-    if (await isUnacceptedEveCopy(ownerId, id)) {
-      await deleteUnacceptedEveCopy(ownerId, id);
-      return Response.json(
-        { rootId: source.rootId, status: "deleted" },
-        { headers }
-      );
-    }
     // Hosted native erasure is not implemented. Reject before revoking access.
     if (!localDeletionAvailable()) {
       return Response.json(

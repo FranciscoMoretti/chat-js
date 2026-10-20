@@ -8,6 +8,7 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
 import {
   eveChat,
+  eveWorkspace,
   eveConversation,
   eveDocumentHead,
   eveFileReference,
@@ -23,11 +24,14 @@ const FIRST_INPUT_INDEX = 0;
 
 vi.mock("./client", (): { db: typeof database } => ({ db: database }));
 vi.mock("@/lib/env", () => ({ env: {} }));
+vi.mock("@/lib/eve/workspace-attachments", () => ({
+  resolveWorkspaceSeedAttachments: async ({ seed }: { seed: unknown }) =>
+    await Promise.resolve(seed),
+}));
 
 const { getEveDocumentRevision, saveEveDocumentRevision } =
   await import("./eve-documents");
 
-const { snapshotPublicEveCopyDocuments } = await import("./eve-copy-documents");
 const { initializeEveCurrentCopy } = await import("./eve-current-copy");
 const { markEveCreationFailure } = await import("./eve-creation-failure");
 const capture = vi.hoisted(() => vi.fn());
@@ -65,7 +69,11 @@ const seedConversation = async (conversationId: string): Promise<void> => {
     ownerId: "document-owner",
     title: "Documents",
   });
+  await database
+    .insert(eveWorkspace)
+    .values({ id: conversationId, ownerId: "document-owner" });
   await database.insert(eveConversation).values({
+    workspaceId: conversationId,
     chatId: conversationId,
     firstMessage: "Documents",
     id: conversationId,
@@ -139,6 +147,7 @@ it("captures current document heads once and keeps retries independent of later 
       parentConversationId: source,
       chatId: source,
       rootConversationId: source,
+      workspaceId: source,
       forkMessageId: "evt_source:user",
       forkKind: "edit",
     })
@@ -151,7 +160,14 @@ it("captures current document heads once and keeps retries independent of later 
       { role: "user", parts: [{ type: "text", text: "Captured history" }] },
     ],
   };
-  capture.mockResolvedValue({ seed });
+  capture.mockResolvedValue({
+    seed,
+    resources: {
+      fileKeys: [],
+      documentIds: [documentId],
+      revisionIds: [first.id],
+    },
+  });
   await expect(
     initializeEveCurrentCopy("foreign-owner", target)
   ).rejects.toThrow("Copy conversation not found");
@@ -186,25 +202,6 @@ it("captures current document heads once and keeps retries independent of later 
     .from(eveConversation)
     .where(eq(eveConversation.id, target));
   expect(copy.initialSeed).toEqual({ ...seed, attachments: "channel" });
-});
-
-it("captures public current heads inside an existing transaction", async () => {
-  const source = crypto.randomUUID();
-  const documentId = crypto.randomUUID();
-  await seedConversation(source);
-  const saved = await saveEveDocumentRevision(
-    revisionInput(source, documentId)
-  );
-  const result = await database.transaction(
-    async (tx) =>
-      await snapshotPublicEveCopyDocuments(
-        source,
-        source,
-        { documentIds: [documentId], revisionIds: [saved.id] },
-        tx
-      )
-  );
-  expect(result.documents[0]?.headRevisionId).toBe(saved.id);
 });
 
 it("releases only rejected reservation references and preserves unknown deliveries", async () => {

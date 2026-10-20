@@ -1,13 +1,17 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveChat, eveConversation } from "../lib/db/schema";
+import { eveChat, eveConversation, eveWorkspace } from "../lib/db/schema";
 
 type ConversationFixture = Readonly<
-  Omit<typeof eveConversation.$inferInsert, "chatId" | "updatedAt">
+  Omit<
+    typeof eveConversation.$inferInsert,
+    "chatId" | "updatedAt" | "workspaceId"
+  >
 > & {
   readonly chatId?: string;
+  readonly workspaceId?: string;
   readonly isPinned?: boolean;
   readonly title?: string;
   readonly updatedAt?: Date | SQL;
@@ -28,6 +32,7 @@ export const insertEveConversationFixtures = async (
     for (const fixture of Array.isArray(input) ? input : [input]) {
       const {
         chatId: requestedChatId,
+        workspaceId: requestedWorkspaceId,
         isPinned,
         title,
         updatedAt,
@@ -39,9 +44,23 @@ export const insertEveConversationFixtures = async (
         conversation.parentConversationId === ""
           ? []
           : await tx
-              .select({ chatId: eveConversation.chatId })
+              .select({
+                chatId: eveConversation.chatId,
+                workspaceId: eveConversation.workspaceId,
+              })
               .from(eveConversation)
-              .where(eq(eveConversation.id, conversation.parentConversationId));
+              .where(
+                and(
+                  eq(eveConversation.id, conversation.parentConversationId),
+                  eq(eveConversation.ownerId, conversation.ownerId)
+                )
+              );
+      const workspaceId =
+        requestedWorkspaceId ?? parent?.workspaceId ?? crypto.randomUUID();
+      await tx
+        .insert(eveWorkspace)
+        .values({ id: workspaceId, ownerId: conversation.ownerId })
+        .onConflictDoNothing();
       const chatId = requestedChatId ?? parent?.chatId ?? crypto.randomUUID();
       await tx
         .insert(eveChat)
@@ -59,7 +78,7 @@ export const insertEveConversationFixtures = async (
         .onConflictDoNothing();
       const [row] = await tx
         .insert(eveConversation)
-        .values({ ...conversation, chatId })
+        .values({ ...conversation, chatId, workspaceId })
         .returning();
       inserted.push(row);
     }

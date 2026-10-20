@@ -83,8 +83,11 @@ beforeAll(async () => {
     `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Weekend notes'), ($2, 'alice', 'Saffron cooking'), ($3, 'bob', 'Private saffron')`,
     [chat, titleChat, otherChat]
   );
+  await postgres.exec(
+    'insert into "EveWorkspace" (id,"ownerId") select id,"ownerId" from "EveChat" on conflict do nothing'
+  );
   await postgres.query(
-    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound'), ($3::uuid, $4, 'alice', '', $3::uuid, $3::text, 'bound'), ($5::uuid, $6, 'bob', '', $5::uuid, $5::text, 'bound')`,
+    `insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($2, $1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound'), ($4, $3::uuid, $4, 'alice', '', $3::uuid, $3::text, 'bound'), ($6, $5::uuid, $6, 'bob', '', $5::uuid, $5::text, 'bound')`,
     [branch, chat, titleBranch, titleChat, otherBranch, otherChat]
   );
 }, DATABASE_SETUP_TIMEOUT_MS);
@@ -169,9 +172,12 @@ it.each([
 
 it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
   const matchingBranch = "00000000-0000-4000-8000-000000000007";
+  await postgres.exec(
+    'insert into "EveWorkspace" (id,"ownerId") select id,"ownerId" from "EveChat" on conflict do nothing'
+  );
   await postgres.query(
-    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
-     values ($1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound')`,
+    `insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
+     values ($2, $1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound')`,
     [matchingBranch, titleChat]
   );
   await indexEveSearchText("alice", matchingBranch, [
@@ -256,8 +262,9 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
     insert into "EveChat" (id, "ownerId", title, "updatedAt")
       select md5(i::text)::uuid, 'pager', 'Pagination test', '2026-09-25 10:00:00.123456'::timestamp
       from generate_series(1, 25) i;
-    insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
-      select id, id, 'pager', '', id, id::text, 'bound' from "EveChat" where "ownerId" = 'pager';
+    insert into "EveWorkspace" (id,"ownerId") select id,"ownerId" from "EveChat" on conflict do nothing;
+    insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
+      select id, id, id, 'pager', '', id, id::text, 'bound' from "EveChat" where "ownerId" = 'pager';
   `);
   const first = await searchEveConversations("pager", { search: "pagin" });
   expect(first.items).toHaveLength(20);
@@ -321,8 +328,11 @@ it("blocks deletion for retained document revisions only within the requested fa
     `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Delete me'), ($2, 'alice', 'Keep me')`,
     [deletingChat, unrelatedChat]
   );
+  await postgres.exec(
+    'insert into "EveWorkspace" (id,"ownerId") select id,"ownerId" from "EveChat" on conflict do nothing'
+  );
   await postgres.query(
-    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", state) values ($1, $2, 'alice', 'Delete me', $1, 'deleting'), ($3, $4, 'alice', 'Keep me', $3, 'bound')`,
+    `insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", state) values ($2, $1, $2, 'alice', 'Delete me', $1, 'deleting'), ($4, $3, $4, 'alice', 'Keep me', $3, 'bound')`,
     [deletingConversation, deletingChat, unrelatedConversation, unrelatedChat]
   );
   await postgres.query(
@@ -441,3 +451,9 @@ describe("preview search history", (): void => {
     await repairPreviewSearchHistory(preview);
   });
 });
+
+vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+  checkDeletedWorkspaceMemberships: vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValue(),
+}));

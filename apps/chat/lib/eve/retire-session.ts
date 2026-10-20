@@ -1,3 +1,4 @@
+import { reconcileEveWorkspaceTurn } from "./reconcile-workspace-turn";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import { Client } from "eve/client";
@@ -74,9 +75,11 @@ const retireEveSessionForDeletion = async (
 ): Promise<SessionSnapshot> => {
   assertEveConfigured();
 
-  if (
-    (await getDeletingEveConversationForSession(ownerId, sessionId)) === null
-  ) {
+  const conversation = await getDeletingEveConversationForSession(
+    ownerId,
+    sessionId
+  );
+  if (conversation === null) {
     throw new Error("Conversation is not pending deletion.");
   }
   const connection = getEveConnectionOptions(ownerId);
@@ -86,6 +89,7 @@ const retireEveSessionForDeletion = async (
   });
   const snapshot = await readRetiredSessionSnapshot(client, sessionId);
   await reconcileRetiredSessionUsage(ownerId, sessionId, snapshot.events);
+  await reconcileEveWorkspaceTurn(ownerId, conversation.id);
   return snapshot;
 };
 

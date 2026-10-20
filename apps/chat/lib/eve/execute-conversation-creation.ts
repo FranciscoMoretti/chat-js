@@ -1,3 +1,5 @@
+import { reconcileEveWorkspaceTurn } from "./reconcile-workspace-turn";
+import { EveWorkspaceBusyError } from "../db/eve-workspace-turns";
 import { EveForkBoundaryError } from "./fork-boundary-error";
 import {
   dispatchEveOnce,
@@ -34,6 +36,12 @@ const logger = createModuleLogger("eve/creation");
 const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const creationFailure = (cause: unknown): Response => {
+  if (cause instanceof EveWorkspaceBusyError) {
+    return Response.json(
+      { code: "workspace_busy", error: cause.message },
+      { status: 409 }
+    );
+  }
   if (cause instanceof EveForkBoundaryError) {
     return Response.json(
       { creationRejected: true, error: cause.message },
@@ -133,6 +141,9 @@ export const executeEveConversationCreation = async (
       }
     );
     if (input.fork) {
+      await reconcileEveWorkspaceTurn(ownerId, binding.id, {
+        waitForSeed: true,
+      });
       await dispatchEveOnce(
         {
           ownerId,

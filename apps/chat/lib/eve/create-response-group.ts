@@ -14,6 +14,9 @@ const FIRST_ALTERNATE_CANDIDATE_INDEX = 1;
 const recoveryKey = (ownerId: string, groupId: string): string =>
   `chatjs.eve.comparison:${ownerId}:${groupId}`;
 
+const progressKey = (ownerId: string, groupId: string): string =>
+  `${recoveryKey(ownerId, groupId)}:progress`;
+
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 const readResponseGroupDraft = (
@@ -27,6 +30,43 @@ const readResponseGroupDraft = (
     return eveResponseGroupInput.parse(JSON.parse(saved));
   }
   return undefined;
+};
+
+/** Only a server response with waiting candidates and no uncertain/rejected work authorizes automatic progress. */
+const canAutomaticallyProgressResponseGroup = (
+  storage: StorageAccess,
+  ownerId: string,
+  groupId: string
+): boolean => {
+  const raw = storage.getItem(progressKey(ownerId, groupId));
+  if (raw === null || raw === "") {
+    return false;
+  }
+  try {
+    const parsed = eveResponseGroupResult.safeParse(JSON.parse(raw));
+    return (
+      parsed.success &&
+      parsed.data.id === groupId &&
+      parsed.data.candidates.some(
+        (candidate) => candidate.state === "waiting"
+      ) &&
+      parsed.data.candidates.every(
+        (candidate) =>
+          candidate.state === "waiting" || candidate.state === "bound"
+      )
+    );
+  } catch {
+    return false;
+  }
+};
+
+/** Clear permission before a request: a crash or lost response must never auto-redispatch. */
+const stopAutomaticResponseGroupProgress = (
+  storage: StorageAccess,
+  ownerId: string,
+  groupId: string
+): void => {
+  storage.removeItem(progressKey(ownerId, groupId));
 };
 
 /**
@@ -49,8 +89,10 @@ const retainResponseGroupDraft = (
   );
   if (unresolved) {
     storage.setItem(recoveryKey(ownerId, result.id), JSON.stringify(operation));
+    storage.setItem(progressKey(ownerId, result.id), JSON.stringify(result));
   } else {
     storage.removeItem(recoveryKey(ownerId, result.id));
+    stopAutomaticResponseGroupProgress(storage, ownerId, result.id);
   }
   if (
     readCreationRequest(storage, ownerId, scope)?.operationId ===
@@ -90,7 +132,29 @@ const requestResponseGroup = async (
   }
   return result;
 };
+/** Advance only certified waiting candidates, retaining the exact saved request. */
+const advanceWaitingResponseGroup = async (
+  storage: StorageAccess,
+  ownerId: string,
+  groupId: string
+): Promise<z.output<typeof eveResponseGroupResult> | undefined> => {
+  if (!canAutomaticallyProgressResponseGroup(storage, ownerId, groupId)) {
+    return undefined;
+  }
+  const operation = readResponseGroupDraft(storage, ownerId, groupId);
+  stopAutomaticResponseGroupProgress(storage, ownerId, groupId);
+  if (!operation) {
+    return undefined;
+  }
+  const result = await requestResponseGroup(operation);
+  retainResponseGroupDraft(storage, ownerId, operation, result);
+  return result;
+};
+
 export {
+  advanceWaitingResponseGroup,
+  canAutomaticallyProgressResponseGroup,
+  stopAutomaticResponseGroupProgress,
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,

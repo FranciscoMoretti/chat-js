@@ -7,6 +7,9 @@ export default defineConfig({
     // Fixtures install/drop shared provider triggers and inspect queue-wide state.
     fileParallelism: false,
     include: [
+      "tests/eve-workspace-attachments.e2e.ts",
+      "tests/eve-workspace-copy-access.e2e.ts",
+      "tests/eve-workspace-turns.e2e.ts",
       "tests/eve-persistent-sandboxes.e2e.ts",
       "tests/eve-lifecycle-provider.e2e.ts",
       "tests/eve-creation-recovery.e2e.ts",
@@ -21,9 +24,6 @@ export default defineConfig({
       "tests/eve-votes.e2e.ts",
       "tests/eve-projects.e2e.ts",
       "tests/eve-documents.e2e.ts",
-      "tests/eve-copy-documents.e2e.ts",
-      "tests/eve-copy-journal.e2e.ts",
-      "tests/eve-save-copy.e2e.ts",
       "tests/eve-files.e2e.ts",
       "tests/eve-file-identities.e2e.ts",
       "tests/eve-orphan-cleanup.e2e.ts",

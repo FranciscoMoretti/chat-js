@@ -45,7 +45,11 @@ beforeAll(async () => {
     [conversationId]
   );
   await postgres.query(
-    `insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,'owner',$1,'Research','native','bound')`,
+    `insert into "EveWorkspace" (id,"ownerId") values ($1,'owner')`,
+    [conversationId]
+  );
+  await postgres.query(
+    `insert into "EveConversation" ("workspaceId",id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$1,'owner',$1,'Research','native','bound')`,
     [conversationId]
   );
 }, 30_000);
@@ -177,3 +181,13 @@ test("owner-visible lookup boundaries return null for missing and foreign identi
   expect(await getEveDeletionState("other", conversationId)).toBeNull();
   expect(await getEveDeletionState("owner", missingId)).toBeNull();
 });
+
+vi.mock("@/lib/eve/workspace-attachments", () => ({
+  resolveWorkspaceSeedAttachments: vi.fn(),
+}));
+
+vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+  checkDeletedWorkspaceMemberships: vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValue(),
+}));

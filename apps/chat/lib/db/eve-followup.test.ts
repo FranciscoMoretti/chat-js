@@ -36,9 +36,10 @@ beforeAll(async () => {
   await postgres.exec(`
     INSERT INTO "user" (id, name, email) VALUES ('owner', 'owner', 'owner');
     INSERT INTO "EveChat" (id, "ownerId", title) VALUES ('${chatId}', 'owner', 'Test');
-    INSERT INTO "EveConversation" (id, "chatId", "ownerId", "operationId", "firstMessage", "sessionId", state)
-    VALUES ('${chatId}', '${chatId}', 'owner', '${chatId}', 'Test', 'root', 'bound'),
-      ('${branchId}', '${chatId}', 'owner', '${branchId}', 'Test', 'branch', 'bound');
+    INSERT INTO "EveWorkspace" (id, "ownerId") VALUES ('${chatId}', 'owner');
+    INSERT INTO "EveConversation" ("workspaceId", id, "chatId", "ownerId", "operationId", "firstMessage", "sessionId", state)
+    VALUES ('${chatId}', '${chatId}', '${chatId}', 'owner', '${chatId}', 'Test', 'root', 'bound'),
+      ('${chatId}', '${branchId}', '${chatId}', 'owner', '${branchId}', 'Test', 'branch', 'bound');
   `);
 }, 30_000);
 afterAll(async () => {

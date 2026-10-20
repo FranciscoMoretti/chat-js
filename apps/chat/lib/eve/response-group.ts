@@ -16,7 +16,7 @@ import { eveResponseGroupInput } from "./response-group-input";
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 
 /**
- * Sequential root reservation followed by independent forks; retries reuse all identities.
+ * Independent workspaces may run together; shared-workspace forks advance in order with stable identities.
  *
  * @param {string} ownerId Owner whose comparison group and candidate identities are reserved.
  * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input validated before reservation and dispatch.
@@ -76,13 +76,21 @@ export const createEveResponseGroup = async (
         );
       }
       if (!response.ok) {
+        const failureBody: unknown = await response.json().catch(() => null);
+        if (
+          response.status === 409 &&
+          z.object({ code: z.literal("workspace_busy") }).safeParse(failureBody)
+            .success
+        ) {
+          return { ...candidate, state: "waiting" };
+        }
         const failure = z
           .object({
             code: z.string().optional(),
             creationRejected: z.literal(true),
             error: z.string(),
           })
-          .safeParse(await response.json().catch(() => null));
+          .safeParse(failureBody);
         if (
           (!guestReservation || released === true) &&
           (response.status === 400 || response.status === 404) &&
@@ -125,12 +133,19 @@ export const createEveResponseGroup = async (
     }
   };
   if (input.fork) {
-    return {
-      candidates: await Promise.all(
-        group.candidates.map(async (candidate) => await dispatch(candidate))
-      ),
-      id: group.id,
-    };
+    const candidates: CandidateResult[] = [];
+    let blocked = false;
+    for (const candidate of group.candidates) {
+      if (blocked) {
+        candidates.push({ ...candidate, state: "waiting" });
+        continue;
+      }
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Fork candidates share one workspace; advance only in order and stop at unconfirmed delivery or certified workspace backpressure.
+      const result = await dispatch(candidate);
+      candidates.push(result);
+      blocked = result.state === "waiting" || result.state === "unresolved";
+    }
+    return { candidates, id: group.id };
   }
   const [first, ...rest] = group.candidates;
   if (!(first !== undefined)) {

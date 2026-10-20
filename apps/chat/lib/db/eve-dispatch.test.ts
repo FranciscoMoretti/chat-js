@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 const postgres = new PGlite();
@@ -34,7 +34,15 @@ vi.mock("./client", () => {
   return { db: database };
 });
 
+vi.mock("../eve/workspace-attachments", () => ({
+  resolveWorkspaceSeedAttachments: vi.fn(),
+}));
 vi.mock("../env", () => ({ env: {} }));
+// This suite exercises journal/receipt behavior; workspace/native reconciliation
+// is covered by eve-workspace-turns.e2e.ts against concurrent PostgreSQL clients.
+vi.mock("../eve/reconcile-workspace-turn", () => ({
+  reconcileEveWorkspaceTurn: async () => {},
+}));
 const {
   dispatchEveOnce,
   EveDispatchUnknownError,
@@ -71,9 +79,13 @@ beforeAll(async () => {
   /* oxlint-enable no-await-in-loop */
   await postgres.exec(`INSERT INTO "user" (id,name,email) VALUES ('owner','owner','owner'), ('foreign','foreign','foreign');
     INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${conversationId}','owner','Test');
-    INSERT INTO "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state)
-    VALUES ('${conversationId}','${conversationId}','owner','${conversationId}','Test','source','bound');`);
+    INSERT INTO "EveWorkspace" (id,"ownerId") VALUES ('${conversationId}','owner');
+    INSERT INTO "EveConversation" (id,"chatId","workspaceId","ownerId","operationId","firstMessage","sessionId",state)
+    VALUES ('${conversationId}','${conversationId}','${conversationId}','owner','${conversationId}','Test','source','bound');`);
 }, 30_000);
+beforeEach(async () => {
+  await postgres.exec(`UPDATE "EveWorkspace" SET "activeOperationId" = null`);
+});
 afterAll(async () => {
   await postgres.close();
 });
@@ -201,6 +213,7 @@ it("exposes only a known send receipt for the exact owner and session", async ()
     await getEveSendReceipt("owner", "foreign-session", operationId)
   ).toBeNull();
   expect(dispatch).toHaveBeenCalledTimes(1);
+  await postgres.exec(`UPDATE "EveWorkspace" SET "activeOperationId" = null`);
   const unknownId = "00000000-0000-4000-8000-000000000062";
   await expect(
     dispatchEveOnce(

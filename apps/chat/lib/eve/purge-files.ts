@@ -1,6 +1,7 @@
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
+  prepareEveWorkspaceFilePurge,
   releaseEveFamilyFileReferences,
 } from "@/lib/db/eve-file-purge";
 import { createFileUrl } from "@/lib/file-url";
@@ -22,4 +23,16 @@ export const purgeEveFamilyFiles = async (
     await completeEveFilePurge(ownerId, keys);
   }
   await releaseEveFamilyFileReferences(ownerId, rootId);
+};
+
+/** Retryable cleanup for an explicitly deleted empty workspace's original uploads. */
+export const purgeEveWorkspaceFiles = async (
+  ownerId: string,
+  workspaceId: string
+): Promise<void> => {
+  const keys = await prepareEveWorkspaceFilePurge(ownerId, workspaceId);
+  if (keys.length > NO_FILE_KEYS) {
+    await deleteFilesByUrls(keys.map((key) => createFileUrl(key)));
+    await completeEveFilePurge(ownerId, keys);
+  }
 };

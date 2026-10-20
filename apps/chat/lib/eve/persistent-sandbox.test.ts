@@ -14,16 +14,20 @@ const mocks = vi.hoisted(() => ({
   stop: vi.fn(),
   remove: vi.fn(),
   write: vi.fn(),
-  binding: vi.fn(),
+  stopWorkspace: vi.fn(),
+}));
+vi.mock("./workspace-attachments", () => ({
+  recordWorkspaceAttachment: vi.fn(),
+  readWorkspaceAttachment: vi.fn(),
 }));
 vi.mock("../sandbox/provider", () => ({ supportsPersistentSandbox: true }));
 vi.mock("../env", () => ({ env: {} }));
-vi.mock("../db/eve-queries", () => ({ readEveSessionMapping: mocks.binding }));
 vi.mock("./persistent-sandbox-store", () => ({
   registerPersistentSession: mocks.register,
   reservePersistentSandbox: mocks.reserve,
   accessPersistentSandbox: mocks.access,
-  readPersistentIdentity: mocks.read,
+  resolvePersistentIdentity: mocks.read,
+  stopPersistentWorkspace: mocks.stopWorkspace,
   retirePersistentSession: mocks.retire,
   cleanupPersistentSession: mocks.cleanup,
 }));
@@ -56,14 +60,18 @@ beforeEach(() => {
     sessionId: "session",
     rootSessionId: "session",
     ownerId: "owner",
+    workspaceId: "workspace",
+    conversationId: "conversation",
   });
   mocks.reserve.mockResolvedValue({ name: "resource", create: true });
   mocks.create.mockResolvedValue({
     name: "resource",
+    resolvePath: (path: string) => path,
     writeBinaryFile: mocks.write,
   });
   mocks.open.mockResolvedValue({
     name: "resource",
+    resolvePath: (path: string) => path,
     writeBinaryFile: mocks.write,
   });
   mocks.access.mockImplementation(
@@ -97,7 +105,8 @@ it("checks the durable fence again before using cached filesystem handles", asyn
 it("retires before deleting and keeps stop distinct from deletion", async () => {
   const result = await implementation.start(context, undefined, []);
   await result.handle.onSandboxStop();
-  expect(mocks.stop).toHaveBeenCalledWith("resource");
+  expect(mocks.stopWorkspace).toHaveBeenCalled();
+  expect(mocks.stop).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
   await result.handle.onSandboxDelete();
   expect(mocks.retire.mock.invocationCallOrder[0]).toBeLessThan(

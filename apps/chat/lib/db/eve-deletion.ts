@@ -1,4 +1,6 @@
-import { and, eq, exists, inArray, ne, or, sql } from "drizzle-orm";
+import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
+import { eveDeletionScope } from "./eve-deletion-scope";
+import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
@@ -8,11 +10,7 @@ import {
   eveFollowup,
   eveChatProject,
   eveCodeSandbox,
-  evePersistentSandbox,
-  eveSandboxSession,
   eveConversation,
-  eveConversationCopy,
-  eveConversationCopyFile,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
@@ -190,8 +188,7 @@ const readOwnedEveDeletionMemberState = (
         eq(eveConversation.chatId, row.chatId),
         eq(eveConversation.ownerId, ownerId)
       )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
+    );
 
 /**
  * Final application stage. The internal coordinator must confirm native payload,
@@ -217,7 +214,7 @@ const completeEveConversationDeletion = async (
     const identity = requireEveDeletionIdentity(queriedIdentity);
     const condition = and(
       eq(eveConversation.ownerId, ownerId),
-      eq(eveConversation.chatId, identity.chatId)
+      eveDeletionScope(ownerId, routeId)
     );
     const family = await tx.select().from(eveConversation).where(condition);
     assertEveFamilyPendingDeletion(family);
@@ -229,27 +226,7 @@ const completeEveConversationDeletion = async (
     if (sandbox) {
       throw new Error("Code sandbox cleanup is incomplete.");
     }
-    const unresolvedPersistent = await tx
-      .select({ name: evePersistentSandbox.name })
-      .from(evePersistentSandbox)
-      .innerJoin(
-        eveSandboxSession,
-        eq(eveSandboxSession.sessionId, evePersistentSandbox.sessionId)
-      )
-      .innerJoin(
-        eveConversation,
-        eq(eveConversation.sessionId, eveSandboxSession.rootSessionId)
-      )
-      .where(
-        and(
-          inArray(eveConversation.id, ids),
-          ne(evePersistentSandbox.state, "deleted")
-        )
-      )
-      .limit(1);
-    if (unresolvedPersistent.length > 0) {
-      throw new Error("Persistent sandbox cleanup is incomplete.");
-    }
+    await checkDeletedWorkspaceMemberships(ownerId, ids);
 
     const contentTables = [
       eveFileReference,
@@ -285,23 +262,18 @@ const completeEveConversationDeletion = async (
     if (remaining.length > EMPTY_FAMILY_SIZE) {
       throw new Error("Application content cleanup is incomplete.");
     }
-    // Transcript preparation and provenance must not survive a completed family deletion.
-    await tx
-      .delete(eveConversationCopyFile)
-      .where(inArray(eveConversationCopyFile.conversationId, ids));
-    await tx
-      .delete(eveConversationCopy)
-      .where(inArray(eveConversationCopy.conversationId, ids));
-    await tx
-      .delete(eveChatProject)
-      .where(eq(eveChatProject.chatId, identity.chatId));
     await tx
       .delete(eveSearchText)
       .where(inArray(eveSearchText.conversationId, ids));
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));
-    await tx.delete(eveFollowup).where(eq(eveFollowup.chatId, identity.chatId));
+    await tx.delete(eveFollowup).where(
+      inArray(
+        eveFollowup.sessionId,
+        family.flatMap((row) => (row.sessionId === null ? [] : [row.sessionId]))
+      )
+    );
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)
@@ -316,17 +288,46 @@ const completeEveConversationDeletion = async (
         visibility: "private",
       })
       .where(condition);
-    await tx
-      .update(eveChat)
-      .set({
-        activeConversationId: null,
-        isPinned: false,
-        title: "",
-        titleStatus: "fallback",
-      })
+    const survivors = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
       .where(
-        and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
-      );
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.chatId, identity.chatId),
+          inArray(eveConversation.state, ["bound", "creating", "uncertain"])
+        )
+      )
+      .orderBy(eveConversation.createdAt, eveConversation.id)
+      .limit(1);
+    const survivor = survivors.at(0);
+    if (survivor) {
+      await tx
+        .update(eveChat)
+        .set({ activeConversationId: survivor.id })
+        .where(
+          and(
+            eq(eveChat.id, identity.chatId),
+            eq(eveChat.ownerId, ownerId),
+            inArray(eveChat.activeConversationId, ids)
+          )
+        );
+    } else {
+      await tx
+        .delete(eveChatProject)
+        .where(eq(eveChatProject.chatId, identity.chatId));
+      await tx
+        .update(eveChat)
+        .set({
+          activeConversationId: null,
+          isPinned: false,
+          title: "",
+          titleStatus: "fallback",
+        })
+        .where(
+          and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
+        );
+    }
   });
 };
 interface EveDeletionState {
@@ -348,12 +349,18 @@ const getEveDeletionState = async (
     return null;
   }
   if (row.state) {
-    return { rootId: row.chatId, state: row.state };
+    return { rootId: conversationId, state: row.state };
   }
-  const [member] = await readOwnedEveDeletionMemberState(db, ownerId, row);
-  if (!member) {
+  const members = await readOwnedEveDeletionMemberState(db, ownerId, row);
+  const states = members.flatMap((member) => (member ? [member.state] : []));
+  if (states.length === 0) {
     return null;
   }
-  return { rootId: row.chatId, state: member.state };
+  const active = states.find(
+    (state) => state !== "deleted" && state !== "deleting"
+  );
+  const state =
+    active ?? (states.includes("deleting") ? "deleting" : "deleted");
+  return { rootId: conversationId, state };
 };
 export { completeEveConversationDeletion, getEveDeletionState };

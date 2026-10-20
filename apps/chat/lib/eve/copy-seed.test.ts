@@ -1,16 +1,9 @@
-import { expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 
-import { parseEveCopySeed } from "./copy-seed";
-import { prepareEveCopyPlan } from "./prepare-copy-plan";
+import { parseEveCopySeed, requireWorkspaceSeedPaths } from "./copy-seed";
 import { eveSeedSearchText } from "./search-text";
 
-vi.mock("@/lib/file-storage", () => ({
-  createFileId: (): never => {
-    throw new Error("This copy has no files to allocate");
-  },
-}));
-
-it("validates the actual prepared copy plan without losing settled tool output or model provenance", async () => {
+it("validates detached shared history without losing settled tool output or model provenance", () => {
   const seed = parseEveCopySeed({
     messages: [
       { role: "user", parts: [{ type: "text", text: "Read my notes" }] },
@@ -30,19 +23,10 @@ it("validates the actual prepared copy plan without losing settled tool output o
       },
     ],
   });
-  const plan = await prepareEveCopyPlan(
-    { seed, resources: { fileKeys: [], documentIds: [], revisionIds: [] } },
-    { documents: [] },
-    () => {
-      throw new Error("No source file should be read");
-    },
-    "https://chat.example"
-  );
-  expect(plan.seed).toEqual({ ...seed, attachments: "channel" });
-  expect(plan.seed).not.toBe(seed);
-  expect(plan.seed.messages).not.toBe(seed.messages);
-  expect(seed.attachments).toBeUndefined();
-  expect(eveSeedSearchText(plan.seed.messages)).toEqual([
+  const detached = parseEveCopySeed({ ...seed, attachments: "channel" });
+  expect(detached).toEqual({ ...seed, attachments: "channel" });
+  expect(detached).not.toBe(seed);
+  expect(eveSeedSearchText(detached.messages)).toEqual([
     { key: "seed:0", text: "Read my notes" },
   ]);
 });
@@ -88,4 +72,34 @@ it("rejects executable or incomplete copy data and invalid text tool results bef
       ],
     })
   ).toThrow("byte limit");
+});
+
+it("rejects a persisted file seed without its observed shared workspace path", () => {
+  const file = {
+    type: "file",
+    url: "https://app.test/api/files/original",
+    mediaType: "application/pdf",
+  };
+  const seed = parseEveCopySeed({
+    attachments: "channel",
+    messages: [{ role: "user", parts: [file] }],
+  });
+  expect(() => requireWorkspaceSeedPaths(seed)).toThrow(
+    "authorized workspace path"
+  );
+  const ready = parseEveCopySeed({
+    ...seed,
+    messages: [
+      {
+        role: "user",
+        parts: [
+          {
+            ...file,
+            existingPath: "/workspace/.eve/attachments/observed/original.pdf",
+          },
+        ],
+      },
+    ],
+  });
+  expect(requireWorkspaceSeedPaths(ready)).toEqual(ready);
 });

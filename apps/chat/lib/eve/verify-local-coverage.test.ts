@@ -6,6 +6,7 @@ import {
 
 const mocks = vi.hoisted(() => ({
   identity: vi.fn(),
+  resolve: vi.fn(),
   retire: vi.fn(),
   cleanup: vi.fn(),
   end: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("../sandbox/runtime", () => ({
 }));
 vi.mock("./persistent-sandbox-store", () => ({
   readPersistentIdentity: mocks.identity,
+  resolvePersistentIdentity: mocks.resolve,
   retirePersistentSession: mocks.retire,
   cleanupPersistentSession: mocks.cleanup,
 }));
@@ -100,6 +102,12 @@ it("retires before purging and propagates unconfirmed deletion", async () => {
 
 it("retires a verified native session that never allocated an app filesystem", async () => {
   mocks.identity.mockResolvedValue(null);
+  mocks.resolve.mockResolvedValue({
+    ownerId: "owner",
+    sessionId: "child",
+    rootSessionId: "root",
+    workspaceId: "workspace",
+  });
   await manageEveLocalResources(
     "owner",
     { sessionId: "child", rootSessionId: "root" },
@@ -109,9 +117,15 @@ it("retires a verified native session that never allocated an app filesystem", a
     ownerId: "owner",
     sessionId: "child",
     rootSessionId: "root",
+    workspaceId: "workspace",
   });
   expect(mocks.cleanup).toHaveBeenCalledWith(
-    { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
+    {
+      ownerId: "owner",
+      sessionId: "child",
+      rootSessionId: "root",
+      workspaceId: "workspace",
+    },
     expect.any(Function)
   );
 });

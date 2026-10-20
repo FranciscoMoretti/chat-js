@@ -1,3 +1,5 @@
+import { reserveConversationWorkspace } from "./eve-workspaces";
+import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";
 import { dispatchEveOnce } from "./eve-dispatch";
 import {
@@ -18,7 +20,6 @@ import {
   eveChat,
   eveChatProject,
   eveConversation,
-  eveFileReference,
   eveGuest,
   eveGuestMessage,
   eveResponseGroup,
@@ -41,7 +42,6 @@ const SINGLE_MATCH_LIMIT = 1;
 const CHAT_PAGE_SIZE = 50;
 const NEXT_PAGE_LOOKAHEAD = 1;
 const LAST_RESULT_OFFSET = -1;
-const EMPTY_REFERENCE_COUNT = 0;
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
 
@@ -528,7 +528,7 @@ const assignCreationProject = async (
 const resolveCreationChat = async (
   tx: CreationTransactionView,
   value: ReadonlyNativeSurface<
-    Omit<typeof eveConversation.$inferInsert, "chatId">
+    Omit<typeof eveConversation.$inferInsert, "chatId" | "workspaceId">
   >,
   fork?: EveForkInput
 ): Promise<{ chatId: string; source: ConversationRow | undefined }> => {
@@ -569,7 +569,7 @@ const resolveCreationChat = async (
 
 const reserveEveConversation = async (
   value: ReadonlyNativeSurface<
-    Omit<typeof eveConversation.$inferInsert, "chatId">
+    Omit<typeof eveConversation.$inferInsert, "chatId" | "workspaceId">
   >,
   initialTitle: string,
   fork?: EveForkInput,
@@ -605,6 +605,11 @@ const reserveEveConversation = async (
       return [];
     }
     const { chatId, source } = await resolveCreationChat(tx, value, fork);
+    const workspaceId = await reserveConversationWorkspace(
+      tx,
+      value.ownerId,
+      source?.id
+    );
     const [createdChat] = await tx
       .insert(eveChat)
       .values({ id: chatId, ownerId: value.ownerId, title: initialTitle })
@@ -626,6 +631,7 @@ const reserveEveConversation = async (
       .values({
         ...value,
         chatId,
+        workspaceId,
         forkKind: value.forkKind,
         parentConversationId: fork?.conversationId,
         forkMessageId: fork?.beforeMessageId,
@@ -636,7 +642,6 @@ const reserveEveConversation = async (
       })
       .onConflictDoNothing()
       .returning();
-    const [created] = rows;
     if (hasQueryRow(createdChat) && isNonemptyString(value.initialProjectId)) {
       await assignCreationProject(
         tx,
@@ -644,27 +649,6 @@ const reserveEveConversation = async (
         value.ownerId,
         value.initialProjectId
       );
-    }
-    if (hasQueryRow(created) && source !== undefined) {
-      // Retain inherited files conservatively; native history owns turn contents.
-      const references = await tx
-        .select({ key: eveFileReference.key })
-        .from(eveFileReference)
-        .where(
-          and(
-            eq(eveFileReference.conversationId, source.id),
-            eq(eveFileReference.ownerId, value.ownerId)
-          )
-        );
-      if (references.length > EMPTY_REFERENCE_COUNT) {
-        await tx.insert(eveFileReference).values(
-          references.map(({ key }) => ({
-            conversationId: created.id,
-            key,
-            ownerId: value.ownerId,
-          }))
-        );
-      }
     }
     return rows;
   });
@@ -711,10 +695,7 @@ const beginEveConversationDeletion = async (
       if (!hasQueryRow(source)) {
         return null;
       }
-      const familyCondition = and(
-        eq(eveConversation.ownerId, ownerId),
-        eq(eveConversation.chatId, source.chatId)
-      );
+      const familyCondition = eveDeletionScope(ownerId, id);
       const family = await tx
         .select()
         .from(eveConversation)
@@ -756,7 +737,7 @@ const beginEveConversationDeletion = async (
         conversations: conversations.toSorted((left, right) =>
           left.id.localeCompare(right.id)
         ),
-        rootId: source.chatId,
+        rootId: id,
       };
     }
   );
@@ -853,11 +834,12 @@ const assertMatchingMessageCreation = (
   initialContentHash: string | undefined,
   initialProjectId: string | undefined,
   fork: ReadonlyNativeSurface<EveForkInput> | undefined,
-  forkKind: typeof eveConversation.$inferInsert.forkKind
+  forkKind: typeof eveConversation.$inferInsert.forkKind,
+  seedOnly: boolean
 ): ConversationRow => {
   if (
     existing === undefined ||
-    existing.creationKind !== "message" ||
+    existing.creationKind !== (seedOnly ? "copy" : "message") ||
     existing.firstMessage !== message ||
     existing.initialModelId !== (initialModelId ?? null) ||
     existing.initialContentHash !== (initialContentHash ?? null) ||
@@ -904,6 +886,7 @@ const createEveConversation = async (
     fileKeys = [],
     initialProjectId,
     guestReservationId,
+    seedOnly = false,
   }: ReadonlyNativeSurface<{
     initialRequest?: unknown;
     initialModelId?: string;
@@ -914,9 +897,10 @@ const createEveConversation = async (
     fileKeys?: string[];
     initialProjectId?: string;
     guestReservationId?: string;
+    seedOnly?: boolean;
   }> = {}
 ): Promise<BoundConversation> => {
-  if (forkKind && !fork) {
+  if ((forkKind || seedOnly) && !fork) {
     throw new CreationConflictError(
       "Fork intent requires a source conversation."
     );
@@ -929,6 +913,7 @@ const createEveConversation = async (
   let [reservation] = await reserveEveConversation(
     {
       firstMessage: message,
+      creationKind: seedOnly ? "copy" : "message",
       forkKind,
       initialContentHash,
       initialModelId,
@@ -961,7 +946,8 @@ const createEveConversation = async (
       initialContentHash,
       initialProjectId,
       fork,
-      forkKind
+      forkKind,
+      seedOnly
     );
     const binding = boundConversation(matching);
     if (binding) {
@@ -981,7 +967,7 @@ const createEveConversation = async (
         ownerId,
         operationId: reservation.id,
         conversationId: reservation.id,
-        kind: "create",
+        kind: seedOnly ? "copy" : "create",
         intent: initialRequest ?? {
           message,
           initialModelId,
@@ -1017,7 +1003,7 @@ const createEveConversation = async (
           if (
             !(
               hasQueryRow(current) &&
-              current.creationKind === "message" &&
+              current.creationKind === (seedOnly ? "copy" : "message") &&
               (current.state === "creating" || current.state === "uncertain")
             )
           ) {

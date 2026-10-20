@@ -2,7 +2,9 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { isDeepStrictEqual } from "node:util";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
-import { eveConversation, eveDispatch } from "./schema";
+import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
+import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
+import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
@@ -119,8 +121,16 @@ export const dispatchEveOnce = async (
   },
   dispatch: () => Promise<{ sessionId: string; deliveryId?: string }>
 ): Promise<{ sessionId: string; deliveryId?: string }> => {
+  const replay = await readEveDispatch(input);
+  if (replay) {
+    return replay;
+  }
+  await reconcileEveWorkspaceTurn(input.ownerId, input.conversationId);
   const [conversation] = await db
-    .select({ id: eveConversation.id })
+    .select({
+      id: eveConversation.id,
+      workspaceId: eveConversation.workspaceId,
+    })
     .from(eveConversation)
     .where(
       and(
@@ -138,11 +148,57 @@ export const dispatchEveOnce = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
     );
-    return await tx
+    const workspace = await lockEveWorkspace(
+      tx,
+      input.ownerId,
+      conversation.workspaceId
+    );
+    // Recheck under the workspace lock: another process may have claimed this exact
+    // operation since the read above. Its replay must not dispatch again.
+    const [existing] = await tx
+      .select()
+      .from(eveDispatch)
+      .where(
+        and(
+          eq(eveDispatch.ownerId, input.ownerId),
+          eq(eveDispatch.operationId, input.operationId)
+        )
+      );
+    if (hasRow(existing)) {
+      return [];
+    }
+    if (workspace.activeOperationId !== null) {
+      throw new EveWorkspaceBusyError();
+    }
+    const [current] = await tx
+      .select({ state: eveConversation.state })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, input.conversationId),
+          eq(eveConversation.ownerId, input.ownerId),
+          eq(eveConversation.workspaceId, workspace.id)
+        )
+      );
+    if (
+      !hasRow(current) ||
+      current.state === "deleted" ||
+      current.state === "deleting"
+    ) {
+      throw new Error("Conversation is unavailable.");
+    }
+    const inserted = await tx
       .insert(eveDispatch)
       .values({ ...input, intent })
       .onConflictDoNothing()
       .returning();
+    if (inserted.length > 0) {
+      await tx
+        .update(eveWorkspace)
+        .set({ activeOperationId: input.operationId })
+        .where(eq(eveWorkspace.id, workspace.id));
+    }
+    return inserted;
   });
   const identity = and(
     eq(eveDispatch.ownerId, input.ownerId),

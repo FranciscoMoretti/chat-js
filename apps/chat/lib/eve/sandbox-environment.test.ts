@@ -43,3 +43,7 @@ it("selects the installed persistent provider without resolving credentials at i
   expect(createAppSandboxEnvironment().provider).toBe("chatjs-persistent");
   expect(calls.provider).not.toHaveBeenCalled();
 });
+
+vi.mock("@/lib/eve/workspace-attachments", () => ({
+  resolveWorkspaceSeedAttachments: vi.fn(),
+}));

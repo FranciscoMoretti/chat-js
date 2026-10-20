@@ -2,6 +2,7 @@ import type { EveChannelInput } from "eve/channels/eve";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
+import { retainWorkspaceAttachment } from "./workspace-attachments";
 
 type FileContext = NonNullable<
   Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1]
@@ -16,6 +17,7 @@ export const fetchEveChannelFile = async (
   url: string,
   context?: {
     readonly session?: {
+      readonly id: string;
       readonly auth: Pick<
         NonNullable<FileContext["session"]>["auth"],
         "current"
@@ -37,8 +39,19 @@ export const fetchEveChannelFile = async (
   }
   await assertEveFilesOwned(auth.principalId, [key]);
   const file = await downloadFile(key);
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const sessionId = context?.session?.id;
+  if (sessionId === undefined || sessionId === "") {
+    throw new Error("Attachment session is unavailable.");
+  }
+  await retainWorkspaceAttachment({
+    ownerId: auth.principalId,
+    sessionId,
+    fileKey: key,
+    content: bytes,
+  });
   return {
-    bytes: Buffer.from(await file.arrayBuffer()),
+    bytes,
     mediaType: file.type,
   };
 };

@@ -1,8 +1,13 @@
-import { and, eq, inArray, lt, notExists } from "drizzle-orm";
+import {
+  eveWorkspace,
+  eveWorkspaceAttachment,
+  eveFileReference,
+  eveStoredFile,
+} from "./schema";
+import { and, eq, inArray, lt, notExists, ne } from "drizzle-orm";
 
 import { db } from "./client";
-import { lockEveCopyOwners } from "./eve-copy-journal";
-import { eveFileReference, eveStoredFile } from "./schema";
+import { lockEveFamilies } from "./eve-family-lock";
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
 const EMPTY_RESULT_COUNT = 0;
@@ -39,11 +44,24 @@ export const prepareEveOrphanedFilePurge = async (
   }
   return await db.transaction(async (tx: OrphanPurgeTransaction) => {
     // Copy and cleanup must acquire every family lock in the same owner order.
-    await lockEveCopyOwners(tx, owners);
+    await lockEveFamilies(tx, owners);
     const references = tx
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
       .where(eq(eveFileReference.key, eveStoredFile.key));
+    const workspaceReferences = tx
+      .select({ key: eveWorkspaceAttachment.fileKey })
+      .from(eveWorkspaceAttachment)
+      .innerJoin(
+        eveWorkspace,
+        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
+      )
+      .where(
+        and(
+          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
+          ne(eveWorkspace.state, "deleted")
+        )
+      );
     // Include tombstones: a provider can finish an uncertain write after an
     // earlier deletion. A later inventory pass must remove that object again.
     return await tx
@@ -54,7 +72,8 @@ export const prepareEveOrphanedFilePurge = async (
           inArray(eveStoredFile.ownerId, owners),
           inArray(eveStoredFile.key, keys),
           lt(eveStoredFile.createdAt, cutoff),
-          notExists(references)
+          notExists(references),
+          notExists(workspaceReferences)
         )
       )
       .returning({

@@ -1,7 +1,5 @@
-import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
 import { claimExpiredEveGuestFamilies } from "@/lib/db/eve-guest-cleanup";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
-import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 import { localDeletionAvailable } from "./local-deletion-available";
 
 /** The appRoot is the trusted worker directory. Guest and billing identities are retained.
@@ -33,12 +31,8 @@ export const cleanupExpiredEveGuests = async (
       break;
     }
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Classify the current claim before deleting it; keep native/provider cleanup bounded to one family at a time.
-      if (await isUnacceptedEveCopy(family.ownerId, family.id)) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this claimed copy's cleanup before claiming more work, bounding native/provider cleanup to one family.
-        await deleteUnacceptedEveCopy(family.ownerId, family.id);
-      } else if (
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this claimed family's cleanup before claiming more work, bounding native/provider cleanup to one family.
+      if (
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this claimed family cleanup before claiming another.
         !(await deleteLocalEveConversationFamily(
           family.ownerId,
           family.id,

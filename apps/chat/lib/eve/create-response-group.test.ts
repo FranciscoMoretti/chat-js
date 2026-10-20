@@ -2,6 +2,8 @@ import { afterEach, expect, test, vi } from "vitest";
 
 import { CreationRejectedError } from "./create-conversation";
 import {
+  advanceWaitingResponseGroup,
+  canAutomaticallyProgressResponseGroup,
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,
@@ -181,4 +183,80 @@ test("moving a definitively rejected project comparison preserves all repeated m
   expect(
     readCreationRequest(storage, "project-owner", { projectId })
   ).toBeUndefined();
+});
+
+test("certified waiting progresses with immutable input and stops after binding", async () => {
+  const { storage, operation, result } = fixture();
+  const waiting: EveResponseGroupResult = {
+    ...result,
+    candidates: result.candidates.map((candidate) =>
+      candidate.state === "bound"
+        ? candidate
+        : { ...candidate, state: "waiting" }
+    ),
+  };
+  retainResponseGroupDraft(storage, "owner", operation, waiting);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(true);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "stranger", result.id)
+  ).toBe(false);
+  const complete: EveResponseGroupResult = {
+    ...result,
+    candidates: result.candidates.map((candidate) => ({
+      ...candidate,
+      conversationId: crypto.randomUUID(),
+      sessionId: `native-${candidate.operationId}`,
+      state: "bound",
+    })),
+  };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json(complete));
+  vi.stubGlobal("fetch", fetcher);
+  const completion = advanceWaitingResponseGroup(storage, "owner", result.id);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
+  await expect(completion).resolves.toEqual(complete);
+  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
+  expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
+});
+
+test("uncertain results and lost progress replies never automatically redispatch", async () => {
+  const { storage, operation, result } = fixture();
+  retainResponseGroupDraft(storage, "owner", operation, result);
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(new Error("Lost progress reply"));
+  vi.stubGlobal("fetch", fetcher);
+  await expect(
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).resolves.toBeUndefined();
+  expect(fetcher).not.toHaveBeenCalled();
+  retainResponseGroupDraft(storage, "owner", operation, {
+    ...result,
+    candidates: result.candidates.map((candidate) =>
+      candidate.state === "bound"
+        ? candidate
+        : { ...candidate, state: "waiting" }
+    ),
+  });
+  await expect(
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).rejects.toThrow("Lost progress reply");
+  expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
+    operation
+  );
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
+  await expect(
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).resolves.toBeUndefined();
+  expect(fetcher).toHaveBeenCalledTimes(1);
 });

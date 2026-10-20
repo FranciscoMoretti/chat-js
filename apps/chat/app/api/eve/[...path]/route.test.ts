@@ -198,3 +198,7 @@ test.each([
   expect(response.status).toBe(400);
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
+
+vi.mock("@/lib/db/eve-workspace-turns", () => ({
+  EveWorkspaceBusyError: vi.fn(),
+}));

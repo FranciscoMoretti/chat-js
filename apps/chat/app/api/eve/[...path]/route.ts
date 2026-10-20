@@ -1,3 +1,4 @@
+import { EveWorkspaceBusyError } from "@/lib/db/eve-workspace-turns";
 import {
   dispatchEveOnce,
   withEveCopyCaptureFence,
@@ -314,6 +315,9 @@ const handle = async (
         : withEveCopyCaptureFence(ownerId, dispatch))
     );
   } catch (error) {
+    if (error instanceof EveWorkspaceBusyError) {
+      return rejectEveCommand(error.message, 409);
+    }
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);
     }

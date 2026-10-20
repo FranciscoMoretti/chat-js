@@ -85,8 +85,9 @@ beforeAll(async () => {
     INSERT INTO "user" (id, name, email) VALUES ('owner', 'owner', 'owner');
     INSERT INTO "UserCredit" ("userId", credits) VALUES ('owner', 100);
     INSERT INTO "EveChat" (id, "ownerId", title) VALUES ('00000000-0000-4000-8000-000000000001', 'owner', 'Test');
-    INSERT INTO "EveConversation" ("chatId", "ownerId", "operationId", "firstMessage", "sessionId", state)
-    VALUES ('00000000-0000-4000-8000-000000000001', 'owner', '00000000-0000-4000-8000-000000000001', 'Test', 'root', 'bound');
+    INSERT INTO "EveWorkspace" (id, "ownerId") VALUES ('00000000-0000-4000-8000-000000000001', 'owner');
+    INSERT INTO "EveConversation" ("workspaceId", "chatId", "ownerId", "operationId", "firstMessage", "sessionId", state)
+    VALUES ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', 'owner', '00000000-0000-4000-8000-000000000001', 'Test', 'root', 'bound');
   `);
 }, 30_000);
 afterAll(async () => {

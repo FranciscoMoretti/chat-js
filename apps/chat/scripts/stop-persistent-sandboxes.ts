@@ -5,10 +5,15 @@ import { z } from "zod";
 const stop = async (): Promise<void> => {
   try {
     const runId = z.uuid().parse(process.argv[2]);
-    await stopDevelopmentPersistentSandboxes(
+    const { deferredWorkspaceIds } = await stopDevelopmentPersistentSandboxes(
       runId,
       getPersistentSandboxProvider
     );
+    if (deferredWorkspaceIds.length > 0) {
+      console.info(
+        `Retained ${deferredWorkspaceIds.length} workspace(s) for native turn reconciliation after restart; delivery fences remain unchanged.`
+      );
+    }
     // The app DB pools otherwise keep this one-shot supervisor command alive.
     process.exit(0);
   } catch (error) {

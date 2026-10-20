@@ -13,16 +13,20 @@ import {
   getPersistentSandboxProvider,
 } from "../sandbox/runtime";
 import { supportsPersistentSandbox } from "../sandbox/provider";
-import { readEveSessionMapping } from "../db/eve-queries";
 import {
   accessPersistentSandbox,
   cleanupPersistentSession,
-  readPersistentIdentity,
+  resolvePersistentIdentity,
+  stopPersistentWorkspace,
   reservePersistentSandbox,
   retirePersistentSession,
   registerPersistentSession,
 } from "./persistent-sandbox-store";
 import type { SessionIdentity } from "./persistent-sandbox-store";
+import {
+  recordWorkspaceAttachment,
+  readWorkspaceAttachment,
+} from "./workspace-attachments";
 
 const stateSchema = z.object({ name: z.string().min(1) });
 type Files = { path: string; content: string }[];
@@ -39,27 +43,16 @@ const identityFor = async (
   }
   const sessionId = context.session.id;
   const rootSessionId = context.session.parent?.rootSessionId ?? sessionId;
-  const saved = await readPersistentIdentity(sessionId);
-  const principal = context.session.auth.initiator?.principalId;
-  const binding = saved
-    ? null
-    : await readEveSessionMapping({ sessionId: rootSessionId });
-  const ownerId = principal ?? saved?.ownerId ?? binding?.ownerId;
-  if (
-    ownerId === undefined ||
-    ownerId === "" ||
-    (binding && binding.ownerId !== ownerId) ||
-    (saved &&
-      (saved.ownerId !== ownerId || saved.rootSessionId !== rootSessionId))
-  ) {
-    throw new Error("Persistent sandbox owner is unavailable or changed.");
-  }
-  return {
+  const reservationId =
+    context.session.auth.initiator?.attributes?.chatjsReservationId;
+  return await resolvePersistentIdentity({
     sessionId,
     rootSessionId,
-    ownerId,
+    ownerId: context.session.auth.initiator?.principalId,
+    reservationId:
+      typeof reservationId === "string" ? reservationId : undefined,
     devRunId: env.CHATJS_SANDBOX_DEV_RUN_ID,
-  };
+  });
 };
 
 const remove = async (identity: SessionIdentity): Promise<void> => {
@@ -138,7 +131,20 @@ const handle = (
         return content === null ? null : stream(content);
       },
       readBinaryFile: async (options) =>
-        await access(async () => await sandbox.readBinaryFile(options)),
+        await access(async () => {
+          const path = sandbox.resolvePath(options.path);
+          if (
+            path.startsWith(
+              `${sandbox.resolvePath("/workspace/.eve/attachments")}/`
+            )
+          ) {
+            const original = await readWorkspaceAttachment({ identity, path });
+            if (original !== undefined) {
+              return original;
+            }
+          }
+          return await sandbox.readBinaryFile(options);
+        }),
       readTextFile: async (options) =>
         await access(async () => await sandbox.readTextFile(options)),
       writeFile: async (options) => {
@@ -152,6 +158,18 @@ const handle = (
       },
       writeBinaryFile: async (options) => {
         await access(async () => {
+          const path = sandbox.resolvePath(options.path);
+          if (
+            path.startsWith(
+              `${sandbox.resolvePath("/workspace/.eve/attachments")}/`
+            )
+          ) {
+            await recordWorkspaceAttachment({
+              identity,
+              path,
+              content: options.content,
+            });
+          }
           await sandbox.writeBinaryFile(options);
         });
       },
@@ -170,14 +188,10 @@ const handle = (
       await remove(identity);
     },
     onSandboxStop: async () => {
-      await access(async () => {
-        await persistent.stop(sandbox.name);
-      });
+      await stopPersistentWorkspace(identity, getPersistentSandboxProvider);
     },
     onRuntimeShutdown: async () => {
-      await access(async () => {
-        await persistent.stop(sandbox.name);
-      });
+      await stopPersistentWorkspace(identity, getPersistentSandboxProvider);
     },
   };
 };

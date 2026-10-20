@@ -1,6 +1,7 @@
 import { getPersistentSandboxProvider } from "../sandbox/runtime";
 import {
   readPersistentIdentity,
+  resolvePersistentIdentity,
   retirePersistentSession,
   cleanupPersistentSession,
 } from "./persistent-sandbox-store";
@@ -17,7 +18,8 @@ export const manageEveLocalResources = async (
   action: "retire" | "purge"
 ): Promise<void> => {
   const saved = await readPersistentIdentity(scope.sessionId);
-  const identity = saved ?? { ...scope, ownerId };
+  const identity =
+    saved ?? (await resolvePersistentIdentity({ ...scope, ownerId }));
   if (
     identity.ownerId !== ownerId ||
     identity.rootSessionId !== scope.rootSessionId

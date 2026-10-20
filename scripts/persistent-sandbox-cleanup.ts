@@ -55,7 +55,7 @@ const processStart = async (pid: number): Promise<string | null> => {
   }
 };
 const stop = async (runId: string): Promise<void> => {
-  await execute(
+  const { stdout } = await execute(
     process.execPath,
     [
       ...(process.versions.bun === undefined
@@ -74,6 +74,9 @@ const stop = async (runId: string): Promise<void> => {
     ],
     { cwd: appDirectory, timeout: deadline }
   );
+  if (stdout.trim()) {
+    console.info(stdout.trim());
+  }
 };
 export const finishPersistentSandboxCleanup = async (
   runId: string

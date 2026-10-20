@@ -5,8 +5,6 @@ import { cleanupExpiredEveGuests } from "./cleanup-expired-guests";
 const mocks = vi.hoisted(() => ({
   available: vi.fn(),
   claim: vi.fn(),
-  copy: vi.fn(),
-  deleteCopy: vi.fn(),
   remove: vi.fn(),
 }));
 vi.mock("./local-deletion-available", () => ({
@@ -15,17 +13,12 @@ vi.mock("./local-deletion-available", () => ({
 vi.mock("../db/eve-guest-cleanup", () => ({
   claimExpiredEveGuestFamilies: mocks.claim,
 }));
-vi.mock("../db/eve-copy-journal", () => ({ isUnacceptedEveCopy: mocks.copy }));
-vi.mock("./delete-unaccepted-copy", () => ({
-  deleteUnacceptedEveCopy: mocks.deleteCopy,
-}));
 vi.mock("./delete-local-conversation", () => ({
   deleteLocalEveConversationFamily: mocks.remove,
 }));
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.available.mockReturnValue(true);
-  mocks.copy.mockResolvedValue(false);
   mocks.claim.mockResolvedValue([]);
 });
 test("unsupported providers do not claim or revoke expired families", async () => {
@@ -54,15 +47,6 @@ test("failed deletion remains pending while the rest of the batch progresses", a
     ["guest", "ready", "/trusted/app"],
   ]);
 });
-test("never-dispatched copies use their proven unaccepted deletion path", async () => {
-  mocks.claim.mockResolvedValueOnce([{ id: "copy", ownerId: "guest" }]);
-  mocks.copy.mockResolvedValue(true);
-  const resolvedResult1 = await cleanupExpiredEveGuests("/trusted/app");
-  expect(resolvedResult1.deletedCount).toBe(1);
-  expect(mocks.deleteCopy).toHaveBeenCalledWith("guest", "copy");
-  expect(mocks.remove).not.toHaveBeenCalled();
-});
-
 test("an absent deletion receipt is pending and cannot count as an erased family", async () => {
   mocks.claim.mockResolvedValueOnce([{ id: "uncertain", ownerId: "guest" }]);
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({

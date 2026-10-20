@@ -1,3 +1,4 @@
+import { eveDeletionScope } from "./eve-deletion-scope";
 import type { SandboxScope } from "@chat-js/sandboxes/provider";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -155,7 +156,7 @@ const listEveCodeSandboxesForDeletion = async (
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        eq(eveConversation.chatId, rootId)
+        eveDeletionScope(ownerId, rootId)
       )
     );
   if (
@@ -183,7 +184,7 @@ const listEveCodeSandboxesForDeletion = async (
       and(
         eq(eveCodeSandbox.ownerId, ownerId),
         eq(eveCodeSandbox.state, "unresolved"),
-        eq(eveConversation.chatId, rootId)
+        eveDeletionScope(ownerId, rootId)
       )
     );
 };

@@ -13,6 +13,7 @@ export const getPublicEveTranscript = async (
   id: string
 ): Promise<{
   id: string;
+  ownerId: string;
   messages: ReturnType<typeof sharedEveMessages>;
   title: string;
 } | null> => {
@@ -35,6 +36,7 @@ export const getPublicEveTranscript = async (
   }
   return {
     id: row.id,
+    ownerId: row.ownerId,
     messages: sharedEveMessages(snapshot.events, receipts),
     title:
       row.title ??

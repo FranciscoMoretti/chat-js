@@ -146,3 +146,7 @@ it("checks provider compatibility before revoking family access", async () => {
   expect(mocks.retireMany).not.toHaveBeenCalled();
   expect(mocks.reset).not.toHaveBeenCalled();
 });
+
+vi.mock("./reconcile-workspace-turn", () => ({
+  reconcileEveWorkspaceTurn: vi.fn(),
+}));

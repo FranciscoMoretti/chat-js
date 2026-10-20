@@ -90,7 +90,7 @@ export const POST = async (
   }
   try {
     return Response.json(
-      await saveEveCopyOperation(session.user.id, input.data, origin),
+      await saveEveCopyOperation(session.user.id, input.data),
       { headers }
     );
   } catch (error) {

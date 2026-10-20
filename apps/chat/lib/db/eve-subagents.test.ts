@@ -51,7 +51,11 @@ beforeAll(async () => {
     [conversationId, otherId]
   );
   await postgres.query(
-    `insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,'owner',$1,'Research','root','bound'), ($2,$2,'other',$2,'Research','foreign-root','bound')`,
+    `insert into "EveWorkspace" (id,"ownerId") values ($1,'owner'), ($2,'other')`,
+    [conversationId, otherId]
+  );
+  await postgres.query(
+    `insert into "EveConversation" ("workspaceId",id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$1,'owner',$1,'Research','root','bound'), ($2,$2,$2,'other',$2,'Research','foreign-root','bound')`,
     [conversationId, otherId]
   );
 }, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
