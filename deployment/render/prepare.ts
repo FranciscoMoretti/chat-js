@@ -41,7 +41,7 @@ await writeFile(
 await rm(path.join(app, "agent/hooks/persistent-sandbox.ts"), { force: true });
 const sandbox = `import { defineSandbox } from "eve/sandbox";
 import { JustBashSandbox } from "eve/sandbox/just-bash";
-const environment = JustBashSandbox.environment({ autoInstall: false });
+export const environment = JustBashSandbox.environment({ autoInstall: false });
 export default defineSandbox(async () => await environment.open());
 `;
 for (const agent of [
