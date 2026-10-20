@@ -14,6 +14,12 @@ Implementation branch: `codex/single-agent-guest-mvp`, based on `8dbcc370c521a0d
 - Live guest cleanup: aged only an isolated test policy while preserving its 24-hour database invariant, ran the protected cron endpoint, verified retirement, deletion receipt, absence of native run/event/step/stream payloads, and rejection of the old credential. Account workflow data remained separate.
 - Separate PostgreSQL concurrency probes admitted exactly three requests with a three-message budget, and exactly two eight-character requests with a 20-character cumulative-input budget. Native lifecycle tests verified late-write fences and account preservation.
 
+## Registered browser follow-up (2026-10-20)
+
+After merging #866, rebuilt the EVE production worker and tested the registered UI in headed Chromium with an isolated, authenticated local account. Selected GPT-4.1 nano (Fast), sent a real message, reloaded, sent a follow-up that recalled the first message, returned to New Chat, and reopened the saved conversation. Desktop and mobile screenshots were inspected; mobile had no horizontal overflow. The account had four usage records (including auxiliary model work), no browser page errors, and no failed application requests. Local-only Vercel analytics script 404s were excluded from application-request assertions.
+
+The first run exposed a test-configuration error: `PLAYWRIGHT=True` intentionally makes the layout anonymous, preventing the registered runtime from mounting even with a valid session cookie. Removing that flag and supplying the already configured instrumentation credentials resolved it without app-code changes. Authentication used a disposable local session, so this did not retest hosted OAuth or external connector/file operations.
+
 ## Fixes found during verification
 
 The published EVE fork needed its canonical `workflow//eve//workflowEntry` identity preserved by the workflow transform; the checked-in patch and regression test cover that. Guest model validation now accepts server-generated assistant reasoning history while still denying nontext user input and tools. Registry-owned research/MCP guards live in their canonical sources and synchronize into the app.
