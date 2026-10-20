@@ -2,7 +2,8 @@
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 import React from "react";
-import { SandboxComposed } from "@/components/sandbox";
+// Preserve the exact TSX target: shadcn otherwise confuses it with subagent sandbox.ts files.
+import { SandboxComposed } from "@/components/sandbox.tsx";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 

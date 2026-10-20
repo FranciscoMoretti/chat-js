@@ -158,3 +158,26 @@ test("every registry tool renderer ships a visual test", () => {
 
   expect(problems).toEqual([]);
 });
+
+test("research installs an explicit sandbox policy for every shipped subagent", () => {
+  const research = registry.items.find((item) => item.name === "deep-research");
+  expect(research).toBeDefined();
+  const files = research?.files ?? [];
+  const agents = files.filter(
+    (file) =>
+      file.target?.includes("agent/subagents/") === true &&
+      file.target?.endsWith("/agent.ts")
+  );
+  expect(agents.length).toBeGreaterThan(0);
+  for (const agent of agents) {
+    const target = agent.target?.replace(/agent\.ts$/u, "sandbox.ts");
+    const sandbox = files.find((file) => file.target === target);
+    expect(
+      sandbox,
+      `${target} must be installed to prevent a default independent sandbox`
+    ).toBeDefined();
+    expect(
+      existsSync(path.join(registryDir, sandbox?.path ?? "missing-sandbox"))
+    ).toBe(true);
+  }
+});

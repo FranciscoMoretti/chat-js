@@ -27,7 +27,7 @@ const verifyGatewayAndTool = (
   );
   expect(
     required(expected, "tools/chatjs/code-execution/renderer.tsx")
-  ).toContain('from "@/components/sandbox"');
+  ).toContain('from "@/components/sandbox.tsx"');
 };
 
 const verifyFeatures = (expected: Readonly<Record<string, string>>): void => {

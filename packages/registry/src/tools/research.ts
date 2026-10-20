@@ -5,12 +5,16 @@ import { toolDefinitionSchema } from "../../metadata";
 const researchAgentFiles = [
   "agent/tools/deepResearch.ts",
   "agent/subagents/researchPlanner/agent.ts",
+  "agent/subagents/researchPlanner/sandbox.ts",
   "agent/subagents/researchPlanner/hooks/billing.ts",
   "agent/subagents/researchWriter/agent.ts",
+  "agent/subagents/researchWriter/sandbox.ts",
   "agent/subagents/researchWriter/hooks/billing.ts",
   "agent/subagents/researchCompressor/agent.ts",
+  "agent/subagents/researchCompressor/sandbox.ts",
   "agent/subagents/researchCompressor/hooks/billing.ts",
   "agent/subagents/researcher/agent.ts",
+  "agent/subagents/researcher/sandbox.ts",
   "agent/subagents/researcher/tools/webSearch.ts",
   "agent/subagents/researcher/hooks/billing.ts",
 ];
