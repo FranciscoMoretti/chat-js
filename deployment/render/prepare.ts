@@ -1,6 +1,7 @@
 // Explicit source-clone verification profile. Run only in a disposable checkout.
 import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { verifyPrivateBucket } from "../../scripts/verify-private-bucket.ts";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -9,6 +10,7 @@ const bucket = process.env.SUPABASE_STORAGE_BUCKET?.trim();
 if (bucket === undefined || bucket === "") {
   throw new Error("Set SUPABASE_STORAGE_BUCKET to an existing private bucket.");
 }
+await verifyPrivateBucket(bucket);
 await copyFile(
   path.join(root, "packages/registry/src/storage/supabase/storage-provider.ts"),
   path.join(app, "lib/storage-provider.ts")
