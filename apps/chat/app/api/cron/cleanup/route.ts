@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { env } from "@/lib/env";
+import { cleanupGuestRuntimeSessions } from "@/lib/eve/cleanup-guest-runtime";
 import { cleanupExpiredEveGuests } from "@/lib/eve/cleanup-expired-guests";
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 
@@ -18,9 +19,15 @@ const cleanupResponse = (
   >,
   guests: ReadonlyNativeSurface<
     PromiseSettledResult<Awaited<ReturnType<typeof cleanupExpiredEveGuests>>>
+  >,
+  runtimeGuests: PromiseSettledResult<
+    Awaited<ReturnType<typeof cleanupGuestRuntimeSessions>>
   >
 ): NextResponse<{
   results: {
+    runtimeGuests:
+      | Awaited<ReturnType<typeof cleanupGuestRuntimeSessions>>
+      | { error: string };
     expiredGuests:
       | Awaited<ReturnType<typeof cleanupExpiredEveGuests>>
       | { error: string };
@@ -36,10 +43,17 @@ const cleanupResponse = (
     !attachments.value.skipped &&
     guests.status === "fulfilled" &&
     !guests.value.skipped &&
-    guests.value.pendingCount === NO_PENDING_GUESTS;
+    guests.value.pendingCount === NO_PENDING_GUESTS &&
+    runtimeGuests.status === "fulfilled" &&
+    !runtimeGuests.value.skipped &&
+    runtimeGuests.value.pendingCount === NO_PENDING_GUESTS;
   return NextResponse.json(
     {
       results: {
+        runtimeGuests:
+          runtimeGuests.status === "fulfilled"
+            ? runtimeGuests.value
+            : { error: "Guest runtime cleanup failed; retry required." },
         expiredGuests:
           guests.status === "fulfilled"
             ? guests.value
@@ -74,11 +88,12 @@ export const GET = async (
     const attachmentCutoff = new Date(
       Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME
     );
-    const [attachments, guests] = await Promise.allSettled([
+    const [attachments, guests, runtimeGuests] = await Promise.allSettled([
       cleanupEveOrphanedFiles(attachmentCutoff),
       cleanupExpiredEveGuests(process.cwd()),
+      cleanupGuestRuntimeSessions(),
     ]);
-    return cleanupResponse(attachments, guests);
+    return cleanupResponse(attachments, guests, runtimeGuests);
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(

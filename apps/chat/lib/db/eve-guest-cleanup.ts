@@ -51,3 +51,20 @@ export const claimExpiredEveGuestFamilies = async (): Promise<
     }
     return rows;
   });
+
+/** Read-only inventory: unsupported providers may report an empty sweep only after this succeeds. */
+export const hasExpiredEveGuestFamilies = async (): Promise<boolean> => {
+  const rows = await db
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .innerJoin(eveGuest, eq(eveGuest.ownerId, eveConversation.ownerId))
+    .where(
+      and(
+        lte(eveGuest.expiresAt, sql`now()`),
+        isNull(eveConversation.rootConversationId),
+        ne(eveConversation.state, "deleted")
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+};

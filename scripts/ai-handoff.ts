@@ -15,6 +15,8 @@ const checkoutEnv = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))
 );
 let stopHookActive = false;
+let interrupted = false;
+const cursor = process.argv[3] === "cursor";
 
 const git = (...args: string[]): Buffer => {
   const result = Bun.spawnSync(["git", ...args], {
@@ -53,29 +55,53 @@ const fingerprint = (): string => {
 };
 
 const output = (systemMessage?: string): void => {
+  if (cursor) {
+    if (systemMessage !== undefined) {
+      process.stderr.write(`${systemMessage}\n`);
+    }
+    process.stdout.write(
+      JSON.stringify(process.argv[2] === "start" ? { continue: true } : {})
+    );
+    return;
+  }
   process.stdout.write(
     JSON.stringify(systemMessage === undefined ? {} : { systemMessage })
   );
 };
 
+const requestCorrection = (message: string): void => {
+  if (cursor) {
+    process.stdout.write(JSON.stringify({ followup_message: message }));
+  } else {
+    process.stderr.write(`${message}\n`);
+    process.exitCode = 2;
+  }
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const parseInput = (input: unknown) => {
+  if (!isRecord(input)) {
+    throw new Error("Hook payload must be an object.");
+  }
+  stopHookActive =
+    input.stop_hook_active === true ||
+    (cursor && typeof input.loop_count === "number" && input.loop_count > 0);
+  interrupted =
+    cursor && (input.status === "aborted" || input.status === "error");
+  const sessionKey = cursor ? "conversation_id" : "session_id";
+  const sessionId = input[sessionKey];
+  if (typeof sessionId !== "string" || sessionId.length === 0) {
+    throw new Error(`Hook payload is missing ${sessionKey}.`);
+  }
+  return sessionId;
+};
+
 const run = async (): Promise<void> => {
   const input: unknown = JSON.parse(await Bun.stdin.text());
-  stopHookActive =
-    typeof input === "object" &&
-    input !== null &&
-    "stop_hook_active" in input &&
-    input.stop_hook_active === true;
-  if (
-    typeof input !== "object" ||
-    input === null ||
-    !("session_id" in input) ||
-    typeof input.session_id !== "string" ||
-    input.session_id.length === 0
-  ) {
-    output("Handoff check skipped: hook payload is missing session_id.");
-    return;
-  }
-  const session = createHash("sha256").update(input.session_id).digest("hex");
+  const sessionId = parseInput(input);
+  const session = createHash("sha256").update(sessionId).digest("hex");
   const directory = path.resolve(
     root,
     git("rev-parse", "--git-path", "agent-handoff").toString().trim()
@@ -83,6 +109,11 @@ const run = async (): Promise<void> => {
   const statePath = path.join(directory, session);
   const failurePath = `${statePath}.failed`;
   const activePath = `${statePath}.active`;
+  if (process.argv[2] === "check" && interrupted) {
+    rmSync(activePath, { force: true });
+    output();
+    return;
+  }
   const current = fingerprint();
   if (process.argv[2] === "start") {
     mkdirSync(directory, { recursive: true });
@@ -135,7 +166,13 @@ const run = async (): Promise<void> => {
         "Handoff checks still fail. Automatic continuation stopped; report the remaining failures to the user."
       );
     } else {
-      process.exitCode = 2;
+      const failed = [
+        ...(lint.exitCode === 0 ? [] : ["bun lint"]),
+        ...(types.exitCode === 0 ? [] : ["bun test:types"]),
+      ];
+      requestCorrection(
+        `Handoff checks failed: ${failed.join(" and ")}. Run the failing commands, fix issues caused by your changes, and report unrelated failures without changing unrelated work.`
+      );
     }
     return;
   }
@@ -148,9 +185,8 @@ try {
   await run();
 } catch (error) {
   const message = `Handoff check could not run: ${String(error)}`;
-  if (process.argv[2] === "check" && !stopHookActive) {
-    process.stderr.write(`${message}\n`);
-    process.exitCode = 2;
+  if (process.argv[2] === "check" && !stopHookActive && !interrupted) {
+    requestCorrection(message);
   } else {
     output(message);
   }

@@ -1,3 +1,4 @@
+import { isGuestSession } from "../../lib/eve/session-identity";
 import { eveTurnGuest, eveTurnTool } from "../../lib/eve/turn-tools";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
@@ -13,7 +14,9 @@ export default defineHook({
       }>
     ) => {
       eveTurnGuest.update(
-        () => context.session.auth.current?.attributes.chatjsGuest === "true"
+        () =>
+          isGuestSession(context.session) ||
+          context.session.auth.initiator?.attributes.chatjsGuest === "true"
       );
       const supplied = context.session.auth.current?.attributes.selectedTool;
       const selected =

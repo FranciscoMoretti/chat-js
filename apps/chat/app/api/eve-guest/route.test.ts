@@ -29,6 +29,11 @@ const mocks = vi.hoisted(() => ({
       ) => Response | Promise<Response>
     >(),
   model: vi.fn(),
+  create: vi.fn(),
+  bind: vi.fn(),
+  ip: vi.fn(),
+  lifecycle: vi.fn(),
+  lifecycleCheck: vi.fn(),
 }));
 const settings = vi.hoisted(
   (): {
@@ -46,9 +51,11 @@ const settings = vi.hoisted(
   })
 );
 vi.mock("@/lib/env", () => ({ env: settings }));
-vi.mock("@/lib/db/client", () => {
-  throw new Error("Guest creation must not load the database");
-});
+vi.mock("@/lib/db/guest-runtime", () => ({
+  createGuestRuntimeSession: mocks.create,
+  bindGuestRuntimeSession: mocks.bind,
+}));
+vi.mock("@/lib/eve/guest-admission", () => ({ guestRequestIpHash: mocks.ip }));
 vi.mock("@/lib/auth", () => {
   throw new Error("Guest creation must not load account authentication");
 });
@@ -56,11 +63,23 @@ vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
 vi.mock("@/lib/types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_MODELS: ["guest-model"] },
+  ANONYMOUS_LIMITS: { AVAILABLE_MODELS: ["openai/gpt-5-nano"] },
+}));
+
+vi.mock("@/lib/eve/deletion-lifecycle", () => ({
+  requireEveDeletionLifecycle: mocks.lifecycle,
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.lifecycle.mockImplementation(() => ({ check: mocks.lifecycleCheck }));
+  mocks.lifecycleCheck.mockResolvedValue(null);
+  mocks.create.mockResolvedValue({
+    status: "ready",
+    guest: { id: "00000000-0000-4000-8000-000000000001" },
+  });
+  mocks.bind.mockResolvedValue(true);
+  mocks.ip.mockReturnValue("a".repeat(64));
   settings.VERCEL_URL = "";
   settings.APP_URL = "https://chat.example";
   vi.stubGlobal("fetch", mocks.fetch);
@@ -75,8 +94,8 @@ const request = (body: unknown, origin = "https://chat.example"): Request =>
     method: "POST",
   });
 
-test("creates a native session without application state, returning only its scoped credential", async () => {
-  const response = await POST(request({ modelId: "guest-model" }));
+test("creates a native session without account state, returning only its scoped credential", async () => {
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
   expect(response.status).toBe(HTTP_STATUS.ok);
   expect(response.headers.get("set-cookie")).toBeNull();
   expect(response.headers.get("cache-control")).toBe("no-store");
@@ -84,7 +103,7 @@ test("creates a native session without application state, returning only its sco
     .object({ credential: z.string(), sessionId: z.string() })
     .parse(await response.json());
   expect(readGuestCredential(body.credential)).toMatchObject({
-    modelId: "guest-model",
+    modelId: "openai/gpt-5-nano",
     sessionId: body.sessionId,
   });
   const [[, init]] = mocks.fetch.mock.calls;
@@ -99,11 +118,11 @@ test("creates a native session without application state, returning only its sco
 
 test("rejects cross-origin and unauthorized model creation before calling EVE", async () => {
   const crossOrigin = await POST(
-    request({ modelId: "guest-model" }, "https://evil.example")
+    request({ modelId: "openai/gpt-5-nano" }, "https://evil.example")
   );
   const premium = await POST(request({ modelId: "premium-model" }));
   const arbitrarySession = await POST(
-    request({ modelId: "guest-model", sessionId: "victim" })
+    request({ modelId: "openai/gpt-5-nano", sessionId: "victim" })
   );
   expect(crossOrigin.status).toBe(HTTP_STATUS.forbidden);
   expect(premium.status).toBe(HTTP_STATUS.badRequest);
@@ -115,26 +134,26 @@ test("failed native creation never issues a browser credential", async () => {
   mocks.fetch.mockResolvedValue(
     new Response(null, { status: HTTP_STATUS.internalServerError })
   );
-  const response = await POST(request({ modelId: "guest-model" }));
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
   expect(response.status).toBe(HTTP_STATUS.badGateway);
   expect(await response.json()).not.toHaveProperty("credential");
 });
 
 test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
   settings.VERCEL_URL = "deployment.vercel.app";
-  await POST(request({ modelId: "guest-model" }));
+  await POST(request({ modelId: "openai/gpt-5-nano" }));
   const [[url, init]] = mocks.fetch.mock.calls;
   expect(url).toEqual(
-    new URL("https://deployment.vercel.app/eve/guest/v1/session")
+    new URL("https://deployment.vercel.app/eve/chat/v1/session")
   );
   expect(new Headers(init.headers).get("x-vercel-protection-bypass")).toBe(
     "deployment-bypass-test"
   );
 });
 test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
-  await POST(request({ modelId: "guest-model" }));
+  await POST(request({ modelId: "openai/gpt-5-nano" }));
   const [[url, init]] = mocks.fetch.mock.calls;
-  expect(url).toEqual(new URL("https://chat.example/eve/guest/v1/session"));
+  expect(url).toEqual(new URL("https://chat.example/eve/chat/v1/session"));
   expect(
     new Headers(init.headers).get("x-vercel-protection-bypass")
   ).toBeNull();
@@ -144,11 +163,41 @@ test("never sends a creation credential to a request-derived host", async () => 
   settings.APP_URL = undefined;
   const response = await POST(
     new Request("https://attacker.example/api/eve-guest", {
-      body: JSON.stringify({ modelId: "guest-model" }),
+      body: JSON.stringify({ modelId: "openai/gpt-5-nano" }),
       headers: { origin: "https://attacker.example" },
       method: "POST",
     })
   );
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("unsupported workflow lifecycle blocks guest admission before policy creation", async () => {
+  mocks.lifecycle.mockImplementationOnce(() => {
+    throw new Error("unsupported managed world");
+  });
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
+  expect(mocks.create).not.toHaveBeenCalled();
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("missing fences or failed lifecycle readiness blocks guest admission", async () => {
+  mocks.lifecycleCheck.mockRejectedValueOnce(
+    new Error("private database details")
+  );
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
+  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
+  expect(await response.text()).not.toContain("private database details");
+  expect(mocks.create).not.toHaveBeenCalled();
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("guest policy creation follows verified lifecycle readiness", async () => {
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(mocks.lifecycleCheck).toHaveBeenCalledOnce();
+  expect(mocks.lifecycleCheck.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.create.mock.invocationCallOrder[0]
+  );
 });

@@ -1,3 +1,5 @@
+import { isGuestSession } from "../lib/eve/session-identity";
+import { resolveGuestModel } from "../lib/eve/guest-model";
 import { defineAgent, defineDynamic } from "eve";
 import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
@@ -16,7 +18,16 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
-  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
+  build: {
+    // Graphile's optional TypeScript config loader should load the compiler only
+    // when needed, instead of retaining its source in the eager worker bundle.
+    externalDependencies: [
+      "pino",
+      "pino-pretty",
+      "thread-stream",
+      "typescript",
+    ],
+  },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
   experimental: { workflow: { world: resolveWorkflowWorld() } },
@@ -26,6 +37,9 @@ export default defineAgent({
         event: unknown,
         context: DynamicResolveContext
       ) => {
+        if (isGuestSession(context.session)) {
+          return await resolveGuestModel();
+        }
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));

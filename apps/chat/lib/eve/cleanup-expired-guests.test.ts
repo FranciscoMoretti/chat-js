@@ -5,6 +5,7 @@ import { cleanupExpiredEveGuests } from "./cleanup-expired-guests";
 const mocks = vi.hoisted(() => ({
   available: vi.fn(),
   claim: vi.fn(),
+  hasExpired: vi.fn(),
   remove: vi.fn(),
 }));
 vi.mock("./local-deletion-available", () => ({
@@ -12,6 +13,7 @@ vi.mock("./local-deletion-available", () => ({
 }));
 vi.mock("../db/eve-guest-cleanup", () => ({
   claimExpiredEveGuestFamilies: mocks.claim,
+  hasExpiredEveGuestFamilies: mocks.hasExpired,
 }));
 vi.mock("./delete-local-conversation", () => ({
   deleteLocalEveConversationFamily: mocks.remove,
@@ -19,6 +21,7 @@ vi.mock("./delete-local-conversation", () => ({
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.available.mockReturnValue(true);
+  mocks.hasExpired.mockResolvedValue(true);
   mocks.claim.mockResolvedValue([]);
 });
 test("unsupported providers do not claim or revoke expired families", async () => {
@@ -68,4 +71,26 @@ test("a supported empty sweep reports success only after checking inventory", as
     skipped: false,
   });
   expect(mocks.claim).toHaveBeenCalledOnce();
+});
+
+test("unsupported runtime reports success only after a read-only empty inventory", async () => {
+  mocks.available.mockReturnValue(false);
+  mocks.hasExpired.mockResolvedValue(false);
+  expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
+  expect(mocks.hasExpired).toHaveBeenCalledOnce();
+  expect(mocks.claim).not.toHaveBeenCalled();
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+test("unsupported runtime inventory errors cannot masquerade as empty backlog", async () => {
+  mocks.available.mockReturnValue(false);
+  mocks.hasExpired.mockRejectedValue(new Error("inventory unavailable"));
+  await expect(cleanupExpiredEveGuests("/trusted/app")).rejects.toThrow(
+    "inventory unavailable"
+  );
+  expect(mocks.claim).not.toHaveBeenCalled();
 });

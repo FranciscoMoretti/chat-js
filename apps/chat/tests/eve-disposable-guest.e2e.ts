@@ -60,7 +60,7 @@ test("anonymous chat stays disposable and disappears on reload", async ({
     animations: "disabled",
     path: testInfo.outputPath("guest-response.png"),
   });
-  const stream = `/eve/guest/v1/session/${binding.sessionId}/stream?includeTailIndex=1`;
+  const stream = `/eve/chat/v1/session/${binding.sessionId}/stream?includeTailIndex=1`;
   const unauthenticated = await page.request.get(stream);
   const otherSession = await page.request.get(
     stream.replace(binding.sessionId, "someone-else"),
@@ -119,7 +119,7 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
       },
     });
   });
-  await page.route("**/eve/guest/v1/session/**", async (route) => {
+  await page.route("**/eve/chat/v1/session/**", async (route) => {
     await route.fulfill({
       json: { error: "This temporary chat has expired." },
       status: 401,
@@ -164,14 +164,14 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   await composer.fill("Discard with shortcut");
   await composer.press("ControlOrMeta+Shift+O");
   await expect(composer).toHaveText("");
-  await page.getByRole("button", { name: /logo/u }).click();
-  await expect(page.getByRole("combobox")).toBeVisible();
+  await expect(page.getByTestId("model-selector")).toBeDisabled();
+  await expect(page.getByTestId("model-selector")).toContainText("GPT-5 nano");
   await page.addStyleTag({
     content: "nextjs-portal { display:none !important; }",
   });
   await page.screenshot({
     animations: "disabled",
-    path: testInfo.outputPath("guest-model-picker.png"),
+    path: testInfo.outputPath("guest-model-locked.png"),
   });
   await page.keyboard.press("Escape");
   await page.setViewportSize({ height: 844, width: 390 });
@@ -198,7 +198,7 @@ test("New Chat discards late bootstrap results and retires their session", async
       },
     });
   });
-  await page.route("**/eve/guest/v1/session/**", async (route) => {
+  await page.route("**/eve/chat/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
       messages.push(new URL(route.request().url()).pathname);
     }
@@ -220,7 +220,7 @@ test("New Chat discards late bootstrap results and retires their session", async
   await retired;
   await expect(composer).toHaveText("Fresh draft");
   await expect(page.getByRole("log")).toHaveCount(0);
-  expect(messages).toEqual(["/eve/guest/v1/session/discarded-session/reset"]);
+  expect(messages).toEqual(["/eve/chat/v1/session/discarded-session/reset"]);
 });
 
 test("back-forward cache restoration starts a fresh guest chat", async ({
@@ -235,7 +235,7 @@ test("back-forward cache restoration starts a fresh guest chat", async ({
       },
     });
   });
-  await page.route("**/eve/guest/v1/session/**", async (route) => {
+  await page.route("**/eve/chat/v1/session/**", async (route) => {
     await route.fulfill({ json: { error: "Expired" }, status: 401 });
   });
   await page.goto("/");

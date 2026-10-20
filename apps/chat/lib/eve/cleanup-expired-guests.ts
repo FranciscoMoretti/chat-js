@@ -1,10 +1,13 @@
-import { claimExpiredEveGuestFamilies } from "@/lib/db/eve-guest-cleanup";
+import {
+  claimExpiredEveGuestFamilies,
+  hasExpiredEveGuestFamilies,
+} from "@/lib/db/eve-guest-cleanup";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 import { localDeletionAvailable } from "./local-deletion-available";
 
 /** The appRoot is the trusted worker directory. Guest and billing identities are retained.
  * @param {string} appRoot Trusted local worker root used for supported family resource cleanup.
- * @returns {ReturnType<typeof cleanupExpiredEveGuests>} Deleted and pending attempt counts for the bounded cleanup batch. Unsupported runtimes skip without a pendingCount because no inventory was read; per-family uncertainty remains pending without aborting later attempts.
+ * @returns {ReturnType<typeof cleanupExpiredEveGuests>} Deleted and pending attempt counts for the bounded cleanup batch. Unsupported runtimes report success only after read-only inventory proves no work, otherwise skip without claiming an empty backlog; per-family uncertainty remains pending without aborting later attempts.
  */
 export const cleanupExpiredEveGuests = async (
   appRoot: string
@@ -15,7 +18,10 @@ export const cleanupExpiredEveGuests = async (
   )
 > => {
   if (!localDeletionAvailable()) {
-    // Omit pendingCount: no inventory was read, so the backlog is unknown.
+    if (!(await hasExpiredEveGuestFamilies())) {
+      return { deletedCount: 0, pendingCount: 0, skipped: false };
+    }
+    // Inventory proved work exists, but this provider cannot safely delete it.
     return {
       deletedCount: 0,
       reason: "unsupported_runtime",

@@ -48,11 +48,27 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
     if (!enabled()) {
       return;
     }
-    const { cleanupExpiredEveGuests } =
-      await import("./cleanup-expired-guests");
-    const result = await cleanupExpiredEveGuests(appRoot);
-    if (result.skipped || result.deletedCount || Boolean(result.pendingCount)) {
-      console.info("Local EVE guest cleanup", result);
+    const [{ cleanupExpiredEveGuests }, { cleanupGuestRuntimeSessions }] =
+      await Promise.all([
+        import("./cleanup-expired-guests"),
+        import("./cleanup-guest-runtime"),
+      ]);
+    const results = await Promise.allSettled([
+      cleanupExpiredEveGuests(appRoot),
+      cleanupGuestRuntimeSessions(),
+    ]);
+    for (const result of results) {
+      if (
+        result.status === "fulfilled" &&
+        (result.value.skipped ||
+          result.value.deletedCount ||
+          Boolean(result.value.pendingCount))
+      ) {
+        console.info("Local EVE guest cleanup", result.value);
+      }
+    }
+    if (results.some((result) => result.status === "rejected")) {
+      throw new Error("Guest cleanup incomplete; the next sweep will retry.");
     }
   };
   if (schedulerGlobal.chatjsEveGuestCleanup) {

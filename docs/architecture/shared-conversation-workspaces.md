@@ -4,6 +4,8 @@ A conversation owns history; a ChatJS workspace owns its persistent sandbox and 
 
 ## Access and dispatch
 
+Guest and account sessions use main's single agent runtime. Disposable guests remain text-only and bypass account workspace registration; their authenticated policy and cleanup stay in the guest-runtime tables. Account sessions retain the workspace ownership and attachment checks described below.
+
 Workspace IDs never authorize access. Conversation membership, workspace ownership and native session binding are checked together. The gateway's trusted reservation identity allows initial sandbox access before the create response is recorded. Public sharing exposes history only; another account cannot fork into the owner's workspace. Historical forks inherit file permissions and document revisions only from their selected history, so publishing an early fork does not expose later source attachments or document revisions.
 
 An owner-family lock followed by a workspace advisory/row lock protects capture, admission and deletion. The minimal dispatch journal and workspace's active operation are committed together before native dispatch. Only one top-level operation may run per workspace. Approval waits and active descendants keep the reservation. Cancellation acknowledgement is not completion. Unreadable sessions or lost create/send responses retain the reservation and never trigger an automatic resend. Known native receipt/turn completion allows release; stale observations cannot release a newer operation. Development shutdown preserves allocations for fenced workspaces and detaches the stopped worker lease. Restart resumes the same allocation and reconciles native evidence without clearing uncertainty or redispatching.
@@ -24,7 +26,7 @@ Deleting a conversation ID retires that member only. Deleting the sidebar chat I
 
 ## Adoption
 
-Migration 0017 intentionally requires empty conversation/sandbox state. It refuses populated state rather than inventing workspace ownership or importing uncertain deliveries. No live migration was performed.
+Migration 0019 intentionally requires empty conversation/sandbox state. It refuses populated state rather than inventing workspace ownership or importing uncertain deliveries. No live migration was performed.
 
 The app branch depends on the companion EVE shared-path seed contract and the resource-provider retirement in EVE #14. The published `@chat-js/eve@0.80.1-chatjs.2` does not contain these changes. Local verification uses an external candidate archive; no archive or vendored package belongs in this diff. A separately authorized versioned package release and dependency update are required before merge. No deployment or publication is authorized here.
 
@@ -43,3 +45,5 @@ The app branch depends on the companion EVE shared-path seed contract and the re
 | Real model image/PDF, shared file edits, historical boundaries, deletion and restart | Two live Playwright scenarios passed: image/PDF reuse, shared mutations, boundary exclusion, original deletion, actual supervisor restart, and simultaneous sibling HTTP sends (one accepted, one conflict) |
 
 The live acceptance environment uses disposable local PostgreSQL, an external EVE candidate, the app-owned sandbox provider and private local filesystem-backed original storage. Available Blob credentials identify a public store, so this run does not certify Vercel Blob private-store configuration. Captured logs, storage contents, screenshots and package archives stay outside the implementation diff.
+
+After merging main at `56acb8ff5` (including the unified agent runtime), the full app unit suite passed 1,167 tests, all nine type-check tasks and lint passed, and 28 PostgreSQL workspace/guest-cleanup regressions passed against freshly applied migrations through 0019. Registry checks passed, including 182 browser tests, and 36 hosting/supervisor tests passed. The external EVE candidate included main's workflow-identity dependency patch for this verification; the earlier live model/sandbox runs above predate this main refresh and were not repeated.

@@ -63,6 +63,18 @@ beforeEach(() => {
   controller = new AbortController();
   context = {
     ...testToolContext({ abortSignal: controller.signal }),
+    session: {
+      ...testToolContext().session,
+      auth: {
+        current: null,
+        initiator: {
+          authenticator: "chatjs-gateway",
+          principalId: "owner",
+          principalType: "user",
+          attributes: {},
+        },
+      },
+    },
     agent: (name) => ({
       send: vi
         .fn()

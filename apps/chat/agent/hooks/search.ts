@@ -1,3 +1,4 @@
+import { isGuestSession } from "../../lib/eve/session-identity";
 import type { EveSearchText } from "../../lib/eve/search-text";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
@@ -24,6 +25,9 @@ export default defineHook({
         >;
       }>
     ) => {
+      if (isGuestSession(context.session)) {
+        return;
+      }
       if (context.session.parent) {
         return;
       }

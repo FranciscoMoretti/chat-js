@@ -1,5 +1,5 @@
 {
-  "id": "58dec273-b61a-4815-83df-e88adb5b07b5",
+  "id": "dccf1591-3f0b-4317-a29f-91c0c92acd78",
   "prevId": "9935b84e-47ab-4ed7-85f5-fdda3ecd0be8",
   "version": "7",
   "dialect": "postgresql",
@@ -425,12 +425,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "workspaceId": {
-          "name": "workspaceId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -592,21 +586,6 @@
           "method": "btree",
           "with": {}
         },
-        "EveConversation_workspace": {
-          "name": "EveConversation_workspace",
-          "columns": [
-            {
-              "expression": "workspaceId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "EveConversation_owner_root": {
           "name": "EveConversation_owner_root",
           "columns": [
@@ -660,21 +639,6 @@
           ],
           "columnsTo": [
             "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "EveConversation_workspace_owner_fk": {
-          "name": "EveConversation_workspace_owner_fk",
-          "tableFrom": "EveConversation",
-          "tableTo": "EveWorkspace",
-          "columnsFrom": [
-            "workspaceId",
-            "ownerId"
-          ],
-          "columnsTo": [
-            "id",
-            "ownerId"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -762,6 +726,10 @@
           "name": "EveConversation_creation_kind",
           "value": "\"EveConversation\".\"creationKind\" in ('message', 'copy')"
         },
+        "EveConversation_copy_root": {
+          "name": "EveConversation_copy_root",
+          "value": "\"EveConversation\".\"creationKind\" <> 'copy' or (\n      \"EveConversation\".\"parentConversationId\" is null and \"EveConversation\".\"rootConversationId\" is null and\n      \"EveConversation\".\"forkTurnId\" is null and \"EveConversation\".\"forkMessageId\" is null and \"EveConversation\".\"forkCheckpointId\" is null and\n      \"EveConversation\".\"forkKind\" is null\n    )"
+        },
         "EveConversation_named_fork_shape": {
           "name": "EveConversation_named_fork_shape",
           "value": "\"EveConversation\".\"forkCheckpointId\" is null or (\n      \"EveConversation\".\"parentConversationId\" is not null and \"EveConversation\".\"forkMessageId\" is null\n    )"
@@ -773,6 +741,211 @@
         "EveConversation_fork_kind": {
           "name": "EveConversation_fork_kind",
           "value": "\"EveConversation\".\"forkKind\" is null or \"EveConversation\".\"forkKind\" in ('edit', 'regenerate', 'comparison')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveConversationCopy": {
+      "name": "EveConversationCopy",
+      "schema": "",
+      "columns": {
+        "acceptedAt": {
+          "name": "acceptedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "documentsReady": {
+          "name": "documentsReady",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparing'"
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "planHash": {
+          "name": "planHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "projectionHash": {
+          "name": "projectionHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seed": {
+          "name": "seed",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourceConversationId": {
+          "name": "sourceConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceOwnerId": {
+          "name": "sourceOwnerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceSessionId": {
+          "name": "sourceSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveConversationCopy_owner_fk": {
+          "name": "EveConversationCopy_owner_fk",
+          "tableFrom": "EveConversationCopy",
+          "tableTo": "EveConversation",
+          "columnsFrom": [
+            "conversationId",
+            "ownerId"
+          ],
+          "columnsTo": [
+            "id",
+            "ownerId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "EveConversationCopy_owner_identity": {
+          "name": "EveConversationCopy_owner_identity",
+          "nullsNotDistinct": false,
+          "columns": [
+            "conversationId",
+            "ownerId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "EveConversationCopy_phase_payload": {
+          "name": "EveConversationCopy_phase_payload",
+          "value": "(\n    \"EveConversationCopy\".\"phase\" = 'preparing' and \"EveConversationCopy\".\"plan\" is not null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is null\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'accepted' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is not null and \"EveConversationCopy\".\"acceptedAt\" is not null and \"EveConversationCopy\".\"documentsReady\"\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'bound' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is not null and \"EveConversationCopy\".\"documentsReady\"\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'rejected' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is null\n  )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveConversationCopyFile": {
+      "name": "EveConversationCopyFile",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mediaType": {
+          "name": "mediaType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "writtenAt": {
+          "name": "writtenAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveConversationCopyFile_copy_owner_fk": {
+          "name": "EveConversationCopyFile_copy_owner_fk",
+          "tableFrom": "EveConversationCopyFile",
+          "tableTo": "EveConversationCopy",
+          "columnsFrom": [
+            "conversationId",
+            "ownerId"
+          ],
+          "columnsTo": [
+            "conversationId",
+            "ownerId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveConversationCopyFile_conversationId_key_pk": {
+          "name": "EveConversationCopyFile_conversationId_key_pk",
+          "columns": [
+            "conversationId",
+            "key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveConversationCopyFile_size": {
+          "name": "EveConversationCopyFile_size",
+          "value": "\"EveConversationCopyFile\".\"size\" > 0"
+        },
+        "EveConversationCopyFile_hash": {
+          "name": "EveConversationCopyFile_hash",
+          "value": "\"EveConversationCopyFile\".\"sha256\" ~ '^[a-f0-9]{64}$'"
         }
       },
       "isRLSEnabled": false
@@ -2012,77 +2185,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.EvePersistentSandbox": {
-      "name": "EvePersistentSandbox",
-      "schema": "",
-      "columns": {
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "workspaceId": {
-          "name": "workspaceId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "providerId": {
-          "name": "providerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "accountId": {
-          "name": "accountId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopeId": {
-          "name": "scopeId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "EvePersistentSandbox_workspaceId_EveWorkspace_id_fk": {
-          "name": "EvePersistentSandbox_workspaceId_EveWorkspace_id_fk",
-          "tableFrom": "EvePersistentSandbox",
-          "tableTo": "EveWorkspace",
-          "columnsFrom": [
-            "workspaceId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "EvePersistentSandbox_workspace": {
-          "name": "EvePersistentSandbox_workspace",
-          "nullsNotDistinct": false,
-          "columns": [
-            "workspaceId"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.EveResponseGroup": {
       "name": "EveResponseGroup",
       "schema": "",
@@ -2185,138 +2287,6 @@
           ],
           "columnsTo": [
             "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.EveSandboxSession": {
-      "name": "EveSandboxSession",
-      "schema": "",
-      "columns": {
-        "sessionId": {
-          "name": "sessionId",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "rootSessionId": {
-          "name": "rootSessionId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "conversationId": {
-          "name": "conversationId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "workspaceId": {
-          "name": "workspaceId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "devRunId": {
-          "name": "devRunId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "EveSandboxSession_root": {
-          "name": "EveSandboxSession_root",
-          "columns": [
-            {
-              "expression": "rootSessionId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "EveSandboxSession_workspace": {
-          "name": "EveSandboxSession_workspace",
-          "columns": [
-            {
-              "expression": "workspaceId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "EveSandboxSession_dev": {
-          "name": "EveSandboxSession_dev",
-          "columns": [
-            {
-              "expression": "devRunId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "EveSandboxSession_conversation_owner_fk": {
-          "name": "EveSandboxSession_conversation_owner_fk",
-          "tableFrom": "EveSandboxSession",
-          "tableTo": "EveConversation",
-          "columnsFrom": [
-            "conversationId",
-            "ownerId"
-          ],
-          "columnsTo": [
-            "id",
-            "ownerId"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "EveSandboxSession_workspace_owner_fk": {
-          "name": "EveSandboxSession_workspace_owner_fk",
-          "tableFrom": "EveSandboxSession",
-          "tableTo": "EveWorkspace",
-          "columnsFrom": [
-            "workspaceId",
-            "ownerId"
-          ],
-          "columnsTo": [
-            "id",
-            "ownerId"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -2808,8 +2778,64 @@
       },
       "isRLSEnabled": false
     },
-    "public.EveWorkspace": {
-      "name": "EveWorkspace",
+    "public.GuestRuntimeRate": {
+      "name": "GuestRuntimeRate",
+      "schema": "",
+      "columns": {
+        "ipHash": {
+          "name": "ipHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "startsAt": {
+          "name": "startsAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requests": {
+          "name": "requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "GuestRuntimeRate_ipHash_kind_startsAt_pk": {
+          "name": "GuestRuntimeRate_ipHash_kind_startsAt_pk",
+          "columns": [
+            "ipHash",
+            "kind",
+            "startsAt"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "GuestRuntimeRate_requests": {
+          "name": "GuestRuntimeRate_requests",
+          "value": "\"GuestRuntimeRate\".\"requests\" >= 0"
+        },
+        "GuestRuntimeRate_kind": {
+          "name": "GuestRuntimeRate_kind",
+          "value": "\"GuestRuntimeRate\".\"kind\" in ('session', 'message')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.GuestRuntimeSession": {
+      "name": "GuestRuntimeSession",
       "schema": "",
       "columns": {
         "id": {
@@ -2825,6 +2851,31 @@
           "primaryKey": false,
           "notNull": true
         },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modelId": {
+          "name": "modelId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ipHash": {
+          "name": "ipHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policyVersion": {
+          "name": "policyVersion",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
         "state": {
           "name": "state",
           "type": "text",
@@ -2832,86 +2883,64 @@
           "notNull": true,
           "default": "'active'"
         },
-        "activeOperationId": {
-          "name": "activeOperationId",
-          "type": "uuid",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now() + interval '24 hours'"
+        },
+        "credentialExpiresAt": {
+          "name": "credentialExpiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageLimit": {
+          "name": "messageLimit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messagesUsed": {
+          "name": "messagesUsed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "cleanupAttemptedAt": {
+          "name": "cleanupAttemptedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         }
       },
-      "indexes": {},
-      "foreignKeys": {
-        "EveWorkspace_ownerId_user_id_fk": {
-          "name": "EveWorkspace_ownerId_user_id_fk",
-          "tableFrom": "EveWorkspace",
-          "tableTo": "user",
-          "columnsFrom": [
-            "ownerId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "EveWorkspace_id_owner": {
-          "name": "EveWorkspace_id_owner",
-          "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "ownerId"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.EveWorkspaceAttachment": {
-      "name": "EveWorkspaceAttachment",
-      "schema": "",
-      "columns": {
-        "workspaceId": {
-          "name": "workspaceId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fileKey": {
-          "name": "fileKey",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sha256": {
-          "name": "sha256",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "paths": {
-          "name": "paths",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        }
-      },
       "indexes": {
-        "EveWorkspaceAttachment_file": {
-          "name": "EveWorkspaceAttachment_file",
+        "GuestRuntimeSession_cleanup_idx": {
+          "name": "GuestRuntimeSession_cleanup_idx",
           "columns": [
             {
-              "expression": "fileKey",
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expiresAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2923,50 +2952,43 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "EveWorkspaceAttachment_workspace_owner_fk": {
-          "name": "EveWorkspaceAttachment_workspace_owner_fk",
-          "tableFrom": "EveWorkspaceAttachment",
-          "tableTo": "EveWorkspace",
-          "columnsFrom": [
-            "workspaceId",
-            "ownerId"
-          ],
-          "columnsTo": [
-            "id",
-            "ownerId"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "EveWorkspaceAttachment_file_owner_fk": {
-          "name": "EveWorkspaceAttachment_file_owner_fk",
-          "tableFrom": "EveWorkspaceAttachment",
-          "tableTo": "EveStoredFile",
-          "columnsFrom": [
-            "fileKey",
-            "ownerId"
-          ],
-          "columnsTo": [
-            "key",
-            "ownerId"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "EveWorkspaceAttachment_workspaceId_fileKey_pk": {
-          "name": "EveWorkspaceAttachment_workspaceId_fileKey_pk",
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "GuestRuntimeSession_ownerId_unique": {
+          "name": "GuestRuntimeSession_ownerId_unique",
+          "nullsNotDistinct": false,
           "columns": [
-            "workspaceId",
-            "fileKey"
+            "ownerId"
+          ]
+        },
+        "GuestRuntimeSession_sessionId_unique": {
+          "name": "GuestRuntimeSession_sessionId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sessionId"
           ]
         }
       },
-      "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "GuestRuntimeSession_state": {
+          "name": "GuestRuntimeSession_state",
+          "value": "\"GuestRuntimeSession\".\"state\" in ('active', 'deleting', 'deleted')"
+        },
+        "GuestRuntimeSession_balance": {
+          "name": "GuestRuntimeSession_balance",
+          "value": "\"GuestRuntimeSession\".\"messagesUsed\" >= 0 and \"GuestRuntimeSession\".\"messagesUsed\" <= \"GuestRuntimeSession\".\"messageLimit\""
+        },
+        "GuestRuntimeSession_ip_hash": {
+          "name": "GuestRuntimeSession_ip_hash",
+          "value": "\"GuestRuntimeSession\".\"ipHash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "GuestRuntimeSession_expiry": {
+          "name": "GuestRuntimeSession_expiry",
+          "value": "\"GuestRuntimeSession\".\"expiresAt\" = \"GuestRuntimeSession\".\"createdAt\" + interval '24 hours'"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.McpConnector": {
@@ -3684,6 +3706,159 @@
         }
       },
       "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EvePersistentSandbox": {
+      "name": "EvePersistentSandbox",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerId": {
+          "name": "providerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scopeId": {
+          "name": "scopeId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EvePersistentSandbox_session": {
+          "name": "EvePersistentSandbox_session",
+          "columns": [
+            {
+              "expression": "sessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk": {
+          "name": "EvePersistentSandbox_sessionId_EveSandboxSession_sessionId_fk",
+          "tableFrom": "EvePersistentSandbox",
+          "tableTo": "EveSandboxSession",
+          "columnsFrom": [
+            "sessionId"
+          ],
+          "columnsTo": [
+            "sessionId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveSandboxSession": {
+      "name": "EveSandboxSession",
+      "schema": "",
+      "columns": {
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "rootSessionId": {
+          "name": "rootSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "devRunId": {
+          "name": "devRunId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveSandboxSession_root": {
+          "name": "EveSandboxSession_root",
+          "columns": [
+            {
+              "expression": "rootSessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveSandboxSession_dev": {
+          "name": "EveSandboxSession_dev",
+          "columns": [
+            {
+              "expression": "devRunId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

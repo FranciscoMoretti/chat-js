@@ -39,6 +39,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/ai/eval-agent.ts",
   "lib/db/eve-document-capabilities.test.ts",
   "lib/db/eve-guest-rate.test.ts",
+  "lib/db/guest-runtime.test.ts",
   "lib/db/eve-model-ledger.test.ts",
   "lib/db/eve-query-lookups.test.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",

@@ -12,10 +12,15 @@ const lastGuest = 1;
 const drainedRequests = 3;
 const failedRequests = 2;
 const batchLimit = 100;
-const batch = (deletedCount: number): Response =>
+const batch = (deletedCount: number, runtimeDeletedCount = 0): Response =>
   Response.json({
     results: {
       expiredGuests: { deletedCount, pendingCount: 0, skipped: false },
+      runtimeGuests: {
+        deletedCount: runtimeDeletedCount,
+        pendingCount: 0,
+        skipped: false,
+      },
     },
     success: true,
   });
@@ -91,4 +96,52 @@ test.each([
   vi.stubGlobal("fetch", request);
   await expect(runHostedCleanup(origin, "secret")).rejects.toThrow();
   expect(request).not.toHaveBeenCalled();
+});
+
+test("drains runtime guest batches even when legacy inventory is empty", async () => {
+  const request = vi
+    .fn(() => batch(0))
+    .mockImplementationOnce(() => batch(0, 5))
+    .mockImplementationOnce(() => batch(0, 2));
+  vi.stubGlobal("fetch", request);
+  await runHostedCleanup("https://chat.example", "secret");
+  expect(request).toHaveBeenCalledTimes(3);
+});
+test("runtime guest cooldown backlog cannot report a successful drain", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() =>
+      Response.json({
+        success: true,
+        results: {
+          expiredGuests: { deletedCount: 0, pendingCount: 0, skipped: false },
+          runtimeGuests: { deletedCount: 0, pendingCount: 1, skipped: false },
+        },
+      })
+    )
+  );
+  await expect(
+    runHostedCleanup("https://chat.example", "secret")
+  ).rejects.toThrow("inventory unavailable");
+});
+
+test("drains an explicitly partial backlog but never reports a stalled sweep as success", async () => {
+  const request = vi
+    .fn(() => batch(0))
+    .mockImplementationOnce(() =>
+      Response.json(
+        {
+          success: false,
+          results: {
+            orphanedAttachments: { deletedCount: 0, skipped: false },
+            expiredGuests: { deletedCount: 0, pendingCount: 0, skipped: false },
+            runtimeGuests: { deletedCount: 5, pendingCount: 3, skipped: false },
+          },
+        },
+        { status: 503 }
+      )
+    );
+  vi.stubGlobal("fetch", request);
+  await runHostedCleanup("https://chat.example", "secret");
+  expect(request).toHaveBeenCalledTimes(2);
 });

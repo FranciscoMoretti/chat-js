@@ -1,4 +1,3 @@
-import path from "node:path";
 import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 import { spawnSync } from "node:child_process";
 
@@ -21,12 +20,9 @@ if (backendCheck.status !== PROCESS_SUCCESS_STATUS) {
   );
 }
 
-for (const root of [".", "guest"]) {
-  const result = spawnSync("bun", ["x", "eve", "build"], {
-    cwd: path.resolve(process.cwd(), root),
-    stdio: "inherit",
-  });
-  if (result.status !== PROCESS_SUCCESS_STATUS) {
-    throw new Error(`EVE build failed for ${root}`, { cause: result.error });
-  }
+const result = spawnSync("bun", ["x", "eve", "build"], {
+  stdio: "inherit",
+});
+if (result.status !== PROCESS_SUCCESS_STATUS) {
+  throw new Error("EVE build failed", { cause: result.error });
 }

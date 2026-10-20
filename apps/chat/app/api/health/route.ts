@@ -17,15 +17,15 @@ const eveHealth = z.object({
 
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
-  // Both workers must be ready before the host sends traffic to this instance.
+  // The shared worker must be ready before the host sends traffic to this instance.
   const timeout = new AbortController();
   try {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        ...["chat", "guest"].map(async (agent) => {
+        (async () => {
           const response = await fetch(
-            new URL(`/eve/${agent}/v1/health`, env.EVE_INTERNAL_ORIGIN),
+            new URL("/eve/chat/v1/health", env.EVE_INTERNAL_ORIGIN),
             {
               cache: "no-store",
               redirect: "error",
@@ -36,7 +36,7 @@ export const GET = async (): Promise<Response> => {
             throw new Error("Eve unavailable");
           }
           eveHealth.parse(await response.json());
-        }),
+        })(),
       ]),
       (async () => {
         await delay(READINESS_TIMEOUT_MS, null, { signal: timeout.signal });

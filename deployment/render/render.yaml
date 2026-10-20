@@ -40,7 +40,7 @@ services:
     runtime: node
     plan: 0.5c-512mb
     autoDeployTrigger: "off"
-    schedule: "0 2 * * *"
+    schedule: "0 * * * *"
     buildCommand: echo 'Dependency-free Node scheduler'
     startCommand: node scripts/hosted-cleanup.ts
     envVars:

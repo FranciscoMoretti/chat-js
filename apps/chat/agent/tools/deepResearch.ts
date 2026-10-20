@@ -1,3 +1,4 @@
+import { requireAccountSession } from "@/lib/eve/session-identity";
 import { defineWorkflowTool } from "eve/tools";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import {
@@ -82,6 +83,7 @@ export default defineWorkflowTool({
     context: ResearchWorkflowContext
   ): AsyncGenerator<ToolResult<ResearchOutput>, void> {
     "use workflow";
+    requireAccountSession(context.session);
     const { config, date, messages, timestamp } =
       await prepareResearch(context);
     const updates: ResearchUpdate[] = [];

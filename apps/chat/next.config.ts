@@ -43,6 +43,6 @@ const nextConfig: NextConfig = {
 };
 
 export default withEve(nextConfig, {
-  agents: { chat: ".", guest: "./guest" },
+  agents: { chat: "." },
   devServerTimeoutMs: 600_000,
 });

@@ -5,6 +5,7 @@ import { startLocalEveGuestCleanup } from "./local-guest-cleanup-scheduler";
 const mocks = vi.hoisted(() => ({
   available: vi.fn(),
   cleanup: vi.fn(),
+  runtimeCleanup: vi.fn(),
   env: {
     DATABASE_URL: "postgresql://localhost/fixture",
 
@@ -19,6 +20,9 @@ vi.mock("./local-deletion-available", () => ({
 vi.mock("./cleanup-expired-guests", () => ({
   cleanupExpiredEveGuests: mocks.cleanup,
 }));
+vi.mock("./cleanup-guest-runtime", () => ({
+  cleanupGuestRuntimeSessions: mocks.runtimeCleanup,
+}));
 let stop: (() => void) | undefined;
 beforeEach(() => {
   vi.useFakeTimers();
@@ -28,6 +32,11 @@ beforeEach(() => {
   mocks.env.EVE_GATEWAY_SECRET = "local-fixture-secret";
   mocks.env.DATABASE_URL = "postgresql://localhost/fixture";
   mocks.available.mockReturnValue(true);
+  mocks.runtimeCleanup.mockResolvedValue({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
   mocks.cleanup.mockResolvedValue({
     deletedCount: 0,
     pendingCount: 0,
@@ -109,6 +118,11 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
   mocks.available.mockReturnValue(false);
   expect(startLocalEveGuestCleanup()).toBeUndefined();
   mocks.available.mockReturnValue(true);
+  mocks.runtimeCleanup.mockResolvedValue({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
   stop = startLocalEveGuestCleanup();
   mocks.env.DATABASE_URL = "postgresql://remote.example/fixture";
   await vi.advanceTimersByTimeAsync(60_000);
@@ -135,4 +149,27 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
+});
+
+test("development sweeps invoke the new runtime cleanup even when legacy cleanup fails", async () => {
+  mocks.cleanup.mockRejectedValueOnce(new Error("legacy failure"));
+  stop = startLocalEveGuestCleanup();
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(mocks.runtimeCleanup).toHaveBeenCalledOnce();
+});
+
+test("a pending runtime sweep prevents overlapping the next combined sweep", async () => {
+  const gate = Promise.withResolvers<{
+    deletedCount: number;
+    pendingCount: number;
+    skipped: boolean;
+  }>();
+  mocks.runtimeCleanup.mockReturnValueOnce(gate.promise);
+  stop = startLocalEveGuestCleanup();
+  await vi.advanceTimersByTimeAsync(240_000);
+  expect(mocks.cleanup).toHaveBeenCalledOnce();
+  expect(mocks.runtimeCleanup).toHaveBeenCalledOnce();
+  gate.resolve({ deletedCount: 0, pendingCount: 0, skipped: false });
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(mocks.runtimeCleanup).toHaveBeenCalledTimes(2);
 });

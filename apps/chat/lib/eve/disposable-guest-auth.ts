@@ -1,10 +1,16 @@
+import { readGuestBody } from "./guest-body";
+import { GUEST_POLICY } from "./session-policy";
+import {
+  readGuestRuntimePolicy,
+  reserveGuestRuntimeMessage,
+} from "../db/guest-runtime";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { readGuestCredential } from "./disposable-guest";
 import { safeStreamQuery } from "./request-policy";
 import { z } from "zod";
 
 const MIN_FIELD_LENGTH = 1;
-const MAX_MESSAGE_LENGTH = 16_000;
+const MAX_MESSAGE_LENGTH = GUEST_POLICY.maxMessageCharacters;
 const MAX_TURN_ID_LENGTH = 200;
 const BEARER_PREFIX = "Bearer ";
 
@@ -20,15 +26,81 @@ const cancel = z
   })
   .strict();
 
-/** EVE's stream route delegates ownership checks to channel auth. Bind every
- * permitted operation to the exact server-issued session credential.
- * @param {ReadonlyNativeSurface<Request>} request - Native operation request whose credential, path and body are checked.
- * @returns {Promise<{ attributes: { modelId: string }; authenticator: string; issuer: string; principalId: string; principalType: "user"; subject: string; } | null>} Session-bound channel identity, or no identity for an invalid credential or operation.
- */
+type Claims = NonNullable<ReturnType<typeof readGuestCredential>>;
+
+const guestOperation = (
+  claims: Claims,
+  url: URL,
+  method: string
+): { body?: z.ZodType; send?: boolean } | null => {
+  if (claims.sessionId === undefined) {
+    return method === "POST" && url.pathname === "/eve/v1/session"
+      ? { body: z.object({ operationId: z.literal(claims.policyId) }).strict() }
+      : null;
+  }
+  const path = `/eve/v1/session/${claims.sessionId}`;
+  if (
+    method === "GET" &&
+    url.pathname === `${path}/stream` &&
+    safeStreamQuery(url.searchParams)
+  ) {
+    return {};
+  }
+  if (method !== "POST") {
+    return null;
+  }
+  if (url.pathname === `${path}/reset`) {
+    return {
+      body:
+        claims.purpose === "cleanup"
+          ? z
+              .object({
+                reason: z.literal("Guest retention expired").optional(),
+              })
+              .strict()
+          : z.object({}).strict(),
+    };
+  }
+  if (claims.purpose === "cleanup") {
+    return null;
+  }
+  if (url.pathname === path) {
+    return { body: message, send: true };
+  }
+  if (url.pathname === `${path}/cancel`) {
+    return { body: cancel };
+  }
+  return null;
+};
+
+const policyMatches = (
+  claims: Claims,
+  policy: NonNullable<Awaited<ReturnType<typeof readGuestRuntimePolicy>>>
+): boolean => {
+  if (
+    policy.modelId !== claims.modelId ||
+    String(policy.policyVersion) !== GUEST_POLICY.version
+  ) {
+    return false;
+  }
+  if (policy.sessionId !== (claims.sessionId ?? null)) {
+    return false;
+  }
+  if (claims.purpose === "cleanup") {
+    return policy.state === "deleting";
+  }
+  return (
+    policy.state === "active" &&
+    policy.credentialExpiresAt.getTime() > Date.now() &&
+    policy.expiresAt.getTime() > Date.now()
+  );
+};
+
+/** Authenticate every guest command against both signed credentials and durable policy. */
 export const authenticateDisposableGuest = async (
   request: ReadonlyNativeSurface<Request>
 ): Promise<{
-  attributes: { modelId: string };
+  attributes: Record<string, string>;
   authenticator: string;
   issuer: string;
   principalId: string;
@@ -41,50 +113,51 @@ export const authenticateDisposableGuest = async (
       ? authorization.slice(BEARER_PREFIX.length)
       : null
   );
-  if (!claims) {
-    return null;
-  }
-  const url = new URL(request.url);
-  let body: z.ZodType | undefined;
-  if (typeof claims.sessionId === "string" && claims.sessionId !== "") {
-    const path = `/eve/v1/session/${claims.sessionId}`;
-    if (request.method === "GET" && url.pathname === `${path}/stream`) {
-      if (!safeStreamQuery(url.searchParams)) {
-        return null;
-      }
-    } else if (request.method === "POST" && url.pathname === path) {
-      body = message;
-    } else if (request.method === "POST" && url.pathname === `${path}/cancel`) {
-      body = cancel;
-    } else if (request.method === "POST" && url.pathname === `${path}/reset`) {
-      body = z.object({}).strict();
-    } else {
-      return null;
-    }
-  } else {
-    if (request.method !== "POST" || url.pathname !== "/eve/v1/session") {
-      return null;
-    }
-    // Creation credentials stay on the server and cannot seed, fork or send.
-    body = z.object({}).strict();
-  }
   if (
-    body &&
-    !body.safeParse(
-      await request
-        .clone()
-        .json()
-        .catch(() => null)
-    ).success
+    !claims ||
+    (claims.purpose !== "cleanup" && claims.modelId !== GUEST_POLICY.modelId)
   ) {
     return null;
   }
+  const policy = await readGuestRuntimePolicy(claims.policyId, claims.ownerId);
+  if (policy === null || !policyMatches(claims, policy)) {
+    return null;
+  }
+  const operation = guestOperation(
+    claims,
+    new URL(request.url),
+    request.method
+  );
+  if (operation === null) {
+    return null;
+  }
+  const command = operation.body ? await readGuestBody(request) : undefined;
+  if (operation.body && !operation.body.safeParse(command).success) {
+    return null;
+  }
+  if (operation.send === true) {
+    const admission = await reserveGuestRuntimeMessage({
+      sessionId: claims.sessionId ?? "",
+      ownerId: claims.ownerId,
+      requestsPerMinute: GUEST_POLICY.requestsPerMinute,
+      inputCharacters: message.parse(command).message.length,
+      maxInputCharacters: GUEST_POLICY.maxInputCharacters,
+    });
+    if (admission !== "ready") {
+      return null;
+    }
+  }
   return {
-    attributes: { modelId: claims.modelId },
+    attributes: {
+      modelId: claims.modelId,
+      chatjsSessionKind: "guest",
+      chatjsPolicyVersion: GUEST_POLICY.version,
+      chatjsPolicyId: policy.id,
+    },
     authenticator: "chatjs-disposable-guest",
     issuer: "chatjs",
     principalId: claims.ownerId,
-    principalType: "user" as const,
+    principalType: "user",
     subject: claims.ownerId,
   };
 };

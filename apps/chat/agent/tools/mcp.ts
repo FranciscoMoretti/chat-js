@@ -1,3 +1,4 @@
+import { isGuestSession } from "@/lib/eve/session-identity";
 import type { ToolDefinition, ToolModelOutput } from "eve/tools";
 import { defineDynamic, defineTool } from "eve/tools";
 import { parse, stringify } from "superjson";
@@ -23,7 +24,11 @@ export default defineDynamic({
         messages: readonly unknown[];
       }>
     ) => {
-      if (eveTurnGuest.get() || eveTurnTool.get()) {
+      if (
+        isGuestSession(context.session) ||
+        eveTurnGuest.get() ||
+        eveTurnTool.get()
+      ) {
         return {};
       }
       const ownerId = context.session.auth.initiator?.principalId;

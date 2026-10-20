@@ -2,18 +2,18 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
-const MINUTES_PER_HOUR = 60;
-const SECONDS_PER_MINUTE = 60;
-const MILLISECONDS_PER_SECOND = 1000;
+import { GUEST_POLICY } from "./session-policy";
+
 const MINIMUM_IDENTIFIER_LENGTH = 1;
 const MAXIMUM_CREDENTIAL_CHARACTERS = 2048;
 const SIGNED_CREDENTIAL_PART_COUNT = 2;
-const GUEST_SESSION_DURATION_MS =
-  MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
+const GUEST_SESSION_DURATION_MS = GUEST_POLICY.credentialDurationMs;
 
 const claimsSchema = z
   .object({
     expiresAt: z.number().int().positive(),
+    policyId: z.uuid(),
+    purpose: z.enum(["chat", "cleanup"]).default("chat"),
     modelId: z.string().min(MINIMUM_IDENTIFIER_LENGTH),
     ownerId: z.uuid(),
     sessionId: z.string().min(MINIMUM_IDENTIFIER_LENGTH).optional(),
@@ -22,7 +22,7 @@ const claimsSchema = z
 
 const signature = (payload: string): Buffer =>
   createHmac("sha256", env.EVE_GATEWAY_SECRET)
-    .update(`chatjs:disposable-guest:v1:${payload}`)
+    .update(`chatjs:disposable-guest:v2:${payload}`)
     .digest();
 
 const issueGuestCredential = (claims: z.infer<typeof claimsSchema>): string => {
@@ -36,10 +36,14 @@ const newGuestClaims = (
   modelId: string
 ): {
   expiresAt: number;
+  policyId: string;
+  purpose: "chat";
   modelId: string;
   ownerId: ReturnType<typeof randomUUID>;
 } => ({
   expiresAt: Date.now() + GUEST_SESSION_DURATION_MS,
+  policyId: randomUUID(),
+  purpose: "chat",
   modelId,
   ownerId: randomUUID(),
 });

@@ -1,3 +1,4 @@
+import { authenticateDisposableGuest } from "../../lib/eve/disposable-guest-auth";
 import { eveChannel } from "eve/channels/eve";
 import { requireWorkspaceSeedPaths } from "../../lib/eve/copy-seed";
 
@@ -6,7 +7,7 @@ import { resolveEveCurrentCopySeed } from "../../lib/db/eve-current-copy";
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 
 export default eveChannel({
-  auth: authenticateEveGateway,
+  auth: [authenticateEveGateway, authenticateDisposableGuest],
   fetchFile: fetchEveChannelFile,
   resolveSeed: async ({ auth, operationId }) => {
     const seed = await resolveEveCurrentCopySeed(auth.principalId, operationId);
