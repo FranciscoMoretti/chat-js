@@ -1,15 +1,15 @@
 import type { EnvRequirement } from "./config-requirements";
 import type { createStorageAdapter } from "./storage-provider";
 
-const storageOptions = {} satisfies Parameters<typeof createStorageAdapter>[0];
-const storageId = "vercel-blob";
+const storageOptions = {
+  bucket: "chatjs-staging",
+  public: false,
+} satisfies Parameters<typeof createStorageAdapter>[0];
+const storageId = "supabase";
 const storageEnvRequirements: EnvRequirement[] = [
   {
-    description: "Vercel Blob credentials",
-    options: [
-      ["BLOB_READ_WRITE_TOKEN"],
-      ["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"],
-    ],
+    description: "Supabase private storage",
+    options: [["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]],
   },
 ];
 export { storageOptions, storageId, storageEnvRequirements };
