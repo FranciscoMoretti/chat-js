@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { isGuestSession, requireAccountSession } from "./session-policy";
+import { isGuestSession, requireAccountSession } from "./session-identity";
 
 test("session class is pinned to the verified initiator, not current caller attributes", () => {
   const guest = {

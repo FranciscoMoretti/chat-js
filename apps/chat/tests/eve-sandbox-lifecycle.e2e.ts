@@ -12,7 +12,12 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
+import {
+  eveCodeSandbox,
+  eveConversation,
+  eveDispatch,
+  user,
+} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
@@ -170,9 +175,12 @@ test("native sandbox ownership is durably released after real provider cleanup",
       resolveSandboxAuth()
     );
     await confirmEveCodeSandboxCreation(ownerId, row.id, orphan.name);
-    await beginEveConversationDeletion(ownerId, row.id);
-    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
-    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    const family = await beginEveConversationDeletion(ownerId, row.id);
+    if (family === null) {
+      throw new Error("Missing sandbox fixture conversation family");
+    }
+    await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
+    await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
     const [recovered] = await db
       .select()
       .from(eveCodeSandbox)
@@ -193,6 +201,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
       await db
         .delete(eveCodeSandbox)
         .where(eq(eveCodeSandbox.ownerId, ownerId));
+      await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, ownerId));
       await db
         .delete(eveConversation)
         .where(eq(eveConversation.ownerId, ownerId));

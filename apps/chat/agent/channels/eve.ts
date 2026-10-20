@@ -1,5 +1,4 @@
 import { authenticateDisposableGuest } from "../../lib/eve/disposable-guest-auth";
-import { eveLocalResourceRoute } from "../../lib/eve/local-resource-route";
 import { eveChannel } from "eve/channels/eve";
 
 import { fetchEveChannelFile } from "../../lib/eve/channel-files";
@@ -8,7 +7,7 @@ import { resolveEveCurrentCopySeed } from "../../lib/db/eve-current-copy";
 import { resolveAcceptedEveCopySeed } from "../../lib/db/eve-copy-dispatch";
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 
-const channel = eveChannel({
+export default eveChannel({
   auth: [authenticateEveGateway, authenticateDisposableGuest],
   fetchFile: fetchEveChannelFile,
   resolveSeed: async ({ auth, operationId }) => {
@@ -27,8 +26,3 @@ const channel = eveChannel({
     return { ...seed, attachments: seed.attachments };
   },
 });
-
-export default {
-  ...channel,
-  routes: [...channel.routes, eveLocalResourceRoute],
-};

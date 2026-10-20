@@ -22,6 +22,7 @@
         "uiverify": "^1.7.0",
         "ultracite": "8.0.0",
         "vitest": "^4.1.11",
+        "zod": "4.5.4",
       },
     },
     "apps/chat": {

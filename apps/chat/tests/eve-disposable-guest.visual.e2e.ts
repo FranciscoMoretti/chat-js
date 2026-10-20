@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("disposable guest presentation uses stable desktop and mobile baselines", async ({
-  page,
-}) => {
+test.beforeEach(async ({ page }) => {
   await page.route("**/react-scan/**", async (route) => {
     await route.fulfill({ body: "", contentType: "text/javascript" });
   });
@@ -32,25 +30,47 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
         await image.decode();
       }
     );
-  await expect(fixture).toHaveScreenshot("guest-welcome.png");
   await expect(
     fixture.getByRole("button", { name: /Guest fixture model/u })
   ).toBeDisabled();
+});
+
+test("guest welcome locks the model picker", async ({ page }) => {
+  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
+    "guest-welcome.png"
+  );
+});
+
+test("guest errors preserve the message draft", async ({ page }) => {
+  const fixture = page.getByTestId("guest-visual");
   await fixture
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-error.png");
+});
+
+test("guest response", async ({ page }) => {
+  const fixture = page.getByTestId("guest-visual");
   await page.getByLabel("Fixture state").selectOption("response");
   await expect(
     fixture.getByText("A useful test protects", { exact: false })
   ).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-response.png");
+});
+
+test("expired guest on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.getByLabel("Fixture state").selectOption("expired");
-  await expect(fixture).toHaveScreenshot("guest-expired-mobile.png");
-  await page.getByLabel("Fixture state").selectOption("welcome");
-  await expect(fixture.getByRole("heading")).toBeVisible();
-  await expect(fixture).toHaveScreenshot("guest-welcome-mobile.png");
+  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
+    "guest-expired-mobile.png"
+  );
+});
+
+test("guest welcome on mobile", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
+    "guest-welcome-mobile.png"
+  );
 });

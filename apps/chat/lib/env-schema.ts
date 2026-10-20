@@ -41,6 +41,7 @@ const MCP_ENCRYPTION_KEY_LENGTH = 44;
  * without triggering `createEnv` runtime validation.
  */
 const serverEnvSchema = {
+  CHATJS_SANDBOX_DEV_RUN_ID: z.uuid().optional(),
   // AI Gateway keys (one required depending on config.ai.gateway)
   AI_GATEWAY_API_KEY: z
     .string()

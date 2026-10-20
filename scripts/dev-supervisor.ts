@@ -1,3 +1,8 @@
+import { randomUUID } from "node:crypto";
+import {
+  finishPersistentSandboxCleanup,
+  preparePersistentSandboxCleanup,
+} from "./persistent-sandbox-cleanup";
 import type { ChildProcess } from "node:child_process";
 import { execFileSync, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
@@ -22,11 +27,15 @@ interface SupervisorRuntime {
   readonly now: () => number;
   readonly sleep: (milliseconds: number, signal?: AbortSignal) => Promise<void>;
   readonly snapshot: () => string;
-  readonly start: () => SupervisedChild;
+  readonly start: (runId: string) => SupervisedChild;
+  readonly prepareSandboxCleanup?: (runId: string) => Promise<void>;
+  readonly finishSandboxCleanup?: (runId: string) => Promise<void>;
 }
 type MonitorOutcome = "monitoring" | "shutdown" | "child-exit" | "unhealthy";
 
 const runtime: SupervisorRuntime = {
+  prepareSandboxCleanup: preparePersistentSandboxCleanup,
+  finishSandboxCleanup: finishPersistentSandboxCleanup,
   health: checkHealth,
   kill: (pid, signal) => {
     process.kill(pid, signal);
@@ -37,12 +46,20 @@ const runtime: SupervisorRuntime = {
   },
   snapshot: () =>
     execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], { encoding: "utf-8" }),
-  start: () =>
-    spawn(process.execPath, ["run", "dev"], {
-      detached: true,
-      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=4096" },
-      stdio: "inherit",
-    }),
+  start: (runId) =>
+    spawn(
+      process.versions.bun === undefined ? "npm" : process.execPath,
+      ["run", "dev"],
+      {
+        detached: true,
+        env: {
+          ...process.env,
+          CHATJS_SANDBOX_DEV_RUN_ID: runId,
+          NODE_OPTIONS: "--max-old-space-size=4096",
+        },
+        stdio: "inherit",
+      }
+    ),
 };
 
 const hasChildProcessId = (pid: number | undefined): pid is number =>
@@ -228,7 +245,20 @@ export const supervise = async (
       console.info("Starting ChatJS and managed Eve runtime");
       launcherObserved = false;
       launcherStarted = undefined;
-      child = environment.start();
+      const sandboxRunId = randomUUID();
+      if (environment.prepareSandboxCleanup) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate prior cleanup intents before a replacement worker can allocate resources.
+        await environment.prepareSandboxCleanup(sandboxRunId);
+      }
+      if (shutdown.aborted) {
+        if (environment.finishSandboxCleanup) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Release the prepared intent without starting a worker after shutdown.
+          await environment.finishSandboxCleanup(sandboxRunId);
+        }
+        outcome = "shutdown";
+        continue;
+      }
+      child = environment.start(sandboxRunId);
       try {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Monitor one launcher to completion before cleaning up and starting its replacement.
         const { outcome: monitorOutcome, wasReady } = await monitorChild(
@@ -249,6 +279,10 @@ export const supervise = async (
         terminate("SIGKILL");
         child = undefined;
         descendants.clear();
+        if (environment.finishSandboxCleanup) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Stop persistent resources after worker termination; failed cleanup retains its durable intent.
+          await environment.finishSandboxCleanup(sandboxRunId);
+        }
       }
       if (shutdown.aborted) {
         outcome = "shutdown";
@@ -276,14 +310,16 @@ export const supervise = async (
 };
 
 if (import.meta.main) {
-  const origin = process.env.APP_URL;
+  const origin =
+    process.env.APP_URL ?? `http://localhost:${process.env.PORT ?? "3000"}`;
   if (
     typeof origin !== "string" ||
     origin.length === EMPTY_VALUE_LENGTH ||
     !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)
   ) {
-    throw new Error("Run through bun dev:supervise with a local worktree URL.");
+    throw new Error("Run through bun dev:supervise with a local app URL.");
   }
+  process.env.APP_URL = origin;
   const shutdown = new AbortController();
   const handleShutdownSignal = (): void => {
     shutdown.abort();

@@ -14,25 +14,3 @@ export const GUEST_POLICY = {
 
 export const GUEST_INSTRUCTIONS =
   "You are a helpful assistant. This is a temporary text conversation. You have no tools, files, saved user history, or ability to perform external actions.";
-
-interface SessionIdentity {
-  readonly auth: {
-    readonly initiator: {
-      readonly authenticator?: string;
-      readonly attributes?: Readonly<
-        Record<string, string | readonly string[]>
-      >;
-    } | null;
-  };
-}
-
-/** Only channel-verified, persisted initiator identity selects the session class. */
-export const isGuestSession = (session: SessionIdentity): boolean =>
-  session.auth.initiator?.authenticator === "chatjs-disposable-guest";
-
-/** A guest cannot acquire account capabilities through reconnect or current auth. */
-export const requireAccountSession = (session: SessionIdentity): void => {
-  if (isGuestSession(session)) {
-    throw new Error("This operation requires an account session.");
-  }
-};

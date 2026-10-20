@@ -1,4 +1,4 @@
-import { and, eq, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "./client";
@@ -214,7 +214,7 @@ export const claimExpiredGuestRuntimeSession = async () =>
       .from(guestRuntimeSession)
       .where(
         and(
-          ne(guestRuntimeSession.state, "deleted"),
+          inArray(guestRuntimeSession.state, ["active", "deleting"]),
           lte(guestRuntimeSession.expiresAt, sql`now()`),
           or(
             isNull(guestRuntimeSession.cleanupAttemptedAt),
@@ -290,14 +290,14 @@ export const bindGuestRuntimeCleanupSession = async (
   return rows.length === 1;
 };
 
-/** Includes expired deletion attempts hidden by claim cooldowns or another worker. */
+/** Includes unclaimed expired guests and attempts hidden by cooldowns or another worker. */
 export const countPendingGuestRuntimeDeletions = async (): Promise<number> => {
   const [row] = await db
     .select({ count: sql<number>`count(*)`.mapWith(Number) })
     .from(guestRuntimeSession)
     .where(
       and(
-        eq(guestRuntimeSession.state, "deleting"),
+        inArray(guestRuntimeSession.state, ["active", "deleting"]),
         lte(guestRuntimeSession.expiresAt, sql`now()`)
       )
     );

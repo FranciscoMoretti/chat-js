@@ -1,12 +1,10 @@
 import type { Sql, TransactionSql } from "postgres";
 import type { PostgresLifecycleQuery } from "./compatibility";
-import postgres from "postgres";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 import { z } from "zod";
 
 const FIRST_ROW_INDEX = 0;
 const EMPTY_COUNT = 0;
-const MAX_RETAINED_RUNS = 10_000;
 type CoverageQuery = PostgresLifecycleQuery & {
   readonly array: TransactionSql["array"];
 };
@@ -139,50 +137,4 @@ const verifyEveSandboxCoverage = async (
   );
 };
 
-/**
- * Only call after authorizing the owner of rootSessionId's deleting binding.
- * @param {string} databaseUrl Native workflow database used to inspect the retained cleanup inventory.
- * @param {string} rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
- * @param {string} sessionId Candidate descendant whose native run and resource fences must be present.
- * @returns {Promise<boolean>} Whether the candidate is in the native inventory and both root and candidate writers are fenced.
- */
-const isFencedEveDescendant = async (
-  databaseUrl: string,
-  rootSessionId: string,
-  sessionId: string
-): Promise<boolean> => {
-  const connection = postgres(databaseUrl, { max: 1 });
-  try {
-    return await connection.begin(
-      "isolation level repeatable read read only",
-      async (query: CoverageQuery) => {
-        const retained = z
-          .array(z.object({ id: z.string() }))
-          .parse(
-            await query`select run_id as id from workflow.eve_queue_purge_runs where session_id = ${rootSessionId} and task_identifier = 'workflow_flows' limit 10001`
-          );
-        if (retained.length > MAX_RETAINED_RUNS) {
-          return false;
-        }
-        const inventory = await readEvePostgresRunInventoryInTransaction(
-          query,
-          rootSessionId,
-          retained.map((run) => run.id)
-        );
-        if (!inventory.runs.some((run) => run.id === sessionId)) {
-          return false;
-        }
-        const resources = [
-          ...new Set([`run:${rootSessionId}`, `run:${sessionId}`]),
-        ];
-        const fenced =
-          await query`select resource from workflow.eve_resource_fences where resource in ${query(resources)} and fenced = true`;
-        return fenced.length === resources.length;
-      }
-    );
-  } finally {
-    await connection.end();
-  }
-};
-
-export { isFencedEveDescendant, verifyEveSandboxCoverage };
+export { verifyEveSandboxCoverage };

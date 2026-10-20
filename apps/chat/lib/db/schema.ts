@@ -760,6 +760,36 @@ const eveFileReference = pgTable(
 );
 
 // Allocation intent survives provider timeouts and worker crashes.
+// Persistent filesystem ownership is retained independently of native workflow payloads.
+const eveSandboxSession = pgTable(
+  "EveSandboxSession",
+  {
+    sessionId: text("sessionId").primaryKey(),
+    rootSessionId: text("rootSessionId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    devRunId: text("devRunId"),
+    state: text("state", { enum: ["active", "retired"] }).notNull(),
+  },
+  (table) => [
+    index("EveSandboxSession_root").on(table.rootSessionId),
+    index("EveSandboxSession_dev").on(table.devRunId),
+  ]
+);
+const evePersistentSandbox = pgTable(
+  "EvePersistentSandbox",
+  {
+    name: text("name").primaryKey(),
+    sessionId: text("sessionId")
+      .notNull()
+      .references(() => eveSandboxSession.sessionId),
+    providerId: text("providerId").notNull(),
+    accountId: text("accountId").notNull(),
+    scopeId: text("scopeId").notNull(),
+    state: text("state", { enum: ["pending", "ready", "deleted"] }).notNull(),
+  },
+  (table) => [index("EvePersistentSandbox_session").on(table.sessionId)]
+);
+
 const eveCodeSandbox = pgTable(
   "EveCodeSandbox",
   {
@@ -1132,6 +1162,8 @@ const eveSearchText = pgTable(
 );
 
 export {
+  eveSandboxSession,
+  evePersistentSandbox,
   eveDispatch,
   account,
   eveChat,

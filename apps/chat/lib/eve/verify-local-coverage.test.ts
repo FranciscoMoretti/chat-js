@@ -1,10 +1,27 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
+import { beforeEach, expect, it, vi } from "vitest";
+import {
+  manageEveLocalResources,
+  verifyLocalEveFamilyCoverage,
+} from "./verify-local-coverage";
 
 const mocks = vi.hoisted(() => ({
+  identity: vi.fn(),
+  retire: vi.fn(),
+  cleanup: vi.fn(),
   end: vi.fn(),
-  fetch: vi.fn<typeof fetch>(),
   verify: vi.fn(),
+  remove: vi.fn(),
+}));
+vi.mock("../sandbox/runtime", () => ({
+  getPersistentSandboxProvider: () => ({
+    scope: { providerId: "vercel", accountId: "account", scopeId: "project" },
+    persistent: { deleteAndConfirmAbsent: mocks.remove },
+  }),
+}));
+vi.mock("./persistent-sandbox-store", () => ({
+  readPersistentIdentity: mocks.identity,
+  retirePersistentSession: mocks.retire,
+  cleanupPersistentSession: mocks.cleanup,
 }));
 vi.mock("postgres", () => ({ default: () => ({ end: mocks.end }) }));
 vi.mock("node:fs/promises", () => ({
@@ -14,36 +31,23 @@ vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
   verifyEveSandboxCoverage: mocks.verify,
 }));
 vi.mock("../env", () => ({
-  env: {
-    EVE_GATEWAY_SECRET: "fixture-secret",
-    EVE_INTERNAL_ORIGIN: "http://worker.local",
-    WORKFLOW_POSTGRES_URL: "postgresql://localhost",
-  },
+  env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost" },
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 const inventories = [{ sessionId: "root", runIds: ["root", "child"] }];
 beforeEach(() => {
-  vi.clearAllMocks();
-  vi.stubGlobal("fetch", mocks.fetch);
+  vi.resetAllMocks();
   mocks.verify.mockResolvedValue(["root", "child"]);
-  mocks.fetch.mockImplementation(
-    async (url) =>
-      await Promise.resolve(
-        Response.json({
-          appRoot: "/worker",
-          sessionId: (url instanceof URL ? url.pathname : "").includes(
-            "/child/"
-          )
-            ? "child"
-            : "root",
-          retired: true,
-          remaining: 0,
-        })
-      )
+  mocks.identity.mockImplementation(
+    async (sessionId: string) =>
+      await Promise.resolve({
+        ownerId: "owner",
+        sessionId,
+        rootSessionId: "root",
+      })
   );
 });
-afterEach(() => vi.unstubAllGlobals());
-it("rechecks worker authority for every session even when workflow coverage was retained", async () => {
+it("rechecks app ownership for all descendants when workflow coverage was retained", async () => {
   expect(
     await verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
   ).toEqual({
@@ -53,50 +57,61 @@ it("rechecks worker authority for every session even when workflow coverage was 
       { sessionId: "child", rootSessionId: "root" },
     ],
   });
-  expect(mocks.fetch).toHaveBeenCalledTimes(2);
-  const [url, init] = mocks.fetch.mock.calls.at(1) ?? [];
-  expect(url).toEqual(
-    new URL("http://worker.local/eve/chat/v1/session/child/local-resources")
-  );
-  expect(init?.method).toBe("POST");
-  expect(init?.redirect).toBe("error");
-  expect(init?.headers).toMatchObject({
-    "x-chatjs-owner": "owner",
-    "x-chatjs-deletion-root": "root",
-  });
-  expect(init?.body).toBe(
-    JSON.stringify({
-      expectedAppRoot: "/worker",
-      action: "retire",
-    })
-  );
+  expect(mocks.retire).toHaveBeenCalledTimes(2);
+  expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-it.each(["appRoot", "sessionId"])(
-  "rejects a worker %s mismatch without accepting cleanup",
-  async (field) => {
-    mocks.fetch.mockImplementation(
-      async () =>
-        await Promise.resolve(
-          Response.json({
-            appRoot: "/worker",
-            sessionId: "root",
-            retired: true,
-            remaining: 0,
-            [field]: "different",
-          })
-        )
-    );
-    await expect(
-      verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
-    ).rejects.toThrow("authority mismatch");
-    expect(mocks.fetch).toHaveBeenCalledOnce();
-    expect(mocks.end).toHaveBeenCalledOnce();
-  }
-);
-it("does not treat failed worker retirement as absence", async () => {
-  mocks.fetch.mockResolvedValue(new Response(null, { status: 503 }));
+it.each([
+  { ownerId: "foreign", sessionId: "root", rootSessionId: "root" },
+  { ownerId: "owner", sessionId: "root", rootSessionId: "foreign" },
+])("rejects mismatched ownership: %j", async (identity) => {
+  mocks.identity.mockResolvedValue(identity);
   await expect(
     verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
-  ).rejects.toThrow("unconfirmed");
+  ).rejects.toThrow("coverage is unavailable");
+  expect(mocks.retire).not.toHaveBeenCalled();
+  expect(mocks.cleanup).not.toHaveBeenCalled();
+  expect(mocks.end).toHaveBeenCalledOnce();
+});
+it("propagates retirement failures instead of accepting cleanup coverage", async () => {
+  mocks.retire.mockRejectedValue(new Error("retirement failed"));
+  await expect(
+    verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
+  ).rejects.toThrow("retirement failed");
+  expect(mocks.end).toHaveBeenCalledOnce();
+});
+it("retires before purging and propagates unconfirmed deletion", async () => {
+  mocks.cleanup.mockRejectedValue(new Error("absence unconfirmed"));
+  await expect(
+    manageEveLocalResources(
+      "owner",
+      { sessionId: "child", rootSessionId: "root" },
+      "purge"
+    )
+  ).rejects.toThrow("absence unconfirmed");
+  expect(mocks.retire.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.cleanup.mock.invocationCallOrder[0]
+  );
+  expect(mocks.cleanup).toHaveBeenCalledWith(
+    { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
+    expect.any(Function)
+  );
+});
+
+it("retires a verified native session that never allocated an app filesystem", async () => {
+  mocks.identity.mockResolvedValue(null);
+  await manageEveLocalResources(
+    "owner",
+    { sessionId: "child", rootSessionId: "root" },
+    "purge"
+  );
+  expect(mocks.retire).toHaveBeenCalledWith({
+    ownerId: "owner",
+    sessionId: "child",
+    rootSessionId: "root",
+  });
+  expect(mocks.cleanup).toHaveBeenCalledWith(
+    { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
+    expect.any(Function)
+  );
 });

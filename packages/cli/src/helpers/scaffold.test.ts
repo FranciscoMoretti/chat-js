@@ -225,6 +225,36 @@ describe("buildConfigTs", (): void => {
 });
 
 describe("scaffoldFromTemplate", (): void => {
+  it("scaffolds without a sandbox SDK or persistent capability", async (): Promise<void> => {
+    const destination = makeTempDir("no-sandbox");
+    await scaffoldFromTemplate(destination);
+    const provider = z
+      .object({
+        createSandboxProvider: z.undefined(),
+        supportsPersistentSandbox: z.boolean(),
+      })
+      .parse(
+        await import(pathModule.join(destination, "lib/sandbox/provider.ts"))
+      );
+    expect(provider.createSandboxProvider).toBeUndefined();
+    expect(provider.supportsPersistentSandbox).toBe(false);
+    const manifest = z
+      .object({ dependencies: z.record(z.string(), z.string()) })
+      .parse(
+        JSON.parse(
+          await readFile(pathModule.join(destination, "package.json"), "utf-8")
+        )
+      );
+    expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
+    expect(manifest.dependencies["@daytona/sdk"]).toBeUndefined();
+    expect(
+      existsSync(pathModule.join(destination, "lib/sandbox/persistent.ts"))
+    ).toBe(false);
+    expect(
+      await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
+    ).toContain("createAppSandboxEnvironment");
+    expect(existsSync(pathModule.join(destination, "guest/agent"))).toBe(false);
+  });
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);

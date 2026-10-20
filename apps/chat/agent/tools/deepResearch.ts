@@ -1,4 +1,4 @@
-import { requireAccountSession } from "@/lib/eve/session-policy";
+import { requireAccountSession } from "@/lib/eve/session-identity";
 import { defineWorkflowTool } from "eve/tools";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import {

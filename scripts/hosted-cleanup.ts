@@ -11,7 +11,10 @@ const verifiedDeletedCount = (guests: unknown): number => {
     typeof guests.deletedCount !== "number" ||
     !Number.isSafeInteger(guests.deletedCount) ||
     guests.deletedCount < emptyCount ||
-    guests.pendingCount !== emptyCount ||
+    typeof guests.pendingCount !== "number" ||
+    !Number.isSafeInteger(guests.pendingCount) ||
+    guests.pendingCount < emptyCount ||
+    (guests.pendingCount > emptyCount && guests.deletedCount === emptyCount) ||
     guests.skipped !== false
   ) {
     throw new Error("Cleanup inventory unavailable; retry required.");
@@ -22,8 +25,11 @@ const verifiedDeletedCount = (guests: unknown): number => {
 const deletedGuestCount = (result: unknown): number => {
   if (
     !isRecord(result) ||
-    result.success !== true ||
-    !isRecord(result.results)
+    !isRecord(result.results) ||
+    (result.success !== true &&
+      (!isRecord(result.results.orphanedAttachments) ||
+        result.results.orphanedAttachments.skipped !== false ||
+        "error" in result.results.orphanedAttachments))
   ) {
     throw new Error("Cleanup incomplete or unavailable; retry required.");
   }
@@ -41,7 +47,9 @@ const drainCleanup = async (
     throw new Error("Cleanup batch limit reached; retry required.");
   }
   const response = await request();
-  if (!response.ok) {
+  // A partial sweep uses 503. Continue only when its validated inventory shows
+  // progress; a stalled batch still fails and keeps its durable retry records.
+  if (!response.ok && response.status !== 503) {
     throw new Error("Cleanup incomplete or unavailable; retry required.");
   }
   if (deletedGuestCount(await response.json()) > emptyCount) {

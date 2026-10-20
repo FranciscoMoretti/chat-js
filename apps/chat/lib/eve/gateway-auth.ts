@@ -13,14 +13,12 @@ import {
 } from "@/lib/db/eve-queries";
 import { getEveSubagent } from "@/lib/db/eve-subagents";
 import { env } from "@/lib/env";
-import { isFencedEveDescendant } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
-import { resolveWorkflowWorld } from "./world-config";
 
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
@@ -34,23 +32,7 @@ const authorizeDeletionRequest = async (
   if (sessionId === null) {
     return false;
   }
-  const rootSessionId = request.headers.get("x-chatjs-deletion-root");
-  if (rootSessionId === null || rootSessionId === "") {
-    return Boolean(
-      await getDeletingEveConversationForSession(owner, sessionId)
-    );
-  }
-  const workflowPostgresUrl = env.WORKFLOW_POSTGRES_URL;
-  return (
-    path.endsWith("/local-resources") &&
-    request.method === "POST" &&
-    resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
-    typeof workflowPostgresUrl === "string" &&
-    workflowPostgresUrl !== "" &&
-    (await getDeletingEveConversationForSession(owner, rootSessionId)) !==
-      null &&
-    (await isFencedEveDescendant(workflowPostgresUrl, rootSessionId, sessionId))
-  );
+  return Boolean(await getDeletingEveConversationForSession(owner, sessionId));
 };
 
 const gatewaySessionPolicy = (

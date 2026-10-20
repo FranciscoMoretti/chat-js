@@ -1,4 +1,4 @@
-import { isGuestSession } from "../../lib/eve/session-policy";
+import { isGuestSession } from "../../lib/eve/session-identity";
 import type { FollowupContext } from "../../lib/eve/followup-context";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";

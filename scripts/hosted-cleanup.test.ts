@@ -124,3 +124,24 @@ test("runtime guest cooldown backlog cannot report a successful drain", async ()
     runHostedCleanup("https://chat.example", "secret")
   ).rejects.toThrow("inventory unavailable");
 });
+
+test("drains an explicitly partial backlog but never reports a stalled sweep as success", async () => {
+  const request = vi
+    .fn(() => batch(0))
+    .mockImplementationOnce(() =>
+      Response.json(
+        {
+          success: false,
+          results: {
+            orphanedAttachments: { deletedCount: 0, skipped: false },
+            expiredGuests: { deletedCount: 0, pendingCount: 0, skipped: false },
+            runtimeGuests: { deletedCount: 5, pendingCount: 3, skipped: false },
+          },
+        },
+        { status: 503 }
+      )
+    );
+  vi.stubGlobal("fetch", request);
+  await runHostedCleanup("https://chat.example", "secret");
+  expect(request).toHaveBeenCalledTimes(2);
+});

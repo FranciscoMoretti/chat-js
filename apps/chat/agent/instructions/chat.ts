@@ -1,8 +1,6 @@
 import type { DynamicResolveContext } from "eve";
-import {
-  isGuestSession,
-  GUEST_INSTRUCTIONS,
-} from "../../lib/eve/session-policy";
+import { isGuestSession } from "../../lib/eve/session-identity";
+import { GUEST_INSTRUCTIONS } from "../../lib/eve/session-policy";
 import { defineDynamic, defineInstructions } from "eve/instructions";
 
 import { systemPrompt } from "../../lib/ai/prompts";

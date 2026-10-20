@@ -1,4 +1,7 @@
-import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
+import {
+  configureSandboxProvider,
+  sandboxProviderTargets,
+} from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
 import {
@@ -318,7 +321,7 @@ export const add = new Command("add")
             },
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
-              ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
+              ...sandboxProviderTargets(selectedSandbox),
               ...(selectedStorage && !keepStorageOptions
                 ? ["lib/storage-options.ts"]
                 : []),

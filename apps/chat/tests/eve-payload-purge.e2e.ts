@@ -10,10 +10,7 @@ import { purgeEvePostgresSessionPayloads } from "@/lib/eve/lifecycle/postgres/ev
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
 import { purgeEvePostgresQueue } from "@/lib/eve/lifecycle/postgres/eve-queue-purge";
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
-import {
-  isFencedEveDescendant,
-  verifyEveSandboxCoverage,
-} from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
 import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
 
 import { env } from "../lib/env";
@@ -349,14 +346,7 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   await expect(verifyEveSandboxCoverage(query, input, verify)).rejects.toThrow(
     "Fence native writers"
   );
-  expect(await isFencedEveDescendant(env.DATABASE_URL, root, child)).toBe(
-    false
-  );
   const inventory = await fenceEvePostgresSession(query, root);
-  expect(await isFencedEveDescendant(env.DATABASE_URL, root, child)).toBe(true);
-  expect(
-    await isFencedEveDescendant(env.DATABASE_URL, root, crypto.randomUUID())
-  ).toBe(false);
   await expect(
     verifyEveSandboxCoverage(query, input, () => {
       throw new Error("receipt absent");

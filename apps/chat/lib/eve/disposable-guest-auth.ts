@@ -77,7 +77,10 @@ const policyMatches = (
   claims: Claims,
   policy: NonNullable<Awaited<ReturnType<typeof readGuestRuntimePolicy>>>
 ): boolean => {
-  if (policy.modelId !== claims.modelId || policy.policyVersion !== 1) {
+  if (
+    policy.modelId !== claims.modelId ||
+    String(policy.policyVersion) !== GUEST_POLICY.version
+  ) {
     return false;
   }
   if (policy.sessionId !== (claims.sessionId ?? null)) {

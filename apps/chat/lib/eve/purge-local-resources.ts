@@ -25,32 +25,10 @@ const purgeOwnedLocalSandboxResources = async (
     appRoot,
     family.nativeInventories
   );
-  // Remove every consumer VM before releasing any shared source artifact.
   for (const session of scope.sessions) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize provider removals because sibling sessions can share retained snapshot dependencies.
-    await manageEveLocalResources(ownerId, scope.appRoot, session, "purge");
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Confirm every owned resource is absent before allowing family erasure.
+    await manageEveLocalResources(ownerId, session, "purge");
   }
-  let previousRemaining = Number.POSITIVE_INFINITY;
-  for (let pass = 0; pass <= scope.sessions.length; pass += 1) {
-    let remaining = 0;
-    for (const session of scope.sessions) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Reclaim dependency leaves before reconsidering sources, with bounded passes and progress checks.
-      remaining += await manageEveLocalResources(
-        ownerId,
-        scope.appRoot,
-        session,
-        "purge"
-      );
-    }
-    if (remaining === 0) {
-      return;
-    }
-    if (remaining >= previousRemaining) {
-      break;
-    }
-    previousRemaining = remaining;
-  }
-  throw new Error("Local sandbox resources are still retained.");
 };
 
 const purgeExternalEveFamilyResources = async (

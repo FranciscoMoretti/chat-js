@@ -7,6 +7,7 @@ export default defineConfig({
     // Fixtures install/drop shared provider triggers and inspect queue-wide state.
     fileParallelism: false,
     include: [
+      "tests/eve-persistent-sandboxes.e2e.ts",
       "tests/eve-lifecycle-provider.e2e.ts",
       "tests/eve-creation-recovery.e2e.ts",
       "tests/eve-guests.e2e.ts",

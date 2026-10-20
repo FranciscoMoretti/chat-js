@@ -34,7 +34,13 @@
       "development": "./src/definition.ts",
       "default": "./dist/definition.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./persistent": {
+      "types": "./dist/persistent.d.ts",
+      "bun": "./src/persistent.ts",
+      "development": "./src/persistent.ts",
+      "default": "./dist/persistent.js"
+    }
   },
   "publishConfig": {
     "access": "public"

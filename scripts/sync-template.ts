@@ -6,6 +6,7 @@ import {
   shouldCopyElectronFile,
 } from "../packages/cli/src/helpers/scaffold-content";
 import { collectSnapshot } from "./sync-template-snapshot";
+import { copyDevelopmentSupervisor } from "../packages/cli/src/helpers/copy-development-supervisor";
 import { parseJsonObject } from "../packages/cli/src/helpers/json-object";
 import { parsePackageJson } from "../packages/cli/src/helpers/package-manifest";
 import path from "node:path";
@@ -109,6 +110,7 @@ const stampTemplateManifest = async (destination: string): Promise<void> => {
 };
 
 const applyTemplateTransforms = async (destination: string): Promise<void> => {
+  await copyDevelopmentSupervisor(rootDir, destination);
   await normalizeScaffoldContent(destination);
   await removeTemplateReferences(destination);
   await rewriteTemplateStyles(destination);

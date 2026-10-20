@@ -42,7 +42,7 @@ vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
 vi.mock("../types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
+  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: [] },
 }));
 
 const startTurn = async (selectedTool?: string, principalType = "user") =>
@@ -74,7 +74,8 @@ const startTurn = async (selectedTool?: string, principalType = "user") =>
           },
           initiator: {
             attributes: { selectedTool: "webSearch" },
-            authenticator: "gateway",
+            authenticator:
+              principalType === "guest" ? "chatjs-disposable-guest" : "gateway",
             principalId: "owner",
             principalType: "user",
           },
@@ -230,7 +231,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
       webSearch: {},
     };
     await startTurn(undefined, "guest");
-    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    expect(Object.keys(filterEveTools(tools))).toEqual([]);
     await startTurn("deepResearch", "guest");
     expect(filterEveTools(tools)).toEqual({});
     await startTurn();
