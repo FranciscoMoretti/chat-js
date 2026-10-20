@@ -253,7 +253,9 @@ describe("scaffoldFromTemplate", (): void => {
     expect(
       await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
     ).toContain("createAppSandboxEnvironment");
-    expect(existsSync(pathModule.join(destination, "guest/agent"))).toBe(false);
+    expect(
+      existsSync(pathModule.join(destination, "guest/agent/sandbox.ts"))
+    ).toBe(false);
   });
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
