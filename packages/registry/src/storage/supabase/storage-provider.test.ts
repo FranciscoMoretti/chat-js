@@ -67,6 +67,7 @@ test("missing Supabase reads retain the Files SDK NotFound contract", async () =
 });
 
 test.each([
+  { body: { message: "Bucket not found", statusCode: "404" }, status: 400 },
   { body: { message: "Object not found", statusCode: "403" }, status: 403 },
   { body: { message: "Object not found", statusCode: "500" }, status: 500 },
   { body: { message: "Object not found", statusCode: "400" }, status: 400 },

@@ -22,6 +22,7 @@ const readObject = async <Value>(
       error.code === "Provider" &&
       error.cause instanceof StorageApiError &&
       error.cause.statusCode === "404" &&
+      error.cause.message === "Object not found" &&
       (error.cause.status === badRequestStatus ||
         error.cause.status === missingObjectStatus)
     ) {

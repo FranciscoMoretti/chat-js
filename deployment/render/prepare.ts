@@ -1,5 +1,5 @@
 // Explicit source-clone verification profile. Run only in a disposable checkout.
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,6 +34,9 @@ await writeFile(
   path.join(app, "lib/storage-provider.test.ts"),
   providerTests.replace('from "bun:test"', 'from "vitest"')
 );
+// JustBash owns this profile's EVE workspace. Its sessions must not register
+// persistent-provider records whose retirement callback is no longer installed.
+await rm(path.join(app, "agent/hooks/persistent-sandbox.ts"), { force: true });
 const sandbox = `import { defineSandbox } from "eve/sandbox";
 import { JustBashSandbox } from "eve/sandbox/just-bash";
 const environment = JustBashSandbox.environment({ autoInstall: false });
