@@ -1,40 +1,25 @@
 # Developing the eve fork with ChatJS
 
-The package migration is part of [PR #447](https://github.com/FranciscoMoretti/chat-js/pull/447), on `codex/app-owned-branch-prototype`. It consumes `eve` through the npm alias `npm:@chat-js/eve@0.61.0-chatjs.0`. The implementation and native tests are published on [francisco/chatjs-package](https://github.com/FranciscoMoretti/eve/tree/3a7acfe6ba42a8dc9d330132b11856962a675705), based on upstream `eve@0.61.0`, with GitHub-verified signatures and DCO trailers. Native unit tests (9,149), types, invariants, lint, focused integrations, package build and consumer smoke checks passed.
+ChatJS consumes the maintained [eve fork](https://github.com/FranciscoMoretti/eve/tree/francisco/chatjs-package) through an exact npm alias. The upstream baseline is eve 0.80.1. The fork README inventories retained patches; `package.json` and `bun.lock` identify the application release. Use Node 24+, pnpm in the fork, and Bun in ChatJS.
 
-The first scoped release is [published on npm](https://www.npmjs.com/package/@chat-js/eve/v/0.61.0-chatjs.0). `bun.lock` resolves the registry artifact, whose integrity matches the tested tarball. Install it with `bun install --frozen-lockfile`.
+## Prepare a release
 
-## Local loop
+1. Start from an exact, clean, reviewed fork commit and record its SHA.
+2. In the release checkout, set `packages/eve/package.json` to the intended scoped prerelease **before building**. Keep its workspace name `eve` for the build. Set `EVE_PACKAGE_DEPENDENCY_URL` to the intended `npm:@chat-js/eve@<version>` alias.
+3. Run `pnpm install --frozen-lockfile` and `pnpm --filter eve build`. This emits declarations and stamps the runtime version. Run the relevant native regression tests with their explicit Vitest tier configurations.
+4. Copy the package license with `node scripts/copy-package-license.mjs packages/eve`. Pack with `pnpm pack --ignore-scripts` from `packages/eve`, writing the archive outside the implementation diff.
+5. Extract into an external staging directory. Change only distribution metadata: set the name to `@chat-js/eve`, the repository to the fork, and `gitHead` to the source SHA; remove `prepack`. Preserve the resolved dependencies, exports and licenses. Run `npm pack --ignore-scripts` there.
+6. Verify that the staged manifest version equals the built runtime's `readStampedPackageVersion()`. Changing the manifest after building without matching the stamped version can leave fresh sessions waiting because the worker treats them as belonging to another version.
+7. Test a clean install and actual ChatJS create/send/fork/restart flows against that exact archive. Preserve ChatJS's workflow-identity dependency patch. Keep archives, credentials, captured logs and runtime state outside Git.
 
-Use Node 24+ for both repositories. In the eve checkout:
+## Publish and adopt
 
-```sh
-pnpm install --frozen-lockfile
-pnpm pack:chatjs
-node scripts/test-chatjs-package.mjs artifacts/chat-js-eve-0.61.0-chatjs.0.tgz
-```
+Publication requires explicit authorization and npm authentication. Publish only the verified archive with `npm publish <archive> --access public --tag chatjs`; do not change `latest`. A successful upload alone is insufficient: confirm registry availability and compare the downloaded artifact's SHA-512 integrity with the tested archive.
 
-Then, in an isolated ChatJS worktree containing this migration:
+Update all consumers and the root patch key to the published version, then run `bun install` and verify `bun install --frozen-lockfile`. Remove temporary local package installations so they cannot shadow the registry dependency. Run `bun lint`, `bun test:types`, relevant regression tests and the required runtime checks before merging the application update. Document the source SHA, registry integrity and verification limitations in the fork README and companion PR.
 
-```sh
-bun run eve:test-package /absolute/path/to/eve/artifacts/chat-js-eve-0.61.0-chatjs.0.tgz
-```
+Fork prerelease versions do not name upstream sandbox images. Keep `EVE_SANDBOX_IMAGE_TAG=0.80.1` for this baseline. Fresh-state migrations and workflow compatibility are separate from publishing; a release does not authorize a live database migration or deployment.
 
-The command temporarily installs that archive as `eve`, runs lint, all workspace type checks, the focused eve/MCP tests, and scaffold tests. It restores the manifests and lockfile even on failure. `node_modules` remains on the tested archive; run `bun install --frozen-lockfile` after publication to restore the registry installation. Avoid concurrent dependency edits in the same worktree. The test install skips lifecycle scripts; initialize other workspace dependencies normally before testing if their native build scripts are required.
+## Historical evidence
 
-The scoped package retains the upstream runtime identity for persisted workflow IDs. Fork revisions have versions such as `0.61.0-chatjs.0`; changing the upstream base is a separate upgrade that requires workflow compatibility checks.
-
-Generated apps preserve the exact npm alias. They no longer reconstruct an eve package from a Bun patch. Postgres still uses its vendored patched archive. MCP now consumes the supported upstream release described in [runtime dependency maintenance](../patches/README.md). Native approval tests now import the regular built module, without the old Bun patch filename relocation.
-
-## Release workflow
-
-1. Review and retain the native source changes in the fork. Its `CHATJS.md` documents the build, tests and publication workflow.
-2. An authenticated owner of the `@chat-js` npm scope publishes the tested archive: `npm publish /absolute/path/to/chat-js-eve-0.61.0-chatjs.0.tgz --access public --tag chatjs`.
-3. Run `bun install` in ChatJS, verify the resolved package name/version, and run the same checks against the registry installation.
-4. Run `bun template:sync` and `bun template:check`. The former EVE source and compiled patches and their assembler were removed after the first release. Their history remains available in Git.
-
-For subsequent releases, use npm trusted publishing with the fork's `chatjs-package.yml` workflow. It builds and checks a tarball before publishing that exact artifact. Package names and versions must agree in both ChatJS manifests and generated templates. No paid provider calls, existing databases, or live workflow migration are part of these checks.
-
-## Verified locally
-
-The npm consumer smoke test passes for the built scoped tarball. Native checks: 9,149 unit tests passed (one skipped), 44 integration tests passed, type checks passed, invariant guards passed, and all 92 documentation pages compiled. ChatJS's local package command passed lint, all seven workspace type checks, 359 focused runtime tests, and 22 scaffold/vendor tests. The candidate tarball is in the eve checkout's ignored `artifacts/` directory. The published registry artifact has the same integrity as this tested candidate.
+The original 0.61.0 migration in [#447](https://github.com/FranciscoMoretti/chat-js/pull/447) recorded 9,149 native unit tests, 44 integration tests, 359 focused ChatJS tests and 22 scaffold/vendor tests. Those results apply to that recorded source and artifact, not later releases. The former `pack:chatjs`, `eve:test-package`, `CHATJS.md` and `chatjs-package.yml` instructions no longer describe the maintained 0.80.1 source tree.

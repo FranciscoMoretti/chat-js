@@ -267,11 +267,20 @@ test("shared workspace forks retain immutable image/PDF originals and independen
   await expect(
     foreign.sessions.attach(fork.sessionId).snapshot()
   ).rejects.toThrow();
-  const deleted = await page.request.delete(
-    `/api/agent-conversations/${source.id}`,
-    { headers: { origin } }
-  );
-  expect(deleted.ok(), await deleted.text()).toBe(true);
+  await expect
+    .poll(
+      async () => {
+        const deleted = await page.request.delete(
+          `/api/agent-conversations/${source.id}`,
+          { headers: { origin } }
+        );
+        expect(deleted.ok(), await deleted.text()).toBe(true);
+        return z.object({ status: z.string() }).parse(await deleted.json())
+          .status;
+      },
+      { timeout: 30_000 }
+    )
+    .toBe("deleted");
   await page.goto(`/chat/${fork.id}`);
   await page.reload();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
