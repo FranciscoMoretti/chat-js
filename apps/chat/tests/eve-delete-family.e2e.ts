@@ -395,6 +395,19 @@ test("deleting the last never-dispatched fork cleans its retained workspace and 
   providers.files.mockClear();
   await deleteLocalEveConversationFamily(owner, original.id, "/fixture");
   expect(providers.files).not.toHaveBeenCalled();
+  providers.files.mockRejectedValueOnce(new Error("Storage offline"));
+  await expect(
+    deleteLocalEveConversationFamily(owner, waiting.id, "/fixture")
+  ).rejects.toThrow("Storage offline");
+  const [pending] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, waiting.id));
+  expect(pending).toMatchObject({
+    state: "deleting",
+    firstMessage: "Waiting fork",
+    sessionId: null,
+  });
   expect(
     await deleteLocalEveConversationFamily(owner, waiting.id, "/fixture")
   ).toEqual({ rootId: waiting.id });
@@ -417,5 +430,5 @@ test("deleting the last never-dispatched fork cleans its retained workspace and 
     firstMessage: "",
     sessionId: null,
   });
-  expect(providers.files).toHaveBeenCalledOnce();
+  expect(providers.files).toHaveBeenCalledTimes(2);
 });

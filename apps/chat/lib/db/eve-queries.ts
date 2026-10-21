@@ -703,8 +703,8 @@ const beginEveConversationDeletion = async (
         .where(familyCondition)
         .orderBy(eveConversation.id);
       // The app journal commits under this same owner lock before any native
-      // call. Only a creating row with no journal/binding is safe to retire
-      // without native cleanup; uncertainty after dispatch stays fenced.
+      // call. A creating/deleting row with no journal/binding can skip native cleanup,
+      // but remains deleting through resource cleanup. Dispatched uncertainty stays fenced.
       const dispatched = await tx
         .select({ conversationId: eveDispatch.conversationId })
         .from(eveDispatch)
@@ -720,35 +720,26 @@ const beginEveConversationDeletion = async (
       const dispatchedIds = new Set(
         dispatched.map((row) => row.conversationId)
       );
-      const undispatched = family
-        .filter(
-          (row) =>
-            row.state === "creating" &&
-            row.sessionId === null &&
-            !dispatchedIds.has(row.id)
-        )
-        .map((row) => row.id);
+      const undispatched = new Set(
+        family
+          .filter(
+            (row) =>
+              ["creating", "deleting"].includes(row.state) &&
+              row.sessionId === null &&
+              !dispatchedIds.has(row.id)
+          )
+          .map((row) => row.id)
+      );
       if (
         family.some(
           (row) =>
             row.state === "uncertain" ||
-            (row.state === "creating" && !undispatched.includes(row.id))
+            (row.state === "creating" && !undispatched.has(row.id))
         )
       ) {
         throw new CreationConflictError(
           "Finish recovering conversation creation before deleting this conversation."
         );
-      }
-      if (undispatched.length > 0) {
-        await tx
-          .update(eveConversation)
-          .set({ state: "deleted", visibility: "private" })
-          .where(
-            and(
-              eq(eveConversation.ownerId, ownerId),
-              inArray(eveConversation.id, undispatched)
-            )
-          );
       }
       await tombstoneEveResponseGroups(tx, ownerId, family);
       // Document writers hold this same lock through their commit. Once the fence
@@ -765,7 +756,7 @@ const beginEveConversationDeletion = async (
         .where(
           and(
             familyCondition,
-            inArray(eveConversation.state, ["bound", "deleting"])
+            inArray(eveConversation.state, ["creating", "bound", "deleting"])
           )
         )
         .returning({
@@ -773,9 +764,9 @@ const beginEveConversationDeletion = async (
           sessionId: eveConversation.sessionId,
         });
       return {
-        conversations: conversations.toSorted((left, right) =>
-          left.id.localeCompare(right.id)
-        ),
+        conversations: conversations
+          .filter((row) => !undispatched.has(row.id))
+          .toSorted((left, right) => left.id.localeCompare(right.id)),
         rootId: id,
       };
     }

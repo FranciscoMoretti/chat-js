@@ -471,7 +471,7 @@ test.each(["retry", "delete"])(
       );
       expect(deletion?.conversations.map((row) => row.id)).toEqual([source.id]);
       const retired = await getEveCreation(ownerId, operationId);
-      expect(retired?.state).toBe("deleted");
+      expect(retired?.state).toBe("deleting");
       expect(dispatch).not.toHaveBeenCalled();
     }
   }
