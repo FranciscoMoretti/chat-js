@@ -1,4 +1,5 @@
 import { eveDeletionScope } from "./eve-deletion-scope";
+import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -174,8 +175,7 @@ const purgeEveFamilyDocuments = async (
             inArray(eveNamedDocumentCheckpoint.conversationId, ids)
           )
         );
-      // Keep the FK constraints intact: unexpected references from a surviving
-      // conversation fail the transaction instead of destroying its ancestry.
+      // Remove this member's pointers before computing surviving ancestry.
       await tx
         .delete(eveDocumentCheckpointEntry)
         .where(
@@ -205,7 +205,10 @@ const purgeEveFamilyDocuments = async (
         .where(
           and(
             eq(eveDocumentRevision.ownerId, ownerId),
-            inArray(eveDocumentRevision.conversationId, ids)
+            inArray(
+              eveDocumentRevision.id,
+              unretainedEveDocumentRevisionIds(ownerId, ids)
+            )
           )
         );
     }

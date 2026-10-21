@@ -34,7 +34,10 @@ type ResolvePersistentProvider = () => {
 };
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Resource = typeof evePersistentSandbox.$inferSelect;
-const lock = async (tx: Transaction, root: string): Promise<void> => {
+const lock = async (
+  tx: Readonly<Pick<Transaction, "execute">>,
+  root: string
+): Promise<void> => {
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`chatjs-workspace:${root}`}, 0))`
   );
@@ -517,9 +520,12 @@ export const resolvePersistentIdentity = async (input: {
 /** Finalization requires retired native members; shared resources may survive only for other live conversations. */
 export const checkDeletedWorkspaceMemberships = async (
   ownerId: string,
-  conversationIds: readonly string[]
+  conversationIds: readonly string[],
+  transaction?: Readonly<Pick<Transaction, "execute" | "select">>
 ): Promise<void> => {
-  await db.transaction(async (tx) => {
+  const check = async (
+    tx: Readonly<Pick<Transaction, "execute" | "select">>
+  ): Promise<void> => {
     const conversations = await tx
       .select()
       .from(eveConversation)
@@ -586,5 +592,6 @@ export const checkDeletedWorkspaceMemberships = async (
         throw new Error("Workspace cleanup is incomplete.");
       }
     }
-  });
+  };
+  await (transaction ? check(transaction) : db.transaction(check));
 };

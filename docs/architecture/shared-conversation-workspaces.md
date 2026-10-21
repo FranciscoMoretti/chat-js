@@ -20,7 +20,7 @@ Imported history still needs new native attachment references. The companion EVE
 
 ## Deletion
 
-Deleting a conversation ID retires that member only. Deleting the sidebar chat ID retires the group. A surviving member retains the workspace and original uploads, including originals no longer referenced by surviving history. The final conversation triggers confirmed sandbox deletion and original-file cleanup. Incomplete cleanup remains retryable; unresolved delivery prevents destructive cleanup.
+Deleting a conversation ID retires that member only. Deleting the sidebar chat ID retires the group. A surviving member retains the workspace and original uploads, including originals no longer referenced by surviving history. Document revisions needed by surviving heads/checkpoints and their ancestry are retained; unreferenced revisions are purged, including retained source revisions when the final member is deleted. Final workspace checks share the tombstone transaction and its locks. The final conversation triggers confirmed sandbox deletion and original-file cleanup. Incomplete cleanup remains retryable; unresolved delivery prevents destructive cleanup.
 
 `DELETE /api/agent-workspaces/:id` is owner-authorized and only accepts an empty workspace with no unresolved work. It does not cascade-delete active conversations. Storage failures retain cleanup state for retry. Identity tombstones and accounting remain.
 

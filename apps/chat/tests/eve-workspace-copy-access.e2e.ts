@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { db } from "../lib/db/client";
 import { env } from "../lib/env";
@@ -15,7 +15,16 @@ import {
   eveStoredFile,
   eveWorkspaceAttachment,
 } from "../lib/db/schema";
-import { getAccessibleEveDocument } from "../lib/db/eve-documents";
+import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+import {
+  cleanupWorkspaceIfUnused,
+  checkDeletedWorkspaceMemberships,
+} from "../lib/eve/persistent-sandbox-store";
+import {
+  getAccessibleEveDocument,
+  getEveDocumentHistory,
+  purgeEveFamilyDocuments,
+} from "../lib/db/eve-documents";
 import { canReadEveFile } from "../lib/db/eve-files";
 import { initializeEveCurrentCopy } from "../lib/db/eve-current-copy";
 import {
@@ -393,4 +402,97 @@ test("a busy fork is rejected without retaining an uncertain workspace member", 
   ).toHaveLength(0);
   const deletion = await beginEveConversationDeletion(ownerId, source.chatId);
   expect(deletion?.conversations.map((row) => row.id)).toContain(source.id);
+});
+
+test("original deletion retains fork document ancestry until the last member is deleted", async () => {
+  const [source] = await insertEveConversationFixtures({
+    ownerId,
+    firstMessage: "Documents",
+    operationId: crypto.randomUUID(),
+    sessionId: crypto.randomUUID(),
+    state: "bound",
+  });
+  const [fork] = await insertEveConversationFixtures({
+    ownerId,
+    firstMessage: "Fork",
+    operationId: crypto.randomUUID(),
+    sessionId: crypto.randomUUID(),
+    state: "bound",
+    parentConversationId: source.id,
+    rootConversationId: source.id,
+  });
+  const documentId = crypto.randomUUID();
+  const originalId = crypto.randomUUID();
+  const sharedId = crypto.randomUUID();
+  const futureId = crypto.randomUUID();
+  const base = {
+    ownerId,
+    conversationId: source.id,
+    documentId,
+    kind: "text" as const,
+    title: "Notes",
+  };
+  await db.insert(eveDocumentRevision).values({
+    ...base,
+    id: originalId,
+    operationId: crypto.randomUUID(),
+    content: "Original",
+  });
+  await db.insert(eveDocumentRevision).values({
+    ...base,
+    id: sharedId,
+    parentRevisionId: originalId,
+    operationId: crypto.randomUUID(),
+    content: "Shared",
+  });
+  await db.insert(eveDocumentRevision).values({
+    ...base,
+    id: futureId,
+    parentRevisionId: sharedId,
+    operationId: crypto.randomUUID(),
+    content: "Later private revision",
+  });
+  await db.insert(eveDocumentHead).values([
+    { ownerId, conversationId: source.id, documentId, revisionId: futureId },
+    { ownerId, conversationId: fork.id, documentId, revisionId: sharedId },
+  ]);
+  await beginEveConversationDeletion(ownerId, source.id);
+  await db.transaction(async (tx) => {
+    await checkDeletedWorkspaceMemberships(ownerId, [source.id], tx);
+    const available = await db.transaction(async (other) => {
+      const [row] = await other.execute<{ locked: boolean }>(
+        sql`select pg_try_advisory_xact_lock(hashtextextended(${`chatjs-workspace:${source.workspaceId}`}, 0)) as locked`
+      );
+      return row.locked;
+    });
+    expect(available).toBe(false);
+  });
+  await purgeEveFamilyDocuments(ownerId, source.id);
+  await completeEveConversationDeletion(ownerId, source.id);
+  const history = await getEveDocumentHistory(ownerId, fork.id, documentId);
+  expect(history.map((revision) => revision.id)).toEqual([
+    originalId,
+    sharedId,
+  ]);
+  expect(
+    await db
+      .select()
+      .from(eveDocumentRevision)
+      .where(eq(eveDocumentRevision.id, futureId))
+  ).toEqual([]);
+  const visible = await getAccessibleEveDocument(ownerId, fork.id, documentId);
+  expect(visible?.revision.content).toBe("Shared");
+  await beginEveConversationDeletion(ownerId, fork.id);
+  await purgeEveFamilyDocuments(ownerId, fork.id);
+  await cleanupWorkspaceIfUnused(ownerId, source.workspaceId, () => {
+    throw new Error("No sandbox was allocated");
+  });
+  await completeEveConversationDeletion(ownerId, fork.id);
+  await purgeEveFamilyDocuments(ownerId, fork.id);
+  expect(
+    await db
+      .select()
+      .from(eveDocumentRevision)
+      .where(eq(eveDocumentRevision.documentId, documentId))
+  ).toEqual([]);
 });

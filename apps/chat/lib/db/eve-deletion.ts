@@ -1,5 +1,6 @@
 import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
 import { eveDeletionScope } from "./eve-deletion-scope";
+import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
@@ -226,7 +227,7 @@ const completeEveConversationDeletion = async (
     if (sandbox) {
       throw new Error("Code sandbox cleanup is incomplete.");
     }
-    await checkDeletedWorkspaceMemberships(ownerId, ids);
+    await checkDeletedWorkspaceMemberships(ownerId, ids, tx);
 
     const contentTables = [
       eveFileReference,
@@ -237,7 +238,6 @@ const completeEveConversationDeletion = async (
       eveDocumentCheckpointEntry,
       eveDocumentCheckpoint,
       eveDocumentHead,
-      eveDocumentRevision,
     ];
     // Only existence matters: check the fenced family's content in one snapshot.
     const remaining = await tx
@@ -247,6 +247,17 @@ const completeEveConversationDeletion = async (
         and(
           inArray(eveConversation.id, ids),
           or(
+            exists(
+              tx
+                .select({ id: eveDocumentRevision.id })
+                .from(eveDocumentRevision)
+                .where(
+                  inArray(
+                    eveDocumentRevision.id,
+                    unretainedEveDocumentRevisionIds(ownerId, ids)
+                  )
+                )
+            ),
             ...contentTables.map((table) =>
               exists(
                 tx
