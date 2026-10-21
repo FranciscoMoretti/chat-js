@@ -161,7 +161,6 @@
         "@types/react-test-renderer": "19.1.0",
         "drizzle-kit": "^0.31.9",
         "just-bash": "^3.6.0",
-        "microsandbox": "^0.6.18",
         "oxfmt": "0.71.0",
         "oxlint": "1.87.0",
         "oxlint-tsgolint": "7.0.2004",
@@ -454,8 +453,8 @@
     },
   },
   "patchedDependencies": {
-    "@chat-js/eve@0.80.1-chatjs.4": "patches/@chat-js%2Feve@0.80.1-chatjs.4.patch",
     "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch",
+    "@chat-js/eve@0.80.1-chatjs.4": "patches/@chat-js%2Feve@0.80.1-chatjs.4.patch",
   },
   "overrides": {
     "//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",
