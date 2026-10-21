@@ -226,7 +226,7 @@ const applyChatTemplateSourceTransforms = async (
     patchPath: pathModule.join(
       getRepoRoot(),
       "patches",
-      "@chat-js%2Feve@0.80.1-chatjs.2.patch"
+      "@chat-js%2Feve@0.80.1-chatjs.4.patch"
     ),
   });
 };

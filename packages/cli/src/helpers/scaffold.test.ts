@@ -271,10 +271,10 @@ describe("scaffoldFromTemplate", (): void => {
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
     expect(manifest.dependencies.eve).toBe(
-      "file:vendor/chat-js-eve-0.80.1-chatjs.2.tgz"
+      "file:vendor/chat-js-eve-0.80.1-chatjs.4.tgz"
     );
     const archives = {
-      eve: "chat-js-eve-0.80.1-chatjs.2.tgz",
+      eve: "chat-js-eve-0.80.1-chatjs.4.tgz",
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
 
@@ -750,7 +750,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBe(false);
         expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
         expect(packageJson.dependencies.eve).toBe(
-          "file:vendor/chat-js-eve-0.80.1-chatjs.2.tgz"
+          "file:vendor/chat-js-eve-0.80.1-chatjs.4.tgz"
         );
         expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
         expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(

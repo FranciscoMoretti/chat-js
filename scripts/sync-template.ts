@@ -132,7 +132,7 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     dependencyName: "eve",
     packageDir: await resolvePackageDirectory("eve", sourceDir, "@chat-js/eve"),
     packageName: "@chat-js/eve",
-    patchPath: join(rootDir, "patches", "@chat-js%2Feve@0.80.1-chatjs.2.patch"),
+    patchPath: join(rootDir, "patches", "@chat-js%2Feve@0.80.1-chatjs.4.patch"),
   });
 
   await stampTemplateManifest(destination);
