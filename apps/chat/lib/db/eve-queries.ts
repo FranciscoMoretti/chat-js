@@ -20,6 +20,7 @@ import {
   eveChat,
   eveChatProject,
   eveConversation,
+  eveDispatch,
   eveGuest,
   eveGuestMessage,
   eveResponseGroup,
@@ -701,15 +702,53 @@ const beginEveConversationDeletion = async (
         .from(eveConversation)
         .where(familyCondition)
         .orderBy(eveConversation.id);
+      // The app journal commits under this same owner lock before any native
+      // call. Only a creating row with no journal/binding is safe to retire
+      // without native cleanup; uncertainty after dispatch stays fenced.
+      const dispatched = await tx
+        .select({ conversationId: eveDispatch.conversationId })
+        .from(eveDispatch)
+        .where(
+          and(
+            eq(eveDispatch.ownerId, ownerId),
+            inArray(
+              eveDispatch.conversationId,
+              family.map((row) => row.id)
+            )
+          )
+        );
+      const dispatchedIds = new Set(
+        dispatched.map((row) => row.conversationId)
+      );
+      const undispatched = family
+        .filter(
+          (row) =>
+            row.state === "creating" &&
+            row.sessionId === null &&
+            !dispatchedIds.has(row.id)
+        )
+        .map((row) => row.id);
       if (
         family.some(
-          (row: Readonly<Pick<ConversationRow, "state">>) =>
-            row.state === "creating" || row.state === "uncertain"
+          (row) =>
+            row.state === "uncertain" ||
+            (row.state === "creating" && !undispatched.includes(row.id))
         )
       ) {
         throw new CreationConflictError(
           "Finish recovering conversation creation before deleting this conversation."
         );
+      }
+      if (undispatched.length > 0) {
+        await tx
+          .update(eveConversation)
+          .set({ state: "deleted", visibility: "private" })
+          .where(
+            and(
+              eq(eveConversation.ownerId, ownerId),
+              inArray(eveConversation.id, undispatched)
+            )
+          );
       }
       await tombstoneEveResponseGroups(tx, ownerId, family);
       // Document writers hold this same lock through their commit. Once the fence

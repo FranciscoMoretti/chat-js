@@ -2,6 +2,8 @@ import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
+import { cleanupRetiredEveWorkspaces } from "./persistent-sandbox-store";
+import { getPersistentSandboxProvider } from "../sandbox/runtime";
 import {
   manageEveLocalResources,
   verifyLocalEveFamilyCoverage,
@@ -55,10 +57,17 @@ export const purgeLocalEveFamilyResources = async (
   appRoot: string
 ): ReturnType<typeof prepareEveFamilyDeletion> => {
   const family = await prepareEveFamilyDeletion(ownerId, conversationId);
-  if (!family || family.conversations.length === NO_CONVERSATIONS) {
+  if (!family) {
     return family;
   }
-  await purgeOwnedLocalSandboxResources(ownerId, appRoot, family);
+  if (family.conversations.length > NO_CONVERSATIONS) {
+    await purgeOwnedLocalSandboxResources(ownerId, appRoot, family);
+  }
+  await cleanupRetiredEveWorkspaces(
+    ownerId,
+    family.rootId,
+    getPersistentSandboxProvider
+  );
   await purgeExternalEveFamilyResources(ownerId, family);
   return family;
 };

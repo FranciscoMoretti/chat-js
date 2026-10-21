@@ -8,9 +8,11 @@ export const markEveCreationFailure = async (
   conversationId: string,
   error: unknown
 ): Promise<void> => {
-  const rejected =
-    error instanceof EveForkBoundaryError ||
-    error instanceof EveWorkspaceBusyError;
+  if (error instanceof EveWorkspaceBusyError) {
+    // No native call was made; retain the immutable reservation for retry.
+    return;
+  }
+  const rejected = error instanceof EveForkBoundaryError;
   await db.transaction(async (tx) => {
     const changed = await tx
       .update(eveConversation)
@@ -25,7 +27,7 @@ export const markEveCreationFailure = async (
       )
       .returning({ id: eveConversation.id });
     if (rejected && changed.length > 0) {
-      // These rejections have no native dispatch or allocation. Remove only
+      // A rejected boundary has no native dispatch or allocation. Remove only
       // this reservation's references; workspace retention is independent.
       await tx
         .delete(eveFileReference)

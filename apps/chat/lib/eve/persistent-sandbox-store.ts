@@ -5,6 +5,7 @@ import type { SandboxScope } from "@chat-js/sandboxes/provider";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { databaseConnection } from "../db/connection";
+import { eveDeletionScope } from "../db/eve-deletion-scope";
 import { env } from "../env";
 import {
   eveConversation,
@@ -349,6 +350,29 @@ export const cleanupWorkspaceIfUnused = async (
       .set({ state: "deleted" })
       .where(eq(eveWorkspace.id, workspaceId));
   });
+};
+
+/** Includes never-dispatched members, which have no native session to trigger resource cleanup. */
+export const cleanupRetiredEveWorkspaces = async (
+  ownerId: string,
+  routeId: string,
+  resolveProvider: ResolvePersistentProvider
+): Promise<void> => {
+  const members = await db
+    .select({ workspaceId: eveConversation.workspaceId })
+    .from(eveConversation)
+    .where(
+      and(
+        eveDeletionScope(ownerId, routeId),
+        inArray(eveConversation.state, ["deleted", "deleting"])
+      )
+    );
+  for (const workspaceId of new Set(
+    members.map((member) => member.workspaceId)
+  )) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each workspace cleanup checks remaining writers and confirms its own provider resources.
+    await cleanupWorkspaceIfUnused(ownerId, workspaceId, resolveProvider);
+  }
 };
 
 /** Detachment never deletes a workspace retained by another conversation. */

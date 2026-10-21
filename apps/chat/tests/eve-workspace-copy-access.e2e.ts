@@ -8,6 +8,7 @@ import {
   eveChat,
   eveConversation,
   eveDispatch,
+  eveResponseGroup,
   eveDocumentHead,
   eveDocumentRevision,
   eveWorkspace,
@@ -32,6 +33,10 @@ import {
   getEveCreation,
   beginEveConversationDeletion,
 } from "../lib/db/eve-queries";
+import {
+  reserveEveResponseGroup,
+  getEveResponseGroup,
+} from "../lib/db/eve-response-groups";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -65,6 +70,9 @@ afterAll(async () => {
     .where(eq(eveFileReference.ownerId, ownerId));
   await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, ownerId));
   await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, ownerId));
+  await db
+    .delete(eveResponseGroup)
+    .where(eq(eveResponseGroup.ownerId, ownerId));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, ownerId));
   await db.delete(eveChat).where(eq(eveChat.ownerId, ownerId));
   await db.delete(eveWorkspace).where(eq(eveWorkspace.ownerId, ownerId));
@@ -372,37 +380,102 @@ test("an already captured seed remains replayable while its delivery is fenced",
   expect(workspace.activeOperationId).toBe(activeOperationId);
 });
 
-test("a busy fork is rejected without retaining an uncertain workspace member", async () => {
-  const [source] = await insertEveConversationFixtures({
-    ownerId,
-    firstMessage: "busy source",
-    operationId: crypto.randomUUID(),
-    sessionId: crypto.randomUUID(),
-    state: "bound",
-  });
-  await db
-    .update(eveWorkspace)
-    .set({ activeOperationId: crypto.randomUUID() })
-    .where(eq(eveWorkspace.id, source.workspaceId));
-  const operationId = crypto.randomUUID();
-  const dispatch = vi.fn(() => crypto.randomUUID());
-  await expect(
-    createEveConversation(ownerId, operationId, "blocked fork", dispatch, {
-      fork: { conversationId: source.id },
-    })
-  ).rejects.toThrow("workspace");
-  expect(dispatch).not.toHaveBeenCalled();
-  const reservation = await getEveCreation(ownerId, operationId);
-  expect(reservation?.state).toBe("deleted");
-  expect(
+test.each(["retry", "delete"])(
+  "a never-dispatched busy fork allows %s with immutable intent",
+  async (action) => {
+    const [source] = await insertEveConversationFixtures({
+      ownerId,
+      firstMessage: "busy source",
+      operationId: crypto.randomUUID(),
+      sessionId: crypto.randomUUID(),
+      state: "bound",
+    });
     await db
-      .select()
-      .from(eveDispatch)
-      .where(eq(eveDispatch.operationId, operationId))
-  ).toHaveLength(0);
-  const deletion = await beginEveConversationDeletion(ownerId, source.chatId);
-  expect(deletion?.conversations.map((row) => row.id)).toContain(source.id);
-});
+      .update(eveWorkspace)
+      .set({ activeOperationId: crypto.randomUUID() })
+      .where(eq(eveWorkspace.id, source.workspaceId));
+    const group = await reserveEveResponseGroup(ownerId, {
+      operationId: crypto.randomUUID(),
+      message: "blocked fork",
+      modelIds: ["model-a", "model-b"],
+      fork: { conversationId: source.id },
+    });
+    const [{ operationId }] = group.candidates;
+    const dispatch = vi.fn(() => crypto.randomUUID());
+    await expect(
+      createEveConversation(ownerId, operationId, "blocked fork", dispatch, {
+        fork: { conversationId: source.id },
+      })
+    ).rejects.toThrow("workspace");
+    expect(dispatch).not.toHaveBeenCalled();
+    const reservation = await getEveCreation(ownerId, operationId);
+    expect(reservation?.state).toBe("creating");
+    if (!reservation) {
+      throw new Error("Missing busy reservation");
+    }
+    const waitingGroup = await getEveResponseGroup(ownerId, group.id);
+    expect(waitingGroup?.candidates[0]).toMatchObject({
+      operationId,
+      state: "waiting",
+    });
+    expect(
+      await db
+        .select()
+        .from(eveDispatch)
+        .where(eq(eveDispatch.conversationId, reservation.id))
+    ).toHaveLength(0);
+    await expect(
+      createEveConversation(ownerId, operationId, "changed intent", dispatch, {
+        fork: { conversationId: source.id },
+      })
+    ).rejects.toThrow("different");
+    if (action === "retry") {
+      // The external writer has now completed. Only this fixture supplies that fact.
+      await db
+        .update(eveWorkspace)
+        .set({ activeOperationId: null })
+        .where(eq(eveWorkspace.id, source.workspaceId));
+      native.capture.mockResolvedValue({
+        seed: {
+          messages: [
+            {
+              role: "user",
+              parts: [{ type: "text", text: "Completed source" }],
+            },
+          ],
+        },
+        resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+        projectionHash: "settled",
+      });
+      const result = await createEveConversation(
+        ownerId,
+        operationId,
+        "blocked fork",
+        dispatch,
+        {
+          fork: { conversationId: source.id },
+        }
+      );
+      expect(result.id).toBe(reservation.id);
+      const boundGroup = await getEveResponseGroup(ownerId, group.id);
+      expect(boundGroup?.candidates[0]).toMatchObject({
+        operationId,
+        state: "bound",
+        conversationId: reservation.id,
+      });
+      expect(dispatch).toHaveBeenCalledOnce();
+    } else {
+      const deletion = await beginEveConversationDeletion(
+        ownerId,
+        source.chatId
+      );
+      expect(deletion?.conversations.map((row) => row.id)).toEqual([source.id]);
+      const retired = await getEveCreation(ownerId, operationId);
+      expect(retired?.state).toBe("deleted");
+      expect(dispatch).not.toHaveBeenCalled();
+    }
+  }
+);
 
 test("original deletion retains fork document ancestry until the last member is deleted", async () => {
   const [source] = await insertEveConversationFixtures({

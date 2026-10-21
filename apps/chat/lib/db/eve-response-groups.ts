@@ -1,4 +1,12 @@
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  getTableColumns,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 
@@ -292,7 +300,13 @@ const getEveResponseGroup = async (
     return undefined;
   }
   const conversations = await db
-    .select()
+    .select({
+      ...getTableColumns(eveConversation),
+      dispatched: sql<boolean>`exists (
+      select 1 from "EveDispatch" dispatch where dispatch."conversationId" = ${eveConversation.id}
+        and dispatch."ownerId" = ${ownerId}
+    )`,
+    })
     .from(eveConversation)
     .where(
       and(
@@ -332,7 +346,15 @@ const getEveResponseGroup = async (
           };
         }
         if (row) {
-          return { ...identity, state: "unresolved" };
+          return {
+            ...identity,
+            state:
+              row.state === "creating" &&
+              row.sessionId === null &&
+              !row.dispatched
+                ? "waiting"
+                : "unresolved",
+          };
         }
 
         if (candidate.rejection) {

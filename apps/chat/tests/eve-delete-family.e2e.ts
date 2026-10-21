@@ -369,3 +369,53 @@ test("explicit empty workspace deletion retries original blob cleanup without ex
   expect(deleted.state).toBe("deleted");
   expect(providers.files).toHaveBeenCalledTimes(2);
 });
+
+test("deleting the last never-dispatched fork cleans its retained workspace and originals", async () => {
+  const original = await fixture();
+  const [waiting] = await insertEveConversationFixtures({
+    id: crypto.randomUUID(),
+    ownerId: owner,
+    operationId: crypto.randomUUID(),
+    firstMessage: "Waiting fork",
+    state: "creating",
+    parentConversationId: original.id,
+    rootConversationId: original.id,
+  });
+  const key = crypto.randomUUID();
+  await db.insert(eveStoredFile).values({ key, ownerId: owner });
+  await db
+    .insert(eveFileReference)
+    .values({ key, conversationId: waiting.id, ownerId: owner });
+  await db.insert(eveWorkspaceAttachment).values({
+    fileKey: key,
+    ownerId: owner,
+    workspaceId: original.workspaceId,
+    sha256: "fixture-original",
+  });
+  providers.files.mockClear();
+  await deleteLocalEveConversationFamily(owner, original.id, "/fixture");
+  expect(providers.files).not.toHaveBeenCalled();
+  expect(
+    await deleteLocalEveConversationFamily(owner, waiting.id, "/fixture")
+  ).toEqual({ rootId: waiting.id });
+  const [workspace] = await db
+    .select()
+    .from(eveWorkspace)
+    .where(eq(eveWorkspace.id, original.workspaceId));
+  const [file] = await db
+    .select()
+    .from(eveStoredFile)
+    .where(eq(eveStoredFile.key, key));
+  const [deleted] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, waiting.id));
+  expect(workspace.state).toBe("deleted");
+  expect(file.state).toBe("deleted");
+  expect(deleted).toMatchObject({
+    state: "deleted",
+    firstMessage: "",
+    sessionId: null,
+  });
+  expect(providers.files).toHaveBeenCalledOnce();
+});

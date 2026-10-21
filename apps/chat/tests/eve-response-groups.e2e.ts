@@ -1,14 +1,16 @@
+import { createEveTestSession } from "./eve-native-session.fixture";
 import {
   eveDispatch,
   eveConversation,
   eveResponseGroup,
   user,
 } from "../lib/db/schema";
-import "./eve-native-session.fixture";
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
+import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
@@ -85,7 +87,7 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
 
         (id) => {
           nativeCalls.push(id);
-          return `session-${id}`;
+          return createEveTestSession();
         },
         { fork: operation.fork, initialModelId: operation.modelId }
       );
@@ -143,7 +145,7 @@ test("continuation candidates copy the current completed source and reject inacc
     crypto.randomUUID(),
     "Original",
 
-    (id) => `source-${id}`
+    createEveTestSession
   );
   vi.mocked(createEveConversationOperation)
     .mockReset()
@@ -153,7 +155,7 @@ test("continuation candidates copy the current completed source and reject inacc
         operation.operationId,
         eveMessageTitle(operation.message),
 
-        (id) => `continued-${id}`,
+        createEveTestSession,
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
@@ -236,7 +238,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     group.candidates[0].operationId,
     input.message,
 
-    (id) => `session-${id}`
+    createEveTestSession
   );
   const forkInput = {
     ...input,
@@ -248,7 +250,18 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     ...input,
     operationId: crypto.randomUUID(),
   });
+  await reconcileEveWorkspaceTurn(owner, root.id);
   await beginEveConversationDeletion(owner, root.id);
+  const reservation = await getEveCreation(
+    owner,
+    group.candidates[0].operationId
+  );
+  if (!reservation) {
+    throw new Error("Missing reservation");
+  }
+  await cleanupWorkspaceIfUnused(owner, reservation.workspaceId, () => {
+    throw new Error("No resources were allocated");
+  });
   await completeEveConversationDeletion(owner, root.id);
   await Promise.all(
     [
@@ -301,7 +314,7 @@ test("group reservation racing retirement cannot leave an active unstarted group
     crypto.randomUUID(),
     "Race",
 
-    (id) => `session-${id}`
+    createEveTestSession
   );
   const input = {
     fork: { conversationId: root.id },
@@ -342,7 +355,7 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     crypto.randomUUID(),
     "Old group",
 
-    (id) => `session-${id}`
+    createEveTestSession
   );
   const input = {
     fork: { conversationId: root.id },
@@ -383,7 +396,7 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.candidates[0].operationId,
     input.message,
 
-    (id) => `session-${id}`
+    createEveTestSession
   );
   await recordEveResponseGroupRejection(
     owner,
@@ -437,10 +450,10 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     owner,
     group.candidates[0].operationId,
     input.message,
-    async (id) => {
+    async () => {
       entered.resolve();
       await release.promise;
-      return `session-${id}`;
+      return createEveTestSession();
     }
   );
   await entered.promise;
