@@ -3,6 +3,8 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
 
+import { EveWorkspaceBusyError } from "@/lib/db/eve-workspace-turns";
+
 import { GET, POST } from "./route";
 
 const HTTP_STATUS = {
@@ -12,6 +14,9 @@ const HTTP_STATUS = {
 };
 
 const mocks = vi.hoisted(() => ({
+  admit: vi.fn(),
+  dispatch: vi.fn(),
+  release: vi.fn(),
   bound: vi.fn(),
   canSpend: vi.fn(),
   eveRequest: vi.fn(),
@@ -25,8 +30,14 @@ vi.mock("@/lib/db/eve-dispatch", () => ({
   dispatchEveOnce: async (
     _input: unknown,
     dispatch: () => Promise<{ sessionId: string; deliveryId: string }>
-  ) => await dispatch(),
+  ) => {
+    mocks.dispatch();
+    return await dispatch();
+  },
   EveDispatchUnknownError: class extends Error {},
+}));
+vi.mock("@/lib/db/eve-guests", () => ({
+  releaseEveGuestMessage: mocks.release,
 }));
 vi.mock("@/lib/db/credits", () => ({ canSpend: mocks.canSpend }));
 vi.mock("@/lib/db/eve-files", () => ({
@@ -37,7 +48,7 @@ vi.mock("@/lib/db/eve-queries", () => ({
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/guest-message-admission", () => ({
-  admitGuestMessage: vi.fn(),
+  admitGuestMessage: mocks.admit,
   settleGuestMessage: vi.fn(),
 }));
 vi.mock("@/lib/eve/model-selection", () => ({
@@ -202,3 +213,38 @@ test.each([
 vi.mock("@/lib/db/eve-workspace-turns", () => ({
   EveWorkspaceBusyError: vi.fn(),
 }));
+
+test.each([true, false])(
+  "refunds a guest reservation only for pre-dispatch workspace rejection: %s",
+  async (busy) => {
+    mocks.principal.mockResolvedValue({ kind: "guest", ownerId: "owner" });
+    mocks.admit.mockResolvedValue({
+      operationId,
+      reservationId: "exact-reservation",
+    });
+    if (busy) {
+      mocks.dispatch.mockImplementation(() => {
+        throw new EveWorkspaceBusyError();
+      });
+    } else {
+      mocks.eveRequest.mockRejectedValue(new Error("reply lost"));
+    }
+    const response = await POST(
+      request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
+      {
+        params: Promise.resolve({ path: ["v1", "session", "native"] }),
+      }
+    );
+    expect(response.status).toBe(busy ? 409 : 502);
+    if (busy) {
+      expect(mocks.release).toHaveBeenCalledExactlyOnceWith(
+        "owner",
+        operationId,
+        "exact-reservation"
+      );
+      expect(mocks.eveRequest).not.toHaveBeenCalled();
+    } else {
+      expect(mocks.release).not.toHaveBeenCalled();
+    }
+  }
+);

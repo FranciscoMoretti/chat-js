@@ -147,7 +147,7 @@ export const EveLogicalGroupRecovery = ({
       clearTimeout(timer);
     };
   }, [groupId, ownerId, queryClient, trpc]);
-  if (autoOnly && !waiting) {
+  if (autoOnly && !waiting && !hasText(failure) && !busy) {
     return null;
   }
   return (
@@ -158,7 +158,7 @@ export const EveLogicalGroupRecovery = ({
           : "This response is not confirmed."}
       </p>
       {hasText(failure) && <p role="alert">{failure}</p>}
-      {!autoOnly && (
+      {(!autoOnly || hasText(failure) || busy) && (
         <Button
           disabled={busy || waiting}
 
@@ -172,7 +172,7 @@ export const EveLogicalGroupRecovery = ({
           Retry response
         </Button>
       )}
-      {!autoOnly && (
+      {(!autoOnly || hasText(failure) || busy) && (
         <Button
           disabled={busy}
           variant="ghost"

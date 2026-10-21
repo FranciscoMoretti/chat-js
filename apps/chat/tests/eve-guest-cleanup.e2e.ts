@@ -2,7 +2,10 @@ import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
 import { db } from "../lib/db/client";
-import { claimExpiredEveGuestFamilies } from "../lib/db/eve-guest-cleanup";
+import {
+  claimExpiredEveGuestFamilies,
+  hasExpiredEveGuestFamilies,
+} from "../lib/db/eve-guest-cleanup";
 import { createEveGuest } from "../lib/db/eve-guests";
 import { eveConversation, eveGuest, user } from "../lib/db/schema";
 import { createEveGuestCredential } from "../lib/eve/guest-credential";
@@ -33,7 +36,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     operationId: crypto.randomUUID(),
     ownerId: guest.ownerId,
   }));
-  await insertEveConversationFixtures(roots);
+  const insertedRoots = await insertEveConversationFixtures(roots);
   const registeredOwner = crypto.randomUUID();
   owners.push(registeredOwner);
   await db.insert(user).values({
@@ -117,5 +120,44 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
   const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
   expect(
     expiredGuestClaimIds.map((row: { readonly id: string }) => row.id)
-  ).toContain(first.id);
+  ).toContain(insertedRoots[0].chatId);
+});
+
+test("expiry selects the whole chat even after its root conversation was deleted", async () => {
+  const guest = await createEveGuest({
+    expiresAt: new Date(Date.now() + 60_000),
+    messageLimit: 10,
+    tokenHash: createEveGuestCredential().tokenHash,
+  });
+  owners.push(guest.ownerId);
+  await db
+    .update(eveGuest)
+    .set({ expiresAt: new Date(0) })
+    .where(eq(eveGuest.ownerId, guest.ownerId));
+  const [root] = await insertEveConversationFixtures({
+    ownerId: guest.ownerId,
+    firstMessage: "root",
+    operationId: crypto.randomUUID(),
+    state: "deleted",
+  });
+  const [fork] = await insertEveConversationFixtures({
+    ownerId: guest.ownerId,
+    firstMessage: "fork",
+    operationId: crypto.randomUUID(),
+    parentConversationId: root.id,
+    rootConversationId: root.id,
+    forkTurnId: "turn_0",
+    state: "bound",
+    sessionId: crypto.randomUUID(),
+  });
+  expect(await hasExpiredEveGuestFamilies()).toBe(true);
+  const claims = await claimExpiredEveGuestFamilies();
+  expect(claims).toContainEqual({ id: root.chatId, ownerId: guest.ownerId });
+  const { beginEveConversationDeletion } =
+    await import("../lib/db/eve-queries");
+  const deletion = await beginEveConversationDeletion(
+    guest.ownerId,
+    root.chatId
+  );
+  expect(deletion?.conversations.map((row) => row.id)).toContain(fork.id);
 });

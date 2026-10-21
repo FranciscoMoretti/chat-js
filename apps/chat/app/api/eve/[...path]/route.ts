@@ -15,6 +15,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { canSpend } from "@/lib/db/credits";
+import { releaseEveGuestMessage } from "@/lib/db/eve-guests";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
@@ -193,6 +194,19 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
+const refundRejectedGuestAdmission = async (
+  ownerId: string,
+  admission: Awaited<ReturnType<typeof checkTurnAdmission>>
+): Promise<void> => {
+  if (admission && !(admission instanceof Response)) {
+    // Called only when the workspace claim rejected before native dispatch.
+    await releaseEveGuestMessage(
+      ownerId,
+      admission.operationId,
+      admission.reservationId
+    );
+  }
+};
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
   context: {
@@ -243,8 +257,9 @@ const handle = async (
     return command;
   }
   const { body, modelId, selectedTool } = command;
+  let admission: Awaited<ReturnType<typeof checkTurnAdmission>>;
   try {
-    const admission = await checkTurnAdmission(
+    admission = await checkTurnAdmission(
       request,
       { principal, sessionId: policy.sessionId },
       command
@@ -252,6 +267,7 @@ const handle = async (
     if (admission instanceof Response) {
       return admission;
     }
+    const guestAdmission = admission;
     const dispatch = async (): Promise<Response> => {
       const result = await eveRequest(
         principal.ownerId,
@@ -269,8 +285,8 @@ const handle = async (
         modelId,
         selectedTool
       );
-      if (admission) {
-        await settleGuestMessage(result, principal.ownerId, admission);
+      if (guestAdmission) {
+        await settleGuestMessage(result, principal.ownerId, guestAdmission);
       }
       return result;
     };
@@ -316,6 +332,7 @@ const handle = async (
     );
   } catch (error) {
     if (error instanceof EveWorkspaceBusyError) {
+      await refundRejectedGuestAdmission(ownerId, admission);
       return rejectEveCommand(error.message, 409);
     }
     if (error instanceof EveUsageReconciliationBusyError) {

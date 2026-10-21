@@ -1,3 +1,7 @@
+import { createEveTestSession } from "./eve-native-session.fixture";
+import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
+import { EveWorkspaceBusyError } from "../lib/db/eve-workspace-turns";
 import { dispatchEveOnce } from "../lib/db/eve-dispatch";
 import {
   eveDispatch,
@@ -7,7 +11,6 @@ import {
   user,
   userCredit,
 } from "../lib/db/schema";
-import { createEveTestSession } from "./eve-native-session.fixture";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { eq, sql } from "drizzle-orm";
@@ -224,7 +227,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   let starts = 0;
   const start = (): string => {
     starts += 1;
-    return crypto.randomUUID();
+    return createEveTestSession();
   };
   const root = await createEveConversation(
     owner,
@@ -496,14 +499,19 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
-  const deletion = await beginEveConversationDeletion(owner, child.id);
+  const deletion = await beginEveConversationDeletion(
+    owner,
+    rootCreation?.chatId ?? "missing"
+  );
   expect(deletion?.rootId).toBe(rootCreation?.chatId);
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].toSorted()
   );
   expect(await getPublicEveConversation(root.id)).toBeUndefined();
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
-  expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
+  expect(
+    await beginEveConversationDeletion(owner, rootCreation?.chatId ?? "missing")
+  ).toEqual(deletion);
 });
 
 test("deletion waits for document commits and fences a concurrent fork", async () => {
@@ -572,9 +580,10 @@ test("unresolved creation prevents a partial family deletion", async () => {
       { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
-  await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
-    "Finish recovering"
-  );
+  const rootCreation = await getEveConversation(owner, root.id);
+  await expect(
+    beginEveConversationDeletion(owner, rootCreation?.chatId ?? "missing")
+  ).rejects.toThrow("Finish recovering");
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
 
@@ -621,14 +630,26 @@ test("final application deletion erases family content, preserves accounting and
   await expect(completeEveConversationDeletion(owner, root.id)).rejects.toThrow(
     "pending deletion"
   );
-  await beginEveConversationDeletion(owner, child.id);
+  const family = await getEveConversation(owner, root.id);
+  const chatId = family?.chatId ?? "missing";
+  await reconcileEveWorkspaceTurn(owner, root.id);
+  await beginEveConversationDeletion(owner, chatId);
+  await expect(completeEveConversationDeletion(owner, chatId)).rejects.toThrow(
+    "Workspace cleanup is incomplete"
+  );
+  await cleanupWorkspaceIfUnused(
+    owner,
+    family?.workspaceId ?? "missing",
+    () => {
+      throw new Error("Text-only fixture must not allocate a sandbox");
+    }
+  );
   await expect(
     completeEveConversationDeletion("other", root.id)
   ).rejects.toThrow("Conversation identity is unavailable");
-  // Any branch route resolves to its logical chat and retires the same family.
-  await completeEveConversationDeletion(owner, child.id);
-  await completeEveConversationDeletion(owner, root.id);
-  await completeEveConversationDeletion(owner, root.id);
+  // Explicit chat deletion retires the family; conversation deletion is scoped.
+  await completeEveConversationDeletion(owner, chatId);
+  await completeEveConversationDeletion(owner, chatId);
   await Promise.all(
     [root.id, child.id].map(async (id) => {
       const [row] = await db
@@ -714,7 +735,7 @@ test.each(copyReservationStates)(
   }
 );
 
-test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
+test("copy reservations retain shared ancestry and creation kinds are enforced by PostgreSQL", async () => {
   const sourceOperation = crypto.randomUUID();
   const source = await createEveConversation(
     owner,
@@ -722,17 +743,18 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     "Source",
     createEveTestSession
   );
-  await expect(
-    insertEveConversationFixtures({
-      creationKind: "copy",
-      firstMessage: "Invalid copy fork",
-      forkTurnId: "turn_0",
-      operationId: crypto.randomUUID(),
-      ownerId: owner,
-      parentConversationId: source.id,
-      rootConversationId: source.id,
-    })
-  ).rejects.toThrow();
+  const [copy] = await insertEveConversationFixtures({
+    creationKind: "copy",
+    firstMessage: "Shared-workspace copy",
+    forkTurnId: "turn_0",
+    operationId: crypto.randomUUID(),
+    ownerId: owner,
+    parentConversationId: source.id,
+    rootConversationId: source.id,
+  });
+  const sourceRow = await getEveConversation(owner, source.id);
+  expect(copy.parentConversationId).toBe(source.id);
+  expect(copy.workspaceId).toBe(sourceRow?.workspaceId);
   await expect(
     db.execute(sql`insert into "EveConversation" ("ownerId", "operationId", "firstMessage", "creationKind")
     values (${owner}, ${crypto.randomUUID()}, 'Invalid kind', 'unrecognized')`)
@@ -817,7 +839,7 @@ test("auxiliary model calls settle once per actual attempt independently of comp
   ).toBe(1);
 });
 
-test("completed-copy capture fences a concurrent send until its source snapshot commits", async () => {
+test("completed-copy capture fences a concurrent send and admits only one workspace operation", async () => {
   const source = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -844,11 +866,12 @@ test("completed-copy capture fences a concurrent send until its source snapshot 
       resources: { fileKeys: [], documentIds: [], revisionIds: [] },
     };
   });
+  const copyDispatch = vi.fn(createEveTestSession);
   const copying = createEveConversation(
     owner,
     crypto.randomUUID(),
     "Copy",
-    createEveTestSession,
+    copyDispatch,
     { fork: { conversationId: source.id } }
   );
   await entered.promise;
@@ -874,6 +897,11 @@ test("completed-copy capture fences a concurrent send until its source snapshot 
   } finally {
     release.resolve(null);
   }
-  await Promise.all([copying, sending]);
-  expect(send).toHaveBeenCalledOnce();
+  const outcomes = await Promise.allSettled([copying, sending]);
+  expect(
+    outcomes.filter((outcome) => outcome.status === "fulfilled")
+  ).toHaveLength(1);
+  const rejected = outcomes.find((outcome) => outcome.status === "rejected");
+  expect(rejected?.reason).toBeInstanceOf(EveWorkspaceBusyError);
+  expect(copyDispatch.mock.calls.length + send.mock.calls.length).toBe(1);
 });

@@ -18,7 +18,11 @@ import {
 import { getAccessibleEveDocument } from "../lib/db/eve-documents";
 import { canReadEveFile } from "../lib/db/eve-files";
 import { initializeEveCurrentCopy } from "../lib/db/eve-current-copy";
-import { createEveConversation } from "../lib/db/eve-queries";
+import {
+  createEveConversation,
+  getEveCreation,
+  beginEveConversationDeletion,
+} from "../lib/db/eve-queries";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -357,4 +361,36 @@ test("an already captured seed remains replayable while its delivery is fenced",
     .from(eveWorkspace)
     .where(eq(eveWorkspace.id, source.workspaceId));
   expect(workspace.activeOperationId).toBe(activeOperationId);
+});
+
+test("a busy fork is rejected without retaining an uncertain workspace member", async () => {
+  const [source] = await insertEveConversationFixtures({
+    ownerId,
+    firstMessage: "busy source",
+    operationId: crypto.randomUUID(),
+    sessionId: crypto.randomUUID(),
+    state: "bound",
+  });
+  await db
+    .update(eveWorkspace)
+    .set({ activeOperationId: crypto.randomUUID() })
+    .where(eq(eveWorkspace.id, source.workspaceId));
+  const operationId = crypto.randomUUID();
+  const dispatch = vi.fn(() => crypto.randomUUID());
+  await expect(
+    createEveConversation(ownerId, operationId, "blocked fork", dispatch, {
+      fork: { conversationId: source.id },
+    })
+  ).rejects.toThrow("workspace");
+  expect(dispatch).not.toHaveBeenCalled();
+  const reservation = await getEveCreation(ownerId, operationId);
+  expect(reservation?.state).toBe("deleted");
+  expect(
+    await db
+      .select()
+      .from(eveDispatch)
+      .where(eq(eveDispatch.operationId, operationId))
+  ).toHaveLength(0);
+  const deletion = await beginEveConversationDeletion(ownerId, source.chatId);
+  expect(deletion?.conversations.map((row) => row.id)).toContain(source.id);
 });

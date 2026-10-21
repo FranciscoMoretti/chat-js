@@ -407,82 +407,99 @@ test("deleting one branch preserves the shared workspace", async () => {
     .toBeVisible();
 });
 
-test("comparison waits for the shared workspace", async () => {
-  const groupId = "a1111111-2222-4333-8444-555555555555";
-  const waitingId = "b1111111-2222-4333-8444-555555555555";
-  const modelId = invoicesConversation.initialModelId ?? "openai/gpt-5-mini";
-  const saved = prepareResponseGroupCreation(
-    sessionStorage,
-    session.user.id,
-    invoicesConversation.firstMessage,
-    [modelId, modelId]
-  );
-  const result = {
-    id: groupId,
-    candidates: [
-      {
-        state: "bound" as const,
-        modelId,
-        operationId: invoicesConversation.operationId,
-        conversationId: invoicesConversation.id,
-        sessionId: invoicesConversation.sessionId ?? "",
-      },
-      { state: "waiting" as const, modelId, operationId: waitingId },
-    ],
-  };
-  retainResponseGroupDraft(sessionStorage, session.user.id, saved, result);
-  const originalFetch = globalThis.fetch;
-  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
-    if (
-      (input instanceof Request ? input.url : input.toString()).includes(
-        "/api/agent-response-groups"
-      )
-    ) {
-      return Response.json(result);
-    }
-    return await originalFetch(input, init);
-  });
-  await renderRoute(conversation, {
-    ...request,
-    transcripts: Object.fromEntries(
-      Object.entries(invoicesTranscripts).map(([id, messages]) => [
-        id,
-        messages.map((message) =>
-          message.role === "assistant"
-            ? {
-                ...message,
-                parts: [
-                  {
-                    type: "text",
-                    text: "The first model finished. The next response waits for this workspace.",
-                  },
-                ],
-              }
-            : message
-        ),
-      ])
-    ),
-    trpc: {
-      ...invoicesTrpc,
-      "eve.branches": {
-        ...invoicesTrpc["eve.branches"],
-        branches: invoicesTrpc["eve.branches"].branches.map((branch) => ({
-          ...branch,
-          responseGroupId: groupId,
-          responseGroupIndex: 0,
-          groupCandidates: result.candidates.map((candidate) => ({
-            modelId: candidate.modelId,
-            operationId: candidate.operationId,
+test.each(["waiting", "lost reply"])(
+  "comparison workspace progress: %s",
+  async (state) => {
+    const groupId = "a1111111-2222-4333-8444-555555555555";
+    const waitingId = "b1111111-2222-4333-8444-555555555555";
+    const modelId = invoicesConversation.initialModelId ?? "openai/gpt-5-mini";
+    const saved = prepareResponseGroupCreation(
+      sessionStorage,
+      session.user.id,
+      invoicesConversation.firstMessage,
+      [modelId, modelId]
+    );
+    const result = {
+      id: groupId,
+      candidates: [
+        {
+          state: "bound" as const,
+          modelId,
+          operationId: invoicesConversation.operationId,
+          conversationId: invoicesConversation.id,
+          sessionId: invoicesConversation.sessionId ?? "",
+        },
+        { state: "waiting" as const, modelId, operationId: waitingId },
+      ],
+    };
+    retainResponseGroupDraft(sessionStorage, session.user.id, saved, result);
+    const originalFetch = globalThis.fetch;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      if (
+        (input instanceof Request ? input.url : input.toString()).includes(
+          "/api/agent-response-groups"
+        )
+      ) {
+        if (state === "lost reply") {
+          throw new Error(
+            "Comparison progress is unconfirmed. Retry the saved request."
+          );
+        }
+        return Response.json(result);
+      }
+      return await originalFetch(input, init);
+    });
+    await renderRoute(conversation, {
+      ...request,
+      transcripts: Object.fromEntries(
+        Object.entries(invoicesTranscripts).map(([id, messages]) => [
+          id,
+          messages.map((message) =>
+            message.role === "assistant"
+              ? {
+                  ...message,
+                  parts: [
+                    {
+                      type: "text",
+                      text: "The first model finished. The next response waits for this workspace.",
+                    },
+                  ],
+                }
+              : message
+          ),
+        ])
+      ),
+      trpc: {
+        ...invoicesTrpc,
+        "eve.branches": {
+          ...invoicesTrpc["eve.branches"],
+          branches: invoicesTrpc["eve.branches"].branches.map((branch) => ({
+            ...branch,
+            responseGroupId: groupId,
+            responseGroupIndex: 0,
+            groupCandidates: result.candidates.map((candidate) => ({
+              modelId: candidate.modelId,
+              operationId: candidate.operationId,
+            })),
           })),
-        })),
+        },
       },
-    },
-  });
-  await expect
-    .element(
-      page.getByText(
-        "Waiting for the shared workspace. Responses continue automatically in this tab."
-      )
-    )
-    .toBeVisible();
-});
+    });
+    if (state === "lost reply") {
+      await expect
+        .element(page.getByRole("alert"))
+        .toHaveTextContent("Comparison progress is unconfirmed.");
+      await expect
+        .element(page.getByRole("button", { name: "Retry response" }))
+        .toBeVisible();
+    } else {
+      await expect
+        .element(
+          page.getByText(
+            "Waiting for the shared workspace. Responses continue automatically in this tab."
+          )
+        )
+        .toBeVisible();
+    }
+  }
+);
