@@ -7,7 +7,7 @@ These instructions apply to this application directory.
 - Use Next.js App Router, React, the Vercel AI SDK, Tailwind CSS 4, and shadcn/ui.
 - Keep shadcn primitives in `components/ui`; its config is `components.json`.
 - EVE is the only chat runtime. Browser commands enter through `app/api/eve/[...path]/route.ts`; agent hooks and tools live in `agent/`.
-- Keep Drizzle schema in `lib/db/schema.ts` and database operations in `lib/db/queries.ts`.
+- Keep core tables in `lib/db/schema.ts`; installable features own their schema and query modules. Declare feature schemas in their manifests so `features/installed-database.ts` composes the installed selection.
 - Register every tRPC router in `trpc/routers/_app.ts`.
 
 ## Commands
@@ -18,16 +18,15 @@ These instructions apply to this application directory.
 
 ## Database changes
 
-1. Change `lib/db/schema.ts`.
+1. Change the owning core or feature schema.
 2. Run `bun db:generate`.
 3. Review the generated migration.
 4. Run `bun db:migrate` only when applying the migration is in scope.
 
 ## Environment and configuration
 
-- Define and access environment variables through `lib/env.ts`; prefer `env.VAR_NAME` over `process.env.VAR_NAME` in application code.
-- Keep feature flags and integration configuration in `lib/config.ts`.
-- When a feature requires environment variables, add matching validation to `scripts/check-env.ts`.
+- Core environment variables use `lib/env.ts`. Installables own server-side environment readers and format validation; declare credential requirements in their manifests for the joint `scripts/check-env.ts` check.
+- Keep one editable `chat.config.ts`. Tool configuration schemas own their defaults and validation and compose through generated `tools/chatjs/installed-config.ts`. Keep credential readers out of this client-visible schema graph.
 
 ## TypeScript and React
 
