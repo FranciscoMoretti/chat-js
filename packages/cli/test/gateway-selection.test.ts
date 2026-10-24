@@ -54,6 +54,10 @@ const archive = nodePath.join(
 );
 
 const removeFixtureFiles = async (): Promise<void> => {
+  if (process.env.CHATJS_KEEP_GATEWAY_FIXTURE === "1") {
+    process.stderr.write(`Preserved gateway fixture: ${root}\n`);
+    return;
+  }
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const cleanupTimeout = Promise.withResolvers<never>();
   try {
@@ -714,11 +718,6 @@ const verifyOptionalToolFiles = async (
       nodePath.join(cwd, "tests/eve-sandbox-lifecycle.e2e.ts")
     ).exists()
   ).toBe(false);
-  if (gateway === "vercel" || gateway === "acme") {
-    expect(
-      await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
-    ).toMatch(/image:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u);
-  }
   expect(
     await Bun.file(
       nodePath.join(cwd, "tools/platform/generate-video.ts")
@@ -734,11 +733,6 @@ const verifyOptionalToolFiles = async (
       nodePath.join(cwd, "tools/chatjs/generate-video/tool.ts")
     ).exists()
   ).toBe(gateway === "vercel");
-  if (gateway === "vercel") {
-    expect(
-      await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
-    ).toMatch(/video:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u);
-  }
   expect(
     await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
   ).not.toMatch(/(?:image|video):\s*\{[^}]*\benabled:/u);
@@ -1386,7 +1380,12 @@ for (const installAtCreation of [false, true]) {
     );
     expect(
       await readFile(nodePath.join(cwd, "lib/db/schema.ts"), "utf-8")
-    ).toContain('"McpConnector"');
+    ).not.toContain('"McpConnector"');
+    expect(
+      await Bun.file(
+        nodePath.join(cwd, "features/mcp/db/mcp-schema.ts")
+      ).exists()
+    ).toBe(installAtCreation);
     expect(
       await Bun.file(
         nodePath.join(cwd, "components/eve/eve-mcp-result.tsx")
@@ -1400,6 +1399,18 @@ for (const installAtCreation of [false, true]) {
       await run(cwd, ["node", cliEntry, "add", "mcp", "--yes"]);
     }
     expect(await Bun.file(nodePath.join(cwd, source)).exists()).toBe(true);
+    expect(
+      await readFile(
+        nodePath.join(cwd, "features/mcp/db/mcp-schema.ts"),
+        "utf-8"
+      )
+    ).toContain('"McpConnector"');
+    expect(
+      await readFile(
+        nodePath.join(cwd, "features/installed-database.ts"),
+        "utf-8"
+      )
+    ).toContain("features/mcp/db/mcp-schema.ts");
     expect(
       await readFile(
         nodePath.join(cwd, "features/installed-routers.ts"),

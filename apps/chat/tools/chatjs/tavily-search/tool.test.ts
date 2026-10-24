@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { webSearch } from "./tool";
 import { webSearchInput } from "./schemas";
@@ -8,7 +8,8 @@ const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 vi.mock("@tavily/core", (): { tavily: () => { search: typeof search } } => ({
   tavily: (): { search: typeof search } => ({ search }),
 }));
-vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
+beforeEach(() => vi.stubEnv("TAVILY_API_KEY", "test-key"));
+afterEach(() => vi.unstubAllEnvs());
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 

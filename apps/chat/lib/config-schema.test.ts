@@ -7,23 +7,21 @@ test("partial tool and workflow overrides retain required sibling defaults", () 
   const input = defineConfig({
     ai: {
       gateway: gatewayType,
-      tools: { deepResearch: { allowClarification: false } },
+      tools: { followupSuggestions: { enabled: true } },
       workflows: { title: gatewayModelDefaults.workflows.chat },
     },
   });
   const config = applyDefaults(input);
-  expect(config.ai.tools.deepResearch).toMatchObject({
-    allowClarification: false,
-    defaultModel: gatewayModelDefaults.roles.fast,
-    finalReportModel: gatewayModelDefaults.roles.smart,
+  expect(config.ai.tools.followupSuggestions).toEqual({
+    enabled: true,
+    default: gatewayModelDefaults.roles.fast,
   });
-  expect(config.ai.tools.code.edits).toBe(gatewayModelDefaults.roles.balanced);
   expect(config.ai.workflows).toMatchObject({
     chat: gatewayModelDefaults.workflows.chat,
     title: gatewayModelDefaults.workflows.chat,
   });
   expect(input).toHaveProperty("ai.tools", {
-    deepResearch: { allowClarification: false },
+    followupSuggestions: { enabled: true },
   });
   expect(defineConfig(input)).toBe(input);
 });

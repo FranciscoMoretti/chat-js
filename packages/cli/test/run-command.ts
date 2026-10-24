@@ -14,6 +14,11 @@ export const run = async (
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+  const started = Date.now();
+  const trace = process.env.CHATJS_TEST_TRACE === "1";
+  if (trace) {
+    process.stderr.write(`[start] ${cwd}: ${command.join(" ")}\n`);
+  }
   const grouped = process.platform !== "win32";
   const child = spawn(
     command[COMMAND_EXECUTABLE_INDEX],
@@ -63,7 +68,9 @@ export const run = async (
     child.stdout.destroy();
     child.stderr.destroy();
     reject(
-      new Error(`${command.join(" ")} timed out after ${timeoutMs}ms in ${cwd}`)
+      new Error(
+        `${command.join(" ")} timed out after ${timeoutMs}ms in ${cwd}:\n${stdout}\n${stderr}`
+      )
     );
   }, timeoutMs);
   child.on("error", (error: Readonly<Error>): void => {
@@ -74,6 +81,11 @@ export const run = async (
     clearTimeout(timer);
     if (timedOut) {
       return;
+    }
+    if (trace) {
+      process.stderr.write(
+        `[finish ${Date.now() - started}ms, exit ${code}] ${command.join(" ")}\n`
+      );
     }
     if (code === SUCCESS_EXIT_CODE) {
       resolve();

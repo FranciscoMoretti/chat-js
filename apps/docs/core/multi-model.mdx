@@ -16,7 +16,7 @@ See [Gateways](/gateways/overview) for setup instructions and the full gateway c
 
 ## Model Configuration
 
-All model settings live in `chat.config.ts` under the `ai` key:
+All model settings live in `chat.config.ts` under the `ai` key. The example below assumes the image-generation tool is installed:
 
 ```typescript title="chat.config.ts"
 ai: {
@@ -43,22 +43,21 @@ ai: {
   },
   tools: {
     image: {
-      enabled: true,
       default: "google/gemini-3-pro-image",
     },
   },
 },
 ```
 
-| Setting              | Description                                      |
-| -------------------- | ------------------------------------------------ |
-| `ai.gateway`         | Active AI gateway                                |
-| `ai.providerOrder`   | Provider sort order in the model selector        |
-| `ai.disabledModels`  | Models hidden from all users                     |
-| `ai.curatedDefaults` | Models enabled by default for new users          |
-| `ai.anonymousModels` | Models available to anonymous users              |
-| `ai.workflows.*`     | Default models for shared application workflows  |
-| `ai.tools.*`         | Tool enablement and tool-specific model defaults |
+| Setting              | Description                                     |
+| -------------------- | ----------------------------------------------- |
+| `ai.gateway`         | Active AI gateway                               |
+| `ai.providerOrder`   | Provider sort order in the model selector       |
+| `ai.disabledModels`  | Models hidden from all users                    |
+| `ai.curatedDefaults` | Models enabled by default for new users         |
+| `ai.anonymousModels` | Models available to anonymous users             |
+| `ai.workflows.*`     | Default models for shared application workflows |
+| `ai.tools.*`         | Installed tool-specific model defaults          |
 
 <Callout type="note">
   Image generation uses `ai.tools.image.default`. Language models with the
@@ -92,4 +91,4 @@ Model visibility is determined through a pipeline:
 
 ## User Settings
 
-Users configure their model preferences at `/settings/models`. This page lets users toggle individual models on or off. A link to [AI Registry](https://airegistry.app) provides detailed model information.
+Users configure their model preferences at `/settings/models`. This page lets users toggle individual models on or off.
