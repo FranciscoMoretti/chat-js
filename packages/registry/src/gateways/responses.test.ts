@@ -218,7 +218,18 @@ test("OpenRouter preserves capability tag order and explicit empty-tag fields", 
   expect(plainModel.tags).toBeUndefined();
 });
 
-for (const Adapter of [LiteLLMGateway, OpenAICompatibleGateway]) {
+for (const { Adapter, urlKey, otherUrlKey } of [
+  {
+    Adapter: LiteLLMGateway,
+    urlKey: "LITELLM_BASE_URL",
+    otherUrlKey: "OPENAI_COMPATIBLE_BASE_URL",
+  },
+  {
+    Adapter: OpenAICompatibleGateway,
+    urlKey: "OPENAI_COMPATIBLE_BASE_URL",
+    otherUrlKey: "LITELLM_BASE_URL",
+  },
+]) {
   test.each([undefined, ""])(
     `${Adapter.name} treats absent or empty URLs as missing configuration: %p`,
     async (baseURL): Promise<void> => {
@@ -238,8 +249,8 @@ for (const Adapter of [LiteLLMGateway, OpenAICompatibleGateway]) {
   test(`${Adapter.name} still rejects malformed nonempty URLs`, (): void => {
     const gateway = new Adapter({
       env: {
-        LITELLM_BASE_URL: "invalid",
-        OPENAI_COMPATIBLE_BASE_URL: "invalid",
+        [urlKey]: "invalid",
+        [otherUrlKey]: "https://unused.example",
       },
     });
     expect(gateway.fetchModels()).rejects.toThrow();
