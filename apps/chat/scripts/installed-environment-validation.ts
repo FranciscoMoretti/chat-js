@@ -20,13 +20,20 @@ const validateInstalledEnvironment = async (
   if (moduleName === undefined) {
     return [];
   }
-  const file = environmentValidationModuleSchema.parse(moduleName);
-  const loadedModule: unknown = await import(
-    /* @vite-ignore */
-    pathToFileURL(path.join(itemDirectory, file)).href
-  );
-  const { validateEnvironment } = validatorSchema.parse(loadedModule);
-  return z.array(z.string()).parse(validateEnvironment(env));
+  try {
+    const file = environmentValidationModuleSchema.parse(moduleName);
+    const loadedModule: unknown = await import(
+      /* @vite-ignore */
+      pathToFileURL(path.join(itemDirectory, file)).href
+    );
+    const { validateEnvironment } = validatorSchema.parse(loadedModule);
+    return z.array(z.string()).parse(validateEnvironment(env));
+  } catch {
+    // Validator exceptions may contain secrets. Keep the aggregate report safe.
+    return [
+      "Unable to load or run the environment validator. Check its module and validateEnvironment export.",
+    ];
+  }
 };
 
 export { validateInstalledEnvironment };
