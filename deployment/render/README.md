@@ -16,6 +16,10 @@ Keep the full source-clone build output and dependencies, including the shared a
 
 Use the existing installer/registry to select an alternative gateway and Supabase storage before building. The checked-in demo defaults still use Vercel Gateway/Blob and Vercel Sandbox. The blueprint deliberately does not overwrite installed source or silently switch providers. Installer validation and executable selection documentation are owned by #654 / PR #660.
 
+For the explicit Supabase/JustBash verification profile, use a disposable source clone and set the Render build command to `bash deployment/render/build.sh` and start command to `bash deployment/render/start.sh`. Set `SUPABASE_STORAGE_BUCKET` to an existing private bucket and provide the Supabase credentials before building. The build script runs `prepare.ts`, which replaces the selected storage and agent sandbox source, exports the sandbox `environment` required by the EVE compiler, and removes the persistent-provider hook. It then runs database migrations and workflow setup before building. See [the verification profile](./pr868-verification.md#opt-in-profile-after-review) for details.
+
+The general Blueprint intentionally does not invoke this verification script: doing so would overwrite the operator's installed providers and run migrations during every build. Use its existing build command for preselected providers, with setup performed explicitly as described below.
+
 Required provisioning inputs:
 
 - A Render account and authorization to create the web and scheduled services, with an agreed public HTTPS origin.
