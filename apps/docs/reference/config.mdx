@@ -49,7 +49,7 @@ Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `r
 | `ai.tools.deepResearch.maxConcurrentResearchUnits` | Integer from 1 through 20 |
 | `ai.tools.deepResearch.maxSearchQueries` | Integer from 1 through 10 |
 
-Tool-specific entries in this table exist only when their owning tool is installed. `followupSuggestions` remains core. Unknown or uninstalled tool options are rejected instead of silently ignored. Gateway roles (`smart`, `balanced`, `fast`, `image`, `video`) supply defaults; you still override a tool through `ai.tools` in `chat.config.ts`.
+Tool-specific entries in this table exist only when their owning tool is installed. `followupSuggestions` remains core. Unknown or uninstalled tool options are rejected instead of silently ignored. Gateway roles (`smart`, `balanced`, `fast`, `image`, `video`) supply defaults. You still override a tool through `ai.tools` in `chat.config.ts`.
 
 Search, retrieval, execution, media and research availability come from installed source. They have no `enabled` input. Built-in gateway choices are Vercel, OpenRouter, OpenAI, OpenAI Compatible and LiteLLM. External gateway registry items supply their own discriminator and defaults. Model IDs and upstream availability must be checked with the selected provider.
 
