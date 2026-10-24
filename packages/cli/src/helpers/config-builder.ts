@@ -267,18 +267,19 @@ export const buildConfigTs = (
   const partial = toConfigInput(input);
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
-  const toolOverrides: Record<string, object> = ai.tools;
-  const tools = Object.fromEntries(
-    Object.entries(defaults.tools).map(
-      ([name, value]: readonly [
-        string,
-        ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
-      ]) => [name, { ...value, ...toolOverrides[name] }]
-    )
-  );
+  const { roles, ...gatewayDefaults } = defaults;
   const fullConfig = {
     ...applyDefaults(appConfig),
-    ai: { ...defaults, ...ai, tools },
+    ai: {
+      ...gatewayDefaults,
+      ...ai,
+      tools: {
+        followupSuggestions: {
+          default: roles.fast,
+          ...ai.tools.followupSuggestions,
+        },
+      },
+    },
   };
 
   return `import { defineConfig } from "@/lib/config-schema";

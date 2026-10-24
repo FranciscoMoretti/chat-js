@@ -14,6 +14,9 @@ const mcpFiles = [
   "components/settings/mcp-create-dialog.tsx",
   "components/settings/mcp-details-page.tsx",
   "features/mcp/composer.tsx",
+  "features/mcp/db/mcp-schema.ts",
+  "features/mcp/db/encrypted-text.ts",
+  "features/mcp/mcp-env.ts",
   "features/mcp/settings.ts",
   "features/mcp/setup.ts",
   "lib/ai/mcp/cache.ts",
@@ -35,6 +38,7 @@ const mcpFiles = [
 
 const mcpDefinition = featureDefinitionSchema.parse({
   contractVersion: 1,
+  databaseSchemas: ["features/mcp/db/mcp-schema.ts"],
   envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
   id: "mcp",
   kind: "feature",
@@ -42,18 +46,11 @@ const mcpDefinition = featureDefinitionSchema.parse({
 
 const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
-  files: [
-    {
-      path: "src/session-identity.ts",
-      target: "~/lib/eve/session-identity.ts",
-      type: "registry:file" as const,
-    },
-    ...mcpFiles.map((file) => ({
-      path: `src/features/mcp/${file}`,
-      target: `~/${file}`,
-      type: "registry:file" as const,
-    })),
-  ],
+  files: mcpFiles.map((file) => ({
+    path: `src/features/mcp/${file}`,
+    target: `~/${file}`,
+    type: "registry:file" as const,
+  })),
   meta: {
     chatjs: mcpDefinition,
   },

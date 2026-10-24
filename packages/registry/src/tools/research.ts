@@ -38,11 +38,6 @@ const researchItem: RegistryItem = {
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
   files: [
-    {
-      path: "src/session-identity.ts",
-      target: "~/lib/eve/session-identity.ts",
-      type: "registry:file" as const,
-    },
     ...[
       "renderer.tsx",
       "search-updates.ts",
@@ -58,6 +53,7 @@ const researchItem: RegistryItem = {
       "prompts.ts",
       "steps.ts",
       "configuration.ts",
+      "configuration-schema.ts",
     ].map((file) => ({
       path: `src/tools/deep-research/${file}`,
       target: `~/tools/chatjs/deep-research/${file}`,
@@ -73,6 +69,7 @@ const researchItem: RegistryItem = {
     chatjs: toolDefinitionSchema.parse({
       availabilityExport: "researchAvailable",
       contractVersion: 1,
+      config: { key: "deepResearch" },
       id: "deep-research",
       kind: "tool",
       requiresTools: ["createTextDocument", "readDocument", "webSearch"],

@@ -14,12 +14,10 @@ test("partial tool and workflow overrides retain required sibling defaults", () 
   const config = applyDefaults(input);
   expect(config.ai.tools.deepResearch).toMatchObject({
     allowClarification: false,
-    defaultModel: gatewayModelDefaults.tools.deepResearch.defaultModel,
-    finalReportModel: gatewayModelDefaults.tools.deepResearch.finalReportModel,
+    defaultModel: gatewayModelDefaults.roles.fast,
+    finalReportModel: gatewayModelDefaults.roles.smart,
   });
-  expect(config.ai.tools.code.edits).toBe(
-    gatewayModelDefaults.tools.code.edits
-  );
+  expect(config.ai.tools.code.edits).toBe(gatewayModelDefaults.roles.balanced);
   expect(config.ai.workflows).toMatchObject({
     chat: gatewayModelDefaults.workflows.chat,
     title: gatewayModelDefaults.workflows.chat,
@@ -43,7 +41,7 @@ test("readonly config inputs preserve selections without changing the source", (
     gatewayModelDefaults.workflows.title,
   ]);
   expect(config.ai.tools.followupSuggestions).toEqual({
-    default: gatewayModelDefaults.tools.followupSuggestions.default,
+    default: gatewayModelDefaults.roles.fast,
     enabled: true,
   });
   expect(input.ai.tools.followupSuggestions).toEqual({ enabled: true });

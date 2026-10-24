@@ -97,6 +97,8 @@ const documentItems: RegistryItem[] = [
     files: documentFiles(`${kind}-documents`, [
       "tool.ts",
       "guidelines.ts",
+      "configuration-schema.ts",
+      "assistant-actions.ts",
       "document.tsx",
       "editor.tsx",
       ...files,
@@ -105,6 +107,8 @@ const documentItems: RegistryItem[] = [
       chatjs: toolDefinitionSchema.parse({
         contractVersion: 1,
         documentKind: kind,
+        documentActions: true,
+        config: { key: kind },
         id: `${kind}-documents`,
         kind: "tool",
         requiresTools: ["readDocument"],

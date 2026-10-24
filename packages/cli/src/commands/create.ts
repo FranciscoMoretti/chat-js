@@ -1,3 +1,4 @@
+import { generateBaseline } from "#cli/utils/generate-baseline";
 import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import type { resolveSandbox } from "#cli/registry/sandboxes";
@@ -362,11 +363,7 @@ const promptCreateSetup = async (
 ): Promise<CreateSetup> => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
-  const coreFeatures = await promptCoreFeatures(
-    options.yes,
-    gatewaySelection.definition,
-    options.mcp
-  );
+  const coreFeatures = await promptCoreFeatures(options.yes, options.mcp);
   if (options.attachments !== undefined) {
     coreFeatures.attachments = options.attachments;
   }
@@ -565,6 +562,7 @@ const installRegistryItems = async (
       }
     );
     await runCommand(packageManager, ["install"], project.targetDir);
+    await generateBaseline(project.targetDir, packageManager);
     await runCommand(
       packageManager,
       [

@@ -22,6 +22,7 @@ const toolItems = (
       dependencies: ["ai", "zod"],
       description: "Generate videos using the selected gateway and storage",
       id: "generate-video",
+      config: { key: "video" },
       requiresGateway: ["video"],
       requiresStorage: true,
       slot: "generateVideo",
@@ -42,6 +43,7 @@ const toolItems = (
       description:
         "Generate and edit images using the selected gateway and storage",
       id: "generate-image",
+      config: { key: "image" },
       requiresGateway: ["image"],
       requiresStorage: true,
       slot: "generateImage",
@@ -91,6 +93,7 @@ const toolItems = (
     dependencies: readonly string[];
     description: string;
     id: string;
+    config?: { readonly key: string };
     slot?: string;
     tools: readonly unknown[];
   }>) =>
@@ -98,6 +101,8 @@ const toolItems = (
       dependencies: [...dependencies],
       description,
       files: [
+        ...(definition.config ? ["configuration-schema.ts"] : []),
+        ...(definition.id === "retrieve-url" ? ["retrieve-url-env.ts"] : []),
         "tool.ts",
         "renderer.tsx",
         "schemas.ts",
@@ -144,6 +149,11 @@ const searchToolItems = (
   ],
   description: `Use ${id} for chat and deep research`,
   files: [
+    {
+      path: `src/tools/${id}/${id}-env.ts`,
+      target: `~/tools/chatjs/${id}/${id}-env.ts`,
+      type: "registry:file" as const,
+    },
     {
       path: `src/tools/${id}/tool.ts`,
       target: `~/tools/chatjs/${id}/tool.ts`,

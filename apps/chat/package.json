@@ -16,7 +16,7 @@
     "check-env": "bun scripts/check-env.ts",
     "search:backfill": "tsx scripts/backfill-eve-search.ts",
     "cleanup": "node scripts/cleanup.ts",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate --config=drizzle.generate.config.ts",
     "db:migrate": "bunx tsx lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",

@@ -55,16 +55,20 @@ const verifyFeatures = (expected: Readonly<Record<string, string>>): void => {
 const verifyEnvironmentBoundaries = (
   expected: Readonly<Record<string, string>>
 ): void => {
-  for (const file of [
-    "features/mcp/setup.ts",
-    "tools/chatjs/retrieve-url/tool.ts",
-    "tools/chatjs/tavily-search/tool.ts",
-    "lib/db/mcp-oauth-lock.ts",
-    "lib/sandbox/adapter.ts",
-  ]) {
-    expect(required(expected, file)).toContain('from "@/lib/env"');
+  for (const [file, reader] of [
+    ["features/mcp/setup.ts", "./mcp-env"],
+    ["tools/chatjs/retrieve-url/tool.ts", "./retrieve-url-env"],
+    ["tools/chatjs/tavily-search/tool.ts", "./tavily-search-env"],
+    ["lib/sandbox/adapter.ts", "./vercel-sandbox-env"],
+  ] as const) {
+    expect(required(expected, file)).toContain(`from "${reader}"`);
+    expect(required(expected, file)).not.toContain('from "@/lib/env"');
     expect(required(expected, file)).not.toContain("@/features/langfuse/");
   }
+  // Database credentials still belong to core, even for an installable query.
+  expect(required(expected, "lib/db/mcp-oauth-lock.ts")).toContain(
+    'from "@/lib/env"'
+  );
 };
 
 const verifyExcludedFiles = (

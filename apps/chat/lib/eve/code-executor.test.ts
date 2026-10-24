@@ -2,9 +2,6 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
-vi.mock("@/lib/env", () => ({
-  env: { DAYTONA_API_KEY: "test", DAYTONA_ORGANIZATION_ID: "org" },
-}));
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: (): { error: ReturnType<typeof vi.fn> } => ({
     error: vi.fn(),

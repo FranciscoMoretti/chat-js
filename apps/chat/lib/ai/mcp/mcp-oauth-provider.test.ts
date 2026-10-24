@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
-import type { McpOAuthSession } from "@/lib/db/schema";
+import type { McpOAuthSession } from "@/features/mcp/db/mcp-schema";
 import { auth } from "@ai-sdk/mcp";
 
 const sdkIssuer = "http://127.0.0.1:3799";

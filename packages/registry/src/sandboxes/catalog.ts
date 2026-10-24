@@ -17,6 +17,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
   ],
   files: [
     "provider.ts",
+    `${id}-sandbox-env.ts`,
     "adapter.ts",
     ...(id === "vercel" ? ["persistent.ts"] : []),
   ].map((file) => ({

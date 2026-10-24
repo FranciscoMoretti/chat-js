@@ -94,7 +94,7 @@ class OpenAICompatibleGateway
   }
 
   private getBaseURL(): string | undefined {
-    return this.env.OPENAI_COMPATIBLE_BASE_URL;
+    return z.url().optional().parse(this.env.OPENAI_COMPATIBLE_BASE_URL);
   }
 
   public async fetchModels(): Promise<AiGatewayModel[]> {

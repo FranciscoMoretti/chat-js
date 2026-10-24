@@ -8,7 +8,7 @@ type MediaKind = "image" | "video";
 interface MediaGateway {
   readonly capabilities: Readonly<Record<MediaKind, boolean>>;
   readonly defaults: {
-    readonly tools: Readonly<Record<MediaKind, { readonly default?: string }>>;
+    readonly roles: Readonly<Partial<Record<MediaKind, string>>>;
   };
 }
 interface StorageConsumer {
@@ -21,9 +21,12 @@ interface MediaConsumer extends StorageConsumer {
 }
 
 const capabilitiesSchema = z.object({ image: z.boolean(), video: z.boolean() });
-const mediaSchema = z.object({ default: z.string().optional() });
-const toolsSchema = z.object({ image: mediaSchema, video: mediaSchema });
-const mediaDefaultsSchema = z.object({ tools: toolsSchema });
+const mediaDefaultsSchema = z.object({
+  roles: z.object({
+    image: z.string().optional(),
+    video: z.string().optional(),
+  }),
+});
 const noConsumers = 0;
 
 // These built-in IDs predate declarative requirements in installed descriptors.
@@ -82,7 +85,7 @@ const validateMedia = (
 ): void => {
   for (const tool of tools) {
     for (const kind of requiredMedia(tool)) {
-      const model = gateway.defaults.tools[kind].default;
+      const model = gateway.defaults.roles[kind];
       if (
         !gateway.capabilities[kind] ||
         typeof model !== "string" ||

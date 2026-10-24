@@ -1,4 +1,5 @@
 {
+  "config": { "key": "video" },
   "envRequirements": [],
   "id": "generate-video",
   "kind": "tool",

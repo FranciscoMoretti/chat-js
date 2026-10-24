@@ -1,4 +1,6 @@
 {
+  "config": { "key": "code" },
+  "documentActions": true,
   "documentKind": "code",
   "envRequirements": [],
   "id": "code-documents",

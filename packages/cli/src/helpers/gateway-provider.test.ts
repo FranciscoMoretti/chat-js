@@ -36,16 +36,11 @@ it("wires selected defaults and snapshot identity without managing dependencies"
       expect(generatedDefaults).toContain(
         `gatewayType = "${item.meta.chatjs.id}"`
       );
-      const codeIndex = generatedDefaults.indexOf('"code": {');
-      const deepResearchIndex = generatedDefaults.indexOf('"deepResearch": {');
-      const allowClarificationIndex = generatedDefaults.indexOf(
-        '"allowClarification":'
-      );
-      const defaultModelIndex = generatedDefaults.indexOf('"defaultModel":');
-      expect(codeIndex).toBeGreaterThanOrEqual(firstIndex);
-      expect(deepResearchIndex).toBeGreaterThan(codeIndex);
-      expect(allowClarificationIndex).toBeGreaterThanOrEqual(firstIndex);
-      expect(defaultModelIndex).toBeGreaterThan(allowClarificationIndex);
+      expect(generatedDefaults).toContain('"roles": {');
+      expect(generatedDefaults).toContain('"smart":');
+      expect(generatedDefaults).toContain('"balanced":');
+      expect(generatedDefaults).toContain('"fast":');
+      expect(generatedDefaults).not.toContain('"deepResearch":');
       expect(generatedSnapshot).toContain(
         `generatedForGateway = "${item.meta.chatjs.id}"`
       );

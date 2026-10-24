@@ -304,14 +304,12 @@ const promptStorage = async (
 
 const promptCoreFeatures = async (
   skipPrompt: boolean,
-  gateway: ReadonlyInput<GatewayDefinition>,
   mcp?: boolean
 ): Promise<Record<CoreFeatureKey, boolean>> => {
-  const defaultTools = gateway.defaults.tools;
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: false,
     documents: true,
-    followupSuggestions: defaultTools.followupSuggestions.enabled,
+    followupSuggestions: false,
     mcp: mcp ?? false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
@@ -432,14 +430,12 @@ const supportedAssistantTools = (
   BUILT_IN_TOOL_KEYS.filter((key) => {
     if (key === "imageGeneration") {
       return (
-        gateway.capabilities.image &&
-        Boolean(gateway.defaults.tools.image.default)
+        gateway.capabilities.image && Boolean(gateway.defaults.roles.image)
       );
     }
     if (key === "videoGeneration") {
       return (
-        gateway.capabilities.video &&
-        Boolean(gateway.defaults.tools.video.default)
+        gateway.capabilities.video && Boolean(gateway.defaults.roles.video)
       );
     }
     return true;

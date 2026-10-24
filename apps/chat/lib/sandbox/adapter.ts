@@ -2,8 +2,10 @@ import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
-import { env } from "@/lib/env";
-import { z } from "zod";
+import {
+  readSandboxEnvironment,
+  readSandboxImageEnvironment,
+} from "./vercel-sandbox-env";
 import { createModuleLogger } from "@/lib/logger";
 
 type SupportedExecutionLanguage = "python" | "javascript";
@@ -59,7 +61,8 @@ const tokenClaims = (
 };
 
 const getTokenAuth = (): Partial<SandboxAuth> => {
-  const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
+  const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } =
+    readSandboxEnvironment();
   if (
     typeof VERCEL_TEAM_ID === "string" &&
     VERCEL_TEAM_ID !== "" &&
@@ -121,14 +124,8 @@ const resolveSandboxAuth = (): SandboxAuth => {
   return { ...identity, token };
 };
 
-// Installed providers must work without rewriting an existing app's env schema.
-const sandboxImageEnvironment = z.object({
-  VERCEL_SANDBOX_IMAGE_JAVASCRIPT: z.string().nonempty().optional(),
-  VERCEL_SANDBOX_IMAGE_PYTHON: z.string().nonempty().optional(),
-});
-
 const getSandboxImage = (language: SupportedExecutionLanguage): string => {
-  const images = sandboxImageEnvironment.parse(process.env);
+  const images = readSandboxImageEnvironment();
   if (language === "javascript") {
     return images.VERCEL_SANDBOX_IMAGE_JAVASCRIPT ?? "vercel/sandbox/node:22";
   }

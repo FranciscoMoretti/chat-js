@@ -4,7 +4,7 @@ import { asSchema, jsonSchema } from "ai";
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
-import type { McpConnector } from "@/lib/db/schema";
+import type { McpConnector } from "@/features/mcp/db/mcp-schema";
 import type { ToolContext } from "eve/tools";
 import { requireMcpCredentials } from "@/features/mcp/setup";
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";

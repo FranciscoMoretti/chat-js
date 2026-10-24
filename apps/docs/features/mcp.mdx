@@ -19,36 +19,22 @@ chat-js add mcp
 
 Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
 
-### Upgrading an existing app
+### Database schema and migrations
 
-Before adding or updating MCP in an older generated app, check the `mcpConnector` columns in `lib/db/schema.ts`. The current MCP feature requires this field:
+MCP owns its tables in `features/mcp/db/mcp-schema.ts`. The core tables stay in `lib/db/schema.ts`. Your generated `features/installed-database.ts` lists the schemas contributed by installed features, and Drizzle composes them into one application schema.
 
-```ts
-requireApproval: boolean("requireApproval").notNull().default(false),
-```
+During `chat-js create`, the CLI installs dependencies and generates one initial migration from your selected schema. This step is offline and needs no database connection or application secrets. An app created with `--no-mcp` has no MCP tables in its baseline. ChatJS supports new installations, not upgrades from older ChatJS templates.
 
-If it is missing, add it to the connector columns and run your app's `db:generate` script using its package manager. This generates a migration against your app's own migration history.
-
-| Package manager | Generate migration     | Apply reviewed migration |
-| --------------- | ---------------------- | ------------------------ |
-| Bun             | `bun run db:generate`  | `bun run db:migrate`     |
-| npm             | `npm run db:generate`  | `npm run db:migrate`     |
-| pnpm            | `pnpm run db:generate` | `pnpm run db:migrate`    |
-| Yarn            | `yarn run db:generate` | `yarn run db:migrate`    |
-
-Review the generated migration. For an existing `McpConnector` table, the approval change should add this column:
-
-```sql
-ALTER TABLE "McpConnector" ADD COLUMN "requireApproval" boolean DEFAULT false NOT NULL;
-```
-
-Run `db:migrate` with your package manager to apply the reviewed migration to your intended database. Then install the updated MCP code:
+If you later add MCP to an app created with this template, generate and review the next migration before applying it:
 
 ```bash
 chat-js add mcp
+bun run db:generate
+# Review the generated SQL, then apply it to your intended database.
+bun run db:migrate
 ```
 
-Use your app's generated migration rather than copying a numbered migration from the ChatJS repository. The CLI checks for the schema field before installing MCP, but it does not connect to your database or apply migrations. These steps also apply when installing the registry item directly through shadcn. New scaffolds already include the schema and migration.
+Use your app's package manager in place of Bun when needed. All migrations belong to the app's single history in `lib/db/migrations`. Adding or syncing a feature does not apply migrations or erase that history. Removing feature code does not delete its data automatically. Review any generated table drops separately before applying them.
 
 ### Encryption key
 

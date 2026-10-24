@@ -28,24 +28,12 @@ const vercelDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  tools: {
-    code: { edits: "openai/gpt-5-mini" },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      finalReportModel: "google/gemini-3-flash",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    followupSuggestions: {
-      default: "google/gemini-2.5-flash-lite",
-      enabled: false,
-    },
-    image: { default: "google/gemini-3-pro-image" },
-    sheet: { analyze: "openai/gpt-5-mini", format: "openai/gpt-5-mini" },
-    text: { polish: "openai/gpt-5-mini" },
-    video: { default: "xai/grok-imagine-video" },
+  roles: {
+    fast: "google/gemini-2.5-flash-lite",
+    balanced: "openai/gpt-5-mini",
+    smart: "google/gemini-3-flash",
+    image: "google/gemini-3-pro-image",
+    video: "xai/grok-imagine-video",
   },
   workflows: {
     chat: "openai/gpt-5-mini",
@@ -71,24 +59,10 @@ const openrouterDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  tools: {
-    code: { edits: "openai/gpt-5-mini" },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      finalReportModel: "google/gemini-3-flash",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    followupSuggestions: {
-      default: "google/gemini-2.5-flash-lite",
-      enabled: false,
-    },
-    image: {},
-    sheet: { analyze: "openai/gpt-5-mini", format: "openai/gpt-5-mini" },
-    text: { polish: "openai/gpt-5-mini" },
-    video: {},
+  roles: {
+    fast: "google/gemini-2.5-flash-lite",
+    balanced: "openai/gpt-5-mini",
+    smart: "google/gemini-3-flash",
   },
   workflows: {
     chat: "openai/gpt-5-mini",
@@ -108,21 +82,11 @@ const openaiDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai"],
-  tools: {
-    code: { edits: "gpt-5-mini" },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "gpt-5-nano",
-      finalReportModel: "gpt-5-mini",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    followupSuggestions: { default: "gpt-5-nano", enabled: false },
-    image: { default: "gpt-image-1" },
-    sheet: { analyze: "gpt-5-mini", format: "gpt-5-mini" },
-    text: { polish: "gpt-5-mini" },
-    video: {},
+  roles: {
+    fast: "gpt-5-nano",
+    balanced: "gpt-5-mini",
+    smart: "gpt-5-mini",
+    image: "gpt-image-1",
   },
   workflows: {
     chat: "gpt-5-mini",
@@ -146,21 +110,10 @@ const litellmDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai"],
-  tools: {
-    code: { edits: "openai/gpt-4o-mini" },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "openai/gpt-4o-mini",
-      finalReportModel: "openai/gpt-4o",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    followupSuggestions: { default: "openai/gpt-4o-mini", enabled: false },
-    image: {},
-    sheet: { analyze: "openai/gpt-4o-mini", format: "openai/gpt-4o-mini" },
-    text: { polish: "openai/gpt-4o-mini" },
-    video: {},
+  roles: {
+    fast: "openai/gpt-4o-mini",
+    balanced: "openai/gpt-4o-mini",
+    smart: "openai/gpt-4o",
   },
   workflows: {
     chat: "openai/gpt-4o-mini",

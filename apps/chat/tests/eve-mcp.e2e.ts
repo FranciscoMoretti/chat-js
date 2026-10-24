@@ -12,7 +12,8 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { MCPClient } from "../lib/ai/mcp/mcp-client";
 import { db } from "../lib/db/client";
-import { mcpConnector, userCredit } from "../lib/db/schema";
+import { userCredit } from "../lib/db/schema";
+import { mcpConnector } from "@/features/mcp/db/mcp-schema";
 import { env } from "../lib/env";
 import { discoverEveMcpTools, executeEveMcpTool } from "../lib/eve/mcp-tools";
 

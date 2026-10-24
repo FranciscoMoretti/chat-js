@@ -1,4 +1,5 @@
 {
+  "databaseSchemas": ["features/mcp/db/mcp-schema.ts"],
   "contractVersion": 1,
   "envRequirements": [{ "options": [["MCP_ENCRYPTION_KEY"]] }],
   "id": "mcp",

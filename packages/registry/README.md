@@ -31,3 +31,25 @@ Source folders group items by category. Each gateway has a `gateway.ts`; each to
 The selected gateway installs into the app's `lib/ai/gateway.ts` slot. Tools install under `tools/chatjs/<id>/` with generated registrations and separate custom modules. Third-party destination namespacing is not inferred from registry aliases and is not added by this source reorganization.
 
 `packages/gateways` owns shared runtime contracts. `packages/cli` owns installation and configuration. `apps/chat` is the reference consumer and app template source. New categories such as layouts and caches should introduce source folders and contracts when their first implementation is added, rather than empty scaffolding.
+
+## Ownership inventory
+
+From the repository root, run `bun architecture:inventory` for a summary or `bun architecture:inventory --json` for every file's owners, source paths and cross-module imports. The inventory derives installable ownership from the current demo selection, local registry dependencies, explicit targets and generated tool/feature descriptors. Core is the complement. It does not mutate installations or replace source receipts.
+
+The scope is present Git-tracked and non-ignored untracked files in `apps/chat`, including a `scaffoldIncluded` flag for the fresh scaffold (which omits demo migration history). A file owned by an installable retains that owner even when its framework entrypoint lives outside the feature folder. Generated composition remains core with a separate role, using generator headers and the demo baseline; app-owned customization files remain core. Inventory counts include tests/assets, while the import audit excludes test files and repository-only source. Static imports, type imports, re-exports, literal dynamic imports and literal `require` calls use the app's TypeScript resolver. Computed imports, external packages and external registry URLs are outside this audit.
+
+`--check` exits nonzero for shared or missing targets, unresolved local imports, or import crossings needing review. Crossings through generated composition, direct declared registry dependencies, and explicitly reviewed public core contracts are distinguished from unresolved findings. This is an audit command, not yet a required CI gate: existing crossings must be reviewed before enforcing it globally. Do not accept them by recording a blanket baseline.
+
+Session identity (`lib/eve/session-identity.ts`) is a core contract. MCP and research consume it; neither installs or overwrites it. The minimal scaffold retains it independently of those selections.
+
+## Feature database schemas
+
+A feature may declare `databaseSchemas` in its `chatjs.json`, using app-relative TypeScript paths beneath `features/<id>/`. Sync validates the selected descriptors and files, then generates `features/installed-database.ts`. Drizzle consumes that list alongside `lib/db/schema.ts`. This is composition metadata, not a barrel that core runtime modules import. MCP contributes `features/mcp/db/mcp-schema.ts` and consumes the core user table for its foreign key.
+
+Fresh scaffolds exclude the demo's historical migrations. After installing dependencies, create runs the offline `db:generate` script to generate the selected schema's initial migration. Only create generates a baseline, and it refuses a nonempty migration directory. Add and sync preserve the app's migration history. Schema generation and applying migrations remain separate actions. ChatJS supports new installations, without migration support for older template versions.
+
+## Tool configuration
+
+Tools can declare `config: { key }` and export `configSchema` from their own `configuration-schema.ts`. Sync generates `tools/chatjs/installed-config.ts` from installed descriptors, rejecting duplicate or reserved keys. The core composes those schemas under `ai.tools`, deriving both input and output types. The editable interface remains `chat.config.ts`. Unknown tool keys are rejected at the type and runtime boundaries.
+
+Gateways supply `roles.smart`, `roles.balanced`, `roles.fast`, and optional `roles.image`/`roles.video`. Tool schemas own their defaults and choose from these roles through the pure `lib/config-models.ts` core contract. They must not import runtime configuration or credentials. Document assistant actions similarly belong to document bundles and enter core through a generated registration. Follow-up suggestions and attachment limits remain core because core runtime code consumes them independently of installable tools.

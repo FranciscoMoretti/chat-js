@@ -1,7 +1,7 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { tavily } from "@tavily/core";
 import { defineTool } from "eve/tools";
-import { env } from "@/lib/env";
+import { readToolEnvironment } from "./tavily-search-env";
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import {
@@ -45,6 +45,7 @@ const createTavilySearch =
     index: number
   ) => Promise<{ content: string; title: string; url: string }[]>) =>
   async ({ query, maxResults }, index) => {
+    const env = readToolEnvironment();
     if (
       !(typeof env.TAVILY_API_KEY === "string" && env.TAVILY_API_KEY !== "")
     ) {

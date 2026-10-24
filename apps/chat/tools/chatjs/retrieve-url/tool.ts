@@ -1,6 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
-import { env } from "@/lib/env";
+import { readToolEnvironment } from "./retrieve-url-env";
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { retrievedInput } from "./schemas";
@@ -22,9 +22,12 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
 const UNBILLED_TOOL_COST_USD = 0;
 const log = createModuleLogger("tools/retrieve-url");
 
-const app = hasNonEmptyValue(env.FIRECRAWL_API_KEY)
-  ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
-  : null;
+const createClient = (): FirecrawlApp | null => {
+  const env = readToolEnvironment();
+  return hasNonEmptyValue(env.FIRECRAWL_API_KEY)
+    ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
+    : null;
+};
 
 const parseUrl = (url: string): URL | null => {
   try {
@@ -53,6 +56,7 @@ Avoid:
     await executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
       usage.addCostUsd(UNBILLED_TOOL_COST_USD);
       try {
+        const app = createClient();
         if (!app) {
           return {
             error:

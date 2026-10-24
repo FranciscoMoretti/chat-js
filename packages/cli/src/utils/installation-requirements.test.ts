@@ -106,7 +106,7 @@ test.each(["image", "video"] as const)(
       }
     );
     gateway.capabilities[kind] = true;
-    gateway.defaults.tools[kind] = {};
+    gateway.defaults.roles[kind] = undefined;
 
     await rejects(
       validateProviderRequirements(tmpdir(), target),
@@ -117,7 +117,7 @@ test.each(["image", "video"] as const)(
         return true;
       }
     );
-    gateway.defaults.tools[kind] = { default: "model" };
+    gateway.defaults.roles[kind] = "model";
     await validateProviderRequirements(tmpdir(), target);
   }
 );
@@ -173,7 +173,7 @@ test("add validates installed provider literals without executing user source", 
   const file = path.join(cwd, "lib/ai/gateway-model-defaults.ts");
   const source = `throw new Error("must not execute");
     const gatewayCapabilities = { image: true, video: false };
-    const gatewayModelDefaults = { tools: { image: { default: "image-model" }, video: {} } } satisfies UnknownType;`;
+    const gatewayModelDefaults = { roles: { image: "image-model" } } satisfies UnknownType;`;
   await writeFile(file, source);
   await validateProviderRequirements(cwd, {
     features: [],

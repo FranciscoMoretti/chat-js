@@ -24,7 +24,9 @@ Use a built item as a starting point. Declare:
 
 Each environment requirement has `options: string[][]`: outer entries are alternatives, and every variable within one alternative is required. Separate requirements must all be satisfied. `optionalEnv` declares optional variables that the adapter also needs. The app passes only these declared variables to it.
 
-`defaults` contains provider order, model lists, workflow models and tool defaults; its complete validated shape is exported as `GatewayDefinition` from `@chat-js/gateways/definition`. The installer writes selected defaults with `satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>` so the generated app checks them against the actual adapter, not a list of known gateway names.
+`defaults` contains provider order, model lists, workflow models and generic model roles; its complete validated shape is exported as `GatewayDefinition` from `@chat-js/gateways/definition`. The installer writes selected defaults with `satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>` so the generated app checks them against the actual adapter, not a list of known gateway names.
+
+`defaults.roles` contains `smart`, `balanced` and `fast` language model IDs, plus optional `image` and `video` IDs. These are default-selection roles, not provider reasoning-effort settings or capability guarantees. Tools own their configuration schemas and select from these roles. Gateways do not define research limits, document actions or other tool-specific settings.
 
 An item can instead install a tiny entry file importing `Gateway` from an author's npm package and list that package in `dependencies`. No ChatJS CLI change is needed for a new gateway ID. Registry dependencies may contain supporting files. ChatJS checks the root item's contract and gateway slot, while shadcn owns dependency resolution and existing-file behavior. Type-check the installed app to verify the adapter and configuration agree. There is no general compatibility solver.
 

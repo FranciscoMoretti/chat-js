@@ -32,6 +32,7 @@
     "uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive",
     "uiverify:docs": "bun run test:visual:docs && bun run uiverify:upload:docs",
     "demo:sync": "turbo run demo:sync --filter=@chat-js/registry --",
+    "architecture:inventory": "bun packages/registry/scripts/ownership.ts",
     "demo:check": "turbo run demo:check --filter=@chat-js/registry",
     "test:visual:registry": "bun --filter=@chat-js/registry run test:visual",
     "uiverify:upload:registry": "uiverify upload --static-dir packages/registry/uiverify-archive --only-changed",

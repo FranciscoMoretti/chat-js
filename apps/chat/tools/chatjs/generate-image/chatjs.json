@@ -1,4 +1,5 @@
 {
+  "config": { "key": "image" },
   "envRequirements": [],
   "id": "generate-image",
   "kind": "tool",

@@ -85,7 +85,7 @@ class LiteLLMGateway
   }
 
   private getBaseURL(): string | undefined {
-    return this.env.LITELLM_BASE_URL;
+    return z.url().optional().parse(this.env.LITELLM_BASE_URL);
   }
 
   public async fetchModels(): Promise<AiGatewayModel[]> {

@@ -361,6 +361,16 @@ export const add = new Command("add")
           }
         );
         printSetupRequirements(setup);
+        if (
+          plan.features.some(
+            (feature: FeatureInput): boolean =>
+              (feature.databaseSchemas?.length ?? 0) > 0
+          )
+        ) {
+          log.info(
+            "Database schema added. Run your db:generate script and review the SQL before running setup or db:migrate."
+          );
+        }
         log.success(
           "Installed and registered. Review .env.local, then run setup."
         );

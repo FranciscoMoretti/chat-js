@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { McpConnector } from "@/lib/db/schema";
+import type { McpConnector } from "@/features/mcp/db/mcp-schema";
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Separator } from "@/components/ui/separator";

@@ -1,4 +1,5 @@
 {
+  "config": { "key": "deepResearch" },
   "availabilityExport": "researchAvailable",
   "envRequirements": [],
   "id": "deep-research",

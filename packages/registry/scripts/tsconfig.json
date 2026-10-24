@@ -5,6 +5,7 @@
   },
   "include": [
     "demo-sync.ts",
+    "ownership.ts",
     "../test/demo-check.test.ts",
     "../src/demo-sync.test.ts",
     "../src/demo-turbo.test.ts"

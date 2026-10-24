@@ -31,7 +31,7 @@ it("returns complete selections from interactive prompts in catalog order", asyn
     expect(Object.keys(auth)).toEqual([...AUTH_PROVIDERS]);
 
     const definition = externalGatewayFixture().root.meta.chatjs;
-    const features = await promptCoreFeatures(false, definition, true);
+    const features = await promptCoreFeatures(false, true);
     expect(features).toEqual({
       attachments: false,
       documents: true,
@@ -71,7 +71,7 @@ it("uses external defaults and every environment group with --yes", async () => 
     { options: [["FIRST"]] },
     { options: [["SECOND"], ["ALTERNATE"]] },
   ];
-  const coreFeatures = await promptCoreFeatures(true, definition);
+  const coreFeatures = await promptCoreFeatures(true);
   const documentTypes = await promptDocumentTypes(true, true);
   const { builtInTools } = await promptAssistantTools(
     [],
@@ -108,7 +108,7 @@ it("uses external defaults and every environment group with --yes", async () => 
 it("rejects a default for media the gateway cannot support", () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.capabilities.image = false;
-  definition.defaults.tools.image = { default: "unsupported" };
+  definition.defaults.roles.image = "unsupported";
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
@@ -132,8 +132,7 @@ it("disables every document type when documents are not installed", async () => 
 it.each([true, false])(
   "honors an explicit MCP installation choice with --yes: %s",
   async (mcp) => {
-    const definition = externalGatewayFixture().root.meta.chatjs;
-    const features = await promptCoreFeatures(true, definition, mcp);
+    const features = await promptCoreFeatures(true, mcp);
     expect(features.mcp).toBe(mcp);
   }
 );

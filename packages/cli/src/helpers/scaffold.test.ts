@@ -196,9 +196,9 @@ describe("buildConfigTs", (): void => {
     );
     expect(output).toContain("parallelResponses: true");
     expect(output).not.toContain("documents: {");
-    expect(output).toContain("video: {");
+    expect(output).not.toContain("video: {");
   });
-  it("preserves gateway media defaults for openai-compatible scaffolds", (): void => {
+  it("leaves uninstalled media configuration to tool contributions", (): void => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -220,8 +220,8 @@ describe("buildConfigTs", (): void => {
     });
 
     expect(output).toContain('gateway: "openai-compatible"');
-    expect(output).toContain("image: {");
-    expect(output).toContain('default: "gpt-image-1"');
+    expect(output).not.toContain("image: {");
+    expect(output).not.toContain('default: "gpt-image-1"');
     expect(output).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
@@ -343,7 +343,7 @@ describe("scaffoldFromTemplate", (): void => {
       "tests/artifacts.e2e.ts",
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
-      "lib/db/migrations/0000_eve_baseline.sql",
+
       "scripts/eve-setup.ts",
       "scripts/eve-setup-config.ts",
       "lib/eve/world-config.ts",
@@ -351,6 +351,9 @@ describe("scaffoldFromTemplate", (): void => {
     ]) {
       expect(existsSync(pathModule.join(destination, file))).toBe(true);
     }
+    expect(existsSync(pathModule.join(destination, "lib/db/migrations"))).toBe(
+      false
+    );
     const playwright = await readFile(
       pathModule.join(destination, "playwright.config.ts"),
       "utf-8"

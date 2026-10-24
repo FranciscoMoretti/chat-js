@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
-import type { McpConnector } from "@/lib/db/schema";
+import type { McpConnector } from "@/features/mcp/db/mcp-schema";
 import { db } from "@/lib/db/client";
-import { mcpConnector } from "@/lib/db/schema";
+import { mcpConnector } from "@/features/mcp/db/mcp-schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-queries");

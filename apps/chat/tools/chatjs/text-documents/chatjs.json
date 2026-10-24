@@ -1,4 +1,6 @@
 {
+  "config": { "key": "text" },
+  "documentActions": true,
   "documentKind": "text",
   "envRequirements": [],
   "id": "text-documents",

@@ -1,70 +1,16 @@
-import type { DocumentAssistantRequest } from "./document-contracts";
-import { config } from "@/lib/config";
+import type {
+  DocumentAssistantAction,
+  DocumentAssistantRequest,
+} from "./document-contracts";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
-interface DocumentAssistantAction {
-  instruction: string;
-  label: string;
-  modelId: typeof config.ai.tools.text.polish;
-}
-
-const sheetDocumentAssistantActions = (): DocumentAssistantAction[] => [
-  {
-    instruction: "Format and clean the spreadsheet data.",
-    label: "Format and clean data",
-    modelId: config.ai.tools.sheet.format,
-  },
-  ...(installedDocumentKinds.has("code")
-    ? [
-        {
-          instruction:
-            "Analyze and visualize the spreadsheet data by creating a new Python code document.",
-          label: "Analyze and visualize data",
-          modelId: config.ai.tools.sheet.analyze,
-        },
-      ]
-    : []),
-];
+import { installedDocumentActions } from "@/tools/chatjs/document-actions";
 
 const documentAssistantActions = (
   kind: "text" | "code" | "sheet"
-): DocumentAssistantAction[] => {
-  if (!installedDocumentKinds.has(kind)) {
-    return [];
-  }
-  switch (kind) {
-    case "text": {
-      return [
-        {
-          instruction:
-            "Add final polish, check grammar, add section titles for structure, and ensure the document reads smoothly.",
-          label: "Add final polish",
-          modelId: config.ai.tools.text.polish,
-        },
-      ];
-    }
-    case "code": {
-      return [
-        {
-          instruction: "Add comments to the code for understanding.",
-          label: "Add comments",
-          modelId: config.ai.tools.code.edits,
-        },
-        {
-          instruction: "Add logs to the code for debugging.",
-          label: "Add logs",
-          modelId: config.ai.tools.code.edits,
-        },
-      ];
-    }
-    case "sheet": {
-      return sheetDocumentAssistantActions();
-    }
-    default: {
-      return [];
-    }
-  }
-};
+): DocumentAssistantAction[] =>
+  installedDocumentKinds.has(kind)
+    ? (installedDocumentActions[kind]?.() ?? [])
+    : [];
 
 const documentAssistantRequest = (
   action: Readonly<ReturnType<typeof documentAssistantActions>[number]>,

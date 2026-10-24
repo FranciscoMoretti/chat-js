@@ -11,8 +11,6 @@ import { updateEnvironmentExample } from "./environment-example";
 import { prepareDependencyUpdate } from "./installation-dependencies";
 import { directoryFiles, optionalFile } from "./installation-files";
 
-import { assertMcpApprovalSchema } from "./mcp-schema";
-
 import type { planInstallation } from "./installation-plan";
 
 import { preflight } from "./preflight";
@@ -150,9 +148,6 @@ const installPlan = async (
   },
   register: () => Promise<void>
 ): Promise<void> => {
-  if (plan.features.some((feature): boolean => feature.id === "mcp")) {
-    await assertMcpApprovalSchema(cwd);
-  }
   const targets = [...sourceTargets(plan), ...(options.managedTargets ?? [])];
   const retired = await Promise.all(
     plan.replacements.map(
@@ -171,6 +166,7 @@ const installPlan = async (
     "pnpm-lock.yaml",
     "yarn.lock",
     ...toolRegistrationTargets,
+    "features/installed-database.ts",
     ...(options.rollbackTargets ?? []),
   ];
   const snapshotTargets = [...new Set([...targets, ...rollbackTargets])];

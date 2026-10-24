@@ -58,14 +58,10 @@ const primaryFixtureModel = createModel(
 );
 
 const alternativeFixtureModels = [
-  createModel(
-    gatewayModelDefaults.tools.code.edits,
-    "Reasoning fixture model",
-    {
-      reasoning: true,
-      toolCall: true,
-    }
-  ),
+  createModel(gatewayModelDefaults.roles.balanced, "Reasoning fixture model", {
+    reasoning: true,
+    toolCall: true,
+  }),
   createModel(
     gatewayModelDefaults.workflows.chatImageCompatible,
     "Alternative fixture model",

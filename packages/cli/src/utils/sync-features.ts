@@ -12,6 +12,8 @@ import { attachmentUploadFiles } from "../../../registry/src/features/attachment
 import { mcpFiles } from "../../../registry/src/features/mcp";
 import { observabilityItems } from "../../../registry/src/features/observability";
 
+import { planDatabaseSchemas } from "./sync-database";
+
 import { generatedRegistrationSource } from "./generated-registration-source";
 
 import {
@@ -375,6 +377,7 @@ const syncFeatures = async (
     ...(uploads ? ["attachment-uploads"] : []),
     ...observability.ids,
   ];
+  const databaseSchemas = await planDatabaseSchemas(cwd, installed);
   const installedSet = installed.length > 0 ? JSON.stringify(installed) : "";
   const installedSource = `export const installedFeatures: ReadonlySet<string> = new Set(${installedSet});`;
   const formattedInstalledSource =
@@ -383,6 +386,10 @@ const syncFeatures = async (
       : installedSource;
   await mkdir(path.join(cwd, "features"), { recursive: true });
   await Promise.all([
+    writeFile(
+      path.join(cwd, "features/installed-database.ts"),
+      databaseSchemas
+    ),
     writeFile(
       path.join(cwd, "features/installed-routers.ts"),
       generatedRegistrationSource(

@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import { MCPClient } from "../lib/ai/mcp/mcp-client";
 import { db } from "../lib/db/client";
-import { mcpConnector, mcpOAuthSession, userCredit } from "../lib/db/schema";
+import { userCredit } from "../lib/db/schema";
+import { mcpConnector, mcpOAuthSession } from "@/features/mcp/db/mcp-schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";

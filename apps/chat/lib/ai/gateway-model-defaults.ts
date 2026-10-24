@@ -16,35 +16,12 @@ const gatewayModelDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  tools: {
-    code: {
-      edits: "openai/gpt-5-mini",
-    },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      finalReportModel: "google/gemini-3-flash",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    followupSuggestions: {
-      default: "google/gemini-2.5-flash-lite",
-      enabled: false,
-    },
-    image: {
-      default: "google/gemini-3-pro-image",
-    },
-    sheet: {
-      analyze: "openai/gpt-5-mini",
-      format: "openai/gpt-5-mini",
-    },
-    text: {
-      polish: "openai/gpt-5-mini",
-    },
-    video: {
-      default: "xai/grok-imagine-video",
-    },
+  roles: {
+    balanced: "openai/gpt-5-mini",
+    fast: "google/gemini-2.5-flash-lite",
+    image: "google/gemini-3-pro-image",
+    smart: "google/gemini-3-flash",
+    video: "xai/grok-imagine-video",
   },
   workflows: {
     chat: "google/gemini-2.5-flash-lite",

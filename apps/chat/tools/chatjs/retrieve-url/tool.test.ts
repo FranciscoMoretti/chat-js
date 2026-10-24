@@ -1,13 +1,11 @@
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
-  env: { FIRECRAWL_API_KEY: "test-key" },
   extract: vi.fn(),
   scrape: vi.fn(),
 }));
-vi.mock("@/lib/env", () => ({ env: mocks.env }));
 vi.mock("@mendable/firecrawl-js", () => ({
   default: class {
     public scrapeUrl = mocks.scrape;
@@ -25,8 +23,10 @@ vi.mock(
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
-  mocks.env.FIRECRAWL_API_KEY = "test-key";
+  vi.stubEnv("FIRECRAWL_API_KEY", "test-key");
 });
+
+afterEach(() => vi.unstubAllEnvs());
 
 test.each([
   ["missing configuration", "https://example.com"],
@@ -36,7 +36,7 @@ test.each([
   async (reason, url) => {
     const noChargeUsd = 0;
     if (reason === "missing configuration") {
-      mocks.env.FIRECRAWL_API_KEY = "";
+      vi.stubEnv("FIRECRAWL_API_KEY", "");
     }
     const { retrieveUrl } = await import("./tool");
     const result = await retrieveUrl.execute(

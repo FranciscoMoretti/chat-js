@@ -1,5 +1,5 @@
 import { rejects } from "node:assert/strict";
-import { afterEach, expect, mock, test } from "bun:test";
+import { afterEach, expect, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
 import path from "node:path";
@@ -140,7 +140,7 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
   ).not.toContain("mcpRouter");
 });
 
-test("MCP installation requires the approval schema before changing an older scaffold", async (): Promise<void> => {
+test("MCP installation contributes its schema without modifying core tables", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
@@ -156,7 +156,7 @@ test("MCP installation requires the approval schema before changing an older sca
   ).toBe(false);
   expect(
     await readFile(path.join(root, "lib/db/schema.ts"), "utf-8")
-  ).toContain('"McpConnector"');
+  ).not.toContain('"McpConnector"');
   const files = await Promise.all(
     (mcpItem.files ?? []).map(
       async (file: Readonly<NonNullable<typeof mcpItem.files>[number]>) => ({
@@ -182,62 +182,10 @@ test("MCP installation requires the approval schema before changing an older sca
   try {
     const schemaFile = path.join(root, "lib/db/schema.ts");
     const schema = await readFile(schemaFile, "utf-8");
-    const oldSchema = schema.replace(
-      '    requireApproval: boolean("requireApproval").notNull().default(false),\n',
-      ""
-    );
-    expect(oldSchema).not.toContain("requireApproval");
-    await writeFile(schemaFile, oldSchema);
     const plan = await planInstallation(root, {
       features: [],
       tools: [`http://127.0.0.1:${server.port}/mcp.json`],
     });
-
-    await rejects(
-      installPlan(
-        root,
-        plan,
-        { overwrite: true },
-        mock<() => Promise<void>>().mockRejectedValue(
-          new Error("registration must not run before the schema upgrade")
-        )
-      ),
-      (reason: unknown) => {
-        expect(() => {
-          throw reason;
-        }).toThrow("db:generate script");
-        return true;
-      }
-    );
-    expect(
-      await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
-    ).toBe(false);
-    expect(await readFile(schemaFile, "utf-8")).toBe(oldSchema);
-    const missingColumnsSchema = schema.replace(
-      /const mcpConnector = pgTable\([\s\S]*?\n\);/u,
-      'const mcpConnector = pgTable("McpConnector");'
-    );
-    expect(missingColumnsSchema).not.toBe(schema);
-    await writeFile(schemaFile, missingColumnsSchema);
-
-    await rejects(
-      installPlan(
-        root,
-        plan,
-        { overwrite: true },
-        mock<() => Promise<void>>().mockRejectedValue(
-          new Error("registration must not run before the schema upgrade")
-        )
-      ),
-      (reason: unknown) => {
-        expect(() => {
-          throw reason;
-        }).toThrow("db:generate script");
-        return true;
-      }
-    );
-    expect(await readFile(schemaFile, "utf-8")).toBe(missingColumnsSchema);
-    await writeFile(schemaFile, schema);
     await installPlan(root, plan, {}, async (): Promise<void> => {
       await syncFeatures(root, { addUi: true, expectedMcp: true });
     });
@@ -248,6 +196,10 @@ test("MCP installation requires the approval schema before changing an older sca
       )
     );
     expect(installed.every(Boolean)).toBe(true);
+    expect(await readFile(schemaFile, "utf-8")).toBe(schema);
+    expect(
+      await readFile(path.join(root, "features/installed-database.ts"), "utf-8")
+    ).toContain("features/mcp/db/mcp-schema.ts");
     expect(
       await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
     ).toContain("mcp: mcpRouter");

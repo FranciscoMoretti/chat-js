@@ -255,7 +255,10 @@ const copyChatTemplateFromRepoSource = async (
 ): Promise<void> => {
   const sourceDir = pathModule.join(getRepoRoot(), "apps", "chat");
   await cp(sourceDir, destination, {
-    filter: (filePath) => shouldCopyChatAppFilePath(sourceDir, filePath),
+    filter: (filePath) =>
+      shouldCopyChatAppFilePath(sourceDir, filePath) &&
+      pathModule.relative(sourceDir, filePath) !==
+        pathModule.join("lib", "db", "migrations"),
     recursive: true,
   });
   await applyChatTemplateSourceTransforms(destination);
@@ -386,7 +389,10 @@ const scaffoldFromTemplate = async (
 
   await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
-        filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
+        filter: (file) =>
+          shouldCopyChatAppFilePath(templateDir, file) &&
+          pathModule.relative(templateDir, file) !==
+            pathModule.join("lib", "db", "migrations"),
         recursive: true,
       })
     : copyChatTemplateFromRepoSource(destination));

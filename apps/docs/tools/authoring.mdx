@@ -90,13 +90,36 @@ The `saved-code-execution` bundle requires code documents and a `codeExecution` 
 
 `chat-js add saved-code-execution` reuses an installed compatible executor or installs `code-execution`. The generic executor requires sandbox infrastructure: select `--sandbox-provider vercel` or `--sandbox-provider daytona` if the app has no sandbox provider yet. An incompatible selected executor produces an error before installation. Its chart packages and Run UI are installed with the execution bundles.
 
-For credentials, declare alternatives in the typed metadata:
+Keep credential reads and format validation in a server-only module owned by your tool, such as `my-tool-env.ts`. Read credentials when the tool runs. Do not add tool credentials to the core `lib/env-schema.ts` or import them into configuration schemas used by client code. Two tools can read the same environment variable independently.
+
+For the shared installation checklist and `check-env` command, declare credential alternatives in the typed metadata:
 
 ```ts
 const envRequirements = [{ options: [["FIRECRAWL_API_KEY"]] }];
 ```
 
 Every outer requirement must be satisfied. Within a requirement, `options` lists alternatives, and each alternative lists variables needed together. The app validates these requirements without evaluating remote source.
+
+## Configuration contributions
+
+A tool can declare `"config": { "key": "myTool" }` in its descriptor and install `configuration-schema.ts` alongside `tool.ts`. Export a Zod schema named `configSchema`. Its input becomes `ai.tools.myTool` in the app's single `chat.config.ts`, and its output becomes the parsed runtime configuration. Supply defaults for omitted fields and for the omitted object:
+
+```ts title="configuration-schema.ts"
+import { z } from "zod";
+import { languageModelSchema, modelRoles } from "@/lib/config-models";
+
+const configSchema = z
+  .strictObject({
+    model: languageModelSchema.default(modelRoles.balanced),
+  })
+  .prefault({});
+
+export { configSchema };
+```
+
+Use `modelRoles.smart`, `.balanced` or `.fast` for language models. Image and video roles are optional and require the corresponding gateway capability. These modules must be pure and safe to import in the browser: do not import runtime `config`, credentials, server SDKs or the tool implementation. The CLI generates typed imports without executing the module during installation. It rejects duplicate keys and the reserved core key `followupSuggestions`.
+
+Document bundles may also declare `documentActions: true` and export `documentAssistantActions` from `assistant-actions.ts`. This function returns `DocumentAssistantAction[]` from `@/lib/eve/document-contracts`. The generated document action registry keeps each bundle's prompts and model selection with its implementation.
 
 ## Feature selections
 
@@ -110,7 +133,7 @@ Saved-code execution still uses restricted internal function composition under i
 
 ## Installable workflows
 
-`chat-js add deep-research` installs the research workflow, subagents, prompts, configuration, and progress renderer. It also installs text documents and reuses your selected search provider, or installs Tavily when none is selected. Enable research and text documents in `chat.config.ts` to expose the feature.
+`chat-js add deep-research` installs the research workflow, subagents, prompts, configuration, and progress renderer. It also installs text documents and reuses your selected search provider, or installs Tavily when none is selected. Override research policy under `ai.tools.deepResearch` in `chat.config.ts` when needed.
 
 Workflow registrations declare `workflow: true` alongside their `toolExport` and optional `rendererExport`. The bundle installs an ordinary EVE default export at `agent/tools/<toolExport>.ts`; its `tool.ts` re-exports that definition by name for type inference. The CLI keeps workflows out of the dynamic tool set and generates type-only registrations for their UI. EVE discovers and executes the static entry point itself.
 

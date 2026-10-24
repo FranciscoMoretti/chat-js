@@ -1,3 +1,4 @@
+import { planToolConfig } from "./tool-config";
 import fs, { mkdir, readdir, writeFile } from "node:fs/promises";
 
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
@@ -404,7 +405,9 @@ const toolRegistrationTargets = [
   "tools.ts",
   "ui.ts",
   "document-ui.ts",
+  "document-actions.ts",
   "installed-features.ts",
+  "installed-config.ts",
   "composer-tools.ts",
   "document-run.ts",
   "providers.ts",
@@ -440,7 +443,9 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   await Promise.all(
     [
       "document-ui.ts",
+      "document-actions.ts",
       "installed-features.ts",
+      "installed-config.ts",
       "composer-tools.ts",
       "document-run.ts",
       "providers.ts",
@@ -510,6 +515,17 @@ const syncTools = async (
   const definitions = await readInstalledTools(cwd);
   validateExpected(definitions, options.expected ?? []);
   await validateToolInstallation(cwd, definitions);
+  const configSource = await planToolConfig(cwd, definitions);
+  const actionFiles = definitions
+    .filter((item) => item.documentActions)
+    .map((item) => `tools/chatjs/${item.id}/assistant-actions.ts`);
+  await preflight(cwd, actionFiles);
+  await Promise.all(
+    actionFiles.map(async (file): Promise<void> => {
+      await fs.readFile(pathModule.join(cwd, file), "utf-8");
+    })
+  );
+
   if (options.checkOnly === true) {
     return definitions;
   }
@@ -519,12 +535,17 @@ const syncTools = async (
   const documents = definitions.filter(
     (item: ReadonlyInput<ToolDefinition>) => item.documentKind
   );
+  const documentActions = documents.filter((item) => item.documentActions);
   const registrations = registrationsFor(definitions);
   const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
     registrationKey(item)
   );
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
+  await writeFile(
+    pathModule.join(dir, "installed-config.ts"),
+    generatedSource(configSource)
+  );
   const [customTools, customUi] = await Promise.all([
     readOptional(pathModule.join(dir, "custom-tools.ts")),
     readOptional(pathModule.join(dir, "custom-ui.ts")),
@@ -638,6 +659,20 @@ const syncTools = async (
     pathModule.join(dir, "tool-availability.ts"),
     generatedSource(
       `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
+    )
+  );
+  await writeFile(
+    pathModule.join(dir, "document-actions.ts"),
+    generatedSource(
+      `import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
+${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "./${item.id}/assistant-actions";`).join("\n")}
+
+export const installedDocumentActions: Partial<
+  Record<"text" | "code" | "sheet", () => DocumentAssistantAction[]>
+> = {
+${documentActions.map((item, index) => `  ${item.documentKind}: actions${index},`).join("\n")}
+};
+`
     )
   );
   await writeFile(toolsPath, generatedSource(toolBody));

@@ -86,3 +86,10 @@ export {
   eveManualDocumentInput,
 };
 export type { DocumentAssistantRequest };
+
+interface DocumentAssistantAction {
+  instruction: string;
+  label: string;
+  modelId: string;
+}
+export type { DocumentAssistantAction };

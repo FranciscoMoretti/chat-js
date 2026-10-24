@@ -1,15 +1,11 @@
+import { installedToolConfig } from "@/tools/chatjs/installed-config";
+import { languageModelSchema, modelRoles } from "./config-models";
 import type {
-  GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
-  GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
 
-import {
-  gatewayCapabilities,
-  gatewayModelDefaults,
-  gatewayType,
-} from "./ai/gateway-model-defaults";
+import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import { isNonEmptyString } from "./is-non-empty-string";
 
 import type { ToolName } from "./ai/types";
@@ -27,134 +23,17 @@ const gatewayModelId = <Gateway extends GatewayType>(): z.ZodCustom<
   GatewayModelIdMap[Gateway]
 > => z.custom<GatewayModelIdMap[Gateway]>(isNonEmptyString);
 
-const gatewayImageModelId = <Gateway extends GatewayType>(): z.ZodCustom<
-  GatewayImageModelIdMap[Gateway],
-  GatewayImageModelIdMap[Gateway]
-> => z.custom<GatewayImageModelIdMap[Gateway]>(isNonEmptyString);
-
-const gatewayVideoModelId = <Gateway extends GatewayType>(): z.ZodCustom<
-  GatewayVideoModelIdMap[Gateway],
-  GatewayVideoModelIdMap[Gateway]
-> =>
-  z.custom<GatewayVideoModelIdMap[Gateway]>(
-    (value) => gatewayCapabilities.video && isNonEmptyString(value)
-  );
-
-const MINIMUM_RESEARCH_COUNT = 1;
-const MAX_CONCURRENT_RESEARCH_UNITS = 20;
-const MAX_RESEARCHER_ITERATIONS = 10;
-const MAX_SEARCH_QUERIES = 10;
-
-const deepResearchToolConfigSchema = z.object({
-  allowClarification: z
-    .boolean()
-    .describe("Whether to ask clarifying questions before starting research"),
-  defaultModel: z.string(),
-  finalReportModel: z.string(),
-  maxConcurrentResearchUnits: z
-    .number()
-    .int()
-    .min(MINIMUM_RESEARCH_COUNT)
-    .max(MAX_CONCURRENT_RESEARCH_UNITS)
-    .describe("Topics researched in parallel per iteration"),
-  maxResearcherIterations: z
-    .number()
-    .int()
-    .min(MINIMUM_RESEARCH_COUNT)
-    .max(MAX_RESEARCHER_ITERATIONS)
-    .describe("Maximum supervisor loop iterations"),
-  maxSearchQueries: z
-    .number()
-    .int()
-    .min(MINIMUM_RESEARCH_COUNT)
-    .max(MAX_SEARCH_QUERIES)
-    .describe("Max search queries per research topic"),
-});
-
-type AiToolsSchema<Gateway extends GatewayType> = z.ZodObject<{
-  code: z.ZodObject<{
-    edits: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
-  }>;
-  deepResearch: z.ZodObject<{
-    allowClarification: z.ZodBoolean;
-    defaultModel: z.ZodCustom<
-      GatewayModelIdMap[Gateway],
-      GatewayModelIdMap[Gateway]
-    >;
-    finalReportModel: z.ZodCustom<
-      GatewayModelIdMap[Gateway],
-      GatewayModelIdMap[Gateway]
-    >;
-    maxConcurrentResearchUnits: z.ZodNumber;
-    maxResearcherIterations: z.ZodNumber;
-    maxSearchQueries: z.ZodNumber;
-  }>;
-  followupSuggestions: z.ZodObject<{
-    default: z.ZodCustom<
-      GatewayModelIdMap[Gateway],
-      GatewayModelIdMap[Gateway]
-    >;
-    enabled: z.ZodBoolean;
-  }>;
-  image: z.ZodObject<{
-    default: z.ZodOptional<
-      z.ZodCustom<
-        GatewayImageModelIdMap[Gateway],
-        GatewayImageModelIdMap[Gateway]
-      >
-    >;
-  }>;
-  sheet: z.ZodObject<{
-    analyze: z.ZodCustom<
-      GatewayModelIdMap[Gateway],
-      GatewayModelIdMap[Gateway]
-    >;
-    format: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
-  }>;
-  text: z.ZodObject<{
-    polish: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
-  }>;
-  video: z.ZodObject<{
-    default: z.ZodOptional<
-      z.ZodCustom<
-        GatewayVideoModelIdMap[Gateway],
-        GatewayVideoModelIdMap[Gateway]
-      >
-    >;
-  }>;
-}>;
-
-const createAiToolsSchema = <
-  Gateway extends GatewayType,
->(): AiToolsSchema<Gateway> =>
-  z
-    .object({
-      code: z.object({
-        edits: gatewayModelId<Gateway>(),
-      }),
-      deepResearch: deepResearchToolConfigSchema.extend({
-        defaultModel: gatewayModelId<Gateway>(),
-        finalReportModel: gatewayModelId<Gateway>(),
-      }),
-      followupSuggestions: z.object({
-        default: gatewayModelId<Gateway>(),
-        enabled: z.boolean(),
-      }),
-      image: z.object({
-        default: gatewayImageModelId<Gateway>().optional(),
-      }),
-      sheet: z.object({
-        analyze: gatewayModelId<Gateway>(),
-        format: gatewayModelId<Gateway>(),
-      }),
-      text: z.object({
-        polish: gatewayModelId<Gateway>(),
-      }),
-      video: z.object({
-        default: gatewayVideoModelId<Gateway>().optional(),
-      }),
-    })
-    .describe("Default model and runtime configuration grouped by tool");
+const aiToolsSchema = z
+  .strictObject({
+    followupSuggestions: z
+      .strictObject({
+        default: languageModelSchema.default(modelRoles.fast),
+        enabled: z.boolean().default(false),
+      })
+      .prefault({}),
+    ...installedToolConfig,
+  })
+  .prefault({});
 
 type AiSchema<Gateway extends GatewayType> = z.ZodObject<{
   anonymousModels: z.ZodArray<
@@ -168,7 +47,7 @@ type AiSchema<Gateway extends GatewayType> = z.ZodObject<{
   >;
   gateway: z.ZodLiteral<Gateway>;
   providerOrder: z.ZodArray<z.ZodString>;
-  tools: AiToolsSchema<Gateway>;
+  tools: typeof aiToolsSchema;
   workflows: z.ZodObject<{
     chat: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
     chatImageCompatible: z.ZodCustom<
@@ -197,7 +76,7 @@ const createAiSchema = <Gateway extends GatewayType>(
     providerOrder: z
       .array(z.string())
       .describe("Provider sort order in model selector"),
-    tools: createAiToolsSchema<Gateway>(),
+    tools: aiToolsSchema,
     workflows: z
       .object({
         chat: gatewayModelId<Gateway>(),
@@ -210,7 +89,7 @@ const createAiSchema = <Gateway extends GatewayType>(
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
-const aiConfigSchema = installedGatewaySchema.default({
+const aiConfigSchema = installedGatewaySchema.prefault({
   gateway: gatewayType,
   ...gatewayModelDefaults,
 });
@@ -472,40 +351,7 @@ type ZodConfigInput = z.input<typeof configSchema>;
 
 // Model IDs come from the installed gateway.
 type AiShape = z.input<typeof installedGatewaySchema>;
-type AiToolsShape = AiShape["tools"];
-
-// All helper types are Partial — fields not provided are filled by applyDefaults
-type DeepResearchToolInputFor<Gateway extends GatewayType> = Partial<
-  Omit<AiToolsShape["deepResearch"], "defaultModel" | "finalReportModel"> & {
-    defaultModel: GatewayModelIdMap[Gateway];
-    finalReportModel: GatewayModelIdMap[Gateway];
-  }
->;
-interface ImageToolInputFor<Gateway extends GatewayType> {
-  default?: GatewayImageModelIdMap[Gateway];
-}
-interface VideoToolInputFor<Gateway extends GatewayType> {
-  default?: GatewayVideoModelIdMap[Gateway];
-}
-type FollowupSuggestionsToolInputFor<Gateway extends GatewayType> = Partial<{
-  enabled: boolean;
-  default: GatewayModelIdMap[Gateway];
-}>;
-interface AiToolsInputFor<Gateway extends GatewayType> {
-  code?: Partial<{
-    [ToolOption in keyof AiToolsShape["code"]]: GatewayModelIdMap[Gateway];
-  }>;
-  deepResearch?: DeepResearchToolInputFor<Gateway>;
-  followupSuggestions?: FollowupSuggestionsToolInputFor<Gateway>;
-  image?: ImageToolInputFor<Gateway>;
-  sheet?: Partial<{
-    [ToolOption in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[Gateway];
-  }>;
-  text?: Partial<{
-    [ToolOption in keyof AiToolsShape["text"]]: GatewayModelIdMap[Gateway];
-  }>;
-  video?: VideoToolInputFor<Gateway>;
-}
+type AiToolsInput = z.input<typeof aiToolsSchema>;
 
 // Only gateway is required; everything else is an override on top of GATEWAY_MODEL_DEFAULTS
 interface AiInputFor<Gateway extends GatewayType> {
@@ -517,7 +363,7 @@ interface AiInputFor<Gateway extends GatewayType> {
   workflows?: Partial<{
     [Workflow in keyof AiShape["workflows"]]: GatewayModelIdMap[Gateway];
   }>;
-  tools?: AiToolsInputFor<Gateway>;
+  tools?: AiToolsInput;
 }
 
 type ConfigInputForGateway<Gateway extends GatewayType> = Omit<
@@ -550,33 +396,22 @@ type ReadonlyConfigData<Value> = Value extends string
  * @param {InputConfig} config Partial configuration with gateway-specific model selections.
  * @returns {InputConfig} The exact input object, retaining its inferred literal field types.
  */
-const defineConfig = <const InputConfig extends ConfigInput>(
-  config: InputConfig
-): InputConfig => config;
+type InstalledToolOverrides<Input> = Input extends {
+  readonly ai: { readonly tools: infer Tools };
+}
+  ? {
+      readonly ai: {
+        readonly tools: Record<
+          Exclude<keyof Tools, keyof NonNullable<AiToolsInput>>,
+          never
+        >;
+      };
+    }
+  : unknown;
 
-const mergeToolsConfig = (
-  defaults: Readonly<Record<string, unknown>>,
-  user: ReadonlyConfigData<AiToolsInputFor<GatewayType>> | undefined
-): Record<string, unknown> => {
-  if (!user) {
-    return defaults;
-  }
-  const result: Record<string, unknown> = { ...defaults };
-  const entries: [string, unknown][] = Object.entries(user);
-  for (const [key, value] of entries) {
-    const defaultValue = result[key];
-    result[key] =
-      value !== null &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      defaultValue !== null &&
-      typeof defaultValue === "object" &&
-      !Array.isArray(defaultValue)
-        ? { ...defaultValue, ...value }
-        : value;
-  }
-  return result;
-};
+const defineConfig = <const InputConfig extends ConfigInput>(
+  config: InputConfig & InstalledToolOverrides<InputConfig>
+): InputConfig => config;
 
 // Apply defaults to partial config
 const applyDefaults = (input: ReadonlyConfigData<ConfigInput>): Config => {
@@ -589,7 +424,7 @@ const applyDefaults = (input: ReadonlyConfigData<ConfigInput>): Config => {
     gateway,
     ...gatewayDefaults,
     ...aiInput,
-    tools: mergeToolsConfig(gatewayDefaults.tools, aiInput.tools),
+    tools: aiInput.tools,
     workflows: {
       ...gatewayDefaults.workflows,
       ...aiInput.workflows,

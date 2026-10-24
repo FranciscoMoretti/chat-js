@@ -4,13 +4,13 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
-import { mcpConnector, mcpOAuthSession } from "./schema";
+import { mcpConnector, mcpOAuthSession } from "@/features/mcp/db/mcp-schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
 vi.mock("./client", () => ({ db: database }));
-vi.mock("@/lib/env", () => ({
-  env: { MCP_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString("base64") },
+vi.mock("@/features/mcp/mcp-env", () => ({
+  readMcpEncryptionKey: () => Buffer.alloc(32, 1).toString("base64"),
 }));
 const {
   deletePendingSessionByState,

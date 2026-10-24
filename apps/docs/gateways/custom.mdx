@@ -22,7 +22,7 @@ Set `meta.chatjs` with:
 
 - `kind: "gateway"`, `contractVersion: 1`, and a unique literal `id`.
 - `capabilities` describing image and video support.
-- Complete `defaults` for models, workflows, documents, and tools. Use model IDs served by your endpoint.
+- Complete `defaults` for model lists, core workflows and `roles`: `smart`, `balanced`, `fast`, plus optional `image` and `video`. Use model IDs served by your endpoint. Tools select their own defaults from these roles.
 - `envRequirements`, an array of required groups. Each group's `options` contains alternative sets of variables.
 - `optionalEnv` for additional variables the adapter reads.
 

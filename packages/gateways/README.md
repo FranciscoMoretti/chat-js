@@ -8,7 +8,7 @@ The installed `lib/ai/gateway.ts` must export a `Gateway` constructor accepting 
 
 The host supplies environment values, logging, a discovery `fetch` function, and `getFallbackModels(gateway)`. Model generation uses the selected SDK's transport. `GatewayRuntime` provides these host dependencies without importing Next.js.
 
-`GatewayModelDefaults<YourGateway>` checks model defaults against adapter model IDs. `gatewayDefinitionSchema` validates the version 1 installation metadata, including capabilities, environment requirements and defaults. Model IDs from compatible servers can be open strings; types cannot verify a remote catalog or credentials.
+`GatewayModelDefaults<YourGateway>` checks model defaults against adapter model IDs. `gatewayDefinitionSchema` validates the version 1 installation metadata, including capabilities, environment requirements and defaults. The defaults expose `roles.smart`, `roles.balanced`, `roles.fast` and optional media roles. Installed tools own their configuration and choose defaults from those roles, so this package has no tool-specific settings. Model IDs from compatible servers can be open strings; types cannot verify a remote catalog or credentials.
 
 See [gateway registry authoring](../registry/src/gateways/README.md).
 

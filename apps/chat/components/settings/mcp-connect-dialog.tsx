@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { McpConnector } from "@/lib/db/schema";
+import type { McpConnector } from "@/features/mcp/db/mcp-schema";
 import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 

@@ -39,13 +39,13 @@ describe("scaffold contracts", () => {
       ]) {
         expect(output).not.toContain(`${removed}: {`);
       }
-      expect(output).toContain("maxSearchQueries: 2");
+      expect(output).not.toContain("maxSearchQueries:");
       expect(output).toContain("followupSuggestions: {");
       expect(output).toContain("parallelResponses: true");
     }
 
     const openaiCompatible = buildConfigFor("openai-compatible");
-    expect(openaiCompatible).toContain('default: "gpt-image-1"');
+    expect(openaiCompatible).not.toContain('default: "gpt-image-1"');
     expect(openaiCompatible).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
 
     const litellm = buildConfigFor("litellm");

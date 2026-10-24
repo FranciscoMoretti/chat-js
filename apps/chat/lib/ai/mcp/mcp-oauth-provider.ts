@@ -3,7 +3,7 @@ import type {
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
-import type { McpOAuthSession } from "@/lib/db/schema";
+import type { McpOAuthSession } from "@/features/mcp/db/mcp-schema";
 import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { randomUUID } from "node:crypto";

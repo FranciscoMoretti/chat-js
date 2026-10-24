@@ -53,9 +53,11 @@ const executionCapabilities = z.object({
 });
 
 const toolDefinitionBase = z.object({
+  config: z.object({ key: identifier }).optional(),
   availabilityExport: identifier.optional(),
   codeExecutionCapabilities: executionCapabilities.optional(),
   codeExecutorExport: identifier.optional(),
+  documentActions: z.literal(true).optional(),
   documentKind: z.enum(["text", "code", "sheet"]).optional(),
   documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
@@ -114,6 +116,10 @@ const toolDefinitionSchema = toolDefinitionBase
     (item: Readonly<{ slot?: string; tools: readonly unknown[] }>) =>
       (item.slot ?? "") === "" || item.tools.length === PROVIDER_TOOL_COUNT,
     { message: "A provider slot must register exactly one tool" }
+  )
+  .refine(
+    (item) => item.documentActions !== true || item.documentKind !== undefined,
+    { message: "Document actions require a document kind" }
   );
 
 type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
@@ -139,6 +145,9 @@ const featureIdSchema = z.enum([
 ]);
 
 const featureDefinitionSchema = z.object({
+  databaseSchemas: z
+    .array(z.string().regex(/^(?:[a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_-]+\.ts$/u))
+    .optional(),
   contractVersion: z.literal(CONTRACT_VERSION),
   envRequirements: z.array(envRequirementSchema).optional(),
   id: featureIdSchema,

@@ -1,7 +1,7 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { defineTool } from "eve/tools";
-import { env } from "@/lib/env";
+import { readToolEnvironment } from "./firecrawl-search-env";
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import {
@@ -35,6 +35,7 @@ const searchFirecrawl = async ({
 }: Readonly<{ query: string; maxResults: number }>): Promise<
   { content: string; title: string; url: string }[]
 > => {
+  const env = readToolEnvironment();
   if (
     !(typeof env.FIRECRAWL_API_KEY === "string" && env.FIRECRAWL_API_KEY !== "")
   ) {

@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { customType } from "drizzle-orm/pg-core";
 
-import { env } from "@/lib/env";
+import { readMcpEncryptionKey } from "@/features/mcp/mcp-env";
 
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -11,7 +11,7 @@ const ALGORITHM = "aes-256-gcm";
 const AES_GCM_IV_BYTE_LENGTH = 16;
 
 const getKey = (): Buffer => {
-  const key = env.MCP_ENCRYPTION_KEY;
+  const key = readMcpEncryptionKey();
   if (typeof key !== "string" || key === "") {
     throw new Error("MCP_ENCRYPTION_KEY is not configured");
   }

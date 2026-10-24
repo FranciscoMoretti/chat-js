@@ -1,43 +1,14 @@
 import { z } from "zod";
 
-const MAX_CONCURRENT_RESEARCH_UNITS = 20;
-const MAX_RESEARCHER_ITERATIONS = 10;
-const MAX_SEARCH_QUERIES = 10;
 const GATEWAY_CONTRACT_VERSION = 1;
 const MIN_REQUIRED_COUNT = 1;
-
 const model = z.string().min(MIN_REQUIRED_COUNT);
-const toggle = z.object({ enabled: z.boolean() });
-const media = z.object({ default: model.optional() });
-
-const deepResearch = z.object({
-  allowClarification: z.boolean(),
-  defaultModel: model,
-  finalReportModel: model,
-  maxConcurrentResearchUnits: z
-    .number()
-    .int()
-    .min(MIN_REQUIRED_COUNT)
-    .max(MAX_CONCURRENT_RESEARCH_UNITS),
-  maxResearcherIterations: z
-    .number()
-    .int()
-    .min(MIN_REQUIRED_COUNT)
-    .max(MAX_RESEARCHER_ITERATIONS),
-  maxSearchQueries: z
-    .number()
-    .int()
-    .min(MIN_REQUIRED_COUNT)
-    .max(MAX_SEARCH_QUERIES),
-});
-const tools = z.object({
-  code: z.object({ edits: model }),
-  deepResearch,
-  followupSuggestions: toggle.extend({ default: model }),
-  image: media,
-  sheet: z.object({ analyze: model, format: model }),
-  text: z.object({ polish: model }),
-  video: media,
+const roles = z.object({
+  fast: model,
+  balanced: model,
+  smart: model,
+  image: model.optional(),
+  video: model.optional(),
 });
 const workflows = z.object({
   chat: model,
@@ -50,7 +21,7 @@ const defaults = z.object({
   curatedDefaults: z.array(model),
   disabledModels: z.array(model),
   providerOrder: z.array(z.string()),
-  tools,
+  roles,
   workflows,
 });
 const envName = z.string().regex(/^[A-Z_][A-Z0-9_]*$/u);
@@ -63,10 +34,7 @@ const envRequirement = z.object({
 interface CapabilityDefinition {
   readonly capabilities: Readonly<{ image: boolean; video: boolean }>;
   readonly defaults: {
-    readonly tools: {
-      readonly image: Readonly<{ default?: string }>;
-      readonly video: Readonly<{ default?: string }>;
-    };
+    readonly roles: { readonly image?: string; readonly video?: string };
   };
 }
 
@@ -88,13 +56,13 @@ const gatewayDefinitionSchema = z
     ) => {
       for (const kind of ["image", "video"] as const) {
         if (
-          typeof definition.defaults.tools[kind].default === "string" &&
+          typeof definition.defaults.roles[kind] === "string" &&
           !definition.capabilities[kind]
         ) {
           ctx.addIssue({
             code: "custom",
             message: `Gateway does not support ${kind} generation.`,
-            path: ["defaults", "tools", kind],
+            path: ["defaults", "roles", kind],
           });
         }
       }
