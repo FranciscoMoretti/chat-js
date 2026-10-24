@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/sandboxes",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sandbox provider contracts and lifecycle runtime for ChatJS",
   "license": "Apache-2.0",
   "repository": {

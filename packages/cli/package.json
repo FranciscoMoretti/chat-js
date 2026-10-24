@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/cli",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "private": false,
   "description": "CLI for creating and extending ChatJS apps",
   "keywords": [
