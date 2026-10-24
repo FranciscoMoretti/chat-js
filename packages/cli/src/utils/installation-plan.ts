@@ -56,7 +56,9 @@ export const planInstallation = async (
     readonly documents?: boolean;
   } = {}
 ) => {
-  await assertCurrentInstallationLayout(cwd);
+  if (options.fresh !== true) {
+    await assertCurrentInstallationLayout(cwd);
+  }
   const selection = installationSelectionSchema.parse(input);
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();

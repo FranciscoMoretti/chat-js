@@ -7,6 +7,24 @@ import { planInstallation } from "./installation-plan";
 import { syncPlugins } from "./sync-plugins";
 import { syncTools } from "./sync-tools";
 
+test("fresh installation planning does not require the destination to exist", async () => {
+  const parent = await mkdtemp(path.join(tmpdir(), "chatjs-fresh-plan-"));
+  try {
+    const root = path.join(parent, "new-app");
+    const plan = await planInstallation(
+      root,
+      { plugins: [], tools: [] },
+      { fresh: true }
+    );
+    expect(plan.plugins).toEqual([]);
+    await rejects(readFile(path.join(root, "package.json")), {
+      code: "ENOENT",
+    });
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+});
+
 for (const marker of [
   "tools/chatjs/tools.ts",
   "tools/chatjs/custom-tools.ts",
