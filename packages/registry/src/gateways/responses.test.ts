@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { expect, mock, test } from "bun:test";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";
@@ -246,14 +247,14 @@ for (const { Adapter, urlKey, otherUrlKey } of [
       );
     }
   );
-  test(`${Adapter.name} still rejects malformed nonempty URLs`, (): void => {
+  test(`${Adapter.name} still rejects malformed nonempty URLs`, async (): Promise<void> => {
     const gateway = new Adapter({
       env: {
         [urlKey]: "invalid",
         [otherUrlKey]: "https://unused.example",
       },
     });
-    expect(gateway.fetchModels()).rejects.toThrow();
+    await rejects(gateway.fetchModels());
     expect(() => gateway.createLanguageModel("model")).toThrow();
   });
 }
