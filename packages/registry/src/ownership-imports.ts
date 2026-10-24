@@ -42,7 +42,9 @@ const localImports = (source: string, file: string): string[] => {
 
 const localImportTarget = (relativePath: string): string | undefined => {
   const target = relativePath.replaceAll("\\", "/");
-  return target === ".." ||
+  return path.win32.isAbsolute(target) ||
+    path.posix.isAbsolute(target) ||
+    target === ".." ||
     target.startsWith("../") ||
     target.includes("node_modules/")
     ? undefined

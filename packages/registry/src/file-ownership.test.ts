@@ -1,7 +1,15 @@
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import ts from "typescript";
 import { expect, test } from "bun:test";
 import { classifyImport, inventoryFiles, targetPath } from "./file-ownership";
 import { installationItems, itemClaims } from "./installation-ownership";
-import { localImports, localImportTarget } from "./ownership-imports";
+import {
+  localImports,
+  localImportTarget,
+  resolveImports,
+} from "./ownership-imports";
 import { demoInstallation } from "../installation";
 import { registry } from "../registry";
 import { shouldCopyChatAppFile } from "../../cli/src/helpers/scaffold-content";
@@ -191,6 +199,8 @@ test("Windows import targets match inventory keys and retain local-only filterin
   expect(paths.has(localImportTarget("lib\\core.ts") ?? "")).toBe(true);
   expect(paths.has(localImportTarget("styles\\theme.css") ?? "")).toBe(true);
   for (const external of [
+    "D:\\external\\outside.ts",
+    "/external/outside.ts",
     "../outside.ts",
     "..\\outside.ts",
     "..",
@@ -198,5 +208,37 @@ test("Windows import targets match inventory keys and retain local-only filterin
     "nested/node_modules/pkg/index.ts",
   ]) {
     expect(localImportTarget(external)).toBeUndefined();
+  }
+});
+
+test("resolver emits inventory-compatible edges and excludes outside modules", async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-imports-"));
+  const root = path.join(temporary, "app");
+  try {
+    await mkdir(path.join(root, "lib"), { recursive: true });
+    await Promise.all([
+      writeFile(path.join(root, "lib/core.ts"), "export const value = 1;"),
+      writeFile(path.join(root, "lib/theme.css"), "body {}"),
+      writeFile(path.join(temporary, "outside.ts"), "export const value = 2;"),
+    ]);
+    const result = resolveImports(
+      path.join("lib", "entry.ts"),
+      `
+      import { value } from "./core";
+      import "./theme.css";
+      import { value as outside } from "../../outside";
+    `,
+      root,
+      { moduleResolution: ts.ModuleResolutionKind.Bundler }
+    );
+    expect(result).toEqual({
+      edges: [
+        { from: "lib/entry.ts", to: "lib/core.ts" },
+        { from: "lib/entry.ts", to: "lib/theme.css" },
+      ],
+      unresolved: [],
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
   }
 });
