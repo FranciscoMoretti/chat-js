@@ -235,14 +235,14 @@ for (const Adapter of [LiteLLMGateway, OpenAICompatibleGateway]) {
       );
     }
   );
-  test(`${Adapter.name} still rejects malformed nonempty URLs`, async (): Promise<void> => {
+  test(`${Adapter.name} still rejects malformed nonempty URLs`, (): void => {
     const gateway = new Adapter({
       env: {
         LITELLM_BASE_URL: "invalid",
         OPENAI_COMPATIBLE_BASE_URL: "invalid",
       },
     });
-    await expect(gateway.fetchModels()).rejects.toThrow();
+    expect(gateway.fetchModels()).rejects.toThrow();
     expect(() => gateway.createLanguageModel("model")).toThrow();
   });
 }
