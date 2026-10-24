@@ -235,7 +235,7 @@ for (const { Adapter, urlKey, otherUrlKey } of [
     async (baseURL): Promise<void> => {
       const fetch = mock();
       const gateway = new Adapter({
-        env: { LITELLM_BASE_URL: baseURL, OPENAI_COMPATIBLE_BASE_URL: baseURL },
+        env: { [urlKey]: baseURL, [otherUrlKey]: "https://unused.example" },
         fetch,
         getFallbackModels: (): AiGatewayModel[] => [fallback],
       });
