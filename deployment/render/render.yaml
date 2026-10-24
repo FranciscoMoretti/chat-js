@@ -42,7 +42,7 @@ services:
     autoDeployTrigger: "off"
     schedule: "0 * * * *"
     buildCommand: echo 'Dependency-free Node scheduler'
-    startCommand: node scripts/hosted-cleanup.ts
+    startCommand: node apps/chat/scripts/cleanup.ts
     envVars:
       - key: NODE_VERSION
         value: 24.20.0

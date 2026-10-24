@@ -15,6 +15,7 @@
     "format": "oxfmt --write .",
     "check-env": "bun scripts/check-env.ts",
     "search:backfill": "tsx scripts/backfill-eve-search.ts",
+    "cleanup": "node scripts/cleanup.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bunx tsx lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
