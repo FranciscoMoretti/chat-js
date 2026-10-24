@@ -42,7 +42,7 @@
     "features/mcp/composer.tsx": "8ece0f46598026d78a46d2ccbbb75e838bd829e5909e3c060c930f6b7fccbd59",
     "features/mcp/db/encrypted-text.ts": "8e5ed79fef2dfb51f0b09a5ec6cda54f3b862c4b3ee67e03d246a6a3ab8d78b6",
     "features/mcp/db/mcp-schema.ts": "0973837a9147fd7bbae03e25d272a248328240a022ee8df06c15442a164718a3",
-    "features/mcp/mcp-env.ts": "bb5d902dfe84c887d7bdb467849fa9ce06eee7ce0208349ccf7ee5daf6146130",
+    "features/mcp/mcp-env.ts": "8b1a43b17da1c2e8a50a72796498beeb8ff8caf88e2969746d4884da425dd3de",
     "features/mcp/settings.ts": "1e108e53990723ee1dc3db940adceb17ac6fdff951a10a6f894d9dd4be22c349",
     "features/mcp/setup.ts": "9e78bce747d7512b513601c6cbb71422667272cd87fb093d6a1d014edb54fcaa",
     "features/vercel-analytics/chatjs.json": "3aafe18091a5f7b6a6ac9c2a89271529e75eb53b130b3b3b8b80ce71b1ed057c",
