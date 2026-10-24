@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { classifyImport, inventoryFiles, targetPath } from "./file-ownership";
 import { installationItems, itemClaims } from "./installation-ownership";
-import { localImports } from "./ownership-imports";
+import { localImports, localImportTarget } from "./ownership-imports";
 import { demoInstallation } from "../installation";
 import { registry } from "../registry";
 import { shouldCopyChatAppFile } from "../../cli/src/helpers/scaffold-content";
@@ -183,4 +183,20 @@ test("static, type-only, re-export and lazy dependencies are inspected without p
     "./types",
     "./required",
   ]);
+});
+
+test("Windows import targets match inventory keys and retain local-only filtering", () => {
+  const inventory = inventoryFiles(["lib/core.ts", "styles/theme.css"], []);
+  const paths = new Set(inventory.map((file) => file.path));
+  expect(paths.has(localImportTarget("lib\\core.ts") ?? "")).toBe(true);
+  expect(paths.has(localImportTarget("styles\\theme.css") ?? "")).toBe(true);
+  for (const external of [
+    "../outside.ts",
+    "..\\outside.ts",
+    "..",
+    "node_modules\\pkg\\index.ts",
+    "nested/node_modules/pkg/index.ts",
+  ]) {
+    expect(localImportTarget(external)).toBeUndefined();
+  }
 });

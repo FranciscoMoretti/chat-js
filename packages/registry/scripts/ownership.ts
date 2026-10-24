@@ -95,7 +95,7 @@ const files = await Promise.all(
       ...file,
       present,
       role,
-      scaffoldIncluded: included,
+      templateCopyEligible: included,
       crossings,
       unresolvedImports: imports.unresolved,
       unclassifiedImports: imports.edges.filter((edge) => !byPath.has(edge.to)),
