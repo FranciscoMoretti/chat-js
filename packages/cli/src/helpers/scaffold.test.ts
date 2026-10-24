@@ -250,6 +250,11 @@ describe("scaffoldFromTemplate", (): void => {
     expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
     expect(manifest.dependencies["@daytona/sdk"]).toBeUndefined();
     expect(
+      existsSync(
+        pathModule.join(destination, "lib/sandbox/vercel-sandbox-env.ts")
+      )
+    ).toBe(false);
+    expect(
       existsSync(pathModule.join(destination, "lib/sandbox/persistent.ts"))
     ).toBe(false);
     expect(

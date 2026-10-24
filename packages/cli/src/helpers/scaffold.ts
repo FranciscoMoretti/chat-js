@@ -422,6 +422,9 @@ const scaffoldFromTemplate = async (
   await rm(pathModule.join(destination, "lib/sandbox/persistent.ts"), {
     force: true,
   });
+  await rm(pathModule.join(destination, "lib/sandbox/vercel-sandbox-env.ts"), {
+    force: true,
+  });
   await writeFile(
     pathModule.join(destination, "lib/sandbox/provider.ts"),
     `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
