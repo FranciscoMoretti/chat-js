@@ -1,0 +1,13 @@
+{
+  "name": "eve080-approval-consumer-proof",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node proof.mjs"
+  },
+  "dependencies": {
+    "ai": "7.0.137",
+    "eve": "0.80.1",
+    "zod": "4.5.4"
+  }
+}
