@@ -1,3 +1,4 @@
+import { linkWorkspaceDependencies } from "../../test/link-workspace-dependencies";
 import { rejects } from "node:assert/strict";
 import { z } from "zod";
 import { afterEach, expect, test } from "bun:test";
@@ -8,7 +9,6 @@ import {
   readFile,
   readdir,
   rm,
-  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -46,10 +46,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     path.join(demo, "drizzle.generate.config.ts"),
     path.join(root, "drizzle.generate.config.ts")
   );
-  await symlink(
-    path.resolve(demo, "../../node_modules"),
-    path.join(root, "node_modules")
-  );
+  await linkWorkspaceDependencies(demo, root);
   await writeFile(
     path.join(root, "tsconfig.json"),
     JSON.stringify({ compilerOptions: { paths: { "@/*": ["./*"] } } })

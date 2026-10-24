@@ -1,14 +1,7 @@
+import { linkWorkspaceDependencies } from "../../test/link-workspace-dependencies";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
-import {
-  cp,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  symlink,
-  writeFile,
-} from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { scaffoldFromTemplate } from "../helpers/scaffold";
@@ -45,10 +38,7 @@ test("configuration only accepts installed tools, with typed partial overrides a
     path.join(demo, "lib/ai/gateway.ts"),
     path.join(root, "lib/ai/gateway.ts")
   );
-  await symlink(
-    path.resolve(demo, "../../node_modules"),
-    path.join(root, "node_modules")
-  );
+  await linkWorkspaceDependencies(demo, root);
   await writeFile(
     path.join(root, "chat.config.ts"),
     'import { defineConfig } from "./lib/config-schema"; export default defineConfig({ appName: "Test", appPrefix: "test" });'
