@@ -24,11 +24,7 @@ const modelRoles = {
   fast: languageModelSchema.parse(roles.fast),
   balanced: languageModelSchema.parse(roles.balanced),
   smart: languageModelSchema.parse(roles.smart),
-  image: imageModelSchema
-    .optional()
-    .parse("image" in roles ? roles.image : undefined),
-  video: videoModelSchema
-    .optional()
-    .parse("video" in roles ? roles.video : undefined),
+  image: "image" in roles ? imageModelSchema.parse(roles.image) : undefined,
+  video: "video" in roles ? videoModelSchema.parse(roles.video) : undefined,
 };
 export { languageModelSchema, imageModelSchema, videoModelSchema, modelRoles };

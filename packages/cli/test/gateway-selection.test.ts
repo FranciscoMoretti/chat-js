@@ -1113,7 +1113,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       ).toBe(true);
       expect(
         await readFile(nodePath.join(cwd, "lib/sandbox/adapter.ts"), "utf-8")
-      ).toContain('from "@/lib/env"');
+      ).toContain('from "./vercel-sandbox-env"');
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
       expect(
