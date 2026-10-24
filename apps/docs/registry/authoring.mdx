@@ -6,11 +6,12 @@ description: Publish tested TypeScript source through generated shadcn registry 
 Start with a working implementation of a supported category contract:
 
 - [Custom gateways](../gateways/custom) defines gateway exports, capabilities, credentials, and model defaults.
+- [Authoring plugins](../plugins/authoring) defines server/client contributions, schema ownership, and framework adapters.
 - [Authoring tools](../tools/authoring) defines server and renderer exports, registration descriptors, and environment requirements.
 
 ## Keep source in code
 
-In this repository, gateway source lives under `packages/registry/src/gateways/<id>/` and tool source under `packages/registry/src/tools/<id>/`. Optional implementation source lives under `packages/registry/src/features/<id>/`. Declare files, dependencies, installation targets, and metadata in `packages/registry/registry.ts`.
+In this repository, gateway source lives under `packages/registry/src/gateways/<id>/` and tool source under `packages/registry/src/tools/<id>/`. Optional implementation source lives under `packages/registry/src/plugins/<id>/`. Declare files, dependencies, installation targets, and metadata in `packages/registry/registry.ts`.
 
 Use standard shadcn `dependencies` for npm packages and `registryDependencies` for shared registry items. ChatJS metadata describes the category contract. The public item name does not have to contain the category name.
 
@@ -24,7 +25,7 @@ Before publishing, follow [Building and Testing](./testing) to check both the so
 
 ## Synchronize the maintained demo
 
-Edit canonical registry source first. Keep core source in `apps/chat`. The checked-in selection in `packages/registry/installation.ts` installs the demo's tools, gateway, storage and all five optional features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.
+Edit canonical registry source first. Keep core source in `apps/chat`. The checked-in selection in `packages/registry/installation.ts` installs the demo's tools, gateway, storage and all five optional plugins: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.
 
 From the repository root, regenerate in this order:
 
@@ -39,4 +40,4 @@ Demo sync stages a fresh installation through the shared CLI planner and shadcn 
 
 `packages/registry/demo-baseline.json` records the last synchronized source hashes. Sync validates every owned file before writing anything. If you edited an installed demo copy, move the edit into canonical registry source and rerun sync. Review any remaining differences before using `bun demo:sync --discard` to replace those copies. Commit the updated source and baseline together. Removing installed files is outside this workflow.
 
-Fresh core scaffolds exclude optional implementation source and start with empty feature registrations. [Create](../cli/create) and [add](../cli/add) assemble the selected implementations. Application settings, permissions and runtime tool selections remain editable.
+Fresh core scaffolds exclude optional implementation source and start with empty plugin registrations. [Create](../cli/create) and [add](../cli/add) assemble the selected implementations. Application settings, permissions and runtime tool selections remain editable.

@@ -1,7 +1,7 @@
 import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
 import type { ReadonlyInput } from "./readonly-input";
 import { builtInGateways } from "#cli/registry/gateways";
-import { mcpDefinition } from "../../../registry/src/features/mcp";
+import { mcpDefinition } from "../../../registry/src/plugins/mcp/manifest";
 
 type EnvVarName = string;
 

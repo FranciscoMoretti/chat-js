@@ -6,10 +6,10 @@ import { Toaster, toast } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ConnectorsSettings } from "@/components/settings/connectors-settings";
-import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
-import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
-import { McpDetailsPage } from "@/components/settings/mcp-details-page";
+import { ConnectorsSettings } from "@/plugins/mcp/ui/connectors-settings";
+import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
+import { McpCreateDialog } from "@/plugins/mcp/ui/mcp-create-dialog";
+import { McpDetailsPage } from "@/plugins/mcp/ui/mcp-details-page";
 import {
   SettingsPage,
   SettingsPageHeader,
@@ -95,8 +95,8 @@ const connector = {
   url: "https://docs.example.test/mcp",
   userId: "fixture-owner",
 };
-vi.mock("@/features/installed", () => ({
-  installedFeatures: new Set(["mcp"]),
+vi.mock("@/composition/generated/installed", () => ({
+  installedPlugins: new Set(["mcp"]),
 }));
 
 vi.mock("@/trpc/react", () => ({ useTRPC: () => ({ mcp: mocks.mcp }) }));
@@ -105,7 +105,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => mocks.search,
 }));
-vi.mock("@/lib/nuqs/mcp-search-params", () => ({
+vi.mock("@/plugins/mcp/search/mcp-search-params", () => ({
   mcpConnectorsSettingsSearchParams: {},
 }));
 

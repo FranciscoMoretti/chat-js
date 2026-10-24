@@ -5,6 +5,7 @@ import type { OwnedFile } from "./file-ownership";
 const publicCoreContracts: ReadonlySet<string> = new Set([
   "lib/eve/session-identity.ts",
   "lib/config-models.ts",
+  "lib/plugin-contracts.ts",
 ]);
 
 const crossingStatus = (

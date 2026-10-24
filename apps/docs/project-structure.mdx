@@ -27,11 +27,15 @@ description: "How ChatJS is organized"
 │   ├── models/            # Model types and utilities
 │   └── artifacts/         # Client helpers for document artifacts
 │
+├── plugins/<id>/           # Plugin implementation, UI, schema, and entrypoints
+├── tools/chatjs/<id>/       # Installed tools and renderers
+├── composition/
+│   ├── generated/          # Installer-owned typed registrations
+│   └── custom/             # Editable custom tools and renderers
 ├── agent/                  # EVE agent channels, hooks, and tools
 ├── trpc/                   # tRPC routers and procedures
 ├── hooks/                  # React hooks
 ├── providers/              # React context providers
-├── evals/                  # AI evaluation tests
 └── scripts/                # Build and dev scripts
 ```
 
@@ -104,7 +108,6 @@ lib/ai/
 ├── gateways/registry.ts # Installed gateway registry
 ├── models.ts          # Model fetching and caching
 ├── models.generated.ts # Fallback model list
-├── installed-tools.ts # Installed tool wiring
 └── prompts.ts         # Shared prompts
 ```
 
@@ -133,7 +136,7 @@ lib/config.ts          # Parse defaults and export config
        ↓
 lib/env.ts             # Validate environment variables
        ↓
-Runtime                # Features toggle based on config + env
+Runtime                # Installed contributions and configured preferences
 ```
 
 ## Data Flow
@@ -167,3 +170,9 @@ Tool execution (if needed)
        ↓
 Client renders parts
 ```
+
+## Repository ownership
+
+`apps/chat` is the reference consumer and core template source. Canonical installables live in `packages/registry/src/`. The CLI publishes explicit source mappings and generates composition files. Maintainer page captures live in `packages/chat-visual-tests`, outside scaffolded applications. Plugin routes in `app/` and discoverable tools in `agent/` delegate to the owning plugin.
+
+See [Authoring plugins](./plugins/authoring) for the contribution contract and [Registry authoring](./registry/authoring) for distribution and demo synchronization.

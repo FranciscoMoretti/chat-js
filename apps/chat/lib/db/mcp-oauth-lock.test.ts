@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { withMcpOAuthRefreshLock } from "./mcp-oauth-lock";
+import { withMcpOAuthRefreshLock } from "../../plugins/mcp/db/mcp-oauth-lock";
 
 const mocks = vi.hoisted(() => ({ begin: vi.fn(), released: vi.fn() }));
 vi.mock("postgres", () => ({

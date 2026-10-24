@@ -70,14 +70,14 @@ test("sandboxes are optional; installing a consumer requires an explicit provide
   try {
     const empty = await planInstallation(
       f.root,
-      { features: [], tools: [] },
+      { plugins: [], tools: [] },
       { fresh: true }
     );
     expect(empty.providerChanges).toEqual([]);
     await rejects(
       planInstallation(
         f.root,
-        { features: [], tools: [f.address("code-execution")] },
+        { plugins: [], tools: [f.address("code-execution")] },
         { fresh: true }
       ),
       /--sandbox-provider/u
@@ -85,7 +85,7 @@ test("sandboxes are optional; installing a consumer requires an explicit provide
     const selected = await planInstallation(
       f.root,
       {
-        features: [],
+        plugins: [],
         tools: [f.address("code-execution")],
         sandbox: f.address("daytona-sandbox"),
       },
@@ -107,7 +107,7 @@ test("provider-only installations expose no model tools and reject ambiguous sel
   try {
     const selected = await planInstallation(
       f.root,
-      { features: [], tools: [], sandbox: f.address("vercel-sandbox") },
+      { plugins: [], tools: [], sandbox: f.address("vercel-sandbox") },
       { fresh: true }
     );
     expect(selected.expected).toEqual([]);
@@ -115,7 +115,7 @@ test("provider-only installations expose no model tools and reject ambiguous sel
       planInstallation(
         f.root,
         {
-          features: [],
+          plugins: [],
           tools: [f.address("daytona-sandbox")],
           sandbox: f.address("vercel-sandbox"),
         },
@@ -137,12 +137,12 @@ test("replacement requires --replace and the existing provider satisfies later c
       'export const sandboxId = "vercel";'
     );
     const consumer = await planInstallation(f.root, {
-      features: [],
+      plugins: [],
       tools: [f.address("code-execution")],
     });
     expect(consumer.expected).toHaveLength(1);
     const selection = {
-      features: [],
+      plugins: [],
       tools: [],
       sandbox: f.address("daytona-sandbox"),
     };
@@ -165,7 +165,7 @@ test("create requires a sandbox after resolving an indirect code-execution depen
     const selected = await planSandboxInstallation(
       f.root,
       {
-        features: [],
+        plugins: [],
         tools: [f.address("dependent")],
       },
       { fresh: true },
@@ -192,7 +192,7 @@ test("create permits no sandbox when the resolved graph has no consumer", async 
     const selected = await planSandboxInstallation(
       f.root,
       {
-        features: [],
+        plugins: [],
         tools: [],
       },
       { fresh: true },

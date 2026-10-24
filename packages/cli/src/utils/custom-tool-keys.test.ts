@@ -36,7 +36,7 @@ const validationFailure = async (root: string): Promise<string> => {
 test("preflight finds imported and spread keys without executing source", async () => {
   const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
-  const directory = pathModule.join(root, "tools/chatjs");
+  const directory = pathModule.join(root, "composition/custom");
   await mkdir(directory, { recursive: true });
   await writeFile(
     pathModule.join(directory, "shared.ts"),
@@ -52,7 +52,7 @@ test("preflight finds imported and spread keys without executing source", async 
 test("preflight rejects dynamic keys it cannot verify", async () => {
   const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
-  const directory = pathModule.join(root, "tools/chatjs");
+  const directory = pathModule.join(root, "composition/custom");
   await mkdir(directory, { recursive: true });
   await writeFile(
     pathModule.join(directory, "custom-tools.ts"),

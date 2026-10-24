@@ -5,7 +5,7 @@ import { defineDynamic } from "eve/tools";
 import { eveImageContext } from "../../lib/eve/image-context";
 import { eveToolImageContext } from "../../lib/eve/tool-image-context";
 import { filterEveTools } from "../../lib/eve/turn-tools";
-import { tools } from "../../tools/chatjs/tools";
+import { tools } from "../../composition/generated/tools";
 
 export default defineDynamic({
   events: {

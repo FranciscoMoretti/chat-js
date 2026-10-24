@@ -11,7 +11,7 @@ import {
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolContext } from "eve/tools";
 import { createHash } from "node:crypto";
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { installedDocumentKinds } from "@/composition/generated/installed-tools";
 import { resolveEveConversationScope } from "./conversation-scope";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;

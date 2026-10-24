@@ -2,10 +2,10 @@
 import { Cpu, Settings } from "lucide-react";
 
 import type { SettingsItem } from "@/components/settings/settings-item";
-import { mcpSettingsItem } from "@/features/mcp/settings";
+import { mcpClient } from "@/plugins/mcp/client-plugin";
 
 export const settingsItems: SettingsItem[] = [
   { href: "/settings", icon: Settings, id: "general", label: "General" },
   { href: "/settings/models", icon: Cpu, id: "models", label: "Models" },
-  mcpSettingsItem,
+  ...mcpClient().settingsItems,
 ];

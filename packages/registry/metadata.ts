@@ -135,37 +135,45 @@ const storageDefinitionSchema = z.object({
 
 type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
 
-// Supported web installation boundaries. Implementations are added by their owners.
-const featureIdSchema = z.enum([
-  "mcp",
-  "attachment-uploads",
-  "vercel-analytics",
-  "vercel-speed-insights",
-  "langfuse",
-]);
-
-const featureDefinitionSchema = z.object({
-  environmentValidation: z
-    .string()
-    .regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u)
-    .optional(),
+// Plugin IDs are open to external registries; contributions use the same contract.
+const pluginIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/u);
+const pluginModuleSchema = z.string().regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u);
+const pluginDefinitionSchema = z.object({
+  contractVersion: z.literal(CONTRACT_VERSION),
+  id: pluginIdSchema,
+  kind: z.literal("plugin"),
+  files: z.array(z.string().min(1)).default([]),
+  environmentValidation: pluginModuleSchema.optional(),
   databaseSchemas: z
     .array(z.string().regex(/^(?:[a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_-]+\.ts$/u))
     .optional(),
-  contractVersion: z.literal(CONTRACT_VERSION),
   envRequirements: z.array(envRequirementSchema).optional(),
-  id: featureIdSchema,
-  kind: z.literal("feature"),
-  requiresFeatures: z.array(featureIdSchema).optional(),
+  requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
+  server: z
+    .object({
+      export: identifier,
+      routers: z.array(identifier).default([]),
+      instrumentation: z.literal(true).optional(),
+    })
+    .optional(),
+  client: z
+    .object({
+      export: identifier,
+      composerControls: z.array(pluginIdSchema).default([]),
+      settingsItems: z.array(pluginIdSchema).default([]),
+      layout: z.literal(true).optional(),
+      uploads: z.literal(true).optional(),
+    })
+    .optional(),
 });
 
-type FeatureDefinition = z.infer<typeof featureDefinitionSchema>;
+type PluginDefinition = z.infer<typeof pluginDefinitionSchema>;
 export {
   envRequirementSchema,
-  featureDefinitionSchema,
-  featureIdSchema,
+  pluginDefinitionSchema,
+  pluginIdSchema,
   storageDefinitionSchema,
   toolDefinitionSchema,
 };
-export type { FeatureDefinition, StorageDefinition, ToolDefinition };
+export type { PluginDefinition, StorageDefinition, ToolDefinition };

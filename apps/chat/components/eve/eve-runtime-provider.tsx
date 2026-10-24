@@ -24,7 +24,7 @@ import { projectEveMessageDisplay } from "@/lib/eve/message-display";
 import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { installedToolNames } from "@/tools/chatjs/installed-features";
+import { installedToolNames } from "@/composition/generated/installed-tools";
 import { useTRPC } from "@/trpc/react";
 
 import { EveChatHeader } from "./eve-chat-header";

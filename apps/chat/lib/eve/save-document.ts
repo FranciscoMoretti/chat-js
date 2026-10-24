@@ -5,7 +5,7 @@ import {
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveManualDocumentInput } from "./document-contracts";
 import { getEveConversation } from "@/lib/db/eve-queries";
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { installedDocumentKinds } from "@/composition/generated/installed-tools";
 import type { z } from "zod";
 
 type SavedDocumentReceipt = Pick<

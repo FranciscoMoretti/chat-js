@@ -17,7 +17,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { composerTools } from "@/tools/chatjs/composer-tools";
+import type { composerTools } from "@/composition/generated/composer-tools";
 
 import "./sandbox.css";
 
@@ -41,9 +41,9 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 
-vi.mock("@/features/installed-uploads", async () => {
+vi.mock("@/composition/generated/installed-uploads", async () => {
   const { attachmentUploads } =
-    await import("@/features/attachment-uploads/integration");
+    await import("@/plugins/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
     if (state.uploadsInstalled) {
@@ -59,7 +59,7 @@ vi.mock("@/features/installed-uploads", async () => {
   };
 });
 
-vi.mock("@/features/attachment-uploads/upload", () => ({
+vi.mock("@/plugins/attachment-uploads/upload", () => ({
   uploadAttachment: async (file: ReadonlyNativeSurface<File>) => {
     await state.upload(file);
     return {
@@ -101,15 +101,15 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 
-vi.mock("@/features/installed", () => ({
-  installedFeatures: {
+vi.mock("@/composition/generated/installed", () => ({
+  installedPlugins: {
     has: (id: string) =>
       state.featuresEnabled &&
       (id !== "attachment-uploads" || state.uploadsInstalled),
   },
 }));
 
-vi.mock("@/tools/chatjs/installed-features", () => ({
+vi.mock("@/composition/generated/installed-tools", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
@@ -167,7 +167,7 @@ vi.mock("@/components/internal-link", () => ({
   ),
 }));
 
-vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
+vi.mock("@/composition/generated/composer-tools", async (importOriginal) => {
   const actual = await importOriginal<{
     composerTools: typeof composerTools;
   }>();

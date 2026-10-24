@@ -24,13 +24,13 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `lib/storage-provider.ts`, `lib/storage-options.ts` | Installed Files SDK adapter, non-secret options and credential requirements |
 | `tools/chatjs/*/chatjs.json` | Installed tool requirements, registration names, exclusive provider slots and document kinds |
 | `tools/chatjs/*/configuration-schema.ts` | Tool-owned validation and defaults |
-| `tools/chatjs/installed-config.ts` | Generated composition of installed tool schemas |
-| `tools/chatjs/document-actions.ts` | Generated composition of document assistant actions |
-| `tools/chatjs/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
-| `tools/chatjs/custom-tools.ts`, `custom-ui.ts` | User-authored tool and renderer registrations |
-| `features/*/chatjs.json`, generated feature registrations | Installed uploads, MCP and telemetry contributions |
+| `composition/generated/installed-config.ts` | Generated composition of installed tool schemas |
+| `composition/generated/document-actions.ts` | Generated composition of document assistant actions |
+| `composition/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
+| `composition/custom/custom-tools.ts`, `custom-ui.ts` | User-authored tool and renderer registrations |
+| `plugins/*/chatjs.json`, generated feature registrations | Installed uploads, MCP and telemetry contributions |
 
-Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Features can declare `requiresFeatures` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
+Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Features can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
 
 ## AI policy
 

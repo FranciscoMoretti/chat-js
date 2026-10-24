@@ -1,0 +1,50 @@
+---
+title: Authoring plugins
+description: Publish plugins with separate server and client contributions
+---
+
+Publish a standard shadcn registry item with `meta.chatjs.kind: "plugin"`. Plugin IDs use lowercase letters, digits, and hyphens, beginning with a letter. External plugins use the same metadata and sync path as the built-ins.
+
+## Source and installation
+
+In this repository, keep a plugin's installation manifest in `packages/registry/src/plugins/<id>/manifest.ts`, its implementation in `src/`, and its framework entrypoints in `adapters/`. Map implementation files into `~/plugins/<id>/`. Map thin Next and EVE entrypoints into their required `app/` and `agent/` locations. List every distributed file explicitly. Tests and authoring metadata stay in the repository.
+
+`server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
+
+## Runtime contributions
+
+A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, and an `uploads` integration. Use `satisfies` to retain the specific router and contribution types.
+
+The built-in MCP factories are `mcp()` and `mcpClient()`. Its server entrypoint registers the `mcp` router. Its client entrypoint supplies the connector control and settings item. Keep credentials, database imports, and server implementations outside the client factory's import graph.
+
+## Installation descriptor
+
+For example, MCP declares these contributions in `chatjs.json`:
+
+```json
+{
+  "contractVersion": 1,
+  "id": "mcp",
+  "kind": "plugin",
+  "server": { "export": "mcp", "routers": ["mcp"] },
+  "client": {
+    "export": "mcpClient",
+    "composerControls": ["mcp"],
+    "settingsItems": ["mcp"]
+  }
+}
+```
+
+The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. Router keys must be unique and cannot replace core routers. Composer and settings IDs must be unique across plugins. Only one plugin can supply uploads.
+
+Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
+
+Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `composition/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
+
+## Composition and verification
+
+Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required source, checks contribution collisions, and then generates registrations. It reads metadata without importing server factories or requiring their runtime credentials.
+
+`chat-js add` also inserts declared composer and settings contributions into the editable application lists. Reorder or customize those lists as needed. If you replace a literal array with computed composition, add the contribution yourself and run sync.
+
+Verify both an app without the plugin and an app with it installed. Exercise the plugin's routes and UI, and check that client entrypoints cannot reach server-only code. In this repository, edit canonical source, run `bun demo:sync`, and commit the generated reference copies and baseline with it.

@@ -1,0 +1,20 @@
+---
+title: Plugins
+description: Install optional application capabilities with explicit server and client contributions
+---
+
+Plugins add application capabilities and own their implementation, credentials, and optional database tables. Install one with `chat-js add <id>` or select it during creation. Installed source determines availability.
+
+| Plugin | Contribution |
+| --- | --- |
+| [MCP](./mcp) | Connector settings, OAuth, dynamic tools, and composer control |
+| [Attachment uploads](./attachments) | File picker, camera, paste/drop, and upload endpoint |
+| `vercel-analytics` | Vercel Analytics layout component |
+| `vercel-speed-insights` | Vercel Speed Insights layout component |
+| `langfuse` | Server instrumentation and tracing credentials |
+
+Plugins live in `plugins/<id>/`. Server contributions come from `server-plugin.ts`; browser contributions come from `client-plugin.ts`. `chat-js sync` reads each `chatjs.json` descriptor and generates typed registrations under `composition/generated/`. It does not execute plugin entrypoints during installation.
+
+Keep preferences in `chat.config.ts`, composer ordering in `composer-controls.ts`, and navigation ordering in `settings-items.ts`. Sync preserves those editable lists. Tools retain their own contracts under `tools/chatjs/`; gateways, storage, and sandboxes retain their provider selection rules.
+
+To build a plugin for your own registry, follow [Authoring plugins](./authoring).

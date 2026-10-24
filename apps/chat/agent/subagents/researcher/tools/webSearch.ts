@@ -1,7 +1,7 @@
 import { defineState } from "eve/context";
 import { defineDynamic } from "eve/tools";
 
-import { providers } from "@/tools/chatjs/providers";
+import { providers } from "@/composition/generated/providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
 const INITIAL_SEARCH_ROUND = 0;

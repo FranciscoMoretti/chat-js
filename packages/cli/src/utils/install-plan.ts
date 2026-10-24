@@ -1,3 +1,4 @@
+import { pluginRegistrationTargets } from "./sync-plugins";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -166,7 +167,7 @@ const installPlan = async (
     "pnpm-lock.yaml",
     "yarn.lock",
     ...toolRegistrationTargets,
-    "features/installed-database.ts",
+    ...pluginRegistrationTargets,
     ...(options.rollbackTargets ?? []),
   ];
   const snapshotTargets = [...new Set([...targets, ...rollbackTargets])];

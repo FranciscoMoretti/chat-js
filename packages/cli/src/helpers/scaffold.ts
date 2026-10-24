@@ -24,15 +24,14 @@ import {
   parsePackageJson,
 } from "./package-manifest";
 import type { PackageManager } from "#cli/types";
-import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
+import { pluginItems } from "../../../registry/src/plugins/catalog";
 import { existsSync } from "node:fs";
-import { initializeFeatureUi } from "#cli/utils/sync-features";
-import { mcpFiles } from "../../../registry/src/features/mcp";
+import { initializePluginUi } from "#cli/utils/sync-plugins";
 import pathModule from "node:path";
 import { registryUrl } from "#cli/registry/shadcn";
 import { resolvePackageDirectory } from "./resolve-package-directory";
 import { runCommand } from "#cli/utils/run-command";
-import { syncTools } from "#cli/utils/sync-tools";
+import { toolRegistrationTargets, syncTools } from "#cli/utils/sync-tools";
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
 const JSON_INDENTATION_SPACES = 2;
@@ -120,6 +119,11 @@ const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
+  await Promise.all(
+    toolRegistrationTargets.map(async (file) => {
+      await rm(pathModule.join(destination, file), { force: true });
+    })
+  );
   await syncTools(destination);
 };
 const writePnpmWorkspaceConfig = async (
@@ -498,12 +502,12 @@ export { sandboxId, sandboxEnvRequirements };
     componentsPath,
     `${JSON.stringify(components, null, JSON_INDENTATION_SPACES)}\n`
   );
-  const optionalFiles = [
-    ...mcpFiles,
-    "features/mcp/chatjs.json",
-    ...attachmentUploadFiles,
-    "features/attachment-uploads/chatjs.json",
-  ];
+  const optionalFiles = pluginItems.flatMap((item) => [
+    ...(item.files ?? []).map(
+      (file) => file.target?.replace(/^~\//u, "") ?? ""
+    ),
+    `plugins/${item.name}/chatjs.json`,
+  ]);
   await Promise.all(
     optionalFiles.map(async (file): Promise<void> => {
       await rm(pathModule.join(destination, file), { force: true });
@@ -536,7 +540,7 @@ export { sandboxId, sandboxEnvRequirements };
       }
     }
   }
-  await initializeFeatureUi(destination);
+  await initializePluginUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
 

@@ -2,12 +2,12 @@ import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { MCPClient } from "../lib/ai/mcp/mcp-client";
+import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
 import { userCredit } from "../lib/db/schema";
-import { mcpConnector, mcpOAuthSession } from "@/features/mcp/db/mcp-schema";
+import { mcpConnector, mcpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
 import { conversationBinding } from "../lib/eve/contracts";
-import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
+import { discoverEveMcpTools } from "../plugins/mcp/runtime/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 

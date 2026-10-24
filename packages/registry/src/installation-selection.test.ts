@@ -5,18 +5,18 @@ import { installationSelectionSchema } from "../installation";
 // JSON/preset is a public boundary: runtime presence flags must not be accepted.
 test("selection accepts addresses and rejects unknown presence/config fields", () => {
   expect(installationSelectionSchema.parse({})).toEqual({
-    features: [],
+    plugins: [],
     tools: [],
   });
   expect(
     installationSelectionSchema.parse({
-      features: ["@chatjs/mcp"],
+      plugins: ["@chatjs/mcp"],
       gateway: "https://example.com/gateway.json",
       storage: { source: "memory" },
       tools: ["word-count"],
     })
   ).toEqual({
-    features: ["@chatjs/mcp"],
+    plugins: ["@chatjs/mcp"],
     gateway: "https://example.com/gateway.json",
     storage: { options: {}, source: "memory" },
     tools: ["word-count"],
@@ -25,7 +25,7 @@ test("selection accepts addresses and rejects unknown presence/config fields", (
   expect(() =>
     installationSelectionSchema.parse({ storage: { source: "" } })
   ).toThrow();
-  expect(() => installationSelectionSchema.parse({ features: [""] })).toThrow();
+  expect(() => installationSelectionSchema.parse({ plugins: [""] })).toThrow();
   expect(() => installationSelectionSchema.parse({ gateway: "" })).toThrow();
   expect(() => installationSelectionSchema.parse({ tools: [""] })).toThrow();
   expect(() =>

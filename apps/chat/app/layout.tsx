@@ -10,7 +10,7 @@ import { Toaster } from "sonner";
 
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
-import { installedLayoutComponents } from "@/features/installed-layout";
+import { installedLayoutComponents } from "@/composition/generated/installed-layout";
 import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 

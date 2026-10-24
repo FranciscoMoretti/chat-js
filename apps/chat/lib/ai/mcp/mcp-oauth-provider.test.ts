@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { McpOAuthClientProvider } from "./mcp-oauth-provider";
-import type { McpOAuthSession } from "@/features/mcp/db/mcp-schema";
+import { McpOAuthClientProvider } from "../../../plugins/mcp/oauth/mcp-oauth-provider";
+import type { McpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
 import { auth } from "@ai-sdk/mcp";
 
 const sdkIssuer = "http://127.0.0.1:3799";
@@ -25,16 +25,18 @@ const mocks = vi.hoisted(() => ({
   setClientInfo: vi.fn(),
   setCodeVerifier: vi.fn(),
 }));
-vi.mock("./mcp-fetch", () => ({ mcpFetch: mocks.fetch }));
+vi.mock("../../../plugins/mcp/oauth/mcp-fetch", () => ({
+  mcpFetch: mocks.fetch,
+}));
 
-vi.mock("@/lib/db/mcp-queries", () => ({
+vi.mock("@/plugins/mcp/db/mcp-queries", () => ({
   getAuthenticatedSession: mocks.read,
   getSessionByState: mocks.read,
   saveTokensAndCleanup: mocks.save,
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
   setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
-vi.mock("@/lib/db/mcp-oauth-lock", () => ({
+vi.mock("@/plugins/mcp/db/mcp-oauth-lock", () => ({
   withMcpOAuthRefreshLock: async (
     _id: string,
     run: () => Promise<unknown>

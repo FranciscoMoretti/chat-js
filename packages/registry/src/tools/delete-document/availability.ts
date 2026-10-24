@@ -1,6 +1,6 @@
 import type { ToolContext } from "eve/tools";
 
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { installedDocumentKinds } from "@/composition/generated/installed-tools";
 
 const EMPTY_DOCUMENT_KIND_COUNT = 0;
 

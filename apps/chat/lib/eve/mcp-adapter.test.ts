@@ -2,7 +2,10 @@ import { tool } from "ai";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+import {
+  describeMcpTool,
+  executeMcpTool,
+} from "../../plugins/mcp/runtime/mcp-adapter";
 
 describe("Eve tool contract", () => {
   it("removes executable schema metadata from the advertised JSON schema", async () => {

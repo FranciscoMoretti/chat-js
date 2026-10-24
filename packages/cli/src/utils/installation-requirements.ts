@@ -61,7 +61,7 @@ const validateStorage = async (
   const storage = selected ?? (await readProviderId(cwd, "storage"));
   if (typeof storage !== "string" || storage === "" || storage === "memory") {
     throw new Error(
-      `${consumers.map((item) => item.id).join(", ")} requires persistent storage. Select --storage-provider before installing file-backed features.`
+      `${consumers.map((item) => item.id).join(", ")} requires persistent storage. Select --storage-provider before installing file-backed plugins.`
     );
   }
 };
@@ -115,7 +115,7 @@ const validateProviderRequirements = async (
     readonly storage?: string;
     readonly sandbox?: string;
     readonly tools: readonly MediaConsumer[];
-    readonly features: readonly StorageConsumer[];
+    readonly plugins: readonly StorageConsumer[];
   }
 ): Promise<void> => {
   if (target.tools.some((tool) => tool.requiresSandbox)) {
@@ -124,7 +124,7 @@ const validateProviderRequirements = async (
       throw new SandboxRequiredError();
     }
   }
-  const fileConsumers = [...target.tools, ...target.features].filter((item) =>
+  const fileConsumers = [...target.tools, ...target.plugins].filter((item) =>
     requiresStorage(item)
   );
   await validateStorage(cwd, fileConsumers, target.storage);

@@ -3,7 +3,7 @@ import { build } from "bun";
 const imageImport = /^next\/image$/u;
 const navigationImport = /^next\/navigation$/u;
 const replacedModule =
-  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|features\/mcp\/composer)\.tsx$/u;
+  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|plugins\/mcp\/composer)\.tsx$/u;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
 /** @type {Record<string, string>} */

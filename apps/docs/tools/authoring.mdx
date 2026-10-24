@@ -149,7 +149,7 @@ Tools receive EVE's native context. Import only the ChatJS services your impleme
 
 Keep provider credentials and SDK dependencies in the installed integration. Tools accessing private user data must authorize that access using the native session identity. Both official and third-party tools use the same registration and accounting contract.
 
-For local custom tools, add native definitions to `tools/chatjs/custom-tools.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `custom-ui.ts`. The generated registry combines installed and custom tools and rejects duplicate names.
+For local custom tools, add native definitions to `composition/custom/custom-tools.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `custom-ui.ts`. The generated registry combines installed and custom tools and rejects duplicate names.
 
 ## Build and verify
 

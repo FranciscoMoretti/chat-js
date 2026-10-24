@@ -6,11 +6,11 @@ import {
   savedCodeExecutionItem,
 } from "./src/tools/documents";
 import type { RegistryItem } from "shadcn/schema";
-import { attachmentUploadsItem } from "./src/features/attachment-uploads";
+import { attachmentUploadsItem } from "./src/plugins/attachment-uploads/manifest";
 import { builtInGateways } from "./src/gateways/catalog";
 import { builtInStorage } from "./src/storage/catalog";
-import { mcpItem } from "./src/features/mcp";
-import { observabilityItems } from "./src/features/observability";
+import { mcpItem } from "./src/plugins/mcp/manifest";
+import { observabilityItems } from "./src/plugins/observability";
 import registryPackage from "./package.json";
 import { registrySchema } from "shadcn/schema";
 import { researchItem } from "./src/tools/research";

@@ -5,7 +5,7 @@ import {
 import type { ToolContext } from "eve/tools";
 import { deleteDocumentAvailable } from "./availability";
 import { deleteDocumentInput } from "./schemas";
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { installedDocumentKinds } from "@/composition/generated/installed-tools";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
 import type { z } from "zod";
 

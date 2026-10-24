@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
-vi.mock("@/tools/chatjs/installed-features", () => ({
+vi.mock("@/composition/generated/installed-tools", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
@@ -40,7 +40,9 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));
+vi.mock("../../composition/generated/providers", () => ({
+  providers: mocks.tools,
+}));
 beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.research = true;

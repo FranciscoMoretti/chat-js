@@ -20,7 +20,7 @@ import { preflight } from "../../cli/src/utils/preflight";
 import { registry } from "../registry";
 import { resolveGateway } from "../../cli/src/registry/gateways";
 import { resolveStorage } from "../../cli/src/registry/storage";
-import { syncFeatures } from "../../cli/src/utils/sync-features";
+import { syncPlugins } from "../../cli/src/utils/sync-plugins";
 import { syncTools } from "../../cli/src/utils/sync-tools";
 import { tmpdir } from "node:os";
 import { z } from "zod";
@@ -132,12 +132,12 @@ const generateDemo = async (): Promise<Map<string, string>> => {
             typeof metadata === "object" &&
             metadata &&
             "kind" in metadata &&
-            (metadata.kind === "tool" || metadata.kind === "feature")
+            (metadata.kind === "tool" || metadata.kind === "plugin")
           ) {
             const target =
               metadata.kind === "tool"
                 ? `~/tools/chatjs/${item.name}/chatjs.json`
-                : `~/features/${item.name}/chatjs.json`;
+                : `~/plugins/${item.name}/chatjs.json`;
             files.push({
               content: await formatted(target, JSON.stringify(metadata)),
               path: `${item.name}.json`,
@@ -230,15 +230,8 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     });
     await syncTools(temporary, { expected: plan.expected });
     // Composer/settings ordering is application-owned; never initialize or add UI here.
-    await syncFeatures(temporary, {
-      expectedMcp: plan.features.some(
-        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
-          feature.id === "mcp"
-      ),
-      expectedUploads: plan.features.some(
-        (feature: ReadonlyInput<(typeof plan.features)[number]>) =>
-          feature.id === "attachment-uploads"
-      ),
+    await syncPlugins(temporary, {
+      expected: plan.plugins.map((plugin) => plugin.id),
     });
     // Narrow application-owned exceptions: model catalog is fetched separately;
     // credentials, dependency manifests, UI order and extension files stay local.
@@ -251,8 +244,8 @@ const generateDemo = async (): Promise<Map<string, string>> => {
       "app/globals.css",
       ".env.example",
       "lib/ai/models.generated.ts",
-      "tools/chatjs/custom-tools.ts",
-      "tools/chatjs/custom-ui.ts",
+      "composition/custom/custom-tools.ts",
+      "composition/custom/custom-ui.ts",
     ]);
     const installedFiles = await filesBelow(temporary);
     const copies = await Promise.all(

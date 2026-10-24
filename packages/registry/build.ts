@@ -21,7 +21,7 @@ await Promise.all(
       typeof metadata === "object" &&
       metadata &&
       "kind" in metadata &&
-      (metadata.kind === "tool" || metadata.kind === "feature")
+      (metadata.kind === "tool" || metadata.kind === "plugin")
     ) {
       const sourcePath = `dist/source/${item.name}.json`;
       const formatted = await format(sourcePath, JSON.stringify(metadata), {
@@ -36,8 +36,8 @@ await Promise.all(
       item.files.push({
         path: sourcePath,
         target:
-          metadata.kind === "feature"
-            ? `~/features/${item.name}/chatjs.json`
+          metadata.kind === "plugin"
+            ? `~/plugins/${item.name}/chatjs.json`
             : `~/tools/chatjs/${item.name}/chatjs.json`,
         type: "registry:file",
       });

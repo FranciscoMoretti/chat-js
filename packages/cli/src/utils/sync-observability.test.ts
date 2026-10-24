@@ -10,8 +10,8 @@ import { requireJsonObject } from "#cli/helpers/json-object";
 
 import { installItems } from "#cli/registry/shadcn";
 
-import { observabilityItems } from "../../../registry/src/features/observability";
-import { syncFeatures } from "./sync-features";
+import { observabilityItems } from "../../../registry/src/plugins/observability";
+import { syncPlugins } from "./sync-plugins";
 
 const lintInstalledObservability = async (root: string): Promise<void> => {
   const config = path.join(root, "export-rules.json");
@@ -31,8 +31,8 @@ const lintInstalledObservability = async (root: string): Promise<void> => {
       "--no-ignore",
       "--report-unused-disable-directives-severity",
       "error",
-      path.join(root, "features/installed-layout.ts"),
-      path.join(root, "features/installed-instrumentation.ts"),
+      path.join(root, "composition/generated/installed-layout.ts"),
+      path.join(root, "composition/generated/installed-instrumentation.ts"),
     ],
     stderr: "pipe",
     stdout: "pipe",
@@ -80,7 +80,7 @@ const itemFiles = async (item: ReadonlyObservabilityItem) => [
   {
     content: JSON.stringify(item.meta.chatjs),
     path: `${item.name}.json`,
-    target: `~/features/${item.name}/chatjs.json`,
+    target: `~/plugins/${item.name}/chatjs.json`,
     type: "registry:file" as const,
   },
 ];
@@ -108,31 +108,34 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
         );
       })
     );
-    await syncFeatures(root);
+    await syncPlugins(root);
     await lintInstalledObservability(root);
     const layout = await readFile(
-      path.join(root, "features/installed-layout.ts"),
+      path.join(root, "composition/generated/installed-layout.ts"),
       "utf-8"
     );
     const instrumentation = await readFile(
-      path.join(root, "features/installed-instrumentation.ts"),
+      path.join(root, "composition/generated/installed-instrumentation.ts"),
       "utf-8"
     );
-    const features = await readFile(
-      path.join(root, "features/installed.ts"),
+    const plugins = await readFile(
+      path.join(root, "composition/generated/installed.ts"),
       "utf-8"
     );
     expect(instrumentation).not.toContain("sort-imports");
     for (const item of observabilityItems) {
       const output = item.name === "langfuse" ? instrumentation : layout;
-      expect(output.includes(`@/features/${item.name}/`)).toBe(
+      expect(output.includes(`@/plugins/${item.name}/`)).toBe(
         selected.includes(item)
       );
-      expect(features.includes(`"${item.name}"`)).toBe(selected.includes(item));
+      expect(plugins.includes(`"${item.name}"`)).toBe(selected.includes(item));
     }
-    await syncFeatures(root);
+    await syncPlugins(root);
     expect(
-      await readFile(path.join(root, "features/installed-layout.ts"), "utf-8")
+      await readFile(
+        path.join(root, "composition/generated/installed-layout.ts"),
+        "utf-8"
+      )
     ).toBe(layout);
   });
 }
@@ -159,9 +162,9 @@ for (const item of observabilityItems) {
     }
     const descriptors = await Promise.all(
       observabilityItems.map(
-        async (feature: { readonly name: string }): Promise<boolean> =>
+        async (plugin: { readonly name: string }): Promise<boolean> =>
           await Bun.file(
-            path.join(root, `features/${feature.name}/chatjs.json`)
+            path.join(root, `plugins/${plugin.name}/chatjs.json`)
           ).exists()
       )
     );
@@ -187,7 +190,7 @@ for (const item of observabilityItems) {
         [`http://127.0.0.1:${server.port}/${item.name}.json`],
         root
       );
-      await syncFeatures(root);
+      await syncPlugins(root);
       const installedManifest = parsePackageJson(
         await readFile(path.join(root, "package.json"), "utf-8")
       );
@@ -204,19 +207,22 @@ for (const item of observabilityItems) {
         expect(installedDependencies[name]).toBeDefined();
       }
       const registration = await readFile(
-        path.join(root, "features/installed.ts"),
+        path.join(root, "composition/generated/installed.ts"),
         "utf-8"
       );
       expect(registration).toContain(`"${item.name}"`);
-      for (const feature of observabilityItems.filter(
+      for (const plugin of observabilityItems.filter(
         (candidate: ReadonlyObservabilityItem): boolean => candidate !== item
       )) {
-        expect(registration).not.toContain(`"${feature.name}"`);
+        expect(registration).not.toContain(`"${plugin.name}"`);
       }
       await rm(path.join(root, files[0].target.replace(/^~\//u, "")));
-      expect(syncFeatures(root)).rejects.toThrow("installation is incomplete");
+      expect(syncPlugins(root)).rejects.toThrow("installation is incomplete");
       expect(
-        await readFile(path.join(root, "features/installed.ts"), "utf-8")
+        await readFile(
+          path.join(root, "composition/generated/installed.ts"),
+          "utf-8"
+        )
       ).toBe(registration);
     } finally {
       await server.stop(true);
@@ -232,16 +238,18 @@ for (const item of observabilityItems) {
         await writeFile(target, file.content);
       })
     );
-    const descriptor = path.join(root, `features/${item.name}/chatjs.json`);
+    const descriptor = path.join(root, `plugins/${item.name}/chatjs.json`);
     await rm(descriptor);
-    expect(syncFeatures(root)).rejects.toThrow("missing its descriptor");
+    expect(syncPlugins(root)).rejects.toThrow("missing its descriptor");
     await writeFile(
       descriptor,
       JSON.stringify({ ...item.meta.chatjs, id: "mcp" })
     );
-    expect(syncFeatures(root)).rejects.toThrow("id must match its directory");
+    expect(syncPlugins(root)).rejects.toThrow("id must match its directory");
     expect(
-      await Bun.file(path.join(root, "features/installed-layout.ts")).exists()
+      await Bun.file(
+        path.join(root, "composition/generated/installed-layout.ts")
+      ).exists()
     ).toBe(false);
   });
 }

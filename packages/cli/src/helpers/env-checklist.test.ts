@@ -88,7 +88,7 @@ describe("collectEnvChecklist", () => {
     ).toBe(false);
   });
 
-  it("keeps required, gateway, feature, and authentication entries ordered", () => {
+  it("keeps required, gateway, plugin, and authentication entries ordered", () => {
     const entries = collectEnvChecklist({
       auth: {
         github: true,

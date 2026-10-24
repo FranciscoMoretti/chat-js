@@ -114,9 +114,9 @@ const collectCoreFeatureEntries = (
   input: EnvChecklistInput,
   add: RequirementCollector["add"]
 ): void => {
-  for (const feature of CORE_FEATURE_KEYS) {
-    if (input.coreFeatures[feature]) {
-      for (const requirement of coreFeatureEnvRequirements[feature] ?? []) {
+  for (const plugin of CORE_FEATURE_KEYS) {
+    if (input.coreFeatures[plugin]) {
+      for (const requirement of coreFeatureEnvRequirements[plugin] ?? []) {
         add(requirement);
       }
     }

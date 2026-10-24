@@ -6,8 +6,8 @@ import { Favicon } from "@/components/favicon";
 import { FaviconGroup } from "@/components/favicon-group";
 import { WebSourceBadge } from "@/components/source-badge";
 import { Sources } from "@/components/sources";
-import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
-import { ConnectorHeader } from "@/components/settings/connector-header";
+import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
+import { ConnectorHeader } from "@/plugins/mcp/ui/connector-header";
 import { mount, renderRoot, unmount } from "@/tests/visual/primitive-mount";
 import "@/tests/visual/sandbox.css";
 

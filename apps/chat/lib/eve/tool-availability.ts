@@ -1,7 +1,7 @@
 import type { LanguageModelMiddleware } from "ai";
 import type { ToolContext } from "eve/tools";
 
-import { toolAvailability } from "@/tools/chatjs/tool-availability";
+import { toolAvailability } from "@/composition/generated/tool-availability";
 
 export type ToolAvailability = (
   session: Pick<ToolContext["session"], "auth" | "parent">

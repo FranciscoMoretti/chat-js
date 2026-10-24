@@ -10,7 +10,7 @@ import {
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import type { TaskPlan } from "./test-json";
 import path from "node:path";
-import { runTestProcess } from "./features/test-runtime";
+import { runTestProcess } from "./plugins/test-runtime";
 import { tmpdir } from "node:os";
 
 const SUCCESS_EXIT_CODE = 0;
@@ -165,7 +165,7 @@ test.each([
   ["apps/chat/oxfmt.config.ts", true],
   ["apps/chat/components.json", true],
   ["apps/chat/tools/chatjs/word-count/tool.ts", true],
-  ["apps/chat/tools/chatjs/tools.ts", true],
+  ["apps/chat/composition/generated/tools.ts", true],
   ["apps/chat/.env.local", false],
   ["apps/chat/.next/generated.js", false],
   ["apps/chat/node_modules/example/index.js", false],

@@ -4,12 +4,12 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 
-import { mcpConnector, mcpOAuthSession } from "@/features/mcp/db/mcp-schema";
+import { mcpConnector, mcpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
 vi.mock("./client", () => ({ db: database }));
-vi.mock("@/features/mcp/mcp-env", () => ({
+vi.mock("@/plugins/mcp/mcp-env", () => ({
   readMcpEncryptionKey: () => Buffer.alloc(32, 1).toString("base64"),
 }));
 const {
@@ -17,7 +17,7 @@ const {
   getMcpConnectorById,
   getMcpConnectorByNameId,
   getSessionByState,
-} = await import("./mcp-queries");
+} = await import("../../plugins/mcp/db/mcp-queries");
 
 beforeAll(async () => {
   const directory = new URL("migrations/", import.meta.url);

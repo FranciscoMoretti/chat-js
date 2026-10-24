@@ -46,7 +46,7 @@ test("configuration only accepts installed tools, with typed partial overrides a
     path.join(root, "lib/ai/gateway.ts")
   );
   await symlink(
-    path.join(demo, "node_modules"),
+    path.resolve(demo, "../../node_modules"),
     path.join(root, "node_modules")
   );
   await writeFile(
@@ -95,7 +95,7 @@ defineConfig({ ai: { gateway: gatewayType, tools: { followupSuggestions: {}, res
     path.join(root, "tools/chatjs/custom-research/configuration-schema.ts")
   );
   await writeFile(
-    path.join(root, "tools/chatjs/installed-config.ts"),
+    path.join(root, "composition/generated/installed-config.ts"),
     await planToolConfig(root, [definition])
   );
   await writeFile(

@@ -1,5 +1,5 @@
 import { config } from "@/lib/config";
-import { installedInstrumentation } from "@/features/installed-instrumentation";
+import { installedInstrumentation } from "@/composition/generated/installed-instrumentation";
 
 export const register = async (): Promise<void> => {
   // Core lifecycle starts even if an installed exporter reports missing credentials.

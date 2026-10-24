@@ -1,0 +1,21 @@
+{
+  "contractVersion": 1,
+  "id": "attachment-uploads",
+  "kind": "plugin",
+  "files": [
+    "plugins/attachment-uploads/controls.tsx",
+    "plugins/attachment-uploads/integration.tsx",
+    "plugins/attachment-uploads/upload.ts",
+    "plugins/attachment-uploads/upload-prep.ts",
+    "app/(chat)/api/files/upload/route.ts",
+    "plugins/attachment-uploads/routes/upload.ts",
+    "plugins/attachment-uploads/client-plugin.ts"
+  ],
+  "requiresStorage": true,
+  "client": {
+    "export": "attachmentUploadsClient",
+    "composerControls": ["attach-files", "take-photo"],
+    "settingsItems": [],
+    "uploads": true
+  }
+}

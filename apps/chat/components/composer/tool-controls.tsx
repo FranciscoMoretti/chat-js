@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
-import { installedToolNames } from "@/tools/chatjs/installed-features";
+import { installedToolNames } from "@/composition/generated/installed-tools";
 
 import { useChatModels } from "@/providers/chat-models-provider";
 

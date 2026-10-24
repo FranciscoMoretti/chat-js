@@ -15,7 +15,7 @@ import { registry } from "../registry";
 import { shouldCopyChatAppFile } from "../../cli/src/helpers/scaffold-content";
 import { crossingStatus } from "./ownership-policy";
 
-test("ownership follows explicit targets even outside feature directories", () => {
+test("ownership follows explicit targets even outside plugin directories", () => {
   const inventory = inventoryFiles(
     ["lib/auth.ts", "app/api/plugin/route.ts"],
     [
@@ -103,26 +103,26 @@ test("selecting a provider does not claim alternative providers", () => {
         registryDependencies: ["@chatjs/chosen-gateway"],
       },
     ],
-    { gateway: "chosen", features: [], tools: [] }
+    { gateway: "chosen", plugins: [], tools: [] }
   );
   expect(items.map((item) => item.name)).toEqual(["chosen-gateway", "shared"]);
   expect(() =>
-    installationItems([], { gateway: "unknown", features: [], tools: [] })
+    installationItems([], { gateway: "unknown", plugins: [], tools: [] })
   ).toThrow("Unknown local registry item");
 });
 
-test("feature descriptors are owned and implicit shadcn targets fail explicitly", () => {
+test("plugin descriptors are owned and implicit shadcn targets fail explicitly", () => {
   expect(
     itemClaims({
       name: "mcp",
       type: "registry:item",
-      meta: { chatjs: { kind: "feature" } },
+      meta: { chatjs: { kind: "plugin" } },
     })
   ).toEqual([
     {
       owner: "mcp",
       source: "descriptor:mcp",
-      target: "features/mcp/chatjs.json",
+      target: "plugins/mcp/chatjs.json",
     },
   ]);
   expect(() =>

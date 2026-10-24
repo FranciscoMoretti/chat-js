@@ -1,4 +1,4 @@
-import { installedToolConfig } from "@/tools/chatjs/installed-config";
+import { installedToolConfig } from "@/composition/generated/installed-config";
 import { languageModelSchema, modelRoles } from "./config-models";
 import type {
   GatewayModelIdMap,

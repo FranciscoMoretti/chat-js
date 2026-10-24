@@ -1,4 +1,4 @@
-import { installedDatabaseSchemas } from "./features/installed-database";
+import { installedDatabaseSchemas } from "./composition/generated/installed-database";
 import { config } from "dotenv";
 import { databaseConnection } from "./lib/db/connection";
 import { defineConfig } from "drizzle-kit";

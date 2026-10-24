@@ -6,16 +6,16 @@ import {
   VideoControl,
 } from "@/components/composer/tool-controls";
 import type { ComposerControl } from "@/components/composer/control";
-import { ConnectorsControl } from "@/features/mcp/composer";
-import { attachmentUploads } from "@/features/attachment-uploads/integration";
+import { mcpClient } from "@/plugins/mcp/client-plugin";
+import { attachmentUploadsClient } from "@/plugins/attachment-uploads/client-plugin";
 // Initial menu order. Reorder or extend this array; chat-js sync preserves it.
 
 export const composerControls: ComposerControl[] = [
-  ...attachmentUploads.controls,
+  ...attachmentUploadsClient().composerControls,
   { Component: CanvasControl, id: "canvas" },
   { Component: SearchControl, id: "web-search" },
   { Component: ResearchControl, id: "deep-research" },
   { Component: ImageControl, id: "image" },
   { Component: VideoControl, id: "video" },
-  { Component: ConnectorsControl, id: "mcp" },
+  ...mcpClient().composerControls,
 ];

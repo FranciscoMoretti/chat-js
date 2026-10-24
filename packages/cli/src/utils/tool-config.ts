@@ -29,6 +29,6 @@ const planToolConfig = async (
       await readFile(path.join(cwd, target), "utf-8");
     })
   );
-  return `${configs.map(({ id }, index) => `import { configSchema as config${index} } from "./${id}/configuration-schema";`).join("\n")}\n\nexport const installedToolConfig = {\n${configs.map(({ key }, index) => `  ${key}: config${index},`).join("\n")}\n};\n`;
+  return `${configs.map(({ id }, index) => `import { configSchema as config${index} } from "@/tools/chatjs/${id}/configuration-schema";`).join("\n")}\n\nexport const installedToolConfig = {\n${configs.map(({ key }, index) => `  ${key}: config${index},`).join("\n")}\n};\n`;
 };
 export { planToolConfig };

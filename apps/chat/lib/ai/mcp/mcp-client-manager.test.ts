@@ -1,14 +1,19 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { getOrCreateMcpClient, removeMcpClient } from "./mcp-client-manager";
+import {
+  getOrCreateMcpClient,
+  removeMcpClient,
+} from "../../../plugins/mcp/oauth/mcp-client-manager";
 
 const mocks = vi.hoisted(() => ({
   close: vi.fn(),
   invalidate: vi.fn(),
   state: { status: "authorizing", url: "https://auth.test?state=active" },
 }));
-vi.mock("./cache", () => ({ invalidateAllMcpCaches: mocks.invalidate }));
-vi.mock("./mcp-client", () => ({
+vi.mock("../../../plugins/mcp/oauth/cache", () => ({
+  invalidateAllMcpCaches: mocks.invalidate,
+}));
+vi.mock("../../../plugins/mcp/oauth/mcp-client", () => ({
   MCPClient: class {
     public state = mocks.state;
     public get status(): string {

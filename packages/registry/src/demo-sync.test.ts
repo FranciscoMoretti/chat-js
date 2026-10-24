@@ -108,8 +108,8 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
   const files = [
     "composer-controls.ts",
     "settings-items.ts",
-    "tools/chatjs/custom-tools.ts",
-    "tools/chatjs/custom-ui.ts",
+    "composition/custom/custom-tools.ts",
+    "composition/custom/custom-ui.ts",
   ];
   await Promise.all(
     files.map(async (file) => {
@@ -386,12 +386,12 @@ test(
     await Promise.all(
       [
         {
-          source: "./features/mcp/lib/eve/mcp-tools.ts",
-          target: "lib/eve/mcp-tools.ts",
+          source: "./plugins/mcp/src/runtime/mcp-tools.ts",
+          target: "plugins/mcp/runtime/mcp-tools.ts",
         },
         {
-          source: "./features/vercel-speed-insights/component.tsx",
-          target: "features/vercel-speed-insights/component.tsx",
+          source: "./plugins/vercel-speed-insights/src/component.tsx",
+          target: "plugins/vercel-speed-insights/component.tsx",
         },
       ].map(
         async ({

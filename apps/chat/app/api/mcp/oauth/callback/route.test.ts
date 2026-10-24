@@ -29,17 +29,17 @@ const mocks = vi.hoisted(() => {
     requireCredentials: vi.fn(),
   };
 });
-vi.mock("@/features/mcp/setup", () => ({
+vi.mock("@/plugins/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
-vi.mock("@/lib/ai/mcp/mcp-client-manager", () => ({
+vi.mock("@/plugins/mcp/oauth/mcp-client-manager", () => ({
   createMcpClientForCallback: vi.fn(),
   removeMcpClient: mocks.removeClient,
 }));
-vi.mock("@/lib/ai/mcp/cache", () => ({
+vi.mock("@/plugins/mcp/oauth/cache", () => ({
   invalidateAllMcpCaches: mocks.invalidate,
 }));
-vi.mock("@/lib/db/mcp-queries", () => ({
+vi.mock("@/plugins/mcp/db/mcp-queries", () => ({
   deletePendingSessionByState: mocks.deleteSession,
   getMcpConnectorById: vi.fn(),
   getSessionByState: mocks.getSession,
@@ -50,7 +50,7 @@ vi.mock("@/lib/logger", () => ({
     info: (...arguments_: readonly unknown[]) => unknown;
   } => ({ error: vi.fn(), info: vi.fn() }),
 }));
-vi.mock("@/lib/nuqs/mcp-search-params.server", () => ({
+vi.mock("@/plugins/mcp/search/mcp-search-params.server", () => ({
   loadMcpOAuthCallbackSearchParams: (): typeof mocks.params => mocks.params,
 }));
 

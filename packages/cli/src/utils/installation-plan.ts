@@ -1,13 +1,11 @@
+import { readInstalledPlugins } from "./installed-plugins";
 import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
 import type {
-  FeatureDefinition,
+  PluginDefinition,
   ToolDefinition,
 } from "../../../registry/metadata";
 
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
-
-import path from "node:path";
-import { readFile } from "node:fs/promises";
 
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
@@ -17,8 +15,7 @@ import type { InstallationSelection } from "../../../registry/installation";
 import { installationSelectionSchema } from "../../../registry/installation";
 
 import {
-  featureDefinitionSchema,
-  featureIdSchema,
+  pluginDefinitionSchema,
   storageDefinitionSchema,
   toolDefinitionSchema,
 } from "../../../registry/metadata";
@@ -28,7 +25,6 @@ import {
   validateProviderRequirements,
   validateRequestedKind,
 } from "./installation-requirements";
-import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
 
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
@@ -45,7 +41,7 @@ const EMPTY_DEPENDENCY_COUNT = 0;
 
 /**
  * Resolve the complete target installation before any source files are written.
- * @param {string} cwd Project directory used for provider, feature and tool preflight.
+ * @param {string} cwd Project directory used for provider, plugin and tool preflight.
  * @param {ReadonlyNative<InstallationSelection>} input Requested registry selections validated before dependency resolution.
  * @param {{ readonly fresh?: boolean; readonly replace?: boolean; readonly documents?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
  * @returns {ReturnType<typeof planInstallation>} Resolved items, validated selections, target changes and registry sources.
@@ -64,7 +60,7 @@ export const planInstallation = async (
   const expected = new Map<string, ToolDefinition>();
   const sources = new Set<string>();
   const items = new Map<string, ReturnType<typeof readItem>>();
-  const features = new Map<string, FeatureDefinition>();
+  const plugins = new Map<string, PluginDefinition>();
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
   const selectProvider = (definition: {
@@ -94,9 +90,9 @@ export const planInstallation = async (
     }
     sources.add(source);
     switch (registryMetadataKind(metadata)) {
-      case "feature": {
-        const definition = featureDefinitionSchema.parse(metadata);
-        const previous = features.get(definition.id);
+      case "plugin": {
+        const definition = pluginDefinitionSchema.parse(metadata);
+        const previous = plugins.get(definition.id);
         if (
           previous &&
           JSON.stringify(previous) !== JSON.stringify(definition)
@@ -105,7 +101,7 @@ export const planInstallation = async (
             `Conflicting requested descriptors for ${definition.id}.`
           );
         }
-        features.set(definition.id, definition);
+        plugins.set(definition.id, definition);
         break;
       }
       case "tool": {
@@ -152,8 +148,8 @@ export const planInstallation = async (
     ...selection.tools.map(async (source): Promise<void> => {
       await visit(itemAddress(source, "tool"));
     }),
-    ...selection.features.map(async (source): Promise<void> => {
-      await visit(itemAddress(source, "tool"), "feature");
+    ...selection.plugins.map(async (source): Promise<void> => {
+      await visit(itemAddress(source, "tool"), "plugin");
     }),
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
@@ -254,62 +250,31 @@ export const planInstallation = async (
     );
   }
   await validateToolInstallation(cwd, target());
-  const installedFeatures =
+  const installedPlugins =
     options.fresh === true
       ? []
-      : await Promise.all(
-          featureIdSchema.options.map(async (id) => {
-            const descriptor = `features/${id}/chatjs.json`;
-            await preflight(cwd, [descriptor]);
-            const content = await readFile(
-              path.join(cwd, descriptor),
-              "utf-8"
-            ).catch((error: unknown) => {
-              if (
-                error instanceof Error &&
-                "code" in error &&
-                error.code === "ENOENT"
-              ) {
-                return null;
-              }
-              throw error;
-            });
-            if (content === null) {
-              return [];
-            }
-            const definition = featureDefinitionSchema.parse(
-              JSON.parse(content)
-            );
-            if (definition.id !== id) {
-              throw new Error(
-                `Feature descriptor id must match its directory: ${id}`
-              );
-            }
-            return [definition];
-          })
-        );
-  const targetFeatures = new Map([
-    ...installedFeatures
+      : await readInstalledPlugins(cwd, new Set(plugins.keys()));
+  const targetPlugins = new Map([
+    ...installedPlugins
       .flat()
       .map(
-        (feature: ReadonlyNative<FeatureDefinition>) =>
-          [feature.id, feature] as const
+        (plugin: ReadonlyNative<PluginDefinition>) =>
+          [plugin.id, plugin] as const
       ),
-    ...features.entries(),
+    ...plugins.entries(),
   ]);
-  const featureIds = new Set(targetFeatures.keys());
-  for (const feature of targetFeatures.values()) {
+  const pluginIds = new Set(targetPlugins.keys());
+  for (const plugin of targetPlugins.values()) {
     const missing =
-      feature.requiresFeatures?.filter((id): boolean => !featureIds.has(id)) ??
-      [];
+      plugin.requiresPlugins?.filter((id): boolean => !pluginIds.has(id)) ?? [];
     if (missing.length > EMPTY_DEPENDENCY_COUNT) {
       throw new Error(
-        `${feature.id} requires installed features: ${missing.join(", ")}`
+        `${plugin.id} requires installed plugins: ${missing.join(", ")}`
       );
     }
   }
   await validateProviderRequirements(cwd, {
-    features: [...targetFeatures.values()],
+    plugins: [...targetPlugins.values()],
     gateway,
     storage: providers.get("storage"),
     sandbox: providers.get("sandbox"),
@@ -320,9 +285,9 @@ export const planInstallation = async (
       ...target().flatMap(
         (tool: ReadonlyNative<ToolDefinition>) => tool.envRequirements
       ),
-      ...[...targetFeatures.values()].flatMap(
-        (feature: ReadonlyNative<FeatureDefinition>) =>
-          feature.envRequirements ?? []
+      ...[...targetPlugins.values()].flatMap(
+        (plugin: ReadonlyNative<PluginDefinition>) =>
+          plugin.envRequirements ?? []
       ),
     ].flatMap(
       (
@@ -330,7 +295,7 @@ export const planInstallation = async (
       ) => requirement.options.flat()
     ),
     expected: [...expected.values()],
-    features: [...features.values()],
+    plugins: [...plugins.values()],
     items: await Promise.all(items.values()),
     providerChanges,
     replacements,

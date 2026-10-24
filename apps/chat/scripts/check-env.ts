@@ -23,8 +23,8 @@ import fs from "node:fs/promises";
 import { gatewayEnvRequirements } from "@/lib/ai/gateway-model-defaults";
 import { generatedForGateway } from "@/lib/ai/models.generated";
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
-import { installedFeatures } from "@/features/installed";
-import { installedToolNames } from "@/tools/chatjs/installed-features";
+import { installedPlugins } from "@/composition/generated/installed";
+import { installedToolNames } from "@/composition/generated/installed-tools";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { config as loadEnvConfig } from "dotenv";
 import path from "node:path";
@@ -85,7 +85,7 @@ const validateStorage = (
 ): ValidationError | null => {
   if (
     !(
-      installedFeatures.has("attachment-uploads") ||
+      installedPlugins.has("attachment-uploads") ||
       installedToolNames.has("generateImage") ||
       installedToolNames.has("generateVideo")
     )
@@ -142,7 +142,7 @@ const validateAuthentication = (
 
 const validateInstalledItems = async (
   env: Readonly<NodeJS.ProcessEnv>,
-  directory: "tools/chatjs" | "features"
+  directory: "tools/chatjs" | "plugins"
 ): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, directory);
   const entries = await fs
@@ -181,7 +181,7 @@ const validateInstalledItems = async (
           }
           return [
             {
-              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              feature: `${directory === "tools/chatjs" ? "tools" : "plugins"}.${entry.name}`,
               missing: [missing],
             },
           ];
@@ -198,7 +198,7 @@ const validateInstalledItems = async (
       return invalid.length > 0
         ? [
             {
-              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              feature: `${directory === "tools/chatjs" ? "tools" : "plugins"}.${entry.name}`,
               missing: invalid,
             },
           ]
@@ -314,7 +314,7 @@ const checkEnv = async (): Promise<void> => {
     ...configuredErrors,
     ...validateAuthentication(env),
     ...installedToolErrors,
-    ...(await validateInstalledItems(env, "features")),
+    ...(await validateInstalledItems(env, "plugins")),
   ];
 
   if (reportEnvironmentFailure(errors)) {

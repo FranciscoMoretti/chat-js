@@ -1,6 +1,6 @@
 import type { NativeToolUI } from "@/lib/eve/tool-types";
-import type { WorkflowTools } from "@/tools/chatjs/workflow-types";
-import type { tools } from "@/tools/chatjs/tools";
+import type { WorkflowTools } from "@/composition/generated/workflow-types";
+import type { tools } from "@/composition/generated/tools";
 
 type AllTools = typeof tools & WorkflowTools;
 

@@ -6,8 +6,8 @@ import {
   PathParamsContext,
   SearchParamsContext,
 } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
-import { Component as Analytics } from "../src/features/vercel-analytics/component";
-import { Component as SpeedInsights } from "../src/features/vercel-speed-insights/component";
+import { Component as Analytics } from "../src/plugins/vercel-analytics/src/component";
+import { Component as SpeedInsights } from "../src/plugins/vercel-speed-insights/src/component";
 import { createRoot } from "react-dom/client";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";

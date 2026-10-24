@@ -4,10 +4,7 @@ import {
 } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
-import {
-  assertSupportedFeatureInstallation,
-  syncFeatures,
-} from "#cli/utils/sync-features";
+import { syncPlugins } from "#cli/utils/sync-plugins";
 import {
   configureStorageProvider,
   parseStorageOptions,
@@ -39,7 +36,7 @@ type RegistryItemInput = ReadonlyNative<InstallationPlan["items"][number]>;
 type ProviderChangeInput = ReadonlyNative<
   InstallationPlan["providerChanges"][number]
 >;
-type FeatureInput = ReadonlyNative<InstallationPlan["features"][number]>;
+type PluginInput = ReadonlyNative<InstallationPlan["plugins"][number]>;
 
 interface AddOptions {
   readonly gateway?: string;
@@ -105,7 +102,7 @@ const validateAddSelection = (
     !hasNonEmptyValue(options.storageProvider)
   ) {
     throw new Error(
-      "Select at least one tool, feature, gateway, sandbox or storage provider."
+      "Select at least one tool, plugin, gateway, sandbox or storage provider."
     );
   }
   if (
@@ -137,7 +134,7 @@ const prepareAdd = async (
   const plan = await planInstallation(
     cwd,
     {
-      features: [],
+      plugins: [],
       gateway: gateway?.source,
       sandbox: sandbox?.source,
       storage: storage
@@ -147,7 +144,6 @@ const prepareAdd = async (
     },
     { replace: options.replace }
   );
-  assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
   const gatewayItem = plan.items.find((item: RegistryItemInput): boolean =>
     hasProviderKind(item.meta?.chatjs, "gateway")
@@ -199,7 +195,7 @@ const prepareAdd = async (
 
 const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   const { plan, selectedGateway, selectedStorage, selectedSandbox } = setup;
-  if (plan.features.some((feature: FeatureInput) => feature.id === "mcp")) {
+  if (plan.plugins.some((plugin: PluginInput) => plugin.id === "mcp")) {
     log.info(
       "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
     );
@@ -209,8 +205,8 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
       (item: ReadonlyNative<AddSetup["plan"]["expected"][number]>) =>
         item.envRequirements
     ),
-    ...plan.features.flatMap(
-      (feature: FeatureInput) => feature.envRequirements ?? []
+    ...plan.plugins.flatMap(
+      (plugin: PluginInput) => plugin.envRequirements ?? []
     ),
     ...(selectedGateway?.definition.envRequirements ?? []),
     ...(selectedSandbox?.definition.envRequirements ?? []),
@@ -225,11 +221,11 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
 
 export const add = new Command("add")
   .description(
-    "install registry tools/features/providers and compose their ChatJS registrations"
+    "install registry tools/plugins/providers and compose their ChatJS registrations"
   )
   .argument(
     "[items...]",
-    "tool/feature names or native shadcn registry addresses"
+    "tool/plugin names or native shadcn registry addresses"
   )
   .option(
     "-y, --yes",
@@ -349,22 +345,17 @@ export const add = new Command("add")
               await writeFile(path.join(cwd, "chat.config.ts"), configEdit);
             }
             await syncTools(cwd, { expected: plan.expected });
-            await syncFeatures(cwd, {
-              addUi: plan.features.map((feature: FeatureInput) => feature.id),
-              expectedMcp: plan.features.some(
-                (feature: FeatureInput) => feature.id === "mcp"
-              ),
-              expectedUploads: plan.features.some(
-                (feature: FeatureInput) => feature.id === "attachment-uploads"
-              ),
+            await syncPlugins(cwd, {
+              addUi: plan.plugins.map((plugin: PluginInput) => plugin.id),
+              expected: plan.plugins.map((plugin) => plugin.id),
             });
           }
         );
         printSetupRequirements(setup);
         if (
-          plan.features.some(
-            (feature: FeatureInput): boolean =>
-              (feature.databaseSchemas?.length ?? 0) > 0
+          plan.plugins.some(
+            (plugin: PluginInput): boolean =>
+              (plugin.databaseSchemas?.length ?? 0) > 0
           )
         ) {
           log.info(

@@ -6,12 +6,12 @@ import {
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/tools/chatjs/installed-features";
+} from "@/composition/generated/installed-tools";
 import type { ToolContext } from "eve/tools";
 import { getEveDocumentRevision } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
 import { eveToolAllowed } from "@/lib/eve/turn-tools";
-import { codeExecutor } from "@/tools/chatjs/code-executor";
+import { codeExecutor } from "@/composition/generated/code-executor";
 
 type ReadonlyCodeExecutionContext = Readonly<
   Pick<ToolContext, "callId" | "session"> & {

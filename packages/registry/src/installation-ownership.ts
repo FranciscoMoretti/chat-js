@@ -7,7 +7,7 @@ const installationItems = (
   selection: Readonly<InstallationSelection>
 ): RegistryItem[] => {
   const pending = [
-    ...selection.features,
+    ...selection.plugins,
     ...selection.tools,
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [`${selection.gateway}-gateway`]
@@ -47,8 +47,8 @@ const itemClaims = (item: Readonly<RegistryItem>): FileClaim[] => {
   const metadata: unknown = item.meta?.chatjs;
   if (typeof metadata === "object" && metadata && "kind" in metadata) {
     const { kind } = metadata;
-    if (kind === "tool" || kind === "feature") {
-      const directory = kind === "tool" ? "tools/chatjs" : "features";
+    if (kind === "tool" || kind === "plugin") {
+      const directory = kind === "tool" ? "tools/chatjs" : "plugins";
       claims.push({
         owner: item.name,
         source: `descriptor:${item.name}`,

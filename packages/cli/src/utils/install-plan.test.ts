@@ -132,14 +132,14 @@ test("explicit provider replacement preserves unrelated installations and refuse
     `http://127.0.0.1:${registry.port}/${id}.json`;
   try {
     const first = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [source("first"), source("extra")],
     });
     await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root, { expected: first.expected });
     });
     await rejects(
-      planInstallation(root, { features: [], tools: [source("second")] }),
+      planInstallation(root, { plugins: [], tools: [source("second")] }),
       (reason: unknown) => {
         expect(() => {
           throw reason;
@@ -149,7 +149,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     );
     const plan = await planInstallation(
       root,
-      { features: [], tools: [source("second")] },
+      { plugins: [], tools: [source("second")] },
       { replace: true }
     );
     const old = path.join(root, "tools/chatjs/first/tool.ts");
@@ -204,7 +204,7 @@ test.each(["registration", "finalization"] as const)(
       `http://127.0.0.1:${registry.port}/${id}.json`;
     try {
       const first = await planInstallation(root, {
-        features: [],
+        plugins: [],
         tools: [source("first")],
       });
       await installPlan(root, first, {}, async (): Promise<void> => {
@@ -212,7 +212,7 @@ test.each(["registration", "finalization"] as const)(
       });
       const plan = await planInstallation(
         root,
-        { features: [], tools: [source("second")] },
+        { plugins: [], tools: [source("second")] },
         { replace: true }
       );
       const env = path.join(root, ".env.example");
@@ -228,7 +228,7 @@ test.each(["registration", "finalization"] as const)(
       const oldDependencies = await readFile(dependencies, "utf-8");
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
-      await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
+      await rm(path.join(root, "composition/generated/workflow-types.ts"));
       const registrationContents = async (
         target: string
       ): Promise<string | null> => {
@@ -262,10 +262,10 @@ test.each(["registration", "finalization"] as const)(
             await syncTools(root, { expected: plan.expected });
             expect(
               await readFile(
-                path.join(root, "tools/chatjs/providers.ts"),
+                path.join(root, "composition/generated/providers.ts"),
                 "utf-8"
               )
-            ).toContain("./second/tool");
+            ).toContain("@/tools/chatjs/second/tool");
             if (phase === "registration") {
               throw new Error("fixture registration failed");
             }
@@ -331,7 +331,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
       "// native user edit\nexport const executeCode = {};\n"
     );
     const plan = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [address],
     });
     await installPlan(root, plan, {}, async (): Promise<void> => {
@@ -384,11 +384,11 @@ test("registration refreshes untouched rollback baselines without blessing user 
     port: 0,
   });
   try {
-    const plan = await planInstallation(root, { features: [], tools: [] });
+    const plan = await planInstallation(root, { plugins: [], tools: [] });
     const storagePlan = await planInstallation(
       root,
       {
-        features: [],
+        plugins: [],
         storage: {
           options: {},
           source: `http://127.0.0.1:${registry.port}/storage.json`,
@@ -506,7 +506,7 @@ test("provider installation refuses inferred native dependency destinations befo
     const plan = await planInstallation(
       root,
       {
-        features: [],
+        plugins: [],
         storage: {
           options: {},
           source: `http://127.0.0.1:${registry.port}/storage.json`,
@@ -528,7 +528,7 @@ test("provider installation refuses inferred native dependency destinations befo
     expect(await readFile(ui, "utf-8")).toBe("// user UI customization\n");
     expect(await readFile(provider, "utf-8")).toBe(originalProvider);
     const native = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [`http://127.0.0.1:${registry.port}/ui.json`],
     });
     const receipt = await readFile(
@@ -563,7 +563,7 @@ test("failed fresh registration restores the scaffold sandbox selection", async 
   const original = await readFile(target, "utf-8");
   const plan = await planInstallation(
     root,
-    { features: [], tools: [] },
+    { plugins: [], tools: [] },
     { fresh: true }
   );
   await rejects(

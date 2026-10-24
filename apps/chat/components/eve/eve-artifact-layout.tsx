@@ -31,7 +31,7 @@ import type {
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { DocumentRun } from "@/tools/chatjs/document-run";
+import { DocumentRun } from "@/composition/generated/document-run";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDocumentActions } from "./eve-document-actions";

@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 
-import { createOAuthSession } from "./mcp-queries";
+import { createOAuthSession } from "../../plugins/mcp/db/mcp-queries";
 
 const mocks = vi.hoisted(() => ({
   prune: vi.fn(),

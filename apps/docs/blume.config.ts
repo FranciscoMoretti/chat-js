@@ -7,6 +7,7 @@ const contentSections = [
   "customization",
   "deployment",
   "features",
+  "plugins",
   "gateways",
   "platforms",
   "reference",
@@ -126,8 +127,6 @@ export default defineConfig({
             "/features/code-execution",
             "/features/image-generation",
             "/features/video-generation",
-            "/features/attachments",
-            "/features/mcp",
             "/features/canvas",
             "/features/reasoning",
             "/features/sharing",
@@ -137,6 +136,15 @@ export default defineConfig({
             "/features/follow-up-suggestions",
           ],
           label: "Features",
+        },
+        {
+          label: "Plugins",
+          items: [
+            "/plugins/overview",
+            "/plugins/mcp",
+            "/plugins/attachments",
+            "/plugins/authoring",
+          ],
         },
         {
           items: [

@@ -6,7 +6,7 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 
 import {
-  featureDefinitionSchema,
+  pluginDefinitionSchema,
   toolDefinitionSchema,
 } from "../../../registry/metadata";
 
@@ -42,7 +42,7 @@ test("legacy built-in descriptors retain mandatory media and storage requirement
 
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      features: [],
+      plugins: [],
       gateway,
       storage: "s3",
       tools: [video],
@@ -57,7 +57,7 @@ test("legacy built-in descriptors retain mandatory media and storage requirement
 
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      features: [],
+      plugins: [],
       gateway,
       storage: "memory",
       tools: [video],
@@ -72,7 +72,7 @@ test("legacy built-in descriptors retain mandatory media and storage requirement
 
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      features: [{ id: "attachment-uploads" }],
+      plugins: [{ id: "attachment-uploads" }],
       storage: "memory",
       tools: [],
     }),
@@ -89,7 +89,7 @@ test.each(["image", "video"] as const)(
   async (kind) => {
     const gateway = externalGatewayFixture().root.meta.chatjs;
     const target = {
-      features: [],
+      plugins: [],
       gateway,
       storage: "s3",
       tools: [media(kind)],
@@ -122,16 +122,16 @@ test.each(["image", "video"] as const)(
   }
 );
 test("uploads and media reject memory storage, while a minimal installation accepts it", async () => {
-  const uploads = featureDefinitionSchema.parse({
+  const uploads = pluginDefinitionSchema.parse({
     contractVersion: 1,
     id: "attachment-uploads",
-    kind: "feature",
+    kind: "plugin",
     requiresStorage: true,
   });
 
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      features: [uploads],
+      plugins: [uploads],
       storage: "memory",
       tools: [],
     }),
@@ -145,7 +145,7 @@ test("uploads and media reject memory storage, while a minimal installation acce
 
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      features: [],
+      plugins: [],
       storage: "memory",
       tools: [media("image")],
     }),
@@ -157,7 +157,7 @@ test("uploads and media reject memory storage, while a minimal installation acce
     }
   );
   await validateProviderRequirements(tmpdir(), {
-    features: [],
+    plugins: [],
     storage: "memory",
     tools: [],
   });
@@ -176,13 +176,13 @@ test("add validates installed provider literals without executing user source", 
     const gatewayModelDefaults = { roles: { image: "image-model" } } satisfies UnknownType;`;
   await writeFile(file, source);
   await validateProviderRequirements(cwd, {
-    features: [],
+    plugins: [],
     tools: [media("image")],
   });
 
   await rejects(
     validateProviderRequirements(cwd, {
-      features: [],
+      plugins: [],
       tools: [media("video")],
     }),
     (reason: unknown) => {
@@ -199,7 +199,7 @@ test("add validates installed provider literals without executing user source", 
 
   await rejects(
     validateProviderRequirements(cwd, {
-      features: [],
+      plugins: [],
       tools: [media("image")],
     }),
     (reason: unknown) => {

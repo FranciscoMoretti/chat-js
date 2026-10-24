@@ -29,7 +29,7 @@ export const validateCustomToolKeys = async (
   cwd: string,
   definitions: readonly ReadonlyNative<ToolDefinition>[]
 ): Promise<void> => {
-  const filename = path.join(cwd, "tools/chatjs/custom-tools.ts");
+  const filename = path.join(cwd, "composition/custom/custom-tools.ts");
   if (!(await customToolsFileExists(filename))) {
     return;
   }

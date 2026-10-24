@@ -45,7 +45,7 @@ import { handleError } from "#cli/utils/handle-error";
 import { highlighter } from "#cli/utils/highlighter";
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
 import { logger } from "#cli/utils/logger";
-import { observabilityItems } from "../../../registry/src/features/observability";
+import { observabilityItems } from "../../../registry/src/plugins/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
 import type { planInstallation } from "#cli/utils/installation-plan";
@@ -53,7 +53,7 @@ import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
 import { spinner } from "#cli/utils/spinner";
-import { syncFeatures } from "#cli/utils/sync-features";
+import { syncPlugins } from "#cli/utils/sync-plugins";
 import { syncTools } from "#cli/utils/sync-tools";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { z } from "zod";
@@ -208,31 +208,31 @@ const collectToolSources = async (
   }
   const selections = [
     {
-      feature: "videoGeneration",
+      plugin: "videoGeneration",
       prompt: promptVideoGenerationTool,
       slot: "generateVideo",
       source: options.videoGenerationTool,
     },
     {
-      feature: "imageGeneration",
+      plugin: "imageGeneration",
       prompt: promptImageGenerationTool,
       slot: "generateImage",
       source: options.imageGenerationTool,
     },
     {
-      feature: "webSearch",
+      plugin: "webSearch",
       prompt: promptSearchTool,
       slot: "webSearch",
       source: options.searchTool,
     },
     {
-      feature: "codeExecution",
+      plugin: "codeExecution",
       prompt: promptCodeExecutionTool,
       slot: "codeExecution",
       source: options.codeExecutionTool,
     },
     {
-      feature: "urlRetrieval",
+      plugin: "urlRetrieval",
       prompt: promptUrlRetrievalTool,
       slot: "retrieveUrl",
       source: options.urlRetrievalTool,
@@ -245,9 +245,9 @@ const collectToolSources = async (
     }
     const selection = selections[index];
     if (typeof selection.source === "string" && selection.source !== "") {
-      assistantTools.builtInTools[selection.feature] = true;
+      assistantTools.builtInTools[selection.plugin] = true;
     }
-    if (assistantTools.builtInTools[selection.feature]) {
+    if (assistantTools.builtInTools[selection.plugin]) {
       const source = itemAddress(
         selection.source ?? (await selection.prompt(options.yes)),
         "tool"
@@ -431,7 +431,7 @@ const promptCreateSetup = async (
   const { plan, sandbox } = await planSandboxInstallation(
     targetDir,
     {
-      features: [
+      plugins: [
         ...observability,
         ...(coreFeatures.mcp ? ["mcp"] : []),
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
@@ -550,14 +550,9 @@ const installRegistryItems = async (
         installedTools = await syncTools(project.targetDir, {
           expected: plan.expected,
         });
-        await syncFeatures(project.targetDir, {
+        await syncPlugins(project.targetDir, {
           addUi: true,
-          expectedMcp: plan.features.some(
-            (feature): boolean => feature.id === "mcp"
-          ),
-          expectedUploads: plan.features.some(
-            (feature): boolean => feature.id === "attachment-uploads"
-          ),
+          expected: plan.plugins.map((plugin) => plugin.id),
         });
       }
     );

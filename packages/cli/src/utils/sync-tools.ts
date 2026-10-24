@@ -219,7 +219,7 @@ const missingPreviousRegistration = (
   entries: readonly { readonly name: string }[]
 ): string | null => {
   for (const match of (previousTools ?? "").matchAll(
-    /from "\.\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
+    /from "@\/tools\/chatjs\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
   )) {
     const { id } = match.groups ?? {};
     if (
@@ -298,13 +298,13 @@ const registrationImports = (
     ]): string => {
       const declaration =
         names.length === 1
-          ? `import { ${names[0].name} as ${names[0].alias} } from "./${id}/${file}";`
+          ? `import { ${names[0].name} as ${names[0].alias} } from "@/tools/chatjs/${id}/${file}";`
           : `import {\n${names
               .toSorted((left, right): number =>
                 left.alias.localeCompare(right.alias)
               )
               .map((name): string => `  ${name.name} as ${name.alias},`)
-              .join("\n")}\n} from "./${id}/${file}";`;
+              .join("\n")}\n} from "@/tools/chatjs/${id}/${file}";`;
       return declaration;
     }
   );
@@ -329,7 +329,7 @@ const sourceFor = (
       })),
       "tool"
     )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "@/composition/custom/custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
       ordinary
         .filter((item): boolean => !item.provider)
         .map((item) => ({
@@ -339,7 +339,7 @@ const sourceFor = (
         })),
       "tool"
     )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
-    uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
+    uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "@/composition/custom/custom-ui";\n${registrationImports(
       renderers.flatMap((item, registrationIndex) => {
         if (
           typeof item.rendererExport === "string" &&
@@ -406,7 +406,7 @@ const toolRegistrationTargets = [
   "ui.ts",
   "document-ui.ts",
   "document-actions.ts",
-  "installed-features.ts",
+  "installed-tools.ts",
   "installed-config.ts",
   "composer-tools.ts",
   "document-run.ts",
@@ -416,7 +416,10 @@ const toolRegistrationTargets = [
   "tool-availability.ts",
   "custom-tools.ts",
   "custom-ui.ts",
-].map((file): string => `tools/chatjs/${file}`);
+].map(
+  (file): string =>
+    `composition/${file.startsWith("custom-") ? "custom" : "generated"}/${file}`
+);
 
 const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
@@ -434,8 +437,9 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
       throw error;
     }
   );
-  const toolsPath = pathModule.join(dir, "tools.ts");
-  const uiPath = pathModule.join(dir, "ui.ts");
+  const generatedDir = pathModule.join(cwd, "composition/generated");
+  const toolsPath = pathModule.join(generatedDir, "tools.ts");
+  const uiPath = pathModule.join(generatedDir, "ui.ts");
   const previousTools = await readOptional(toolsPath);
   const previousUi = await readOptional(uiPath);
   checkGenerated(previousTools, toolsPath);
@@ -444,7 +448,7 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
     [
       "document-ui.ts",
       "document-actions.ts",
-      "installed-features.ts",
+      "installed-tools.ts",
       "installed-config.ts",
       "composer-tools.ts",
       "document-run.ts",
@@ -453,7 +457,10 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
       "workflow-types.ts",
       "tool-availability.ts",
     ].map(async (file): Promise<void> => {
-      checkGenerated(await readOptional(pathModule.join(dir, file)), file);
+      checkGenerated(
+        await readOptional(pathModule.join(generatedDir, file)),
+        file
+      );
     })
   );
   const definitions = await collectDefinitions(cwd, directory, entries);
@@ -461,10 +468,10 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
     definitions.map((item: ReadonlyInput<ToolDefinition>): string => item.id)
   );
   const previousProviders = await readOptional(
-    pathModule.join(dir, "providers.ts")
+    pathModule.join(generatedDir, "providers.ts")
   );
   const previousWorkflows = await readOptional(
-    pathModule.join(dir, "workflow-types.ts")
+    pathModule.join(generatedDir, "workflow-types.ts")
   );
   const missing = missingPreviousRegistration(
     `${previousTools ?? ""}\n${previousProviders ?? ""}\n${previousWorkflows ?? ""}`,
@@ -529,7 +536,7 @@ const syncTools = async (
   if (options.checkOnly === true) {
     return definitions;
   }
-  const dir = pathModule.join(cwd, "tools/chatjs");
+  const dir = pathModule.join(cwd, "composition/generated");
   const toolsPath = pathModule.join(dir, "tools.ts");
   const uiPath = pathModule.join(dir, "ui.ts");
   const documents = definitions.filter(
@@ -542,19 +549,21 @@ const syncTools = async (
   );
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
+  const customDir = pathModule.join(cwd, "composition/custom");
+  await mkdir(customDir, { recursive: true });
   await writeFile(
     pathModule.join(dir, "installed-config.ts"),
     generatedSource(configSource)
   );
   const [customTools, customUi] = await Promise.all([
-    readOptional(pathModule.join(dir, "custom-tools.ts")),
-    readOptional(pathModule.join(dir, "custom-ui.ts")),
+    readOptional(pathModule.join(customDir, "custom-tools.ts")),
+    readOptional(pathModule.join(customDir, "custom-ui.ts")),
   ]);
   await Promise.all([
     ...(customTools === null
       ? [
           writeFile(
-            pathModule.join(dir, "custom-tools.ts"),
+            pathModule.join(customDir, "custom-tools.ts"),
             generatedRegistrationSource(
               'import { defineToolSet } from "@/lib/eve/tool-types";\n\nexport const customTools = defineToolSet({});\n'
             )
@@ -564,7 +573,7 @@ const syncTools = async (
     ...(customUi === null
       ? [
           writeFile(
-            pathModule.join(dir, "custom-ui.ts"),
+            pathModule.join(customDir, "custom-ui.ts"),
             generatedRegistrationSource(
               'import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n\nexport const customUi = {} satisfies Partial<ToolRendererRegistry>;\n'
             )
@@ -575,11 +584,11 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "document-ui.ts"),
     generatedSource(
-      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "./${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
+      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "@/tools/chatjs/${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
     )
   );
   await writeFile(
-    pathModule.join(dir, "installed-features.ts"),
+    pathModule.join(dir, "installed-tools.ts"),
     generatedSource(
       `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item: ReadonlyInput<ToolDefinition>): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
     )
@@ -625,7 +634,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "document-run.ts"),
     generatedSource(
-      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "./${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
+      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "@/tools/chatjs/${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
     )
   );
   await writeFile(
@@ -639,7 +648,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "code-executor.ts"),
     generatedSource(
-      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "./${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
+      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "@/tools/chatjs/${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
     )
   );
   const workflows = registrations.filter(
@@ -648,7 +657,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "workflow-types.ts"),
     generatedSource(
-      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport interface WorkflowTools {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n}\n`
+      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "@/tools/chatjs/${item.id}/tool";`).join("\n")}\n\nexport interface WorkflowTools {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n}\n`
     )
   );
   const availability = definitions.filter(
@@ -658,14 +667,14 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "tool-availability.ts"),
     generatedSource(
-      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
+      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "@/tools/chatjs/${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
     )
   );
   await writeFile(
     pathModule.join(dir, "document-actions.ts"),
     generatedSource(
       `import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
-${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "./${item.id}/assistant-actions";`).join("\n")}
+${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "@/tools/chatjs/${item.id}/assistant-actions";`).join("\n")}
 
 export const installedDocumentActions: Partial<
   Record<"text" | "code" | "sheet", () => DocumentAssistantAction[]>

@@ -13,14 +13,14 @@ export default defineConfig({
     "!**/components/{ai-elements,ui}/extra/**",
     "!**/components/{ai-elements,ui}/**/*.{test,spec}.*",
     "!**/components/{ai-elements,ui}/**/__tests__/**",
-    "**/features/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
+    "**/plugins/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
     "**/lib/db/migrations/meta/**",
     "**/composer-icons.generated.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",
     // The model catalog is generator-owned; avoid unrelated snapshot churn.
     "**/lib/ai/models.generated.ts",
-    "**/tools/chatjs/{tools,ui,providers,code-executor,workflow-types,tool-availability,document-ui,document-run,installed-features,composer-tools,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
+    "**/tools/chatjs/{tools,ui,providers,code-executor,workflow-types,tool-availability,document-ui,document-run,installed-tools,composer-tools,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
   ],
   // Preserve module evaluation order; lint-policy changes must not reorder imports.
   sortImports: false,

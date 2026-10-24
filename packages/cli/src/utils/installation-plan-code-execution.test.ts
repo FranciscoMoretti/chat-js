@@ -68,7 +68,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
   try {
     await rejects(
       planInstallation(root, {
-        features: [],
+        plugins: [],
         tools: [`http://127.0.0.1:${server.port}/second.json`],
       }),
       (reason: unknown) => {
@@ -81,7 +81,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     const fresh = await planInstallation(
       root,
       {
-        features: [],
+        plugins: [],
         tools: [`http://127.0.0.1:${server.port}/second.json`],
       },
       { fresh: true }
@@ -96,7 +96,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
       )
     ).toEqual([]);
     const reinstall = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [`http://127.0.0.1:${server.port}/first.json`],
     });
     expect(reinstall.expected).toEqual([definition("first")]);
@@ -140,7 +140,7 @@ test("replaces an older executor descriptor but rejects newly requested provider
   });
   try {
     const selection = {
-      features: [],
+      plugins: [],
       tools: [`http://127.0.0.1:${server.port}/executor.json`],
     };
     const planned = await planInstallation(root, selection, { replace: true });

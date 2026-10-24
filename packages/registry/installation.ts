@@ -9,7 +9,7 @@ const storageSelectionSchema = z.strictObject({
 
 /** Registry addresses, not runtime flags. Creation and demo sync use the same input. */
 const installationSelectionSchema = z.strictObject({
-  features: z.array(registryAddressSchema).default([]),
+  plugins: z.array(registryAddressSchema).default([]),
   gateway: registryAddressSchema.optional(),
   storage: storageSelectionSchema.optional(),
   sandbox: registryAddressSchema.optional(),
@@ -18,9 +18,9 @@ const installationSelectionSchema = z.strictObject({
 
 type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Checked-in demo preset preserves the application's installed features.
+// Checked-in demo preset preserves the application's installed plugins.
 const demoInstallation = installationSelectionSchema.parse({
-  features: [
+  plugins: [
     "mcp",
     "attachment-uploads",
     "vercel-analytics",

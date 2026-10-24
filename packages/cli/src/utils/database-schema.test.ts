@@ -13,7 +13,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { mcpDefinition } from "../../../registry/src/features/mcp";
+import { mcpDefinition } from "../../../registry/src/plugins/mcp/manifest";
 import { generateBaseline } from "./generate-baseline";
 import { planDatabaseSchemas } from "./sync-database";
 import { runCommand } from "./run-command";
@@ -30,7 +30,8 @@ afterEach(async (): Promise<void> => {
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-database-"));
   roots.push(root);
-  await mkdir(path.join(root, "features/mcp"), { recursive: true });
+  await mkdir(path.join(root, "plugins/mcp"), { recursive: true });
+  await mkdir(path.join(root, "composition/generated"), { recursive: true });
   return root;
 };
 
@@ -46,7 +47,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     path.join(root, "drizzle.generate.config.ts")
   );
   await symlink(
-    path.join(demo, "node_modules"),
+    path.resolve(demo, "../../node_modules"),
     path.join(root, "node_modules")
   );
   await writeFile(
@@ -65,7 +66,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     })
   );
   await writeFile(
-    path.join(root, "features/installed-database.ts"),
+    path.join(root, "composition/generated/installed-database.ts"),
     await planDatabaseSchemas(root, [])
   );
   await generateBaseline(root, "bun");
@@ -85,20 +86,20 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   ).toHaveLength(1);
 
   await cp(
-    path.join(demo, "features/mcp/db"),
-    path.join(root, "features/mcp/db"),
+    path.join(demo, "plugins/mcp/db"),
+    path.join(root, "plugins/mcp/db"),
     { recursive: true }
   );
   await cp(
-    path.join(demo, "features/mcp/mcp-env.ts"),
-    path.join(root, "features/mcp/mcp-env.ts")
+    path.join(demo, "plugins/mcp/mcp-env.ts"),
+    path.join(root, "plugins/mcp/mcp-env.ts")
   );
   await writeFile(
-    path.join(root, "features/mcp/chatjs.json"),
+    path.join(root, "plugins/mcp/chatjs.json"),
     JSON.stringify(mcpDefinition)
   );
   await writeFile(
-    path.join(root, "features/installed-database.ts"),
+    path.join(root, "composition/generated/installed-database.ts"),
     await planDatabaseSchemas(root, ["mcp"])
   );
   await runCommand("bun", ["run", "db:generate", "--name=add_mcp"], root);
@@ -136,12 +137,12 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   expect(fullBaseline).toContain('CREATE TABLE "user"');
 }, 60_000);
 
-test.each(["../outside.ts", "lib/db/schema.ts", "features/other/schema.ts"])(
-  "feature schema must remain within its owner: %s",
+test.each(["../outside.ts", "lib/db/schema.ts", "plugins/other/schema.ts"])(
+  "plugin schema must remain within its owner: %s",
   async (schema): Promise<void> => {
     const root = await fixture();
     await writeFile(
-      path.join(root, "features/mcp/chatjs.json"),
+      path.join(root, "plugins/mcp/chatjs.json"),
       JSON.stringify({ ...mcpDefinition, databaseSchemas: [schema] })
     );
     await rejects(planDatabaseSchemas(root, ["mcp"]));
@@ -151,7 +152,7 @@ test.each(["../outside.ts", "lib/db/schema.ts", "features/other/schema.ts"])(
 test("a selected schema must exist before registration", async (): Promise<void> => {
   const root = await fixture();
   await writeFile(
-    path.join(root, "features/mcp/chatjs.json"),
+    path.join(root, "plugins/mcp/chatjs.json"),
     JSON.stringify(mcpDefinition)
   );
   await rejects(planDatabaseSchemas(root, ["mcp"]), /ENOENT/u);

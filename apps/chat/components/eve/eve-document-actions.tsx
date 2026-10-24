@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { documentUi } from "@/tools/chatjs/document-ui";
+import { documentUi } from "@/composition/generated/document-ui";
 
 export const EveDocumentActions = ({
   kind,

@@ -7,7 +7,7 @@ import {
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/tools/chatjs/installed-features";
+} from "@/composition/generated/installed-tools";
 import { Button } from "@/components/ui/button";
 import type { DocumentRunProps } from "@/lib/eve/document-ui";
 import { EveDocumentRunResult } from "./result";

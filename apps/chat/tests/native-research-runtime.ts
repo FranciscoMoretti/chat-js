@@ -244,7 +244,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
 }`)
   );
   await write(
-    "tools/chatjs/providers.ts",
+    "composition/generated/providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";

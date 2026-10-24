@@ -1,4 +1,4 @@
-import { installedRouters } from "@/features/installed-routers";
+import { installedRouters } from "@/composition/generated/installed-routers";
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { creditsRouter } from "./credits.router";

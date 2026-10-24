@@ -31,15 +31,15 @@ it("returns complete selections from interactive prompts in catalog order", asyn
     expect(Object.keys(auth)).toEqual([...AUTH_PROVIDERS]);
 
     const definition = externalGatewayFixture().root.meta.chatjs;
-    const features = await promptCoreFeatures(false, true);
-    expect(features).toEqual({
+    const plugins = await promptCoreFeatures(false, true);
+    expect(plugins).toEqual({
       attachments: false,
       documents: true,
       followupSuggestions: false,
       mcp: true,
       parallelResponses: true,
     });
-    expect(Object.keys(features)).toEqual([...CORE_FEATURE_KEYS]);
+    expect(Object.keys(plugins)).toEqual([...CORE_FEATURE_KEYS]);
 
     const documents = await promptDocumentTypes(false, true);
     expect(documents).toEqual({ code: false, sheet: true, text: false });
@@ -132,7 +132,7 @@ it("disables every document type when documents are not installed", async () => 
 it.each([true, false])(
   "honors an explicit MCP installation choice with --yes: %s",
   async (mcp) => {
-    const features = await promptCoreFeatures(true, mcp);
-    expect(features.mcp).toBe(mcp);
+    const plugins = await promptCoreFeatures(true, mcp);
+    expect(plugins.mcp).toBe(mcp);
   }
 );

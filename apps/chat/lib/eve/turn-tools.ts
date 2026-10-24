@@ -5,7 +5,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/tools/chatjs/installed-features";
+} from "@/composition/generated/installed-tools";
 
 import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";

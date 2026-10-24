@@ -10,12 +10,15 @@ import { z } from "zod";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { MCPClient } from "../lib/ai/mcp/mcp-client";
+import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
 import { userCredit } from "../lib/db/schema";
-import { mcpConnector } from "@/features/mcp/db/mcp-schema";
+import { mcpConnector } from "@/plugins/mcp/db/mcp-schema";
 import { env } from "../lib/env";
-import { discoverEveMcpTools, executeEveMcpTool } from "../lib/eve/mcp-tools";
+import {
+  discoverEveMcpTools,
+  executeEveMcpTool,
+} from "../plugins/mcp/runtime/mcp-tools";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("MCP acceptance requires local Postgres.");

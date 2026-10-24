@@ -17,7 +17,7 @@ import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { installedToolNames } from "@/tools/chatjs/installed-features";
+import { installedToolNames } from "@/composition/generated/installed-tools";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";

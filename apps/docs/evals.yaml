@@ -29,4 +29,4 @@ questions:
       - the model can call tools during a chat turn
     routes:
       - /core/tool-registry
-      - /features/overview
+      - /plugins/overview

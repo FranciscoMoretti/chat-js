@@ -32,7 +32,7 @@ test("reports missing groups explicitly without exposing supplied secrets", () =
 test("supports alternative credentials, combined groups, and Vercel runtime auth", () => {
   expect(() => {
     requireCredentials(
-      "feature",
+      "plugin",
       [
         { options: [["A", "B"], ["TOKEN"]] },
         {
@@ -54,10 +54,10 @@ test("supports alternative credentials, combined groups, and Vercel runtime auth
     );
   }).not.toThrow();
   expect(() => {
-    requireCredentials("feature", [], { NODE_ENV: "test" });
+    requireCredentials("plugin", [], { NODE_ENV: "test" });
   }).not.toThrow();
   expect(() => {
-    requireCredentials("feature", [{ options: [["TOKEN"]] }], {
+    requireCredentials("plugin", [{ options: [["TOKEN"]] }], {
       NODE_ENV: "test",
       TOKEN: "",
     });

@@ -30,7 +30,7 @@ const verifyGatewayAndTool = (
   ).toContain('from "@/components/sandbox.tsx"');
 };
 
-const verifyFeatures = (expected: Readonly<Record<string, string>>): void => {
+const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
   for (const id of [
     "mcp",
     "attachment-uploads",
@@ -38,35 +38,37 @@ const verifyFeatures = (expected: Readonly<Record<string, string>>): void => {
     "vercel-speed-insights",
     "langfuse",
   ]) {
-    expect(Object.hasOwn(expected, `features/${id}/chatjs.json`)).toBe(true);
-    expect(required(expected, "features/installed.ts")).toContain(`"${id}"`);
+    expect(Object.hasOwn(expected, `plugins/${id}/chatjs.json`)).toBe(true);
+    expect(required(expected, "composition/generated/installed.ts")).toContain(
+      `"${id}"`
+    );
   }
-  expect(required(expected, "features/installed-uploads.ts")).toContain(
-    "@/features/attachment-uploads/integration"
-  );
-  expect(required(expected, "features/installed-layout.ts")).toContain(
-    "@/features/vercel-speed-insights/component"
-  );
-  expect(required(expected, "features/installed-instrumentation.ts")).toContain(
-    "@/features/langfuse/instrumentation"
-  );
+  expect(
+    required(expected, "composition/generated/installed-uploads.ts")
+  ).toContain("@/plugins/attachment-uploads/client-plugin");
+  expect(
+    required(expected, "composition/generated/installed-layout.ts")
+  ).toContain("@/plugins/vercel-speed-insights/client-plugin");
+  expect(
+    required(expected, "composition/generated/installed-instrumentation.ts")
+  ).toContain("@/plugins/langfuse/server-plugin");
 };
 
 const verifyEnvironmentBoundaries = (
   expected: Readonly<Record<string, string>>
 ): void => {
   for (const [file, reader] of [
-    ["features/mcp/setup.ts", "./mcp-env"],
+    ["plugins/mcp/setup.ts", "./mcp-env"],
     ["tools/chatjs/retrieve-url/tool.ts", "./retrieve-url-env"],
     ["tools/chatjs/tavily-search/tool.ts", "./tavily-search-env"],
     ["lib/sandbox/adapter.ts", "./vercel-sandbox-env"],
   ] as const) {
     expect(required(expected, file)).toContain(`from "${reader}"`);
     expect(required(expected, file)).not.toContain('from "@/lib/env"');
-    expect(required(expected, file)).not.toContain("@/features/langfuse/");
+    expect(required(expected, file)).not.toContain("@/plugins/langfuse/");
   }
   // Database credentials still belong to core, even for an installable query.
-  expect(required(expected, "lib/db/mcp-oauth-lock.ts")).toContain(
+  expect(required(expected, "plugins/mcp/db/mcp-oauth-lock.ts")).toContain(
     'from "@/lib/env"'
   );
 };
@@ -77,11 +79,11 @@ const verifyExcludedFiles = (
   for (const file of [
     "test-json.ts",
     "demo-sync-test-support.ts",
-    "features/test-runtime.ts",
+    "plugins/test-runtime.ts",
     "composer-controls.ts",
     "settings-items.ts",
-    "tools/chatjs/custom-tools.ts",
-    "tools/chatjs/custom-ui.ts",
+    "composition/custom/custom-tools.ts",
+    "composition/custom/custom-ui.ts",
   ]) {
     expect(Object.hasOwn(expected, file)).toBe(false);
   }
@@ -93,7 +95,7 @@ test(
     const expected = await generateDemo();
     const source = Object.fromEntries(expected);
     verifyGatewayAndTool(source);
-    verifyFeatures(source);
+    verifyPlugins(source);
     verifyEnvironmentBoundaries(source);
     verifyExcludedFiles(source);
     await syncDemo({

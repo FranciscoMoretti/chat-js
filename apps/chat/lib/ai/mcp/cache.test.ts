@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 
-import type { ConnectionStatusResult } from "./cache";
-import { createCachedConnectionStatus } from "./cache";
+import type { ConnectionStatusResult } from "../../../plugins/mcp/oauth/cache";
+import { createCachedConnectionStatus } from "../../../plugins/mcp/oauth/cache";
 
 const mocks = vi.hoisted(() => ({ cache: vi.fn() }));
 vi.mock("next/cache", () => ({

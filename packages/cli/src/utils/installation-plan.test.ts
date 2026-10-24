@@ -18,6 +18,50 @@ afterEach(async (): Promise<void> => {
   );
 });
 
+test("requested plugins can repair incomplete installations while unrelated installs still reject them", async (): Promise<void> => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-repair-"));
+  roots.push(root);
+  const directory = path.join(root, "plugins/team-notes");
+  await mkdir(directory, { recursive: true });
+  const definition = {
+    contractVersion: 1,
+    id: "team-notes",
+    kind: "plugin",
+    server: { export: "teamNotes", routers: ["notes"] },
+  };
+  await writeFile(
+    path.join(directory, "chatjs.json"),
+    JSON.stringify(definition)
+  );
+  const server = Bun.serve({
+    fetch(): Response {
+      return Response.json({
+        meta: { chatjs: definition },
+        name: "team-notes",
+        type: "registry:item",
+      });
+    },
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    await rejects(
+      planInstallation(root, { plugins: [], tools: [] }),
+      /installation is incomplete/u
+    );
+    const plan = await planInstallation(root, {
+      plugins: [`http://127.0.0.1:${server.port}/team-notes.json`],
+      tools: [],
+    });
+    expect(plan.plugins.map((plugin) => plugin.id)).toEqual(["team-notes"]);
+    expect(
+      await Bun.file(path.join(directory, "server-plugin.ts")).exists()
+    ).toBe(false);
+  } finally {
+    await server.stop(true);
+  }
+});
+
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
@@ -58,7 +102,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       planInstallation(
         root,
         {
-          features: [],
+          plugins: [],
           tools: [`${source}/text-documents.json`],
         },
         { documents: false, fresh: true }
@@ -74,7 +118,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       false
     );
     const first = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [`${source}/text-documents.json`],
     });
     expect(
@@ -83,7 +127,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
         .toSorted()
     ).toEqual(["read-document", "text-documents"]);
     expect(
-      await Bun.file(path.join(root, "tools/chatjs/tools.ts")).exists()
+      await Bun.file(path.join(root, "composition/generated/tools.ts")).exists()
     ).toBe(false);
     const dir = path.join(root, "tools/chatjs/text-documents");
     await mkdir(dir, { recursive: true });
@@ -97,7 +141,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       "export const createTextDocument = {};\n"
     );
     await rejects(
-      planInstallation(root, { features: [], tools: [] }),
+      planInstallation(root, { plugins: [], tools: [] }),
       (reason: unknown) => {
         expect(() => {
           throw reason;
@@ -106,7 +150,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       }
     );
     const repair = await planInstallation(root, {
-      features: [],
+      plugins: [],
       tools: [`${source}/read-document.json`],
     });
     expect(repair.expected).toEqual([reader]);
@@ -118,8 +162,8 @@ test("plans transitive dependencies and repairs against the complete resulting i
   }
 });
 
-test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
-  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
+test("validates plugin dependencies and exclusive storage slots before writing", async (): Promise<void> => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-plugin-"));
   roots.push(root);
   const server = Bun.serve({
     fetch(request: Readonly<Pick<Request, "url">>): Response {
@@ -129,13 +173,13 @@ test("validates feature dependencies and exclusive storage slots before writing"
           ? {
               contractVersion: 1,
               id: "langfuse",
-              kind: "feature",
-              requiresFeatures: ["mcp"],
+              kind: "plugin",
+              requiresPlugins: ["mcp"],
             }
           : {
               contractVersion: 1,
               id: name,
-              kind: name === "mcp" ? "feature" : "storage",
+              kind: name === "mcp" ? "plugin" : "storage",
             };
       return Response.json({
         meta: { chatjs },
@@ -154,28 +198,28 @@ test("validates feature dependencies and exclusive storage slots before writing"
   try {
     await rejects(
       planInstallation(root, {
-        features: [`${source}/langfuse.json`],
+        plugins: [`${source}/langfuse.json`],
         tools: [],
       }),
       (reason: unknown) => {
         expect(() => {
           throw reason;
-        }).toThrow("requires installed features: mcp");
+        }).toThrow("requires installed plugins: mcp");
         return true;
       }
     );
     const plan = await planInstallation(root, {
-      features: [`${source}/mcp.json`, `${source}/langfuse.json`],
+      plugins: [`${source}/mcp.json`, `${source}/langfuse.json`],
       tools: [],
     });
     expect(
-      plan.features
-        .map((feature: { readonly id: string }): string => feature.id)
+      plan.plugins
+        .map((plugin: { readonly id: string }): string => plugin.id)
         .toSorted()
     ).toEqual(["langfuse", "mcp"]);
     await rejects(
       planInstallation(root, {
-        features: [`${source}/mcp.json`],
+        plugins: [`${source}/mcp.json`],
         gateway: `${source}/mcp.json`,
         tools: [],
       }),
@@ -186,21 +230,21 @@ test("validates feature dependencies and exclusive storage slots before writing"
         return true;
       }
     );
-    const dir = path.join(root, "features/mcp");
+    const dir = path.join(root, "plugins/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
       path.join(dir, "chatjs.json"),
-      JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
+      JSON.stringify({ contractVersion: 1, id: "mcp", kind: "plugin" })
     );
     expect(
       await planInstallation(root, {
-        features: [`${source}/langfuse.json`],
+        plugins: [`${source}/langfuse.json`],
         tools: [],
       })
-    ).toMatchObject({ features: [{ id: "langfuse" }] });
+    ).toMatchObject({ plugins: [{ id: "langfuse" }] });
     await rejects(
       planInstallation(root, {
-        features: [],
+        plugins: [],
         storage: { options: {}, source: `${source}/first.json` },
         tools: [],
       }),
@@ -212,7 +256,9 @@ test("validates feature dependencies and exclusive storage slots before writing"
       }
     );
     expect(
-      await Bun.file(path.join(root, "features/installed-routers.ts")).exists()
+      await Bun.file(
+        path.join(root, "composition/generated/installed-routers.ts")
+      ).exists()
     ).toBe(false);
   } finally {
     await server.stop(true);
