@@ -168,9 +168,13 @@ for (const item of observabilityItems) {
     expect(descriptors).toEqual(observabilityItems.map((): boolean => false));
     // Exercise shadcn's dependency installation without the scaffold's unrelated
     // unpublished workspace packages (the packed generated-app suite covers those).
+    // Keep the app AI SDK version so npm does not float Langfuse's peer to latest.
     await writeFile(
       path.join(root, "package.json"),
-      JSON.stringify({ dependencies: {}, name: "observability-fixture" })
+      JSON.stringify({
+        dependencies: { ai: dependencies.ai },
+        name: "observability-fixture",
+      })
     );
     const files = await itemFiles(item);
     const server = Bun.serve({
