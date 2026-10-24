@@ -1,8 +1,18 @@
 import descriptor from "@/features/mcp/chatjs.json";
-import { readMcpEncryptionKey } from "./mcp-env";
-import { requireCredentials } from "@/lib/required-credentials";
+import { validateEnvironment } from "./mcp-env";
+import {
+  MissingCredentialsError,
+  requireCredentials,
+} from "@/lib/required-credentials";
 
 export const requireMcpCredentials = (): void => {
   requireCredentials("mcp", descriptor.envRequirements, process.env);
-  readMcpEncryptionKey();
+  if (validateEnvironment(process.env).length > 0) {
+    throw new MissingCredentialsError("mcp", [
+      {
+        options: [["MCP_ENCRYPTION_KEY"]],
+        description: "A base64-encoded 32-byte key is required",
+      },
+    ]);
+  }
 };

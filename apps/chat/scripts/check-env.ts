@@ -30,6 +30,7 @@ import { config as loadEnvConfig } from "dotenv";
 import path from "node:path";
 import { resolveEveEnvironment } from "@/lib/eve/environment";
 import { z } from "zod";
+import { validateInstalledEnvironment } from "./installed-environment-validation";
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -57,6 +58,7 @@ const toolEnvironmentRequirementSchema = z.object({
   runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 const toolEnvironmentSchema = z.object({
+  environmentValidation: z.string().optional(),
   envRequirements: z.array(toolEnvironmentRequirementSchema).default([]),
 });
 
@@ -170,19 +172,37 @@ const validateInstalledItems = async (
 
       const toolSource = await fs.readFile(toolPath, "utf-8");
       const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
-      return mod.envRequirements.flatMap((toolEnvVar: RequirementInput) => {
-        const missing = getMissingRequirement(toolEnvVar, env);
+      const missingRequirements = mod.envRequirements.flatMap(
+        (toolEnvVar: RequirementInput) => {
+          const missing = getMissingRequirement(toolEnvVar, env);
 
-        if (typeof missing !== "string" || missing === "") {
-          return [];
+          if (typeof missing !== "string" || missing === "") {
+            return [];
+          }
+          return [
+            {
+              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              missing: [missing],
+            },
+          ];
         }
-        return [
-          {
-            feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
-            missing: [missing],
-          },
-        ];
-      });
+      );
+      if (missingRequirements.length > 0) {
+        return missingRequirements;
+      }
+      const invalid = await validateInstalledEnvironment(
+        path.join(toolsDir, entry.name),
+        mod.environmentValidation,
+        env
+      );
+      return invalid.length > 0
+        ? [
+            {
+              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              missing: invalid,
+            },
+          ]
+        : [];
     })
   );
 

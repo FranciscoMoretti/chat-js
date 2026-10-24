@@ -14,7 +14,11 @@ it("installed MCP reports a setup error without exposing secrets", () => {
     "Missing credentials for mcp: MCP_ENCRYPTION_KEY"
   );
   vi.stubEnv("MCP_ENCRYPTION_KEY", "configured-secret");
-  expect(requireMcpCredentials).toThrow("must encode a 32-byte key");
+  expect(requireMcpCredentials).toThrow(MissingCredentialsError);
+  expect(requireMcpCredentials).toThrow(
+    "A base64-encoded 32-byte key is required"
+  );
+  expect(requireMcpCredentials).not.toThrow("configured-secret");
   vi.stubEnv("MCP_ENCRYPTION_KEY", Buffer.alloc(32, 1).toString("base64"));
   expect(requireMcpCredentials).not.toThrow();
 });

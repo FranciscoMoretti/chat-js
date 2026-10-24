@@ -39,6 +39,7 @@ const mcpFiles = [
 const mcpDefinition = featureDefinitionSchema.parse({
   contractVersion: 1,
   databaseSchemas: ["features/mcp/db/mcp-schema.ts"],
+  environmentValidation: "mcp-env.ts",
   envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
   id: "mcp",
   kind: "feature",

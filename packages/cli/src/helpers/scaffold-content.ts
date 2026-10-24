@@ -19,6 +19,7 @@ const researchTestFiles = [
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "scripts/installed-environment-validation.test.ts",
   "lib/db/encrypted-text.test.ts",
   "app/api/eve/[...path]/route-journal.test.ts",
   "lib/db/eve-dispatch.test.ts",

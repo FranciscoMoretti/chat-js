@@ -145,6 +145,10 @@ const featureIdSchema = z.enum([
 ]);
 
 const featureDefinitionSchema = z.object({
+  environmentValidation: z
+    .string()
+    .regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u)
+    .optional(),
   databaseSchemas: z
     .array(z.string().regex(/^(?:[a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_-]+\.ts$/u))
     .optional(),

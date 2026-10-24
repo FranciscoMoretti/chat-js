@@ -52,7 +52,7 @@ MCP_ENCRYPTION_KEY=your_generated_44_char_key
 
 ## Configuration
 
-MCP has no enable flag in `chat.config.ts`. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, even before you add connectors. Missing credentials produce an explicit setup error during environment validation and runtime discovery.
+MCP has no enable flag in `chat.config.ts`. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, even before you add connectors. Missing or malformed credentials produce an explicit setup error during environment validation and runtime discovery. The MCP manifest declares `environmentValidation: "mcp-env.ts"`. The joint environment check loads that module beside the installed descriptor and calls `validateEnvironment(env)`, which returns diagnostic strings. The validator stays with MCP and is not loaded when MCP is absent.
 
 ### Environment Variables
 
