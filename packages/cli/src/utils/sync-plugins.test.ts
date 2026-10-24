@@ -578,3 +578,43 @@ for (const key of ["eve", "settings", "project", "credits"]) {
     ).not.toContain("conflict");
   });
 }
+
+for (const [contribution, ids] of [
+  [
+    "composerControls",
+    ["canvas", "web-search", "deep-research", "image", "video"],
+  ],
+  ["settingsItems", ["general", "models"]],
+] as const) {
+  for (const id of ids) {
+    test(`plugin ${contribution} cannot claim core id ${id}`, async () => {
+      const root = await fixture();
+      await initializePluginUi(root);
+      const before = await readFile(
+        path.join(root, "composition/generated/installed.ts"),
+        "utf-8"
+      );
+      await mkdir(path.join(root, "plugins/conflict"), { recursive: true });
+      await writeFile(path.join(root, "plugins/conflict/client-plugin.ts"), "");
+      await writeFile(
+        path.join(root, "plugins/conflict/chatjs.json"),
+        JSON.stringify({
+          contractVersion: 1,
+          id: "conflict",
+          kind: "plugin",
+          client: { export: "conflictClient", [contribution]: [id] },
+        })
+      );
+      await rejects(
+        syncPlugins(root, { addUi: true }),
+        /Duplicate or reserved plugin/u
+      );
+      expect(
+        await readFile(
+          path.join(root, "composition/generated/installed.ts"),
+          "utf-8"
+        )
+      ).toBe(before);
+    });
+  }
+}

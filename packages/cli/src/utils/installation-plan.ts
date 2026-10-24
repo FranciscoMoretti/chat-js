@@ -1,3 +1,4 @@
+import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
 import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
 import type {
@@ -55,6 +56,7 @@ export const planInstallation = async (
     readonly documents?: boolean;
   } = {}
 ) => {
+  await assertCurrentInstallationLayout(cwd);
   const selection = installationSelectionSchema.parse(input);
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();

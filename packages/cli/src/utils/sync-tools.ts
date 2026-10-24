@@ -1,3 +1,4 @@
+import { assertCurrentInstallationLayout } from "./installation-layout";
 import { planToolConfig } from "./tool-config";
 import fs, { mkdir, readdir, writeFile } from "node:fs/promises";
 
@@ -422,6 +423,7 @@ const toolRegistrationTargets = [
 );
 
 const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
+  await assertCurrentInstallationLayout(cwd);
   const directory = "tools/chatjs";
   await preflight(cwd, toolRegistrationTargets);
   const dir = pathModule.join(cwd, directory);

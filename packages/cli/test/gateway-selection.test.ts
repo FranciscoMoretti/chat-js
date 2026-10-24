@@ -634,7 +634,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
         nodePath.join(cwd, "composition/generated/tools.ts"),
         "utf-8"
       )
-    ).toContain('from "./delete-document/tool"');
+    ).toContain('from "@/tools/chatjs/delete-document/tool"');
     expect(
       await readFile(
         nodePath.join(cwd, "composition/generated/tool-availability.ts"),
@@ -671,9 +671,11 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
       nodePath.join(cwd, "composition/generated/tools.ts"),
       "utf-8"
     );
-    expect(registered).toContain('from "./saved-code-execution/tool"');
-    expect(registered).toContain('from "./code-documents/tool"');
-    expect(registered).toContain('from "./read-document/tool"');
+    expect(registered).toContain(
+      'from "@/tools/chatjs/saved-code-execution/tool"'
+    );
+    expect(registered).toContain('from "@/tools/chatjs/code-documents/tool"');
+    expect(registered).toContain('from "@/tools/chatjs/read-document/tool"');
     await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
     expect(
       await Bun.file(nodePath.join(cwd, "agent/tools/deepResearch.ts")).exists()
@@ -688,10 +690,10 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
         nodePath.join(cwd, "composition/generated/tools.ts"),
         "utf-8"
       )
-    ).not.toContain('from "./deep-research/tool"');
+    ).not.toContain('from "@/tools/chatjs/deep-research/tool"');
     expect(
       await readFile(nodePath.join(cwd, "composition/generated/ui.ts"), "utf-8")
-    ).toContain('from "./deep-research/renderer"');
+    ).toContain('from "@/tools/chatjs/deep-research/renderer"');
   }
 };
 
@@ -1195,7 +1197,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
           nodePath.join(cwd, "composition/generated/providers.ts"),
           "utf-8"
         )
-      ).toContain("./tavily-search/tool");
+      ).toContain("@/tools/chatjs/tavily-search/tool");
       expect(
         await readFile(
           nodePath.join(cwd, "agent/subagents/researcher/tools/webSearch.ts"),
@@ -1455,7 +1457,7 @@ for (const installAtCreation of [false, true]) {
         nodePath.join(cwd, "composition/generated/installed-routers.ts"),
         "utf-8"
       )
-    ).toContain("mcp: mcpRouter");
+    ).toContain("mcp: plugin0().routers.mcp");
     const composer = await readFile(
       nodePath.join(cwd, "composer-controls.ts"),
       "utf-8"

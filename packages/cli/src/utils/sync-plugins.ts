@@ -1,3 +1,4 @@
+import { assertCurrentInstallationLayout } from "./installation-layout";
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
@@ -204,8 +205,14 @@ const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
   const routers = new Set(["credits", "eve", "project", "settings"]);
-  const controls = new Set<string>();
-  const settings = new Set<string>();
+  const controls = new Set([
+    "canvas",
+    "web-search",
+    "deep-research",
+    "image",
+    "video",
+  ]);
+  const settings = new Set(["general", "models"]);
   let uploads = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
@@ -257,6 +264,7 @@ const syncPlugins = async (
     expected?: readonly string[];
   }> = {}
 ): Promise<void> => {
+  await assertCurrentInstallationLayout(cwd);
   await preflight(cwd, [
     ...pluginRegistrationTargets,
     "composer-controls.ts",

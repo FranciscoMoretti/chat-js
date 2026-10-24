@@ -48,6 +48,8 @@ Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Ge
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply plugin-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected plugins. Direct shadcn installations require `chat-js sync` afterward.
 
+Older apps using `features/` descriptors or generated/custom registrations under `tools/chatjs/` must migrate before running `add` or `sync`. The CLI detects this layout and stops before writing. Use the current template to move implementation/descriptors into `plugins/<id>`, generated registrations into `composition/generated`, and custom registrations into `composition/custom`. Update imports and adopt the plugin descriptor plus server/client factory contract, then remove the old registration files.
+
 ## MCP and composer controls
 
 Selecting MCP during app creation installs its tRPC router, connector settings pages, OAuth callback, and agent integration. Skipping MCP leaves those source files and database schemas out of the fresh scaffold. Historical message rendering remains available. The MCP registry item builds from canonical source in `packages/registry/src/plugins/mcp`. The demo contains installed copies. Use `--mcp` or `--no-mcp` to select MCP during creation.

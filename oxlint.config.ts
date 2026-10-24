@@ -10,14 +10,13 @@ export default defineConfig({
   ignorePatterns: [
     ...(core.ignorePatterns ?? []),
     "examples/**",
+    "**/composition/generated/*.ts",
     // Library-installed components and generator-owned registrations.
     "**/components/{ai-elements,ui}/**",
     "!**/components/{ai-elements,ui}/**/",
     "!**/components/{ai-elements,ui}/extra/**",
     "!**/components/{ai-elements,ui}/**/*.{test,spec}.*",
     "!**/components/{ai-elements,ui}/**/__tests__/**",
-    "**/plugins/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
-    "**/tools/chatjs/{tools,ui,providers,code-executor,workflow-types,tool-availability,document-ui,document-run,installed-tools,composer-tools}.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",
   ],
