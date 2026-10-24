@@ -54,6 +54,10 @@ const drainCleanup = async (
   }
   if (deletedGuestCount(await response.json()) > emptyCount) {
     await drainCleanup(request, remaining - batchStep);
+    return;
+  }
+  if (!response.ok) {
+    throw new Error("Cleanup stalled; retry required.");
   }
 };
 const runHostedCleanup = async (

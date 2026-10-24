@@ -63,3 +63,18 @@ test.each([
   const result = await runCleanupJob();
   expect(result.success).toBe(false);
 });
+
+test.each([
+  { pendingCount: 1, skipped: false },
+  { pendingCount: 0, skipped: true, reason: "unsupported_runtime" },
+])("incomplete legacy guest cleanup remains retryable: %o", async (state) => {
+  tasks.guests.mockResolvedValue({ deletedCount: 0, ...state });
+  const result = await runCleanupJob();
+  expect(result.success).toBe(false);
+});
+
+test("skipped attachment cleanup remains retryable", async () => {
+  tasks.attachments.mockResolvedValue({ deletedCount: 0, skipped: true });
+  const result = await runCleanupJob();
+  expect(result.success).toBe(false);
+});

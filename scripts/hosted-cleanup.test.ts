@@ -60,6 +60,29 @@ test("sends credentials only to the configured HTTPS origin without redirects", 
     })
   );
 });
+test.each([false, true])(
+  "rejects a stalled 503 even with valid empty inventory (success: %s)",
+  async (success) => {
+    const request = vi.fn(() =>
+      Response.json(
+        {
+          success,
+          results: {
+            orphanedAttachments: { deletedCount: 0, skipped: false },
+            expiredGuests: { deletedCount: 0, pendingCount: 0, skipped: false },
+            runtimeGuests: { deletedCount: 0, pendingCount: 0, skipped: false },
+          },
+        },
+        { status: unavailable }
+      )
+    );
+    vi.stubGlobal("fetch", request);
+    await expect(
+      runHostedCleanup("https://chat.example", "secret")
+    ).rejects.toThrow("retry required");
+    expect(request).toHaveBeenCalledOnce();
+  }
+);
 test("drains multiple guest batches before reporting success", async () => {
   const request = vi
     .fn(() => batch(emptyBatch))
