@@ -491,7 +491,7 @@ export const invoicesFollowupTrpc = {
       input.eventId !== "completed-invoices"
     ) {
       return new TrpcFixtureError(
-        "BAD_REQUEST",
+        "NOT_FOUND",
         "Unexpected follow-up completion identity"
       );
     }
