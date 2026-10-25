@@ -14,7 +14,7 @@ Run this command inside your ChatJS app:
 Before adding this plugin, configure a durable Files SDK storage provider in your app. Choose one during app creation, or follow [File storage](../storage) to configure an existing app. Set the provider’s generated environment variables. For Vercel Blob, set `BLOB_READ_WRITE_TOKEN`. Installation stops if you have no durable provider configured.
 
 ```bash
-bunx chat-js add attachment-uploads
+bunx @chat-js/cli@latest add attachment-uploads
 ```
 
 The plugin adds the upload endpoint and composer controls. It adds no database tables and has no `features.attachments` enable flag.
@@ -55,7 +55,7 @@ attachments: {
 },
 ```
 
-`maxBytes` limits the uploaded size after compression. `maxDimension` limits image width and height.
+`maxBytes` limits the uploaded size after compression. `maxDimension` limits image width and height when compressing JPEG or PNG files that exceed `maxBytes`. Images already within the byte limit are uploaded unchanged, even if their dimensions are larger.
 
 ## Storage and customization
 

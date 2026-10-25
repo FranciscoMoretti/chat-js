@@ -10,7 +10,7 @@ Plugins add capabilities such as project organization, message feedback, connect
 Run the install command from your ChatJS app:
 
 ```bash
-bunx chat-js add projects
+bunx @chat-js/cli@latest add projects
 ```
 
 The CLI copies the plugin source, installs its dependencies, and generates the registrations. You do not manually add server and client factories to configuration arrays. Some plugins also add thin Next.js routes or EVE hooks.
@@ -49,7 +49,7 @@ Plugins can provide web server contributions, browser UI, and chat lifecycle cal
 After a direct shadcn installation or changes to a descriptor, regenerate composition:
 
 ```bash
-bunx chat-js sync
+bunx @chat-js/cli@latest sync
 ```
 
 ## Creating a plugin

@@ -103,7 +103,7 @@ The client `chat.MessageActions` placement receives `{ conversationId, messageId
 
 ### Suggestions
 
-When you add `chat.Suggestions`, it receives `conversationId`, native `events`, `lastMessage: { role, metadata: { turnId } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. The plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+When you add `chat.Suggestions`, it receives `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
 
 Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
 
