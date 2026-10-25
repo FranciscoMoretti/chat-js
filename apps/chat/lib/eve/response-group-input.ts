@@ -1,13 +1,14 @@
-import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import {
+  installedCreationFields,
+  installedSharedPlugins,
+} from "@/composition/generated/installed-shared";
 
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { eveForkInput } from "./contracts";
 import { eveMessageInput } from "./message-input";
-import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
 export const eveResponseGroupInput = z
   .object({
@@ -17,15 +18,15 @@ export const eveResponseGroupInput = z
     selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
     forkKind: z.enum(["edit", "comparison"]).optional(),
-    projectId: z.uuid().optional(),
+    ...installedCreationFields,
   })
   .strict()
   .refine(
-    (input: {
-      readonly fork?: z.infer<typeof eveForkInput>;
-      readonly projectId?: string;
-    }) => !(input.fork !== undefined && isNonEmptyString(input.projectId)),
-    "Forks inherit their source project."
+    (input) =>
+      installedSharedPlugins.every(
+        (plugin) => plugin.validateCreation?.(input) ?? true
+      ),
+    "Invalid plugin creation context."
   )
   .refine(
     (input: {
@@ -34,29 +35,7 @@ export const eveResponseGroupInput = z
     }) => !input.forkKind || input.fork !== undefined,
     "Fork intent requires a source conversation."
   )
-  .transform(
-    (
-      input: ReadonlyNativeSurface<{
-        operationId: string;
-        modelIds: string[];
-        selectedTool?:
-          | "deepResearch"
-          | "createTextDocument"
-          | "createCodeDocument"
-          | "createSheetDocument"
-          | "editTextDocument"
-          | "editCodeDocument"
-          | "editSheetDocument"
-          | "webSearch"
-          | "generateImage"
-          | "generateVideo"
-          | undefined;
-        fork?: z.infer<typeof eveForkInput>;
-        forkKind?: "edit" | "comparison" | undefined;
-        projectId?: string | undefined;
-      }> & { readonly message: ReadonlyEveMessageInput }
-    ) => ({
-      ...input,
-      operationId: input.operationId.toLowerCase(),
-    })
-  );
+  .transform((input) => ({
+    ...input,
+    operationId: input.operationId.toLowerCase(),
+  }));

@@ -54,6 +54,7 @@ const readInstalledPlugins = async (
         const files = [
           ...new Set([
             ...definition.files,
+            ...(definition.shared ? [`plugins/${id}/shared-plugin.ts`] : []),
             ...(definition.server ? [`plugins/${id}/server-plugin.ts`] : []),
             ...(definition.client ? [`plugins/${id}/client-plugin.ts`] : []),
             ...(definition.environmentValidation === undefined

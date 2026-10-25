@@ -6,7 +6,7 @@ import type { eveRequest } from "./server";
 import type { createEveConversation } from "../db/eve-queries";
 
 import { CreationConflictError } from "@/lib/db/creation-conflict-error";
-import { CreationProjectNotFoundError } from "@/lib/db/creation-project-not-found-error";
+import { CreationRejectedError } from "@/lib/creation-rejected-error";
 
 import { createEveConversationOperation } from "./create-conversation-operation";
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
@@ -39,7 +39,7 @@ vi.mock("@/lib/db/client", () => ({ db: {} }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 vi.mock("@/lib/db/eve-queries", () => ({
   CreationConflictError,
-  CreationProjectNotFoundError,
+  CreationRejectedError,
   createEveConversation: mocks.reserve,
   getEveConversation: mocks.source,
   getEveCreation: mocks.creation,
@@ -110,7 +110,7 @@ it("creates an idle seed then journals the first send separately", async () => {
 });
 it("maps project admission errors to not-found responses", async () => {
   mocks.reserve.mockRejectedValue(
-    new CreationProjectNotFoundError("Project not found.")
+    new CreationRejectedError("Project not found.", "project_not_found", 404)
   );
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(404);

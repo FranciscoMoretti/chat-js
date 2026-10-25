@@ -1,3 +1,4 @@
+import { installedChatPlugins } from "@/composition/generated/installed-chat";
 import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
@@ -9,7 +10,6 @@ import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
   eveFollowup,
-  eveChatProject,
   eveCodeSandbox,
   eveConversation,
   eveDocumentCheckpoint,
@@ -292,7 +292,6 @@ const completeEveConversationDeletion = async (
         firstMessage: "",
         initialContentHash: null,
         initialModelId: null,
-        initialProjectId: null,
         initialRequest: null,
         initialSeed: null,
         state: "deleted",
@@ -324,9 +323,10 @@ const completeEveConversationDeletion = async (
           )
         );
     } else {
-      await tx
-        .delete(eveChatProject)
-        .where(eq(eveChatProject.chatId, identity.chatId));
+      for (const plugin of installedChatPlugins) {
+        // oxlint-disable-next-line no-await-in-loop -- Keep plugin cleanup inside the family transaction.
+        await plugin.onDelete?.(tx, identity.chatId);
+      }
       await tx
         .update(eveChat)
         .set({

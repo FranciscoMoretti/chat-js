@@ -1,4 +1,6 @@
 "use client";
+import { pluginCreationScope } from "@/lib/eve/plugin-creation-input";
+import type { CreationScope } from "@/lib/eve/pending-create";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -48,28 +50,26 @@ import { useEveAttachments } from "./use-eve-attachments";
 
 export const NewEveConversation = ({
   ownerId,
-  projectId,
+  creationInput,
   onPendingChange,
 }: {
   readonly ownerId: string;
-  readonly projectId?: string;
+  readonly creationInput?: Readonly<Record<string, unknown>>;
   readonly onPendingChange?: (pending: boolean) => void;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const openRuntime = useEveRuntime();
-  const scope = useMemo((): { projectId: string } | undefined => {
-    if (typeof projectId === "string" && projectId !== "") {
-      return { projectId };
-    }
-    return undefined;
-  }, [projectId]);
+  const scope = useMemo((): CreationScope | undefined => {
+    const context = pluginCreationScope(creationInput);
+    return context ? { context } : undefined;
+  }, [creationInput]);
   const selectedModel = useDefaultModel();
   const changeModel = useModelChange();
   const [selection, setSelection] = useState<SelectedModelValue>();
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [cleanupRejected, setCleanupRejected] = useState(false);
-  const [projectRejected, setProjectRejected] = useState(false);
+  const [contextRejected, setContextRejected] = useState(false);
   const store = useMemo(
     () =>
       createClientSnapshot<{
@@ -167,7 +167,7 @@ export const NewEveConversation = ({
   const [optimisticComparison, setOptimisticComparison] =
     useState<
       Extract<
-        ReturnType<typeof prepareSelectedCreation>,
+        ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>,
         { readonly modelIds: readonly string[] }
       >
     >();
@@ -220,10 +220,9 @@ export const NewEveConversation = ({
         } catch (error) {
           if (
             error instanceof CreationRejectedError &&
-            error.projectUnavailable &&
-            hasText(projectId)
+            scope?.context !== undefined
           ) {
-            setProjectRejected(true);
+            setContextRejected(true);
           } else if (error instanceof CreationRejectedError) {
             try {
               finishCreation(sessionStorage, ownerId, scope);
@@ -269,11 +268,11 @@ export const NewEveConversation = ({
       );
     }
   };
-  if (projectRejected || (retained && !busy)) {
+  if (contextRejected || (retained && !busy)) {
     return (
       <EveCreationRecovery
         firstMessage={draft}
-        initiallyRejected={projectRejected || cleanupRejected}
+        initiallyRejected={contextRejected || cleanupRejected}
         initialFailure={failure}
         onClearRejected={cleanupRejected ? clearRejected : undefined}
         operationId={retainedOperationId}
@@ -342,7 +341,7 @@ export const NewEveConversation = ({
       </div>
     );
   }
-  if (hasText(projectId)) {
+  if (scope?.context) {
     return composer;
   }
   return <ChatWelcomeView>{composer}</ChatWelcomeView>;

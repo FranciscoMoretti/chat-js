@@ -29,7 +29,7 @@ type LogicalBranch = EveBranchReference & {
         readonly operationId: string;
         readonly rejection?: {
           readonly error: string;
-          readonly code?: "project_not_found";
+          readonly code?: string;
         };
       }[]
     | null;

@@ -15,6 +15,7 @@ const unselectedFeatures = {
   documents: false,
   followupSuggestions: false,
   mcp: false,
+  projects: false,
   parallelResponses: false,
 } as const;
 

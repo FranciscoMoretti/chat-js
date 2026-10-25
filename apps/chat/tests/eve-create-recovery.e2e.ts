@@ -169,7 +169,6 @@ test("an unresolved project conversation recovers after its project is deleted",
         .mockRejectedValue(new Error("Simulated dispatch interruption")),
       {
         initialModelId: operation.modelId,
-        initialProjectId: projectId,
       }
     )
   ).rejects.toThrow("Simulated dispatch interruption");

@@ -86,7 +86,6 @@ const ChatLayoutDynamic = async ({
     );
 
     // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
-    void preloadQuery(queryClient.query(trpc.project.list.queryOptions()));
   }
 
   return (

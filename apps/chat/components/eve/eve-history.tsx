@@ -12,7 +12,7 @@ export const EveHistory = async () => {
     return null;
   }
   const current = await listEveConversations(principal.ownerId, {
-    projectId: null,
+    surface: "sidebar",
     search: "",
   });
   return (

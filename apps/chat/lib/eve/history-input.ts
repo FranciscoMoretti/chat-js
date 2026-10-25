@@ -1,3 +1,4 @@
+import { installedHistoryFields } from "@/composition/generated/installed-shared";
 import { z } from "zod";
 
 const MIN_OWNER_SCOPE_LENGTH = 1;
@@ -17,7 +18,8 @@ export const eveHistoryInput = z.object({
     .min(MIN_OWNER_SCOPE_LENGTH)
     .max(MAX_OWNER_SCOPE_LENGTH)
     .optional(),
-  projectId: z.uuid().nullable().optional(),
+  ...installedHistoryFields,
+  surface: z.enum(["sidebar", "all"]).optional(),
   search: z.string().trim().max(MAX_HISTORY_SEARCH_LENGTH).default(""),
 });
 

@@ -128,11 +128,11 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getEveChatPageConversation: () => Promise.resolve(route.server.conversation),
   listEveConversations: (
     _ownerId: string,
-    input?: { projectId?: string | null }
+    input?: { projectId?: string | null; surface?: "sidebar" | "all" }
   ) => Promise.resolve(chatsIn(route.server.conversations, input)),
 }));
 
-vi.mock("@/lib/db/queries", () => ({
+vi.mock("@/plugins/projects/db/project-queries", () => ({
   getProjectById: () => Promise.resolve(route.server.project),
 }));
 

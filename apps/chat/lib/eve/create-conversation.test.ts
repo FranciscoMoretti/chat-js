@@ -99,7 +99,7 @@ it("identifies a missing project only on a definitive rejection", async () => {
     )
   );
   await expect(requestConversation(operation)).rejects.toMatchObject({
-    projectUnavailable: true,
+    code: "project_not_found",
   });
   vi.stubGlobal(
     "fetch",
@@ -113,7 +113,7 @@ it("identifies a missing project only on a definitive rejection", async () => {
       )
   );
   await expect(requestConversation(operation)).rejects.toMatchObject({
-    projectUnavailable: false,
+    code: undefined,
   });
 });
 it("automatically retries busy creation with the same operation identity", async () => {

@@ -1,3 +1,7 @@
+import {
+  installedCreationFields,
+  installedSharedPlugins,
+} from "@/composition/generated/installed-shared";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -29,7 +33,7 @@ const createConversationBase = z
     selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
     forkKind: eveForkKind.optional(),
-    projectId: z.uuid().optional(),
+    ...installedCreationFields,
   })
   .strict();
 
@@ -38,14 +42,10 @@ type CreateConversationInput = z.output<typeof createConversationBase>;
 const createConversationInput = createConversationBase
   .refine(
     (input: ReadonlyNativeSurface<CreateConversationInput>) =>
-      !(
-        typeof input.fork === "object" &&
-        typeof input.projectId === "string" &&
-        input.projectId.length >= MIN_IDENTIFIER_LENGTH
+      installedSharedPlugins.every(
+        (plugin) => plugin.validateCreation?.(input) ?? true
       ),
-    {
-      message: "Forks inherit their source conversation project.",
-    }
+    { message: "Invalid plugin creation context." }
   )
   .refine(
     (input: ReadonlyNativeSurface<CreateConversationInput>) =>

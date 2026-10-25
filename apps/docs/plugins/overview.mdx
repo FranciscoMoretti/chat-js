@@ -7,6 +7,7 @@ Plugins add application capabilities and own their implementation, credentials, 
 
 | Plugin | Contribution |
 | --- | --- |
+| [Projects](./projects) | Chat organization, project pages, and shared instructions |
 | [MCP](./mcp) | Connector settings, OAuth, dynamic tools, and composer control |
 | [Attachment uploads](./attachments) | File picker, camera, paste/drop, and upload endpoint |
 | `vercel-analytics` | Vercel Analytics layout component |
@@ -18,3 +19,5 @@ Plugins live in `plugins/<id>/`. Server contributions come from `server-plugin.t
 Keep preferences in `chat.config.ts`, composer ordering in `composer-controls.ts`, and navigation ordering in `settings-items.ts`. Sync preserves those editable lists. Tools retain their own contracts under `tools/chatjs/`; gateways, storage, and sandboxes retain their provider selection rules.
 
 To build a plugin for your own registry, follow [Authoring plugins](./authoring).
+
+For the technical contracts, see [Plugin integration points](./integration-points).

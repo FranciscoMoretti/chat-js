@@ -1,0 +1,53 @@
+{
+  "contractVersion": 1,
+  "id": "projects",
+  "kind": "plugin",
+  "files": [
+    "plugins/projects/chat.ts",
+    "plugins/projects/client-plugin.ts",
+    "plugins/projects/conversation-hook.ts",
+    "plugins/projects/creation.ts",
+    "plugins/projects/db/project-queries.ts",
+    "plugins/projects/db/project-schema.ts",
+    "plugins/projects/instructions-state.ts",
+    "plugins/projects/instructions.ts",
+    "plugins/projects/project-icons.ts",
+    "plugins/projects/router.ts",
+    "plugins/projects/routes/project-chat-page.tsx",
+    "plugins/projects/routes/project-page.tsx",
+    "plugins/projects/server-plugin.ts",
+    "plugins/projects/shared-plugin.ts",
+    "plugins/projects/ui/chat-contributions.tsx",
+    "plugins/projects/ui/delete-project-dialog.tsx",
+    "plugins/projects/ui/eve-move-project-dialog.tsx",
+    "plugins/projects/ui/eve-project-home.tsx",
+    "plugins/projects/ui/project-chat-item.tsx",
+    "plugins/projects/ui/project-config.tsx",
+    "plugins/projects/ui/project-details-dialog.tsx",
+    "plugins/projects/ui/project-history.tsx",
+    "plugins/projects/ui/project-icon-picker.tsx",
+    "plugins/projects/ui/project-icon.tsx",
+    "plugins/projects/ui/project-instructions-dialog.tsx",
+    "plugins/projects/ui/project-menu-items.tsx",
+    "plugins/projects/ui/sidebar-project-item.tsx",
+    "plugins/projects/ui/sidebar-projects.tsx",
+    "plugins/projects/use-projects.ts",
+    "agent/hooks/projects.ts",
+    "agent/instructions/projects.ts",
+    "app/(chat)/project/[projectId]/chat/[chatId]/page.tsx",
+    "app/(chat)/project/[projectId]/page.tsx"
+  ],
+  "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
+  "shared": {
+    "export": "projectsShared",
+    "creationFields": ["projectId"],
+    "historyFields": ["projectId"]
+  },
+  "server": { "export": "projects", "routers": ["project"], "chat": true },
+  "client": {
+    "export": "projectsClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "chat": true
+  }
+}

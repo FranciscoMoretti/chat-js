@@ -141,6 +141,13 @@
       "when": 1792508170922,
       "tag": "0019_woozy_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792919362764,
+      "tag": "0020_organic_black_panther",
+      "breakpoints": true
     }
   ]
 }

@@ -150,11 +150,19 @@ const pluginDefinitionSchema = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
+  shared: z
+    .object({
+      export: identifier,
+      creationFields: z.array(identifier).default([]),
+      historyFields: z.array(identifier).default([]),
+    })
+    .optional(),
   server: z
     .object({
       export: identifier,
       routers: z.array(identifier).default([]),
       instrumentation: z.literal(true).optional(),
+      chat: z.literal(true).optional(),
     })
     .optional(),
   client: z
@@ -162,6 +170,7 @@ const pluginDefinitionSchema = z.object({
       export: identifier,
       composerControls: z.array(pluginIdSchema).default([]),
       settingsItems: z.array(pluginIdSchema).default([]),
+      chat: z.literal(true).optional(),
       layout: z.literal(true).optional(),
       uploads: z.literal(true).optional(),
     })

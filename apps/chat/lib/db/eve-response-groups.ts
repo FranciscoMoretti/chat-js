@@ -1,3 +1,5 @@
+import { installedCreationFields } from "@/composition/generated/installed-shared";
+import { pluginCreationInput } from "@/lib/eve/plugin-creation-input";
 import {
   and,
   eq,
@@ -16,7 +18,7 @@ import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
 
 import { db } from "./client";
-import { eveConversation, eveResponseGroup } from "./schema";
+import { eveConversation, eveResponseGroup, eveDispatch } from "./schema";
 import type { z } from "zod";
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
@@ -46,15 +48,63 @@ type ReservedResponseGroup = ReadonlyNativeSurface<
   }
 >;
 
+const hash = (request: unknown): string =>
+  createHash("sha256").update(JSON.stringify(request)).digest("hex");
+
+const legacyGroupHash = async (
+  tx: ResponseGroupWriteTransaction,
+  ownerId: string,
+  existing: ReadonlyNativeSurface<ResponseGroupRow>,
+  input: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>,
+  coreInput: Readonly<Record<string, unknown>>
+): Promise<string> => {
+  // Upgrade legacy hashes only after proving every non-plugin input matches.
+  // The first candidate's pending request or dispatch journal retains its original assignment.
+  const [original] = await tx
+    .select({
+      request: eveConversation.initialRequest,
+      intent: eveDispatch.intent,
+    })
+    .from(eveConversation)
+    .leftJoin(
+      eveDispatch,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.kind, "create")
+      )
+    )
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(
+          eveConversation.operationId,
+          existing.candidateOperationIds[0] ?? input.operationId
+        )
+      )
+    );
+  const originalInput = original?.request ?? original?.intent;
+  const restored =
+    originalInput !== null && typeof originalInput === "object"
+      ? eveResponseGroupInput.parse({
+          ...coreInput,
+          ...pluginCreationInput(
+            Object.fromEntries(Object.entries(originalInput))
+          ),
+        })
+      : input;
+  return hash(restored);
+};
+
 const reserveGroupRow = async (
   tx: ResponseGroupWriteTransaction,
   ownerId: string,
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ResponseGroupRow | undefined> => {
   const input = eveResponseGroupInput.parse(value);
-  const inputHash = createHash("sha256")
-    .update(JSON.stringify(input))
-    .digest("hex");
+  const coreInput = Object.fromEntries(
+    Object.entries(input).filter(([key]) => !(key in installedCreationFields))
+  );
+  const inputHash = hash(coreInput);
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
   );
@@ -67,10 +117,18 @@ const reserveGroupRow = async (
     throw new Error("This response group has been deleted.");
   }
   if (hasQueryRow(existing) && existing.inputHash !== inputHash) {
-    throw new Error(
-      "This response group already has a different message, model order, tool selection, or source."
-    );
+    if (
+      existing.inputHash !==
+      (await legacyGroupHash(tx, ownerId, existing, input, coreInput))
+    ) {
+      throw new Error(
+        "This response group already has a different message, model order, tool selection, or source."
+      );
+    }
+    await tx.update(eveResponseGroup).set({ inputHash }).where(condition);
+    existing.inputHash = inputHash;
   }
+
   const sourceId = input.fork?.conversationId ?? null;
   const [source] =
     typeof sourceId === "string" && sourceId !== ""
@@ -227,7 +285,7 @@ const tombstoneEveResponseGroups = async (
  * @param {string} ownerId Owner whose family lock serializes the candidate update.
  * @param {string} groupId Live response group containing the candidate operation.
  * @param {string} operationId Exact candidate operation whose rejection is replaced or cleared.
- * @param {{ error: string; code?: "project_not_found"; } | undefined} rejection Definitive rejection details; absence clears the prior rejection for retry.
+ * @param {{ error: string; code?: string; } | undefined} rejection Definitive rejection details; absence clears the prior rejection for retry.
  */
 const recordEveResponseGroupRejection = async (
   ownerId: string,
@@ -235,7 +293,7 @@ const recordEveResponseGroupRejection = async (
   operationId: string,
   rejection?: {
     readonly error: string;
-    readonly code?: "project_not_found";
+    readonly code?: string;
   }
 ): Promise<void> => {
   await db.transaction(async (tx: ResponseGroupWriteTransaction) => {

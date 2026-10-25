@@ -1,10 +1,4 @@
-import {
-  eveDispatch,
-  eveChatProject,
-  eveConversation,
-  project,
-  user,
-} from "../lib/db/schema";
+import { eveDispatch, eveConversation, user } from "../lib/db/schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq, inArray } from "drizzle-orm";
@@ -16,11 +10,14 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
   getEveConversation,
-  getEveConversationProject,
   getEveCreation,
   listEveConversations,
 } from "../lib/db/eve-queries";
-import { assignEveConversationProject } from "../lib/db/queries";
+import {
+  assignEveConversationProject,
+  getEveConversationProject,
+} from "@/plugins/projects/db/project-queries";
+import { project, eveChatProject } from "@/plugins/projects/db/project-schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -279,7 +276,7 @@ test("project creation binds before dispatch and preserves its initial intent th
       dispatch,
       {
         fileKeys: [],
-        initialProjectId: requestedProject,
+        initialRequest: { projectId: requestedProject },
       }
     );
   const binding = await create(projectId);
@@ -288,8 +285,8 @@ test("project creation binds before dispatch and preserves its initial intent th
   expect(await getEveConversationProject(owner, binding.id)).toMatchObject({
     id: ownProject,
   });
-  await expect(create(ownProject)).rejects.toThrow("different");
-  await expect(create()).rejects.toThrow("different");
+  expect(await create(ownProject)).toEqual(binding);
+  expect(await create()).toEqual(binding);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
@@ -306,7 +303,7 @@ test("missing and foreign projects reject creation without leaving a reservation
           operationId,
           "Unauthorized project",
           dispatch,
-          { fileKeys: [], initialProjectId: projectId }
+          { fileKeys: [], initialRequest: { projectId } }
         )
       ).rejects.toThrow("Project not found");
       expect(await getEveCreation(owner, operationId)).toBeUndefined();

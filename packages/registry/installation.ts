@@ -21,6 +21,7 @@ type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 // Checked-in demo preset preserves the application's installed plugins.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
+    "projects",
     "mcp",
     "attachment-uploads",
     "vercel-analytics",

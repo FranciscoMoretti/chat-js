@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderInput, Pencil, PinIcon, Trash2 } from "lucide-react";
+import { Pencil, PinIcon, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import React from "react";
@@ -10,7 +10,7 @@ import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 interface ChatMenuItemsProps {
   readonly isPinned: boolean;
   readonly onDelete?: () => void;
-  readonly onMoveProject?: () => void;
+  readonly pluginActions?: React.ReactNode;
   readonly onRename: () => void;
   readonly onShare?: () => void;
   readonly onTogglePin: () => void;
@@ -22,7 +22,7 @@ export const ChatMenuItems = ({
   onRename,
   onTogglePin,
   onDelete,
-  onMoveProject,
+  pluginActions,
   onShare,
   showShare = true,
 }: ChatMenuItemsProps): React.JSX.Element => (
@@ -37,12 +37,7 @@ export const ChatMenuItems = ({
       <span>{isPinned ? "Unpin" : "Pin"}</span>
     </DropdownMenuItem>
 
-    {onMoveProject && (
-      <DropdownMenuItem onClick={onMoveProject}>
-        <FolderInput size={16} />
-        <span>Move to project</span>
-      </DropdownMenuItem>
-    )}
+    {pluginActions}
 
     {showShare && onShare && <ShareMenuItem onShare={onShare} />}
 

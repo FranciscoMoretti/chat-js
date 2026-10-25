@@ -90,31 +90,6 @@ const userModelPreference = pgTable(
 
 type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
-const project = pgTable(
-  "Project",
-  {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
-    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
-    instructions: text("instructions").notNull().default(""),
-    name: text("name").notNull(),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (columns) => [
-    unique("Project_id_user").on(columns.id, columns.userId),
-    index("Project_user_id_idx").on(columns.userId),
-  ]
-);
-
-type Project = InferSelectModel<typeof project>;
-
 // Disposable runtime policy records never create an application account.
 const guestRuntimeSession = pgTable(
   "GuestRuntimeSession",
@@ -396,8 +371,6 @@ const eveConversation = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     initialContentHash: text("initialContentHash"),
     initialModelId: text("initialModelId"),
-    // Immutable creation intent; retained when the project is removed.
-    initialProjectId: uuid("initialProjectId"),
     initialRequest: jsonb("initialRequest").$type<unknown>(),
     initialSeed: jsonb("initialSeed").$type<unknown>(),
     operationId: uuid("operationId").notNull(),
@@ -527,7 +500,7 @@ const eveResponseGroup = pgTable(
       {
         modelId: string;
         operationId: string;
-        rejection?: { error: string; code?: "project_not_found" };
+        rejection?: { error: string; code?: string };
       }[]
     >(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -548,27 +521,6 @@ const eveResponseGroup = pgTable(
       table.ownerId,
       table.operationId
     ),
-  ]
-);
-
-/** Removing a project detaches its conversations without deleting their native sessions. */
-const eveChatProject = pgTable(
-  "EveChatProject",
-  {
-    chatId: uuid("chatId").primaryKey(),
-    ownerId: text("ownerId").notNull(),
-    projectId: uuid("projectId").notNull(),
-  },
-  (table) => [
-    index("EveChatProject_project").on(table.projectId),
-    foreignKey({
-      columns: [table.chatId, table.ownerId],
-      foreignColumns: [eveChat.id, eveChat.ownerId],
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.projectId, table.ownerId],
-      foreignColumns: [project.id, project.userId],
-    }).onDelete("cascade"),
   ]
 );
 
@@ -1081,7 +1033,6 @@ export {
   eveDispatch,
   account,
   eveChat,
-  eveChatProject,
   eveCodeSandbox,
   eveConversation,
   eveDocumentCheckpoint,
@@ -1107,7 +1058,6 @@ export {
   eveUsage,
   eveVote,
   eveWorkflowBackend,
-  project,
   schema,
   session,
   user,
@@ -1118,7 +1068,6 @@ export {
 export type {
   EveChat,
   EveDocumentRevision,
-  Project,
   User,
   UserCredit,
   UserModelPreference,

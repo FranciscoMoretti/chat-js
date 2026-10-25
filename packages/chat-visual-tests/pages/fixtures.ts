@@ -79,7 +79,8 @@ const chat = (
   createdAt: updatedAt,
   id,
   isPinned: false,
-  projectId: null,
+  href: `/chat/${id}`,
+  parentHref: "/",
   state: "bound",
   title,
   titleStatus: "generated",
@@ -132,13 +133,17 @@ export const history: HistoryPage = {
 /** A history page as the query returns it for one scope: `null` is chats outside any project. */
 export const chatsIn = (
   page: HistoryPage | undefined,
-  input?: { projectId?: string | null }
+  input?: { projectId?: string | null; surface?: "sidebar" | "all" }
 ) =>
   page && {
     ...page,
     items: page.items.filter(
       (item) =>
-        input?.projectId === undefined || item.projectId === input.projectId
+        (input?.projectId === undefined && input?.surface !== "sidebar") ||
+        item.parentHref ===
+          (typeof input?.projectId === "string"
+            ? `/project/${input.projectId}`
+            : "/")
     ),
   };
 
@@ -148,6 +153,7 @@ export const signedInTrpc = {
   "eve.list": (input: { projectId?: string | null }) => chatsIn(history, input),
   "mcp.listConnected": [],
   "project.list": projects,
+  "project.forChat": null,
   "settings.getModelPreferences": [],
 };
 
@@ -225,7 +231,6 @@ export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
   id: invoicesChatId,
   initialContentHash: null,
   initialModelId: "google/gemini-2.5-flash-lite",
-  initialProjectId: null,
   initialRequest: null,
   initialSeed: null,
   isPinned: false,
@@ -269,7 +274,8 @@ export const invoicesTrpc = {
   "eve.get": {
     chatId: invoicesChatId,
     isPinned: false,
-    projectId: null,
+    href: `/chat/${invoicesChatId}`,
+    parentHref: "/",
     title: invoicesConversation.title,
     titleStatus: "generated",
     visibility: "private",
@@ -442,7 +448,7 @@ export const launchChats: HistoryPage = {
       "Launch checklist for Northwind Pay",
       daysAgo(0, 11),
       {
-        projectId: launchProject?.id ?? null,
+        parentHref: `/project/${launchProject?.id}`,
       }
     ),
     chat(
@@ -450,7 +456,7 @@ export const launchChats: HistoryPage = {
       "Press release first draft",
       daysAgo(2),
       {
-        projectId: launchProject?.id ?? null,
+        parentHref: `/project/${launchProject?.id}`,
       }
     ),
     chat(
@@ -458,7 +464,7 @@ export const launchChats: HistoryPage = {
       "FAQ for support team",
       daysAgo(5),
       {
-        projectId: launchProject?.id ?? null,
+        parentHref: `/project/${launchProject?.id}`,
       }
     ),
   ],

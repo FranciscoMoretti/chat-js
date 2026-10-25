@@ -1,3 +1,4 @@
+import { PluginSidebar } from "@/components/plugin-chat-ui";
 import React, { Suspense } from "react";
 import { Cpu } from "lucide-react";
 
@@ -8,7 +9,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -20,7 +20,6 @@ import { EveSearchChats } from "@/components/eve/eve-search-chats";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import type { JSX as ReactJSX } from "react";
-import { SidebarProjects } from "@/components/sidebar-projects";
 import { SidebarTopRow } from "@/components/sidebar-top-row";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +27,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarUserNav } from "./sidebar-user-nav";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -53,21 +51,6 @@ const HistorySkeleton = (): React.JSX.Element => (
     </div>
   </SidebarGroup>
 );
-
-const RegisteredEveProjects = async (): Promise<ReactJSX.Element | null> => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (session?.user) {
-    return (
-      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-        <SidebarGroupLabel>Projects</SidebarGroupLabel>
-        <SidebarMenu>
-          <SidebarProjects />
-        </SidebarMenu>
-      </SidebarGroup>
-    );
-  }
-  return null;
-};
 
 export const AppSidebar = (): React.JSX.Element => (
   <Sidebar
@@ -102,7 +85,7 @@ export const AppSidebar = (): React.JSX.Element => (
     <ScrollArea className="relative flex-1 overflow-y-auto">
       <SidebarContent className="max-w-(--sidebar-width) pr-2 group-data-[collapsible=icon]:hidden">
         <Suspense fallback={<HistorySkeleton />}>
-          <RegisteredEveProjects />
+          <PluginSidebar />
           <EveHistory />
         </Suspense>
       </SidebarContent>

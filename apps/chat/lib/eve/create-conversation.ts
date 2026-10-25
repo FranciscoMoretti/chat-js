@@ -8,11 +8,11 @@ import type { createConversationInput } from "./contracts";
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 class CreationRejectedError extends Error {
-  public readonly projectUnavailable: boolean;
-  public constructor(message: string, projectUnavailable = false) {
+  public readonly code: string | undefined;
+  public constructor(message: string, code?: string) {
     super(message);
     this.name = "CreationRejectedError";
-    this.projectUnavailable = projectUnavailable;
+    this.code = code;
   }
 }
 
@@ -54,10 +54,7 @@ const requestConversation = async (
           (response.status === 400 || response.status === 404) &&
           failure.creationRejected === true
         ) {
-          throw new CreationRejectedError(
-            failure.error,
-            failure.code === "project_not_found"
-          );
+          throw new CreationRejectedError(failure.error, failure.code);
         }
         throw new Error(failure.error);
       }

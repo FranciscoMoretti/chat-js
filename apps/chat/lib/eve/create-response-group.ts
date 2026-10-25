@@ -125,10 +125,7 @@ const requestResponseGroup = async (
       .every((candidate) => candidate.state === "waiting") ||
       result.candidates.every((candidate) => candidate.state === "rejected"))
   ) {
-    throw new CreationRejectedError(
-      primary.error,
-      primary.code === "project_not_found"
-    );
+    throw new CreationRejectedError(primary.error, primary.code);
   }
   return result;
 };

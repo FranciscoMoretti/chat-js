@@ -2,6 +2,12 @@ import { expect, test } from "vitest";
 import { takeSnapshot } from "@uiverify/vitest";
 
 const pages = [
+  { name: "plugins", path: "/docs/plugins/overview" },
+  {
+    name: "plugin-integration-points",
+    path: "/docs/plugins/integration-points",
+  },
+  { name: "projects-plugin", path: "/docs/plugins/projects" },
   { name: "threads", path: "/docs/threads" },
   { name: "database", path: "/docs/reference/database" },
   { name: "storage", path: "/docs/storage" },

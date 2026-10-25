@@ -1,0 +1,152 @@
+---
+title: Plugin integration points
+description: Technical contracts for installing plugins and extending chat creation, history, navigation, and UI
+---
+
+Plugins own an optional application capability. You install their source into `plugins/<id>/`, then compose their contributions through generated modules. Core keeps authentication, chat identity, session dispatch, recovery, and pagination.
+
+Start with [Authoring plugins](./authoring) for the registry packaging workflow. This page describes the interfaces your implementation can use.
+
+## Entry points
+
+Keep each import graph separate:
+
+| Entry point | Contract | Allowed dependencies |
+| --- | --- | --- |
+| `server-plugin.ts` | `ChatPlugin` | Database access, tRPC routers, server integrations |
+| `client-plugin.ts` | `ChatClientPlugin` | React components, browser interactions, client queries |
+| `shared-plugin.ts` | `ChatSharedPlugin` | Pure validation and routing code used on either side |
+
+Use `satisfies` when returning a contribution so TypeScript retains your concrete router and schema types. Shared entry points must not import React components, credentials, or database clients.
+
+```ts
+import type { ChatPlugin } from "@/lib/plugin-contracts";
+import { projectRouter } from "./router";
+import { projectsChat } from "./chat";
+
+export const projects = () =>
+  ({
+    id: "projects",
+    routers: { project: projectRouter },
+    chat: projectsChat,
+  }) satisfies ChatPlugin;
+```
+
+## Server contributions
+
+| Property | Purpose |
+| --- | --- |
+| `routers` | Add named tRPC routers to the application router |
+| `instrumentation` | Register server instrumentation with the runtime and application prefix |
+| `chat` | Participate in logical chat creation, history, navigation, and deletion |
+
+Router names must be unique. You cannot replace core `credits`, `eve`, or `settings` routers. Use protected procedures and enforce ownership in plugin queries and mutations.
+
+### Chat creation
+
+`chat.onCreate({ tx, chatId, ownerId, request })` runs only when core inserts a new logical chat. It runs inside the same database transaction as the chat and conversation reservation.
+
+Use the provided transaction for database validation and insertion. Do not dispatch a native session, call an external service, or open a separate transaction from this callback. Throwing rolls back the reservation. Use `CreationRejectedError` from `@/lib/creation-rejected-error` for a definitive rejection with a public error code and HTTP status.
+
+Projects validates project ownership under a database lock and inserts membership here. A fork shares its source logical chat, so it inherits membership. Multiple model responses also share one logical chat.
+
+On retry, core checks the existing creation's message, attachments, model, tool selection, and source. It does not call `onCreate` again. A changed project choice is ignored. Moving an existing chat requires an explicit plugin mutation.
+
+Core retains the original pending request for recovery and dispatch validation. Current membership can change independently. Do not use current membership to reconstruct the original request or reattach membership during recovery.
+
+### History
+
+`chat.historyFilter(input, surface)` returns a Drizzle SQL predicate or `undefined`. Core combines every plugin predicate with its ownership, state, search, and cursor restrictions before ordering and limiting the result.
+
+The `surface` is `sidebar` or `all`. Projects excludes assigned chats from the ordinary sidebar and filters project pages by the requested project. Search can query all chats.
+
+Filtering an already-fetched page is insufficient because it breaks pagination. A plugin predicate can narrow access, but cannot replace core ownership checks.
+
+### Navigation
+
+`chat.links(ownerId, chatIds)` returns a map of chat IDs to `{ href, parentHref }`. Core calls it with a batch of authorized logical chat IDs. The links drive history navigation and the destination after deletion. Chats without a contributed link use `/chat/<id>` and `/`.
+
+Only one plugin may claim navigation for a particular chat. Conflicting claims throw instead of silently depending on installation order. Keep links inside your application and scope membership lookups to `ownerId`.
+
+### Deletion
+
+`chat.onDelete(tx, chatId)` removes plugin-owned membership inside the existing deletion transaction when the logical chat's final session is removed. Core retains control of session deletion and its family lock. Use the supplied transaction and keep this callback limited to database cleanup.
+
+Deleting a project is different from deleting a chat. Projects deletes its membership rows and leaves native sessions intact.
+
+## Client contributions
+
+| Property | Purpose |
+| --- | --- |
+| `composerControls` | Add composer controls with stable IDs |
+| `settingsItems` | Add settings navigation entries |
+| `layout` | Mount a no-prop component in the application layout |
+| `uploads` | Supply attachment picker, paste/drop, and upload queue behavior |
+| `chat.Sidebar` | Render an optional sidebar section |
+| `chat.Actions` | Render chat menu actions from `{ chat: { id, title, state } }` |
+| `chat.Breadcrumb` | Render contextual breadcrumb content from `{ chatId }` |
+
+Chat contribution components own their hooks, queries, authorization-aware visibility, loading states, and dialogs. Core mounts components normally, so plugins do not need to invoke hooks through a dynamic loop.
+
+Composer and settings ordering remain in the app-owned `composer-controls.ts` and `settings-items.ts` arrays. Chat UI contributions follow generated plugin order. Only one plugin can supply uploads.
+
+## Shared contributions
+
+| Property | Purpose |
+| --- | --- |
+| `creationFields` | Zod fields added to single-chat and multiple-model creation inputs |
+| `historyFields` | Zod fields added to history inputs |
+| `validateCreation(input)` | Validate combinations such as a fork with an explicit initial assignment |
+| `creationScope(input)` | Return the original browser draft scope, or `undefined` |
+| `parseRoute(pathname)` | Recognize a plugin route and return its chat ID, context ID, and parent link |
+
+Declare field names in the descriptor as well as exporting their schemas. Field names cannot collide with core fields or another plugin's fields. Core creation fields include `operationId`, `message`, `modelId`, `modelIds`, `selectedTool`, `fork`, and `forkKind`.
+
+A creation scope contains a stable `key`, the plugin creation `input`, and a user-visible `label`. Core uses that key to retain and recover the browser's original pending request. Projects keeps `project:<id>` so existing saved drafts retain their storage location. Only one plugin may supply a scope for a request.
+
+Pass plugin inputs to `NewEveConversation` through its `creationInput` prop. Keep them out of permanent chat identity. Guests cannot submit populated plugin creation fields.
+
+## Framework adapters and database schema
+
+Next.js pages and HTTP handlers still live under `app/`. EVE tools, hooks, and instructions still live under `agent/`. Install thin adapters at those paths and keep their implementations in the plugin directory.
+
+Project instructions load through an EVE hook that resolves the authorized conversation before reading membership. A failed lookup stops the turn. The instruction resolver reads the prepared state rather than performing a fallible database lookup itself.
+
+Declare schema files in `databaseSchemas`. Sync includes them in Drizzle's schema list. Preserve table names when extracting existing functionality, generate and review the migration, and retain existing migration history. Adding or syncing a plugin does not apply migrations.
+
+Use distinctive filenames such as `project-schema.ts`. Registry import rewriting can otherwise confuse plugin files with host files sharing the same basename.
+
+## Descriptor and generated composition
+
+Projects declares its integration points as follows:
+
+```json
+{
+  "contractVersion": 1,
+  "id": "projects",
+  "kind": "plugin",
+  "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
+  "shared": {
+    "export": "projectsShared",
+    "creationFields": ["projectId"],
+    "historyFields": ["projectId"]
+  },
+  "server": { "export": "projects", "routers": ["project"], "chat": true },
+  "client": { "export": "projectsClient", "chat": true }
+}
+```
+
+The complete descriptor also lists every installed file. `chat-js sync` reads descriptors without evaluating plugin factories, checks declarations, and writes registrations under `composition/generated/`.
+
+| Generated module | Consumer |
+| --- | --- |
+| `installed-routers.ts` | Core tRPC router |
+| `installed-database.ts` | Drizzle configuration |
+| `installed-instrumentation.ts` | Server instrumentation |
+| `installed-layout.ts` | Application layout |
+| `installed-uploads.ts` | Attachment composer integration |
+| `installed-chat.ts` | Chat creation, history, and deletion |
+| `installed-chat-ui.ts` | Sidebar, chat actions, and breadcrumbs |
+| `installed-shared.ts` | Creation validation, draft recovery, history inputs, and route parsing |
+
+Do not edit generated files. Edit the factory or descriptor, then run sync. Verify both installation selections: a core app without your plugin and an app with it installed.

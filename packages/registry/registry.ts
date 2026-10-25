@@ -1,3 +1,4 @@
+import { projectsItem } from "./src/plugins/projects/manifest";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
 import { codeExecutionItem, codeExecutionRuntimeItem } from "./code-execution";
 import {
@@ -197,6 +198,7 @@ const searchToolItems = (
 const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
   items: [
+    projectsItem,
     mcpItem,
     attachmentUploadsItem,
     ...observabilityItems,

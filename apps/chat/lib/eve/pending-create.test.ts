@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasPendingCreation,
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareCreation,
   readCreation,
 } from "./pending-create";
@@ -26,6 +26,11 @@ describe("rejected project draft recovery", () => {
   it("moves the exact model and message to a fresh ordinary operation", () => {
     const storage = storageFixture();
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      input: { projectId },
+      label: "project",
+    };
     const original = prepareCreation(
       storage,
       "owner",
@@ -39,12 +44,12 @@ describe("rejected project draft recovery", () => {
         },
       ],
       "chosen-model",
-      { projectId }
+      { context }
     );
-    const next = moveRejectedProjectCreation(
+    const next = moveRejectedContextCreation(
       storage,
       "owner",
-      projectId,
+      context,
       original.operationId
     );
     expect(next).toMatchObject({
@@ -54,34 +59,39 @@ describe("rejected project draft recovery", () => {
     expect(next.operationId).not.toBe(original.operationId);
     expect(next.projectId).toBeUndefined();
     expect(readCreation(storage, "owner")).toEqual(next);
-    expect(readCreation(storage, "owner", { projectId })).toBeUndefined();
+    expect(readCreation(storage, "owner", { context })).toBeUndefined();
   });
   it("preserves both requests if another root draft exists", () => {
     const storage = storageFixture();
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      input: { projectId },
+      label: "project",
+    };
     const ordinary = prepareCreation(storage, "owner", "Other message");
     const original = prepareCreation(
       storage,
       "owner",
       "Project message",
       undefined,
-      { projectId }
+      { context }
     );
     expect(() =>
-      moveRejectedProjectCreation(
+      moveRejectedContextCreation(
         storage,
         "owner",
-        projectId,
+        context,
         original.operationId
       )
     ).toThrow("Finish the saved request");
     expect(readCreation(storage, "owner")).toEqual(ordinary);
-    expect(readCreation(storage, "owner", { projectId })).toEqual(original);
+    expect(readCreation(storage, "owner", { context })).toEqual(original);
     expect(() =>
-      moveRejectedProjectCreation(
+      moveRejectedContextCreation(
         storage,
         "other-owner",
-        projectId,
+        context,
         original.operationId
       )
     ).toThrow("saved request changed");

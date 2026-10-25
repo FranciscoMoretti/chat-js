@@ -1,3 +1,4 @@
+import { pluginCreationInput } from "./plugin-creation-input";
 import { z } from "zod";
 
 import { releaseEveGuestCreation } from "@/lib/db/eve-guests";
@@ -62,7 +63,7 @@ export const createEveResponseGroup = async (
           modelId: candidate.modelId,
           operationId: candidate.operationId,
           selectedTool: input.selectedTool,
-          ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
+          ...(fork ? { fork, forkKind } : pluginCreationInput(input)),
         },
         guestReservation?.reservationId
       );
@@ -98,12 +99,12 @@ export const createEveResponseGroup = async (
         ) {
           const rejection: {
             error: string;
-            code?: "project_not_found";
+            code?: string;
           } = {
             error: failure.data.error,
-            ...(failure.data.code === "project_not_found"
-              ? { code: "project_not_found" }
-              : {}),
+            ...(failure.data.code === undefined
+              ? {}
+              : { code: failure.data.code }),
           };
           await recordEveResponseGroupRejection(
             ownerId,

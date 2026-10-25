@@ -150,7 +150,11 @@ test("conversation inside a project", async () => {
     ...request,
     trpc: {
       ...invoicesTrpc,
-      "eve.get": { ...invoicesTrpc["eve.get"], projectId: launchProject.id },
+      "eve.get": {
+        ...invoicesTrpc["eve.get"],
+        parentHref: `/project/${launchProject.id}`,
+      },
+      "project.forChat": launchProject,
       "project.getById": launchProject,
     },
   });
@@ -503,3 +507,18 @@ test.each(["waiting", "lost reply"])(
     }
   }
 );
+
+test("project assignment dialog from the chat menu", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    trpc: { ...invoicesTrpc, "project.forChat": launchProject },
+  });
+  await page
+    .getByRole("button", { name: `Chat menu: ${invoicesConversation.title}` })
+    .click();
+  await page.getByRole("menuitem", { name: "Move to project" }).click();
+  await expect.element(page.getByRole("dialog")).toBeVisible();
+  await expect
+    .element(page.getByRole("combobox", { name: "Project", exact: true }))
+    .toHaveValue(launchProject.id);
+});

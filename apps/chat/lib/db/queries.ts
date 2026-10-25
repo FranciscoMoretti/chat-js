@@ -1,17 +1,14 @@
 // Shared by Next.js and the standalone EVE server; env guards server credentials.
 import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import type { User, UserModelPreference } from "./schema";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { GetSelectTableName } from "drizzle-orm/query-builders/select.types";
 
 import { db } from "./client";
 import {
-  eveChat,
-  eveChatProject,
   eveConversation,
   eveVote,
   eveFollowup,
-  project,
   user,
   userModelPreference,
 } from "./schema";
@@ -20,93 +17,9 @@ const hasQueryRow: (row: unknown) => boolean = Boolean;
 
 const SINGLE_MATCH_LIMIT = 1;
 const FIRST_RESULT_INDEX = 0;
-type ProjectWriteTransaction = Readonly<
+type WriteTransaction = Readonly<
   Pick<typeof db, "select" | "execute" | "insert" | "delete" | "update">
 >;
-
-const createProject = ({
-  id,
-  userId,
-  name,
-  instructions = "",
-  icon,
-  iconColor,
-}: {
-  readonly id: string;
-  readonly userId: string;
-  readonly name: string;
-  readonly instructions?: string;
-  readonly icon?: string;
-  readonly iconColor?: string;
-}): ReturnType<ReturnType<typeof db.insert<typeof project>>["values"]> =>
-  db.insert(project).values({
-    createdAt: new Date(),
-    ...(typeof icon === "string" && icon !== "" && { icon }),
-    ...(typeof iconColor === "string" && iconColor !== "" && { iconColor }),
-    id,
-    instructions,
-    name,
-    updatedAt: new Date(),
-    userId,
-  });
-
-const getProjectsByUserId = ({
-  userId,
-}: {
-  readonly userId: string;
-}): PgSelectWithout<
-  PgSelectBase<
-    GetSelectTableName<typeof project>,
-    (typeof project)["_"]["columns"],
-    "single",
-    Record<GetSelectTableName<typeof project>, "not-null">
-  >,
-  false,
-  "where" | "orderBy"
-> =>
-  db
-    .select()
-    .from(project)
-    .where(eq(project.userId, userId))
-    .orderBy(desc(project.updatedAt));
-
-const getProjectById = async ({
-  id,
-}: {
-  readonly id: string;
-}): Promise<typeof project.$inferSelect> => {
-  const [selectedProject] = await db
-    .select()
-    .from(project)
-    .where(eq(project.id, id));
-  return selectedProject;
-};
-
-const updateProject = ({
-  id,
-  updates,
-}: {
-  readonly id: string;
-  readonly updates: Partial<{
-    readonly name: string;
-    readonly instructions: string;
-    readonly icon: string;
-    readonly iconColor: string;
-  }>;
-}): ReturnType<
-  ReturnType<ReturnType<typeof db.update<typeof project>>["set"]>["where"]
-> =>
-  db
-    .update(project)
-    .set({ ...updates, updatedAt: new Date() })
-    .where(eq(project.id, id));
-
-const deleteProject = ({
-  id,
-}: {
-  readonly id: string;
-}): ReturnType<ReturnType<typeof db.delete<typeof project>>["where"]> =>
-  db.delete(project).where(eq(project.id, id));
 
 const getUserById = async ({
   userId,
@@ -209,7 +122,7 @@ const saveEveMessageVote = async (
   typeof eveVote.$inferSelect,
   "isUpvoted" | "messageId"
 > | null> =>
-  await db.transaction(async (tx: ProjectWriteTransaction) => {
+  await db.transaction(async (tx: WriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -240,79 +153,11 @@ const saveEveMessageVote = async (
     return saved;
   });
 
-const assignEveConversationProject = async (
-  ownerId: string,
-  routeId: string,
-  projectId: string | null
-): Promise<{ conversationId: string; projectId: string | null } | null> =>
-  await db.transaction(async (tx: ProjectWriteTransaction) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [logicalChat] = await tx
-      .select({ id: eveChat.id })
-      .from(eveChat)
-      .where(
-        and(
-          eq(eveChat.ownerId, ownerId),
-          or(
-            eq(eveChat.id, routeId),
-            sql`exists (
-              select 1 from "EveConversation" route_member
-              where route_member."chatId" = ${eveChat.id}
-                and route_member."ownerId" = ${ownerId}
-                and route_member."id" = ${routeId}
-            )`
-          ),
-          sql`exists (
-            select 1 from "EveConversation" member
-            where member."chatId" = ${eveChat.id}
-              and member."ownerId" = ${ownerId}
-              and member."state" = 'bound'
-          )`
-        )
-      );
-    if (!hasQueryRow(logicalChat)) {
-      return null;
-    }
-    if (projectId === null) {
-      await tx
-        .delete(eveChatProject)
-        .where(eq(eveChatProject.chatId, logicalChat.id));
-    } else {
-      const [target] = await tx
-        .select({ id: project.id })
-        .from(project)
-        .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
-        .for("key share");
-      if (!hasQueryRow(target)) {
-        return null;
-      }
-      await tx
-        .insert(eveChatProject)
-        .values({ chatId: logicalChat.id, ownerId, projectId })
-        .onConflictDoUpdate({
-          set: { projectId },
-          target: eveChatProject.chatId,
-        });
-    }
-    await tx
-      .update(eveChat)
-      .set({ updatedAt: new Date() })
-      .where(eq(eveChat.id, logicalChat.id));
-    return { conversationId: routeId, projectId };
-  });
 export {
-  assignEveConversationProject,
-  createProject,
-  deleteProject,
   getEveMessageVotes,
-  getProjectById,
-  getProjectsByUserId,
   getUserById,
   getUserModelPreferences,
   saveEveMessageVote,
-  updateProject,
   upsertUserModelPreference,
 };
 

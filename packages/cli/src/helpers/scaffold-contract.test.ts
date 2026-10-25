@@ -20,6 +20,7 @@ const buildConfigFor = (gateway: Gateway): string =>
       documents: true,
       followupSuggestions: true,
       mcp: true,
+      projects: false,
       parallelResponses: true,
     },
     gateway,

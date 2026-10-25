@@ -3,6 +3,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "attachment-uploads",
   "langfuse",
   "mcp",
+  "projects",
   "vercel-analytics",
   "vercel-speed-insights",
 ]);

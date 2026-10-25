@@ -3,7 +3,7 @@ import {
   PROJECT_ICONS,
   getProjectColorName,
   getProjectIconName,
-} from "./project-icons";
+} from "@/plugins/projects/project-icons";
 
 import { expect, test } from "vitest";
 

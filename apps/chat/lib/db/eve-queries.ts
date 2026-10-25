@@ -1,3 +1,5 @@
+import { installedChatPlugins } from "@/composition/generated/installed-chat";
+import { chatLinks } from "@/lib/chat-plugins";
 import { reserveConversationWorkspace } from "./eve-workspaces";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";
@@ -18,16 +20,13 @@ import {
 import { db } from "@/lib/db/client";
 import {
   eveChat,
-  eveChatProject,
   eveConversation,
   eveDispatch,
   eveGuest,
   eveGuestMessage,
   eveResponseGroup,
-  project,
 } from "@/lib/db/schema";
 import { CreationConflictError } from "./creation-conflict-error";
-import { CreationProjectNotFoundError } from "./creation-project-not-found-error";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
@@ -59,7 +58,8 @@ type ConversationListItem = Pick<
   "createdAt" | "id" | "isPinned" | "title" | "titleStatus"
 > & {
   conversationId: string;
-  projectId: string | null;
+  href: string;
+  parentHref: string;
   state: Exclude<ConversationRow["state"], "deleted">;
   updatedAt: string;
 };
@@ -160,20 +160,22 @@ const listEveConversations = async (
     "id" | "isPinned" | "updatedAt"
   > | null;
 }> => {
-  const { search = "", cursor, projectId } = input ?? {};
+  const { search = "", cursor, surface = "all" } = input ?? {};
   const { title } = eveChat;
   // Preserve PostgreSQL's microseconds: converting the cursor to Date can skip
   // conversations sharing the same millisecond at a page boundary.
   const updatedAt = sql<string>`to_char(${eveChat.updatedAt}, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+  // Qualify correlated references explicitly: Drizzle strips column qualifiers
+  // from selected SQL expressions when the outer query has only one table.
   const routeConversationId = sql<string>`coalesce((
     select active."id" from "EveConversation" active
-    where active."id" = ${eveChat.activeConversationId}
-      and active."chatId" = ${eveChat.id}
+    where active."id" = ${eveChat}."activeConversationId"
+      and active."chatId" = ${eveChat}."id"
       and active."ownerId" = ${ownerId}
       and active."state" in ('creating', 'bound', 'uncertain', 'deleting')
   ), (
     select member."id" from "EveConversation" member
-    where member."chatId" = ${eveChat.id}
+    where member."chatId" = ${eveChat}."id"
       and member."ownerId" = ${ownerId}
       and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
     order by (member."state" = 'bound') desc, member."createdAt", member."id"
@@ -187,7 +189,7 @@ const listEveConversations = async (
       else 'creating'
     end
     from "EveConversation" member
-    where member."chatId" = ${eveChat.id}
+    where member."chatId" = ${eveChat}."id"
       and member."ownerId" = ${ownerId}
       and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
   )`;
@@ -206,10 +208,6 @@ const listEveConversations = async (
         )
       )
     : undefined;
-  const matchesProject =
-    typeof projectId === "string" && projectId !== ""
-      ? eq(eveChatProject.projectId, projectId)
-      : isNull(eveChatProject.projectId);
   const escapedSearch = search.replaceAll(/[\\%_]/gu, String.raw`\$&`);
   const rows = await db
     .select({
@@ -217,14 +215,12 @@ const listEveConversations = async (
       createdAt: eveChat.createdAt,
       id: eveChat.id,
       isPinned: eveChat.isPinned,
-      projectId: eveChatProject.projectId,
       state: chatState,
       title,
       titleStatus: eveChat.titleStatus,
       updatedAt,
     })
     .from(eveChat)
-    .leftJoin(eveChatProject, eq(eveChatProject.chatId, eveChat.id))
     .where(
       and(
         eq(eveChat.ownerId, ownerId),
@@ -234,14 +230,26 @@ const listEveConversations = async (
             and member."ownerId" = ${ownerId}
             and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
         )`,
-        projectId === undefined ? undefined : matchesProject,
+        ...installedChatPlugins.map((plugin) =>
+          plugin.historyFilter?.(input, surface)
+        ),
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
     )
     .orderBy(desc(eveChat.isPinned), desc(eveChat.updatedAt), desc(eveChat.id))
     .limit(CHAT_PAGE_SIZE + NEXT_PAGE_LOOKAHEAD);
-  const page = rows.slice(FIRST_RESULT_INDEX, CHAT_PAGE_SIZE);
+  const links = await chatLinks(
+    ownerId,
+    rows.map((row) => row.id)
+  );
+  const page = rows.slice(FIRST_RESULT_INDEX, CHAT_PAGE_SIZE).map((row) => ({
+    ...row,
+    ...(links.get(row.id) ?? {
+      href: `/chat/${row.id}` as const,
+      parentHref: "/" as const,
+    }),
+  }));
   const last = page.at(LAST_RESULT_OFFSET);
   return {
     items: page,
@@ -353,29 +361,23 @@ const getEveChatIdentity = async (
   ownerId: string,
   routeId: string
 ): Promise<
-  Pick<ChatRow, "isPinned" | "title" | "titleStatus"> & {
-    chatId: ChatRow["id"];
-    projectId: string | null;
-    visibility: ConversationRow["visibility"] | null;
-  }
+  | (Pick<ChatRow, "isPinned" | "title" | "titleStatus"> & {
+      chatId: ChatRow["id"];
+      href: string;
+      parentHref: string;
+      visibility: ConversationRow["visibility"] | null;
+    })
+  | undefined
 > => {
   const [identity] = await db
     .select({
       chatId: eveChat.id,
       isPinned: eveChat.isPinned,
-      projectId: eveChatProject.projectId,
       title: eveChat.title,
       titleStatus: eveChat.titleStatus,
       visibility: eveConversation.visibility,
     })
     .from(eveChat)
-    .leftJoin(
-      eveChatProject,
-      and(
-        eq(eveChatProject.chatId, eveChat.id),
-        eq(eveChatProject.ownerId, ownerId)
-      )
-    )
     .leftJoin(
       eveConversation,
       and(
@@ -391,7 +393,17 @@ const getEveChatIdentity = async (
       )
     )
     .limit(SINGLE_MATCH_LIMIT);
-  return identity;
+  if (identity === undefined) {
+    return undefined;
+  }
+  const links = await chatLinks(ownerId, [identity.chatId]);
+  return {
+    ...identity,
+    ...(links.get(identity.chatId) ?? {
+      href: `/chat/${identity.chatId}`,
+      parentHref: "/",
+    }),
+  };
 };
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
@@ -504,26 +516,6 @@ const assertGuestCreationAdmission = async (
       }
     }
   }
-};
-
-const assignCreationProject = async (
-  tx: Readonly<Pick<CreationTransaction, "select" | "insert">>,
-  chatId: string,
-  ownerId: string,
-  projectId: string
-): Promise<void> => {
-  const [target] = await tx
-    .select({ id: project.id })
-    .from(project)
-    .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
-    .for("key share");
-  if (!hasQueryRow(target)) {
-    throw new CreationProjectNotFoundError("Project not found.");
-  }
-  await tx
-    .insert(eveChatProject)
-    .values({ chatId, ownerId, projectId: target.id })
-    .onConflictDoNothing();
 };
 
 const resolveCreationChat = async (
@@ -643,13 +635,16 @@ const reserveEveConversation = async (
       })
       .onConflictDoNothing()
       .returning();
-    if (hasQueryRow(createdChat) && isNonemptyString(value.initialProjectId)) {
-      await assignCreationProject(
-        tx,
-        chatId,
-        value.ownerId,
-        value.initialProjectId
-      );
+    if (hasQueryRow(createdChat)) {
+      for (const plugin of installedChatPlugins) {
+        // oxlint-disable-next-line no-await-in-loop -- Contributions participate in this transaction in deterministic order.
+        await plugin.onCreate?.({
+          tx,
+          chatId,
+          ownerId: value.ownerId,
+          request: value.initialRequest,
+        });
+      }
     }
     return rows;
   });
@@ -862,7 +857,6 @@ const assertMatchingMessageCreation = (
   message: string,
   initialModelId: string | undefined,
   initialContentHash: string | undefined,
-  initialProjectId: string | undefined,
   fork: ReadonlyNativeSurface<EveForkInput> | undefined,
   forkKind: typeof eveConversation.$inferInsert.forkKind,
   seedOnly: boolean
@@ -873,11 +867,10 @@ const assertMatchingMessageCreation = (
     existing.firstMessage !== message ||
     existing.initialModelId !== (initialModelId ?? null) ||
     existing.initialContentHash !== (initialContentHash ?? null) ||
-    existing.initialProjectId !== (initialProjectId ?? null) ||
     !matchesEveFork(existing, fork, forkKind ?? null)
   ) {
     throw new CreationConflictError(
-      "This operation already has a different message, attachments, model, tool selection, project, or source conversation."
+      "This operation already has a different message, attachments, model, tool selection, or source conversation."
     );
   }
   return existing;
@@ -897,7 +890,6 @@ const assertMatchingMessageCreation = (
  * @param {EveForkInput} [fork] Current completed source conversation to copy.
  * @param {typeof eveConversation.$inferInsert.forkKind} [forkKind] Fork type for the new conversation.
  * @param {string[]} [fileKeys] File keys attached to the initial message.
- * @param {string} [initialProjectId] Project to associate with a new non-fork conversation.
  * @param {string} [guestReservationId] Existing guest reservation to consume.
  * @returns {Promise<BoundConversation>} The bound conversation after native session creation succeeds.
  */
@@ -914,7 +906,6 @@ const createEveConversation = async (
     fork,
     forkKind,
     fileKeys = [],
-    initialProjectId,
     guestReservationId,
     seedOnly = false,
   }: ReadonlyNativeSurface<{
@@ -925,7 +916,6 @@ const createEveConversation = async (
     fork?: EveForkInput;
     forkKind?: typeof eveConversation.$inferInsert.forkKind;
     fileKeys?: string[];
-    initialProjectId?: string;
     guestReservationId?: string;
     seedOnly?: boolean;
   }> = {}
@@ -935,11 +925,6 @@ const createEveConversation = async (
       "Fork intent requires a source conversation."
     );
   }
-  if (fork && typeof initialProjectId === "string" && initialProjectId !== "") {
-    throw new CreationConflictError(
-      "Forks inherit their source conversation project."
-    );
-  }
   let [reservation] = await reserveEveConversation(
     {
       firstMessage: message,
@@ -947,7 +932,6 @@ const createEveConversation = async (
       forkKind,
       initialContentHash,
       initialModelId,
-      initialProjectId,
       initialRequest,
       operationId,
       ownerId,
@@ -974,7 +958,6 @@ const createEveConversation = async (
       message,
       initialModelId,
       initialContentHash,
-      initialProjectId,
       fork,
       forkKind,
       seedOnly
@@ -998,11 +981,10 @@ const createEveConversation = async (
         operationId: reservation.id,
         conversationId: reservation.id,
         kind: seedOnly ? "copy" : "create",
-        intent: initialRequest ?? {
+        intent: reservation.initialRequest ?? {
           message,
           initialModelId,
           initialContentHash,
-          initialProjectId,
           fork,
           forkKind,
         },
@@ -1011,11 +993,12 @@ const createEveConversation = async (
         await db.transaction(async (tx: CreationTransactionView) => {
           // The reservation is already committed so native hooks can find it.
           // Transaction locks release on worker death; creating rows need no manual repair.
-          const [lock] = await tx.execute<{
-            locked: boolean;
-          }>(
-            sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
-          );
+          const [lock] = await tx
+            .select({
+              locked: sql<boolean>`pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0))`,
+            })
+            .from(eveConversation)
+            .where(eq(eveConversation.id, reservation.id));
           if (!lock?.locked) {
             throw new CreationConflictError(
               "Creation is still in progress. Retry the same operation shortly.",
@@ -1323,51 +1306,6 @@ const getDeletingEveConversationForSession = async (
   return row ?? null;
 };
 
-const getEveConversationProject = async (
-  ownerId: string,
-  routeId: string
-): Promise<Pick<
-  typeof project.$inferSelect,
-  "id" | "instructions" | "name"
-> | null> => {
-  const [assigned] = await db
-    .select({
-      id: project.id,
-      instructions: project.instructions,
-      name: project.name,
-    })
-    .from(eveChat)
-    .leftJoin(
-      eveConversation,
-      and(
-        eq(eveConversation.chatId, eveChat.id),
-        eq(eveConversation.ownerId, eveChat.ownerId),
-        eq(eveConversation.id, routeId)
-      )
-    )
-    .innerJoin(
-      eveChatProject,
-      and(
-        eq(eveChatProject.chatId, eveChat.id),
-        eq(eveChatProject.ownerId, eveChat.ownerId)
-      )
-    )
-    .innerJoin(project, eq(project.id, eveChatProject.projectId))
-    .where(
-      and(
-        eq(eveChat.ownerId, ownerId),
-        or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId)),
-        sql`exists (
-          select 1 from "EveConversation" member
-          where member."chatId" = ${eveChat.id}
-            and member."ownerId" = ${ownerId}
-            and member."state" in ('creating', 'bound', 'uncertain')
-        )`
-      )
-    );
-  return assigned ?? null;
-};
-
 /**
  * Only interrupted message commands are replayable here; copies and deletion have separate journals.
  * @param {string} ownerId Owner whose creating and uncertain message commands need recovery.
@@ -1416,7 +1354,6 @@ export {
   getEveChatIdentity,
   getEveChatPageConversation,
   getEveConversation,
-  getEveConversationProject,
   getEveCreation,
   getPublicEveConversation,
   isEveRootTitlePending,
@@ -1432,4 +1369,3 @@ export {
   updateEveConversationMetadata,
 };
 export { CreationConflictError } from "./creation-conflict-error";
-export { CreationProjectNotFoundError } from "./creation-project-not-found-error";

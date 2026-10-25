@@ -1,4 +1,5 @@
 "use client";
+import { pluginCreationScope } from "@/lib/eve/plugin-creation-input";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import {
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
 import type { CreationScope } from "@/lib/eve/pending-create";
@@ -23,12 +24,13 @@ const recoveryStatus = (
   loaded: boolean,
   pending: boolean,
   rejected: boolean,
-  canClear: boolean
+  canClear: boolean,
+  label: string
 ): string => {
   if (rejected) {
     return canClear
       ? "The original request was rejected. Clear the saved request before sending again."
-      : "The original request was rejected. You can continue with the saved message outside this project.";
+      : `The original request was rejected. You can continue with the saved message outside this ${label}.`;
   }
   if (!loaded) {
     return "Checking the saved request…";
@@ -36,6 +38,23 @@ const recoveryStatus = (
   return pending
     ? "Conversation creation is unconfirmed. Retry the saved request to recover it."
     : "This browser does not have the original request. Return to the tab where you sent it, or check again if creation is still running.";
+};
+
+const matchesSavedRequest = (
+  saved: ReturnType<typeof readCreationRequest>,
+  operationId: string | undefined,
+  scope: Readonly<CreationScope> | undefined
+): boolean => {
+  if (!saved) {
+    return false;
+  }
+  if (hasText(operationId)) {
+    return saved.operationId === operationId;
+  }
+  return (
+    scope?.context !== undefined &&
+    pluginCreationScope(saved)?.key === scope.context.key
+  );
 };
 
 export const EveCreationRecovery = ({
@@ -55,6 +74,8 @@ export const EveCreationRecovery = ({
   readonly initialFailure?: string;
   readonly onClearRejected?: () => void;
 }): ReactJSX.Element => {
+  const context = scope?.context;
+  const contextLabel = context?.label ?? "context";
   const [, startEventAction] = React.useTransition();
   const router = useRouter();
   const lock = useRef(false);
@@ -79,14 +100,9 @@ export const EveCreationRecovery = ({
             return {
               ...current,
               loaded: true,
-              pending:
-                saved &&
-                (hasText(operationId)
-                  ? saved.operationId === operationId
-                  : hasText(scope?.projectId) &&
-                    saved.projectId === scope.projectId)
-                  ? saved
-                  : undefined,
+              pending: matchesSavedRequest(saved, operationId, scope)
+                ? saved
+                : undefined,
             };
           } catch {
             return {
@@ -135,10 +151,7 @@ export const EveCreationRecovery = ({
           );
           globalThis.location.assign(`/chat/${id}`);
         } catch (error) {
-          if (
-            error instanceof CreationRejectedError &&
-            hasText(scope?.projectId)
-          ) {
+          if (error instanceof CreationRejectedError && context !== undefined) {
             setRejected(true);
           }
           setFailure(
@@ -154,15 +167,15 @@ export const EveCreationRecovery = ({
       }
     );
   };
-  const continueWithoutProject = (): void => {
-    if (!(rejected && pending && hasText(scope?.projectId))) {
+  const continueWithoutContext = (): void => {
+    if (!(rejected && pending && context !== undefined)) {
       return;
     }
     try {
-      moveRejectedProjectCreation(
+      moveRejectedContextCreation(
         sessionStorage,
         ownerId,
-        scope.projectId,
+        context,
         pending.operationId
       );
       globalThis.location.assign("/");
@@ -177,7 +190,8 @@ export const EveCreationRecovery = ({
     loaded,
     pending !== undefined,
     rejected,
-    onClearRejected !== undefined
+    onClearRejected !== undefined,
+    contextLabel
   );
   return (
     <section
@@ -194,9 +208,9 @@ export const EveCreationRecovery = ({
       {rejected && onClearRejected && (
         <Button onClick={onClearRejected}>Clear rejected request</Button>
       )}
-      {rejected && !onClearRejected && hasText(scope?.projectId) ? (
-        <Button onClick={continueWithoutProject}>
-          Continue without project
+      {rejected && !onClearRejected && context !== undefined ? (
+        <Button onClick={continueWithoutContext}>
+          Continue without {contextLabel}
         </Button>
       ) : null}
       {!rejected && pending ? (

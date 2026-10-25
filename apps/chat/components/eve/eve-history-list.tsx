@@ -1,6 +1,6 @@
 "use client";
-
-import { hasText } from "@/components/text-value";
+import { PluginChatActions } from "@/components/plugin-chat-ui";
+import type { EveHistoryInput } from "@/lib/eve/history-input";
 
 import {
   useInfiniteQuery,
@@ -10,12 +10,10 @@ import {
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname } from "next/navigation";
 import type { JSX as ReactJSX } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
-import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -26,11 +24,9 @@ import type { listEveConversations } from "@/lib/db/eve-queries";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
-import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveDeletion } from "./eve-deletion-provider";
-import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
@@ -67,25 +63,28 @@ const groupLabel = (
 export const EveHistoryList = ({
   initialPage,
   ownerId,
-  projectId,
+  input,
+  renderItem,
+  empty,
 }: {
   readonly ownerId: string;
-  readonly projectId?: string;
+  readonly input?: EveHistoryInput;
+  readonly empty?: React.ReactNode;
+  readonly renderItem?: (
+    item: ReadonlyNativeSurface<
+      Awaited<ReturnType<typeof listEveConversations>>["items"][number]
+    >,
+    index: number
+  ) => Exclude<React.ReactNode, Promise<unknown>>;
   readonly initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
-  const { data: session } = useSession();
   const openDeletion = useEveDeletion();
   const queryClient = useQueryClient();
-  const [moving, setMoving] = useState<{
-    id: string;
-    title: string;
-    projectId: string | null;
-  }>();
   const search = "";
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { ownerScope: ownerId, projectId: projectId ?? null, search },
+      { ownerScope: ownerId, surface: "sidebar", search, ...input },
       {
         getNextPageParam: (page: {
           readonly nextCursor: {
@@ -112,7 +111,7 @@ export const EveHistoryList = ({
   const selectedIdentity = useQuery(
     trpc.eve.get.queryOptions(
       { id: routeId ?? "" },
-      { enabled: route.type === "chat" || route.type === "projectChat" }
+      { enabled: route.type === "chat" || route.type === "pluginChat" }
     )
   );
   const hadPendingTitle = useRef(false);
@@ -172,7 +171,7 @@ export const EveHistoryList = ({
     return true;
   });
   const { rename, pin } = useEveMetadataMutations();
-  const grouped = hasText(projectId)
+  const grouped = renderItem
     ? [{ items: filtered, label: "" }]
     : [
         "Pinned",
@@ -191,11 +190,9 @@ export const EveHistoryList = ({
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
-      className={
-        hasText(projectId) ? "p-0" : "group-data-[collapsible=icon]:hidden"
-      }
+      className={renderItem ? "p-0" : "group-data-[collapsible=icon]:hidden"}
     >
-      {!hasText(projectId) && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
+      {!renderItem && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
       {grouped
         .filter(
           (group: Readonly<{ items: readonly unknown[] }>) => group.items.length
@@ -232,37 +229,8 @@ export const EveHistoryList = ({
                         </li>
                       );
                     }
-                    if (hasText(projectId)) {
-                      return (
-                        <li key={item.id}>
-                          {index > 0 && <Separator />}
-                          <ProjectChatItem
-                            chat={item}
-                            onDelete={() => {
-                              openDeletion(item);
-                            }}
-                            onMoveProject={
-                              session?.user && item.state === "bound"
-                                ? () => {
-                                    setMoving(item);
-                                  }
-                                : undefined
-                            }
-                            onRename={async (id, title) => {
-                              await rename.mutateAsync({ id, title });
-                            }}
-                            renderShareContent={(
-                              _chatId,
-                              onClose
-                            ): React.JSX.Element => (
-                              <EveShareDialogContent
-                                chatId={item.conversationId}
-                                onClose={onClose}
-                              />
-                            )}
-                          />
-                        </li>
-                      );
+                    if (renderItem) {
+                      return renderItem(item, index);
                     }
                     return (
                       <SidebarChatItem
@@ -272,13 +240,7 @@ export const EveHistoryList = ({
                         onDelete={() => {
                           openDeletion(item);
                         }}
-                        onMoveProject={
-                          session?.user && item.state === "bound"
-                            ? () => {
-                                setMoving(item);
-                              }
-                            : undefined
-                        }
+                        pluginActions={<PluginChatActions chat={item} />}
                         onPin={(id, isPinned) => {
                           pin.mutate({ id, isPinned });
                         }}
@@ -341,30 +303,11 @@ export const EveHistoryList = ({
         </Button>
       )}
       {!(filtered.length > 0 || history.isPending || history.isError) &&
-        (hasText(projectId) ? (
-          <div className="border-border/60 rounded-xl border px-4 py-6">
-            <p className="text-foreground text-sm font-medium">
-              No chats in this project
-            </p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Start a chat to keep conversations organized and re-use project
-              knowledge.
-            </p>
-          </div>
-        ) : (
+        (empty ?? (
           <p className="text-muted-foreground px-2 py-4 text-sm">
             Start chatting to see your conversation history!
           </p>
         ))}
-      {moving && (
-        <EveMoveProjectDialog
-          conversation={moving}
-          key={moving.id}
-          onClose={() => {
-            setMoving(undefined);
-          }}
-        />
-      )}
     </SidebarGroup>
   );
 };

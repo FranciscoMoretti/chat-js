@@ -6,7 +6,7 @@ import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { checkChatItemSharing } from "./chat-item-sharing.fixture";
-import { ProjectChatItem } from "@/components/project-chat-item";
+import { ProjectChatItem } from "@/plugins/projects/ui/project-chat-item";
 import { mountNative } from "@/tests/visual/native-eve-fixture";
 import { unmount } from "@/tests/visual/primitive-mount";
 
@@ -37,7 +37,6 @@ const UpdatingProject = (): React.JSX.Element => {
       <ProjectChatItem
         chat={{
           id: "clock-chat",
-          projectId: "project",
           title: "Clock conversation",
           updatedAt,
         }}

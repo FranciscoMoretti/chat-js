@@ -1,3 +1,4 @@
+import { projectsDefinition } from "../../../registry/src/plugins/projects/manifest";
 import { linkWorkspaceDependencies } from "../../test/link-workspace-dependencies";
 import { rejects } from "node:assert/strict";
 import { z } from "zod";
@@ -78,6 +79,8 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   const baseline = await readFile(path.join(history, baselineFile), "utf-8");
   expect(baseline).toContain('CREATE TABLE "user"');
   expect(baseline).not.toContain("McpConnector");
+  expect(baseline).not.toContain('CREATE TABLE "Project"');
+  expect(baseline).not.toContain("EveChatProject");
   expect(
     initialFiles.filter((file): boolean => file.endsWith(".sql"))
   ).toHaveLength(1);
@@ -116,6 +119,37 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   expect(next).not.toContain('CREATE TABLE "user"');
   expect(next).not.toContain("DROP");
   await rejects(generateBaseline(root, "bun"), /existing migration history/u);
+  await cp(
+    path.join(demo, "plugins/projects/db"),
+    path.join(root, "plugins/projects/db"),
+    { recursive: true }
+  );
+  await writeFile(
+    path.join(root, "plugins/projects/chatjs.json"),
+    JSON.stringify(projectsDefinition)
+  );
+  await writeFile(
+    path.join(root, "composition/generated/installed-database.ts"),
+    await planDatabaseSchemas(root, ["mcp", "projects"])
+  );
+  await runCommand("bun", ["run", "db:generate", "--name=add_projects"], root);
+  const migrationFiles = await readdir(history);
+  const projectMigration = migrationFiles.find((file) =>
+    file.endsWith("add_projects.sql")
+  );
+  if (projectMigration === undefined) {
+    throw new Error("Expected Projects migration");
+  }
+  const projectSql = await readFile(
+    path.join(history, projectMigration),
+    "utf-8"
+  );
+  expect(projectSql).toContain('CREATE TABLE "Project"');
+  expect(projectSql).toContain('CREATE TABLE "EveChatProject"');
+  expect(projectSql).not.toContain("DROP");
+  expect(await readFile(path.join(history, baselineFile), "utf-8")).toBe(
+    baseline
+  );
   const fresh = await fixture();
   await cp(root, fresh, {
     recursive: true,
@@ -131,6 +165,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     "utf-8"
   );
   expect(fullBaseline).toContain('CREATE TABLE "McpConnector"');
+  expect(fullBaseline).toContain('CREATE TABLE "Project"');
   expect(fullBaseline).toContain('CREATE TABLE "user"');
 }, 60_000);
 

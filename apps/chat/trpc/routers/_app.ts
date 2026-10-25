@@ -3,7 +3,6 @@ import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { creditsRouter } from "./credits.router";
 import { eveRouter } from "./eve.router";
-import { projectRouter } from "./project.router";
 import { settingsRouter } from "./settings.router";
 
 /**
@@ -16,7 +15,6 @@ const appRouter = createTRPCRouter({
   credits: creditsRouter,
   eve: eveRouter,
   ...installedRouters,
-  project: projectRouter,
   settings: settingsRouter,
 });
 

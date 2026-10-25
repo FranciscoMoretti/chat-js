@@ -1,3 +1,4 @@
+import { pluginCreationScope } from "@/lib/eve/plugin-creation-input";
 import { hasText } from "@/components/text-value";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -23,8 +24,9 @@ const creationRecoveryScope = (
   if (hasText(selected?.parentConversationId)) {
     return { conversationId: selected.parentConversationId };
   }
-  if (hasText(selected?.initialProjectId)) {
-    return { projectId: selected.initialProjectId };
+  const context = pluginCreationScope(selected?.initialRequest);
+  if (context) {
+    return { context };
   }
   return undefined;
 };

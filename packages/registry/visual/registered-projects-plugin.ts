@@ -34,7 +34,7 @@ const getRegisteredInitializer = async (): Promise<string> => {
 const loadRegisteredProjects = async (): Promise<string> => {
   const initializer = await getRegisteredInitializer();
   const source = `import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
-import { SidebarProjects } from "@/components/sidebar-projects";
+import { SidebarProjects } from "@/plugins/projects/ui/sidebar-projects";
 import { fixtureAuth as auth, fixtureHeaders as headers } from "@/tests/visual/native-eve-services";
 export const RegisteredEveProjects = ${initializer};`;
   return ts.transpileModule(source, {

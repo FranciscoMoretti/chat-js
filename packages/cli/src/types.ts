@@ -25,6 +25,7 @@ const CORE_FEATURE_KEYS = [
   "parallelResponses",
   "documents",
   "mcp",
+  "projects",
   "followupSuggestions",
 ] as const;
 

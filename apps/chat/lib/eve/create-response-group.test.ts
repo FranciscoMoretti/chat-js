@@ -9,7 +9,7 @@ import {
   retainResponseGroupDraft,
 } from "./create-response-group";
 import {
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareCreation,
   prepareResponseGroupCreation,
   prepareSelectedCreation,
@@ -161,17 +161,22 @@ test("rejected secondary candidates retain the original request for their retry"
 test("moving a definitively rejected project comparison preserves all repeated models", () => {
   const { storage } = fixture();
   const projectId = crypto.randomUUID();
+  const context = {
+    key: `project:${projectId}`,
+    input: { projectId },
+    label: "project",
+  };
   const original = prepareResponseGroupCreation(
     storage,
     "project-owner",
     "Project message",
     ["model-a", "model-a"],
-    { projectId }
+    { context }
   );
-  const moved = moveRejectedProjectCreation(
+  const moved = moveRejectedContextCreation(
     storage,
     "project-owner",
-    projectId,
+    context,
     original.operationId
   );
   expect(moved).toMatchObject({
@@ -181,7 +186,7 @@ test("moving a definitively rejected project comparison preserves all repeated m
   expect(moved.operationId).not.toBe(original.operationId);
   expect(moved.projectId).toBeUndefined();
   expect(
-    readCreationRequest(storage, "project-owner", { projectId })
+    readCreationRequest(storage, "project-owner", { context })
   ).toBeUndefined();
 });
 

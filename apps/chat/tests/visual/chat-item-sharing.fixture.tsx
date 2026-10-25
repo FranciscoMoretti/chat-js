@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { expect, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ProjectChatItem } from "@/components/project-chat-item";
+import { ProjectChatItem } from "@/plugins/projects/ui/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { SidebarMenu } from "@/components/ui/sidebar";
@@ -43,7 +43,6 @@ const checkChatItemSharing = async (
         <ProjectChatItem
           chat={{
             id: "project-chat",
-            projectId: "project",
             title: "Project notes",
           }}
           onRename={vi
@@ -59,7 +58,6 @@ const checkChatItemSharing = async (
             chat={{
               id: "sidebar-chat",
               isPinned: false,
-              projectId: null,
               title: "Sidebar notes",
             }}
             isActive

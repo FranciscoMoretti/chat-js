@@ -199,12 +199,30 @@ const pluginRegistrationTargets = [
   "installed-layout",
   "installed-instrumentation",
   "installed-database",
+  "installed-chat",
+  "installed-chat-ui",
+  "installed-shared",
 ].map((name) => `composition/generated/${name}.ts`);
+
+const assertPluginDependencies = (
+  plugins: readonly PluginDefinition[]
+): void => {
+  const ids = new Set(plugins.map((plugin) => plugin.id));
+  for (const plugin of plugins) {
+    for (const dependency of plugin.requiresPlugins ?? []) {
+      if (!ids.has(dependency)) {
+        throw new Error(
+          `${plugin.id} requires installed plugin: ${dependency}`
+        );
+      }
+    }
+  }
+};
 
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["credits", "eve", "project", "settings"]);
+  const routers = new Set(["credits", "eve", "settings"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -213,10 +231,22 @@ const assertUniqueContributions = (
     "video",
   ]);
   const settings = new Set(["general", "models"]);
+  const creationFields = new Set([
+    "operationId",
+    "modelId",
+    "modelIds",
+    "message",
+    "selectedTool",
+    "fork",
+    "forkKind",
+  ]);
+  const historyFields = new Set(["cursor", "ownerScope", "search", "surface"]);
   let uploads = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
       [plugin.server?.routers ?? [], routers, "router"],
+      [plugin.shared?.creationFields ?? [], creationFields, "creation field"],
+      [plugin.shared?.historyFields ?? [], historyFields, "history field"],
       [plugin.client?.composerControls ?? [], controls, "composer control"],
       [plugin.client?.settingsItems ?? [], settings, "settings item"],
     ] as const) {
@@ -234,21 +264,12 @@ const assertUniqueContributions = (
       uploads = true;
     }
   }
-  const ids = new Set(plugins.map((plugin) => plugin.id));
-  for (const plugin of plugins) {
-    for (const dependency of plugin.requiresPlugins ?? []) {
-      if (!ids.has(dependency)) {
-        throw new Error(
-          `${plugin.id} requires installed plugin: ${dependency}`
-        );
-      }
-    }
-  }
+  assertPluginDependencies(plugins);
 };
 
 const imports = (
   selected: readonly PluginDefinition[],
-  side: "server" | "client"
+  side: "server" | "client" | "shared"
 ): string =>
   selected
     .map(
@@ -330,7 +351,28 @@ const syncPlugins = async (
   );
   const layout = plugins.filter((plugin) => plugin.client?.layout);
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
+  const shared = plugins.filter((plugin) => plugin.shared);
+  const chat = plugins.filter((plugin) => plugin.server?.chat);
+  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
   const contents = [
+    [
+      "installed-chat",
+      `${imports(chat, "server")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `plugin${index}().chat`).join(", ")}];`,
+    ],
+    [
+      "installed-chat-ui",
+      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
+    ],
+    [
+      "installed-shared",
+      `${imports(shared, "shared")}\nimport type { ChatSharedPlugin } from "@/lib/chat-plugin-contracts";\nexport const installedSharedPlugins: readonly ChatSharedPlugin[] = [${shared.map((_, index) => `plugin${index}()`).join(", ")}];\nexport const installedCreationFields = { ${shared
+        .filter((plugin) => (plugin.shared?.creationFields.length ?? 0) > 0)
+        .map((plugin) => `...plugin${shared.indexOf(plugin)}().creationFields`)
+        .join(", ")} };\nexport const installedHistoryFields = { ${shared
+        .filter((plugin) => (plugin.shared?.historyFields.length ?? 0) > 0)
+        .map((plugin) => `...plugin${shared.indexOf(plugin)}().historyFields`)
+        .join(", ")} };`,
+    ],
     [
       "installed",
       `export const installedPlugins: ReadonlySet<string> = new Set(${plugins.length > 0 ? JSON.stringify(plugins.map((plugin) => plugin.id)) : ""});`,

@@ -1,3 +1,4 @@
+import { CreationRejectedError } from "@/lib/creation-rejected-error";
 import { reconcileEveWorkspaceTurn } from "./reconcile-workspace-turn";
 import { EveWorkspaceBusyError } from "../db/eve-workspace-turns";
 import { EveForkBoundaryError } from "./fork-boundary-error";
@@ -8,7 +9,6 @@ import {
 
 import {
   CreationConflictError,
-  CreationProjectNotFoundError,
   createEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
@@ -48,14 +48,14 @@ const creationFailure = (cause: unknown): Response => {
       { status: 400 }
     );
   }
-  if (cause instanceof CreationProjectNotFoundError) {
+  if (cause instanceof CreationRejectedError) {
     return Response.json(
       {
-        code: "project_not_found",
+        code: cause.code,
         creationRejected: true,
         error: cause.message,
       },
-      { status: 404 }
+      { status: cause.status }
     );
   }
   return Response.json(
@@ -135,7 +135,6 @@ export const executeEveConversationCreation = async (
           input.selectedTool
         ),
         initialModelId: input.modelId,
-        initialProjectId: input.projectId,
         initialRequest: input,
         initialTitle: eveConversationTitleFallback(input.message),
       }
