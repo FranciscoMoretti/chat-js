@@ -102,9 +102,9 @@ Composer and settings ordering remain in the app-owned `composer-controls.ts` an
 
 Export both `creationFields` and `historyFields` from a shared factory, using `{}` when unused. These schemas are the source of truth. Generated composition initializes each pure factory once and rejects collisions with core fields or another plugin's fields before accepting requests. Core creation fields include `operationId`, `message`, `modelId`, `modelIds`, `selectedTool`, `fork`, and `forkKind`.
 
-A creation scope contains a stable `key`, the plugin creation `input`, and a user-visible `label`. Core uses that key to retain and recover the browser's original pending request. Projects keeps `project:<id>` so existing saved drafts retain their storage location. Only one plugin may supply a scope for a request.
+A creation scope contains only a stable `key` and a user-visible `label`. Core uses that key to retain and recover the browser's original pending request. Projects keeps `project:<id>` so existing saved drafts retain their storage location. Only one plugin may supply a scope for a request.
 
-Pass plugin inputs to `NewEveConversation` through its `creationInput` prop. Keep them out of permanent chat identity. Guests cannot submit populated plugin creation fields.
+Pass plugin inputs to `NewEveConversation` through its `creationInput` prop. The validated fields are saved in the pending request independently of its storage scope. Plugins can contribute inputs without providing a scope, and a retry reuses the saved payload even if the caller supplies new values. Recovering a rejected context into New Chat removes only that context plugin's fields, preserving other plugins' inputs. Keep these inputs out of permanent chat identity. Guests cannot submit populated plugin creation fields.
 
 ## Framework adapters and database schema
 

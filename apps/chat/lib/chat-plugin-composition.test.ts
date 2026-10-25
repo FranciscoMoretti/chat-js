@@ -34,7 +34,7 @@ test("metadata plugins coexist with one primary draft scope, but two owners fail
     id: "contextual",
     creationFields: {},
     historyFields: {},
-    creationScope: () => ({ key: "context:one", label: "context", input: {} }),
+    creationScope: () => ({ key: "context:one", label: "context" }),
   };
   installed.shared.push(contextual);
   expect(pluginCreationScope({})?.key).toBe("context:one");

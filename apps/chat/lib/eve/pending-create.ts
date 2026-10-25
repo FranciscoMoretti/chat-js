@@ -1,5 +1,9 @@
 import type { ChatCreationScope } from "@/lib/chat-plugin-contracts";
-import { pluginCreationScope } from "./plugin-creation-input";
+import {
+  pluginCreationInput,
+  pluginCreationScope,
+  withoutCreationScope,
+} from "./plugin-creation-input";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveForkInput, EveForkKind } from "./contracts";
@@ -67,7 +71,8 @@ const prepareResponseGroupCreation = (
       forkKind?: Extract<EveForkKind, "comparison" | "edit">;
     }
   >,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<Record<string, unknown>> = {}
 ): z.output<typeof eveResponseGroupInput> => {
   const saved = readCreationRequest(storage, ownerId, context);
   if (saved) {
@@ -84,7 +89,7 @@ const prepareResponseGroupCreation = (
     message,
     modelIds,
     operationId: crypto.randomUUID(),
-    ...context?.context?.input,
+    ...pluginCreationInput(creationInput),
     selectedTool,
   });
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
@@ -116,7 +121,8 @@ const prepareCreation = (
       forkKind?: EveForkKind;
     }
   >,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<Record<string, unknown>> = {}
 ): z.output<typeof createConversationInput> => {
   const key = keyFor(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
@@ -129,7 +135,7 @@ const prepareCreation = (
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
-    ...context?.context?.input,
+    ...pluginCreationInput(creationInput),
     selectedTool,
   });
   if (!pending.success) {
@@ -145,7 +151,8 @@ const prepareSelectedCreation = (
   draft: ReadonlyEveMessageInput,
   modelIds: readonly string[],
   scope?: Readonly<CreationScope>,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<Record<string, unknown>> = {}
 ): z.output<typeof creationRequest> => {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
@@ -159,7 +166,8 @@ const prepareSelectedCreation = (
       draft,
       modelIds,
       scope,
-      selectedTool
+      selectedTool,
+      creationInput
     );
   }
   return prepareCreation(
@@ -168,7 +176,8 @@ const prepareSelectedCreation = (
     draft,
     modelIds[FIRST_MODEL_INDEX],
     scope,
-    selectedTool
+    selectedTool,
+    creationInput
   );
 };
 
@@ -215,7 +224,8 @@ const moveRejectedContextCreation = (
           pending.message,
           pending.modelIds,
           undefined,
-          pending.selectedTool
+          pending.selectedTool,
+          withoutCreationScope(pending, context.key)
         )
       : prepareCreation(
           storage,
@@ -223,7 +233,8 @@ const moveRejectedContextCreation = (
           pending.message,
           pending.modelId,
           undefined,
-          pending.selectedTool
+          pending.selectedTool,
+          withoutCreationScope(pending, context.key)
         );
   finishCreation(storage, ownerId, scope);
   return next;

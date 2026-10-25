@@ -163,7 +163,6 @@ test("moving a definitively rejected project comparison preserves all repeated m
   const projectId = crypto.randomUUID();
   const context = {
     key: `project:${projectId}`,
-    input: { projectId },
     label: "project",
   };
   const original = prepareResponseGroupCreation(
@@ -171,7 +170,9 @@ test("moving a definitively rejected project comparison preserves all repeated m
     "project-owner",
     "Project message",
     ["model-a", "model-a"],
-    { context }
+    { context },
+    undefined,
+    { projectId }
   );
   const moved = moveRejectedContextCreation(
     storage,

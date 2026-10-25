@@ -37,7 +37,6 @@ const ProjectContent = async ({
           scope={{
             context: {
               key: `project:${projectId}`,
-              input: { projectId },
               label: "project",
             },
           }}

@@ -6,7 +6,6 @@ import type { db } from "./db/client";
 /** Browser-safe context for recovering a request in its original draft location. */
 export interface ChatCreationScope {
   readonly key: string;
-  readonly input: Readonly<Record<string, unknown>>;
   readonly label: string;
 }
 

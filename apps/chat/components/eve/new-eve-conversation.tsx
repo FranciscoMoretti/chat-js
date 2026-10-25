@@ -206,7 +206,8 @@ export const NewEveConversation = ({
             draftMessage(draft, files.attachments),
             modelIds,
             scope,
-            selectedTool ?? undefined
+            selectedTool ?? undefined,
+            creationInput
           );
           retainOperation(operation);
           const binding = await resolveCreationRequest(

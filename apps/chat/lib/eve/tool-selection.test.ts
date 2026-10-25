@@ -170,7 +170,6 @@ it.each([["model-a"], ["model-a", "model-b"]])(
     const projectId = crypto.randomUUID();
     const context = {
       key: `project:${projectId}`,
-      input: { projectId },
       label: "project",
     };
     const original = prepareSelectedCreation(
@@ -179,7 +178,8 @@ it.each([["model-a"], ["model-a", "model-b"]])(
       "hello",
       modelIds,
       { context },
-      "webSearch"
+      "webSearch",
+      { projectId }
     );
     expect(readCreationRequest(storage, "owner", { context })).toEqual(
       original

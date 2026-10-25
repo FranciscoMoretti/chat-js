@@ -28,7 +28,6 @@ describe("rejected project draft recovery", () => {
     const projectId = crypto.randomUUID();
     const context = {
       key: `project:${projectId}`,
-      input: { projectId },
       label: "project",
     };
     const original = prepareCreation(
@@ -44,7 +43,9 @@ describe("rejected project draft recovery", () => {
         },
       ],
       "chosen-model",
-      { context }
+      { context },
+      undefined,
+      { projectId }
     );
     const next = moveRejectedContextCreation(
       storage,
@@ -66,7 +67,6 @@ describe("rejected project draft recovery", () => {
     const projectId = crypto.randomUUID();
     const context = {
       key: `project:${projectId}`,
-      input: { projectId },
       label: "project",
     };
     const ordinary = prepareCreation(storage, "owner", "Other message");
@@ -75,7 +75,9 @@ describe("rejected project draft recovery", () => {
       "owner",
       "Project message",
       undefined,
-      { context }
+      { context },
+      undefined,
+      { projectId }
     );
     expect(() =>
       moveRejectedContextCreation(

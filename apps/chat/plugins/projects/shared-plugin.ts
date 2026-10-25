@@ -18,7 +18,6 @@ export const projectsShared = () =>
         ? undefined
         : {
             key: `project:${projectId}`,
-            input: { projectId },
             label: "project",
           };
     },

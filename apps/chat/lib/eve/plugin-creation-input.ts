@@ -26,3 +26,23 @@ export const pluginCreationScope = (
   }
   return scopes.at(0);
 };
+
+/** Leaving a rejected context must not discard another plugin's metadata. */
+export const withoutCreationScope = (
+  input: Readonly<Record<string, unknown>>,
+  key: string
+): Record<string, unknown> => {
+  const removed = new Set<string>();
+  for (const plugin of installedSharedPlugins) {
+    if (plugin.creationScope?.(input)?.key === key) {
+      for (const field of Object.keys(plugin.creationFields)) {
+        removed.add(field);
+      }
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(pluginCreationInput(input)).filter(
+      ([field]) => !removed.has(field)
+    )
+  );
+};
