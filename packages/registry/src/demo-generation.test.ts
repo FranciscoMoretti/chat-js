@@ -25,6 +25,17 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
   };
   const read = async (file: string): Promise<string> =>
     await readFile(path.join(fixture, file), "utf-8");
+  // Older supported Bun versions safely fall back to complete generation.
+  const graph = await Bun.build({
+    entrypoints: [
+      path.join(root, "packages/registry/scripts/registry-mirror/inputs.ts"),
+    ],
+    packages: "external",
+    target: "bun",
+    metafile: true,
+  });
+  expect(graph.success).toBe(true);
+  const supportsIncremental = graph.metafile !== undefined;
   let previous: Record<string, string> | undefined;
   const run = async (
     changes?: readonly string[],
@@ -70,6 +81,8 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
       "packages/gateways/src",
       "packages/sandboxes/src",
       "packages/cli/package.json",
+      "packages/gateways/package.json",
+      "packages/sandboxes/package.json",
       "packages/registry/package.json",
       "apps/chat/components.json",
       "apps/chat/oxfmt.config.ts",
@@ -155,7 +168,9 @@ process.exit(0);
     expect(await run([manifest, source])).toContain("Full generation");
     await write(source, 'export const probe="second";\n');
     expect(await run([source])).toContain(
-      "Incremental plugin generation (2 outputs)"
+      supportsIncremental
+        ? "Incremental plugin generation (2 outputs)"
+        : "Full generation"
     );
     const outputs = await Promise.all(
       ["sync-probe.ts", "sync-alias.ts"].map(
@@ -244,7 +259,9 @@ await mirror.run({ check: true });
     if (adapterCode !== 0) {
       throw new Error(`${adapterOut}\n${adapterErr}`);
     }
-    expect(adapterOut).toContain("Incremental plugin generation");
+    expect(adapterOut).toContain(
+      supportsIncremental ? "Incremental plugin generation" : "Full generation"
+    );
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }

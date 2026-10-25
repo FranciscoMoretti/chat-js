@@ -1,5 +1,5 @@
 import { watch } from "node:fs";
-import { readFile } from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
 
 export const changedInputs = (
@@ -38,21 +38,29 @@ export const createInputs = (
           ])
           .filter(matches)
       );
-      return Object.fromEntries(
-        await Promise.all(
-          [...names]
-            .toSorted()
-            .map(
-              async (file) =>
-                [
-                  file,
-                  new Bun.CryptoHasher("sha256")
-                    .update(await readFile(path.join(sourceRoot, file)))
-                    .digest("hex"),
-                ] as const
-            )
-        )
+      const entries = await Promise.all(
+        [...names].toSorted().map(async (file) => {
+          try {
+            return [
+              file,
+              new Bun.CryptoHasher("sha256")
+                .update(await fs.readFile(path.join(sourceRoot, file)))
+                .digest("hex"),
+            ] as const;
+          } catch (error) {
+            // Atomic saves can remove a glob result before it is read.
+            if (
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "ENOENT"
+            ) {
+              return null;
+            }
+            throw error;
+          }
+        })
       );
+      return Object.fromEntries(entries.filter((entry) => entry !== null));
     },
     subscribe: (changed, failed) => {
       // Watch literal directory prefixes, avoiding a recursive repository-wide

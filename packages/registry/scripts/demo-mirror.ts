@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { runDemoWorker } from "./demo-worker-process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -40,21 +40,10 @@ export const createDemoMirror = (): ReturnType<typeof createRegistryMirror> => {
           const request = path.join(temporary, "request.json");
           const result = path.join(temporary, "result.json");
           await writeFile(request, JSON.stringify({ changes, previous }));
-          const worker = spawn(
-            process.execPath,
+          await runDemoWorker(
             [path.join(import.meta.dir, "demo-worker.ts"), request, result],
-            { cwd: root, detached: true, stdio: "inherit" }
+            root
           );
-          const completed = Promise.withResolvers<boolean>();
-          worker.once("error", completed.reject);
-          worker.once("close", (code) => {
-            if (code === 0) {
-              completed.resolve(true);
-            } else {
-              completed.reject(new Error(`Generator exited with ${code}`));
-            }
-          });
-          await completed.promise;
           const generated = demoResultSchema.parse(
             JSON.parse(await readFile(result, "utf-8"))
           );

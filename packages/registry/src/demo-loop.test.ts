@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -196,4 +196,99 @@ test("a startup edit reverted before the next pass still reports settled success
   });
   expect(successes).toEqual([false, true]);
   expect(generations).toBe(1);
+});
+
+test("an edit reverted during generation is reconciled before readiness", async () => {
+  const shutdown = new AbortController();
+  let notify = (): void => {
+    shutdown.abort();
+  };
+  let content = "A";
+  let output = "";
+  let passes = 0;
+  const successes: boolean[] = [];
+  await runMirrorLoop({
+    signal: shutdown.signal,
+    debounceMs: 1,
+    pollMs: 60_000,
+    snapshot: async () => await Promise.resolve({ source: content }),
+    subscribe: (changed) => {
+      notify = changed;
+      return () => {};
+    },
+    synchronize: async () => {
+      passes += 1;
+      if (passes === 1) {
+        content = "B";
+        notify();
+      }
+      output = content;
+      if (passes === 1) {
+        content = "A";
+        notify();
+      }
+      await Promise.resolve();
+    },
+    succeeded: (settled) => {
+      successes.push(settled);
+      if (settled) {
+        shutdown.abort();
+      }
+    },
+    failed: (error) => {
+      throw error;
+    },
+  });
+  expect(output).toBe("A");
+  expect(passes).toBe(2);
+  expect(successes).toEqual([false, true]);
+});
+
+test("unchanged failures back off while corrected inputs retry immediately", async () => {
+  const shutdown = new AbortController();
+  let now = 0;
+  const clock = spyOn(Date, "now").mockImplementation(() => now);
+  let content = "broken";
+  let notify = (): void => {
+    shutdown.abort();
+  };
+  const attempts: number[] = [];
+  try {
+    await runMirrorLoop({
+      signal: shutdown.signal,
+      debounceMs: 1,
+      pollMs: 5,
+      snapshot: async () => {
+        now += 1;
+        return await Promise.resolve({ source: content });
+      },
+      subscribe: (changed) => {
+        notify = changed;
+        return () => {};
+      },
+      synchronize: async () => {
+        attempts.push(now);
+        if (content === "broken") {
+          throw new Error("Invalid source");
+        }
+        await Promise.resolve();
+      },
+      failed: () => {
+        if (attempts.length === 3) {
+          content = "fixed";
+          notify();
+        }
+      },
+      succeeded: () => {
+        shutdown.abort();
+      },
+    });
+    expect(attempts).toHaveLength(4);
+    expect(attempts[1] - attempts[0]).toBeGreaterThanOrEqual(5);
+    expect(attempts[2] - attempts[1]).toBeGreaterThanOrEqual(10);
+    expect(attempts[3] - attempts[2]).toBeLessThan(5);
+  } finally {
+    clock.mockRestore();
+    shutdown.abort();
+  }
 });

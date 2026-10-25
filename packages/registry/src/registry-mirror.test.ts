@@ -12,6 +12,8 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { createRegistryMirror } from "../scripts/registry-mirror/mirror";
 
+import { createInputs } from "../scripts/registry-mirror/inputs";
+
 const directories: string[] = [];
 afterEach(async () => {
   await Promise.all(
@@ -260,4 +262,45 @@ test("a partial publication retains cleanup ownership and a later generation rep
     await readFile(path.join(options.destinationRoot, "generated.ts"), "utf-8")
   ).toBe("updated");
   await mirror.run({ check: true });
+});
+
+test("an input removed between scan and read is omitted, while other read errors propagate", async () => {
+  const { root } = await fixture();
+  const file = path.join(root, "source.txt");
+  await writeFile(file, "before atomic save");
+  const inputs = createInputs(root, ["source.txt"]);
+  const original = fs.readFile;
+  const removed = spyOn(fs, "readFile").mockImplementation(async () => {
+    await rm(file, { force: true });
+    await original(file);
+    throw new Error("Expected the removed input to be missing");
+  });
+  try {
+    expect(await inputs.snapshot()).toEqual({});
+  } finally {
+    removed.mockRestore();
+  }
+  await writeFile(file, "restored");
+  const denied = spyOn(fs, "readFile").mockRejectedValue(
+    new Error("permission denied")
+  );
+  try {
+    expect(inputs.snapshot()).rejects.toThrow("permission denied");
+  } finally {
+    denied.mockRestore();
+  }
+});
+
+test("file-to-directory changes reject before altering existing output", async () => {
+  const { files, allowed, options, mirror } = await fixture();
+  await mirror.run();
+  const before = await readFile(options.manifestPath, "utf-8");
+  files.delete("generated.ts");
+  files.set("generated.ts/child.ts", new TextEncoder().encode("new layout"));
+  allowed.push("generated.ts/child.ts");
+  expect(mirror.run()).rejects.toThrow("Invalid");
+  expect(
+    await readFile(path.join(options.destinationRoot, "generated.ts"), "utf-8")
+  ).toBe("canonical");
+  expect(await readFile(options.manifestPath, "utf-8")).toBe(before);
 });

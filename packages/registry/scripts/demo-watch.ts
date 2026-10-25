@@ -49,7 +49,7 @@ const main = async (): Promise<void> => {
         const closed = Promise.withResolvers<boolean>();
         appClosed = closed.promise;
         if (app.pid !== undefined) {
-          processes = trackDemoProcesses(app.pid);
+          processes = trackDemoProcesses(app);
         }
         {
           app?.once("error", (error) => {

@@ -5,6 +5,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
+import { runDemoWorker } from "../scripts/demo-worker-process";
+
 const waitForFile = async (file: string): Promise<void> => {
   const deadline = Date.now() + 5000;
   // oxlint-disable-next-line no-await-in-loop -- Each condition observes a later process state.
@@ -77,6 +79,23 @@ if (process.connected) process.disconnect();
         }
       }
     }
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("a hung generator is terminated and its worker lease can be released", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "demo-deadline-test-"));
+  try {
+    await writeFile(
+      path.join(directory, "hung.ts"),
+      `await Bun.write("pid", String(process.pid)); setInterval(() => {}, 1000);`
+    );
+    expect(runDemoWorker(["hung.ts"], directory, 500)).rejects.toThrow(
+      "deadline"
+    );
+    const pid = Number(await readFile(path.join(directory, "pid"), "utf-8"));
+    expect(() => process.kill(pid, 0)).toThrow();
+  } finally {
     await rm(directory, { recursive: true, force: true });
   }
 });
