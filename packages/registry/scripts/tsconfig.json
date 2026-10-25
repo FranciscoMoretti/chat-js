@@ -1,10 +1,13 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "bun"]
+    "types": ["node", "next", "bun"]
   },
   "include": [
     "demo-*.ts",
+    "installation-*.ts",
+    "validation-*.ts",
+    "../test/installation-validation.test.ts",
     "registry-mirror/**/*.ts",
     "ownership.ts",
     "../test/demo-check.test.ts",

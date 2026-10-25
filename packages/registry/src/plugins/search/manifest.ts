@@ -28,6 +28,12 @@ const searchDefinition = pluginDefinitionSchema.parse({
   client: { export: "searchClient", chat: true },
 });
 const searchItem: RegistryItem = {
+  dependencies: [
+    "@tanstack/react-query",
+    "@trpc/server",
+    "drizzle-orm",
+    "lucide-react",
+  ],
   name: "search",
   type: "registry:item",
   description: "Search chat titles and conversation text",

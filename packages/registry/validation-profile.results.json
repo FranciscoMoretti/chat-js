@@ -1,0 +1,196 @@
+{
+  "environment": {
+    "bun": "1.3.11",
+    "nodeCompatibility": "v24.3.0",
+    "typescript": "6.0.2",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Pro"
+  },
+  "preparationMs": 323.101875,
+  "materialRenderingPercent": 20,
+  "summaries": [
+    {
+      "name": "minimal openai",
+      "renderMs": 670.5714160000061,
+      "checkMs": 5068.173833,
+      "renderingPercent": 11.684983161029065,
+      "phases": {
+        "captureMs": 21.732500000000073,
+        "contextMs": 53.03137499999866,
+        "planMs": 247.906332999999,
+        "installMs": 34.79812499999389,
+        "configureMs": 241.47299999999814,
+        "collectMs": 1.4057909999974072,
+        "cleanupMs": 29.75649999999996
+      }
+    },
+    {
+      "name": "shared chat",
+      "renderMs": 777.4343750000007,
+      "checkMs": 5059.727250000001,
+      "renderingPercent": 13.318705647455847,
+      "phases": {
+        "captureMs": 24.956958000002487,
+        "contextMs": 61.40320799999972,
+        "planMs": 262.6387500000001,
+        "installMs": 106.06991600000038,
+        "configureMs": 274.87924999999814,
+        "collectMs": 2.1609170000010636,
+        "cleanupMs": 38.03820800000176
+      }
+    },
+    {
+      "name": "full feature preset",
+      "renderMs": 1053.3234999999986,
+      "checkMs": 6374.855708000003,
+      "renderingPercent": 14.180103501886306,
+      "phases": {
+        "captureMs": 19.554542000005313,
+        "contextMs": 50.89137499999924,
+        "planMs": 249.29429099999834,
+        "installMs": 373.63216699999975,
+        "configureMs": 301.5459580000006,
+        "collectMs": 4.2039589999985765,
+        "cleanupMs": 42.91004199999952
+      }
+    }
+  ],
+  "samples": [
+    {
+      "name": "minimal openai",
+      "renderMs": 799.1990420000001,
+      "checkMs": 5068.173833,
+      "files": 690,
+      "phases": {
+        "captureMs": 21.732500000000073,
+        "contextMs": 51.942499999999995,
+        "planMs": 304.6887909999999,
+        "installMs": 140.25687500000004,
+        "configureMs": 245.98125000000005,
+        "collectMs": 1.633583999999928,
+        "cleanupMs": 29.75649999999996
+      }
+    },
+    {
+      "name": "shared chat",
+      "renderMs": 755.4494169999998,
+      "checkMs": 5059.727250000001,
+      "files": 767,
+      "phases": {
+        "captureMs": 20.724750000000313,
+        "contextMs": 61.40320799999972,
+        "planMs": 262.6387500000001,
+        "installMs": 112.48800000000028,
+        "configureMs": 263.9027500000002,
+        "collectMs": 2.0805829999999332,
+        "cleanupMs": 31.1440419999999
+      }
+    },
+    {
+      "name": "full feature preset",
+      "renderMs": 1053.3234999999986,
+      "checkMs": 6308.764917,
+      "files": 934,
+      "phases": {
+        "captureMs": 19.032250000000204,
+        "contextMs": 50.749541999999565,
+        "planMs": 247.8538329999992,
+        "installMs": 381.19879200000105,
+        "configureMs": 301.5459580000006,
+        "collectMs": 4.2039589999985765,
+        "cleanupMs": 47.55841599999985
+      }
+    },
+    {
+      "name": "shared chat",
+      "renderMs": 777.4343750000007,
+      "checkMs": 5510.124374999999,
+      "files": 767,
+      "phases": {
+        "captureMs": 24.956958000002487,
+        "contextMs": 63.47999999999956,
+        "planMs": 266.4447089999994,
+        "installMs": 106.06991600000038,
+        "configureMs": 274.87924999999814,
+        "collectMs": 2.309709000001021,
+        "cleanupMs": 38.03820800000176
+      }
+    },
+    {
+      "name": "full feature preset",
+      "renderMs": 1114.9502089999987,
+      "checkMs": 7625.1938329999975,
+      "files": 934,
+      "phases": {
+        "captureMs": 25.207707999998092,
+        "contextMs": 53.47004200000083,
+        "planMs": 305.90716600000087,
+        "installMs": 373.63216699999975,
+        "configureMs": 306.2943750000013,
+        "collectMs": 6.368500000000495,
+        "cleanupMs": 42.91004199999952
+      }
+    },
+    {
+      "name": "minimal openai",
+      "renderMs": 670.5714160000061,
+      "checkMs": 5283.1475839999985,
+      "files": 690,
+      "phases": {
+        "captureMs": 56.510291999999026,
+        "contextMs": 60.013082999998005,
+        "planMs": 246.43979200000467,
+        "installMs": 34.79812499999389,
+        "configureMs": 238.60087500000373,
+        "collectMs": 1.4057909999974072,
+        "cleanupMs": 31.814917000003334
+      }
+    },
+    {
+      "name": "full feature preset",
+      "renderMs": 986.3332919999957,
+      "checkMs": 6374.855708000003,
+      "files": 934,
+      "phases": {
+        "captureMs": 19.554542000005313,
+        "contextMs": 50.89137499999924,
+        "planMs": 249.29429099999834,
+        "installMs": 334.72658400000364,
+        "configureMs": 289.53895799999736,
+        "collectMs": 3.8872919999994338,
+        "cleanupMs": 37.1896659999984
+      }
+    },
+    {
+      "name": "minimal openai",
+      "renderMs": 625.046709000002,
+      "checkMs": 4983.078249999999,
+      "files": 690,
+      "phases": {
+        "captureMs": 19.01470800000243,
+        "contextMs": 53.03137499999866,
+        "planMs": 247.906332999999,
+        "installMs": 33.24770900000294,
+        "configureMs": 241.47299999999814,
+        "collectMs": 1.2721250000031432,
+        "cleanupMs": 28.29979099999764
+      }
+    },
+    {
+      "name": "shared chat",
+      "renderMs": 808.9423339999994,
+      "checkMs": 4919.912916000001,
+      "files": 767,
+      "phases": {
+        "captureMs": 56.44399999999587,
+        "contextMs": 60.44116600000416,
+        "planMs": 246.36179199999606,
+        "installMs": 105.04262500000186,
+        "configureMs": 299.1080000000002,
+        "collectMs": 2.1609170000010636,
+        "cleanupMs": 38.50070799999958
+      }
+    }
+  ]
+}

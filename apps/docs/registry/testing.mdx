@@ -11,6 +11,7 @@ bun template:check
 bun run --cwd packages/registry test:types
 bun run --cwd packages/registry test:unit
 bun run --cwd packages/registry build
+bun run --cwd packages/registry test:installation
 ```
 
 ## Check the distributed item
@@ -40,3 +41,5 @@ Type checks cannot verify remote credentials or guarantee every combination of t
 `bun demo:check` checks full formatted source, including types, comments, descriptors and generated registrations, against the canonical demo installation. Turbo caches successful checks using registry, CLI planner, gateway and demo source inputs. CI runs this check with affected unit tests.
 
 `bun run --cwd packages/cli test:gateways` installs packaged CLI output into independent apps. It covers omitted and installed optional features, adding all five integrations together, repeated sync, exclusive provider replacement, and preservation of modified source and UI ordering. Run these generated-app checks after changing installation targets or composition. They complement the registry's component captures and the demo's runtime tests.
+
+Use [Registry Validation](./validation) for dependency ownership, metadata-derived combinations and whole-project parity.

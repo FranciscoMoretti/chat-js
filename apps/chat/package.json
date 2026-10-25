@@ -53,6 +53,7 @@
     "@ai-sdk/mcp": "2.0.73",
     "@ai-sdk/otel": "1.0.137",
     "@ai-sdk/provider": "4.0.26",
+    "@ai-sdk/provider-utils": "5.0.58",
     "@better-auth/core": "1.6.2",
     "@better-auth/electron": "1.6.2",
     "@chat-js/gateways": "workspace:*",

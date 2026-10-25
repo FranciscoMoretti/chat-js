@@ -72,6 +72,12 @@ export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirement
 export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definition))};
 `);
 
+export const gatewayConfigurationTargets = [
+  "lib/ai/gateway-model-defaults.ts",
+  "lib/ai/models.generated.ts",
+  ".env.example",
+];
+
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
  * @param {string} destination Project receiving gateway defaults, model snapshot and env keys.
@@ -81,11 +87,7 @@ export const configureGatewayProvider = async (
   destination: string,
   selection: ReadonlyInput<GatewaySelection>
 ): Promise<void> => {
-  await preflight(destination, [
-    "lib/ai/gateway-model-defaults.ts",
-    "lib/ai/models.generated.ts",
-    ".env.example",
-  ]);
+  await preflight(destination, gatewayConfigurationTargets);
   const snapshotPath = path.join(destination, "lib/ai/models.generated.ts");
   const snapshot = await readFile(snapshotPath, "utf-8").catch(
     (error: unknown) => {

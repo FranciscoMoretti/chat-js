@@ -26,6 +26,7 @@ const replaceEnvironmentSection = (
     ""
   );
   const entries = [...new Set(variables)]
+    .toSorted()
     .filter((name) => !new RegExp(`^${name}=`, "mu").test(preserved))
     .map((name) => `${name}=`);
   const block = `${start}\n# Credentials for installed source. Fill applicable alternatives in .env.local.\n${entries.join("\n")}\n${end}`;

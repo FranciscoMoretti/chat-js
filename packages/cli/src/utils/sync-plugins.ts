@@ -1,5 +1,6 @@
+import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
 import type { PluginDefinition } from "../../../registry/metadata";
@@ -192,20 +193,6 @@ const planContribution = async (
   return { content, file };
 };
 
-const pluginRegistrationTargets = [
-  "installed",
-  "installed-routers",
-  "installed-uploads",
-  "installed-model-visibility",
-  "installed-layout",
-  "installed-instrumentation",
-  "installed-database",
-  "installed-chat",
-  "installed-chat-ui",
-  "installed-billing",
-  "installed-account-ui",
-].map((name) => `composition/generated/${name}.ts`);
-
 const assertPluginDependencies = (
   plugins: readonly PluginDefinition[]
 ): void => {
@@ -306,6 +293,75 @@ if (!accountSummary${index}) throw new Error('Plugin "${plugin.id}" declares acc
   .join("\n")}
 export const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${plugins.map((plugin, index) => `{ id: "${plugin.id}", Component: accountSummary${index} }`).join(", ")}];`;
 
+const renderPluginRegistrations = (
+  plugins: readonly PluginDefinition[],
+  databaseSchemas: string
+): Map<string, string> => {
+  const routerPlugins = plugins.filter(
+    (plugin) => (plugin.server?.routers.length ?? 0) > 0
+  );
+  const instrumented = plugins.filter(
+    (plugin) => plugin.server?.instrumentation
+  );
+  const layout = plugins.filter((plugin) => plugin.client?.layout);
+  const uploads = plugins.filter((plugin) => plugin.client?.uploads);
+  const modelVisibility = plugins.filter(
+    (plugin) => plugin.client?.modelVisibility
+  );
+  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
+  const chat = plugins.filter((plugin) => plugin.chat);
+  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  const contents = [
+    ["installed-billing", billingRegistration(plugins)],
+    ["installed-account-ui", accountSummaryRegistration(accountUi)],
+    [
+      "installed-model-visibility",
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
+    ],
+    [
+      "installed-chat",
+      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
+    ],
+    [
+      "installed-chat-ui",
+      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
+    ],
+    [
+      "installed",
+      `export const installedPlugins: ReadonlySet<string> = new Set(${plugins.length > 0 ? JSON.stringify(plugins.map((plugin) => plugin.id)) : ""});`,
+    ],
+    [
+      "installed-routers",
+      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/lib/installation-contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
+    ],
+    [
+      "installed-instrumentation",
+      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/lib/installation-contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
+    ],
+    [
+      "installed-layout",
+      `${imports(layout, "client")}\nimport type { InstalledLayoutComponent } from "@/lib/installation-contracts";\nexport const installedLayoutComponents: readonly { id: string; Component: InstalledLayoutComponent }[] = [${layout.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().layout }`).join(", ")}];`,
+    ],
+    [
+      "installed-uploads",
+      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0().uploads" : "{ controls: [], useUploads: () => ({ uploadQueue: [] }) }"};`,
+    ],
+  ] as const;
+  return new Map([
+    ["composition/generated/installed-database.ts", databaseSchemas],
+    ...contents.map(
+      ([name, content]) =>
+        [
+          `composition/generated/${name}.ts`,
+          generatedRegistrationSource(
+            `// Generated by chat-js sync.\n${content}\n`
+          ),
+        ] as const
+    ),
+  ]);
+};
+const pluginRegistrationTargets = [...renderPluginRegistrations([], "").keys()];
+
 const syncPlugins = async (
   cwd: string,
   options: Readonly<{
@@ -371,74 +427,15 @@ const syncPlugins = async (
       }
     }
   }
-  const routerPlugins = plugins.filter(
-    (plugin) => (plugin.server?.routers.length ?? 0) > 0
+  await writeGeneratedFiles(
+    cwd,
+    renderPluginRegistrations(plugins, databaseSchemas)
   );
-  const instrumented = plugins.filter(
-    (plugin) => plugin.server?.instrumentation
-  );
-  const layout = plugins.filter((plugin) => plugin.client?.layout);
-  const uploads = plugins.filter((plugin) => plugin.client?.uploads);
-  const modelVisibility = plugins.filter(
-    (plugin) => plugin.client?.modelVisibility
-  );
-  const chat = plugins.filter((plugin) => plugin.chat);
-  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
-  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
-  const contents = [
-    ["installed-billing", billingRegistration(plugins)],
-    ["installed-account-ui", accountSummaryRegistration(accountUi)],
-    [
-      "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
-    ],
-    [
-      "installed-chat",
-      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
-    ],
-    [
-      "installed-chat-ui",
-      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
-    ],
-    [
-      "installed",
-      `export const installedPlugins: ReadonlySet<string> = new Set(${plugins.length > 0 ? JSON.stringify(plugins.map((plugin) => plugin.id)) : ""});`,
-    ],
-    [
-      "installed-routers",
-      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/lib/installation-contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
-    ],
-    [
-      "installed-instrumentation",
-      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/lib/installation-contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
-    ],
-    [
-      "installed-layout",
-      `${imports(layout, "client")}\nimport type { InstalledLayoutComponent } from "@/lib/installation-contracts";\nexport const installedLayoutComponents: readonly { id: string; Component: InstalledLayoutComponent }[] = [${layout.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().layout }`).join(", ")}];`,
-    ],
-    [
-      "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0().uploads" : "{ controls: [], useUploads: () => ({ uploadQueue: [] }) }"};`,
-    ],
-  ] as const;
-  await mkdir(path.join(cwd, "composition/generated"), { recursive: true });
-  await Promise.all([
-    writeFile(
-      path.join(cwd, "composition/generated/installed-database.ts"),
-      databaseSchemas
-    ),
-    ...contents.map(async ([name, content]) => {
-      await writeFile(
-        path.join(cwd, `composition/generated/${name}.ts`),
-        generatedRegistrationSource(
-          `// Generated by chat-js sync.\n${content}\n`
-        )
-      );
-    }),
-    ...ui.map(async ({ file, content }) => {
+  await Promise.all(
+    ui.map(async ({ file, content }) => {
       await writeFile(file, content);
-    }),
-  ]);
+    })
+  );
 };
 
 // Only creation resets demo contributions. Add/sync preserve app-owned order.

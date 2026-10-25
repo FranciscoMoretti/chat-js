@@ -782,7 +782,11 @@ describe("scaffoldFromTemplate", (): void => {
         expect(packageJson.dependencies.eve).toBe(
           "file:vendor/chat-js-eve-0.80.1-chatjs.4.tgz"
         );
-        expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
+        expect(packageJson.dependencies["@ai-sdk/mcp"]).toBeUndefined();
+        expect(
+          packageJson.dependencies["@modelcontextprotocol/sdk"]
+        ).toBeUndefined();
+        expect(packageJson.dependencies["@vercel/analytics"]).toBeUndefined();
         expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
           "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
         );

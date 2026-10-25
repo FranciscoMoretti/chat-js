@@ -4,6 +4,8 @@ export const demoInputs = [
   "packages/registry/*.{ts,json}",
   "packages/registry/scripts/**/*.ts",
   "packages/registry/src/**",
+  "packages/registry-validation/src/**",
+  "packages/registry-validation/package.json",
   "packages/cli/src/**",
   "packages/cli/package.json",
   "packages/gateways/src/**",

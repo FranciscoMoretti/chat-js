@@ -24,6 +24,7 @@ const creditsDefinition = pluginDefinitionSchema.parse({
 const creditsItem: RegistryItem = {
   name: "credits",
   type: "registry:item",
+  dependencies: ["@tanstack/react-query", "drizzle-orm", "lucide-react"],
   description: "Credit balances, spending admission, and atomic usage debits",
   files: creditsFiles.map((file) => ({
     path: `src/plugins/credits/src/${file.slice("plugins/credits/".length)}`,

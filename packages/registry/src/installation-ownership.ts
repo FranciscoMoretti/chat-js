@@ -1,4 +1,6 @@
+import { descriptorTarget } from "../descriptor-target";
 import type { RegistryItem } from "shadcn/schema";
+import { targetPath } from "./file-ownership";
 import type { FileClaim } from "./file-ownership";
 import type { InstallationSelection } from "../installation";
 
@@ -44,17 +46,16 @@ const itemClaims = (item: Readonly<RegistryItem>): FileClaim[] => {
     }
     return { owner: item.name, source: file.path, target: file.target };
   });
-  const metadata: unknown = item.meta?.chatjs;
-  if (typeof metadata === "object" && metadata && "kind" in metadata) {
-    const { kind } = metadata;
-    if (kind === "tool" || kind === "plugin") {
-      const directory = kind === "tool" ? "tools/chatjs" : "plugins";
-      claims.push({
-        owner: item.name,
-        source: `descriptor:${item.name}`,
-        target: `${directory}/${item.name}/chatjs.json`,
-      });
-    }
+  const target = descriptorTarget(item);
+  if (
+    target !== undefined &&
+    !claims.some((claim) => targetPath(claim.target) === targetPath(target))
+  ) {
+    claims.push({
+      owner: item.name,
+      source: `descriptor:${item.name}`,
+      target: targetPath(target),
+    });
   }
   return claims;
 };

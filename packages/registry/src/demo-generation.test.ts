@@ -83,6 +83,8 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
     const copies = [
       "packages/registry/src",
       "packages/registry/scripts",
+      "packages/registry-validation/src",
+      "packages/registry-validation/package.json",
       "packages/cli/src",
       "packages/gateways/src",
       "packages/sandboxes/src",
@@ -149,7 +151,7 @@ process.exit(0);
         })
     );
     await Promise.all(
-      ["gateways", "sandboxes"].map(async (name) => {
+      ["gateways", "sandboxes", "registry-validation"].map(async (name) => {
         await symlink(
           path.join(fixture, "packages", name),
           path.join(fixture, "node_modules/@chat-js", name)
@@ -157,22 +159,24 @@ process.exit(0);
       })
     );
     await Promise.all(
-      ["registry", "cli", "gateways", "sandboxes"].map(async (name) => {
-        const modules = path.join("packages", name, "node_modules");
-        try {
-          await stat(path.join(root, modules));
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "ENOENT"
-          ) {
-            return;
+      ["registry", "cli", "gateways", "sandboxes", "registry-validation"].map(
+        async (name) => {
+          const modules = path.join("packages", name, "node_modules");
+          try {
+            await stat(path.join(root, modules));
+          } catch (error) {
+            if (
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "ENOENT"
+            ) {
+              return;
+            }
+            throw error;
           }
-          throw error;
+          await symlink(path.join(root, modules), path.join(fixture, modules));
         }
-        await symlink(path.join(root, modules), path.join(fixture, modules));
-      })
+      )
     );
     const invalidSource =
       "packages/registry/src/plugins/mcp/src/ui/connectors-settings.tsx";

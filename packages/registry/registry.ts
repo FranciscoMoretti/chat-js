@@ -2,6 +2,7 @@ import { creditsItem } from "./src/plugins/credits/manifest";
 import { modelPreferencesItem } from "./src/plugins/model-preferences/manifest";
 import { sharingItem } from "./src/plugins/sharing/manifest";
 import { aiTitlesItem } from "./src/plugins/ai-titles/manifest";
+import { versionedRegistryItem } from "./dependency-contract";
 import { searchItem } from "./src/plugins/search/manifest";
 import { followupSuggestionsItem } from "./src/plugins/followup-suggestions/manifest";
 import { feedbackItem } from "./src/plugins/feedback/manifest";
@@ -82,7 +83,13 @@ const toolItems = (
       ],
     },
     {
-      dependencies: ["ai", "zod", "@mendable/firecrawl-js"],
+      dependencies: [
+        "ai",
+        "zod",
+        "@mendable/firecrawl-js",
+        "lucide-react",
+        "react-markdown",
+      ],
       description: "Fetch structured information from a single URL",
       envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
       id: "retrieve-url",
@@ -227,7 +234,7 @@ const registry = registrySchema.parse({
     ...searchToolItems,
     codeExecutionItem,
     codeExecutionRuntimeItem,
-  ],
+  ].map(versionedRegistryItem),
   name: "chatjs",
 });
 export { codeExecutionItem } from "./code-execution";

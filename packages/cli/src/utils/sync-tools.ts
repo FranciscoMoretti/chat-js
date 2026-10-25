@@ -1,3 +1,4 @@
+import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { planToolConfig } from "./tool-config";
 import fs, { mkdir, readdir, writeFile } from "node:fs/promises";
@@ -402,25 +403,138 @@ const validateToolDependencies = (
   }
 };
 
+const renderToolRegistrations = (
+  definitions: readonly ReadonlyInput<ToolDefinition>[],
+  configSource: string
+): Map<string, string> => {
+  const files = new Map<string, string>([
+    [
+      "composition/generated/installed-config.ts",
+      generatedSource(configSource),
+    ],
+  ]);
+  const documents = definitions.filter(
+    (item: ReadonlyInput<ToolDefinition>) => item.documentKind
+  );
+  const documentActions = documents.filter((item) => item.documentActions);
+  const registrations = registrationsFor(definitions);
+  const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
+    registrationKey(item)
+  );
+  const { providerBody, toolBody, uiBody } = sourceFor(registrations);
+  files.set(
+    "composition/generated/document-ui.ts",
+    generatedSource(
+      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "@/tools/chatjs/${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
+    )
+  );
+  files.set(
+    "composition/generated/installed-tools.ts",
+    generatedSource(
+      `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item: ReadonlyInput<ToolDefinition>): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+    )
+  );
+  const composerTools = registrations
+    .filter((item: ReadonlyInput<Registration>) => item.composer)
+    .toSorted(
+      (
+        leftRegistration: ReadonlyInput<Registration>,
+        rightRegistration: ReadonlyInput<Registration>
+      ): number => leftRegistration.key.localeCompare(rightRegistration.key)
+    );
+  files.set(
+    "composition/generated/composer-tools.ts",
+    generatedSource(
+      `${
+        composerTools.length > 0
+          ? `import { ${composerTools
+              .map((item: ReadonlyInput<Registration>, index) => ({
+                alias: `Icon${index}`,
+                icon: item.composer?.icon,
+              }))
+              .toSorted(
+                (
+                  left: Readonly<{ alias: string; icon: string | undefined }>,
+                  right: Readonly<{ alias: string; icon: string | undefined }>
+                ): number => left.alias.localeCompare(right.alias)
+              )
+              .map(
+                (
+                  item: Readonly<{ alias: string; icon: string | undefined }>
+                ): string => `${item.icon} as ${item.alias}`
+              )
+              .join(", ")} } from "lucide-react";\n`
+          : ""
+      }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item: ReadonlyInput<Registration>, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
+    )
+  );
+  const runner = definitions.find(
+    ({ documentRunExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof documentRunExport === "string" && documentRunExport !== ""
+  );
+  files.set(
+    "composition/generated/document-run.ts",
+    generatedSource(
+      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "@/tools/chatjs/${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
+    )
+  );
+  files.set(
+    "composition/generated/providers.ts",
+    generatedSource(providerBody)
+  );
+  const executor = definitions.find(
+    ({ codeExecutorExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof codeExecutorExport === "string" && codeExecutorExport !== ""
+  );
+  files.set(
+    "composition/generated/code-executor.ts",
+    generatedSource(
+      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "@/tools/chatjs/${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
+    )
+  );
+  const workflows = registrations.filter(
+    (item: ReadonlyInput<Registration>) => item.workflow
+  );
+  files.set(
+    "composition/generated/workflow-types.ts",
+    generatedSource(
+      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "@/tools/chatjs/${item.id}/tool";`).join("\n")}\n\nexport interface WorkflowTools {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n}\n`
+    )
+  );
+  const availability = definitions.filter(
+    ({ availabilityExport }: ReadonlyInput<ToolDefinition>): boolean =>
+      typeof availabilityExport === "string" && availabilityExport !== ""
+  );
+  files.set(
+    "composition/generated/tool-availability.ts",
+    generatedSource(
+      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "@/tools/chatjs/${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
+    )
+  );
+  files.set(
+    "composition/generated/document-actions.ts",
+    generatedSource(
+      `import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
+${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "@/tools/chatjs/${item.id}/assistant-actions";`).join("\n")}
+
+export const installedDocumentActions: Partial<
+  Record<"text" | "code" | "sheet", () => DocumentAssistantAction[]>
+> = {
+${documentActions.map((item, index) => `  ${item.documentKind}: actions${index},`).join("\n")}
+};
+`
+    )
+  );
+  files.set("composition/generated/tools.ts", generatedSource(toolBody));
+  files.set("composition/generated/ui.ts", generatedSource(uiBody));
+  return files;
+};
+
 const toolRegistrationTargets = [
-  "tools.ts",
-  "ui.ts",
-  "document-ui.ts",
-  "document-actions.ts",
-  "installed-tools.ts",
-  "installed-config.ts",
-  "composer-tools.ts",
-  "document-run.ts",
-  "providers.ts",
-  "code-executor.ts",
-  "workflow-types.ts",
-  "tool-availability.ts",
-  "custom-tools.ts",
-  "custom-ui.ts",
-].map(
-  (file): string =>
-    `composition/${file.startsWith("custom-") ? "custom" : "generated"}/${file}`
-);
+  ...renderToolRegistrations([], "").keys(),
+  "composition/custom/custom-tools.ts",
+  "composition/custom/custom-ui.ts",
+];
 
 const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   await assertCurrentInstallationLayout(cwd);
@@ -441,29 +555,13 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   );
   const generatedDir = pathModule.join(cwd, "composition/generated");
   const toolsPath = pathModule.join(generatedDir, "tools.ts");
-  const uiPath = pathModule.join(generatedDir, "ui.ts");
   const previousTools = await readOptional(toolsPath);
-  const previousUi = await readOptional(uiPath);
-  checkGenerated(previousTools, toolsPath);
-  checkGenerated(previousUi, uiPath);
   await Promise.all(
-    [
-      "document-ui.ts",
-      "document-actions.ts",
-      "installed-tools.ts",
-      "installed-config.ts",
-      "composer-tools.ts",
-      "document-run.ts",
-      "providers.ts",
-      "code-executor.ts",
-      "workflow-types.ts",
-      "tool-availability.ts",
-    ].map(async (file): Promise<void> => {
-      checkGenerated(
-        await readOptional(pathModule.join(generatedDir, file)),
-        file
-      );
-    })
+    toolRegistrationTargets
+      .filter((file) => file.startsWith("composition/generated/"))
+      .map(async (file): Promise<void> => {
+        checkGenerated(await readOptional(pathModule.join(cwd, file)), file);
+      })
   );
   const definitions = await collectDefinitions(cwd, directory, entries);
   const ids = new Set(
@@ -538,25 +636,8 @@ const syncTools = async (
   if (options.checkOnly === true) {
     return definitions;
   }
-  const dir = pathModule.join(cwd, "composition/generated");
-  const toolsPath = pathModule.join(dir, "tools.ts");
-  const uiPath = pathModule.join(dir, "ui.ts");
-  const documents = definitions.filter(
-    (item: ReadonlyInput<ToolDefinition>) => item.documentKind
-  );
-  const documentActions = documents.filter((item) => item.documentActions);
-  const registrations = registrationsFor(definitions);
-  const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
-    registrationKey(item)
-  );
-  const { providerBody, toolBody, uiBody } = sourceFor(registrations);
-  await mkdir(dir, { recursive: true });
   const customDir = pathModule.join(cwd, "composition/custom");
   await mkdir(customDir, { recursive: true });
-  await writeFile(
-    pathModule.join(dir, "installed-config.ts"),
-    generatedSource(configSource)
-  );
   const [customTools, customUi] = await Promise.all([
     readOptional(pathModule.join(customDir, "custom-tools.ts")),
     readOptional(pathModule.join(customDir, "custom-ui.ts")),
@@ -583,111 +664,10 @@ const syncTools = async (
         ]
       : []),
   ]);
-  await writeFile(
-    pathModule.join(dir, "document-ui.ts"),
-    generatedSource(
-      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "@/tools/chatjs/${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
-    )
+  await writeGeneratedFiles(
+    cwd,
+    renderToolRegistrations(definitions, configSource)
   );
-  await writeFile(
-    pathModule.join(dir, "installed-tools.ts"),
-    generatedSource(
-      `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item: ReadonlyInput<ToolDefinition>): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
-    )
-  );
-  const composerTools = registrations
-    .filter((item: ReadonlyInput<Registration>) => item.composer)
-    .toSorted(
-      (
-        leftRegistration: ReadonlyInput<Registration>,
-        rightRegistration: ReadonlyInput<Registration>
-      ): number => leftRegistration.key.localeCompare(rightRegistration.key)
-    );
-  await writeFile(
-    pathModule.join(dir, "composer-tools.ts"),
-    generatedSource(
-      `${
-        composerTools.length > 0
-          ? `import { ${composerTools
-              .map((item: ReadonlyInput<Registration>, index) => ({
-                alias: `Icon${index}`,
-                icon: item.composer?.icon,
-              }))
-              .toSorted(
-                (
-                  left: Readonly<{ alias: string; icon: string | undefined }>,
-                  right: Readonly<{ alias: string; icon: string | undefined }>
-                ): number => left.alias.localeCompare(right.alias)
-              )
-              .map(
-                (
-                  item: Readonly<{ alias: string; icon: string | undefined }>
-                ): string => `${item.icon} as ${item.alias}`
-              )
-              .join(", ")} } from "lucide-react";\n`
-          : ""
-      }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item: ReadonlyInput<Registration>, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
-    )
-  );
-  const runner = definitions.find(
-    ({ documentRunExport }: ReadonlyInput<ToolDefinition>): boolean =>
-      typeof documentRunExport === "string" && documentRunExport !== ""
-  );
-  await writeFile(
-    pathModule.join(dir, "document-run.ts"),
-    generatedSource(
-      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "@/tools/chatjs/${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
-    )
-  );
-  await writeFile(
-    pathModule.join(dir, "providers.ts"),
-    generatedSource(providerBody)
-  );
-  const executor = definitions.find(
-    ({ codeExecutorExport }: ReadonlyInput<ToolDefinition>): boolean =>
-      typeof codeExecutorExport === "string" && codeExecutorExport !== ""
-  );
-  await writeFile(
-    pathModule.join(dir, "code-executor.ts"),
-    generatedSource(
-      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "@/tools/chatjs/${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
-    )
-  );
-  const workflows = registrations.filter(
-    (item: ReadonlyInput<Registration>) => item.workflow
-  );
-  await writeFile(
-    pathModule.join(dir, "workflow-types.ts"),
-    generatedSource(
-      `${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "@/tools/chatjs/${item.id}/tool";`).join("\n")}\n\nexport interface WorkflowTools {\n${workflows.map((item: ReadonlyInput<Registration>, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n}\n`
-    )
-  );
-  const availability = definitions.filter(
-    ({ availabilityExport }: ReadonlyInput<ToolDefinition>): boolean =>
-      typeof availabilityExport === "string" && availabilityExport !== ""
-  );
-  await writeFile(
-    pathModule.join(dir, "tool-availability.ts"),
-    generatedSource(
-      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "@/tools/chatjs/${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
-    )
-  );
-  await writeFile(
-    pathModule.join(dir, "document-actions.ts"),
-    generatedSource(
-      `import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
-${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "@/tools/chatjs/${item.id}/assistant-actions";`).join("\n")}
-
-export const installedDocumentActions: Partial<
-  Record<"text" | "code" | "sheet", () => DocumentAssistantAction[]>
-> = {
-${documentActions.map((item, index) => `  ${item.documentKind}: actions${index},`).join("\n")}
-};
-`
-    )
-  );
-  await writeFile(toolsPath, generatedSource(toolBody));
-  await writeFile(uiPath, generatedSource(uiBody));
   return definitions;
 };
 

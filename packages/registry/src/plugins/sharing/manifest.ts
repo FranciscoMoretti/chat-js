@@ -29,6 +29,13 @@ const sharingDefinition = pluginDefinitionSchema.parse({
 const sharingItem: RegistryItem = {
   name: "sharing",
   type: "registry:item",
+  dependencies: [
+    "@tanstack/react-query",
+    "@trpc/server",
+    "drizzle-orm",
+    "lucide-react",
+    "sonner",
+  ],
   description: "Share read-only conversations with revocable public access",
   files: sharingFiles.map((file) => ({
     path: file.startsWith("plugins/sharing/")

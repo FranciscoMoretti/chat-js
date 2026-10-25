@@ -23,6 +23,7 @@ const bundles = [
       "@lexical/rich-text",
       "lexical",
       "diff",
+      "@tanstack/react-query",
     ],
     files: ["comparison.tsx", "diffview.tsx", "editor-config.ts"],
     kind: "text",
@@ -42,7 +43,12 @@ const bundles = [
     title: "Code",
   },
   {
-    dependencies: ["papaparse", "@types/papaparse", "react-data-grid"],
+    dependencies: [
+      "papaparse",
+      "@types/papaparse",
+      "react-data-grid",
+      "next-themes",
+    ],
     files: [],
     kind: "sheet",
     title: "Sheet",
@@ -131,6 +137,7 @@ const documentItems: RegistryItem[] = [
 ];
 
 const savedCodeExecutionItem: RegistryItem = {
+  dependencies: ["lucide-react"],
   description: "Run saved code revisions with a compatible installed executor",
   files: documentFiles("saved-code-execution", [
     "tool.ts",
@@ -159,7 +166,7 @@ const savedCodeExecutionItem: RegistryItem = {
 };
 
 const codeExecutionUiItem: RegistryItem = {
-  dependencies: ["echarts", "echarts-for-react", "motion"],
+  dependencies: ["echarts", "echarts-for-react", "motion", "next-themes"],
   description: "Shared chart renderer for installed code execution tools",
   files: [
     "code-execution-chart.tsx",

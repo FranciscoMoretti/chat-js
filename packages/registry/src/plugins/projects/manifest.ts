@@ -52,6 +52,15 @@ const projectsDefinition = pluginDefinitionSchema.parse({
   client: { export: "projectsClient", chat: true },
 });
 const projectsItem: RegistryItem = {
+  dependencies: [
+    "@tanstack/react-query",
+    "@trpc/client",
+    "@trpc/server",
+    "date-fns",
+    "drizzle-orm",
+    "lucide-react",
+    "sonner",
+  ],
   name: "projects",
   type: "registry:item",
   description: "Projects, chat organization, and shared project instructions",

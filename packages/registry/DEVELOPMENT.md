@@ -78,3 +78,5 @@ Experiments used Bun 1.3.11, Turbo 2.10.12 and Next 16.3.0 in isolated fixtures.
 Keep Turbo for prerequisite ordering and application tasks. A dedicated coordinator provides the initial readiness and recovery behavior that plain Turbo watch did not provide in these fixtures. Turbo's continuous dependency rebuilding is broader than this mirror's input scope.
 
 Earlier end-to-end acceptance measured a canonical MCP edit reaching the browser in 752 ms and an isolated EVE tool update in 638 ms. Those timings predate the path-manifest simplification; the two runner fixtures also used different artificial generation delays, so they are not an intrinsic speed comparison.
+
+The shared installation generator also drives [consumer installation validation](VALIDATION.md), with isolated TypeScript checks and packaged CLI parity sentinels.

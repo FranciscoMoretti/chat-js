@@ -59,6 +59,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chat-js/registry-validation": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "22.13.10",
     "next": "16.3.0",

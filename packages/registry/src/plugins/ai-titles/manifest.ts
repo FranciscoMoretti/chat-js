@@ -16,6 +16,7 @@ const aiTitlesDefinition = pluginDefinitionSchema.parse({
 const aiTitlesItem: RegistryItem = {
   name: "ai-titles",
   type: "registry:item",
+  dependencies: ["drizzle-orm"],
   description: "Automatically name new chats with AI",
   files: aiTitlesFiles.map((file) => ({
     path: `src/plugins/ai-titles/src/${file.slice("plugins/ai-titles/".length)}`,
