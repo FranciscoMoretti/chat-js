@@ -24,7 +24,7 @@ const plugins = registry.items.flatMap((item) => {
 const prepared = { core: new Map<string, Uint8Array>() };
 beforeAll(async () => {
   prepared.core = await prepareValidationCore();
-}, 60_000);
+});
 
 for (const gateway of GATEWAYS) {
   test(`${gateway}: the manifest-derived empty installation typechecks`, async () => {
