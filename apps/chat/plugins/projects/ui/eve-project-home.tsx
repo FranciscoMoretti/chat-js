@@ -53,7 +53,12 @@ export const EveProjectHome = ({
   const [sending, setSending] = useState(false);
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { ownerScope: ownerId, projectId: initialProject.id, search: "" },
+      {
+        ownerScope: ownerId,
+        projectId: initialProject.id,
+        search: "",
+        surface: "sidebar",
+      },
       {
         getNextPageParam: (page: {
           readonly nextCursor: {

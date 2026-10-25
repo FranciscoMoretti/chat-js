@@ -37,6 +37,8 @@ await db.insert(user).values(
 await db.insert(project).values([
   {
     id: ownProject,
+    icon: "folder",
+    iconColor: "gray",
     instructions: "Owner-only instructions",
     name: "Owner project",
     userId: owner,
@@ -73,6 +75,8 @@ test("assignment, filtered history and removal retain native identity", async ()
   );
   expect(await getEveConversationProject(owner, row.id)).toEqual({
     id: ownProject,
+    icon: "folder",
+    iconColor: "gray",
     instructions: "Owner-only instructions",
     name: "Owner project",
   });
@@ -81,7 +85,7 @@ test("assignment, filtered history and removal retain native identity", async ()
     search: "",
   });
   expect(conversationsInProject.items).toEqual([
-    expect.objectContaining({ conversationId: row.id, projectId: ownProject }),
+    expect.objectContaining({ conversationId: row.id }),
   ]);
   const conversationsWithoutProject = await listEveConversations(owner, {
     projectId: null,

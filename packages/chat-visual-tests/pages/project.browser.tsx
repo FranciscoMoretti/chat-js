@@ -44,6 +44,17 @@ test("project with instructions and chats", async () => {
     .element(page.getByText("Press release first draft"))
     .toBeVisible();
   await expect.element(page.getByText("✓")).toBeInTheDocument();
+  const histories = [...route.queryClients].flatMap((client) =>
+    client
+      .getQueryCache()
+      .findAll()
+      .filter((query) => {
+        const key = JSON.stringify(query.queryKey);
+        return key.includes('"eve","list"') && key.includes(launchProject.id);
+      })
+  );
+  expect(histories).toHaveLength(1);
+  expect(histories[0]?.getObserversCount()).toBeGreaterThanOrEqual(2);
 });
 
 test("project instructions being edited", async () => {
