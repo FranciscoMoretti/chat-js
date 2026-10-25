@@ -74,6 +74,9 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
       - if: steps.affected.outputs.run == 'true'
         run: bun install --frozen-lockfile
+      - name: Check Playwright task isolation
+        if: steps.affected.outputs.run == 'true'
+        run: bun test scripts/playwright-task-graph.test.ts
       - name: Migrate isolated test database
         if: steps.affected.outputs.run == 'true'
         run: bun run --cwd apps/chat db:migrate
