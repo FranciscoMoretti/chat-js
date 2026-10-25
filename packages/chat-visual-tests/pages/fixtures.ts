@@ -6,7 +6,7 @@ import type { AppRouter } from "@/trpc/routers/_app";
 
 import { assetDataUri } from "../../registry/src/tools/_shared/visual";
 import { TrpcFixtureError } from "./route";
-import type { ServerData } from "./route";
+import type { ServerData, route } from "./route";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type HistoryPage = NonNullable<ServerData["conversations"]>;
@@ -471,7 +471,7 @@ export const launchChats: HistoryPage = {
   nextCursor: null,
 };
 
-export const invoicesFollowupEvents = {
+export const invoicesFollowupEvents: typeof route.events = {
   [invoicesSessionId]: [
     {
       type: "turn.completed",
