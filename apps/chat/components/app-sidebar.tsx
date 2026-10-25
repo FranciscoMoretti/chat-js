@@ -66,7 +66,13 @@ export const AppSidebar = (): React.JSX.Element => (
         </div>
 
         <NewChatButton />
-        <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+        <Suspense
+          fallback={
+            <SidebarMenuItem>
+              <Skeleton className="h-8 w-full" />
+            </SidebarMenuItem>
+          }
+        >
           <ScopedPluginSidebarHeader />
         </Suspense>
         <SidebarMenuItem>
