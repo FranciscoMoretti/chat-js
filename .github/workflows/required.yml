@@ -3,69 +3,78 @@ name: Required
 on:
   pull_request:
 
+concurrency:
+  group: required-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   gate:
     name: Required
     runs-on: ubuntu-22.04
     permissions:
-      checks: read
       actions: read
     steps:
-      - name: Wait for required workflows
-        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          # ============================================
-          # REQUIRED CHECKS - Add/remove check names here
-          # ============================================
-          check-regexp: ^(Docs|Lint|Typecheck|Unit|Playwright|CLI Scaffold|Native Lifecycle)$
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-      - name: Require scaffold aggregate acceptance
+      - name: Require latest workflow attempts
         uses: actions/github-script@v7
         env:
           TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
         with:
           script: |
-            // A newer run or attempt may not have created its aggregate check yet.
-            const deadline = Date.now() + 45 * 60 * 1000;
-            const latestRun = async () => {
-              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+            // A stack update can trigger two runs on the same head. Judge the
+            // latest run and attempt, not cancelled checks from its predecessor.
+            const required = [
+              { file: "docs.yml", job: "Docs", allowSkipped: true },
+              { file: "lint.yml", job: "Lint", allowSkipped: true },
+              { file: "typecheck.yml", job: "Typecheck", allowSkipped: true },
+              { file: "unit.yml", job: "Unit", allowSkipped: true },
+              { file: "playwright.yml", job: "Playwright", allowSkipped: true },
+              { file: "cli-scaffold.yml", job: "CLI Scaffold", allowSkipped: false },
+              { file: "native.yml", job: "Native Lifecycle", allowSkipped: false },
+            ];
+            const latestRuns = async () => {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
                 ...context.repo,
-                workflow_id: "cli-scaffold.yml",
                 head_sha: process.env.TARGET_SHA,
                 event: "pull_request",
                 per_page: 100,
               });
-              return runs.sort((left, right) => right.id - left.id)[0];
+              return required.map(({ file }) => runs
+                .filter((run) => run.path === `.github/workflows/${file}` &&
+                  run.head_sha === process.env.TARGET_SHA &&
+                  run.head_branch === process.env.TARGET_BRANCH)
+                .sort((left, right) => right.id - left.id)[0]);
             };
+            const deadline = Date.now() + 45 * 60 * 1000;
             while (Date.now() < deadline) {
-              const run = await latestRun();
-              if (run?.status === "completed") {
-                const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
-                  ...context.repo,
-                  run_id: run.id,
-                  attempt_number: run.run_attempt,
-                  per_page: 100,
-                });
-                const aggregate = jobs.find((job) => job.name === "CLI Scaffold");
-                // Re-read after fetching jobs: a rerun can start during either request.
-                const current = await latestRun();
-                if (current?.id === run.id && current.run_attempt === run.run_attempt && current.status === "completed") {
-                  if (current.conclusion !== "success" || aggregate?.conclusion !== "success") {
-                    core.setFailed(`CLI Scaffold run ${run.id} attempt ${run.run_attempt} did not succeed`);
-                  }
+              const runs = await latestRuns();
+              if (runs.every((run) => run?.status === "completed")) {
+                const results = await Promise.all(runs.map(async (run, index) => {
+                  const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+                    ...context.repo,
+                    run_id: run.id,
+                    attempt_number: run.run_attempt,
+                    per_page: 100,
+                  });
+                  const requirement = required[index];
+                  const job = jobs.find((entry) => entry.name === requirement.job);
+                  const allowed = (conclusion) => conclusion === "success" ||
+                    (requirement.allowSkipped && conclusion === "skipped");
+                  return {
+                    passed: allowed(run.conclusion) && job?.status === "completed" && allowed(job.conclusion),
+                    description: `${requirement.job}: run ${run.id}, attempt ${run.run_attempt}, workflow ${run.conclusion}, job ${job?.conclusion ?? "missing"}`,
+                  };
+                }));
+                // A newer run or rerun can start while the job results are read.
+                const current = await latestRuns();
+                if (current.every((run, index) => run?.id === runs[index].id &&
+                  run.run_attempt === runs[index].run_attempt && run.status === "completed")) {
+                  for (const result of results) core.info(result.description);
+                  const failures = results.filter((result) => !result.passed);
+                  if (failures.length) core.setFailed(failures.map((result) => result.description).join("\n"));
                   return;
                 }
               }
               await new Promise((resolve) => setTimeout(resolve, 10_000));
             }
-            core.setFailed("Timed out waiting for the latest CLI Scaffold run to succeed");
-      - name: Require native lifecycle acceptance
-        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          check-name: Native Lifecycle
-          allowed-conclusions: success
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+            core.setFailed("Timed out waiting for the latest required workflow attempts");
