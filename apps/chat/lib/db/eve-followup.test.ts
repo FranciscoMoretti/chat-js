@@ -115,6 +115,11 @@ it("cleans only deleted-session suggestions when the logical chat survives", asy
   );
   await completeEveConversationDeletion("owner", branchId);
   expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
+  const afterDeletion = await postgres.query(
+    'SELECT * FROM "EveFollowup" WHERE "eventId" = $1',
+    ["branch-completion"]
+  );
+  expect(afterDeletion.rows).toEqual([]);
   expect(await getEveFollowup("owner", chatId, "completion")).toEqual([
     "Next?",
     "Why?",
@@ -124,6 +129,11 @@ it("cleans only deleted-session suggestions when the logical chat survives", asy
     "Late result",
   ]);
   expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
+  const afterLateFinish = await postgres.query(
+    'SELECT * FROM "EveFollowup" WHERE "eventId" = $1',
+    ["branch-completion"]
+  );
+  expect(afterLateFinish.rows).toEqual([]);
 });
 it("fences new claims and reads after deletion begins", async () => {
   await postgres.exec(

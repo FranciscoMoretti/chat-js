@@ -17,6 +17,8 @@ import {
   invoicesShared,
   invoicesTranscripts,
   invoicesTrpc,
+  invoicesFollowupEvents,
+  invoicesFollowupTrpc,
   launchProject,
   session,
   signedIn,
@@ -539,29 +541,10 @@ test("conversation with saved private feedback", async () => {
 });
 
 test("conversation with persisted follow-up suggestions", async () => {
-  const { sessionId } = invoicesConversation;
-  if (sessionId === null) {
-    throw new Error("Missing fixture session");
-  }
   await renderRoute(conversation, {
     ...request,
-    events: {
-      [sessionId]: [
-        {
-          type: "turn.completed",
-          data: { turnId: "turn_0", sequence: 2 },
-          meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
-        },
-      ],
-    },
-    trpc: {
-      ...invoicesTrpc,
-      "followupSuggestions.get": [
-        "How do I measure the improvement?",
-        "What about partial indexes?",
-        "Does column order matter?",
-      ],
-    },
+    events: invoicesFollowupEvents,
+    trpc: invoicesFollowupTrpc,
   });
   await expect
     .element(

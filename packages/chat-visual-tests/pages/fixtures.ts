@@ -470,3 +470,21 @@ export const launchChats: HistoryPage = {
   ],
   nextCursor: null,
 };
+
+export const invoicesFollowupEvents = {
+  [invoicesSessionId]: [
+    {
+      type: "turn.completed",
+      data: { turnId: "turn_0", sequence: 2 },
+      meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
+    },
+  ],
+};
+export const invoicesFollowupTrpc = {
+  ...invoicesTrpc,
+  "followupSuggestions.get": [
+    "How do I measure the improvement?",
+    "What about partial indexes?",
+    "Does column order matter?",
+  ],
+};
